@@ -1,0 +1,21 @@
+.env
+node_modules/
+/data/
+.nuxt
+.output
+*.sqlite
+.DS_Store
+db/seed.json
+db/seed.pre-users.json
+.ui-check/
+
+# Built web app and Storybook
+apps/web/dist/
+apps/web/storybook-static/
+
+# Python AI service
+services/ai/.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.coverage

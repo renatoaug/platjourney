@@ -1,0 +1,7 @@
+language css
+
+CssGenericProperty() as $declaration where {
+  $filename <: not r".*theme[.]css",
+  $declaration <: r"(?s).*var[(]--palette-.*",
+  register_diagnostic(span=$declaration, message="That is the raw palette. Use the semantic token (var(--color-*)) that points to it.")
+}

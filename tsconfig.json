@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["bun"]
+  },
+  "include": [
+    "apps/server/src",
+    "apps/server/scripts",
+    "apps/server/tests",
+    "apps/web/scripts",
+    "scripts"
+  ]
+}

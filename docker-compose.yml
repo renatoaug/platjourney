@@ -1,0 +1,39 @@
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:v3.0.5
+    container_name: platjourney-surrealdb
+    restart: always
+    command: start --user ${SURREAL_USER:-root} --pass ${SURREAL_PASS:-root} rocksdb:/data/platjourney.db
+    ports:
+      - '${SURREAL_PORT:-8000}:8000'
+    volumes:
+      # Bind mount: the image runs unprivileged and cannot create dirs inside a fresh named volume.
+      - ./data/surrealdb:/data
+
+  # Everything below runs only with the `app` profile (`bun run docker:up`), to try PlatJourney
+  # locally without installing Bun and uv. `bun run db:up` still starts the database alone.
+  ai:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: services/ai/Dockerfile
+    env_file: .env
+    environment:
+      SURREAL_URL: http://surrealdb:8000/rpc
+      AI_HOST: 0.0.0.0
+      AI_PORT: '8100'
+    depends_on: [surrealdb]
+
+  server:
+    profiles: [app]
+    build: .
+    env_file: .env
+    environment:
+      SURREAL_URL: http://surrealdb:8000/rpc
+      AI_URL: http://ai:8100
+      # Plugins live outside this repository; the containers run the plain app.
+      PLUGINS: ''
+    ports:
+      # Only this machine can reach it.
+      - '127.0.0.1:${PORT:-3000}:3000'
+    depends_on: [surrealdb, ai]

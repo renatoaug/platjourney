@@ -1,0 +1,51 @@
+{
+  "name": "platjourney",
+  "private": true,
+  "description": "Your PlayStation platinum partner: Telegram and web, guides researched from the web, recommendations from what you play.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "bun run --parallel dev:server dev:web dev:ai",
+    "dev:server": "bun run --cwd apps/server dev",
+    "start": "bun run --cwd apps/server start",
+    "dev:web": "bun run --cwd apps/web dev",
+    "dev:ai": "cd services/ai && uv run uvicorn platjourney_ai.main:app --port 8100 --reload",
+    "build": "bun run --cwd apps/web build",
+    "storybook": "bun run --cwd apps/web storybook",
+    "lint": "biome check . && bun run --cwd apps/web check-tokens && bun run ai:lint",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p apps/web && bun run ai:typecheck",
+    "migrate": "bun run --cwd apps/server migrate",
+    "seed": "bun run --cwd apps/server seed",
+    "password": "bun run --cwd apps/server password",
+    "check-servers": "bun run --cwd apps/server check-servers",
+    "build-seed": "bun run --cwd apps/server build-seed",
+    "catalog:expand": "bun run --cwd apps/server catalog:expand",
+    "embed": "cd services/ai && uv run python -m platjourney_ai.jobs.embed_catalog",
+    "db:reset": "bun run --cwd apps/server db:reset",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "docker:up": "docker compose --profile app up -d --build",
+    "docker:down": "docker compose --profile app down",
+    "docker:logs": "docker compose --profile app logs -f server ai",
+    "ui:check": "bun run --cwd apps/web ui:check",
+    "stories:check": "bun run --cwd apps/web build-storybook && bun run --cwd apps/web stories:check",
+    "ai:lint": "cd services/ai && uv run ruff check . && uv run ruff format --check .",
+    "ai:typecheck": "cd services/ai && uv run pyright",
+    "ai:test": "cd services/ai && uv run pytest",
+    "test": "bun run test:server && bun run test:web && bun run ai:test",
+    "test:server": "bun test apps/server/tests",
+    "test:web": "bun test apps/web/tests --preload ./apps/web/tests/setup.ts",
+    "test:coverage": "bun scripts/check-coverage.ts",
+    "ai:eval": "cd services/ai && uv run python -m evals"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@types/bun": "^1.4.2",
+    "pm2": "^7.0.4",
+    "typescript": "^7.0.2"
+  }
+}
