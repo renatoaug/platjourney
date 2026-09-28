@@ -1,0 +1,326 @@
+import { config } from './config.ts'
+import { tagged } from './costs.ts'
+import { ensureDeepGuide } from './deepguide.ts'
+import { isDemo, trophiesFor } from './demo.ts'
+import { ensureGuide, type Guide } from './guide.ts'
+import {
+  defineMessages,
+  fmtRate,
+  Language,
+  type MessageKey,
+  translator,
+  userLocale,
+} from './i18n.ts'
+import { library } from './library.ts'
+import { type GameContext, proactiveTip, sessionSummary, unlockReaction } from './nexo.ts'
+import { hours, playtimes } from './playtime.ts'
+import { Refused } from './plugins.ts'
+import { PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
+import { loadGroups } from './ranking.ts'
+import { logTip, type TipKind } from './repository/activity.ts'
+import { gameForTitle } from './repository/game.ts'
+import { getGuide } from './repository/guide.ts'
+import { requestGuide } from './repository/guide-request.ts'
+import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
+import { getUser, listUsers, type User, updateUser } from './repository/user.ts'
+import { reachedMilestone, routeNotice, stillOpen } from './route.ts'
+import { checkServers } from './servers.ts'
+import { sendMessage } from './telegram.ts'
+
+const messages = defineMessages({
+  [Language.PtBR]: {
+    started: 'Você começou {game}. O guia da platina está no PlatJourney.',
+    unlocked: '🏆 {trophy} ({type}) em {game}',
+    unlockedRate: '🏆 {trophy} ({type}, {rate}% de quem joga) em {game}',
+    types: {
+      platinum: 'platina',
+      gold: 'ouro',
+      silver: 'prata',
+      bronze: 'bronze',
+    },
+  },
+  [Language.En]: {
+    started: 'You started {game}. The platinum guide is on PlatJourney.',
+    unlocked: '🏆 {trophy} ({type}) in {game}',
+    unlockedRate: '🏆 {trophy} ({type}, {rate}% of players) in {game}',
+    types: {
+      platinum: 'platinum',
+      gold: 'gold',
+      silver: 'silver',
+      bronze: 'bronze',
+    },
+  },
+})
+
+// The game each user is talking about: the last one they played, or the one they
+// picked with /game.
+const contexts = new Map<string, GameContext>()
+export const getCurrent = (user: User) => contexts.get(user.id)
+export const forgetUser = (id: string) => contexts.delete(id)
+
+// Proactive messages go to Telegram when the user linked it; they are always in
+// the web history through the tip log. Plain notices are written in the player's language.
+const TYPES = new Set(['platinum', 'gold', 'silver', 'bronze'])
+
+// A notice without the model: logged like any tip (so it reaches the bell) and sent to Telegram.
+async function plainNotice(user: User, kind: TipKind, text: string, game: string) {
+  await logTip(user.id, kind, text, game)
+  await notify(user, text)
+}
+
+type Named = Pick<GameContext, 'title'> & Partial<Pick<GameContext, 'game'>>
+// The catalog's name ("Days Gone"), not the trophy list's ("DAYS GONE").
+const gameName = (ctx: Named) => ctx.game?.name ?? ctx.title.name
+
+export const startNotice = (user: User, ctx: Named) =>
+  translator(messages, user)('started', { game: gameName(ctx) })
+
+export const unlockNotice = (user: User, ctx: Named, unlocked: GameContext['trophies']) => {
+  const t = translator(messages, user)
+  return unlocked
+    .map((trophy) => {
+      const params = {
+        trophy: trophy.name,
+        type: TYPES.has(trophy.type)
+          ? t(`types.${trophy.type}` as MessageKey<typeof messages>)
+          : trophy.type,
+        rate: fmtRate(userLocale(user), trophy.earnedRate),
+        game: gameName(ctx),
+      }
+      return trophy.earnedRate ? t('unlockedRate', params) : t('unlocked', params)
+    })
+    .join('\n')
+}
+
+// Nexo writes the notices when the instance allows it (AI_NOTICES) and the player wants it
+// (the profile's switch); otherwise they come from plain templates, free.
+const nexoNotices = (user: User) => config.automatic.notices && user.ai_notices !== false
+
+// The guide's note on what comes next, when this start or these unlocks reach one of its
+// milestones. It needs no model, so it goes out whatever the notices switch says.
+function routeFor(user: User, ctx: GameContext, unlocked: string[], started: boolean) {
+  const reached = reachedMilestone(ctx.guide, unlocked, started)
+  const earned = ctx.trophies.filter((t) => t.earned).map((t) => t.name)
+  const milestone = reached && stillOpen(reached, earned)
+  return milestone ? routeNotice(milestone, userLocale(user)) : undefined
+}
+
+// One message per sweep: what happened, then the guide's note on what comes next.
+export const together = (...parts: (string | undefined)[]) => parts.filter(Boolean).join('\n\n')
+
+async function notify(user: User, text: string): Promise<void> {
+  if (user.telegram_chat_id) await sendMessage(user.telegram_chat_id, text)
+}
+
+// With automatic research off, the stored guide is used as it is and a missing one is only listed.
+async function guideFor(user: User, title: TitleProgress, ctxTrophies: GameContext['trophies']) {
+  const game = await gameForTitle(title)
+  const cached = await getGuide<Guide>(game.id)
+  // The demo player reads the stored guide and never asks for one.
+  if (isDemo(user)) return cached
+  if (!config.automatic.research) {
+    if (!cached) await requestGuide(game.id)
+    return cached
+  }
+  return ensureGuide(game, ctxTrophies, { name: title.name, platform: title.platform })
+}
+
+// Switches the chat context to another title (used by /game and the detail page).
+export async function setCurrent(user: User, title: TitleProgress): Promise<GameContext> {
+  const game = await gameForTitle(title)
+  const [trophies, groups] = await Promise.all([trophiesFor(title, user), loadGroups(title, user)])
+  const guide = await guideFor(user, title, trophies).catch((e) => {
+    console.error('guide failed:', e.message)
+    return undefined
+  })
+  if (guide && !isDemo(user))
+    ensureDeepGuide(game, title.total).catch((e) => console.error('deep guide failed:', e.message))
+  const played = await playtimes(user).catch(() => new Map())
+  const ctx = { game, title, trophies, guide, groups, hoursPlayed: hours(played.get(game.id)) }
+  contexts.set(user.id, ctx)
+  return ctx
+}
+
+interface PlaySession {
+  npCommunicationId: string
+  startedAt: string
+  lastActivity: string
+  unlockedIds: number[]
+}
+
+// A session opens on the first trophy activity and closes after
+// sessionIdleMinutes without a new one; closing sends the summary.
+async function trackSession(
+  user: User,
+  ctx: GameContext,
+  unlocked: number[],
+  activityAt: string,
+): Promise<void> {
+  let session = ((await getUser(user.id))?.play_session ?? null) as PlaySession | null
+  const sameGame = session?.npCommunicationId === ctx.title.npCommunicationId
+  if (unlocked.length > 0) {
+    if (!session || !sameGame) {
+      session = {
+        npCommunicationId: ctx.title.npCommunicationId,
+        startedAt: activityAt,
+        lastActivity: activityAt,
+        unlockedIds: [],
+      }
+    }
+    session.lastActivity = activityAt
+    session.unlockedIds.push(...unlocked)
+    await updateUser(user.id, { play_session: session })
+    return
+  }
+  if (!session || !sameGame) return
+  const idleMinutes = (Date.now() - new Date(session.lastActivity).getTime()) / 60_000
+  if (idleMinutes < config.sessionIdleMinutes) return
+  const ids = new Set(session.unlockedIds)
+  const trophies = ctx.trophies.filter((t) => ids.has(t.id))
+  console.log(`${user.psn_online_id}: session over for ${ctx.title.name}`)
+  await updateUser(user.id, { play_session: null })
+  // A plugin may refuse the summary (see plugins.ts): then there is none, as with notices off.
+  if (nexoNotices(user))
+    await sessionSummary(user, ctx, trophies, Math.round(idleMinutes))
+      .then((text) => notify(user, text))
+      .catch((e) =>
+        console.warn(
+          `${user.psn_online_id}: session summary skipped:`,
+          (e as Error).message.slice(0, 80),
+        ),
+      )
+}
+
+// Compares the user's PSN title list against the stored snapshot. A title we
+// have never tipped that is still early triggers the intro; newly earned trophies
+// on the current title trigger a reaction and feed the session tracker.
+export async function checkUser(user: User): Promise<void> {
+  // The demo player has no PSN profile to watch.
+  if (isDemo(user)) return
+  const titles = await recentTitles(user.psn_account_id, 5)
+  if (titles.length === 0) return
+
+  const latest = titles[0]
+  const current = contexts.get(user.id)
+  const switched = current?.title.npCommunicationId !== latest.npCommunicationId
+  const prev = await getTitle(user.id, latest.npCommunicationId)
+  const changed =
+    !prev ||
+    prev.earned !== latest.earned ||
+    new Date(prev.last_updated_at).getTime() !== new Date(latest.lastUpdated).getTime()
+  const ctx = switched || changed || !current ? await setCurrent(user, latest) : current
+
+  for (const t of titles) await upsertTitle(user.id, t)
+
+  const earnedIds = ctx.trophies.filter((t) => t.earned).map((t) => t.id)
+  const knownIds = new Set<number>(prev?.earned_ids ?? [])
+  // A first sync of an account must not greet every old game as new.
+  const firstSync = !prev && latest.earned > 0 && latest.progress >= 10
+  const justStarted = !firstSync && !prev?.last_tip_at && latest.progress < 10
+  const unlocked =
+    knownIds.size > 0 ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
+
+  const route = routeFor(
+    user,
+    ctx,
+    unlocked.map((t) => t.name),
+    justStarted,
+  )
+  // Without Nexo's notices the player still hears about it, from a plain template.
+  const plain = async () => {
+    if (justStarted) {
+      await plainNotice(user, 'start', together(startNotice(user, ctx), route), ctx.game.id)
+      await markTipSent(user.id, latest.npCommunicationId)
+    } else if (unlocked.length > 0)
+      await plainNotice(
+        user,
+        'unlock',
+        together(unlockNotice(user, ctx, unlocked), route),
+        ctx.game.id,
+      )
+    else if (route) await plainNotice(user, 'route', route, ctx.game.id)
+  }
+  if (!nexoNotices(user)) await plain()
+  else
+    try {
+      if (justStarted) {
+        console.log(`${user.psn_online_id}: new game ${latest.name}`)
+        await notify(user, await proactiveTip(user, ctx, route))
+        await markTipSent(user.id, latest.npCommunicationId)
+      } else if (unlocked.length > 0) {
+        console.log(`${user.psn_online_id}: unlocked ${unlocked.map((t) => t.name).join(', ')}`)
+        await notify(user, await unlockReaction(user, ctx, unlocked, route))
+      } else if (route) await plainNotice(user, 'route', route, ctx.game.id)
+    } catch (e) {
+      if (e instanceof Refused) {
+        // A plugin refused Nexo's words (see plugins.ts): the plain notice needs no model.
+        console.log(`${user.psn_online_id}: ${e.code}, plain notice`)
+        await plain()
+      } else {
+        // The model is down (provider quota, outage): still tell the player,
+        // without Nexo's comment, and let the sweep record what it saw.
+        console.warn(
+          `${user.psn_online_id}: Nexo unavailable, plain notice:`,
+          (e as Error).message.slice(0, 80),
+        )
+        await plain()
+      }
+    }
+  await saveEarnedIds(user.id, latest.npCommunicationId, earnedIds)
+  await trackSession(
+    user,
+    ctx,
+    unlocked.map((t) => t.id),
+    latest.lastUpdated,
+  )
+}
+
+// Users are visited one after the other so PSN sees a steady, modest stream.
+async function sweep(each: (user: User) => Promise<void>, label: string): Promise<void> {
+  for (const user of await listUsers()) {
+    if (isDemo(user)) continue
+    await tagged({ user: user.id }, () => each(user)).catch((e) => {
+      // Hidden trophies are the player's choice, not a failure; the page tells them.
+      if (!(e instanceof PrivateProfile))
+        console.error(`${label} failed for ${user.psn_online_id}:`, e.message)
+    })
+    await new Promise((r) => setTimeout(r, 1500))
+  }
+}
+
+// The demo player's current game is its stored title played last that has no platinum yet.
+export async function demoContext(user: User): Promise<GameContext | undefined> {
+  return tagged({ user: user.id, demo: true }, async () => {
+    const titles = await library(user.psn_account_id)
+    const latest = titles.find((t) => t.earnedByType.platinum === 0) ?? titles[0]
+    return latest && setCurrent(user, latest)
+  })
+}
+
+// Loads a user's context right after they sign in, without waiting for the next sweep.
+export function watchNow(user: User): void {
+  const work = async () => {
+    if (isDemo(user)) await demoContext(user)
+    else await checkUser(user)
+  }
+  tagged({ user: user.id }, work).catch((e) =>
+    console.error(`watcher failed for ${user.psn_online_id}:`, e.message),
+  )
+}
+
+export function startWatcher(minutes: number): void {
+  const run = () => sweep(checkUser, 'watcher')
+  run()
+  setInterval(run, minutes * 60_000)
+
+  // Checking servers searches the web; without automatic research it runs only by hand
+  // (scripts/check-servers.ts).
+  if (!config.automatic.research) return
+  const servers = () =>
+    sweep(async (user) => {
+      const warnings = await checkServers(user, await library(user.psn_account_id))
+      for (const w of warnings) await notify(user, w)
+    }, 'server check')
+  setTimeout(servers, 2 * 60_000)
+  setInterval(servers, 24 * 60 * 60_000)
+}

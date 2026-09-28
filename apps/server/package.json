@@ -1,0 +1,21 @@
+{
+  "name": "@platjourney/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "WEB_DEV_URL=http://localhost:5173 bun --env-file=../../.env --watch src/index.ts",
+    "start": "bun --env-file=../../.env src/index.ts",
+    "seed": "bun --env-file=../../.env scripts/seed.ts",
+    "migrate": "bun --env-file=../../.env scripts/migrate.ts",
+    "password": "bun --env-file=../../.env scripts/set-password.ts",
+    "check-servers": "bun --env-file=../../.env scripts/check-servers.ts",
+    "build-seed": "bun --env-file=../../.env scripts/build-seed.ts",
+    "catalog:expand": "bun --env-file=../../.env scripts/expand-catalog.ts",
+    "embed": "cd ../../services/ai && uv run python -m platjourney_ai.jobs.embed_catalog",
+    "db:reset": "bun --env-file=../../.env scripts/reset.ts"
+  },
+  "dependencies": {
+    "psn-api": "^2.18.1",
+    "surrealdb": "^2.0.8"
+  }
+}
