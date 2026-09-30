@@ -1,0 +1,145 @@
+/*
+ * PlatJourney design tokens. Three levels:
+ *   --palette-*   raw values. Only this file uses them.
+ *   --color-*, --font-*, --text-*, --radius-*   semantic tokens. Components use only these.
+ *   component tokens (e.g. --key-accent) live next to their component, pointing at a semantic token.
+ * A new identity or a light theme changes this file only: the palette, or which palette entry
+ * each semantic token points to.
+ */
+:root {
+  --palette-neutral-950: #10120f;
+  --palette-neutral-925: #151814;
+  --palette-neutral-900: #191c18;
+  --palette-neutral-850: #22271d;
+  --palette-neutral-800: #2b3028;
+  --palette-neutral-700: #3c4336;
+  --palette-neutral-500: #818b76;
+  --palette-neutral-400: #a0a697;
+  --palette-neutral-300: #c3cbb9;
+  --palette-neutral-50: #f1f3eb;
+  --palette-white: #ffffff;
+  --palette-black: #000000;
+  --palette-lime-950: #16200f;
+  --palette-lime-600: #647550;
+  --palette-lime-500: #7fa64a;
+  --palette-lime-400: #c2f366;
+  --palette-lime-300: #d2ff86;
+  --palette-red-950: #3a2525;
+  --palette-red-400: #ff9292;
+  --palette-gold-400: #e6c47e;
+  --palette-silver-300: #c3ced6;
+  --palette-bronze-400: #ca9774;
+  --palette-platinum-300: #bad2e4;
+  --palette-peach-300: #e6b5a5;
+  --palette-olive-300: #b0bc9f;
+  --palette-olive-400: #9eac8c;
+
+  /* Surfaces */
+  --color-bg: var(--palette-neutral-950);
+  --color-bg-subtle: var(--palette-neutral-925);
+  --color-surface: var(--palette-neutral-900);
+  --color-surface-raised: var(--palette-neutral-850);
+  --color-border: var(--palette-neutral-800);
+  --color-border-strong: var(--palette-neutral-700);
+  --color-overlay: var(--palette-white);
+  --color-shadow: var(--palette-black);
+  /* Text */
+  --color-fg: var(--palette-neutral-50);
+  --color-fg-soft: var(--palette-neutral-300);
+  --color-fg-muted: var(--palette-neutral-400);
+  --color-fg-subtle: var(--palette-neutral-500);
+  --color-fg-tint: var(--palette-olive-300);
+  --color-fg-tint-muted: var(--palette-olive-400);
+  /* Accent (brand) */
+  --color-accent: var(--palette-lime-400);
+  --color-accent-hover: var(--palette-lime-300);
+  --color-accent-dim: var(--palette-lime-500);
+  --color-accent-muted: var(--palette-lime-600);
+  --color-on-accent: var(--palette-lime-950);
+  /* Feedback */
+  --color-danger: var(--palette-red-400);
+  --color-danger-surface: var(--palette-red-950);
+  --color-highlight-warm: var(--palette-peach-300);
+  /* Trophies */
+  --color-trophy-platinum: var(--palette-platinum-300);
+  --color-trophy-gold: var(--palette-gold-400);
+  --color-trophy-silver: var(--palette-silver-300);
+  --color-trophy-bronze: var(--palette-bronze-400);
+
+  /* Transparency: mix a semantic color with these, never a loose percentage */
+  --alpha-faint: 2%;
+  --alpha-wash: 4%;
+  --alpha-tint: 8%;
+  --alpha-soft: 14%;
+  --alpha-line: 22%;
+  --alpha-glow: 33%;
+  --alpha-strong: 50%;
+  --alpha-dim: 70%;
+  --alpha-heavy: 90%;
+
+  /* Typography */
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: Inter, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+  --text-xs: 10px;
+  --text-sm: 11px;
+  --text-md: 12px;
+  --text-base: 13px;
+  --text-body: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-4xl: 28px;
+  --text-5xl: 30px;
+  --text-6xl: 40px;
+  --text-display: 44px;
+  --text-display-lg: 64px;
+  --text-fluid-md: clamp(28px, 3vw, 40px);
+  --text-fluid-lg: clamp(32px, 3.8vw, 56px);
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-none: 1;
+  --leading-tight: 1.2;
+  --leading-snug: 1.45;
+  --leading-body: 1.6;
+  --leading-relaxed: 1.75;
+  --leading-loose: 1.85; /* long reading text: guide, chat */
+  --tracking-tight: -0.04em; /* display numbers and titles */
+  --tracking-snug: -0.02em;
+  --tracking-label: 0.1em; /* small labels */
+  --tracking-caps: 0.16em; /* uppercase eyebrows */
+
+  /* Shape */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 20px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
+
+  /* Elevation */
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
+  --shadow-glow: 0 0 12px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  --shadow-popover: 0 18px 50px
+    color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+  --shadow-drag:
+    0 18px 44px color-mix(in srgb, var(--color-shadow) var(--alpha-dim), transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+
+  /* Layout. Breakpoints can't be variables in plain CSS; use only these in @media:
+   * 480px (phone), 760px (tablet, sidebar collapses), 1100px (narrow desktop), 1600px (wide). */
+  --sidebar: 224px;
+}
+
+/* Dark is the only theme today. A light theme redefines the semantic level here, never the palette:
+ * :root[data-theme="light"] { --color-bg: var(--palette-neutral-50); ... }
+ */
+:root {
+  color-scheme: dark;
+}

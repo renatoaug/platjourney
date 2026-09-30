@@ -1,0 +1,104 @@
+/** Chat with Nexo. The conversation is fetched once and kept in the app cache, so navigating away and back keeps it (and an answer still in flight). */
+import { useCallback, useEffect, useState } from 'react'
+import { useApp } from '../app/app-state'
+import { Page } from '../app/page'
+import { type ChatLoad, type ChatMessage, NexoChat } from '../components/chat/chat'
+import { connectAccount, useDemo } from '../components/demo'
+import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { ApiError, api } from '../lib/api'
+import { modelWorkDone } from '../ui/plugin-slot'
+import { toast } from '../ui/toast'
+
+const messages = defineMessages({
+  [Language.PtBR]: {
+    sendFailed: 'Não conseguimos falar com o Nexo. Tenta de novo.',
+    subtitleLoading: 'Um passo mais perto da platina.',
+    subtitleGame: 'Falando sobre {name} ({progress}%).',
+    subtitleNoGame: 'Pergunta qualquer coisa sobre a platina ou o game.',
+  },
+  [Language.En]: {
+    sendFailed: 'Could not reach Nexo. Try again.',
+    subtitleLoading: 'One step closer to the platinum.',
+    subtitleGame: 'Talking about {name} ({progress}%).',
+    subtitleNoGame: 'Ask anything about the platinum or the game.',
+  },
+})
+
+type ChatReply = { text?: string; error?: string; messages?: ChatMessage[] }
+
+export function Nexo() {
+  // The demo's chat is closed: it shows sample exchanges and asks nothing of the server.
+  if (useDemo()) return <DemoNexo />
+  return <LiveNexo />
+}
+
+function DemoNexo() {
+  return (
+    <Page path="/nexo">
+      <NexoChat
+        chat={[]}
+        sending={false}
+        subtitle=""
+        onSend={() => {}}
+        demo
+        onConnect={connectAccount}
+      />
+    </Page>
+  )
+}
+
+function LiveNexo() {
+  const t = useMessages(messages)
+  const { data, cache } = useApp()
+  const cached = () => (Array.isArray(cache.chat) ? (cache.chat as ChatMessage[]) : null)
+  const [chat, setChat] = useState<ChatLoad>(() => cached() ?? 'loading')
+  const [sending, setSending] = useState(() => cache.chatSending === true)
+
+  // Writes go to the cache first: a reply that lands after the player left is still there on return.
+  const update = useCallback(
+    (next: (list: ChatMessage[]) => ChatMessage[]) => {
+      const list = next(Array.isArray(cache.chat) ? (cache.chat as ChatMessage[]) : [])
+      cache.chat = list
+      setChat(list)
+    },
+    [cache],
+  )
+
+  useEffect(() => {
+    if (Array.isArray(cache.chat)) return
+    api<ChatMessage[]>('/api/chat')
+      .then((list) => update(() => list))
+      .catch(() => setChat('error'))
+  }, [cache, update])
+
+  const send = async (text: string) => {
+    if (cache.chatSending === true) return
+    cache.chatSending = true
+    setSending(true)
+    update((list) => [...list, { role: 'user', content: text, optimistic: true }])
+    try {
+      const r = await api<ChatReply>('/api/chat', { text })
+      const messages = r.messages
+      if (messages) update(() => messages)
+      else update((list) => [...list, { role: 'assistant', content: r.text ?? r.error ?? '' }])
+      modelWorkDone()
+    } catch (e) {
+      if (!(e instanceof ApiError && e.handled)) toast(t('sendFailed'))
+    }
+    cache.chatSending = false
+    setSending(false)
+  }
+
+  const current = data?.current
+  const subtitle = !data
+    ? t('subtitleLoading')
+    : current
+      ? t('subtitleGame', { name: current.name, progress: current.progress })
+      : t('subtitleNoGame')
+
+  return (
+    <Page path="/nexo">
+      <NexoChat chat={chat} sending={sending} subtitle={subtitle} onSend={send} />
+    </Page>
+  )
+}

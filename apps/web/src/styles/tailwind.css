@@ -1,0 +1,92 @@
+/*
+ * Tailwind reads the tokens from theme.css; it has no values of its own. Utilities such as
+ * bg-surface, text-fg-muted, rounded-xl, font-display and phone:/tablet: resolve to the same
+ * variables the stylesheets use, so a change in theme.css reaches both.
+ * No preflight: styles.css already sets the base styles.
+ */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --*: initial;
+  --spacing: 4px;
+  --breakpoint-phone: 480px;
+  --breakpoint-tablet: 760px;
+  --breakpoint-desktop: 1100px;
+  --breakpoint-wide: 1600px;
+}
+
+@theme inline reference {
+  --color-bg: var(--color-bg);
+  --color-bg-subtle: var(--color-bg-subtle);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-overlay: var(--color-overlay);
+  --color-shadow: var(--color-shadow);
+  --color-fg: var(--color-fg);
+  --color-fg-soft: var(--color-fg-soft);
+  --color-fg-muted: var(--color-fg-muted);
+  --color-fg-subtle: var(--color-fg-subtle);
+  --color-fg-tint: var(--color-fg-tint);
+  --color-fg-tint-muted: var(--color-fg-tint-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-dim: var(--color-accent-dim);
+  --color-accent-muted: var(--color-accent-muted);
+  --color-on-accent: var(--color-on-accent);
+  --color-danger: var(--color-danger);
+  --color-danger-surface: var(--color-danger-surface);
+  --color-highlight-warm: var(--color-highlight-warm);
+  --color-trophy-platinum: var(--color-trophy-platinum);
+  --color-trophy-gold: var(--color-trophy-gold);
+  --color-trophy-silver: var(--color-trophy-silver);
+  --color-trophy-bronze: var(--color-trophy-bronze);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-md: var(--text-md);
+  --text-base: var(--text-base);
+  --text-body: var(--text-body);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-2xl: var(--text-2xl);
+  --text-3xl: var(--text-3xl);
+  --text-4xl: var(--text-4xl);
+  --text-5xl: var(--text-5xl);
+  --text-6xl: var(--text-6xl);
+  --text-display: var(--text-display);
+  --text-display-lg: var(--text-display-lg);
+  --text-fluid-md: var(--text-fluid-md);
+  --text-fluid-lg: var(--text-fluid-lg);
+  --font-weight-regular: var(--weight-regular);
+  --font-weight-medium: var(--weight-medium);
+  --font-weight-semibold: var(--weight-semibold);
+  --font-weight-bold: var(--weight-bold);
+  --leading-none: var(--leading-none);
+  --leading-tight: var(--leading-tight);
+  --leading-snug: var(--leading-snug);
+  --leading-body: var(--leading-body);
+  --leading-relaxed: var(--leading-relaxed);
+  --leading-loose: var(--leading-loose);
+  --tracking-tight: var(--tracking-tight);
+  --tracking-snug: var(--tracking-snug);
+  --tracking-label: var(--tracking-label);
+  --tracking-caps: var(--tracking-caps);
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
+  --radius-pill: var(--radius-pill);
+  --radius-round: var(--radius-round);
+  --shadow-focus: var(--shadow-focus);
+  --shadow-glow: var(--shadow-glow);
+  --shadow-popover: var(--shadow-popover);
+  --shadow-drag: var(--shadow-drag);
+}

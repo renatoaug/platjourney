@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["vite/client", "bun"],
+    "paths": {
+      "platjourney-plugins": ["./src/plugins/none.ts"],
+      "@platjourney/web/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "tests", ".storybook", "vite.config.ts"]
+}

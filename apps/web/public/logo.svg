@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PlatJourney"><title>PlatJourney</title>
+  <defs>
+    <mask id="lcut" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64"><rect width="64" height="64" fill="#fff"/><path transform="translate(9.6 11) scale(0.7)" d="M12 25H16V21H20V25H24V29H20V33H16V29H12Z M49 21L55 27L49 33L43 27Z" fill="#000"/></mask>
+  </defs>
+  <path transform="translate(9.6 11) scale(0.7)" d="M14 12H50C58 12 62 20 62 28C62 36 58 42 52 42C48 42 45 39 42 37C40 43 37 46 34 47H30C27 46 24 43 22 37C19 39 16 42 12 42C6 42 2 36 2 28C2 20 6 12 14 12Z" fill="#bad2e4" mask="url(#lcut)"/>
+  <g transform="translate(9.6 11) scale(0.7)"><path d="M30 46H34V50H30Z" fill="#bad2e4"/><rect x="18" y="49" width="28" height="7" rx="2.5" fill="#c2f366"/></g>
+  <circle cx="32" cy="32" r="29" fill="none" stroke="#c2f366" stroke-width="4" stroke-linecap="round" stroke-dasharray="155 200" transform="rotate(-150 32 32)"/>
+</svg>

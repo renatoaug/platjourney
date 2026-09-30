@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none" role="img" aria-label="Nexo, seu parceiro de platinas"><title>Nexo, seu parceiro de platinas</title><defs><linearGradient id="shell" x1="40" y1="25" x2="95" y2="109" gradientUnits="userSpaceOnUse"><stop stop-color="#E4FFAC"/><stop offset=".43" stop-color="#C2F366"/><stop offset="1" stop-color="#719B38"/></linearGradient><linearGradient id="metal" x1="20" y1="30" x2="98" y2="111" gradientUnits="userSpaceOnUse"><stop stop-color="#F1FAFF"/><stop offset=".48" stop-color="#BAD2E4"/><stop offset="1" stop-color="#86A8BD"/></linearGradient><linearGradient id="glass" x1="50" y1="35" x2="85" y2="90" gradientUnits="userSpaceOnUse"><stop stop-color="#283A33"/><stop offset="1" stop-color="#0D1615"/></linearGradient></defs><ellipse cx="64" cy="112" rx="24" ry="4" fill="#C2F366" opacity=".13"/>
+<path d="m59 94 5 9 5-9" fill="#C2F366"/><path d="M28 43H16v11c0 10 5 17 14 20m70-31h12v11c0 10-5 17-14 20" stroke="url(#metal)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M42 28h44c12 0 18 8 21 21l5 26c2 9-2 15-9 15-7 0-13-7-21-13H46c-8 6-14 13-21 13-7 0-11-6-9-15l5-26c3-13 9-21 21-21Z" fill="url(#metal)"/>
+
+<path d="m64 12 15 6-2 11-13 9-13-9-2-11 15-6Z" fill="url(#metal)" stroke="#73909D" stroke-width="1.2"/><path d="m64 16 11 4-2 7-9 7-9-7-2-7 11-4Z" fill="#22322A"/><path d="M60 20h8v4a4 4 0 0 1-8 0v-4Zm0 1h-3v2q0 4 5 4m6-6h3v2q0 4-5 4m-2 1v3m-3 0h6" stroke="#C2F366" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M44 35h40c10 0 17 7 17 17v8c0 13-16 19-37 19S27 73 27 60v-8c0-10 7-17 17-17Z" fill="url(#glass)" stroke="#7696A4" stroke-width="1.2"/>
+<path d="M40 43q14-7 29-4" stroke="#BAD2E4" stroke-opacity=".28" stroke-width="2" stroke-linecap="round"/>
+<g class="eyes"><rect x="44" y="48" width="8" height="14" rx="4" fill="#D9FF97"/><rect x="76" y="48" width="8" height="14" rx="4" fill="#D9FF97"/></g>
+<path d="M58 67q6 5 12 0" stroke="#C2F366" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M25 70v8m-4-4h8" stroke="#3C5964" stroke-width="2.5" stroke-linecap="round"/><path d="m102 70 4 4-4 4-4-4 4-4Z" fill="#3C5964"/>
+<path d="M49 85q15 8 30 0" stroke="#C2F366" stroke-width="3" stroke-linecap="round"/>
+</svg>
