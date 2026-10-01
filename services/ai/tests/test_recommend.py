@@ -1,0 +1,252 @@
+"""Recommendations: taste vector, candidate retrieval, prompt and the catalog embedding job."""
+
+from datetime import UTC, datetime
+from typing import Any
+
+import pytest
+
+from platjourney_ai import db, llm, recommend, taste
+from platjourney_ai.jobs import embed_catalog
+from platjourney_ai.recommend import Dismissed, RecommendRequest, build_input, candidate_line
+from platjourney_ai.taste import Candidate, LibraryTitle, cosine, mean, signals
+
+NOW = datetime(2026, 9, 30, tzinfo=UTC)
+
+
+def title(name: str, progress: int, platinum: int, updated: str, game: str | None) -> LibraryTitle:
+    return LibraryTitle.model_validate(
+        {
+            'name': name,
+            'platform': 'PS5',
+            'progress': progress,
+            'lastUpdated': updated,
+            'earnedByType': {'bronze': 3, 'silver': 1, 'gold': 0, 'platinum': platinum},
+            'game': game,
+        }
+    )
+
+
+LIBRARY = [
+    title('Old Plat', 100, 1, '2020-01-01T00:00:00Z', 'game:1'),
+    title('New Plat', 100, 1, '2026-09-30T00:00:00Z', 'game:2'),
+    title('Halfway', 60, 0, '2026-05-01T00:00:00Z', 'game:3'),
+    title('Started', 25, 0, '2026-06-01T00:00:00Z', 'game:4'),
+    title('Dropped', 5, 0, '2026-07-01T00:00:00Z', 'game:5'),
+    title('Not in catalog', 100, 1, '2026-08-01T00:00:00Z', None),
+]
+
+
+def test_signals_weigh_platinums_by_recency_and_skip_unknown_games() -> None:
+    by_game = {s.game: s.weight for s in signals(LIBRARY, NOW)}
+    assert by_game == {'game:1': 1, 'game:2': 1.5, 'game:3': 0.6, 'game:4': 0.3, 'game:5': -0.15}
+
+
+def test_weighted_mean_and_cosine() -> None:
+    assert mean([[1, 0], [0, 1]], [3, 1]) == [0.75, 0.25]
+    assert mean([[2, 4], [4, 8]]) == [3, 6]
+    assert mean([[1, 1]], [0]) == [0, 0]
+    assert mean([]) == []
+    assert cosine([1, 0], [1, 0]) == 1
+    assert cosine([1, 0], [0, 1]) == 0
+    assert cosine([], [1, 0]) == 0
+
+
+VECTORS = {
+    'game:1': ('Old Plat', [1.0, 0.0]),
+    'game:2': ('New Plat', [0.0, 1.0]),
+    'game:3': ('Halfway', [1.0, 1.0]),
+}
+
+
+async def test_candidates_use_the_taste_vector_and_exclusions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: dict[str, Any] = {}
+
+    async def rows(sql: str, vars: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        assert vars is not None
+        if 'vector::similarity::cosine' in sql:
+            seen['sql'], seen['vars'] = sql, vars
+            return [
+                {
+                    'id': 'game:9',
+                    'name': 'Close',
+                    'platforms': ['PS5', 'PC'],
+                    'release_year': None,
+                    'genres': ['RPG'],
+                    'embedding': [0.1, 1.0],
+                    'score': 0.9,
+                }
+            ]
+        return [
+            {'id': i, 'name': VECTORS[i][0], 'embedding': VECTORS[i][1]}
+            for i in vars['ids']
+            if i in VECTORS
+        ]
+
+    monkeypatch.setattr(db, 'rows', rows)
+    found = await taste.candidates(LIBRARY, ['game:7', 'game:6', 'game:7'], 24, NOW)
+    # Plats 1 and 1.5, halfway 0.6: (1*1 + 0 + 0.6, 0 + 1.5 + 0.6) / 3.1.
+    assert seen['vars']['v'] == pytest.approx([1.6 / 3.1, 2.1 / 3.1])
+    assert seen['vars']['exclude'] == ['game:6', 'game:7']
+    assert 'LIMIT 24' in seen['sql']
+    assert found == [
+        Candidate(
+            id='game:9',
+            name='Close',
+            platforms=['PS5', 'PC'],
+            genres=['RPG'],
+            score=0.9,
+            similar_to=['New Plat', 'Halfway'],
+        )
+    ]
+
+
+async def test_no_candidates_without_embedded_games(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def rows(sql: str, vars: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        assert 'embedding <|' not in sql
+        return []
+
+    monkeypatch.setattr(db, 'rows', rows)
+    assert await taste.candidates(LIBRARY, [], 24, NOW) == []
+
+
+CANDIDATE = Candidate(
+    id='game:9',
+    name='Close',
+    platforms=['PC', 'PS4', 'PS5'],
+    release_year=2021,
+    genres=['RPG', 'Adventure', 'Shooter', 'Puzzle'],
+    similar_to=['New Plat', 'Halfway'],
+)
+
+
+def test_candidate_line() -> None:
+    assert candidate_line(CANDIDATE) == (
+        '- Close (PS4/PS5; 2021; RPG, Adventure, Shooter) — parecido com New Plat e Halfway'
+    )
+    bare = Candidate(id='game:8', name='Bare', platforms=['PC'])
+    assert candidate_line(bare) == '- Bare (PS; ?; ) — parecido com —'
+
+
+def test_prompt_lists_recent_platinums_progress_candidates_and_dismissed() -> None:
+    text = build_input(
+        LIBRARY,
+        [CANDIDATE],
+        [Dismissed(name='Skipped'), Dismissed(name='Endless', reason='too_long')],
+    )
+    assert text == (
+        'Platinumed (3 in all; the 3 most recent):\nNew Plat\nNot in catalog\nOld Plat\n\n'
+        'In progress:\nStarted (25%)\nHalfway (60%)\n\n'
+        'Candidates (pick only from these, use the exact name):\n'
+        '- Close (PS4/PS5; 2021; RPG, Adventure, Shooter) — parecido com New Plat e Halfway'
+        '\n\nDismissed before — never suggest:\nSkipped\nEndless (too long a platinum)'
+    )
+    assert 'Dismissed' not in build_input(LIBRARY, [CANDIDATE], [])
+
+
+def test_prompt_keeps_only_the_most_recent_platinums() -> None:
+    many = [title(f'P{i:03}', 100, 1, f'2026-01-01T00:00:{i % 60:02}Z', None) for i in range(90)]
+    text = build_input(many, [], [])
+    assert text.startswith('Platinumed (90 in all; the 80 most recent):\n')
+
+
+async def test_recommend_resolves_picks_to_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fake_candidates(*_: Any) -> list[Candidate]:
+        return [CANDIDATE]
+
+    calls: list[tuple[str, str, str]] = []
+
+    async def research_json(name: str, instructions: str, input: str, schema: Any) -> Any:
+        calls.append((name, instructions, input))
+        pick = {
+            'platform': 'PS5',
+            'difficulty': 4,
+            'hours': 30,
+            'playthroughs': None,
+            'hasDifficultyTrophy': False,
+            'why': 'Porque sim',
+            'hasMissables': True,
+        }
+        return {
+            'profile': {'summary': 'Você...', 'genres': ['RPG'], 'traits': [], 'avoid': []},
+            'items': [
+                pick | {'name': 'close'},
+                pick | {'name': 'Elsewhere'},
+                # A smaller model copies the candidate line and adds markdown.
+                pick | {'name': 'Close (PS4/PS5; 2021; RPG)', 'why': 'Como **New Plat**, *curto*'},
+            ],
+        }
+
+    async def no_guides(ids: Any) -> dict[str, str]:
+        return {}
+
+    monkeypatch.setattr(recommend, 'candidates', fake_candidates)
+    monkeypatch.setattr(recommend, 'guide_facts', no_guides)
+    monkeypatch.setattr(llm, 'research_json', research_json)
+    req = RecommendRequest.model_validate({'library': [], 'dismissed': []})
+    out = (await recommend.recommend(req)).model_dump(by_alias=True)
+    assert calls[0][0] == 'recommendations'
+    assert calls[0][1].startswith('You recommend PlayStation platinums')
+    first, second, copied = out['items']
+    assert (first['game'], first['similarTo'], first['hasDifficultyTrophy']) == (
+        'game:9',
+        ['New Plat', 'Halfway'],
+        False,
+    )
+    assert (second['game'], second['similarTo']) == (None, [])
+    assert (copied['name'], copied['game'], copied['why']) == (
+        'Close',
+        'game:9',
+        'Como New Plat, curto',
+    )
+
+
+def test_game_text() -> None:
+    game = {
+        'id': 'game:1',
+        'name': 'Bloodborne',
+        'genres': ['RPG', 'Adventure'],
+        'themes': [],
+        'modes': ['Single player'],
+        'release_year': 2015,
+        'summary': 'Hunt.',
+    }
+    assert embed_catalog.game_text(game) == (
+        'Bloodborne\nGenres: RPG, Adventure\nModes: Single player\nReleased: 2015\nHunt.'
+    )
+    assert embed_catalog.game_text({'name': 'Bare', 'summary': None}) == 'Bare'
+
+
+async def test_embed_catalog_saves_one_vector_per_game(monkeypatch: pytest.MonkeyPatch) -> None:
+    games = [{'id': f'game:{i}', 'name': f'G{i}'} for i in range(3)]
+    saved: list[dict[str, Any]] = []
+
+    async def rows(sql: str, vars: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        assert 'embedding = NONE' in sql
+        return games
+
+    async def query(sql: str, vars: dict[str, Any] | None = None) -> list[Any]:
+        assert vars is not None
+        saved.append(vars)
+        return [[]]
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        return [[float(len(t))] for t in texts]
+
+    monkeypatch.setattr(db, 'rows', rows)
+    monkeypatch.setattr(db, 'query', query)
+    monkeypatch.setattr(llm, 'embed', embed)
+    assert await embed_catalog.embed_catalog() == 3
+    assert saved == [{'id': f'game:{i}', 'embedding': [2.0]} for i in range(3)]
+
+
+def test_candidates_carry_the_guide_numbers_when_we_have_a_guide() -> None:
+    from platjourney_ai.recommend import candidate_line
+    from platjourney_ai.taste import Candidate
+
+    c = Candidate(id='game:1', name='Days Gone', platforms=['PS4'], genres=['Action'])
+    assert candidate_line(c, 'dificuldade 3/10, ~70h, 1 jogada(s)').endswith(
+        ' — guia: dificuldade 3/10, ~70h, 1 jogada(s)'
+    )
+    assert ' — guia' not in candidate_line(c)

@@ -1,0 +1,144 @@
+import { describe, expect, mock, test } from 'bun:test'
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
+import { CHAT_MAX, type ChatLoad, ChatSkeleton, NexoChat } from '../../../src/components/chat/chat'
+import { Loaded, Pending } from '../../../src/components/chat/chat.stories'
+
+const messages = Loaded.args?.chat as ChatLoad
+const pending = Pending.args?.chat as ChatLoad
+
+const show = (chat: ChatLoad, { sending = false, onSend = () => {} } = {}) =>
+  render(
+    <MemoryRouter>
+      <NexoChat
+        chat={chat}
+        sending={sending}
+        subtitle="Falando sobre DAYS GONE (13%)."
+        onSend={onSend}
+      />
+    </MemoryRouter>,
+  )
+
+const log = () => screen.getByRole('log', { name: 'Conversa com o Nexo' })
+const box = () => screen.getByLabelText('Mensagem para Nexo') as HTMLTextAreaElement
+
+describe('NexoChat', () => {
+  test('shows the conversation with games, dates and sources', () => {
+    show(messages)
+    expect(screen.getByText('Falando sobre DAYS GONE (13%).')).toBeTruthy()
+    expect(within(log()).getByText('Tem algum missable perto de onde estou?')).toBeTruthy()
+    expect(within(log()).getAllByRole('link', { name: /Days Gone/ })).toHaveLength(4)
+    expect(
+      within(log())
+        .getAllByRole('link', { name: /Days Gone/ })[0]
+        .getAttribute('href'),
+    ).toBe('/title/game/game%3A19561')
+    expect(log().querySelectorAll('time')).toHaveLength(4)
+    expect(within(log()).getByText(/Trophy Guides e Platinum Forum/)).toBeTruthy()
+  })
+
+  test('an empty conversation welcomes the player', () => {
+    show([])
+    expect(screen.getByRole('heading', { name: 'Sou o Nexo. Vamos à platina?' })).toBeTruthy()
+  })
+
+  test('loading shows the skeleton, a failure says so', () => {
+    const { unmount } = show('loading')
+    expect(log().querySelectorAll('.msg')).toHaveLength(3)
+    unmount()
+    show('error')
+    expect(screen.getByRole('alert').textContent).toContain('Não foi possível carregar a conversa')
+  })
+
+  test('while sending, the just-sent message and the typing bubble show and sending is locked', () => {
+    const onSend = mock()
+    show(pending, { sending: true, onSend })
+    expect(within(log()).getByText('Travei nessa parte.')).toBeTruthy()
+    expect(screen.getByRole('img', { name: 'Nexo está preparando uma resposta' })).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Enviar' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
+    fireEvent.change(box(), { target: { value: 'oi' } })
+    fireEvent.submit(box().form as HTMLFormElement)
+    expect(onSend).not.toHaveBeenCalled()
+  })
+
+  test('the first message can be sent while nothing came back yet', () => {
+    show([], { sending: true })
+    expect(screen.queryByText('Sou o Nexo. Vamos à platina?')).toBeNull()
+    expect(screen.getByRole('img', { name: 'Nexo está preparando uma resposta' })).toBeTruthy()
+  })
+
+  test('a suggestion sends its full question', () => {
+    const onSend = mock()
+    show(messages, { onSend })
+    fireEvent.click(screen.getByRole('button', { name: 'Travei aqui' }))
+    expect(onSend).toHaveBeenCalledWith('Travei. Me explica o que fazer nessa parte sem spoiler.')
+  })
+
+  test('Enter sends the trimmed text and clears the box; Shift+Enter does not', () => {
+    const onSend = mock()
+    show(messages, { onSend })
+    fireEvent.change(box(), { target: { value: '  e agora?  ' } })
+    fireEvent.keyDown(box(), { key: 'Enter', shiftKey: true })
+    fireEvent.keyDown(box(), { key: 'a' })
+    expect(onSend).not.toHaveBeenCalled()
+    fireEvent.keyDown(box(), { key: 'Enter' })
+    expect(onSend).toHaveBeenCalledWith('e agora?')
+    expect(box().value).toBe('')
+  })
+
+  test('an empty message is not sent', () => {
+    const onSend = mock()
+    show(messages, { onSend })
+    fireEvent.change(box(), { target: { value: '   ' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar' }))
+    expect(onSend).not.toHaveBeenCalled()
+  })
+
+  test('a message without a game or a valid date shows just the text', () => {
+    show([
+      { role: 'assistant', content: 'Sem data.', created_at: 'ontem' },
+      { role: 'user', content: 'Também.' },
+    ])
+    expect(log().querySelector('time')).toBeNull()
+    expect(within(log()).queryByRole('link')).toBeNull()
+  })
+
+  test('the skeleton renders three bubbles', () => {
+    const { container } = render(<ChatSkeleton />)
+    expect(container.querySelectorAll('.msg')).toHaveLength(3)
+  })
+})
+
+test('the message box counts as you type and takes up to the limit', () => {
+  show(messages)
+  expect(box().maxLength).toBe(CHAT_MAX)
+  expect(screen.queryByText(new RegExp(`/${CHAT_MAX}$`))).toBeNull()
+  fireEvent.change(box(), { target: { value: 'a'.repeat(7) } })
+  expect(screen.getByText(`7/${CHAT_MAX}`).className).toBe('chat-count')
+  fireEvent.change(box(), { target: { value: 'a'.repeat(CHAT_MAX * 0.9) } })
+  expect(screen.getByText(`${CHAT_MAX * 0.9}/${CHAT_MAX}`).className).toContain('near')
+  fireEvent.change(box(), { target: { value: 'a'.repeat(CHAT_MAX) } })
+  expect(screen.getByText(`${CHAT_MAX}/${CHAT_MAX}`).className).toContain('full')
+})
+
+test('a paste longer than what is left says it was cut', () => {
+  show(messages)
+  const paste = new Event('paste', { bubbles: true, cancelable: true }) as Event & {
+    clipboardData: { getData: () => string }
+  }
+  paste.clipboardData = { getData: () => 'b'.repeat(CHAT_MAX + 50) }
+  fireEvent(box(), paste)
+  fireEvent.change(box(), { target: { value: 'b'.repeat(CHAT_MAX) } })
+  expect(screen.getByText(/Texto colado cortado em 1000 caracteres/)).toBeTruthy()
+  fireEvent.change(box(), { target: { value: 'curto' } })
+  expect(screen.queryByText(/Texto colado cortado/)).toBeNull()
+})
+
+test('the message box is sized from its text', () => {
+  show(messages)
+  fireEvent.change(box(), { target: { value: 'uma linha' } })
+  expect(box().style.height).toMatch(/px$/)
+  expect(box().style.overflowY).toBe('hidden')
+})

@@ -1,0 +1,171 @@
+import './env.ts'
+import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
+import { config } from '../src/config.ts'
+import {
+  artUrl,
+  canonical,
+  type IgdbGame,
+  normalizeName,
+  popularGames,
+  resolveGame,
+  toCatalog,
+} from '../src/igdb.ts'
+
+const game = (over: Partial<IgdbGame> = {}): IgdbGame => ({
+  id: 1,
+  name: 'Ghost of Tsushima',
+  slug: 'ghost-of-tsushima',
+  game_type: 0,
+  ...over,
+})
+
+let clock = 1_000_000
+
+beforeEach(() => {
+  spyOn(Date, 'now').mockImplementation(() => {
+    clock += 10_000
+    return clock
+  })
+})
+
+afterEach(() => mock.restore())
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+
+// Answers the Twitch token request and hands every IGDB query to `games`.
+function igdbApi(games: (body: string) => unknown, status = 200) {
+  return spyOn(globalThis, 'fetch').mockImplementation((async (url: string, init: RequestInit) => {
+    if (url.startsWith('https://id.twitch.tv/'))
+      return json({ access_token: 'tok', expires_in: 10_000_000 })
+    if (status !== 200) return new Response('nope', { status })
+    return json(games(String(init.body)))
+  }) as never)
+}
+
+test('names lose accents, symbols and case', () => {
+  expect(normalizeName('Pokémon™: Édition — Ünïcode®!')).toBe('pokemon edition unicode')
+})
+
+test('a catalog entry keeps only aliases a person would type', () => {
+  const entry = toCatalog(
+    game({
+      alternative_names: [
+        { name: 'Ghost of Tsushima' },
+        { name: 'GoT' },
+        { name: '対馬の亡霊' },
+        { name: 'ghost.exe' },
+        { name: 'C:\\ghost' },
+      ],
+      platforms: [48, 167, 6],
+      cover: { image_id: 'abc' },
+      screenshots: [{ image_id: 'shot' }],
+      genres: [{ name: 'Adventure' }],
+      themes: [{ name: 'Historical' }],
+      game_modes: [{ name: 'Single player' }],
+      summary: 'Samurai.',
+      first_release_date: 1595548800,
+      total_rating: 87.6,
+    }),
+    ['Ghost of Tsushima Director’s Cut'],
+  )
+  expect(entry).toEqual({
+    id: 1,
+    name: 'Ghost of Tsushima',
+    slug: 'ghost-of-tsushima',
+    aliases: ['GoT', 'Ghost of Tsushima Director’s Cut'],
+    platforms: ['PS4', 'PS5'],
+    cover_url: 'https://images.igdb.com/igdb/image/upload/t_cover_big/abc.jpg',
+    art_url: 'https://images.igdb.com/igdb/image/upload/t_1080p/shot.jpg',
+    genres: ['Adventure'],
+    themes: ['Historical'],
+    modes: ['Single player'],
+    summary: 'Samurai.',
+    release_year: 2020,
+    rating: 88,
+  })
+})
+
+test('a bare game has empty lists and null details', () => {
+  expect(toCatalog(game())).toMatchObject({
+    aliases: [],
+    platforms: [],
+    cover_url: null,
+    summary: null,
+    release_year: null,
+    rating: null,
+  })
+})
+
+test('a PSN title resolves to the best matching game with its name kept as an alias', async () => {
+  const fetch = igdbApi(() => [
+    game({ id: 2, name: 'Ghost Recon' }),
+    game({ id: 3, name: 'Ghost of Tsushima Legends' }),
+    game({ id: 1, alternative_names: [{ name: 'Tsushima' }] }),
+  ])
+  const entry = await resolveGame('Ghost of Tsushima™ Trophies')
+  expect(entry?.id).toBe(1)
+  expect(entry?.aliases).toEqual(['Tsushima', 'Ghost of Tsushima™ Trophies'])
+  const call = fetch.mock.calls.find(([url]) => String(url).includes('api.igdb.com'))
+  expect(call?.[0]).toBe('https://api.igdb.com/v4/games')
+  expect(String(call?.[1]?.body)).toStartWith('search "Ghost of Tsushima";')
+  expect(call?.[1]?.headers).toMatchObject({ 'Client-ID': config.igdb.clientId })
+})
+
+test('partial name matches rank above unrelated results', async () => {
+  igdbApi(() => [game({ id: 4, name: 'Other' }), game({ id: 5, name: 'Astro Bot Rescue' })])
+  expect((await resolveGame('Astro Bot'))?.id).toBe(5)
+  igdbApi(() => [game({ id: 4, name: 'Other' }), game({ id: 6, name: 'The Astro Bot Story' })])
+  expect((await resolveGame('Astro Bot'))?.id).toBe(6)
+})
+
+test('an edition resolves to its original game, keeping both names', async () => {
+  igdbApi((body) =>
+    body.startsWith('search')
+      ? [game({ id: 10, name: 'Ghost DC', game_type: 10, parent_game: 1 })]
+      : [game({ id: 1 })],
+  )
+  const entry = await resolveGame('Ghost DC')
+  expect(entry?.id).toBe(1)
+  expect(entry?.aliases).toEqual(['Ghost DC'])
+})
+
+test('nothing found resolves to null', async () => {
+  igdbApi(() => [])
+  expect(await resolveGame('Nope')).toBeNull()
+})
+
+test('a main game is its own canonical game', async () => {
+  const fetch = igdbApi(() => [])
+  const main = game({ game_type: 0, parent_game: 9 })
+  expect(await canonical(main)).toBe(main)
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+test('an edition whose parent is gone stays itself', async () => {
+  igdbApi(() => [])
+  const remaster = game({ id: 11, game_type: 9, version_parent: 99 })
+  expect(await canonical(remaster)).toBe(remaster)
+})
+
+test('popular games are queried by rating count with paging', async () => {
+  const fetch = igdbApi(() => [game()])
+  expect(await popularGames(100, 500, 50)).toEqual([game()])
+  const body = String(fetch.mock.calls.at(-1)?.[1]?.body)
+  expect(body).toContain('total_rating_count > 100')
+  expect(body).toContain('limit 50; offset 500;')
+})
+
+test('an IGDB error is raised with its status', async () => {
+  igdbApi(() => [], 500)
+  await expect(popularGames(1)).rejects.toThrow('igdb games: 500 nope')
+})
+
+test('the wide picture prefers a screenshot, then artwork', () => {
+  const url = (id: string) => `https://images.igdb.com/igdb/image/upload/t_1080p/${id}.jpg`
+  expect(artUrl({ artworks: [{ image_id: 'art' }], screenshots: [{ image_id: 'shot' }] })).toBe(
+    url('shot'),
+  )
+  expect(artUrl({ artworks: [{ image_id: 'art' }] })).toBe(url('art'))
+  expect(artUrl({})).toBeNull()
+})

@@ -1,0 +1,145 @@
+import '../env.ts'
+import { afterEach, expect, mock, spyOn, test } from 'bun:test'
+import * as db from '../../src/db.ts'
+import {
+  createUser,
+  deleteUser,
+  getUser,
+  listUsers,
+  touchUser,
+  updateUser,
+  userByAccount,
+  userByChat,
+  userByLinkCode,
+  userRef,
+  wipeUserData,
+} from '../../src/repository/user.ts'
+
+const user = new db.RecordId('user', 'u1')
+
+afterEach(() => mock.restore())
+
+test('user ids work with or without the table prefix', () => {
+  expect(userRef('user:u1')).toEqual(user)
+  expect(userRef('u1')).toEqual(user)
+})
+
+test('a user is read by id with record ids as strings', async () => {
+  const one = spyOn(db, 'one').mockResolvedValue({ id: user, psn_online_id: 'P' })
+  expect(await getUser('user:u1')).toEqual({ id: 'user:u1', psn_online_id: 'P' } as never)
+  expect(one.mock.calls[0]).toEqual(['SELECT * FROM $id', { id: user }])
+})
+
+test('users are listed oldest first', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue([{ id: user }])
+  expect(await listUsers()).toEqual([{ id: 'user:u1' }] as never)
+  expect(q.mock.calls[0][0]).toBe('SELECT * FROM user ORDER BY created_at')
+})
+
+test('a user is found by account, chat or link code', async () => {
+  const one = spyOn(db, 'one').mockResolvedValue(undefined)
+  expect(await userByAccount('acc')).toBeUndefined()
+  await userByChat('42')
+  await userByLinkCode('CODE')
+  expect(one.mock.calls).toEqual([
+    ['SELECT * FROM user WHERE psn_account_id = $a LIMIT 1', { a: 'acc' }],
+    ['SELECT * FROM user WHERE telegram_chat_id = $c LIMIT 1', { c: '42' }],
+    ['SELECT * FROM user WHERE telegram_link_code = $c LIMIT 1', { c: 'CODE' }],
+  ])
+})
+
+test('a new user stores the lowercased id and only the optional fields given', async () => {
+  const one = spyOn(db, 'one').mockResolvedValue({ id: user })
+  expect(await createUser({ psn_online_id: 'Player', psn_account_id: 'acc' })).toEqual({
+    id: 'user:u1',
+  } as never)
+  await createUser({
+    psn_online_id: 'Player',
+    psn_account_id: 'acc',
+    password_hash: 'h',
+    avatar_url: 'a.png',
+  })
+  expect(one.mock.calls[0]).toEqual([
+    'CREATE user CONTENT $data RETURN AFTER',
+    { data: { psn_online_id: 'Player', psn_online_id_lower: 'player', psn_account_id: 'acc' } },
+  ])
+  expect(one.mock.calls[1][1]).toEqual({
+    data: {
+      psn_online_id: 'Player',
+      psn_online_id_lower: 'player',
+      psn_account_id: 'acc',
+      password_hash: 'h',
+      avatar_url: 'a.png',
+    },
+  })
+})
+
+test('updating sets values, clears nulls and ignores unsafe keys', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await updateUser('user:u1', {
+    telegram_chat_id: '42',
+    play_session: null,
+    ['bad key' as 'telegram_link_code']: 'x',
+  })
+  expect(q.mock.calls[0]).toEqual([
+    'UPDATE $id SET telegram_chat_id = $telegram_chat_id, play_session = NONE',
+    { id: user, telegram_chat_id: '42' },
+  ])
+})
+
+test('an update with nothing to set sends no query', async () => {
+  const q = spyOn(db, 'q')
+  await updateUser('user:u1', {})
+  expect(q).not.toHaveBeenCalled()
+})
+
+test('touching a user records when it was last seen', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await touchUser('user:u1')
+  expect(q.mock.calls[0]).toEqual(['UPDATE $id SET last_seen_at = time::now()', { id: user }])
+})
+
+test('wiping deletes every personal table and resets the profile fields', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await wipeUserData('user:u1')
+  const sqls = q.mock.calls.map(([sql]) => sql)
+  expect(sqls.slice(0, 8)).toEqual(
+    [
+      'title',
+      'interest',
+      'platinum',
+      'recommendation',
+      'dismissal',
+      'tip',
+      'message',
+      'playtime',
+    ].map((t) => `DELETE ${t} WHERE user = $user`),
+  )
+  expect(sqls[8]).toContain('goal_targets = {}')
+  expect(q.mock.calls.map(([, vars]) => vars)).toEqual(Array(9).fill({ user }))
+})
+
+test('deleting a user removes its record', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await deleteUser('user:u1')
+  expect(q.mock.calls[0]).toEqual(['DELETE $user', { user }])
+})
+
+test('objects kept on the user are stored in snake_case and read in camelCase', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await updateUser('user:u1', { session_plan: { totalMinutes: 60, ifTimeLeft: null } })
+  expect(q.mock.calls[0][1]).toEqual({
+    id: user,
+    session_plan: { total_minutes: 60, if_time_left: null },
+  })
+  spyOn(db, 'one').mockResolvedValue({
+    id: 'user:u1',
+    play_session: { np_communication_id: 'NP', unlocked_ids: [1] },
+    taste_profile: null,
+  })
+  expect(await getUser('user:u1')).toEqual({
+    id: 'user:u1',
+    play_session: { npCommunicationId: 'NP', unlockedIds: [1] },
+    taste_profile: null,
+  } as never)
+})
