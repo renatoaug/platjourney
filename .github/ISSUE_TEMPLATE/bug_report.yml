@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in PlatJourney does not work as it should.
+title: "fix: "
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you saw, including any error message.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - Web app
+        - Telegram bot
+        - Trophy guide content
+        - Sync with PSN
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: game
+    attributes:
+      label: Game and platform
+      description: When the bug is about a specific game, e.g. "Far Cry 3 Classic Edition, PS4".
+  - type: textarea
+    id: context
+    attributes:
+      label: Screenshots or logs
+      description: Never paste passwords, tokens or your NPSSO.

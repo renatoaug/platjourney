@@ -1,0 +1,50 @@
+name: On pull request
+
+# Every pull request gets the same checks a contributor runs locally: lint, types, and every test
+# suite with its coverage floor.
+on:
+  pull_request:
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true # a new push supersedes the run it replaced
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, types, tests and coverage
+    runs-on: ubuntu-latest
+
+    # The AI service refuses to start without these; the tests never reach a database or a model.
+    env:
+      SURREAL_PASS: ci
+      AI_TOKEN: ci
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version-file: services/ai/.python-version
+
+      - run: bun install --frozen-lockfile
+
+      - run: uv sync --frozen
+        working-directory: services/ai
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Types
+        run: bun run typecheck
+
+      - name: Tests with coverage
+        run: bun run test:coverage
