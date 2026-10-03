@@ -1,0 +1,134 @@
+{
+  "about": "Questions players ask Nexo about a game, in pt-BR, and what a passage that answers them must contain. `terms` are the English trophy names nexo.mentioned_trophies finds when the question names a trophy by its pt-BR (or English) name. A retrieved passage is relevant when its heading plus content contains every keyword of at least one group in `relevant` (case-insensitive).",
+  "games": [
+    {
+      "game": "game:1020",
+      "name": "Grand Theft Auto V",
+      "cases": [
+        {
+          "question": "como faço o Sangue no Zóio? onde ficam as matanças do trevor",
+          "terms": ["Red Mist"],
+          "relevant": [["rampage"]]
+        },
+        {
+          "question": "se eu escolher matar o trevor no final perco algum troféu?",
+          "terms": [],
+          "relevant": [["option c"]]
+        },
+        {
+          "question": "Acólito Altruísta: pra onde levo o caronista?",
+          "terms": ["Altruist Acolyte"],
+          "relevant": [["altruist cult"]]
+        },
+        {
+          "question": "quantas medalhas de ouro precisa pra platina",
+          "terms": [],
+          "relevant": [["70", "gold medal"]]
+        },
+        {
+          "question": "onde acho os barris de lixo nuclear pro Gestão de Resíduos?",
+          "terms": ["Waste Management"],
+          "relevant": [["nuclear waste"]]
+        },
+        {
+          "question": "qual o jeito mais rapido de chegar no rank 100 do online",
+          "terms": [],
+          "relevant": [["rank 100"]]
+        }
+      ]
+    },
+    {
+      "game": "game:529",
+      "name": "Far Cry 3",
+      "cases": [
+        {
+          "question": "como pego o Toxofilo? tem que matar de 70 metros com o arco?",
+          "terms": ["Toxophilite"],
+          "relevant": [["70m", "bow"]]
+        },
+        {
+          "question": "Piromaníaco sem Coração, onde arranjo o lança-chamas?",
+          "terms": ["Heartless Pyro"],
+          "relevant": [["flamethrower"]]
+        },
+        {
+          "question": "preciso pegar todas as reliquias ou só algumas?",
+          "terms": [],
+          "relevant": [["relics", "60"]]
+        },
+        {
+          "question": "quantos postos avançados tem pra libertar no Libertador da Ilha",
+          "terms": ["Island Liberator"],
+          "relevant": [["outposts", "34"]]
+        },
+        {
+          "question": "vale a pena ativar todas as torres de rádio logo no começo?",
+          "terms": [],
+          "relevant": [["radio towers", "18"]]
+        }
+      ]
+    },
+    {
+      "game": "game:1970",
+      "name": "Assassin's Creed IV Black Flag",
+      "cases": [
+        {
+          "question": "Tumba Saqueada: onde ficam as estelas maias?",
+          "terms": ["Vault Raider"],
+          "relevant": [["stela"]]
+        },
+        {
+          "question": "onde acho baleia assassina pra arpoar",
+          "terms": [],
+          "relevant": [["killer whale"]]
+        },
+        {
+          "question": "quanto custa fazer a roupa de caçador e o que precisa comprar?",
+          "terms": [],
+          "relevant": [["11,000r"]]
+        },
+        {
+          "question": "como faço pra acordar num monte de feno?",
+          "terms": [],
+          "relevant": [["haystack", "drinking"]]
+        },
+        {
+          "question": "como mato o guarda tocando o sino",
+          "terms": [],
+          "relevant": [["bell", "melee"]]
+        }
+      ]
+    },
+    {
+      "game": "game:1011",
+      "name": "Borderlands 2",
+      "cases": [
+        {
+          "question": "da pra matar o Terramorphous sozinho? que nivel preciso",
+          "terms": [],
+          "relevant": [["terramorphous", "level 50"]]
+        },
+        {
+          "question": "onde encontro o Michael Mamaril?",
+          "terms": [],
+          "relevant": [["mamaril", "sanctuary"]]
+        },
+        {
+          "question": "onde farmar um Chubby pro Cute Loot",
+          "terms": ["Cute Loot"],
+          "relevant": [["chubby", "caustic caverns"]]
+        },
+        {
+          "question": "o donkey mong não aparece de jeito nenhum, onde ele nasce?",
+          "terms": [],
+          "relevant": [["donkey mong", "spawn"]]
+        },
+        {
+          "question": "preciso comprar as DLC pra platinar?",
+          "terms": [],
+          "relevant": [["dlc trophies do not count"]]
+        }
+      ]
+    }
+  ]
+}
