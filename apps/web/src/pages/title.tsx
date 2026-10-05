@@ -12,14 +12,7 @@ import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { fmtHours } from '../lib/format'
 import { plainText } from '../lib/text'
-import type {
-  CurrentGame,
-  DeepGuideStats,
-  Game,
-  GuideDetail,
-  ProgressGroup,
-  Trophy,
-} from '../lib/types'
+import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { ErrorState } from '../ui/states'
 

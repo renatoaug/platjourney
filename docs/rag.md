@@ -45,7 +45,7 @@ flowchart TB
 
 | Step | Detail |
 |---|---|
-| Pages | Up to 10 per game: the main guide and roadmap, collectible guides, pages about one hard trophy |
+| Pages | The main guide and roadmap, collectible guides, pages about one hard trophy: up to 10 when the model searches for them, all of them when they are chosen by hand |
 | Permission | Only pages the site's `robots.txt` allows (`allowed` in `deepguide.py`), read with a user agent that links to this repository |
 | Text | The page's `<article>` (or a forum's posts), without scripts, menus, headers and footers; headings and lists kept; the page's date kept |
 | Passages | Cut at headings, long sections at paragraph breaks. Each passage's heading is the path above it (`TEXT GUIDE > Chapter 10`) |

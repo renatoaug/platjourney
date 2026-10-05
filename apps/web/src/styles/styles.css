@@ -5553,12 +5553,27 @@ button.danger:hover {
   color: var(--color-fg);
 }
 .auth-footnote {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   font-size: var(--text-xs);
   line-height: var(--leading-relaxed);
   color: var(--color-fg-subtle);
   margin: 32px 0 0;
   padding-top: 20px;
   border-top: 1px solid var(--color-border);
+}
+.auth-footnote p {
+  margin: 0;
+}
+.auth-footnote a {
+  color: var(--color-fg-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.auth-footnote a:hover {
+  color: var(--color-fg);
 }
 @media (max-width: 1100px) {
   .auth {
@@ -7777,8 +7792,11 @@ button.danger:hover {
   .onb *,
   .onb *::before,
   .onb *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: Respect reduced motion in the onboarding too. */
     animation-duration: 0.01s !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Respect reduced motion in the onboarding too. */
     animation-delay: 0s !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Respect reduced motion in the onboarding too. */
     animation-iteration-count: 1 !important;
   }
   .onb-answer {

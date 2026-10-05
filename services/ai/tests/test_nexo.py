@@ -120,7 +120,9 @@ class Model:
 
     async def __call__(self, **params: Any) -> Any:
         self.calls.append(params)
-        return SimpleNamespace(output_text=' Vai no [Trophy Guides](https://guides.example.com/x). ')
+        return SimpleNamespace(
+            output_text=' Vai no [Trophy Guides](https://guides.example.com/x). '
+        )
 
 
 @pytest.fixture
@@ -161,7 +163,9 @@ async def test_reply_sends_history_and_guide_passages(
     ) -> list[Passage]:
         asked.append(terms)
         return [
-            Passage(source='Trophy Guides', url='u', heading='Collector', content='Map 1', position=0)
+            Passage(
+                source='Trophy Guides', url='u', heading='Collector', content='Map 1', position=0
+            )
         ]
 
     monkeypatch.setattr(deepguide, 'retrieve', retrieve)

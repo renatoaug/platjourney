@@ -6,7 +6,8 @@ import plugins from 'platjourney-plugins'
 import type { ComponentType } from 'react'
 import type { Language } from '../i18n/locale'
 
-export type PluginSlotName = 'top-bar' | 'profile'
+/** `sign-in` sits under the sign-in card, next to the footnote; the others inside the app. */
+export type PluginSlotName = 'top-bar' | 'profile' | 'sign-in'
 
 export interface PluginPage {
   /** The route, e.g. '/hello'. */

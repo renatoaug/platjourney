@@ -28,7 +28,7 @@ flowchart TB
     end
     subgraph web["Web app (apps/web, one bundle)"]
         pages["screens + plugin pages<br/>(route + menu item)"]
-        slots["slots: top-bar, profile"]
+        slots["slots: top-bar, profile, sign-in"]
         toast["refusal toast<br/>+ the plugin's button"]
     end
     ps[["plugins/*/server.ts"]] --> ext & hooks & events
@@ -139,7 +139,7 @@ Relative paths in both settings start at the repository's root, and absolute pat
 | `ctx.modelFailed(hook)` | Runs when the work failed after every `beforeModel` let it through. |
 | `ctx.on('user:created', listener)` | Runs after a new account signs up. |
 | `ctx.on('user:deleted', listener)` | Runs before an account is deleted. |
-| `slots`: `top-bar`, `profile` | Places in the interface a web module fills with a component. |
+| `slots`: `top-bar`, `profile`, `sign-in` | Places in the interface a web module fills with a component: the top bar, the profile, and under the sign-in card (links like terms or a privacy policy) |
 | `pages` | Whole pages: `{ path, label (per language), icon, component }` become a route, an item at the end of the menu and the page title. |
 | `refusalAction` | Called when the server refuses model work with `402` (a `Refused` from a plugin): returns the button shown next to the message (`{ href, label }`), or nothing. |
 | `platjourney:model-work-done` | Fired on `window` after the web app finished model work for the player (an answer, a plan, recommendations), so a component can refresh what it shows (`MODEL_WORK_DONE` in `@platjourney/web/ui/plugin-slot`). |

@@ -181,7 +181,12 @@ test('after sign-in it asks again every 3 s until the first game arrives, for up
 test('the quick retries stop after 30 s even without a game', async () => {
   jest.useFakeTimers()
   let calls = 0
-  mockApi({ '/api/state': () => (calls++, SAMPLE_DATA) })
+  mockApi({
+    '/api/state': () => {
+      calls++
+      return SAMPLE_DATA
+    },
+  })
   renderProvider()
   for (let i = 0; i < 12; i++)
     await act(async () => {

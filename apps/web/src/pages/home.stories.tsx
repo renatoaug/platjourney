@@ -3,7 +3,6 @@ import { MockAppState, SAMPLE_DATA } from '../app/app-state'
 import { rankingData } from '../components/game-cards.stories'
 import { currentData, tipsData } from '../components/nexo-brief.stories'
 import { Language } from '../i18n/i18n'
-import type { ProfileSummary } from '../lib/types'
 import { Home } from './home'
 
 const meta: Meta = { title: 'Pages/Home', parameters: { layout: 'fullscreen' } }

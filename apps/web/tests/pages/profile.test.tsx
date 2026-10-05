@@ -1,6 +1,6 @@
 import { afterEach, expect, jest, mock, test } from 'bun:test'
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { SAMPLE_ME, useApp } from '../../src/app/app-state'
+import { SAMPLE_ME } from '../../src/app/app-state'
 import { Profile } from '../../src/pages/profile'
 import { profileData } from '../../src/pages/profile.stories'
 import { mockApi, never, renderApp, reply } from '../support/web'

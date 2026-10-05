@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { current } from '../fixtures'
 import { Language } from '../i18n/i18n'
-import type { Game, GuideDetail, Trophy } from '../lib/types'
+import type { Game, GuideDetail } from '../lib/types'
 import { type TitleDetail, TitleScreen } from './title'
 
 const meta: Meta = {

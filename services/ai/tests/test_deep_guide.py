@@ -2,6 +2,7 @@
 and retrieval, with the database, the web and the model mocked."""
 
 import asyncio
+import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -68,6 +69,28 @@ def test_html_to_text_reads_a_flarum_forum_post_from_its_noscript_block() -> Non
         '</div></noscript></main>'
     )
     assert html_to_text(html) == '## Guia de Troféus\n\nFaça a história.'
+
+
+def test_html_to_text_reads_an_article_shipped_as_next_js_page_data() -> None:
+    data = {
+        'props': {
+            'pageProps': {
+                'page': {
+                    'page': {
+                        'htmlEntities': [
+                            {'values': {'html': '<h2>Masks</h2>'}},
+                            {'values': {'html': '<p>Behind the waterfall.</p>'}},
+                        ]
+                    }
+                }
+            }
+        }
+    }
+    html = (
+        '<nav>Guide | Maps</nav><div id="__next"></div>'
+        f'<script id="__NEXT_DATA__" type="application/json">{json.dumps(data)}</script>'
+    )
+    assert html_to_text(html) == '## Masks\n\nBehind the waterfall.'
 
 
 def test_html_to_text_reads_the_whole_page_without_an_article() -> None:
@@ -403,3 +426,73 @@ def test_index_route_waits_and_reports_a_failure(monkeypatch: pytest.MonkeyPatch
     r = TestClient(app).post('/deep-guide/index', json=body, headers=HEADERS)
     assert r.status_code == 500
     assert 'embeddings down' in r.json()['detail']
+
+
+def test_pages_given_by_hand_are_all_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    read: list[str] = []
+
+    async def fake_read(_http: object, url: str) -> tuple[str, str | None] | None:
+        read.append(url)
+        return None
+
+    async def fake_save(*_args: object) -> None:
+        return None
+
+    monkeypatch.setattr(deepguide, 'read_page', fake_read)
+    monkeypatch.setattr(deepguide.guidestore, 'save_index', fake_save)
+    pages = [deepguide.GuidePage(url=f'https://a/{i}', site='A') for i in range(15)]
+    asyncio.run(deepguide._index(GAME, None, pages))  # pyright: ignore[reportPrivateUsage]
+    assert len(read) == 15
+
+
+# Writing a game's passages
+
+
+@pytest.fixture
+def calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, Any]]:
+    seen: list[tuple[str, Any]] = []
+
+    async def rows(sql: str, vars: dict[str, Any] | None = None) -> list[Any]:
+        seen.append((sql, vars))
+        if sql.startswith('SELECT'):
+            return ['guide_chunk:old']
+        if 'boom' in str(vars):
+            raise RuntimeError('write failed')
+        batch: list[Any] = (vars or {})['chunks']
+        return [f'guide_chunk:new{len(seen)}{i}' for i in range(len(batch))]
+
+    async def query(sql: str, vars: dict[str, Any] | None = None) -> list[Any]:
+        seen.append((sql, vars))
+        return []
+
+    monkeypatch.setattr(guidestore.db, 'rows', rows)
+    monkeypatch.setattr(guidestore.db, 'query', query)
+    return seen
+
+
+async def test_passages_are_written_in_batches_before_the_old_ones_go(
+    calls: list[tuple[str, Any]],
+) -> None:
+    chunks = [{'content': str(i)} for i in range(guidestore.WRITE_BATCH * 2 + 1)]
+    await guidestore.replace_chunks('game:1', chunks)
+    inserts = [v for sql, v in calls if 'INSERT' in sql]
+    assert [len(v['chunks']) for v in inserts] == [
+        guidestore.WRITE_BATCH,
+        guidestore.WRITE_BATCH,
+        1,
+    ]
+    deletes = [v for sql, v in calls if sql.startswith('DELETE')]
+    assert deletes == [{'ids': ['guide_chunk:old']}]
+    assert calls[-1][0].startswith('DELETE')
+
+
+async def test_a_failed_batch_removes_what_it_wrote_and_keeps_the_old(
+    calls: list[tuple[str, Any]],
+) -> None:
+    chunks = [{'content': 'ok'}] * guidestore.WRITE_BATCH + [{'content': 'boom'}]
+    with pytest.raises(RuntimeError):
+        await guidestore.replace_chunks('game:1', chunks)
+    deletes = [v['ids'] for sql, v in calls if sql.startswith('DELETE')]
+    assert len(deletes) == 1
+    assert 'guide_chunk:old' not in deletes[0]
+    assert len(deletes[0]) == guidestore.WRITE_BATCH

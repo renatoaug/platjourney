@@ -1,7 +1,9 @@
 """Guide pages as plain text, split into passages that follow the page's headings."""
 
+import json
 import re
 from dataclasses import dataclass
+from typing import Any, cast
 
 CHUNK_CHARS = 900
 
@@ -24,6 +26,9 @@ _ARTICLE = re.compile(r'<article[\s\S]*?</article>', re.I)
 # in the <noscript> after their loading notice, which the noise rule below would drop with every
 # other <noscript>.
 _FLARUM = re.compile(r'<div id="flarum-loading"[\s\S]*?<noscript>([\s\S]*?)</noscript>', re.I)
+# Wikis built with Next.js (IGN's, for one) draw the article in the browser from the page's data;
+# the HTML itself carries only the menu. The article is the list of HTML blocks in that data.
+_NEXT_DATA = re.compile(r'<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)</script>', re.I)
 _NOISE = re.compile(
     r'<(script|style|noscript|nav|header|footer|aside|form|iframe|svg)[\s\S]*?</\1>', re.I
 )
@@ -38,11 +43,43 @@ _TAG = re.compile(r'<[^>]+>')
 _ENTITY = re.compile(r'&[a-z0-9#]+;', re.I)
 
 
+def _html_blocks(data: Any) -> list[str]:
+    """Every `htmlEntities[*].values.html` in a page's data, in order."""
+    if isinstance(data, list):
+        return [b for item in cast(list[Any], data) for b in _html_blocks(item)]
+    if not isinstance(data, dict):
+        return []
+    node = cast(dict[str, Any], data)
+    entities = node.get('htmlEntities')
+    if isinstance(entities, list):
+        blocks: list[str] = []
+        for entity in cast(list[Any], entities):
+            values = (
+                cast(dict[str, Any], entity).get('values') if isinstance(entity, dict) else None
+            )
+            html = cast(dict[str, Any], values).get('html') if isinstance(values, dict) else None
+            if isinstance(html, str):
+                blocks.append(html)
+        return blocks
+    return [b for value in node.values() for b in _html_blocks(value)]
+
+
+def _next_article(html: str) -> str | None:
+    found = _NEXT_DATA.search(html)
+    if not found:
+        return None
+    try:
+        blocks = _html_blocks(json.loads(found.group(1)))
+    except ValueError:
+        return None
+    return '\n'.join(blocks) if blocks else None
+
+
 def html_to_text(html: str) -> str:
     """HTML to plain text that keeps headings ("## ", with one "#" per level) and list items
     ("- "). A paragraph of bold text alone becomes the deepest heading level."""
     found = _FLARUM.search(html) or _ARTICLE.search(html)
-    text = found.group(found.lastindex or 0) if found else html
+    text = _next_article(html) or (found.group(found.lastindex or 0) if found else html)
     text = _NOISE.sub(' ', text)
     text = _COMMENT.sub(' ', text)
     text = _BOLD_LINE.sub(lambda m: f'\n\n####### {m.group(2).strip().rstrip(":")}\n\n', text)

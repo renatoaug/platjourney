@@ -25,6 +25,7 @@ __all__ = ['GuidePage', 'Passage', 'Status', 'ensure', 'retrieve', 'start', 'sta
 log = logging.getLogger(__name__)
 
 USER_AGENT = 'platjourney/0.1 (+https://github.com/renatoaug/platjourney)'
+# Pages the model's own search may bring; pages someone chose are all read.
 MAX_PAGES = 10
 # Guides get corrected after patches and server shutdowns; refresh monthly.
 MAX_AGE = timedelta(days=30)
@@ -130,12 +131,12 @@ def embed_text(game_name: str, heading: str, content: str) -> str:
 
 async def _index(game: Game, trophy_total: int | None, given: list[GuidePage] | None) -> None:
     log.info('indexing deep guide for %s', game.name)
-    pages = given if given is not None else await find_pages(game)
+    pages = given if given is not None else (await find_pages(game))[:MAX_PAGES]
     chunks: list[dict[str, Any]] = []
     async with httpx.AsyncClient(
         headers={'user-agent': USER_AGENT}, follow_redirects=True, timeout=30
     ) as http:
-        for page in pages[:MAX_PAGES]:
+        for page in pages:
             read = await read_page(http, page.url)
             if not read:
                 log.info('  skipped %s', page.url)

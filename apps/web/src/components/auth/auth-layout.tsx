@@ -8,6 +8,7 @@ import {
   useMessages,
 } from '../../i18n/i18n'
 import { Icon } from '../../ui/icon'
+import { PluginSlot } from '../../ui/plugin-slot'
 import { LanguageSwitcher } from '../language-switcher'
 
 const messages = defineMessages({
@@ -106,7 +107,10 @@ export function AuthLayout({
           <div id="auth-step" ref={stepRef}>
             {children}
           </div>
-          <p className="auth-footnote">{t('footnote')}</p>
+          <div className="auth-footnote">
+            <p>{t('footnote')}</p>
+            <PluginSlot name="sign-in" />
+          </div>
         </section>
       </div>
     </div>

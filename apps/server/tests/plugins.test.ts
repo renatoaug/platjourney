@@ -1,5 +1,5 @@
 import { afterEach, expect, mock, test } from 'bun:test'
-import type { Plugin } from '../src/plugins.ts'
+import type { Plugin, PluginContext } from '../src/plugins.ts'
 import {
   aroundModel,
   emit,
@@ -27,7 +27,7 @@ test('a plugin loaded from PLUGINS answers its route', async () => {
 })
 
 test('two plugins cannot take the same route', async () => {
-  const taken = { name: 'a', register: (ctx: any) => ctx.route('x', async () => {}) }
+  const taken = { name: 'a', register: (ctx: PluginContext) => ctx.route('x', async () => {}) }
   await registerPlugin(taken)
   expect(registerPlugin({ ...taken, name: 'b' })).rejects.toThrow('route x is taken')
 })

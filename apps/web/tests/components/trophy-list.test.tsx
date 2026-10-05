@@ -191,7 +191,9 @@ describe('TrophyList', () => {
     expect(JSON.parse(String(init?.body))).toEqual({ np: 'NPWR1', trophyId: 5 })
     await act(async () =>
       reply(
-        new Response(JSON.stringify({ text: 'Fale com ele no acampamento.\n\nFonte: Trophy Guides' })),
+        new Response(
+          JSON.stringify({ text: 'Fale com ele no acampamento.\n\nFonte: Trophy Guides' }),
+        ),
       ),
     )
     expect(await screen.findByText('Dica do Nexo')).toBeTruthy()

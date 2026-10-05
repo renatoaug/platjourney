@@ -11,3 +11,13 @@ test('a plugin fills its slot', () => {
   render(<PluginSlot name="profile" module={{ slots: { profile: () => <p>plano</p> } }} />)
   expect(screen.getByText('plano')).toBeTruthy()
 })
+
+test('a plugin can add to the sign-in screen', () => {
+  render(
+    <PluginSlot
+      name="sign-in"
+      module={{ slots: { 'sign-in': () => <a href="/terms">termos</a> } }}
+    />,
+  )
+  expect(screen.getByText('termos')).toBeTruthy()
+})

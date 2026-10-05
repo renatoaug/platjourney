@@ -63,16 +63,37 @@ async def save_index(game: str, trophy_total: int | None, pages: list[str], pass
     )
 
 
+# Passages are written this many at a time: a whole big game (a thousand passages with their
+# vectors) in one statement is more than the database takes.
+WRITE_BATCH = 200
+
+
 async def replace_chunks(game: str, chunks: list[dict[str, Any]]) -> None:
-    """Swaps a game's passages in one transaction, so readers never see it half empty."""
-    await db.query(
-        'BEGIN TRANSACTION; '
-        'LET $g = type::record($game); '
-        'DELETE guide_chunk WHERE game = $g; '
-        'FOR $c IN $chunks { CREATE guide_chunk CONTENT object::extend($c, { game: $g }) }; '
-        'COMMIT TRANSACTION;',
-        {'game': game, 'chunks': chunks},
+    """Swaps a game's passages. The new ones go in first, in batches, and the old ones go only
+    after all of them are in, so readers see old and new together for a moment, never none.
+    If a batch fails, the new passages written so far are removed and the old ones stay."""
+    old = await db.rows(
+        'SELECT VALUE id FROM guide_chunk WHERE game = type::record($game)', {'game': game}
     )
+    new: list[Any] = []
+    try:
+        for start in range(0, len(chunks), WRITE_BATCH):
+            new += await db.rows(
+                'LET $g = type::record($game); '
+                'INSERT INTO guide_chunk $chunks.map(|$c| object::extend($c, { game: $g })) '
+                'RETURN VALUE id;',
+                {'game': game, 'chunks': chunks[start : start + WRITE_BATCH]},
+            )
+    except Exception:
+        if new:
+            await _delete(new)
+        raise
+    if old:
+        await _delete(old)
+
+
+async def _delete(ids: list[Any]) -> None:
+    await db.query('DELETE $ids.map(|$i| type::record($i))', {'ids': ids})
 
 
 async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
