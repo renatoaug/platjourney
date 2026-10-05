@@ -1,0 +1,126 @@
+# Configuration
+
+Every setting lives in the root `.env`; `.env.example` lists them with a line on each.
+
+## First run
+
+1. **Accounts you need:** a Telegram bot ([@BotFather](https://t.me/BotFather)), an [IGDB app](https://api-docs.igdb.com/#account-creation), an OpenAI key (or a [local model](#local-models)) and a throwaway PSN account.
+2. **Fill `.env`:** `cp .env.example .env`. The PSN NPSSO belongs to the throwaway account and only reads public profiles, so every player's games, trophies and "About me" must be visible to anyone.
+3. **Install:** `bun install` and `(cd services/ai && uv sync)`.
+4. **Database:** `bun run db:up` (SurrealDB in Docker, data in `./data/surrealdb`), then `bun run migrate`.
+5. **Catalog:** `bun run catalog:expand && bun run embed` (once; both are safe to re-run).
+6. **Run:** `bun run dev`, and open http://localhost:3000.
+
+Then:
+
+- Type your PSN ID and create a password, or open the demo.
+- Connect Telegram from the profile page: it opens the bot with a one-time link.
+- An account that came from a seed has no password yet: the first sign-in sets it. Do that (or `bun run password <psn id>`) before anyone else can reach the instance.
+
+## Running
+
+| Command | What it starts |
+|---|---|
+| `bun run dev` | Server, AI service and web, reloading on save |
+| `bun run dev:server`, `dev:web`, `dev:ai` | One part alone |
+| `bun run build` then `bun run start` | The built web app, served by the server |
+| `(cd services/ai && uv run platjourney-ai)` | The AI service, next to `start` |
+
+`ecosystem.config.cjs` runs the server and the AI service under pm2.
+
+## Everything in Docker
+
+To try PlatJourney without installing Bun and uv: fill `.env`, then
+
+```bash
+bun run docker:up            # SurrealDB, the AI service and the server with the built web app
+```
+
+and open http://localhost:3000 (only this machine can reach it). The first time, load data into the containers:
+
+| Command | What it does |
+|---|---|
+| `docker compose exec server bun scripts/seed.ts` | The demo player and its games |
+| `docker compose exec server bun scripts/expand-catalog.ts` | The game catalog from IGDB |
+| `docker compose exec ai uv run --no-dev python -m platjourney_ai.jobs.embed_catalog` | The catalog's vectors |
+
+- `bun run docker:logs` follows the server and the AI service; `bun run docker:down` stops them.
+- The containers read the same `.env`, but reach SurrealDB and each other by their compose names, and run without plugins.
+- A container is a snapshot: after changing the code, `bun run docker:up` builds it again. For day-to-day work, `bun run dev` reloads on save.
+- Do not run it next to `bun run dev` on the same database and Telegram bot: two servers would both poll Telegram and sweep the same players.
+
+## Required
+
+| Setting | What it is |
+|---|---|
+| `PSN_NPSSO` | NPSSO of the throwaway PSN account. Treat it like a password |
+| `TELEGRAM_BOT_TOKEN` | The bot's token |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | OpenAI key and default model (not needed with local models) |
+| `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET` | The IGDB app |
+| `SURREAL_URL`, `SURREAL_USER`, `SURREAL_PASS`, `SURREAL_NS`, `SURREAL_DB` | SurrealDB; Docker Compose reads the user and password too |
+| `AI_URL`, `AI_TOKEN` | Where the AI service listens and the token the server calls it with (`openssl rand -hex 24`) |
+
+## What the instance spends on its own
+
+By default the app also calls the model without a player asking. Each switch turns part of that off.
+
+| Setting | Default | `0` means |
+|---|---|---|
+| `AI_RESEARCH` | 1 | No guide research for games without one, no deep guide page search, no server checks. Games opened without a guide are recorded in `guide_request`; `bun run check-servers` checks servers on demand |
+| `AI_NOTICES` | 1 | Plain notices on game start and trophies, nothing at session end. With `1`, each player can still turn Nexo's notices off on the profile page |
+| `AI_WEB_SEARCH` | 1 | No web search inside answers: Nexo answers from the guide and the deep guide passages, recommendations use the numbers of the guides already written, and uncovered questions are recorded in `guide_request` |
+
+With all three off, the instance only spends when a player chats, asks for a plan or for recommendations.
+
+## Local models
+
+The AI service can run on your own machine, for free, with any server that speaks the OpenAI API: [LM Studio](https://lmstudio.ai) or [mlx-lm](https://github.com/ml-explore/mlx-lm) (fastest on Apple Silicon), [llama.cpp](https://github.com/ggml-org/llama.cpp), [Ollama](https://ollama.com).
+
+| Setting | What it is |
+|---|---|
+| `AI_PROVIDER=local` | Every feature on the local server |
+| `EMBEDDING_PROVIDER=local` | The vectors too |
+| `LOCAL_BASE_URL` | The server's address (e.g. `http://localhost:1234/v1`) |
+| `LOCAL_MODEL`, `LOCAL_EMBEDDING_MODEL` | Model names on that server |
+| `LOCAL_REASONING_EFFORT` | `none` by default: thinking models on a laptop can think for minutes |
+| `LOCAL_MAX_TOKENS` | Caps each reply (2000), so a model stuck repeating itself stops |
+
+- Local models have no web search: pair them with `AI_RESEARCH=0`.
+- Calls are still recorded in `llm_call`, at $0.
+- After changing the embedding model, run `bun run embed --all`: vectors from different models do not compare.
+
+## A model per feature
+
+`AI_MODEL_<FEATURE>=provider` or `provider:model` overrides `AI_PROVIDER` for one feature, e.g. `AI_MODEL_CHAT=openai:gpt-5.5`, `AI_MODEL_TIP=local`.
+
+| Feature | What it is |
+|---|---|
+| `chat` | Nexo's answers |
+| `tip` | Nexo's notices |
+| `plan` | Session routes |
+| `recommend` | Recommendations |
+| `guide` | Guide research |
+| `guide_index` | Finding deep guide pages |
+| `server_check` | Online server checks |
+
+Web search follows each feature's provider. An OpenAI model needs its price in `services/ai/src/platjourney_ai/costs.py`, or its calls are recorded at $0.
+
+## Accounts and access
+
+| Setting | Default | What it is |
+|---|---|---|
+| `SESSION_DAYS` | 30 | How long a sign-in lasts |
+| `COOKIE_SECURE` | 0 | `1` when served over HTTPS |
+| `AUTH_SKIP_VERIFICATION` | 0 | `1` skips the "About me" check when claiming an account. Local development only |
+| `ACCESS_HASH_SECRET` | empty | Records where accounts are used from, as an HMAC of the IP (`openssl rand -hex 32`). Empty records nothing |
+| `ACCESS_KEEP_DAYS` | 180 | Days an unused address is kept |
+| `TRUST_PROXY` | 0 | `1` reads the address from `X-Forwarded-For`, only behind a proxy that sets it |
+
+## Optional
+
+| Setting | Default | What it is |
+|---|---|---|
+| `POLL_MINUTES` | 15 | How often each player's PSN profile is checked |
+| `SESSION_IDLE_MINUTES` | 60 | Without a new trophy for this long, a play session is over |
+| `PORT` | 3000 | The server's port |
+| `PLUGINS`, `PLUGINS_WEB` | empty | Plugin modules to load ([plugins](plugins.md)) |
