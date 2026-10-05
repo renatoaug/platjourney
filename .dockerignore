@@ -1,0 +1,12 @@
+.git
+.env
+data
+node_modules
+**/node_modules
+apps/web/dist
+apps/web/.ui-check
+.ui-check
+services/ai/.venv
+services/ai/.ruff_cache
+services/ai/.coverage
+**/__pycache__
