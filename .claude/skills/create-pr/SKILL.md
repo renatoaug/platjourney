@@ -23,7 +23,7 @@ type(scope): lowercase subject
 ```
 
 - Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `perf`, `test`, `ci`, `build`, `style`, `revert`.
-- Use a scope when there is an obvious one (e.g. `feat(guide): ...`, `fix(telegram): ...`).
+- Use one of the repository's `scope:` labels as the scope (`web`, `server`, `ai`, `telegram`, `guides`, `db`), e.g. `feat(guides): ...`, `fix(telegram): ...`. The `labels.yml` workflow reads the title and adds the `type:` and `scope:` labels; a scope outside that list gets no label.
 - The subject **must not start with an uppercase letter**.
 
 ## 3. Body
