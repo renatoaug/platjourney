@@ -46,7 +46,7 @@ flowchart LR
 
 **API** · The web API, the Telegram bot and the PSN watcher.
 
-[![Bun 1.3](https://img.shields.io/badge/-Bun%201.3-333333?style=flat&logo=bun)](https://bun.sh)
+[![Bun 1.4](https://img.shields.io/badge/-Bun%201.4-333333?style=flat&logo=bun)](https://bun.sh)
 [![TypeScript 7](https://img.shields.io/badge/-TypeScript%207-333333?style=flat&logo=typescript)](https://www.typescriptlang.org)
 [![psn-api](https://img.shields.io/badge/-psn--api-333333?style=flat&logo=playstation)](https://github.com/achievements-app/psn-api)
 [![IGDB](https://img.shields.io/badge/-IGDB-333333?style=flat&logo=twitch)](https://api-docs.igdb.com)
