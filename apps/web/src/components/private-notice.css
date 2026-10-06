@@ -1,0 +1,15 @@
+@layer screens {
+  .private-notice .auth-steps {
+    margin: 16px 0;
+  }
+
+  /* ---------- private trophies ---------- */
+  .private-notice {
+    margin-bottom: 20px;
+    border-color: var(--color-trophy-gold);
+  }
+
+  .private-notice h2 {
+    margin: 6px 0;
+  }
+}

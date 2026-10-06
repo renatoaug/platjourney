@@ -3,12 +3,14 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
+import { GameColumns } from '../components/game-columns'
 import { Guide, GuideSkeleton } from '../components/guide'
 import { Hero, HeroSkeleton } from '../components/hero'
 import { PlanCard } from '../components/plan'
 import { TrophyList } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import type { CurrentGame } from '../lib/types'
+import './game.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -55,31 +57,36 @@ export function GameScreen({
       {current !== null && (
         <>
           {plan}
-          <div className="grid cols-2 game-columns" style={{ marginTop: 16 }}>
-            <div className="card" id="trophies-card">
-              {loading ? <h2>{t('trophies')}</h2> : null}
-              <TrophyList trophies={current?.trophies ?? null} prefix="t" np={current?.np} />
-            </div>
-            <div className="stack">
-              <div className="card" id="guide-card">
-                {current ? (
-                  <Guide
-                    key={current.name}
-                    id="guide-card"
-                    game={{
-                      name: current.name,
-                      guide: current.guide ?? null,
-                      trophies: current.trophies,
-                      deepGuide: current.deepGuide,
-                      queued: current.queued === true,
-                    }}
-                  />
-                ) : (
-                  <GuideSkeleton />
-                )}
+          <GameColumns
+            style={{ marginTop: 16 }}
+            trophies={
+              <div className="card" id="trophies-card">
+                {loading ? <h2>{t('trophies')}</h2> : null}
+                <TrophyList trophies={current?.trophies ?? null} prefix="t" np={current?.np} />
               </div>
-            </div>
-          </div>
+            }
+            guide={
+              <div className="stack">
+                <div className="card" id="guide-card">
+                  {current ? (
+                    <Guide
+                      key={current.name}
+                      id="guide-card"
+                      game={{
+                        name: current.name,
+                        guide: current.guide ?? null,
+                        trophies: current.trophies,
+                        deepGuide: current.deepGuide,
+                        queued: current.queued === true,
+                      }}
+                    />
+                  ) : (
+                    <GuideSkeleton />
+                  )}
+                </div>
+              </div>
+            }
+          />
         </>
       )}
     </Page>

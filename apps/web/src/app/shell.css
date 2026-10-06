@@ -1,0 +1,650 @@
+@layer screens {
+  /* Uppercase eyebrow labels share size and tracking; each keeps its own color and weight. */
+  .nav-label,
+  .sidebar-note .eyebrow {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .nav a .icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 1.6;
+  }
+
+  .nav a.active {
+    background: var(--color-accent);
+    color: var(--color-surface-raised);
+  }
+
+  .sidebar-note .eyebrow {
+    color: var(--color-fg-tint-muted);
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sync-status.failed {
+    display: block;
+  }
+
+  #refresh-state:disabled .icon {
+    animation: spin 0.9s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #refresh-state:disabled .icon {
+      animation: none;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .nav-label,
+    .sidebar-note {
+      display: none;
+    }
+
+    /* The sliding pill (.nav-indicator) draws the active background, so it can travel between items. */
+    .nav a.active {
+      color: var(--color-accent);
+    }
+  }
+
+  @media (min-width: 761px) {
+    .sidebar > .logo,
+    .sidebar > .profile {
+      flex: none;
+    }
+
+    .sidebar > .profile > div {
+      min-width: 0;
+    }
+
+    .sidebar > .profile img {
+      flex: none;
+    }
+  }
+
+  @media (min-width: 761px) and (max-height: 900px) {
+    .sidebar > .logo {
+      padding-bottom: 28px;
+    }
+  }
+
+  .topbar-right .icon-button {
+    position: relative;
+    height: 34px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    background: transparent;
+  }
+
+  .topbar-right .icon-button {
+    width: 34px;
+    display: grid;
+    place-items: center;
+  }
+
+  .topbar-right .icon-button:hover {
+    border-color: var(--color-accent);
+    background: var(--color-surface);
+  }
+
+  .topbar-right .notif-badge {
+    top: -3px;
+    right: -3px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: var(--text-xs);
+    line-height: 16px;
+    box-shadow: 0 0 0 2px var(--color-bg);
+  }
+
+  .nav.nav-animated a.active,
+  .nav.nav-animated a.active:hover {
+    background: transparent;
+  }
+
+  .nav a .icon {
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav a:hover .icon {
+    transform: translateY(-1px);
+  }
+
+  .nav a:active .icon {
+    transform: scale(0.94);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-indicator,
+    .nav a .icon {
+      transition: none;
+    }
+
+    .nav a:hover .icon,
+    .nav a:active .icon {
+      transform: none;
+    }
+  }
+
+  .nav a[data-tour-spot] {
+    animation: tour-spot 1.6s ease-in-out infinite;
+  }
+
+  @media (max-width: 760px) {
+    .nav .nav-more.active {
+      color: var(--color-accent);
+    }
+
+    .nav-sheet-icon .icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .nav-sheet a.active {
+      color: var(--color-accent);
+    }
+
+    .nav-sheet a.active .nav-sheet-icon {
+      border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+      background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+      color: var(--color-accent);
+    }
+
+    .nav .nav-more .icon {
+      transition: transform 0.25s;
+    }
+
+    .nav .nav-more[aria-expanded="true"] .icon {
+      transform: rotate(90deg);
+    }
+  }
+
+  /* Inside the navigation the halo sits within the item, so the column does not clip it. */
+  .nav a:focus-visible {
+    box-shadow: inset var(--shadow-focus);
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: 36px 20px 20px;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+  }
+
+  .nav-label {
+    color: var(--color-fg-subtle);
+    font-weight: var(--weight-semibold);
+    padding: 0 13px 15px;
+  }
+
+  .nav {
+    display: grid;
+    gap: 7px;
+  }
+
+  .nav a {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-height: 46px;
+    padding: 12px 14px;
+    border-radius: var(--radius-control);
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    transition:
+      background 0.2s,
+      color 0.2s;
+  }
+
+  .nav a:hover {
+    color: var(--color-fg);
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-faint), transparent);
+  }
+
+  .nav-ai {
+    margin-left: auto;
+    font-size: var(--text-xs);
+    padding: 0 5px;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-tag);
+    opacity: 0.8;
+  }
+
+  .sidebar-note {
+    margin-top: auto;
+    padding: 22px 12px;
+    background: radial-gradient(
+      ellipse at 0 80%,
+      color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent),
+      transparent 80%
+    );
+  }
+
+  .sidebar-note strong {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: var(--weight-medium);
+    font-size: var(--text-lg);
+    line-height: var(--leading-snug);
+    margin: 9px 0 14px;
+  }
+
+  .sidebar-note > span:last-child {
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 78px;
+    gap: 16px;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 33px;
+    font-size: var(--text-sm);
+  }
+
+  .breadcrumb {
+    color: var(--color-fg-subtle);
+  }
+
+  .breadcrumb span {
+    padding: 0 12px;
+    color: var(--color-fg-subtle);
+  }
+
+  .breadcrumb b {
+    color: var(--color-fg-soft);
+    font-weight: var(--weight-regular);
+  }
+
+  /* Sync state: the refresh icon spins while syncing, nothing shows when all is
+     well, and a red dot on the button's corner means it failed. The words are for
+     screen readers; the tooltip has the details. */
+  .sync-status {
+    display: none;
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-round);
+    background: var(--color-danger);
+    box-shadow: 0 0 0 2px var(--color-bg);
+    overflow: hidden;
+    color: transparent;
+    font-size: 0;
+  }
+
+  @media (max-width: 1100px) {
+    .sidebar {
+      padding: 30px 12px 20px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .sidebar {
+      position: fixed;
+      top: auto;
+      bottom: 0;
+      height: auto;
+      width: 100%;
+      z-index: 20;
+      border-right: 0;
+      border-top: 1px solid var(--color-border-strong);
+      background: color-mix(in srgb, var(--color-bg-subtle) var(--alpha-heavy), transparent);
+      backdrop-filter: blur(15px);
+      padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    }
+
+    .nav {
+      display: flex;
+      gap: 2px;
+      justify-content: space-between;
+    }
+
+    .nav a {
+      flex: 1;
+      flex-direction: column;
+      padding: 7px 2px;
+      gap: 5px;
+      min-height: 48px;
+      font-size: var(--text-xs);
+    }
+
+    .nav-ai {
+      display: none;
+    }
+
+    .topbar {
+      height: 63px;
+      margin-bottom: 25px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .sync-status {
+      font-size: var(--text-xs);
+    }
+
+    .breadcrumb {
+      font-size: var(--text-xs);
+    }
+
+    .breadcrumb span {
+      padding: 0 6px;
+    }
+
+    .topbar-right {
+      gap: 7px;
+    }
+  }
+
+  @media (min-width: 761px) {
+    .sidebar {
+      overflow: hidden;
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-border-strong) transparent;
+    }
+
+    .sidebar-scroll > * {
+      flex: none;
+    }
+  }
+
+  @media (min-width: 761px) and (max-height: 900px) {
+    .sidebar {
+      padding-top: 24px;
+    }
+
+    .nav {
+      gap: 4px;
+    }
+
+    .nav a {
+      min-height: 40px;
+      padding-block: 9px;
+    }
+
+    .sidebar-note {
+      padding-top: 18px;
+      padding-bottom: 12px;
+    }
+  }
+
+  @media (min-width: 761px) and (max-height: 800px) {
+    .nav-label {
+      padding-bottom: 10px;
+    }
+
+    .nav a {
+      min-height: 38px;
+      padding-block: 8px;
+    }
+
+    .sidebar-note {
+      padding-top: 14px;
+      padding-bottom: 6px;
+    }
+
+    .sidebar-note strong {
+      margin: 6px 0 8px;
+    }
+  }
+
+  @media (min-width: 761px) and (max-height: 680px) {
+    .sidebar-note {
+      display: none;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .sidebar-scroll {
+      display: contents;
+    }
+  }
+
+  /* ---------- top bar controls: one size, one shape ---------- */
+  .topbar-right {
+    gap: 8px;
+  }
+
+  /* One shared highlight glides between the navigation items. */
+  .nav {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .nav a {
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: var(--color-accent);
+    border-radius: var(--radius-control);
+    opacity: 0;
+    transition:
+      transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+      width 300ms ease,
+      height 300ms ease,
+      opacity 160ms ease;
+  }
+
+  @media (max-width: 760px) {
+    .nav-indicator {
+      background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 22%, transparent);
+      transition:
+        transform 420ms cubic-bezier(0.34, 1.4, 0.5, 1),
+        width 420ms cubic-bezier(0.34, 1.4, 0.5, 1),
+        opacity 0.2s;
+    }
+
+    /* The icon of the item just chosen gives a small hop as the pill lands under it. */
+    .nav a.active .icon,
+    .nav .nav-more.active .icon {
+      animation: nav-hop 0.45s cubic-bezier(0.34, 1.6, 0.5, 1);
+    }
+  }
+
+  /* Phone navigation: four links and "Mais" in the bottom bar, the rest in a sheet above it; the
+     account's picture at the end of the top bar. On a wide screen the sidebar shows every link. */
+  .nav-more,
+  .nav-sheet,
+  .nav-sheet-scrim,
+  .topbar-avatar {
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    .nav .nav-extra {
+      display: none;
+    }
+
+    .nav .nav-more {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 48px;
+      padding: 7px 2px;
+      border: 0;
+      border-radius: var(--radius-control);
+      background: transparent;
+      color: var(--color-fg-muted);
+      font: inherit;
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+    }
+
+    .nav a,
+    .nav .nav-more {
+      font-size: 11px;
+    }
+
+    .nav-sheet-scrim {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 18;
+      border: 0;
+      border-radius: 0;
+      background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+      backdrop-filter: blur(3px);
+      animation: nav-scrim-in 0.2s ease-out;
+    }
+
+    .nav-sheet {
+      display: block;
+      position: fixed;
+      left: 10px;
+      right: 10px;
+      bottom: calc(78px + env(safe-area-inset-bottom));
+      z-index: 21;
+      padding: 8px 12px 14px;
+      border: 1px solid var(--color-border-strong);
+      border-radius: var(--radius-card);
+      background:
+        radial-gradient(
+          ellipse at 50% 0,
+          color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent),
+          transparent 70%
+        ),
+        var(--color-bg-subtle);
+      box-shadow: var(--shadow-popover);
+      transform-origin: 90% 100%;
+      animation: nav-sheet-in 0.32s cubic-bezier(0.2, 1.2, 0.4, 1);
+    }
+
+    .nav-sheet-handle {
+      display: block;
+      width: 36px;
+      height: 4px;
+      margin: 0 auto 10px;
+      border-radius: var(--radius-pill);
+      background: var(--color-border-strong);
+    }
+
+    .nav-sheet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .nav-sheet a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 4px 10px;
+      border-radius: var(--radius-control);
+      color: var(--color-fg-muted);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+      text-align: center;
+      animation: nav-item-in 0.32s cubic-bezier(0.2, 1.2, 0.4, 1) backwards;
+      animation-delay: calc(40ms + var(--i, 0) * 30ms);
+      transition:
+        background 0.2s,
+        color 0.2s;
+    }
+
+    .nav-sheet a:active {
+      background: var(--color-surface);
+    }
+
+    .nav-sheet-icon {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-control);
+      background: var(--color-surface);
+      color: var(--color-fg);
+      overflow: hidden;
+    }
+
+    /* The PSN avatar is a round picture: its tile becomes a circle, so the two shapes match. */
+    .nav-sheet-icon.is-avatar {
+      border-radius: var(--radius-round);
+      border-color: transparent;
+      background: none;
+    }
+
+    .nav-sheet-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .topbar-avatar {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-round);
+      overflow: hidden;
+      color: var(--color-fg-muted);
+    }
+
+    .topbar-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-sheet,
+    .nav-sheet a,
+    .nav-sheet-scrim {
+      animation: none;
+    }
+  }
+
+  @keyframes nav-hop {
+    0% {
+      transform: translateY(0) scale(1);
+    }
+
+    40% {
+      transform: translateY(-4px) scale(1.12);
+    }
+
+    100% {
+      transform: translateY(0) scale(1);
+    }
+  }
+}

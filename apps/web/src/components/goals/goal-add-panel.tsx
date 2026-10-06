@@ -5,6 +5,7 @@ import { api } from '../../lib/api'
 import type { Game, Interest } from '../../lib/types'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
+import './goal-add-panel.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

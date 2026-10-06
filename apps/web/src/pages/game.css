@@ -1,0 +1,10 @@
+@layer screens {
+  #guide-card {
+    font-size: var(--text-md);
+    line-height: var(--leading-loose);
+  }
+
+  #guide-card h2 {
+    margin-top: 0;
+  }
+}

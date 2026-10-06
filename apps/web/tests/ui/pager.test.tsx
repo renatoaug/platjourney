@@ -22,13 +22,15 @@ test('the pager shows the range and turns pages', () => {
   const { rerender } = render(<Pager page={1} size={8} total={25} onPage={onPage} />)
   expect(screen.getByRole('navigation', { name: 'Páginas' }).textContent).toContain('1–8 de 25')
   expect(screen.getByRole('button', { name: 'Página 1' }).getAttribute('aria-current')).toBe('page')
-  for (const name of ['Primeira página', 'Página anterior'])
-    expect(screen.getByRole('button', { name }).hasAttribute('disabled')).toBe(true)
+  expect(screen.getByRole('button', { name: 'Página anterior' }).hasAttribute('disabled')).toBe(
+    true,
+  )
+  expect(screen.queryByRole('button', { name: 'Primeira página' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }))
   expect(onPage).toHaveBeenLastCalledWith(2)
   fireEvent.click(screen.getByRole('button', { name: 'Página 3' }))
   expect(onPage).toHaveBeenLastCalledWith(3)
-  fireEvent.click(screen.getByRole('button', { name: 'Última página' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Página 4' }))
   expect(onPage).toHaveBeenLastCalledWith(4)
   onPage.mockClear()
   fireEvent.click(screen.getByRole('button', { name: 'Página 1' }))
@@ -38,8 +40,8 @@ test('the pager shows the range and turns pages', () => {
   expect(screen.getByRole('navigation', { name: 'Páginas de jogos' }).textContent).toContain(
     '25–25 de 25',
   )
-  expect(screen.getByRole('button', { name: 'Última página' }).hasAttribute('disabled')).toBe(true)
-  fireEvent.click(screen.getByRole('button', { name: 'Primeira página' }))
+  expect(screen.getByRole('button', { name: 'Próxima página' }).hasAttribute('disabled')).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: 'Página 1' }))
   expect(onPage).toHaveBeenLastCalledWith(1)
 })
 

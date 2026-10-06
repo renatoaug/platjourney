@@ -13,6 +13,7 @@ import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Markdown } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
+import './tip.css'
 
 /** Also read by the notifications panel, which shows the same items. */
 export const messages = defineMessages({

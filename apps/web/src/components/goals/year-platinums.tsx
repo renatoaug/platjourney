@@ -8,6 +8,8 @@ import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
 import { Pager } from '../../ui/pager'
 import { useKept } from './use-kept'
+import '../guide.css'
+import './year-platinums.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

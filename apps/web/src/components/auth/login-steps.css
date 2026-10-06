@@ -1,0 +1,95 @@
+@layer screens {
+  .auth-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    display: grid;
+    gap: 14px;
+  }
+
+  .auth-steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 36px;
+    color: var(--color-fg-muted);
+  }
+
+  .auth-steps li b {
+    color: var(--color-fg);
+    font-weight: var(--weight-medium);
+  }
+
+  .auth-steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: -1px;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-round);
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-accent);
+    font:
+      600 12px / 22px "Space Grotesk",
+      sans-serif;
+    text-align: center;
+  }
+
+  .auth-demo {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+    font-size: var(--text-base);
+  }
+
+  .auth-who img {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-round);
+    background: var(--color-bg-subtle);
+  }
+
+  .auth-who b {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+  }
+
+  .auth-who small {
+    color: var(--color-fg-muted);
+  }
+
+  .auth-code {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px 14px;
+    background: var(--color-bg-subtle);
+    border: 1px dashed var(--color-border-strong);
+    color: var(--color-accent);
+    font: var(--weight-semibold) var(--text-2xl) / var(--leading-none) var(--font-display);
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .auth-code:hover {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-accent);
+  }
+
+  .auth-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: var(--leading-snug);
+  }
+
+  .auth-check input {
+    width: auto;
+    margin-top: 2px;
+  }
+}

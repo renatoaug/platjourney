@@ -10,6 +10,7 @@ import { UserText } from '../ui/markdown'
 import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote } from '../ui/source-note'
 import { EmptyState, PendingState } from '../ui/states'
+import './guide.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -103,7 +104,7 @@ const messages = defineMessages({
       summary: 'Resumo',
       key: 'Troféus-chave',
       missables: 'Perdíveis',
-      missablesSkeleton: 'Missables',
+      missablesSkeleton: 'Perdíveis',
       roadmap: 'Roadmap',
       glossary: 'Glossário',
     },
@@ -306,12 +307,15 @@ function BugStatus({ status, reported }: { status?: string | null; reported?: st
   )
 }
 
+/** The game's trophy a guide names, by its pt-BR or English name. */
+const trophyNamed = (c: GuideGame, name: string) =>
+  (c.trophies ?? []).find(
+    (t) => normalize(t.name) === normalize(name) || normalize(t.nameEn) === normalize(name),
+  )
+
 function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
   const tr = useMessages(messages)
-  const findTrophy = (name: string) =>
-    (c.trophies ?? []).find(
-      (t) => normalize(t.name) === normalize(name) || normalize(t.nameEn) === normalize(name),
-    )
+  const findTrophy = (name: string) => trophyNamed(c, name)
   const featured = (label: string, tone: string, item?: KeyTrophy | null) => {
     if (!item) return null
     const trophy = findTrophy(item.trophy)
@@ -633,6 +637,30 @@ function DeepGuide({ dg }: { dg?: DeepGuideStats | null }) {
   return null
 }
 
+/** A missable trophy: its art, when it can be lost, and how to get it in time. */
+function Missable({ c, m }: { c: GuideGame; m: NonNullable<GuideDetail['missables']>[number] }) {
+  const tr = useMessages(messages)
+  const trophy = trophyNamed(c, m.trophy)
+  return (
+    <div className="missable">
+      <KeyArt trophy={trophy} />
+      <div className="missable-body">
+        <div className="missable-head">
+          <b>{m.trophy}</b>
+          {trophy?.earned && (
+            <span className="key-earned">
+              <Icon name="check" />
+              <span>{tr('key.earned')}</span>
+            </span>
+          )}
+        </div>
+        <p className="missable-when">{m.when}</p>
+        <p className="muted">{plainText(m.how)}</p>
+      </div>
+    </div>
+  )
+}
+
 /** The guide skeleton, also shown (with a pending line) while the guide is being researched. */
 export function GuideSkeleton() {
   const t = useMessages(messages)
@@ -678,7 +706,43 @@ export function GuideSkeleton() {
  */
 export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; id?: string }) {
   const tr = useMessages(messages)
-  const [selected, setSelected] = useState(0)
+  const [selected, setSelectedState] = useState(0)
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const [moreTabs, setMoreTabs] = useState(false)
+  // A shorter panel shrinks the page; when the tabs had scrolled out of sight above, bring them back
+  // to the top of the screen instead of leaving the reader wherever the shorter page ends.
+  const setSelected = (i: number) => {
+    const row = tabsRef.current
+    const above = row ? row.getBoundingClientRect().top < 0 : false
+    setSelectedState(i)
+    // Slide the chosen tab into view inside the row, without moving the page.
+    const tab = tabRefs.current[i]
+    if (
+      row &&
+      tab &&
+      (tab.offsetLeft < row.scrollLeft ||
+        tab.offsetLeft + tab.offsetWidth > row.scrollLeft + row.clientWidth)
+    )
+      row.scrollTo({ left: tab.offsetLeft - 16, behavior: 'smooth' })
+    if (above && row)
+      requestAnimationFrame(() =>
+        window.scrollTo({ top: window.scrollY + row.getBoundingClientRect().top - 16 }),
+      )
+    // Otherwise the tabs stay where they were on screen. Safari moves the page when the panel
+    // changes height; this puts it back before the frame is painted.
+    else if (row) {
+      const top = row.getBoundingClientRect().top
+      requestAnimationFrame(() => {
+        const moved = row.getBoundingClientRect().top - top
+        if (Math.abs(moved) > 1) window.scrollBy({ top: moved })
+      })
+    }
+  }
+  // A fade on the right edge says there are more tabs to swipe to.
+  const checkTabs = () => {
+    const el = tabsRef.current
+    if (el) setMoreTabs(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const g = c?.guide
   if (!g && c?.queued)
@@ -730,11 +794,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
       <Fragment key="missables">
         {missables.map((m, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: one trophy can be missable in two places; the list never reorders
-          <div key={`${m.trophy}-${i}`} className="missable">
-            <b>{m.trophy}</b> — {m.when}
-            <br />
-            <span className="muted">{plainText(m.how)}</span>
-          </div>
+          <Missable key={`${m.trophy}-${i}`} c={c} m={m} />
         ))}
       </Fragment>
     ) : (
@@ -778,7 +838,19 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
     <>
       <h2>{tr('title')}</h2>
       <DeepGuide dg={c.deepGuide} />
-      <div className="tabs guide-tabs" role="tablist" aria-label={tr('tabs.label')}>
+      <div
+        ref={(el) => {
+          tabsRef.current = el
+          if (el && !el.dataset.watched) {
+            el.dataset.watched = '1'
+            requestAnimationFrame(checkTabs)
+          }
+        }}
+        className={`tabs guide-tabs${moreTabs ? ' has-more' : ''}`}
+        role="tablist"
+        aria-label={tr('tabs.label')}
+        onScroll={checkTabs}
+      >
         {tabs.map(([label, count], i) => (
           <button
             key={label}
@@ -802,19 +874,21 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
           </button>
         ))}
       </div>
-      {panels.map((p, i) => (
-        <div
-          // biome-ignore lint/suspicious/noArrayIndexKey: the five panels are fixed, one per tab
-          key={i}
-          role="tabpanel"
-          id={`${id}-panel-${i}`}
-          aria-labelledby={`${id}-tab-${i}`}
-          data-panel={i}
-          hidden={i !== selected}
-        >
-          {p}
-        </div>
-      ))}
+      <div>
+        {panels.map((p, i) => (
+          <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: the five panels are fixed, one per tab
+            key={i}
+            role="tabpanel"
+            id={`${id}-panel-${i}`}
+            aria-labelledby={`${id}-tab-${i}`}
+            data-panel={i}
+            hidden={i !== selected}
+          >
+            {p}
+          </div>
+        ))}
+      </div>
     </>
   )
 }

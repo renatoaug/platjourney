@@ -5,6 +5,7 @@ import type { YearGoals } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { season } from './goals/season'
+import './annual-goal.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

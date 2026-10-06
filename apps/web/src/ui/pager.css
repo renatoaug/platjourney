@@ -1,0 +1,77 @@
+@layer ui {
+  /* The count on the left, the pages on the right; centered without the count on a phone. */
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .pager > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pager-arrow .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Quiet controls: no frames, the current page as a soft accent chip. */
+  .pager-arrow,
+  .pager-page {
+    display: inline-grid;
+    place-items: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 6px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-fg-muted);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
+
+  .pager-arrow:hover:not(:disabled),
+  .pager-page:hover:not(:disabled) {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  .pager-arrow:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .pager-pages {
+    display: flex;
+    align-items: center;
+  }
+
+  .pager-pages .pager-page[aria-current="page"] {
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  .pager-gap {
+    min-width: 20px;
+    text-align: center;
+  }
+
+  @media (max-width: 560px) {
+    .pager {
+      justify-content: center;
+    }
+
+    .pager > span {
+      display: none;
+    }
+  }
+}

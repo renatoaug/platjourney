@@ -1,0 +1,156 @@
+@layer screens {
+  /* A setting: title and help on the left, a switch on the right. */
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 6px;
+    cursor: pointer;
+  }
+
+  .setting-row + .setting-row {
+    margin-top: 18px;
+  }
+
+  .setting-row.static {
+    cursor: default;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+  }
+
+  .setting-text {
+    display: grid;
+    gap: 4px;
+  }
+
+  .setting-text b {
+    font-weight: var(--weight-medium);
+  }
+
+  .setting-text small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+    line-height: var(--leading-snug);
+  }
+
+  .account-id {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .telegram-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .account-avatar-empty {
+    display: grid;
+    place-items: center;
+    color: var(--color-fg-muted);
+  }
+
+  /* A checkbox drawn as an on/off switch: <input type="checkbox" role="switch" class="switch">. */
+  input[type="checkbox"].switch {
+    appearance: none;
+    flex: none;
+    position: relative;
+    width: 40px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-bg);
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      border-color 0.2s;
+  }
+
+  input[type="checkbox"].switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-round);
+    background: var(--color-fg-muted);
+    transition:
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+      background 0.2s;
+  }
+
+  input[type="checkbox"].switch:checked {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  input[type="checkbox"].switch:checked::after {
+    transform: translateX(18px);
+    background: var(--color-on-accent);
+  }
+
+  input[type="checkbox"].switch:disabled {
+    opacity: 0.6;
+  }
+
+  /* ---------- account ---------- */
+  /* Over .auth-form's margin, whichever of the two files loads first. */
+  .auth-form.account-form {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .account-form[hidden] {
+    display: none;
+  }
+
+  .danger-zone {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  button.text-danger,
+  button.text-danger:hover {
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--color-danger);
+    font-size: var(--text-base);
+  }
+
+  button.text-danger:hover {
+    text-decoration: underline;
+  }
+
+  .telegram-logo {
+    width: 26px;
+    height: 26px;
+    flex: none;
+  }
+
+  .account-id img,
+  .account-avatar-empty {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-round);
+    flex: none;
+    object-fit: cover;
+    background: var(--color-bg-subtle);
+  }
+
+  .account-id b {
+    display: block;
+    font-size: var(--text-lg);
+  }
+
+  .account-id small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+  }
+}

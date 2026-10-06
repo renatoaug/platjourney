@@ -6,6 +6,7 @@ import type { ServerStatus } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState } from '../ui/states'
+import './servers.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

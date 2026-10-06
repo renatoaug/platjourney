@@ -1,0 +1,429 @@
+@layer screens {
+  .nexo-chat-heading .eyebrow,
+  .message-author small {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .message-game span:not(.cover-placeholder) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chat-welcome > .eyebrow {
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 560px) {
+    #chat-chips {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      /* Its own width never widens the card: the row scrolls inside whatever space it gets. */
+      contain: inline-size;
+      /* Sideways only: overflow-x alone would let the row scroll (and clip) up and down too. */
+      overflow-y: hidden;
+      padding-block: 2px;
+      flex: 0 0 100%;
+      width: 100%;
+      scrollbar-width: none;
+      mask-image: linear-gradient(90deg, var(--color-fg) calc(100% - 28px), transparent);
+    }
+
+    #chat-chips::-webkit-scrollbar {
+      display: none;
+    }
+
+    #chat-chips .chip {
+      flex: none;
+      white-space: nowrap;
+    }
+  }
+
+  .chat-page {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: calc(100dvh - 145px);
+    min-height: 460px;
+    padding: 28px;
+  }
+
+  .chat-page .page-head {
+    margin-bottom: 8px;
+  }
+
+  .msg {
+    max-width: 82%;
+    white-space: pre-wrap;
+    padding: 17px 20px;
+    border-radius: var(--radius-control);
+    font-size: var(--text-base);
+    line-height: var(--leading-loose);
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    border-bottom-right-radius: 3px;
+  }
+
+  .msg.assistant {
+    align-self: flex-start;
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-bottom-left-radius: 3px;
+  }
+
+  .chatform {
+    display: flex;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .chatform input,
+  .chatform textarea {
+    flex: 1;
+  }
+
+  .chatform {
+    align-items: center;
+  }
+
+  .chat-field {
+    flex: 1;
+    display: grid;
+  }
+
+  .chat-box {
+    position: relative;
+    display: grid;
+  }
+
+  .chatform textarea {
+    font: inherit;
+    line-height: var(--leading-snug);
+    resize: none;
+    min-height: 44px;
+    max-height: 200px;
+    /* Sized from its content in chat.tsx; it scrolls only past the tallest size. */
+    overflow-y: hidden;
+  }
+
+  .chatform textarea {
+    padding-right: 84px;
+  }
+
+  .chat-count.full {
+    color: var(--color-danger);
+  }
+
+  @media (max-width: 760px) {
+    .chat-page {
+      height: calc(100dvh - 185px);
+      min-height: 400px;
+      padding: 20px;
+    }
+
+    .chat-page .chips {
+      gap: 5px;
+    }
+
+    .chat-page .chip {
+      font-size: var(--text-xs);
+      padding: 6px 8px;
+    }
+
+    .msg {
+      max-width: 95%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .chatform {
+      gap: 6px;
+    }
+
+    .chatform input,
+    .chatform textarea {
+      font-size: var(--text-md);
+      padding: 10px;
+    }
+
+    /* The count sits inside the field, bottom right: the text keeps clear of it. */
+    .chatform textarea {
+      padding-right: 84px;
+    }
+
+    .chatform button {
+      min-height: 36px;
+      padding: 8px 14px;
+    }
+  }
+
+  .chat-welcome .inline-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Nexo: a controller with a trophy on the head, a gaming visor and green eyes. */
+  .nexo-avatar {
+    display: block;
+    width: 44px;
+    height: 44px;
+    aspect-ratio: 1;
+    flex: 0 0 auto;
+    object-fit: contain;
+  }
+
+  .nexo-chat-heading > .nexo-avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .nexo-chat-heading .eyebrow {
+    color: var(--color-accent);
+    margin-bottom: 4px;
+  }
+
+  .chat-welcome > .nexo-avatar {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 22px;
+  }
+
+  .msg.assistant {
+    white-space: normal;
+  }
+
+  .message-author {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 13px;
+  }
+
+  .message-author .nexo-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .message-author > span {
+    color: var(--color-fg);
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    line-height: var(--leading-tight);
+  }
+
+  .message-author small {
+    display: block;
+    margin-top: 3px;
+    color: var(--color-fg-muted);
+    font: var(--text-xs) / var(--leading-snug) var(--font-body);
+  }
+
+  .message-content {
+    overflow-wrap: anywhere;
+  }
+
+  .message-content p {
+    margin: 0 0 10px;
+  }
+
+  .message-content p:last-child,
+  .message-content ul:last-child {
+    margin-bottom: 0;
+  }
+
+  .message-content ul {
+    margin: 0 0 10px;
+    padding-left: 18px;
+  }
+
+  .message-content li {
+    margin: 3px 0;
+  }
+
+  .message-content strong {
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  .message-content code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    padding: 1px 5px;
+    border-radius: var(--radius-tag);
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-tint), transparent);
+  }
+
+  @media (max-width: 480px) {
+    .nexo-chat-heading > .nexo-avatar {
+      width: 50px;
+      height: 50px;
+    }
+  }
+
+  .nexo-chat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .nexo-chat-top > .page-head {
+    flex: 0 1 auto;
+  }
+
+  #chat-chips {
+    margin: 0 0 0 auto;
+    justify-content: flex-end;
+    gap: 6px;
+    flex: 1 1 340px;
+  }
+
+  #chat-chips .chip {
+    padding: 5px 9px;
+    min-height: 28px;
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+  }
+
+  .message-author {
+    flex-wrap: wrap;
+  }
+
+  .message-meta {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    font-size: var(--text-xs);
+    line-height: var(--leading-snug);
+    color: var(--color-fg-muted);
+  }
+
+  .message-meta time {
+    white-space: nowrap;
+  }
+
+  .msg.user .message-meta {
+    color: color-mix(in srgb, var(--color-on-accent) var(--alpha-dim), transparent);
+    margin-bottom: 8px;
+  }
+
+  .msg.user .message-meta:empty {
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    #chat-chips {
+      flex-basis: 100%;
+      justify-content: flex-start;
+      margin-left: 0;
+    }
+
+    .message-author .message-meta {
+      flex-basis: 100%;
+    }
+  }
+
+  .chat-welcome {
+    max-width: 340px;
+  }
+
+  .chat-welcome .chat-welcome h2 {
+    color: var(--color-fg);
+    font-size: var(--text-4xl);
+    margin-bottom: 10px;
+  }
+
+  .chat-count {
+    /* Inside the field, bottom right; the text keeps clear of it with the field's right padding. */
+    position: absolute;
+    right: 12px;
+    bottom: 9px;
+    font-size: var(--text-xs);
+    color: var(--color-fg-subtle);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .chat-cut {
+    margin-top: 4px;
+    font-size: var(--text-xs);
+    color: var(--color-danger);
+  }
+
+  .chat-count.near {
+    color: var(--color-fg-muted);
+  }
+
+  .nexo-chat-heading {
+    display: flex;
+    align-items: center;
+    gap: 17px;
+  }
+
+  .nexo-chat-heading h1 {
+    font-size: var(--text-5xl);
+  }
+
+  .nexo-chat-heading p {
+    margin-top: 4px;
+  }
+
+  @media (max-width: 480px) {
+    .nexo-chat-heading {
+      gap: 12px;
+    }
+
+    .nexo-chat-heading h1 {
+      font-size: var(--text-4xl);
+    }
+  }
+
+  .message-game {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 220px;
+    padding: 3px 10px 3px 3px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .message-game:hover {
+    background: color-mix(in srgb, currentColor 18%, transparent);
+  }
+
+  .message-game-cover {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    object-position: center 20%;
+    border-radius: var(--radius-round);
+    flex-shrink: 0;
+  }
+
+  .demo-lead p {
+    margin: 4px 0 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-base);
+  }
+
+  .demo-exchange {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}

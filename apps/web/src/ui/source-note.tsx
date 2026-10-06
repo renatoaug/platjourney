@@ -1,5 +1,6 @@
 /** Where a piece of advice came from: a bookmark icon and the source names, under a divider. */
 import { Icon } from './icon'
+import './source-note.css'
 
 export function SourceNote({ text }: { text: string }) {
   return (

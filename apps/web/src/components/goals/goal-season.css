@@ -1,0 +1,312 @@
+@layer screens {
+  .goal-season-icon .icon {
+    width: 23px;
+    height: 23px;
+  }
+
+  .goal-season-heading .eyebrow {
+    font-size: var(--text-xs);
+    margin-bottom: 3px;
+  }
+
+  .goal-progress-heading .goal-big {
+    font-size: var(--text-display-lg);
+  }
+
+  .goal-progress-heading .goal-big span {
+    font-size: var(--text-4xl);
+  }
+
+  .goal-control-icon .icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .goal-editor .eyebrow {
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .goal-unit {
+    display: block;
+    margin-top: 8px;
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+  }
+
+  .goal-editor-actions .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .goal-feedback.error {
+    color: var(--color-danger);
+  }
+
+  .goal-season {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 40px;
+    padding: 32px;
+    background: linear-gradient(115deg, var(--color-surface-raised), var(--color-surface) 65%);
+  }
+
+  .goal-season-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+
+  .goal-season-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    border-radius: var(--radius-control);
+    color: var(--color-accent);
+  }
+
+  .goal-season-heading h2 {
+    margin: 0;
+    font-size: var(--text-2xl);
+  }
+
+  .goal-progress-heading {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .goal-progress-caption {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+    line-height: var(--leading-body);
+  }
+
+  .goal-percent {
+    margin-left: auto;
+    align-self: flex-end;
+    color: var(--color-accent);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+  }
+
+  .goal-pace {
+    font-size: var(--text-md);
+    color: var(--color-fg-muted);
+    margin-top: 14px;
+  }
+
+  .goal-control-wrap {
+    border-left: 1px solid var(--color-border-strong);
+    padding-left: 32px;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  #goal-control {
+    position: relative;
+  }
+
+  .goal-control-icon {
+    position: absolute;
+    right: 0;
+    top: 0;
+    color: var(--color-accent-muted);
+  }
+
+  .goal-target-value {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin: 8px 0 18px;
+    font:
+      500 38px / 1.3 "Space Grotesk",
+      sans-serif;
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .goal-target-value span {
+    font:
+      12px Inter,
+      sans-serif;
+    color: var(--color-fg-muted);
+    letter-spacing: 0;
+  }
+
+  #goal-edit {
+    padding: 9px 13px;
+    font-size: var(--text-sm);
+  }
+
+  .goal-stepper {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-control);
+    transition: border-color 0.2s;
+  }
+
+  .goal-stepper:focus-within {
+    border-color: var(--color-accent-dim);
+    box-shadow: var(--shadow-focus);
+  }
+
+  .goal-stepper button {
+    width: 34px;
+    height: 36px;
+    padding: 0;
+    color: var(--color-fg-muted);
+    background: var(--color-surface-raised);
+    border-radius: var(--radius-tag);
+  }
+
+  .goal-stepper button:hover {
+    color: var(--color-accent);
+    background: var(--color-border-strong);
+  }
+
+  .goal-stepper button:disabled {
+    cursor: default;
+    opacity: 0.3;
+  }
+
+  .goal-stepper input {
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    padding: 0 5px;
+    outline: none;
+    border-radius: 0;
+    color: var(--color-fg);
+    background: transparent;
+    text-align: center;
+    font:
+      500 27px / 1.5 "Space Grotesk",
+      sans-serif;
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  .goal-stepper input::-webkit-inner-spin-button,
+  .goal-stepper input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .goal-stepper input:focus-visible {
+    outline: none;
+  }
+
+  .goal-editor-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 17px;
+  }
+
+  .goal-editor-actions button {
+    font-size: var(--text-xs);
+    padding: 9px 10px;
+  }
+
+  .goal-editor-actions .goal-save {
+    flex: 1;
+    gap: 5px;
+  }
+
+  .goal-feedback {
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+  }
+
+  .goal-feedback:not(:empty) {
+    margin-top: 10px;
+  }
+
+  @media (max-width: 1100px) {
+    .goal-season {
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 24px;
+      padding: 25px;
+    }
+
+    .goal-control-wrap {
+      padding-left: 24px;
+    }
+
+    .goal-progress-caption {
+      display: none;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .goal-season {
+      grid-template-columns: 1fr;
+      gap: 25px;
+      padding: 22px;
+    }
+
+    .goal-control-wrap {
+      border-left: 0;
+      border-top: 1px solid var(--color-border);
+      padding: 22px 0 0;
+    }
+
+    .goal-season-heading {
+      gap: 12px;
+    }
+
+    .goal-season-heading h2 {
+      font-size: var(--text-xl);
+    }
+
+    .goal-progress-caption {
+      display: block;
+    }
+
+    .goal-control-icon {
+      top: 2px;
+    }
+
+    .goal-target-value {
+      font-size: var(--text-5xl);
+      margin-bottom: 12px;
+    }
+
+    .goal-editor-actions button {
+      min-height: 40px;
+      font-size: var(--text-md);
+    }
+
+    .goal-stepper button {
+      width: 42px;
+      height: 40px;
+    }
+
+    .goal-stepper input {
+      font-size: var(--text-5xl);
+    }
+  }
+
+  .goal-percent small {
+    color: var(--color-fg-muted);
+    font:
+      11px Inter,
+      sans-serif;
+  }
+
+  .goal-target-none {
+    margin: 12px 0 22px;
+    font-size: var(--text-lg);
+    color: var(--color-fg-muted);
+  }
+}

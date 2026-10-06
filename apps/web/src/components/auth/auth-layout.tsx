@@ -10,6 +10,7 @@ import {
 import { Icon } from '../../ui/icon'
 import { PluginSlot } from '../../ui/plugin-slot'
 import { LanguageSwitcher } from '../language-switcher'
+import './auth-layout.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

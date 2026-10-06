@@ -1,0 +1,25 @@
+@layer screens {
+  .game-columns {
+    --two-column-layout: repeat(2, minmax(0, 1fr));
+  }
+
+  .game-switch {
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    .game-switch {
+      display: flex;
+      margin-bottom: 12px;
+    }
+
+    .game-switch button {
+      flex: 1;
+    }
+
+    .game-columns-wrap[data-side="trophies"] .game-columns > :last-child,
+    .game-columns-wrap[data-side="guide"] .game-columns > :first-child {
+      display: none;
+    }
+  }
+}

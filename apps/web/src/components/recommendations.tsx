@@ -11,6 +11,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { useDemo } from './demo'
 import { titleHref } from './tip'
+import './recommendations.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -335,7 +336,7 @@ export function Taste({ profile }: { profile: TasteProfile | null }) {
 export function RecsSkeleton({ n = 4 }: { n?: number }) {
   return repeat(n, () => (
     <div className="row">
-      <Sk w="92px" h={43} style={{ borderRadius: 4, flex: 'none' }} />
+      <Sk w="92px" h={43} style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }} />
       <div className="grow">
         <Sk w="45%" h={12} />
         <Sk w="30%" h={10} style={{ marginTop: 8 }} />

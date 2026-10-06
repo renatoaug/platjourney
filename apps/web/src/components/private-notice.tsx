@@ -1,5 +1,7 @@
 /** Notice shown when the PSN profile keeps trophies private, with the steps to open them. */
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import './auth/login-steps.css'
+import './private-notice.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

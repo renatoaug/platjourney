@@ -64,7 +64,7 @@ test('a filter with nothing has its own empty state, with a way back', () => {
   renderApp(<History />, {
     value: { data: { ...SAMPLE_DATA, tips: TIPS }, cache: { tipKind: 'route' } },
   })
-  expect(screen.getByText('nenhuma de rota ainda')).toBeTruthy()
+  expect(screen.getByText('Nada de rota ainda')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Ver todos' }))
   expect(screen.getAllByRole('article')).toHaveLength(3)
 })
@@ -73,7 +73,7 @@ test('an unknown kind is named as it came', () => {
   renderApp(<History />, {
     value: { data: { ...SAMPLE_DATA, tips: TIPS }, cache: { tipKind: 'novo' } },
   })
-  expect(screen.getByText('nenhuma de novo ainda')).toBeTruthy()
+  expect(screen.getByText('Nada de novo ainda')).toBeTruthy()
 })
 
 test('no history yet', () => {

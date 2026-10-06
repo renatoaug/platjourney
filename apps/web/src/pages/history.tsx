@@ -1,13 +1,15 @@
 /** History page: everything Nexo said, filterable by kind, as a day-by-day timeline. */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { TipItem, TipSkeleton } from '../components/tip'
 import { defineMessages, Language, type MessageKey, useMessages } from '../i18n/i18n'
+import { api } from '../lib/api'
 import { fmtDay } from '../lib/format'
 import type { Tip } from '../lib/types'
 import { repeat } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
+import './history.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -25,7 +27,8 @@ const messages = defineMessages({
     emptyTitle: 'Nada no histórico ainda',
     empty:
       'Tudo que o Nexo te mandar, dicas, avisos de troféu e fim de sessão, fica guardado aqui.',
-    emptyKind: 'nenhuma de {kind} ainda',
+    emptyKind: 'Nada de {kind} ainda',
+    emptyKindHint: 'Quando o Nexo mandar uma mensagem desse tipo, ela aparece aqui.',
     seeAll: 'Ver todos',
     loadFailed:
       'Não conseguimos carregar o histórico. Use o botão de atualizar para tentar novamente.',
@@ -44,7 +47,8 @@ const messages = defineMessages({
     },
     emptyTitle: 'Nothing in the history yet',
     empty: 'Everything Nexo sends you, tips, trophy notices and session ends, is kept here.',
-    emptyKind: 'no {kind} yet',
+    emptyKind: 'No {kind} yet',
+    emptyKindHint: 'When Nexo sends a message of this kind, it shows up here.',
     seeAll: 'See all',
     loadFailed: 'We could not load the history. Use the refresh button to try again.',
   },
@@ -60,6 +64,43 @@ const FILTERS: { kind: string; label: MessageKey<typeof messages> }[] = [
   { kind: 'chat', label: 'kinds.chat' },
 ]
 const LABEL = new Map(FILTERS.map((f) => [f.kind, f.label]))
+
+// The app state brings the newest 50; the page asks for 30 older ones each time its end shows.
+const FIRST = 50
+const BATCH = 30
+
+/** Older tips for the endless timeline, appended as the end of the list comes into view. */
+function useOlderTips(first: Tip[] | undefined) {
+  const [older, setOlder] = useState<Tip[]>([])
+  const [done, setDone] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const end = useRef<HTMLDivElement>(null)
+  const all = first ? [...first, ...older] : []
+  const last = all[all.length - 1]?.created_at
+  const exhausted = done || !first || first.length < FIRST
+  useEffect(() => {
+    const el = end.current
+    if (exhausted || loading || !last || !el) return
+    const seen = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        seen.disconnect()
+        setLoading(true)
+        api<Tip[]>(`/api/tips?before=${encodeURIComponent(last)}`)
+          .then((more) => {
+            setOlder((o) => [...o, ...more])
+            if (more.length < BATCH) setDone(true)
+          })
+          .catch(() => setDone(true))
+          .finally(() => setLoading(false))
+      },
+      { rootMargin: '300px' },
+    )
+    seen.observe(el)
+    return () => seen.disconnect()
+  }, [exhausted, loading, last])
+  return { all, loading, end }
+}
 
 // Grouped by day, newest first (the server already sends them in that order).
 function byDay(list: Tip[]) {
@@ -83,15 +124,17 @@ function Timeline({ tips, kind, onAll }: { tips: Tip[]; kind: string; onAll: () 
   if (!filtered.length)
     return (
       <EmptyState
+        icon="history"
+        title={t('emptyKind', {
+          kind: LABEL.has(kind) ? t(LABEL.get(kind) as MessageKey<typeof messages>) : kind,
+        })}
         action={
-          <button type="button" className="ghost sm" onClick={onAll}>
+          <button type="button" className="text-link" onClick={onAll}>
             {t('seeAll')}
           </button>
         }
       >
-        {t('emptyKind', {
-          kind: LABEL.has(kind) ? t(LABEL.get(kind) as MessageKey<typeof messages>) : kind,
-        })}
+        {t('emptyKindHint')}
       </EmptyState>
     )
   return (
@@ -114,6 +157,7 @@ function Timeline({ tips, kind, onAll }: { tips: Tip[]; kind: string; onAll: () 
 export function History() {
   const t = useMessages(messages)
   const { data, sync, cache } = useApp()
+  const older = useOlderTips(data?.tips)
   // The chosen filter survives navigation.
   const [kind, setKindState] = useState(() =>
     typeof cache.tipKind === 'string' ? cache.tipKind : '',
@@ -147,7 +191,11 @@ export function History() {
       <div className="card">
         <div id="tips">
           {data ? (
-            <Timeline tips={data.tips} kind={kind} onAll={() => setKind('')} />
+            <>
+              <Timeline tips={older.all} kind={kind} onAll={() => setKind('')} />
+              {older.loading && repeat(3, () => <TipSkeleton />)}
+              <div ref={older.end} aria-hidden="true" />
+            </>
           ) : sync === 'failed' ? (
             <ErrorState>{t('loadFailed')}</ErrorState>
           ) : (

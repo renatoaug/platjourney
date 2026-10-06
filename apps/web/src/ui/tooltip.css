@@ -1,0 +1,42 @@
+@layer ui {
+  /* Tooltip */
+  /* Fixed to the viewport: an absolute node left near the bottom would stretch the page past the app. */
+  .tooltip {
+    position: fixed;
+    z-index: 60;
+    pointer-events: none;
+    padding: 5px 9px;
+    border-radius: var(--radius-tag);
+    background: var(--color-fg);
+    color: var(--color-bg-subtle);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(3px);
+    transition:
+      opacity 0.12s,
+      transform 0.12s;
+  }
+
+  .tooltip::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    width: 8px;
+    height: 8px;
+    background: inherit;
+    transform: translateX(-50%) rotate(45deg);
+  }
+
+  .tooltip.below::after {
+    bottom: auto;
+    top: -4px;
+  }
+
+  .tooltip.show {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,0 +1,283 @@
+@layer screens {
+  .recommendation-meta,
+  .recommendation-meta > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .recommendation-meta .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .recommendation-heading .n {
+    flex: 1 1 150px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* Taste profile explaining the recommendations: one collapsed strip under the list */
+  .taste {
+    margin-top: 14px;
+    border-top: 1px solid var(--color-border);
+    padding-top: 14px;
+  }
+
+  .taste summary {
+    display: grid;
+    gap: 10px;
+    list-style: none;
+    cursor: pointer;
+    border-radius: var(--radius-tag);
+  }
+
+  .taste summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .taste-head .eyebrow {
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+  }
+
+  .taste summary:hover .taste-more,
+  .taste[open] .taste-more {
+    color: var(--color-accent);
+  }
+
+  .taste-more .icon {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s;
+  }
+
+  .taste[open] .taste-more .icon {
+    transform: rotate(180deg);
+  }
+
+  .taste-tag.avoid {
+    border-style: dashed;
+  }
+
+  .rec-save:focus-visible,
+  .rec-save.saved {
+    opacity: 1;
+  }
+
+  .rec-save:hover,
+  .rec-save.saved {
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+  }
+
+  .rec-save.saved:hover {
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) var(--alpha-wash), transparent);
+  }
+
+  .rec-save .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .rec-dismiss:focus-visible {
+    opacity: 1;
+  }
+
+  .rec-dismiss .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .similar-to .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  @media (max-width: 760px) {
+    .recommendation-heading .n {
+      flex: initial;
+    }
+  }
+
+  .recommendation-heading {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-bottom: 8px;
+  }
+
+  .recommendation-meta {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: auto;
+    gap: 8px 12px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .taste-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .taste-genres {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .taste-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+    transition: color 0.15s;
+  }
+
+  .taste-body {
+    display: grid;
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .taste-body p {
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--color-fg-soft);
+  }
+
+  .taste-group {
+    display: grid;
+    gap: 8px;
+  }
+
+  .taste-label {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-fg-subtle);
+  }
+
+  .taste-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .taste-tag {
+    font-size: var(--text-xs);
+    padding: 3px 9px;
+    border-radius: var(--radius-tag);
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-fg-muted);
+  }
+
+  .taste-tag.genre {
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+  }
+
+  .taste-tag.trait {
+    color: var(--color-fg);
+  }
+
+  .row-arrow {
+    color: var(--color-fg-muted);
+    flex: none;
+  }
+
+  .rec-ask small {
+    display: block;
+    margin-top: 4px;
+  }
+
+  .rec-reasons {
+    margin-top: 12px;
+  }
+
+  .rec-ask-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  /* Dismiss a recommendation */
+  .rec-actions {
+    display: flex;
+    gap: 2px;
+    flex: none;
+  }
+
+  .rec-save {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    flex: none;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--color-fg-subtle);
+    opacity: 0;
+    transition:
+      opacity 0.15s,
+      color 0.15s;
+  }
+
+  .rec-dismiss {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    flex: none;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--color-fg-subtle);
+    opacity: 0;
+    transition:
+      opacity 0.15s,
+      color 0.15s;
+  }
+
+  .rec-dismiss:hover {
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) var(--alpha-wash), transparent);
+  }
+
+  @media (hover: none) {
+    .rec-dismiss,
+    .rec-save {
+      opacity: 1;
+    }
+  }
+
+  .similar-to {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+  }
+
+  .recommendation-meta > span {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 760px) {
+    .recommendation-heading {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .recommendation-meta {
+      margin-left: 0;
+      justify-content: flex-start;
+    }
+  }
+}

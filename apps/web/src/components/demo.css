@@ -1,0 +1,75 @@
+@layer screens {
+  .demo-banner .eyebrow {
+    margin-bottom: 2px;
+    color: var(--color-accent);
+  }
+
+  .demo-connect {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-top: 15px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .demo-connect p {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-base);
+  }
+
+  @media (max-width: 760px) {
+    .demo-banner,
+    .demo-connect {
+      flex-wrap: wrap;
+    }
+
+    .demo-banner button,
+    .demo-connect button {
+      width: 100%;
+    }
+  }
+
+  /* ---------- demo ---------- */
+  .demo-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    border: 1px solid var(--color-accent-muted);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-tint), var(--color-surface));
+  }
+
+  .demo-banner-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-round);
+    color: var(--color-accent);
+    background: var(--color-accent-dim);
+  }
+
+  .demo-banner p {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    color: var(--color-fg);
+    font-size: var(--text-base);
+  }
+
+  .demo-banner button {
+    flex: none;
+  }
+
+  .demo-note {
+    margin: 10px 0 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+  }
+}

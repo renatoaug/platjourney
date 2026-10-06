@@ -1,3 +1,14 @@
+/*
+ * The cascade, in order: Tailwind's tokens, then base (src/styles), ui (src/ui) and screens
+ * (components and pages), then Tailwind's utilities. A later layer wins over an earlier one
+ * whatever the selector or the order the files load in; inside a layer, the more specific
+ * selector wins. This file has to be the first CSS loaded (main.tsx imports it first).
+ */
+@layer theme, base, ui, screens, utilities;
+
 @import "./theme.css";
 @import "./tailwind.css";
-@import "./styles.css";
+@import "./base.css";
+@import "./controls.css";
+@import "./surfaces.css";
+@import "./page.css";

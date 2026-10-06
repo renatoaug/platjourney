@@ -1,0 +1,18 @@
+@layer screens {
+  .server-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .server-status .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .server-status {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    margin-left: 7px;
+  }
+}

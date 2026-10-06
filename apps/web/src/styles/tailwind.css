@@ -1,8 +1,8 @@
 /*
  * Tailwind reads the tokens from theme.css; it has no values of its own. Utilities such as
- * bg-surface, text-fg-muted, rounded-xl, font-display and phone:/tablet: resolve to the same
+ * bg-surface, text-fg-muted, rounded-card, font-display and phone:/tablet: resolve to the same
  * variables the stylesheets use, so a change in theme.css reaches both.
- * No preflight: styles.css already sets the base styles.
+ * No preflight: base.css sets the base styles.
  */
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
@@ -76,13 +76,9 @@
   --tracking-snug: var(--tracking-snug);
   --tracking-label: var(--tracking-label);
   --tracking-caps: var(--tracking-caps);
-  --radius-xs: var(--radius-xs);
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
-  --radius-2xl: var(--radius-2xl);
-  --radius-3xl: var(--radius-3xl);
+  --radius-tag: var(--radius-tag);
+  --radius-control: var(--radius-control);
+  --radius-card: var(--radius-card);
   --radius-pill: var(--radius-pill);
   --radius-round: var(--radius-round);
   --shadow-focus: var(--shadow-focus);

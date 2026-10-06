@@ -249,6 +249,10 @@ INSTRUCTIONS = ' '.join(
         'Be surgical: name the exact mission, chapter, region, character, ally, item, build or '
         'setting. Never give generic advice such as "pick a mission where allies distract the '
         'boss"; say which mission and which allies.',
+        'Write the facts, never the research: no "the sources say", "according to the guide" or '
+        '"sources disagree" in any field. When something is unconfirmed, say it plainly '
+        '("the total is not confirmed yet"). Sources are credited only in the sources and source '
+        'fields.',
     ]
 )
 

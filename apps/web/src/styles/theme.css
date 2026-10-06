@@ -112,14 +112,13 @@
   --tracking-label: 0.1em; /* small labels */
   --tracking-caps: 0.16em; /* uppercase eyebrows */
 
-  /* Shape */
-  --radius-xs: 3px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 10px;
-  --radius-2xl: 12px;
-  --radius-3xl: 20px;
+  /* Shape: three corner sizes, by role, and the two round ones.
+     tag     small labels, badges, the chosen item inside a segmented tray
+     control buttons, inputs, chips, tabs, list items and boxes inside a card, thumbnails
+     card    cards, panels, sheets, toasts, dialogs: the outermost boxes */
+  --radius-tag: 4px;
+  --radius-control: 8px;
+  --radius-card: 12px;
   --radius-pill: 999px;
   --radius-round: 50%;
 

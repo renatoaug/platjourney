@@ -1,0 +1,389 @@
+@layer screens {
+  .goal-add-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition:
+      grid-template-rows 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 200ms ease,
+      transform 280ms ease;
+  }
+
+  .goal-add-panel.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .goal-add-panel .goal-form {
+    padding: 3px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #goal-add > button .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .goal-add-panel input {
+    width: 0;
+  }
+
+  #goal-search-results [role="option"] > span:not(.cover-placeholder) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .goal-add-panel .goal-search-field input {
+    width: 100%;
+    padding-left: 36px;
+    padding-right: 34px;
+    box-sizing: border-box;
+  }
+
+  .goal-search-field > .icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    color: var(--color-fg-muted);
+    pointer-events: none;
+  }
+
+  .goal-search-empty-icon .icon {
+    width: 21px;
+    height: 21px;
+  }
+
+  .goal-search-field.has-selection > .icon {
+    visibility: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .goal-selected {
+      animation: none;
+    }
+  }
+
+  .goal-add-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #goal-add > button {
+    flex: none;
+    height: 32px;
+    padding: 0 10px;
+    gap: 5px;
+    font-size: var(--text-sm);
+  }
+
+  #goal-add > #goal-add-cancel {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-color: transparent;
+    color: var(--color-fg-muted);
+  }
+
+  #goal-add > #goal-add-cancel:hover {
+    color: var(--color-fg);
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-wash), transparent);
+  }
+
+  .goal-form {
+    display: flex;
+    gap: 9px;
+    margin: 0 0 18px;
+  }
+
+  .goal-form input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  @media (max-width: 480px) {
+    .goal-form {
+      flex-wrap: wrap;
+    }
+  }
+
+  .goal-search-status {
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+    margin: 0 3px 16px;
+  }
+
+  .goal-search-status:empty {
+    display: none;
+  }
+
+  #goal-search-results {
+    height: 232px;
+    max-height: 232px;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+    overflow-y: auto;
+    margin: -8px 3px 12px;
+    padding: 5px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+  }
+
+  #goal-search-results [role="option"] {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: var(--radius-control);
+    cursor: pointer;
+  }
+
+  #goal-search-results [role="option"]:hover,
+  #goal-search-results [aria-selected="true"] {
+    background: var(--color-surface);
+  }
+
+  #goal-search-results [aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  #goal-search-results b {
+    display: block;
+    font-size: var(--text-base);
+  }
+
+  #goal-search-results small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .goal-search-cover {
+    width: 32px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: var(--radius-tag);
+    flex-shrink: 0;
+  }
+
+  .goal-search-field {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .goal-search-spinner {
+    display: none;
+    position: absolute;
+    right: 12px;
+    top: calc(50% - 7px);
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--color-border-strong);
+    border-top-color: var(--color-accent);
+    border-radius: var(--radius-round);
+    animation: goal-search-spin 0.7s linear infinite;
+  }
+
+  .is-searching .goal-search-spinner {
+    display: block;
+  }
+
+  #goal-search-retry {
+    padding: 5px 9px;
+    font-size: var(--text-sm);
+    margin: -6px 3px 14px;
+  }
+
+  #goal-search-retry[hidden] {
+    display: none;
+  }
+
+  #goal-search-results [role="option"] + [role="option"] {
+    border-top: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-faint), transparent);
+  }
+
+  #goal-search-results {
+    box-sizing: border-box;
+  }
+
+  .goal-search-message {
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 20px;
+    text-align: center;
+    color: var(--color-fg-muted);
+    font-size: var(--text-base);
+  }
+
+  .goal-search-message small {
+    display: block;
+  }
+
+  .goal-search-skeleton > div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    height: 62px;
+    box-sizing: border-box;
+  }
+
+  .goal-search-skeleton i {
+    width: 32px;
+    height: 42px;
+    flex: none;
+  }
+
+  .goal-search-skeleton span {
+    flex: 1;
+  }
+
+  .goal-search-skeleton b,
+  .goal-search-skeleton small {
+    display: block;
+    height: 11px;
+    width: 60%;
+  }
+
+  .goal-search-skeleton small {
+    width: 28%;
+    height: 8px;
+    margin-top: 9px;
+  }
+
+  .goal-search-skeleton i,
+  .goal-search-skeleton b,
+  .goal-search-skeleton small {
+    border-radius: var(--radius-tag);
+    background: var(--color-border);
+    animation: search-skeleton-pulse 1.4s ease-in-out infinite;
+  }
+
+  #goal-search-results.is-updating [role="option"] {
+    opacity: 0.55;
+    cursor: progress;
+    transition: opacity 150ms;
+  }
+
+  .goal-search-announcement {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  #goal-search-results:has(.goal-search-message) {
+    display: grid;
+  }
+
+  #goal-search-results[hidden] {
+    display: none;
+  }
+
+  .goal-search-message {
+    box-sizing: border-box;
+    align-self: stretch;
+    gap: 8px;
+  }
+
+  .goal-search-message strong {
+    color: var(--color-fg);
+    font-size: var(--text-body);
+    font-weight: var(--weight-medium);
+  }
+
+  .goal-search-empty-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 6px;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    color: var(--color-fg-tint-muted);
+  }
+
+  /* The game chosen in the interest search, shown as a chip over the field. */
+  .goal-search-field.has-selection input {
+    color: transparent;
+    caret-color: transparent;
+  }
+
+  .goal-selected {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    max-width: calc(100% - 18px);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 2px 3px 3px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
+    animation: goal-selected-in 0.18s ease-out;
+  }
+
+  .goal-selected-cover {
+    width: 18px;
+    height: 24px;
+    flex: none;
+    border-radius: var(--radius-tag);
+    object-fit: cover;
+  }
+
+  .goal-selected-text {
+    display: grid;
+    min-width: 0;
+    line-height: var(--leading-tight);
+  }
+
+  .goal-selected-text b,
+  .goal-selected-text small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .goal-selected-text b {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+  }
+
+  .goal-selected-text small {
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+  }
+
+  .goal-selected-clear {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-fg-muted);
+  }
+
+  .goal-selected-clear:hover {
+    color: var(--color-fg);
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-tint), transparent);
+  }
+}

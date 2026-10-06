@@ -115,15 +115,15 @@ test('many notices are paged', async () => {
   )
 })
 
-test('a click outside, Escape or the bell closes it; a click inside does not', async () => {
+test('a tap outside, Escape or the bell closes it; a tap inside does not', async () => {
   setup(0, { '/api/notifications': { items, total: 3 } })
   const closed = () => waitFor(() => expect(panel().hidden).toBe(true))
 
   fireEvent.click(bell())
   await within(panel()).findAllByRole('article')
-  fireEvent.click(panel())
+  fireEvent.pointerDown(panel())
   expect(panel().className).toContain('is-open')
-  fireEvent.click(document.body)
+  fireEvent.pointerDown(document.body)
   expect(panel().className).toContain('is-closing')
   await closed()
 

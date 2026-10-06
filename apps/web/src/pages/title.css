@@ -1,0 +1,25 @@
+@layer screens {
+  .back-link .icon {
+    transform: rotate(-135deg);
+  }
+
+  /* Guide as a full-width block on the detail page: tabs in a row, columns for long panels */
+  .guide-wide [data-panel] ul.clean {
+    columns: 2;
+    column-gap: 32px;
+  }
+
+  .guide-wide [data-panel] ul.clean li {
+    break-inside: avoid;
+  }
+
+  @media (max-width: 1100px) {
+    .guide-wide [data-panel] ul.clean {
+      columns: 1;
+    }
+  }
+
+  .back-link {
+    margin-bottom: 18px;
+  }
+}

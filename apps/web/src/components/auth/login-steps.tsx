@@ -6,6 +6,8 @@ import { toast } from '../../ui/toast'
 import { NewPasswordFields, PasswordInput, SubmitButton } from '../password-fields'
 import { PrivacySteps } from '../private-notice'
 import { useAuthForm } from './use-auth-form'
+import './auth-layout.css'
+import './login-steps.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

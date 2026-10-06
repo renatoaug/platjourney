@@ -18,6 +18,7 @@ import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { KIND_ICON, kindLabel, messages as tipMessages, titleHref } from './tip'
+import './notifications.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -150,16 +151,19 @@ export function Notifications() {
 
   useEffect(() => {
     if (state !== 'open') return
-    const outside = () => close()
+    // pointerdown, not click: on iOS a tap on plain content never fires click on the document.
+    const outside = (e: Event) => {
+      if (!(e.target as Element | null)?.closest?.('.notif')) close()
+    }
     const esc = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       close()
       button.current?.focus()
     }
-    document.addEventListener('click', outside)
+    document.addEventListener('pointerdown', outside)
     document.addEventListener('keydown', esc)
     return () => {
-      document.removeEventListener('click', outside)
+      document.removeEventListener('pointerdown', outside)
       document.removeEventListener('keydown', esc)
     }
   }, [state, close])
@@ -210,7 +214,7 @@ export function Notifications() {
                 <span className="rank">
                   <Sk w="14px" h={16} />
                 </span>
-                <Sk w="68px" h={44} style={{ borderRadius: 4, flex: 'none' }} />
+                <Sk w="68px" h={44} style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }} />
                 <div className="grow">
                   <Sk w="60%" h={12} />
                   <Sk w="40%" h={10} style={{ marginTop: 8 }} />

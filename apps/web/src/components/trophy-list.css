@@ -1,0 +1,603 @@
+@layer screens {
+  .filters .toggle:has(input:checked) {
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .filters .search {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: var(--text-md);
+  }
+
+  .filters .search:focus-visible {
+    box-shadow: none;
+  }
+
+  .filters .toggle {
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    font-size: var(--text-md);
+    color: var(--color-fg-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition:
+      color 0.15s,
+      border-color 0.15s,
+      background 0.15s;
+  }
+
+  .filters .toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .filters .toggle span::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 8px;
+    border-radius: var(--radius-round);
+    background: var(--color-border-strong);
+    vertical-align: 1px;
+    transition:
+      background 0.15s,
+      box-shadow 0.15s;
+  }
+
+  .filters .toggle:hover {
+    color: var(--color-fg);
+  }
+
+  .filters .toggle:has(input:checked) span::before {
+    background: var(--color-accent);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .filters .toggle:has(input:focus-visible) {
+    box-shadow: var(--shadow-focus);
+  }
+
+  /* Trophy library: quiet rows and a bounded, paginated list. */
+  .trophy-controls {
+    container-type: inline-size;
+    scroll-margin-top: 24px;
+  }
+
+  .trophy-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--color-border-strong);
+    padding: 0 0 12px;
+    color: var(--color-fg-muted);
+  }
+
+  .trophy-search > .icon {
+    width: 18px;
+    height: 18px;
+    flex: none;
+  }
+
+  .trophy-search input {
+    width: 100%;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 8px 0;
+    font-size: var(--text-base);
+  }
+
+  .trophy-search:focus-within {
+    border-color: var(--color-accent);
+  }
+
+  .trophy-search input:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .trophy-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 0;
+  }
+
+  /* A segmented control: buttons in a tray, the chosen one raised (trophy status, language). */
+  .trophy-status {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-control);
+  }
+
+  .trophy-status button {
+    background: transparent;
+    border: 0;
+    color: var(--color-fg-muted);
+    padding: 8px 11px;
+    font-size: var(--text-sm);
+    border-radius: var(--radius-tag);
+    font-weight: var(--weight-medium);
+  }
+
+  .trophy-status button[aria-pressed="true"] {
+    background: var(--color-border);
+    color: var(--color-fg);
+  }
+
+  .trophy-status button:hover {
+    color: var(--color-fg);
+  }
+
+  .trophy-options summary {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    list-style: none;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    min-height: 36px;
+  }
+
+  .trophy-options summary .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .trophy-options[open] summary > .icon:last-child {
+    transform: rotate(180deg);
+  }
+
+  .trophy-results {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    padding: 4px 0 12px;
+  }
+
+  .trophy-art > .icon {
+    width: 22px;
+    height: 22px;
+    color: var(--color-fg-muted);
+  }
+
+  .trophy-earned-mark .icon {
+    width: 11px;
+    height: 11px;
+  }
+
+  .trophy-metal .icon {
+    width: 11px;
+    height: 11px;
+  }
+
+  .trophy-metal.bronze {
+    color: var(--color-trophy-bronze);
+  }
+
+  .trophy-metal.silver {
+    color: var(--color-trophy-silver);
+  }
+
+  .trophy-metal.gold {
+    color: var(--color-trophy-gold);
+  }
+
+  .trophy-metal.platinum {
+    color: var(--color-trophy-platinum);
+  }
+
+  .trophy-row-progress .bar {
+    flex: 1;
+    margin: 0;
+  }
+
+  .trophy-pagination > button .icon {
+    width: 16px;
+    height: 16px;
+    transform: rotate(90deg);
+  }
+
+  .trophy-pagination > button:last-child .icon {
+    transform: rotate(-90deg);
+  }
+
+  @container (max-width: 380px) {
+    .trophy-status {
+      flex: 1;
+    }
+
+    .trophy-status button {
+      flex: 1;
+      padding: 8px;
+    }
+
+    .trophy-options {
+      margin-left: 0;
+    }
+  }
+
+  /* Skeleton fills inside the real trophy/guide containers */
+  .trophy-art .sk {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+  }
+
+  .trophy-row-meta .sk,
+  .trophy-pagination .sk {
+    display: inline-block;
+    margin: 0;
+  }
+
+  .trophy-controls input:disabled,
+  .trophy-status button:disabled,
+  .trophy-options summary {
+    cursor: default;
+  }
+
+  .filters .sk,
+  .trophy-row-meta .sk,
+  .trophy-pagination .sk {
+    display: inline-block;
+    margin: 0 6px 0 0;
+  }
+
+  .trophy-row-content h4 .sk,
+  .trophy-row-content p .sk {
+    display: block;
+  }
+
+  .trophy-help-btn .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .trophy-help-head .nexo-avatar {
+    width: 22px;
+    height: 22px;
+  }
+
+  .trophy-help .md p {
+    margin: 0 0 8px;
+  }
+
+  .trophy-help .text-link {
+    display: inline-flex;
+    margin-top: 4px;
+    font-size: var(--text-md);
+  }
+
+  input[type="checkbox"],
+  .trophy-progress-filter input {
+    accent-color: var(--color-accent);
+    width: 15px;
+    height: 15px;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .filters select {
+    height: 36px;
+    padding: 0 40px 0 12px;
+    font-size: var(--text-md);
+  }
+
+  .trophy-options {
+    margin-left: auto;
+  }
+
+  .trophy-options summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .trophy-options summary > span:not(:empty) {
+    color: var(--color-accent);
+  }
+
+  .trophy-options[open] {
+    width: 100%;
+  }
+
+  .trophy-options[open] summary {
+    color: var(--color-fg);
+  }
+
+  .trophy-options-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 12px;
+    padding: 12px 0 4px;
+  }
+
+  .trophy-options-body > label {
+    display: grid;
+    flex: 1 1 150px;
+    gap: 6px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .trophy-options-body > label[hidden] {
+    display: none;
+  }
+
+  .trophy-options-body select {
+    width: 100%;
+    min-height: 36px;
+    font-size: var(--text-md);
+    padding: 8px 40px 8px 12px;
+    background-color: var(--color-bg-subtle);
+  }
+
+  .trophy-options-body > .trophy-progress-filter {
+    display: flex;
+    flex: 1 1 160px;
+    align-items: center;
+    min-height: 36px;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .trophy-rows {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .trophy-row {
+    display: flex;
+    gap: 14px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .trophy-art {
+    flex: none;
+    width: 46px;
+    height: 46px;
+    position: relative;
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+    display: grid;
+    place-items: center;
+  }
+
+  .trophy-art > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+  }
+
+  .trophy-earned-mark {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 17px;
+    height: 17px;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--color-surface);
+    border-radius: var(--radius-round);
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .trophy-row-content {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .trophy-row h4 {
+    margin: 0 0 5px;
+    font-size: var(--text-base);
+    line-height: var(--leading-snug);
+    font-weight: var(--weight-medium);
+    color: var(--color-fg);
+  }
+
+  .trophy-row p {
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    line-height: var(--leading-body);
+    overflow-wrap: anywhere;
+  }
+
+  .trophy-row-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 12px;
+    align-items: center;
+    margin-top: 9px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+
+  .trophy-metal {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .trophy-earned-date {
+    color: var(--color-accent);
+  }
+
+  .trophy-row-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 300px;
+    margin-top: 10px;
+  }
+
+  .trophy-row-progress > span {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .trophy-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 20px;
+  }
+
+  .trophy-pagination[hidden] {
+    display: none;
+  }
+
+  .trophy-page-numbers {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .trophy-pagination button {
+    display: grid;
+    place-items: center;
+    min-width: 30px;
+    height: 32px;
+    padding: 0 7px;
+    border: 0;
+    border-radius: var(--radius-tag);
+    color: var(--color-fg-muted);
+    background: transparent;
+    font-size: var(--text-sm);
+  }
+
+  .trophy-pagination button:hover:not(:disabled) {
+    background: var(--color-border);
+    color: var(--color-fg);
+  }
+
+  .trophy-pagination button[aria-current="page"] {
+    background: var(--color-border);
+    color: var(--color-accent);
+  }
+
+  .trophy-pagination button:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .page-gap {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .trophy-empty {
+    padding: 32px 12px;
+    text-align: center;
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+  }
+
+  @media (max-width: 480px) {
+    .trophy-row {
+      gap: 11px;
+    }
+
+    .trophy-art {
+      width: 40px;
+      height: 40px;
+    }
+
+    .trophy-page-numbers {
+      gap: 1px;
+    }
+
+    .trophy-pagination button {
+      min-width: 27px;
+    }
+  }
+
+  /* ---------- trophy help ---------- */
+  .trophy-help-btn,
+  .trophy-help-btn:hover {
+    flex: none;
+    align-self: flex-start;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  .trophy-help-btn:hover {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
+  }
+
+  .trophy-help {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    font-size: var(--text-base);
+  }
+
+  .trophy-help.is-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-fg-muted);
+  }
+
+  .trophy-help-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-family: var(--font-display);
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 760px) {
+    /* Icon only on phones; the label is read out by the aria-label. */
+    .trophy-help-btn span {
+      display: none;
+    }
+
+    .trophy-help-btn,
+    .trophy-help-btn:hover {
+      padding: 6px;
+    }
+  }
+}

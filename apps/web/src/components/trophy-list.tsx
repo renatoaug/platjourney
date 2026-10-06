@@ -20,6 +20,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote, splitSource } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
 import { toast } from '../ui/toast'
+import './trophy-list.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -362,8 +363,8 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
                 <Sk w={`${70 + ((i * 11) % 25)}%`} h={12} />
               </p>
               <div className="trophy-row-meta">
-                <Sk w="64px" h={20} style={{ borderRadius: 999 }} />
-                <Sk w="96px" h={20} style={{ borderRadius: 999 }} />
+                <Sk w="64px" h={20} style={{ borderRadius: 'var(--radius-pill)' }} />
+                <Sk w="96px" h={20} style={{ borderRadius: 'var(--radius-pill)' }} />
               </div>
             </div>
           </article>

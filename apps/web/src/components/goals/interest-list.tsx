@@ -17,6 +17,7 @@ import { Pager } from '../../ui/pager'
 import { Sk } from '../../ui/skeleton'
 import { EmptyState } from '../../ui/states'
 import { type GoalFilter, goalState, started } from './season'
+import './interest-list.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -392,7 +393,7 @@ export function InterestListSkeleton() {
           <li key={i}>
             <Sk w="22px" h={28} />
             <Sk w="29px" h={29} style={{ borderRadius: '50%' }} />
-            <Sk w="34px" h={46} style={{ borderRadius: 3 }} />
+            <Sk w="34px" h={46} style={{ borderRadius: 'var(--radius-tag)' }} />
             <span className="name">
               <Sk w="55%" h={12} />
             </span>

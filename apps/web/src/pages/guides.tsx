@@ -10,6 +10,8 @@ import { Icon } from '../ui/icon'
 import { Pager } from '../ui/pager'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
+import '../components/trophy-list.css'
+import './guides.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

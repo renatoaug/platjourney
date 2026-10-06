@@ -1,0 +1,89 @@
+@layer ui {
+  .inline-status .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .empty-icon .icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .empty-icon.error {
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) var(--alpha-wash), transparent);
+    border-color: color-mix(in srgb, var(--color-danger) var(--alpha-line), transparent);
+  }
+
+  .empty-action .icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* A card with nothing to show yet: an icon, a line in bold, what to do about it. */
+  .empty-rich {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 0 6px;
+    animation: onb-enter 0.35s ease both;
+  }
+
+  .empty-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: var(--radius-control);
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+  }
+
+  .empty-text {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .empty-text b {
+    color: var(--color-fg);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+  }
+
+  .empty-text > span {
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+  }
+
+  .empty-action {
+    margin-top: 10px;
+  }
+
+  /* Typing dots, while an answer is on its way. */
+  .typing i {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: var(--radius-round);
+    margin-right: 5px;
+    background: var(--color-fg-muted);
+    animation: pulse 1s infinite alternate;
+  }
+
+  .typing i:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .typing i:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes pulse {
+    to {
+      opacity: 0.25;
+    }
+  }
+}

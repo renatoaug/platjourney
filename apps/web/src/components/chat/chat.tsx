@@ -18,6 +18,8 @@ import { SourceNote, splitSource } from '../../ui/source-note'
 import { ErrorState } from '../../ui/states'
 import { DemoConnectButton } from '../demo'
 import { titleHref } from '../tip'
+import '../demo.css'
+import './chat.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

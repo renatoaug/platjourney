@@ -6,7 +6,11 @@ React + TypeScript in `apps/web/src/`, built with Vite into `apps/web/dist/`, wh
 
 ### Where things are
 
-- **Tokens**: `apps/web/src/styles/theme.css`. Components use only the semantic level (`--color-*`, `--font-*`, `--text-*`, `--radius-*`). The raw palette (`--palette-*`) lives only in that file; a new identity or a light theme changes only it. Tailwind (`src/styles/tailwind.css`) has no values of its own: its utilities (`bg-surface`, `text-fg-muted`, `rounded-xl`, `tablet:`) read the same tokens. There is no preflight; `src/styles/styles.css` holds the base and component styles.
+- **Tokens**: `apps/web/src/styles/theme.css`. Components use only the semantic level (`--color-*`, `--font-*`, `--text-*`, `--radius-*`). Corners come in three sizes by role: `--radius-tag` (labels, badges), `--radius-control` (buttons, inputs, chips, tabs, boxes inside a card) and `--radius-card` (cards, panels, sheets, toasts), plus `--radius-pill` and `--radius-round`; no other radius. The raw palette (`--palette-*`) lives only in that file; a new identity or a light theme changes only it. Tailwind (`src/styles/tailwind.css`) has no values of its own: its utilities (`bg-surface`, `text-fg-muted`, `rounded-card`, `tablet:`) read the same tokens. There is no preflight.
+- **CSS**: each component owns its styles in a file next to it with the same name (`guide.tsx` and `guide.css`) and imports it as its last import: `import './guide.css'`. There is no app-wide stylesheet to append to.
+  - **`src/styles/`**: what has no component: reset, elements and utilities (`base.css`), buttons, fields, chips and tabs (`controls.css`), cards, rows, tiles, tags and bars (`surfaces.css`), the page frame (`page.css`). Loaded once by `main.tsx` and the Storybook preview, through `index.css`.
+  - **Layers**: every file wraps its rules in a cascade layer: `@layer base` in `src/styles/`, `@layer ui` in `src/ui/`, `@layer screens` everywhere else (and in the ops plugins). The order is declared in `src/styles/index.css`, so a screen overrides a shared piece no matter which file loads first. Inside a layer, an override needs a more specific selector (`.nexo-brief.card`), never a later position.
+  - A component that uses another component's classes imports that component (or its CSS file), so its styles reach Storybook too.
 - **Generic pieces**: `apps/web/src/ui/` (Icon, Cover, Markdown, toast, tooltip, skeletons, empty/error/pending states, pager, source note). They know nothing about the product.
 - **Product components**: `apps/web/src/components/`. Screens: `apps/web/src/pages/`. App shell, state and routing: `apps/web/src/app/` (`useApp()` for the signed-in player and `/api/state`, `useInterests()` for the interests). Helpers and API types: `apps/web/src/lib/`.
 - **Storybook**: `bun run storybook`. Every component has a `*.stories.tsx` next to it with its states and sample data (`src/fixtures/index.ts`). **Look there and in both folders before writing a component**; it almost always exists.
@@ -15,7 +19,7 @@ React + TypeScript in `apps/web/src/`, built with Vite into `apps/web/dist/`, wh
 
 ### The five usual mistakes
 
-1. A raw color, a `--palette-*` token or a variable nobody defines (a renamed token) in CSS or markup. The lint fails on all three.
+1. A raw color, a `--palette-*` token or a variable nobody defines (a renamed token) in CSS or markup, or a CSS rule glued to the one before it with no empty line between. The lint fails on all of them (`bun scripts/css-spacing.ts --write` adds the empty lines).
 2. Rewriting a piece that exists in `src/ui/` or `src/components/` under another name.
 3. A list or screen without its four states: loading, empty, empty because of a filter, error.
 4. A spinner instead of the component's skeleton built from `<Sk>`.

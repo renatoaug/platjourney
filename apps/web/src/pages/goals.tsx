@@ -16,6 +16,8 @@ import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { toast } from '../ui/toast'
+import '../components/tip.css'
+import './goals.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

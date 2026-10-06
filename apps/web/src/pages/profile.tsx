@@ -13,6 +13,10 @@ import { Icon } from '../ui/icon'
 import { PluginSlot } from '../ui/plugin-slot'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState, PendingState } from '../ui/states'
+import '../components/goals/year-platinums.css'
+import '../components/trophy-list.css'
+import './goals.css'
+import './profile.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -524,7 +528,7 @@ const rowSkeleton = () => (
     <span className="rank">
       <Sk w="14px" h={16} />
     </span>
-    <Sk w="68px" h={44} style={{ borderRadius: 4, flex: 'none' }} />
+    <Sk w="68px" h={44} style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }} />
     <div className="grow">
       <Sk w="60%" h={12} />
       <Sk w="40%" h={10} style={{ marginTop: 8 }} />
@@ -573,7 +577,10 @@ export function ProfileSkeleton() {
                   <Sk
                     w="100%"
                     h={20 + ((i * 37) % 90)}
-                    style={{ maxWidth: 44, borderRadius: '3px 3px 0 0' }}
+                    style={{
+                      maxWidth: 44,
+                      borderRadius: 'var(--radius-tag) var(--radius-tag) 0 0',
+                    }}
                   />
                   <Sk w="30px" h={9} />
                 </div>

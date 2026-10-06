@@ -1,0 +1,588 @@
+@layer screens {
+  .road-tag {
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .road-tag {
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-tag);
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+
+  .plan-options {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .plan-badge .icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 560px) {
+    .plan-options .chip {
+      flex: 1;
+      justify-content: center;
+      padding-inline: 0;
+    }
+  }
+
+  .plan-meter .bar {
+    height: 7px;
+  }
+
+  .plan-meter .icon,
+  .road-time .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .plan-closed .road-step:not(.done) .road-card {
+    opacity: 0.55;
+  }
+
+  .road-step.prev-done .road-rail::before,
+  .road-step.done .road-rail::after {
+    background: var(--color-accent);
+  }
+
+  .road-node .icon {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.4;
+  }
+
+  .road-step.done .road-node,
+  .road-step.next .road-tag {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .road-step.next .road-node {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent),
+      0 0 18px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .road-step.flexible:not(.done) .road-node {
+    border-style: dashed;
+  }
+
+  .road-step.next .road-card {
+    border-color: var(--color-accent-dim);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .road-step.next .road-time {
+    color: var(--color-accent);
+  }
+
+  .road-step.done .road-card {
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+  }
+
+  .road-step.done .road-card h3 {
+    text-decoration: line-through;
+    color: var(--color-fg-tint-muted);
+  }
+
+  .road-step.done .road-tag {
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .plan-trick .icon {
+    width: 12px;
+    height: 12px;
+    margin-top: 3px;
+    color: var(--color-accent);
+  }
+
+  .plan-validity .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .plan-warnings summary .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .plan-warnings summary .icon:last-child {
+    margin-left: auto;
+    transition: transform 0.15s;
+  }
+
+  .plan-warnings[open] summary .icon:last-child {
+    transform: rotate(180deg);
+  }
+
+  .road-art.gold {
+    border-color: var(--color-trophy-gold);
+  }
+
+  .road-art.silver {
+    border-color: var(--color-trophy-silver);
+  }
+
+  .road-art.bronze {
+    border-color: var(--color-trophy-bronze);
+  }
+
+  .road-art.empty {
+    display: grid;
+    place-items: center;
+    color: var(--color-fg-muted);
+  }
+
+  .road-art.empty .icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .road-step.done .road-art {
+    filter: grayscale(0.6);
+    opacity: 0.7;
+  }
+
+  .road-chevron .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .plan-empty {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    border-style: dashed;
+  }
+
+  .plan-invite {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1 1 360px;
+    min-width: 0;
+  }
+
+  .plan-badge {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-control);
+    color: var(--color-accent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+  }
+
+  .plan-invite-text p,
+  .plan-top p {
+    margin-top: 6px;
+    font-size: var(--text-md);
+    line-height: var(--leading-body);
+    color: var(--color-fg-muted);
+    max-width: 62ch;
+  }
+
+  .plan-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .plan-question {
+    font-size: var(--text-md);
+    color: var(--color-fg);
+  }
+
+  .plan-options .when-narrow {
+    display: none;
+  }
+
+  @media (max-width: 560px) {
+    .plan-question {
+      flex-basis: 100%;
+    }
+
+    .plan-options {
+      flex: 1 1 100%;
+      flex-wrap: nowrap;
+    }
+
+    .plan-options .when-wide {
+      display: none;
+    }
+
+    .plan-options .when-narrow {
+      display: inline;
+    }
+
+    #plan-go,
+    #plan-cancel {
+      flex: 1 1 100%;
+      justify-content: center;
+    }
+  }
+
+  .plan-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .plan-meter {
+    min-width: 220px;
+    display: grid;
+    gap: 6px;
+    text-align: right;
+  }
+
+  .plan-meter b {
+    font-family: var(--font-display);
+    font-size: var(--text-5xl);
+    font-weight: var(--weight-medium);
+    line-height: var(--leading-none);
+    color: var(--color-accent);
+  }
+
+  .plan-meter span {
+    display: inline-flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .plan-warnings {
+    margin-top: 10px;
+  }
+
+  .plan-closed {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+  }
+
+  /* The road: a rail with the session clock on the left, one card per step */
+  .road {
+    list-style: none;
+    margin: 20px 0 0;
+    padding: 0;
+  }
+
+  .road-step {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 0 16px;
+    margin: 0;
+  }
+
+  .road-rail {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 14px;
+  }
+
+  /* The rail is two segments per step, meeting at the node's centre: the upper one
+     takes the colour of the previous step, the lower one of this step. */
+  .road-rail::before,
+  .road-rail::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    width: 2px;
+    background: var(--color-border-strong);
+  }
+
+  .road-rail::before {
+    top: 0;
+    height: 29px;
+  }
+
+  .road-rail::after {
+    top: 29px;
+    bottom: 0;
+  }
+
+  .road-step:first-child .road-rail::before,
+  .road-step.road-end .road-rail::after {
+    display: none;
+  }
+
+  .road-clock {
+    padding-top: 6px;
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .road-node {
+    position: relative;
+    z-index: 1;
+    width: 30px;
+    height: 30px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-round);
+    border: 2px solid var(--color-border-strong);
+    background: var(--color-surface);
+    font-family: var(--font-display);
+    font-size: var(--text-base);
+    color: var(--color-fg-muted);
+  }
+
+  .road-step.road-end .road-node {
+    color: var(--color-trophy-platinum);
+    border-color: color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
+  }
+
+  .road-card {
+    margin: 0 0 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-bg-subtle) var(--alpha-strong), transparent);
+  }
+
+  .road-card header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .road-card h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+  }
+
+  .road-card p {
+    margin: 6px 0 4px;
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--color-fg-soft);
+  }
+
+  .road-card small {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .road-tag {
+    font-weight: var(--weight-semibold);
+    padding: 2px 8px;
+  }
+
+  .road-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .road-step.later .road-card {
+    opacity: 0.72;
+  }
+
+  .road-step.flexible .road-tag {
+    border-style: dashed;
+  }
+
+  .road-end .road-card {
+    border-style: dashed;
+    background: transparent;
+  }
+
+  .plan-trick {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-left: 2px solid var(--color-accent);
+    border-radius: 0 var(--radius-control) var(--radius-control) 0;
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    font-size: var(--text-sm);
+    line-height: var(--leading-body);
+    color: var(--color-fg-soft);
+  }
+
+  .plan-trick b {
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+    margin-right: 4px;
+  }
+
+  .plan-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  @media (max-width: 760px) {
+    .plan-meter {
+      min-width: 0;
+      width: 100%;
+      text-align: left;
+    }
+
+    .plan-meter span {
+      justify-content: flex-start;
+    }
+
+    .road-step {
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 0 12px;
+    }
+
+    .road-clock {
+      display: none;
+    }
+  }
+
+  /* Roadmap, compact: one line per step, only the current one open */
+  .plan-top p {
+    font-size: var(--text-base);
+    color: var(--color-fg-soft);
+  }
+
+  .plan-validity {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .plan-warnings {
+    margin-top: 14px;
+    border: 1px solid color-mix(in srgb, var(--color-trophy-gold) var(--alpha-line), transparent);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-trophy-gold) var(--alpha-wash), transparent);
+  }
+
+  .plan-warnings summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    list-style: none;
+    cursor: pointer;
+    font-size: var(--text-md);
+    color: var(--color-trophy-gold);
+  }
+
+  .plan-warnings summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .plan-warnings ul {
+    margin: 0;
+    padding: 0 12px 10px 32px;
+    font-size: var(--text-md);
+    color: var(--color-fg-soft);
+  }
+
+  details.road-card {
+    padding: 0;
+  }
+
+  details.road-card > summary,
+  .road-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  details.road-card > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .road-art {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: var(--radius-control);
+    object-fit: cover;
+    background: var(--color-border);
+    border: 1px solid var(--color-border-strong);
+  }
+
+  .road-title {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+    justify-items: start;
+  }
+
+  .road-title h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .road-chevron {
+    color: var(--color-fg-muted);
+    transition: transform 0.15s;
+  }
+
+  details.road-card[open] .road-chevron {
+    transform: rotate(180deg);
+  }
+
+  .road-body {
+    padding: 0 14px 14px 70px;
+  }
+
+  .road-body p {
+    margin: 0;
+  }
+
+  .road-finish {
+    padding: 12px 14px;
+  }
+
+  .road-finish p {
+    margin: 4px 0 0;
+  }
+
+  @media (max-width: 760px) {
+    .road-body {
+      padding-left: 14px;
+    }
+
+    .road-time {
+      display: none;
+    }
+  }
+}

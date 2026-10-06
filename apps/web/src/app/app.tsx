@@ -16,6 +16,7 @@ import { ToastHost } from '../ui/toast'
 import { TooltipHost } from '../ui/tooltip'
 import { AppStateProvider } from './app-state'
 import { Shell } from './shell'
+import './app.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

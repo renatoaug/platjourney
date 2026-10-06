@@ -1,0 +1,40 @@
+@layer screens {
+  .goal-emblem {
+    position: absolute;
+    right: 20px;
+    top: 54px;
+    width: 68px;
+    height: 68px;
+    color: var(--color-accent);
+    opacity: 0.8;
+  }
+
+  .goal-big {
+    font-family: var(--font-display);
+    font-size: var(--text-display-lg);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-tight);
+    line-height: var(--leading-tight);
+  }
+
+  .goal-big span {
+    font-size: var(--text-3xl);
+    color: var(--color-fg-tint-muted);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  @media (max-width: 1100px) {
+    .goal-emblem {
+      top: 30px;
+      right: 35px;
+      width: 90px;
+      height: 90px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .annual-goal.card {
+      padding: 20px;
+    }
+  }
+}

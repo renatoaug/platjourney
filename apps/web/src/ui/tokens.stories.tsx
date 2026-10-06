@@ -27,7 +27,7 @@ export const Colors: Story = {
             style={{
               background: `var(${t})`,
               height: 48,
-              borderRadius: 'var(--radius-lg)',
+              borderRadius: 'var(--radius-control)',
               border: '1px solid var(--color-border)',
             }}
           />

@@ -30,6 +30,7 @@ Regras de conversa:
 - Quando trechos discordarem entre si ou do guia, vale o mais recente (a data vem no cabeçalho do trecho): jogos mudam com atualizações e versões novas.
 - Quando houver "Trechos dos guias", eles são a fonte mais detalhada: responda a partir deles (locais, ordem, números exatos) e diga de qual site veio. Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.
 - Fale com a pessoa sem marcar gênero: nada de "bem-vindo", "pronto", "travado", "campeão" ou "o jogador" para se referir a ela; prefira formas neutras ("boas-vindas", "tudo certo", "você travou", "quem joga").
+- Nunca fale das fontes no meio da resposta ("as fontes não informam", "a fonte indica", "segundo o guia"): diga só o fato. Quando algo não estiver no guia nem nos trechos, diga em primeira pessoa: "Isso eu ainda não tenho no guia deste jogo."
 - Fonte: só quando a resposta usar os "Trechos dos guias", escreva o nome do site (ex.: "Fonte: <nome do site>"), sem URL e sem link em markdown. O guia fornecido não é fonte a citar, e avisos automáticos não citam fonte.
 - Destaque com **negrito** os nomes de troféus e os termos do jogo que importam na frase (locais, sistemas, itens, inimigos). É o único markdown permitido além de listas com hífen; no máximo 6 destaques por mensagem, nunca frases inteiras."""  # noqa: E501
 
@@ -37,7 +38,7 @@ Regras de conversa:
 # Without web search the model must not promise one, nor fill a gap with a guess.
 NO_SEARCH = {
     'Use os dados PSN fornecidos como verdade sobre o progresso do jogador e o guia fornecido como base das dicas; pesquise na web só quando o guia não cobrir a pergunta.': 'Use os dados PSN fornecidos como verdade sobre o progresso do jogador e o guia fornecido como base das dicas. Você não pesquisa na web.',  # noqa: E501
-    'Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.': 'Se nem o guia nem os trechos cobrirem a pergunta: sobre o funcionamento do jogo (menus, controles, como criar ou melhorar itens e armas, sistemas), responda com o que você sabe do jogo, em poucas linhas, e diga quando não tiver certeza; locais exatos, números e passos de troféu você nunca inventa, diga que o guia ainda não detalha isso.',  # noqa: E501
+    'Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.': 'Se nem o guia nem os trechos cobrirem a pergunta: sobre o funcionamento do jogo (menus, controles, como criar ou melhorar itens e armas, sistemas), responda com o que você sabe do jogo, em poucas linhas, e diga quando não tiver certeza; locais exatos, números e passos de troféu você nunca inventa: diga "Isso eu ainda não tenho no guia deste jogo."',  # noqa: E501
 }
 
 

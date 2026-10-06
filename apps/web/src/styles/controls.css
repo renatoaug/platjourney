@@ -1,0 +1,244 @@
+/* Buttons, fields, chips, tabs and switches shared across screens. */
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  .button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    cursor: pointer;
+    transition:
+      background 0.18s,
+      transform 0.18s;
+  }
+
+  button:hover,
+  .button:hover {
+    background: var(--color-accent-hover);
+  }
+
+  button:active,
+  .button:active {
+    transform: translateY(1px);
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: wait;
+  }
+
+  button.ghost,
+  .button.secondary {
+    background: transparent;
+    border-color: var(--color-border-strong);
+    color: var(--color-fg);
+  }
+
+  button.ghost:hover,
+  .button.secondary:hover {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-wash), transparent);
+    border-color: var(--color-accent-muted);
+  }
+
+  button.sm {
+    padding: 7px 12px;
+  }
+
+  button:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: var(--color-accent-dim);
+    box-shadow: var(--shadow-focus);
+  }
+
+  input,
+  select,
+  textarea {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    padding: 11px 13px;
+    color: var(--color-fg);
+    min-width: 0;
+  }
+
+  .segmented {
+    flex: none;
+  }
+
+  /* Our own chevron, drawn with two gradients, so it sits inside the padding like the text. */
+  select {
+    appearance: none;
+    padding-right: 40px;
+    background-image:
+      linear-gradient(
+        45deg,
+        transparent 40%,
+        var(--color-fg-muted) 40%,
+        var(--color-fg-muted) 60%,
+        transparent 60%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent 40%,
+        var(--color-fg-muted) 40%,
+        var(--color-fg-muted) 60%,
+        transparent 60%
+      );
+    background-position:
+      calc(100% - 21px) 55%,
+      calc(100% - 16px) 55%;
+    background-size: 6px 6px;
+    background-repeat: no-repeat;
+  }
+
+  input::placeholder {
+    color: var(--color-fg-subtle);
+  }
+
+  label {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .icon-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    color: var(--color-fg-muted);
+    border: 1px solid var(--color-border);
+  }
+
+  .icon-button .icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .icon-button:hover {
+    background: var(--color-surface);
+    color: var(--color-accent);
+  }
+
+  .text-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  .text-link:hover {
+    color: var(--color-accent-hover);
+  }
+
+  /* A text link that is a button (it acts on the page, it does not navigate). */
+  button.text-link {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .text-link span {
+    font-size: var(--text-lg);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chip {
+    display: inline-flex;
+    border: 1px solid var(--color-border-strong);
+    background: transparent;
+    color: var(--color-fg-muted);
+    padding: 7px 11px;
+    border-radius: var(--radius-tag);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-regular);
+    cursor: pointer;
+  }
+
+  .chip:hover,
+  .chip.active {
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .segmented {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-control);
+  }
+
+  .segmented button {
+    background: transparent;
+    border: 0;
+    color: var(--color-fg-muted);
+    padding: 8px 11px;
+    font-size: var(--text-sm);
+    border-radius: var(--radius-tag);
+    font-weight: var(--weight-medium);
+  }
+
+  .segmented button[aria-pressed="true"] {
+    background: var(--color-border);
+    color: var(--color-fg);
+  }
+
+  .segmented button:hover {
+    color: var(--color-fg);
+  }
+
+  .chips .sk {
+    display: inline-block;
+    margin: 0 6px 0 0;
+  }
+
+  button.danger,
+  button.danger:hover {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: var(--color-bg);
+  }
+}

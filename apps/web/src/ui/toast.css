@@ -1,0 +1,113 @@
+@layer ui {
+  .toast-mark .icon {
+    width: 14px;
+    height: 14px;
+    stroke: var(--color-on-accent);
+    stroke-width: 2.4;
+  }
+
+  .toast-action .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .toast-mark {
+    width: 26px;
+    height: 26px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-round);
+    background: currentColor;
+  }
+
+  .toast-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 6px;
+    padding-left: 12px;
+    border-left: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-soft), transparent);
+    color: var(--color-accent);
+    font-size: var(--text-md);
+    white-space: nowrap;
+  }
+
+  /* Particles fly out from the check mark on success. */
+  .burst {
+    position: absolute;
+    left: 27px;
+    top: 50%;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .burst i {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    margin: -3px;
+    border-radius: var(--radius-round);
+    background: var(--color-accent);
+    opacity: 0;
+    animation: burst 0.9s ease-out 0.15s forwards;
+  }
+
+  .burst i:nth-child(2n) {
+    width: 4px;
+    height: 4px;
+    margin: -2px;
+    background: var(--color-trophy-gold);
+  }
+
+  .burst i:nth-child(1) {
+    --dx: 34px;
+    --dy: -30px;
+  }
+
+  .burst i:nth-child(2) {
+    --dx: -30px;
+    --dy: -34px;
+  }
+
+  .burst i:nth-child(3) {
+    --dx: 44px;
+    --dy: 4px;
+  }
+
+  .burst i:nth-child(4) {
+    --dx: -40px;
+    --dy: 12px;
+  }
+
+  .burst i:nth-child(5) {
+    --dx: 22px;
+    --dy: 38px;
+  }
+
+  .burst i:nth-child(6) {
+    --dx: -18px;
+    --dy: 40px;
+  }
+
+  .burst i:nth-child(7) {
+    --dx: 8px;
+    --dy: -46px;
+  }
+
+  .burst i:nth-child(8) {
+    --dx: -6px;
+    --dy: 46px;
+  }
+
+  .burst i:nth-child(9) {
+    --dx: 48px;
+    --dy: -22px;
+  }
+
+  .burst i:nth-child(10) {
+    --dx: -46px;
+    --dy: -14px;
+  }
+}

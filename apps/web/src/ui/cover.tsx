@@ -1,3 +1,4 @@
+import './cover.css'
 /** Game cover, or a lettered placeholder when no store has art for the game. */
 export function Cover({
   url,

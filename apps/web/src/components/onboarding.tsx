@@ -9,6 +9,7 @@ import { number } from '../lib/format'
 import type { AppStateData, Me } from '../lib/types'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
+import './onboarding.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

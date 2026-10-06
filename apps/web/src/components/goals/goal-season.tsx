@@ -5,6 +5,8 @@ import type { YearGoals } from '../../lib/types'
 import { Icon } from '../../ui/icon'
 import { Sk } from '../../ui/skeleton'
 import { season } from './season'
+import '../annual-goal.css'
+import './goal-season.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -263,7 +265,7 @@ export function GoalSeasonSkeleton() {
     <div className="card goal-season">
       <div className="goal-overview">
         <div className="goal-season-heading">
-          <Sk w="44px" h={44} style={{ borderRadius: 8, flex: 'none' }} />
+          <Sk w="44px" h={44} style={{ borderRadius: 'var(--radius-control)', flex: 'none' }} />
           <div style={{ flex: 1 }}>
             <Sk w="30%" h={9} />
             <Sk w="50%" h={18} style={{ marginTop: 8 }} />

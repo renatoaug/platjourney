@@ -1,0 +1,273 @@
+@layer screens {
+  .page-footer span:first-child {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .home-heading .eyebrow {
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+    margin-bottom: 12px;
+  }
+
+  .mission-grid,
+  .dashboard-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 2.15fr) minmax(265px, 1fr);
+    gap: 20px;
+  }
+
+  .nexo-brief {
+    background: linear-gradient(145deg, var(--color-surface-raised), var(--color-surface) 75%);
+    border-color: var(--color-border-strong);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .nexo-brief .eyebrow {
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    margin-bottom: 9px;
+  }
+
+  .nexo-brief h3 {
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+    margin-bottom: 10px;
+  }
+
+  .nexo-brief p {
+    font-size: var(--text-sm);
+    line-height: var(--leading-loose);
+    color: var(--color-fg-tint);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .nexo-brief .text-link {
+    margin-top: auto;
+    padding-top: 20px;
+  }
+
+  .section-head .eyebrow {
+    font-size: var(--text-xs);
+    margin-bottom: 5px;
+  }
+
+  .annual-goal {
+    position: relative;
+    padding: 23px;
+    background: var(--color-surface-raised);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .annual-goal .eyebrow {
+    color: var(--color-fg-tint);
+    font-size: var(--text-xs);
+  }
+
+  .annual-goal h2 {
+    font-size: var(--text-lg);
+    margin: 6px 0 20px;
+  }
+
+  .annual-goal .goal-big {
+    font-size: var(--text-display);
+    margin-bottom: 5px;
+  }
+
+  .annual-goal .goal-big span {
+    font-size: var(--text-2xl);
+  }
+
+  .annual-goal > small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    margin-bottom: 18px;
+  }
+
+  .annual-goal .bar {
+    margin-bottom: 10px;
+  }
+
+  .annual-goal p {
+    font-size: var(--text-xs);
+    color: var(--color-fg-tint);
+    line-height: var(--leading-relaxed);
+  }
+
+  .annual-goal .text-link {
+    font-size: var(--text-xs);
+    margin-top: auto;
+    padding-top: 18px;
+  }
+
+  .activity-grid .tip {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+    padding: 18px;
+  }
+
+  .activity-grid .tip:first-child {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .activity-grid .tip time {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+    margin-top: 12px;
+  }
+
+  @media (max-width: 1100px) {
+    .mission-grid,
+    .dashboard-bottom {
+      grid-template-columns: minmax(0, 1.8fr) minmax(250px, 1fr);
+      gap: 16px;
+    }
+
+    .nexo-brief {
+      padding: 22px;
+    }
+
+    .section-head .text-link {
+      font-size: var(--text-xs);
+      gap: 5px;
+    }
+
+    .mission-grid {
+      grid-template-columns: minmax(0, 1.6fr) minmax(230px, 1fr);
+    }
+
+    .dashboard-bottom {
+      grid-template-columns: 1fr;
+    }
+
+    .annual-goal {
+      display: block;
+    }
+
+    .annual-goal .bar {
+      margin-top: 15px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .home-heading .eyebrow {
+      font-size: var(--text-xs);
+    }
+
+    .mission-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .nexo-brief {
+      padding: 22px;
+    }
+
+    .nexo-brief p {
+      -webkit-line-clamp: 2;
+    }
+
+    .nexo-brief h3 {
+      font-size: var(--text-2xl);
+    }
+  }
+
+  .date-label {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    padding-bottom: 3px;
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 19px;
+  }
+
+  .section-head h2 {
+    margin: 0;
+    font-size: var(--text-2xl);
+  }
+
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .activity-section {
+    margin-top: 33px;
+  }
+
+  .activity-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .page-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 35px;
+    padding-top: 20px;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-fg-subtle);
+    font-size: var(--text-xs);
+  }
+
+  @media (max-width: 1100px) {
+    .game-grid {
+      gap: 10px;
+    }
+
+    .activity-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .date-label {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .game-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .section-head h2 {
+      font-size: var(--text-2xl);
+    }
+
+    .page-footer {
+      font-size: var(--text-xs);
+      gap: 10px;
+    }
+
+    .page-footer span:last-child {
+      max-width: 180px;
+      text-align: right;
+    }
+  }
+
+  /* An empty state outside a card (the overview's sections): it brings its own frame and spans the
+     grid it would have filled. */
+  .empty-panel {
+    grid-column: 1 / -1;
+    padding: 20px;
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-soft), transparent);
+  }
+}

@@ -1,8 +1,9 @@
+// First, as in the app: index.css declares the cascade layers before any component's CSS.
+import '../src/styles/index.css'
 import type { Preview } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router'
 import { MockAppState } from '../src/app/app-state'
 import { I18nProvider, type Locale } from '../src/i18n/i18n'
-import '../src/styles/index.css'
 import './preview.css'
 
 const preview: Preview = {

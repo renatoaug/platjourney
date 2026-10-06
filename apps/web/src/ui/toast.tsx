@@ -1,6 +1,7 @@
 /** Toast: short feedback at the bottom of the screen, with an optional action. Call toast() from anywhere; <ToastHost /> renders it. */
 import { useEffect, useState } from 'react'
 import { Icon } from './icon'
+import './toast.css'
 
 export type ToastKind = 'error' | 'success' | 'info'
 export interface ToastAction {

@@ -12,6 +12,8 @@ import { DemoNote } from './demo'
 import { LanguageSetting } from './language-switcher'
 import { OPEN_ONBOARDING } from './onboarding'
 import { NewPasswordFields, PasswordInput, SubmitButton } from './password-fields'
+import './auth/auth-layout.css'
+import './account.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -522,7 +524,7 @@ export function AccountSkeleton() {
         </h2>
         <Sk w="92%" h={12} />
         <Sk w="70%" h={12} style={{ marginTop: 8 }} />
-        <Sk w="150px" h={36} style={{ marginTop: 18, borderRadius: 9 }} />
+        <Sk w="150px" h={36} style={{ marginTop: 18, borderRadius: 'var(--radius-control)' }} />
       </div>
       <div className="card">
         <h2>{t('title')}</h2>
@@ -534,8 +536,8 @@ export function AccountSkeleton() {
           </div>
         </div>
         <div className="chips" style={{ marginTop: 16 }}>
-          <Sk w="110px" h={36} style={{ borderRadius: 9 }} />
-          <Sk w="60px" h={36} style={{ borderRadius: 9 }} />
+          <Sk w="110px" h={36} style={{ borderRadius: 'var(--radius-control)' }} />
+          <Sk w="60px" h={36} style={{ borderRadius: 'var(--radius-control)' }} />
         </div>
         <Sk w="120px" h={12} style={{ marginTop: 28 }} />
       </div>

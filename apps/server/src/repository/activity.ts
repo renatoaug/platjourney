@@ -37,6 +37,16 @@ export async function recentTips(user: string, limit = 30): Promise<Tip[]> {
   )
 }
 
+/** The next `limit` tips older than `before`, newest first: the history page's endless list. */
+export async function tipsBefore(user: string, before: Date, limit = 30): Promise<Tip[]> {
+  return plain(
+    await q<Tip[]>(
+      'SELECT *, game.* AS game FROM tip WHERE user = $user AND created_at < $before ORDER BY created_at DESC LIMIT $limit',
+      { user: userRef(user), before, limit },
+    ),
+  )
+}
+
 export interface Notification {
   id: string
   kind: Exclude<TipKind, 'chat'>

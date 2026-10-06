@@ -50,6 +50,7 @@ import {
   notificationsPage,
   recentMessages,
   recentTips,
+  tipsBefore,
   unreadNotifications,
 } from './repository/activity.ts'
 import {
@@ -589,6 +590,11 @@ async function api(
       hoursPlayed: hours((await playtimes(me)).get(game.id)),
     }
     return json(res, 200, { text: await trophyHelp(me, ctx, trophy) })
+  }
+  if (path === '/api/tips' && method === 'GET') {
+    const before = new Date(url.searchParams.get('before') ?? '')
+    if (Number.isNaN(before.getTime())) return json(res, 400, { error: 'before' })
+    return json(res, 200, await tipsBefore(me.id, before, 30))
   }
   if (path === '/api/notifications' && method === 'GET') {
     const page = Math.max(1, Number(url.searchParams.get('page')) || 1)

@@ -1,16 +1,15 @@
-/** Pager for a paged list: "1–24 de 399" on the left; first, previous, page numbers, next and last on the right. Renders nothing when everything fits on one page. */
+/** Pager for a paged list: "1–24 de 399" on the left; previous, page numbers and next on the right. The first and last pages are always among the numbers, so there are no separate jump buttons. Renders nothing when everything fits on one page. */
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { Icon } from './icon'
+import './pager.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
     pager: {
       label: 'Páginas',
       range: '{start}–{end} de {total}',
-      first: 'Primeira página',
       previous: 'Página anterior',
       next: 'Próxima página',
-      last: 'Última página',
       page: 'Página {page}',
     },
   },
@@ -18,10 +17,8 @@ const messages = defineMessages({
     pager: {
       label: 'Pages',
       range: '{start}–{end} of {total}',
-      first: 'First page',
       previous: 'Previous page',
       next: 'Next page',
-      last: 'Last page',
       page: 'Page {page}',
     },
   },
@@ -61,10 +58,10 @@ export function Pager({
   const pages = Math.max(1, Math.ceil(total / size))
   if (pages <= 1) return null
   const start = (page - 1) * size
-  const arrow = (to: number, name: string, icon: string, off: boolean, className = '') => (
+  const arrow = (to: number, name: string, icon: string, off: boolean) => (
     <button
       type="button"
-      className={`ghost sm ${className}`.trim()}
+      className="pager-arrow"
       disabled={disabled || off}
       aria-label={name}
       onClick={() => onPage(to)}
@@ -78,7 +75,6 @@ export function Pager({
         {t('pager.range', { start: start + 1, end: Math.min(start + size, total), total })}
       </span>
       <div className="pager-pages">
-        {arrow(1, t('pager.first'), 'chevrons-left', page === 1, 'pager-end')}
         {arrow(page - 1, t('pager.previous'), 'chevron-left', page === 1)}
         {pageItems(page, pages).map((p, i) =>
           p === null ? (
@@ -90,7 +86,7 @@ export function Pager({
             <button
               key={p}
               type="button"
-              className="ghost sm"
+              className="pager-page"
               disabled={disabled}
               aria-label={t('pager.page', { page: p })}
               aria-current={p === page ? 'page' : undefined}
@@ -101,7 +97,6 @@ export function Pager({
           ),
         )}
         {arrow(page + 1, t('pager.next'), 'chevron-right', page === pages)}
-        {arrow(pages, t('pager.last'), 'chevrons-right', page === pages, 'pager-end')}
       </div>
     </nav>
   )

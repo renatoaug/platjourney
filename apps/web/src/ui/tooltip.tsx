@@ -1,5 +1,6 @@
 /** Tooltip for any element with data-tip. One floating node, shown on hover and focus; mount <TooltipHost /> once. */
 import { useEffect, useRef } from 'react'
+import './tooltip.css'
 
 export function TooltipHost() {
   const ref = useRef<HTMLDivElement>(null)
@@ -31,13 +32,28 @@ export function TooltipHost() {
     }
     const target = (e: Event) =>
       (e.target as HTMLElement | null)?.closest?.<HTMLElement>('[data-tip]')
+    // Touch screens have no hover: a tap would leave the tip hanging. Focus from a tap is skipped
+    // too; focus from the keyboard still shows it.
+    const hover = window.matchMedia?.('(hover: hover)')
+    let touched = false
+    const touch = () => {
+      touched = true
+    }
+    const key = () => {
+      touched = false
+    }
     const over = (e: Event) => {
       const el = target(e)
-      if (el) show(el)
+      if (!el) return
+      if (e.type === 'mouseover' && hover && !hover.matches) return
+      if (e.type === 'focusin' && touched) return
+      show(el)
     }
     const out = (e: Event) => {
       if (target(e)) hide()
     }
+    document.addEventListener('touchstart', touch, { passive: true })
+    document.addEventListener('keydown', key)
     document.addEventListener('mouseover', over)
     document.addEventListener('mouseout', out)
     document.addEventListener('focusin', over)
@@ -46,6 +62,8 @@ export function TooltipHost() {
     window.addEventListener('scroll', hide, { passive: true })
     return () => {
       hide()
+      document.removeEventListener('touchstart', touch)
+      document.removeEventListener('keydown', key)
       document.removeEventListener('mouseover', over)
       document.removeEventListener('mouseout', out)
       document.removeEventListener('focusin', over)

@@ -13,6 +13,7 @@ import type { ProfileSummary } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { repeat } from '../ui/skeleton'
 import { EmptyState } from '../ui/states'
+import './home.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

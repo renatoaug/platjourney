@@ -15,6 +15,7 @@ import {
 import { ApiError, api } from '../lib/api'
 import type { Me } from '../lib/types'
 import { toast } from '../ui/toast'
+import './account.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

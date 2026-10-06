@@ -5,6 +5,7 @@ import type { CurrentGame, Tip } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { UserText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
+import './nexo-brief.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -91,7 +92,7 @@ export function NexoBriefSkeleton() {
   return (
     <>
       <div className="nexo-heading">
-        <Sk w="44px" h={44} style={{ borderRadius: 8, flex: 'none' }} />
+        <Sk w="44px" h={44} style={{ borderRadius: 'var(--radius-control)', flex: 'none' }} />
         <div style={{ flex: 1 }}>
           <Sk w="40%" h={14} />
           <Sk w="60%" h={10} style={{ marginTop: 8 }} />

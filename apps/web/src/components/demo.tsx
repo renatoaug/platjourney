@@ -3,6 +3,7 @@ import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { Icon } from '../ui/icon'
+import './demo.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

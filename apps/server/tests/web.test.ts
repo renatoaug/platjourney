@@ -497,6 +497,13 @@ test('a trophy tip needs a missing trophy from the library', async () => {
   expect(help.mock.calls[0][1]).toMatchObject({ game, title, guide: freshGuide, hoursPlayed: null })
 })
 
+test('older tips come 30 at a time before a date', async () => {
+  const older = spyOn(activity, 'tipsBefore').mockResolvedValue([])
+  expect((await send('GET', '/api/tips')).status).toBe(400)
+  expect((await send('GET', '/api/tips?before=2026-10-01T10:00:00Z')).body).toEqual([])
+  expect(older).toHaveBeenLastCalledWith(me.id, new Date('2026-10-01T10:00:00Z'), 30)
+})
+
 test('notifications are paged within bounds and can be marked read', async () => {
   const page = spyOn(activity, 'notificationsPage').mockResolvedValue({ items: [] } as never)
   spyOn(activity, 'markNotificationsRead').mockResolvedValue()

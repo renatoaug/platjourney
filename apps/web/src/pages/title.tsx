@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { Page } from '../app/page'
 import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
+import { GameColumns } from '../components/game-columns'
 import { Guide, GuideSkeleton } from '../components/guide'
 import { HeroProgress, HeroSkeleton, UnobtainableBanner } from '../components/hero'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
@@ -15,6 +16,7 @@ import { plainText } from '../lib/text'
 import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { ErrorState } from '../ui/states'
+import './title.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -169,17 +171,22 @@ export function TitleSkeleton({ owned = true }: { owned?: boolean }) {
         <HeroSkeleton />
       </div>
       {owned ? (
-        <div className="grid cols-2 game-columns" style={{ marginTop: 20 }}>
-          <div className="card">
-            <h2>{t('trophies')}</h2>
-            <TrophyListSkeleton rows={6} />
-          </div>
-          <div className="stack">
+        <GameColumns
+          style={{ marginTop: 20 }}
+          trophies={
             <div className="card">
-              <GuideSkeleton />
+              <h2>{t('trophies')}</h2>
+              <TrophyListSkeleton rows={6} />
             </div>
-          </div>
-        </div>
+          }
+          guide={
+            <div className="stack">
+              <div className="card">
+                <GuideSkeleton />
+              </div>
+            </div>
+          }
+        />
       ) : (
         <div className="card guide-wide" style={{ marginTop: 20 }}>
           <GuideSkeleton />
@@ -252,18 +259,23 @@ export function TitleView({ d }: { d: TitleDetail }) {
       {/* Owned games get the same two columns as the current game: trophies on the
           left, the guide beside them. Without a trophy list the guide takes the width. */}
       {owned || d.trophies?.length ? (
-        <div className="grid cols-2 game-columns" style={{ marginTop: 20 }}>
-          <div className="card" id="title-trophies">
-            {/* Games not owned still list their trophies (from the catalog), without the
-                player's progress and without "Pedir dica", which needs that progress. */}
-            <TrophyList trophies={d.trophies ?? []} prefix="title-t" np={owned ? d.np : null} />
-          </div>
-          <div className="stack">
-            <div className="card" id="title-guide">
-              {guide}
+        <GameColumns
+          style={{ marginTop: 20 }}
+          trophies={
+            <div className="card" id="title-trophies">
+              {/* Games not owned still list their trophies (from the catalog), without the
+                  player's progress and without "Pedir dica", which needs that progress. */}
+              <TrophyList trophies={d.trophies ?? []} prefix="title-t" np={owned ? d.np : null} />
             </div>
-          </div>
-        </div>
+          }
+          guide={
+            <div className="stack">
+              <div className="card" id="title-guide">
+                {guide}
+              </div>
+            </div>
+          }
+        />
       ) : (
         <>
           <div className="card guide-wide" style={{ marginTop: 20 }} id="title-guide">

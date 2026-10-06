@@ -19,6 +19,7 @@ import { Icon } from '../ui/icon'
 import { modelWorkDone } from '../ui/plugin-slot'
 import { EmptyState } from '../ui/states'
 import { toast } from '../ui/toast'
+import './discover.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

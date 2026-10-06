@@ -1,5 +1,6 @@
 /** The signed-in layout: sidebar, top bar and the screen for the current route. */
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router'
 import { DemoBanner } from '../components/demo'
 import { Notifications } from '../components/notifications'
@@ -27,6 +28,7 @@ import { Icon } from '../ui/icon'
 import { PluginSlot, pluginModule } from '../ui/plugin-slot'
 import { Sk } from '../ui/skeleton'
 import { useApp } from './app-state'
+import './shell.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -40,10 +42,12 @@ const messages = defineMessages({
       history: 'Histórico',
       profile: 'Meu perfil',
       title: 'Jogo',
+      more: 'Mais',
     },
     mainNav: 'Navegação principal',
     ai: 'IA',
     profileLabel: 'Meu perfil',
+    avatarLabel: 'Abrir meu perfil',
     profileLine: 'Nível {level} · {platinums} platinas',
     profileUnavailable: 'Perfil indisponível',
     waitingPsn: 'Aguardando a PSN',
@@ -79,10 +83,12 @@ const messages = defineMessages({
       history: 'History',
       profile: 'My profile',
       title: 'Game',
+      more: 'More',
     },
     mainNav: 'Main navigation',
     ai: 'AI',
     profileLabel: 'My profile',
+    avatarLabel: 'Open my profile',
     profileLine: 'Level {level} · {platinums} platinums',
     profileUnavailable: 'Profile unavailable',
     waitingPsn: 'Waiting for PSN',
@@ -119,6 +125,9 @@ const NAV: { to: string; label: MessageKey<typeof messages>; icon: string; ai?: 
   { to: '/history', label: 'nav.history', icon: 'history' },
 ]
 
+// Links in the phone's bottom bar before "Mais".
+const BAR_ITEMS = 4
+
 const LABELS: Record<string, MessageKey<typeof messages>> = {
   '/': 'nav.home',
   '/game': 'nav.game',
@@ -137,13 +146,19 @@ function Nav() {
   const indicator = useRef<HTMLSpanElement>(null)
   const { pathname } = useLocation()
   const animated = useRef(false)
+  const [more, setMore] = useState(false)
+  const { data } = useApp()
 
   // A pill slides behind the active link.
   // biome-ignore lint/correctness/useExhaustiveDependencies: the active link changes with the route
   useLayoutEffect(() => {
     const place = (animate: boolean) => {
       const el = indicator.current
-      const active = nav.current?.querySelector<HTMLElement>('a.active')
+      // On a phone a page from the "Mais" sheet has no visible link: the pill sits on "Mais".
+      const link = nav.current?.querySelector<HTMLElement>('a.active')
+      const active = link?.offsetWidth
+        ? link
+        : nav.current?.querySelector<HTMLElement>('.nav-more.active')
       if (!el) return
       if (!active?.offsetWidth) {
         el.style.opacity = '0'
@@ -166,25 +181,81 @@ function Nav() {
     const observer = new ResizeObserver(() => place(false))
     if (nav.current) observer.observe(nav.current)
     return () => observer.disconnect()
-  }, [pathname])
+  }, [pathname, more])
 
+  // On a phone the bar holds the first BAR_ITEMS links and "Mais"; the rest open in a sheet above it.
+  const extras = [
+    ...NAV.slice(BAR_ITEMS).map((n) => ({ to: n.to, icon: n.icon, label: t(n.label) })),
+    ...(pluginModule.pages ?? []).map((p) => ({
+      to: p.path,
+      icon: p.icon,
+      label: p.label[locale],
+    })),
+    { to: '/profile', icon: 'circle', label: t('nav.profile'), avatar: data?.profile?.avatarUrl },
+  ] as { to: string; icon: string; label: string; avatar?: string }[]
+  const inExtras = extras.some((e) => pathname === e.to)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new route closes the sheet
+  useEffect(() => setMore(false), [pathname])
   return (
-    <nav className="nav" aria-label={t('mainNav')} ref={nav}>
-      <span className="nav-indicator" aria-hidden="true" ref={indicator} />
-      {NAV.map((n) => (
-        <NavLink key={n.to} to={n.to} end={n.to === '/'}>
-          <Icon name={n.icon} />
-          {t(n.label)}
-          {n.ai && <span className="nav-ai">{t('ai')}</span>}
-        </NavLink>
-      ))}
-      {pluginModule.pages?.map((p) => (
-        <NavLink key={p.path} to={p.path}>
-          <Icon name={p.icon} />
-          {p.label[locale]}
-        </NavLink>
-      ))}
-    </nav>
+    <>
+      <nav className="nav" aria-label={t('mainNav')} ref={nav}>
+        <span className="nav-indicator" aria-hidden="true" ref={indicator} />
+        {NAV.map((n, i) => (
+          <NavLink
+            key={n.to}
+            to={n.to}
+            end={n.to === '/'}
+            className={i >= BAR_ITEMS ? 'nav-extra' : undefined}
+          >
+            <Icon name={n.icon} />
+            {t(n.label)}
+            {n.ai && <span className="nav-ai">{t('ai')}</span>}
+          </NavLink>
+        ))}
+        {pluginModule.pages?.map((p) => (
+          <NavLink key={p.path} to={p.path} className="nav-extra">
+            <Icon name={p.icon} />
+            {p.label[locale]}
+          </NavLink>
+        ))}
+        <button
+          type="button"
+          className={`nav-more${more || inExtras ? ' active' : ''}`}
+          aria-expanded={more}
+          aria-controls="nav-sheet"
+          onClick={() => setMore((m) => !m)}
+        >
+          <Icon name={more ? 'close' : 'more'} />
+          {t('nav.more')}
+        </button>
+      </nav>
+      {/* On the body: the bar's backdrop filter would make it the box the sheet is fixed to. */}
+      {more &&
+        createPortal(
+          <>
+            <button
+              type="button"
+              className="nav-sheet-scrim"
+              aria-label={t('nav.more')}
+              onClick={() => setMore(false)}
+            />
+            <div className="nav-sheet" id="nav-sheet">
+              <span className="nav-sheet-handle" aria-hidden="true" />
+              <div className="nav-sheet-grid">
+                {extras.map((e, i) => (
+                  <NavLink key={e.to} to={e.to} style={{ '--i': i } as CSSProperties}>
+                    <span className={`nav-sheet-icon${e.avatar ? ' is-avatar' : ''}`}>
+                      {e.avatar ? <img src={e.avatar} alt="" /> : <Icon name={e.icon} />}
+                    </span>
+                    {e.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          </>,
+          document.body,
+        )}
+    </>
   )
 }
 
@@ -218,6 +289,18 @@ function SidebarProfile() {
           <small>{t('waitingPsn')}</small>
         </div>
       )}
+    </Link>
+  )
+}
+
+/** The account's picture at the end of the top bar, a way to the profile on a phone. */
+function TopbarAvatar() {
+  const t = useMessages(messages)
+  const { data } = useApp()
+  const avatar = data?.profile?.avatarUrl
+  return (
+    <Link className="topbar-avatar" to="/profile" aria-label={t('avatarLabel')}>
+      {avatar ? <img src={avatar} alt="" /> : <Icon name="circle" />}
     </Link>
   )
 }
@@ -316,6 +399,7 @@ export function Shell() {
             <PluginSlot name="top-bar" />
             <Notifications />
             <SyncButton />
+            <TopbarAvatar />
           </div>
         </header>
         {me.demo && <DemoBanner />}

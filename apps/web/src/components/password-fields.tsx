@@ -3,6 +3,7 @@ import { type ReactNode, type Ref, useRef, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { Icon } from '../ui/icon'
 import { type AuthForm, type FieldProps, MIN_PASSWORD } from './auth/use-auth-form'
+import './password-fields.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

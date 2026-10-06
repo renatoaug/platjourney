@@ -8,6 +8,7 @@ import { shownProgress } from '../lib/progress'
 import type { CurrentGame, GuideDetail } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
+import './hero.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {

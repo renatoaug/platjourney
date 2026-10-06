@@ -1,0 +1,62 @@
+@layer screens {
+  .nexo-badge {
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .nexo-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .nexo-heading h2 {
+    font-size: var(--text-body);
+    margin: 0;
+  }
+
+  .nexo-heading small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+
+  @media (max-width: 760px) {
+    .nexo-heading {
+      margin-bottom: 14px;
+    }
+  }
+
+  .nexo-heading {
+    gap: 12px;
+  }
+
+  .nexo-heading > div {
+    min-width: 0;
+  }
+
+  .nexo-heading h2 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    font-size: var(--text-xl);
+  }
+
+  .nexo-heading small {
+    display: block;
+    margin-top: 3px;
+    line-height: var(--leading-snug);
+  }
+
+  .nexo-badge {
+    font: var(--weight-medium) var(--text-xs) / var(--leading-snug) var(--font-body);
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 480px) {
+    .nexo-brief.card {
+      padding: 20px;
+    }
+  }
+}

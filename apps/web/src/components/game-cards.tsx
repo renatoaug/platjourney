@@ -8,6 +8,8 @@ import type { RankingItem } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { titleHref } from './tip'
+import './hero.css'
+import './game-cards.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -135,7 +137,7 @@ export function RankingRowsSkeleton({ n = 5 }: { n?: number }) {
       <span className="rank">
         <Sk w="14px" h={16} />
       </span>
-      <Sk w="68px" h={44} style={{ borderRadius: 4, flex: 'none' }} />
+      <Sk w="68px" h={44} style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }} />
       <div className="grow">
         <Sk w="60%" h={12} />
         <Sk w="40%" h={10} style={{ marginTop: 8 }} />

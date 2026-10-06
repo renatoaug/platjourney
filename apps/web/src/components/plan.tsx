@@ -11,6 +11,7 @@ import { modelWorkDone } from '../ui/plugin-slot'
 import { repeat, Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
 import { DemoNote } from './demo'
+import './plan.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -167,9 +168,18 @@ function PlanPicker({
             type="button"
             className={`chip ${m === minutes ? 'active' : ''}`}
             aria-pressed={m === minutes}
+            aria-label={
+              m < 60 ? t('optionMinutes', { count: m }) : t('optionHours', { count: m / 60 })
+            }
             onClick={() => onMinutes(m)}
           >
-            {m < 60 ? t('optionMinutes', { count: m }) : t('optionHours', { count: m / 60 })}
+            {/* The short form ("1h") on a phone, where five options share one line. */}
+            <span className="when-wide" aria-hidden="true">
+              {m < 60 ? t('optionMinutes', { count: m }) : t('optionHours', { count: m / 60 })}
+            </span>
+            <span className="when-narrow" aria-hidden="true">
+              {m < 60 ? t('optionMinutes', { count: m }) : `${m / 60}h`}
+            </span>
           </button>
         ))}
       </div>
@@ -253,7 +263,7 @@ export function PlanSkeleton() {
           </div>
           <div className="road-card">
             <div className="road-summary">
-              <Sk w="44px" h={44} style={{ borderRadius: 8, flex: 'none' }} />
+              <Sk w="44px" h={44} style={{ borderRadius: 'var(--radius-control)', flex: 'none' }} />
               <span className="road-title">
                 <Sk w="70px" h={14} />
                 <Sk w={`${140 + i * 30}px`} h={16} style={{ marginTop: 8 }} />

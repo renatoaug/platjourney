@@ -1,6 +1,7 @@
 /** Empty, error and in-progress states. Every screen and list uses these instead of its own markup. */
 import type { ReactNode } from 'react'
 import { Icon } from './icon'
+import './states.css'
 
 // With an icon and a title the state becomes a small panel (a card with nothing to list yet);
 // without them it stays one line of text.

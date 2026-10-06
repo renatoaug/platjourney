@@ -1,0 +1,12 @@
+@layer ui {
+  .cover-placeholder {
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    color: var(--color-fg-subtle);
+    background: linear-gradient(135deg, var(--color-surface-raised), var(--color-surface));
+    border: 1px solid var(--color-border-strong);
+  }
+}
