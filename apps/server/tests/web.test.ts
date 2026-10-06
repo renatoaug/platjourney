@@ -603,6 +603,21 @@ test('pages come from the built app, with long cache only for assets', async () 
   ).toEndWith('/index.html')
 })
 
+test('the app shell points link previews at its image with the address the visitor used', async () => {
+  spyOn(fs, 'existsSync').mockReturnValue(true)
+  spyOn(fs, 'readFileSync').mockReturnValue('<meta property="og:image" content="/og.png">')
+  const behindProxy = await send('GET', '/', undefined, {
+    host: 'app.example.com',
+    'x-forwarded-proto': 'https',
+  })
+  expect(behindProxy.body).toBe(
+    '<meta property="og:image" content="https://app.example.com/og.png">',
+  )
+  const direct = await send('GET', '/', undefined, { host: '127.0.0.1:3000' })
+  expect(direct.body).toBe('<meta property="og:image" content="http://127.0.0.1:3000/og.png">')
+  expect((await send('GET', '/')).body).toBe('<meta property="og:image" content="/og.png">')
+})
+
 test('without a build or for other methods there is nothing to serve', async () => {
   spyOn(fs, 'existsSync').mockReturnValue(false)
   expect(await send('GET', '/goals')).toMatchObject({ status: 404, body: 'not found' })

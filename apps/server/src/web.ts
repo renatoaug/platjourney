@@ -664,6 +664,16 @@ async function api(
   json(res, 404, { error: 'not found' })
 }
 
+/** The app shell, with the share-preview image as a full URL: link previews (WhatsApp, Telegram)
+ * skip a relative one. The address is the one the visitor used, so any instance gets its own. */
+function withShareImage(req: IncomingMessage, file: URL): string {
+  const html = readFileSync(file, 'utf8')
+  const host = req.headers.host
+  if (!host) return html
+  const proto = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'
+  return html.replace('content="/og.png"', `content="${proto}://${host}/og.png"`)
+}
+
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', 'http://localhost')
   const path = url.pathname
@@ -706,7 +716,11 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
             ? 'public, max-age=31536000, immutable'
             : 'no-cache',
         })
-        .end(readFileSync(target))
+        .end(
+          target.pathname.endsWith('/index.html')
+            ? withShareImage(req, target)
+            : readFileSync(target),
+        )
       return
     }
   }
