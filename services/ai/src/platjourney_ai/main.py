@@ -29,6 +29,9 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
 app = FastAPI(title='PlatJourney AI', lifespan=lifespan, docs_url=None, redoc_url=None)
 
 
+# The biggest request is a game with its trophy list and a chat history: well under this.
+MAX_BODY = 2_000_000
+
 for feature in (deep_guide, nexo, plans, guides, recommend, servers):
     app.include_router(feature.router)
 
@@ -39,9 +42,11 @@ async def internal_only(
 ) -> Response:
     """Only the Bun server may call this, and it says who the work is for."""
     if request.url.path != '/health' and not secrets.compare_digest(
-        request.headers.get('x-internal-token', ''), settings.ai_token
+        request.headers.get('x-internal-token', '').encode(), settings.ai_token.encode()
     ):
         return JSONResponse({'error': 'forbidden'}, status_code=403)
+    if int(request.headers.get('content-length') or 0) > MAX_BODY:
+        return JSONResponse({'error': 'body too large'}, status_code=413)
     token = current_tag.set(
         CostTag(
             user=request.headers.get('x-cost-user') or None,

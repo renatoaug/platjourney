@@ -33,9 +33,9 @@ class TrophyHelpRequest(Wire):
 
 
 class ReplyRequest(Wire):
-    text: str
+    text: str = Field(max_length=4000)
     context: GameContext | None = None
-    history: list[nexo.Turn] = Field(default_factory=list[nexo.Turn])
+    history: list[nexo.Turn] = Field(default_factory=list[nexo.Turn], max_length=50)
 
 
 @router.post('/tip')

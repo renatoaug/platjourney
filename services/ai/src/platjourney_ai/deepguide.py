@@ -10,6 +10,7 @@ import asyncio
 import ipaddress
 import logging
 import socket
+import time
 from datetime import UTC, datetime, timedelta
 from http.cookiejar import CookieJar, DefaultCookiePolicy
 from typing import Any
@@ -117,6 +118,9 @@ _robots: dict[str, str] = {}
 # A guide page is text; anything bigger is cut off rather than held in memory.
 MAX_PAGE_BYTES = 5_000_000
 MAX_REDIRECTS = 5
+# A page or a game cannot grow past this many passages: each one is embedded and stored.
+MAX_PASSAGES_PER_PAGE = 400
+MAX_PASSAGES = 2000
 
 
 async def _addresses(host: str, port: int) -> list[str]:
@@ -190,7 +194,8 @@ async def read_page(http: httpx.AsyncClient, url: str) -> tuple[str, str | None]
         return None
     if not got or not 200 <= got[0] < 300:
         return None
-    return html_to_text(got[1]), page_date(got[1])
+    # Parsing a big page takes a while: off the event loop, so chat keeps answering meanwhile.
+    return await asyncio.to_thread(lambda: (html_to_text(got[1]), page_date(got[1])))
 
 
 async def find_pages(game: Game) -> list[GuidePage]:
@@ -216,7 +221,7 @@ async def _index(game: Game, trophy_total: int | None, given: list[GuidePage] | 
                 log.info('  skipped %s', page.url)
                 continue
             text, updated = read
-            parts = chunk_text(text)
+            parts = chunk_text(text)[:MAX_PASSAGES_PER_PAGE]
             log.info('  %s: %d passages from %s', page.site, len(parts), page.url)
             for part in parts:
                 chunks.append(
@@ -229,6 +234,7 @@ async def _index(game: Game, trophy_total: int | None, given: list[GuidePage] | 
                     }
                     | ({'page_updated_at': updated} if updated else {})
                 )
+    chunks = chunks[:MAX_PASSAGES]
     if not chunks:
         # Remember the attempt so a game without readable guides is not retried on every request.
         await guidestore.save_index(game.id, trophy_total, [], 0)
@@ -242,6 +248,9 @@ async def _index(game: Game, trophy_total: int | None, given: list[GuidePage] | 
 
 
 _in_flight: dict[str, asyncio.Task[None]] = {}
+# A game whose indexing failed is not tried again for a while: each try may search the web.
+_failed: dict[str, float] = {}
+RETRY_AFTER_FAILURE_S = 3600
 
 
 def start(
@@ -260,6 +269,7 @@ def start(
     def done(t: asyncio.Task[None]) -> None:
         _in_flight.pop(game.id, None)
         if not t.cancelled() and (e := t.exception()):
+            _failed[game.id] = time.monotonic()
             log.error('deep guide for %s failed: %s', game.name, e)
 
     task.add_done_callback(done)
@@ -289,6 +299,9 @@ async def ensure(game: Game, trophy_total: int | None = None) -> Status:
         and index.trophy_total is not None
         and index.trophy_total != trophy_total
     )
+    failed_at = _failed.get(game.id)
+    if failed_at is not None and time.monotonic() - failed_at < RETRY_AFTER_FAILURE_S:
+        return await status(game)
     if outdated or list_changed:
         if index:
             why = 'behind the trophy list' if list_changed else 'old'
