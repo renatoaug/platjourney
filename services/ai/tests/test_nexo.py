@@ -95,6 +95,23 @@ def test_unlock_prompt_names_the_trophies() -> None:
     )
 
 
+def test_unlock_prompt_cheers_the_guides_hardest_and_most_tedious() -> None:
+    unlocked = [Trophy.model_validate(trophy())]
+    guide = {
+        'hardest': {'trophy': 'SURVIVOR', 'why': 'horda de 500'},
+        'mostTedious': {'trophy': 'Sobrevivente', 'why': ''},
+        'easiest': {'trophy': 'Sobrevivente', 'why': 'grátis'},
+    }
+    prompt = nexo.unlock_prompt(unlocked, guide)
+    assert (
+        'Pelo guia, Sobrevivente era o mais difícil da platina (horda de 500); '
+        'Sobrevivente era o mais demorado da platina: abra a comemoração com um emoji'
+    ) in prompt
+    assert 'mais fácil' not in prompt
+    assert 'Pelo guia' not in nexo.unlock_prompt(unlocked, {'hardest': {'trophy': 'Outro'}})
+    assert 'Pelo guia' not in nexo.unlock_prompt(unlocked)
+
+
 def test_session_prompt_without_trophies() -> None:
     prompt = nexo.session_prompt([], 25)
     assert '(última atividade há ~25 min). Troféus desta sessão: nenhum troféu novo.' in prompt

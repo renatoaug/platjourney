@@ -154,6 +154,18 @@ describe('checkUser', () => {
     })
   })
 
+  test('two checks at once send the reaction once', async () => {
+    let stored = row()
+    getTitle.mockImplementation(async () => stored)
+    saveEarned.mockImplementation(async (_user, _id, ids) => {
+      stored = row({ earned_ids: ids })
+    })
+    const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
+    await Promise.all([checkUser(user), checkUser(user)])
+    expect(reaction).toHaveBeenCalledTimes(1)
+    expect(send).toHaveBeenCalledTimes(1)
+  })
+
   test('with notices off, trophies get a plain notice', async () => {
     config.automatic.notices = false
     const reaction = spyOn(nexo, 'unlockReaction')

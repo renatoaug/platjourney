@@ -192,10 +192,24 @@ async function trackSession(
       )
 }
 
+// One check per player at a time: the sweep and a sign-in (watchNow) running together would both
+// see the same trophies as new, before either saves them, and send the notice twice.
+const checks = new Map<string, Promise<void>>()
+export function checkUser(user: User): Promise<void> {
+  const next = (checks.get(user.id) ?? Promise.resolve())
+    .catch(() => {})
+    .then(() => check(user))
+    .finally(() => {
+      if (checks.get(user.id) === next) checks.delete(user.id)
+    })
+  checks.set(user.id, next)
+  return next
+}
+
 // Compares the user's PSN title list against the stored snapshot. A title we
 // have never tipped that is still early triggers the intro; newly earned trophies
 // on the current title trigger a reaction and feed the session tracker.
-export async function checkUser(user: User): Promise<void> {
+async function check(user: User): Promise<void> {
   // The demo player has no PSN profile to watch.
   if (isDemo(user)) return
   const titles = await recentTitles(user.psn_account_id, 5)
