@@ -112,6 +112,13 @@ test('a PSN title resolves to the best matching game with its name kept as an al
   expect(call?.[1]?.headers).toMatchObject({ 'Client-ID': config.igdb.clientId })
 })
 
+test('quotes and backslashes in a name cannot escape the search string', async () => {
+  const fetch = igdbApi(() => [])
+  await resolveGame('Evil \\"; where id = 1; \\')
+  const call = fetch.mock.calls.find(([url]) => String(url).includes('api.igdb.com'))
+  expect(String(call?.[1]?.body)).toStartWith('search "Evil ; where id = 1;";')
+})
+
 test('partial name matches rank above unrelated results', async () => {
   igdbApi(() => [game({ id: 4, name: 'Other' }), game({ id: 5, name: 'Astro Bot Rescue' })])
   expect((await resolveGame('Astro Bot'))?.id).toBe(5)

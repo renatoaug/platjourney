@@ -11,6 +11,7 @@ import * as deepguide from '../src/deepguide.ts'
 import { DEMO_ACCOUNT_ID } from '../src/demo.ts'
 import * as guide from '../src/guide.ts'
 import { GUIDE_VERSION, type Guide } from '../src/guide.ts'
+import { PAGE_POLICY, SECURITY_HEADERS } from '../src/http.ts'
 import * as interests from '../src/interests.ts'
 import * as lib from '../src/library.ts'
 import * as nexo from '../src/nexo.ts'
@@ -21,6 +22,7 @@ import * as profile from '../src/profile.ts'
 import * as psn from '../src/psn.ts'
 import { PrivateProfile } from '../src/psn.ts'
 import * as ranking from '../src/ranking.ts'
+import { resetRateLimits } from '../src/rate-limit.ts'
 import * as recommend from '../src/recommend.ts'
 import * as activity from '../src/repository/activity.ts'
 import * as games from '../src/repository/game.ts'
@@ -86,6 +88,7 @@ const saved = { research: config.automatic.research, skip: config.auth.skipVerif
 
 beforeEach(() => {
   forgetResearch()
+  resetRateLimits()
   config.automatic.research = true
   spyOn(console, 'error').mockImplementation(() => {})
   spyOn(auth, 'authenticate').mockResolvedValue(me)
@@ -114,6 +117,7 @@ beforeEach(() => {
   spyOn(requests, 'requestGuide').mockResolvedValue()
   spyOn(statuses, 'listServerStatuses').mockResolvedValue([])
   spyOn(users, 'updateUser').mockResolvedValue()
+  spyOn(users, 'setLinkCode').mockResolvedValue()
   spyOn(telegram, 'botInfo').mockResolvedValue({ username: 'nexo_bot', name: 'Nexo' })
   spyOn(telegram, 'botUsername').mockResolvedValue('nexo_bot')
   spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
@@ -169,7 +173,7 @@ test('register and login sign in, start watching and set the cookie', async () =
     })
   }
   expect(register).toHaveBeenCalledWith('Kratos', 'secret12')
-  expect(login).toHaveBeenCalledWith('Kratos', 'secret12')
+  expect(login).toHaveBeenCalledWith('Kratos', 'secret12', '')
   expect(watcher.watchNow).toHaveBeenCalledTimes(2)
 })
 
@@ -236,6 +240,17 @@ test('a change asked from another site is refused; the same site and server call
   ).not.toBe(403)
 })
 
+test('sign-in routes and the demo are limited per address', async () => {
+  spyOn(auth, 'accountStatus').mockResolvedValue({} as never)
+  for (let i = 0; i < 30; i++) await send('POST', '/api/auth/lookup', { onlineId: 'Kratos' })
+  const cut = await send('POST', '/api/auth/lookup', { onlineId: 'Kratos' })
+  expect(cut).toMatchObject({ status: 429, body: { error: 'too_many_requests' } })
+  expect(auth.accountStatus).toHaveBeenCalledTimes(30)
+  spyOn(auth, 'demoSession').mockResolvedValue(null)
+  for (let i = 0; i < 5; i++) await send('POST', '/api/auth/demo')
+  expect((await send('POST', '/api/auth/demo')).status).toBe(429)
+})
+
 test('auth failures answer with their status and message', async () => {
   spyOn(auth, 'login').mockRejectedValue(new AuthError('too_many_attempts'))
   const res = await send('POST', '/api/auth/login', { onlineId: 'Kratos', password: 'x' })
@@ -256,8 +271,13 @@ test('private trophies, a plugin refusal and anything else have their own answer
   expect(console.error).toHaveBeenCalledWith('web failed:', 'boom')
 })
 
-test('a broken body is an internal error', async () => {
-  expect((await send('POST', '/api/chat', '{nope')).status).toBe(500)
+test('a body that is not JSON is a bad request, and one too big is refused', async () => {
+  expect(await send('POST', '/api/chat', '{nope')).toMatchObject({
+    status: 400,
+    body: { error: 'bad_json' },
+  })
+  const big = await send('POST', '/api/chat', JSON.stringify({ text: 'x'.repeat(200_000) }))
+  expect(big).toMatchObject({ status: 413, body: { error: 'body_too_large' } })
 })
 
 test('an unknown auth route needs a session like any other', async () => {
@@ -330,18 +350,30 @@ test('deleting the account forgets the user and clears the cookie', async () => 
   expect(remove).toHaveBeenLastCalledWith(me, '')
 })
 
-test('the Telegram link keeps an existing code', async () => {
-  spyOn(auth, 'authenticate').mockResolvedValue(makeUser({ telegram_link_code: 'abc' }))
+test('the Telegram link keeps a code still valid, and replaces one about to expire', async () => {
+  const inAWhile = new Date(Date.now() + 10 * 60_000)
+  spyOn(auth, 'authenticate').mockResolvedValue(
+    makeUser({ telegram_link_code: 'abc', telegram_link_expires_at: inAWhile }),
+  )
   expect((await send('POST', '/api/telegram/link')).body).toEqual({
     url: 'https://t.me/nexo_bot?start=abc',
   })
-  expect(users.updateUser).not.toHaveBeenCalled()
+  expect(users.setLinkCode).not.toHaveBeenCalled()
+  spyOn(auth, 'authenticate').mockResolvedValue(
+    makeUser({
+      telegram_link_code: 'abc',
+      telegram_link_expires_at: new Date(Date.now() + 30_000),
+    }),
+  )
+  const { url } = (await send('POST', '/api/telegram/link')).body
+  expect(url).not.toEndWith('=abc')
+  expect(users.setLinkCode).toHaveBeenCalledWith(me.id, url.split('start=')[1])
 })
 
 test('the Telegram link makes a code the first time, and unlinking drops it', async () => {
   const { url } = (await send('POST', '/api/telegram/link')).body
   const code = url.split('start=')[1]
-  expect(users.updateUser).toHaveBeenCalledWith(me.id, { telegram_link_code: code })
+  expect(users.setLinkCode).toHaveBeenCalledWith(me.id, code)
   await send('DELETE', '/api/telegram/link')
   expect(users.updateUser).toHaveBeenLastCalledWith(me.id, {
     telegram_chat_id: null,
@@ -672,12 +704,19 @@ test('pages come from the built app, with long cache only for assets', async () 
   expect(index.headers).toEqual({
     'content-type': 'text/html; charset=utf-8',
     'cache-control': 'no-cache',
+    'content-security-policy': PAGE_POLICY,
+    ...SECURITY_HEADERS,
   })
+  expect(PAGE_POLICY).toContain("frame-ancestors 'none'")
   const asset = await send('GET', '/assets/app.js')
   expect(asset.headers).toEqual({
     'content-type': 'text/javascript; charset=utf-8',
     'cache-control': 'public, max-age=31536000, immutable',
+    ...SECURITY_HEADERS,
   })
+  config.auth.secureCookie = true
+  expect((await send('GET', '/')).headers['strict-transport-security']).toContain('max-age=')
+  config.auth.secureCookie = false
   await send('GET', '/../secret.txt')
   expect(
     String((fs.existsSync as unknown as ReturnType<typeof spyOn>).mock.lastCall?.[0]),
@@ -696,6 +735,8 @@ test('the app shell points link previews at its image with the address the visit
   )
   const direct = await send('GET', '/', undefined, { host: '127.0.0.1:3000' })
   expect(direct.body).toBe('<meta property="og:image" content="http://127.0.0.1:3000/og.png">')
+  const forged = await send('GET', '/', undefined, { host: 'x"><script>alert(1)</script>' })
+  expect(forged.body).toBe('<meta property="og:image" content="/og.png">')
   expect((await send('GET', '/')).body).toBe('<meta property="og:image" content="/og.png">')
 })
 
@@ -739,7 +780,7 @@ describe('the demo', () => {
     const missing = await send('POST', '/api/auth/demo', undefined, { 'accept-language': 'en' })
     expect(missing).toEqual({
       status: 404,
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...SECURITY_HEADERS },
       body: { error: 'demo_unavailable', message: 'The demo is not available on this server.' },
     })
   })

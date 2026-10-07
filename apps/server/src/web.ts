@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { extname } from 'node:path'
-import { noteAccess } from './access.ts'
+import { clientIp, noteAccess } from './access.ts'
 import {
   AuthError,
   accountStatus,
@@ -26,7 +26,7 @@ import { tagged } from './costs.ts'
 import { deepGuideStats, ensureDeepGuide } from './deepguide.ts'
 import { DemoReadOnly, isDemo, storedSummary, trophiesFor } from './demo.ts'
 import { ensureGuide, GUIDE_VERSION, type Guide } from './guide.ts'
-import { json, readBody } from './http.ts'
+import { BadBody, json, PAGE_POLICY, readBody, SECURITY_HEADERS } from './http.ts'
 import {
   defineMessages,
   fromAcceptLanguage,
@@ -46,6 +46,7 @@ import { pluginRoute, Refused } from './plugins.ts'
 import { profilePage } from './profile.ts'
 import { catalogTrophies, PrivateProfile, profileSummary, titleTrophies } from './psn.ts'
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
+import { allow } from './rate-limit.ts'
 import { dismissRecommendation, recommendations } from './recommend.ts'
 import {
   markNotificationsRead,
@@ -67,7 +68,7 @@ import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
 import { isDismissReason } from './repository/recommendation.ts'
 import { listServerStatuses } from './repository/server-status.ts'
-import { type User, updateUser } from './repository/user.ts'
+import { setLinkCode, type User, updateUser } from './repository/user.ts'
 import { botInfo, botUsername } from './telegram.ts'
 import { demoContext, forgetUser, getCurrent, watchNow } from './watcher.ts'
 
@@ -79,6 +80,7 @@ const messages = defineMessages({
     taken: 'Esse PSN ID já tem conta. Entre com a senha.',
     wrongPassword: 'Senha incorreta.',
     tooManyAttempts: 'Muitas tentativas. Espere 15 minutos ou recupere o acesso.',
+    tooManyRequests: 'Muitos pedidos seguidos. Espere um minuto e tente de novo.',
     confirmationMismatch: 'O PSN ID digitado não confere.',
     trophiesPrivate:
       'Seus troféus estão privados na PSN. Deixe "Troféus" visível para "Qualquer pessoa" nas configurações de privacidade e tente de novo.',
@@ -102,6 +104,7 @@ const messages = defineMessages({
     taken: 'This PSN ID already has an account. Sign in with the password.',
     wrongPassword: 'Wrong password.',
     tooManyAttempts: 'Too many attempts. Wait 15 minutes or recover access.',
+    tooManyRequests: 'Too many requests in a row. Wait a minute and try again.',
     confirmationMismatch: "The PSN ID you typed doesn't match.",
     trophiesPrivate:
       'Your trophies are private on PSN. Set "Trophies" to "Anyone" in the privacy settings and try again.',
@@ -369,6 +372,17 @@ async function authRoutes(
   method: string,
 ): Promise<boolean> {
   if (!path.startsWith('/api/auth/') || method !== 'POST') return false
+  // Each of these asks PSN or opens a session: a loop from one address is cut short, so it can
+  // neither wear out the instance's PSN account nor fill the database with demo sessions.
+  const ip = clientIp(req) ?? ''
+  const demo = path === '/api/auth/demo'
+  if (!allow(`${demo ? 'demo' : 'auth'}|${ip}`, demo ? 5 : 30, 60_000)) {
+    json(res, 429, {
+      error: 'too_many_requests',
+      message: translator(messages, requestLocale(req))('tooManyRequests'),
+    })
+    return true
+  }
   if (path === '/api/auth/logout') {
     await logout(req)
     json(res, 200, { ok: true }, { 'set-cookie': sessionCookie(null) })
@@ -420,7 +434,7 @@ async function authRoutes(
       return true
     }
     case '/api/auth/login':
-      signIn(await login(onlineId, secret))
+      signIn(await login(onlineId, secret, ip))
       return true
     case '/api/auth/claim': {
       const { secret: claimSecret, ...claim } = await startClaim(onlineId, claimSecretFrom(req))
@@ -544,9 +558,13 @@ async function api(
     return json(res, 200, { ok: true }, { 'set-cookie': sessionCookie(null) })
   }
   if (path === '/api/telegram/link' && method === 'POST') {
-    // Clicking twice (or in two tabs) must not invalidate the link already opened.
-    const code = me.telegram_link_code ?? newLinkCode()
-    if (!me.telegram_link_code) await updateUser(me.id, { telegram_link_code: code })
+    // Clicking twice (or in two tabs) must not invalidate a link still valid.
+    const valid =
+      me.telegram_link_code &&
+      me.telegram_link_expires_at &&
+      new Date(me.telegram_link_expires_at).getTime() > Date.now() + 60_000
+    const code = valid ? (me.telegram_link_code as string) : newLinkCode()
+    if (!valid) await setLinkCode(me.id, code)
     return json(res, 200, { url: `https://t.me/${await botUsername()}?start=${code}` })
   }
   if (path === '/api/telegram/link' && method === 'DELETE') {
@@ -712,7 +730,8 @@ async function api(
 function withShareImage(req: IncomingMessage, file: URL): string {
   const html = readFileSync(file, 'utf8')
   const host = req.headers.host
-  if (!host) return html
+  // A Host header is client data: only a plain host name (and port) goes into the page.
+  if (!host || !/^[a-z0-9.-]+(:\d{1,5})?$/i.test(host)) return html
   const proto = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'
   return html.replace('content="/og.png"', `content="${proto}://${host}/og.png"`)
 }
@@ -782,6 +801,11 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
           'cache-control': path.startsWith('/assets/')
             ? 'public, max-age=31536000, immutable'
             : 'no-cache',
+          ...SECURITY_HEADERS,
+          ...(type === STATIC_TYPES['.html'] ? { 'content-security-policy': PAGE_POLICY } : {}),
+          ...(config.auth.secureCookie
+            ? { 'strict-transport-security': 'max-age=31536000; includeSubDomains' }
+            : {}),
         })
         .end(
           target.pathname.endsWith('/index.html')
@@ -816,6 +840,8 @@ export function handle(req: IncomingMessage, res: ServerResponse): Promise<void>
         message: translator(messages, locale)('demoReadOnly'),
       })
     if (e instanceof Refused) return json(res, e.status, { error: e.code, message: e.message })
+    if (e instanceof BadBody)
+      return json(res, e.status, { error: e.status === 413 ? 'body_too_large' : 'bad_json' })
     console.error('web failed:', (e as Error).message)
     json(res, 500, { error: 'internal error' })
   })

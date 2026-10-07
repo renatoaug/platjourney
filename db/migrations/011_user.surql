@@ -8,6 +8,8 @@ DEFINE FIELD IF NOT EXISTS password_hash ON user TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS avatar_url ON user TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS telegram_chat_id ON user TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS telegram_link_code ON user TYPE option<string>;
+-- A link code works for a short while: a screenshot of the link is no lasting key to the account.
+DEFINE FIELD IF NOT EXISTS telegram_link_expires_at ON user TYPE option<datetime>;
 DEFINE FIELD IF NOT EXISTS goal_targets ON user TYPE object FLEXIBLE DEFAULT {};
 DEFINE FIELD IF NOT EXISTS taste_profile ON user TYPE option<object> FLEXIBLE;
 DEFINE FIELD IF NOT EXISTS play_session ON user TYPE option<object> FLEXIBLE;

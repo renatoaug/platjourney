@@ -178,6 +178,16 @@ def strip_links(text: str) -> str:
     return re.sub(r'\[([^\]]+)\]\(https?://[^)]+\)', r'\1', text).strip()
 
 
+_URL = re.compile(r'\(?\b(?:https?://|www\.)\S+')
+
+
+def strip_urls(text: str) -> str:
+    """No address at all in what Nexo says: guide pages are untrusted text, and one could try
+    to send the player to a site that asks for their PSN login. Answers state facts, not
+    sources."""
+    return re.sub(r'[ \t]{2,}', ' ', _URL.sub('', strip_links(text))).strip()
+
+
 async def research_json(name: str, instructions: str, input: str, schema: dict[str, Any]) -> Any:
     """One web-searching call that must come back as JSON matching `schema`. A local model
     answers from what it knows, without searching."""

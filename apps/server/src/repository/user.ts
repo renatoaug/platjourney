@@ -9,6 +9,7 @@ export interface User {
   avatar_url: string | null
   telegram_chat_id: string | null
   telegram_link_code: string | null
+  telegram_link_expires_at?: string | Date | null
   goal_targets: Record<string, number>
   taste_profile: unknown | null
   play_session: unknown | null
@@ -60,7 +61,22 @@ export async function userByChat(chatId: string): Promise<User | undefined> {
 
 export async function userByLinkCode(code: string): Promise<User | undefined> {
   return fromRow(
-    plain(await one<User>('SELECT * FROM user WHERE telegram_link_code = $c LIMIT 1', { c: code })),
+    plain(
+      await one<User>(
+        'SELECT * FROM user WHERE telegram_link_code = $c AND telegram_link_expires_at > time::now() LIMIT 1',
+        { c: code },
+      ),
+    ),
+  )
+}
+
+export const LINK_CODE_MINUTES = 15
+
+/** A fresh Telegram link code for the user, valid for LINK_CODE_MINUTES. */
+export async function setLinkCode(id: string, code: string): Promise<void> {
+  await q(
+    'UPDATE $id SET telegram_link_code = $code, telegram_link_expires_at = time::now() + <duration> $ttl',
+    { id: userRef(id), code, ttl: `${LINK_CODE_MINUTES}m` },
   )
 }
 
@@ -86,7 +102,12 @@ export async function createUser(u: {
 export async function updateUser(id: string, fields: Partial<Omit<User, 'id'>>): Promise<void> {
   const set: string[] = []
   const vars: Record<string, unknown> = { id: userRef(id) }
-  for (const [key, value] of Object.entries(fields)) {
+  // The unique index is on the lowercase id: a rename moves it too, or the old name stays taken.
+  const all =
+    typeof fields.psn_online_id === 'string'
+      ? { ...fields, psn_online_id_lower: fields.psn_online_id.toLowerCase() }
+      : fields
+  for (const [key, value] of Object.entries(all)) {
     if (!/^[a-z_]+$/.test(key)) continue
     if (value === null) set.push(`${key} = NONE`)
     else {

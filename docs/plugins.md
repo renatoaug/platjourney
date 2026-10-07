@@ -134,7 +134,7 @@ Relative paths in both settings start at the repository's root, and absolute pat
 | `ctx.db.q(sql, vars)` | The app's database. The plugin keeps its own tables (singular, snake_case), defined when it registers. |
 | `ctx.json(res, status, body)`, `ctx.readBody(req)` | Answer JSON and read a JSON body. |
 | `ctx.Refused` | The error to throw to refuse, with a code, a message for the player and a status. |
-| `ctx.route(path, handler, { public })` | Answers `/api/ext/<path>`. The handler gets `req`, `res`, `url`, `method` and, unless public, `me`. Two plugins cannot take the same path. |
+| `ctx.route(path, handler, { public, method })` | Answers `/api/ext/<path>` for one HTTP method, GET unless `method` says otherwise; any other method gets 405. A route that changes anything declares `POST` (or `PUT`, `PATCH`, `DELETE`): a link opens a GET. The handler gets `req`, `res`, `url`, `method` and, unless public, `me`. The demo account reaches only GET routes, and a non-read request from another site's page is refused before any route. Two plugins cannot take the same path. |
 | `ctx.beforeModel(hook)` | Runs before model work with `{ user, action }`. Throwing `Refused(code, message, status)` stops it; the player gets `message` with `status`. |
 | `ctx.modelFailed(hook)` | Runs when the work failed after every `beforeModel` let it through. |
 | `ctx.on('user:created', listener)` | Runs after a new account signs up. |

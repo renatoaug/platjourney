@@ -442,7 +442,8 @@ def test_index_route_waits_and_reports_a_failure(monkeypatch: pytest.MonkeyPatch
     }
     r = TestClient(app).post('/deep-guide/index', json=body, headers=HEADERS)
     assert r.status_code == 500
-    assert 'embeddings down' in r.json()['detail']
+    # The cause goes to the log, never to the caller.
+    assert r.json()['detail'] == 'deep guide failed'
 
 
 def test_pages_given_by_hand_are_all_read(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -605,3 +606,58 @@ async def test_robots_rules_still_apply_after_a_redirect(resolver: None) -> None
 
     async with deepguide.reader_client(httpx.MockTransport(handler)) as http:
         assert await deepguide.read_page(http, 'http://guides.example/private/page') is None
+
+
+async def test_a_failed_index_is_not_retried_for_a_while(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    async def broken(game: Game, total: int | None, given: Any) -> None:
+        calls.append(game.id)
+        raise RuntimeError('search down')
+
+    async def no_index(game: str) -> None:
+        return None
+
+    async def idle(game: Game) -> Any:
+        return deepguide.Status(indexing=False, chunks=0, sources=[])
+
+    monkeypatch.setattr(deepguide, '_index', broken)
+    monkeypatch.setattr(deepguide, '_failed', {})
+    monkeypatch.setattr(guidestore, 'get_index', no_index)
+    monkeypatch.setattr(deepguide, 'status', idle)
+    game = Game(id='game:77', name='Broken Game')
+    await deepguide.ensure(game)
+    await asyncio.sleep(0.01)
+    await deepguide.ensure(game)
+    await deepguide.ensure(game)
+    assert calls == ['game:77']
+
+
+def test_requests_past_their_bounds_are_refused() -> None:
+    client = TestClient(app)
+    game = {'id': 'game:1', 'name': 'Far Cry 3'}
+    long = client.post(
+        '/deep-guide/retrieve',
+        json={'game': game, 'question': 'x' * 5000},
+        headers=HEADERS,
+    )
+    assert long.status_code == 422
+    many = client.post(
+        '/deep-guide/retrieve',
+        json={'game': game, 'question': 'q', 'limit': 500},
+        headers=HEADERS,
+    )
+    assert many.status_code == 422
+    big = client.post(
+        '/deep-guide/stats',
+        content=b'{}',
+        headers={**HEADERS, 'content-type': 'application/json', 'content-length': '5000000'},
+    )
+    assert big.status_code == 413
+
+
+def test_a_token_with_other_characters_is_refused_not_an_error() -> None:
+    token = b'\xe9' * 48  # sent as raw bytes, like a client that does not encode its headers
+    headers: list[tuple[bytes, bytes]] = [(b'x-internal-token', token)]
+    r = TestClient(app).post('/deep-guide/stats', json={}, headers=headers)
+    assert r.status_code == 403

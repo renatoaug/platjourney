@@ -12,15 +12,23 @@ import type { User } from './repository/user.ts'
 const HOUR_MS = 3_600_000
 const DAY_MS = 24 * HOUR_MS
 
-// The client's address: the first X-Forwarded-For hop behind a proxy this instance trusts
-// (TRUST_PROXY=1), the socket's address otherwise, since anyone can send that header.
+// The client's address behind a proxy this instance trusts (TRUST_PROXY=1): Cloudflare's
+// CF-Connecting-IP, or else the last X-Forwarded-For hop, the one the proxy itself added. The
+// first hop is whatever the client sent. Without a trusted proxy, the socket's address.
 export function clientIp(req: IncomingMessage): string | undefined {
   if (config.access.trustProxy) {
+    const cf = req.headers['cf-connecting-ip']
+    const fromCf = (Array.isArray(cf) ? cf[0] : cf)?.trim()
+    if (fromCf) return fromCf
     const forwarded = req.headers['x-forwarded-for']
-    const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0]?.trim()
-    if (first) return first
+    const last = (Array.isArray(forwarded) ? forwarded.join(',') : forwarded)
+      ?.split(',')
+      .map((hop) => hop.trim())
+      .filter(Boolean)
+      .at(-1)
+    if (last) return last
   }
-  return req.socket.remoteAddress?.replace(/^::ffff:/, '')
+  return req.socket?.remoteAddress?.replace(/^::ffff:/, '')
 }
 
 export const hashIp = (ip: string, secret: string): string =>

@@ -6,7 +6,7 @@ Models accept unknown fields so the server can send more than a feature reads.
 import math
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 
@@ -69,7 +69,7 @@ class GameContext(Wire):
 
     game: Game
     title: TitleProgress
-    trophies: list[Trophy]
+    trophies: list[Trophy] = Field(max_length=3000)
     guide: dict[str, Any] | None = None
     groups: TitleGroups | None = None
     # Hours played so far, from PSN (may lag a session behind).

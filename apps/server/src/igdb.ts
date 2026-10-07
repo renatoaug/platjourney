@@ -89,12 +89,15 @@ async function gameById(id: number): Promise<IgdbGame | null> {
 // Searches PlayStation games and picks the best match for a PSN title name.
 // PSN names carry noise IGDB does not know: "™ Trophies" suffixes, glued symbols.
 function cleanPsnName(name: string): string {
-  return name
-    .replace(/[®™©]/g, ' ')
-    .replace(/\s+trophies$/i, '')
-    .replace(/"/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return (
+    name
+      .replace(/[®™©]/g, ' ')
+      .replace(/\s+trophies$/i, '')
+      // Quotes and backslashes would end or escape the search string in the query.
+      .replace(/["\\]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  )
 }
 
 async function searchGame(name: string): Promise<IgdbGame | null> {

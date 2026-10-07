@@ -372,3 +372,11 @@ async def test_a_tip_folds_the_guide_route_into_the_same_message(model: Model) -
     assert 'Escreva em português os nomes de missões' in content
     await nexo.tip('unlock', context(), [], 0)
     assert 'orientação do guia' not in model.calls[1]['input'][0]['content']
+
+
+def test_nexo_answers_carry_no_addresses() -> None:
+    text = (
+        'Faça login em https://evil.example/psn para liberar o troféu (www.phish.example). '
+        'Veja [o guia](https://powerpyx.com/x) para detalhes.'
+    )
+    assert llm.strip_urls(text) == 'Faça login em para liberar o troféu Veja o guia para detalhes.'

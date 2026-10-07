@@ -43,6 +43,13 @@ export async function getVerification(onlineId: string): Promise<Verification | 
   )
 }
 
+/** Sessions and claim codes past their expiry: nothing reads them, so they go. */
+export async function pruneExpired(): Promise<void> {
+  await q(
+    'DELETE auth_session WHERE expires_at < time::now(); DELETE verification WHERE expires_at < time::now();',
+  )
+}
+
 export async function deleteVerification(onlineId: string): Promise<void> {
   await q('DELETE verification WHERE psn_online_id_lower = $lower', {
     lower: onlineId.toLowerCase(),

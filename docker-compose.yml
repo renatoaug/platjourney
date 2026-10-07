@@ -3,9 +3,10 @@ services:
     image: surrealdb/surrealdb:v3.0.5
     container_name: platjourney-surrealdb
     restart: always
-    command: start --user ${SURREAL_USER:-root} --pass ${SURREAL_PASS:-root} rocksdb:/data/platjourney.db
+    # No default password, and the port only on this machine: the database is not for the network.
+    command: start --user ${SURREAL_USER:-root} --pass ${SURREAL_PASS:?set SURREAL_PASS in .env} rocksdb:/data/platjourney.db
     ports:
-      - '${SURREAL_PORT:-8000}:8000'
+      - '127.0.0.1:${SURREAL_PORT:-8000}:8000'
     volumes:
       # Bind mount: the image runs unprivileged and cannot create dirs inside a fresh named volume.
       - ./data/surrealdb:/data

@@ -67,8 +67,10 @@ async function openSession(user: User): Promise<{ user: User; token: string }> {
   return { user, token }
 }
 
-// Wrong passwords per PSN id, in memory: enough to make guessing pointless.
+// Wrong passwords, in memory: 8 per PSN id from one address, 50 per PSN id from anywhere.
+// Keyed by address too, so someone else's wrong guesses do not lock the owner out.
 const MAX_ATTEMPTS = 8
+const MAX_ATTEMPTS_ANYWHERE = 50
 const ATTEMPT_WINDOW_MS = 15 * 60_000
 const attempts = new Map<string, { count: number; since: number }>()
 function countAttempt(key: string): void {
@@ -77,9 +79,9 @@ function countAttempt(key: string): void {
   if (!entry || now - entry.since > ATTEMPT_WINDOW_MS) attempts.set(key, { count: 1, since: now })
   else entry.count++
 }
-function blocked(key: string): boolean {
+function blocked(key: string, max = MAX_ATTEMPTS): boolean {
   const entry = attempts.get(key)
-  return !!entry && Date.now() - entry.since <= ATTEMPT_WINDOW_MS && entry.count >= MAX_ATTEMPTS
+  return !!entry && Date.now() - entry.since <= ATTEMPT_WINDOW_MS && entry.count >= max
 }
 
 export interface AccountStatus {
@@ -139,15 +141,19 @@ export async function register(
 export async function login(
   onlineId: string,
   password: string,
+  ip = '',
 ): Promise<{ user: User; token: string }> {
   const profile = await lookupProfile(onlineId.trim())
   if (!profile) throw new AuthError('psn_not_found')
-  const key = profile.accountId
-  if (blocked(key)) throw new AuthError('too_many_attempts')
+  const key = `${profile.accountId}|${ip}`
+  const anywhere = `${profile.accountId}|*`
+  if (blocked(key) || blocked(anywhere, MAX_ATTEMPTS_ANYWHERE))
+    throw new AuthError('too_many_attempts')
   const user = await userByAccount(profile.accountId)
   const ok = !!user?.password_hash && (await Bun.password.verify(password, user.password_hash))
   if (!user || !ok) {
     countAttempt(key)
+    countAttempt(anywhere)
     throw new AuthError('wrong_password')
   }
   attempts.delete(key)

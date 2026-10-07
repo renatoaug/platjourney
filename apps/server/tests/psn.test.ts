@@ -5,6 +5,8 @@ import {
   aboutMe,
   allTitles,
   catalogTrophies,
+  forgetProfiles,
+  forgetTrophyLists,
   lookupProfile,
   PrivateProfile,
   playedGames,
@@ -19,6 +21,8 @@ import { counts, makeTitle } from './fixtures.ts'
 const tokens = { accessToken: 'a', refreshToken: 'r', expiresIn: 3600 }
 
 beforeEach(() => {
+  forgetProfiles()
+  forgetTrophyLists()
   spyOn(api, 'exchangeNpssoForAccessCode').mockResolvedValue('code')
   spyOn(api, 'exchangeAccessCodeForAuthTokens').mockResolvedValue(tokens as never)
   spyOn(api, 'exchangeRefreshTokenForAuthTokens').mockResolvedValue(tokens as never)
@@ -125,6 +129,17 @@ test('a profile is found only by an exact online id, ignoring case', async () =>
   })
   spyOn(api, 'getProfileFromUserName').mockRejectedValue(new Error('Not Found'))
   expect(await lookupProfile('nobody')).toBeNull()
+})
+
+test('a looked-up profile is reused for a few minutes', async () => {
+  const search = spyOn(api, 'makeUniversalSearch').mockResolvedValue({
+    domainResponses: [
+      { results: [{ socialMetadata: { onlineId: 'Kratos', accountId: 'acc-k' } }] },
+    ],
+  } as never)
+  await lookupProfile('Kratos')
+  await lookupProfile('kratos')
+  expect(search).toHaveBeenCalledTimes(1)
 })
 
 test('an id the search leaves out is asked for directly', async () => {

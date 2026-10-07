@@ -74,7 +74,24 @@ export interface PsnProfile {
 // Exact match of a PSN online id (case-insensitive), or null when nobody has it. The search
 // leaves out some accounts (the one this server signs in with, new ones not indexed yet), so
 // without an exact hit the id is asked for directly.
+// Sign-in screens look the same id up several times in a minute; PSN is asked once.
+const PROFILE_TTL_MS = 5 * 60_000
+const profiles = new Map<string, { at: number; profile: PsnProfile | null }>()
+
 export async function lookupProfile(onlineId: string): Promise<PsnProfile | null> {
+  const key = onlineId.toLowerCase()
+  const hit = profiles.get(key)
+  if (hit && Date.now() - hit.at < PROFILE_TTL_MS) return hit.profile
+  const profile = await findProfile(onlineId)
+  if (profiles.size > 5_000) profiles.clear()
+  profiles.set(key, { at: Date.now(), profile })
+  return profile
+}
+
+/** For tests: forgets looked-up profiles. */
+export const forgetProfiles = () => profiles.clear()
+
+async function findProfile(onlineId: string): Promise<PsnProfile | null> {
   const a = await auth()
   const search = await makeUniversalSearch(a, onlineId, 'SocialAllAccounts')
   const hit = (search.domainResponses[0]?.results ?? []).find(
@@ -202,7 +219,26 @@ interface TargetFields {
 
 const rarityLabel = ['Ultra rara', 'Muito rara', 'Rara', 'Comum']
 
-export async function titleTrophies(
+// A screen and the questions on it ask for the same list within seconds; PSN is asked once a minute.
+const TROPHIES_TTL_MS = 60_000
+const trophyLists = new Map<string, { at: number; list: Promise<TrophyStatus[]> }>()
+
+export function titleTrophies(title: TitleProgress, accountId: string): Promise<TrophyStatus[]> {
+  const key = `${accountId}|${title.npCommunicationId}`
+  const hit = trophyLists.get(key)
+  if (hit && Date.now() - hit.at < TROPHIES_TTL_MS) return hit.list
+  const list = fetchTitleTrophies(title, accountId)
+  if (trophyLists.size > 5_000) trophyLists.clear()
+  trophyLists.set(key, { at: Date.now(), list })
+  // A failure is not kept: the next ask tries again.
+  list.catch(() => trophyLists.delete(key))
+  return list
+}
+
+/** For tests: forgets cached trophy lists. */
+export const forgetTrophyLists = () => trophyLists.clear()
+
+async function fetchTitleTrophies(
   title: TitleProgress,
   accountId: string,
 ): Promise<TrophyStatus[]> {

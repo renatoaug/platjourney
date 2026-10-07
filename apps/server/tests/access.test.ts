@@ -9,9 +9,12 @@ import { makeUser } from './api-fixtures.ts'
 const saved = { ...config.access }
 let record: ReturnType<typeof spyOn>
 
-const request = (address: string, forwarded?: string) =>
+const request = (address: string, forwarded?: string, cf?: string) =>
   ({
-    headers: forwarded ? { 'x-forwarded-for': forwarded } : {},
+    headers: {
+      ...(forwarded ? { 'x-forwarded-for': forwarded } : {}),
+      ...(cf ? { 'cf-connecting-ip': cf } : {}),
+    },
     socket: { remoteAddress: address },
   }) as unknown as IncomingMessage
 
@@ -27,10 +30,14 @@ afterEach(() => {
 })
 
 test('the address comes from the socket unless a proxy is trusted', () => {
-  const req = request('::ffff:10.0.0.1', '203.0.113.9, 10.0.0.1')
+  const req = request('::ffff:10.0.0.1', '198.51.100.7, 203.0.113.9')
   expect(clientIp(req)).toBe('10.0.0.1')
   config.access.trustProxy = true
+  // The first hop is whatever the client sent; the last one is what the proxy saw.
   expect(clientIp(req)).toBe('203.0.113.9')
+  expect(clientIp(request('10.0.0.1', '198.51.100.7, 203.0.113.9', '203.0.113.50'))).toBe(
+    '203.0.113.50',
+  )
   expect(clientIp(request('10.0.0.2'))).toBe('10.0.0.2')
 })
 

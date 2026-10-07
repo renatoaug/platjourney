@@ -252,7 +252,7 @@ async def ask(user_text: str, context: str, history: list[Turn] | None = None) -
         max_output_tokens=settings.chat_max_output_tokens,
         input=[*turns, {'role': 'user', 'content': f'{context}\n\n---\n{user_text}'}],
     )
-    return llm.strip_links(response.output_text)
+    return llm.strip_urls(response.output_text)
 
 
 ROUTE_PROMPT = (

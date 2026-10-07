@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_ENV = Path(__file__).resolve().parents[4] / '.env'
@@ -54,7 +55,8 @@ class Settings(BaseSettings):
     surreal_db: str = 'main'
 
     # Only the Bun server calls this service; it sends this token on every request.
-    ai_token: str
+    # At least 32 characters: an empty or short token would leave the service open.
+    ai_token: str = Field(min_length=32)
     ai_host: str = '127.0.0.1'
     ai_port: int = 8100
 
