@@ -32,7 +32,7 @@ import * as titles from '../src/repository/title.ts'
 import * as users from '../src/repository/user.ts'
 import * as telegram from '../src/telegram.ts'
 import * as watcher from '../src/watcher.ts'
-import { handle, heroArt } from '../src/web.ts'
+import { forgetResearch, handle, heroArt } from '../src/web.ts'
 import { makeContext, makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
 import { counts } from './fixtures.ts'
 
@@ -85,6 +85,7 @@ const played = (seconds: number): Playtime => ({
 const saved = { research: config.automatic.research, skip: config.auth.skipVerification }
 
 beforeEach(() => {
+  forgetResearch()
   config.automatic.research = true
   spyOn(console, 'error').mockImplementation(() => {})
   spyOn(auth, 'authenticate').mockResolvedValue(me)
@@ -107,7 +108,7 @@ beforeEach(() => {
   spyOn(activity, 'unreadNotifications').mockResolvedValue(0)
   spyOn(activity, 'recentMessages').mockResolvedValue([])
   spyOn(games, 'getGame').mockResolvedValue(game)
-  spyOn(games, 'gameForName').mockResolvedValue(undefined as never)
+  spyOn(games, 'catalogGameForName').mockResolvedValue(undefined as never)
   spyOn(games, 'gameForTitle').mockResolvedValue(game)
   spyOn(guides, 'getGuide').mockResolvedValue(freshGuide)
   spyOn(requests, 'requestGuide').mockResolvedValue()
@@ -174,12 +175,65 @@ test('register and login sign in, start watching and set the cookie', async () =
 
 test('a claim starts with a code and finishes with a session', async () => {
   config.auth.skipVerification = true
-  spyOn(auth, 'startClaim').mockResolvedValue({ code: 'TC-ABCDEF' } as never)
+  const start = spyOn(auth, 'startClaim').mockResolvedValue({
+    code: 'TC-ABCDEF',
+    secret: 's3cret',
+  } as never)
   const finish = spyOn(auth, 'finishClaim').mockResolvedValue(signedIn)
-  const start = await send('POST', '/api/auth/claim', { onlineId: 'Kratos' })
-  expect(start.body).toEqual({ code: 'TC-ABCDEF', skipVerification: true })
-  await send('POST', '/api/auth/claim/finish', { onlineId: 'Kratos', password: 7, fresh: true })
-  expect(finish).toHaveBeenCalledWith('Kratos', '', true)
+  const started = await send('POST', '/api/auth/claim', { onlineId: 'Kratos' })
+  // The secret goes only in an HttpOnly cookie on the claim routes, never in the body.
+  expect(started.body).toEqual({ code: 'TC-ABCDEF', skipVerification: true })
+  expect(started.headers['set-cookie']).toContain(
+    'platjourney_claim=s3cret; Path=/api/auth/claim; HttpOnly; SameSite=Strict',
+  )
+  const cookie = { cookie: 'platjourney_claim=s3cret' }
+  await send('POST', '/api/auth/claim', { onlineId: 'Kratos' }, cookie)
+  expect(start).toHaveBeenLastCalledWith('Kratos', 's3cret')
+  const done = await send(
+    'POST',
+    '/api/auth/claim/finish',
+    { onlineId: 'Kratos', password: 7, fresh: true },
+    cookie,
+  )
+  expect(finish).toHaveBeenCalledWith('Kratos', '', true, 's3cret')
+  expect(done.headers['set-cookie'] as unknown).toEqual([
+    expect.stringContaining('platjourney_session='),
+    expect.stringContaining('platjourney_claim=; Path=/api/auth/claim'),
+  ])
+})
+
+test('a change asked from another site is refused; the same site and server calls are not', async () => {
+  const other = await send(
+    'POST',
+    '/api/chat',
+    { text: 'oi' },
+    { origin: 'https://evil.example', host: 'app.example' },
+  )
+  expect(other).toMatchObject({ status: 403, body: { error: 'cross_origin' } })
+  const bad = await send(
+    'POST',
+    '/api/chat',
+    { text: 'oi' },
+    { origin: 'nonsense', host: 'app.example' },
+  )
+  expect(bad.status).toBe(403)
+  spyOn(nexo, 'reply').mockResolvedValue({ text: 'ok' } as never)
+  const same = await send(
+    'POST',
+    '/api/chat',
+    { text: 'oi' },
+    { origin: 'https://app.example', host: 'app.example' },
+  )
+  expect(same.status).not.toBe(403)
+  // A read from another site is not a change: it goes through (CORS keeps the answer from it).
+  expect(
+    (
+      await send('GET', '/api/me', undefined, {
+        origin: 'https://evil.example',
+        host: 'app.example',
+      })
+    ).status,
+  ).not.toBe(403)
 })
 
 test('auth failures answer with their status and message', async () => {
@@ -389,12 +443,12 @@ test('an unknown title is not found', async () => {
   spyOn(lib, 'library').mockResolvedValue([])
   const res = await send('GET', '/api/title?name=Zelda&platform=PS4')
   expect(res.status).toBe(404)
-  expect(games.gameForName).toHaveBeenCalledWith('Zelda', 'PS4')
+  expect(games.catalogGameForName).toHaveBeenCalledWith('Zelda', 'PS4')
 })
 
 test('a title the player does not own uses the catalog trophy list', async () => {
   spyOn(lib, 'library').mockResolvedValue([])
-  spyOn(games, 'gameForName').mockResolvedValue(game)
+  spyOn(games, 'catalogGameForName').mockResolvedValue(game)
   spyOn(psn, 'catalogTrophies').mockResolvedValue({
     platform: 'PS4',
     trophies: [makeTrophy()],
@@ -438,6 +492,33 @@ test('a missing guide is built once while the page polls', async () => {
   expect(build).toHaveBeenCalledTimes(1)
   expect(build).toHaveBeenCalledWith(game, [makeTrophy()], { name: 'Days Gone', platform: 'PS5' })
   finish(freshGuide)
+})
+
+test('research is capped: a few at a time, and a daily number per player', async () => {
+  spyOn(guides, 'getGuide').mockResolvedValue(undefined)
+  spyOn(lib, 'library').mockResolvedValue([])
+  spyOn(games, 'getGame').mockImplementation(async (id: string) => makeGame({ id }))
+  const pending: ((g: Guide) => void)[] = []
+  const build = spyOn(guide, 'ensureGuide').mockImplementation(
+    () => new Promise<Guide>((resolve) => pending.push(resolve)),
+  )
+  for (const n of [1, 2, 3]) await send('GET', `/api/title?game=game:${n}`)
+  const fourth = await send('GET', '/api/title?game=game:4')
+  expect(fourth.body).toMatchObject({ guide: null, queued: true })
+  expect(requests.requestGuide).toHaveBeenCalledWith('game:4')
+  expect(build).toHaveBeenCalledTimes(3)
+  for (const finish of pending.splice(0)) finish(freshGuide)
+  await Bun.sleep(0)
+
+  build.mockResolvedValue(freshGuide)
+  for (let n = 5; n < 12; n++) {
+    await send('GET', `/api/title?game=game:${n}`)
+    await Bun.sleep(0)
+  }
+  expect(build).toHaveBeenCalledTimes(10)
+  const past = await send('GET', '/api/title?game=game:12')
+  expect(past.body).toMatchObject({ guide: null, queued: true })
+  expect(build).toHaveBeenCalledTimes(10)
 })
 
 test('a failed guide build is logged', async () => {
@@ -697,6 +778,34 @@ describe('the demo', () => {
     for (const spy of spies) expect(spy).not.toHaveBeenCalled()
   })
 
+  test('plugin routes only read for the demo too', async () => {
+    const ran: string[] = []
+    await registerPlugin({
+      name: 'demo-fixture',
+      register(ctx) {
+        ctx.route('read', async ({ res }) => {
+          ran.push('read')
+          res.writeHead(204).end()
+        })
+        ctx.route(
+          'write',
+          async ({ res }) => {
+            ran.push('write')
+            res.writeHead(204).end()
+          },
+          { method: 'POST' },
+        )
+      },
+    })
+    try {
+      expect((await send('GET', '/api/ext/read')).status).toBe(204)
+      expect(await send('POST', '/api/ext/write')).toMatchObject({ status: 403, body: readOnly })
+      expect(ran).toEqual(['read'])
+    } finally {
+      resetPlugins()
+    }
+  })
+
   test('the read-only notice follows the page language', async () => {
     const res = await send('POST', '/api/chat', { text: 'oi' }, { 'accept-language': 'en-US' })
     expect(res.body.message).toStartWith('This is a demo')
@@ -754,7 +863,7 @@ describe('the demo', () => {
     const res = await send('GET', '/api/title?name=Days')
     expect(res.body).toMatchObject({ owned: false, trophies: null, guide: null, building: false })
     expect(byName).toHaveBeenCalledWith('Days')
-    expect(games.gameForName).not.toHaveBeenCalled()
+    expect(games.catalogGameForName).not.toHaveBeenCalled()
     expect(psn.catalogTrophies).not.toHaveBeenCalled()
     expect(guide.ensureGuide).not.toHaveBeenCalled()
     expect(requests.requestGuide).not.toHaveBeenCalled()
@@ -789,7 +898,7 @@ test('plugin routes: public ones skip sign-in, the others get the player, and a 
           seen.push(me)
           res.writeHead(204).end()
         },
-        { public: true },
+        { public: true, method: 'POST' },
       )
       ctx.route('mine', async ({ res, me }) => {
         seen.push(me?.id)
@@ -798,12 +907,24 @@ test('plugin routes: public ones skip sign-in, the others get the player, and a 
       ctx.route('refuse', async () => {
         throw new Refused('no_plan', 'Sem plano', 402)
       })
+      ctx.route(
+        'change',
+        async ({ res }) => {
+          res.writeHead(204).end()
+        },
+        { method: 'POST' },
+      )
     },
   })
   try {
     expect((await send('POST', '/api/ext/hook')).status).toBe(204)
     expect((await send('GET', '/api/ext/mine')).status).toBe(200)
     expect(seen).toEqual([undefined, me.id])
+    // A route answers only its method: a link (GET) cannot trigger a change.
+    const viaLink = await send('GET', '/api/ext/change')
+    expect(viaLink).toMatchObject({ status: 405, headers: { allow: 'POST' } })
+    expect((await send('POST', '/api/ext/mine')).status).toBe(405)
+    expect((await send('POST', '/api/ext/change')).status).toBe(204)
     const refused = await send('GET', '/api/ext/refuse')
     expect(refused.status).toBe(402)
     expect(refused.body).toEqual({ error: 'no_plan', message: 'Sem plano' })

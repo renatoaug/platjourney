@@ -6,6 +6,7 @@ export interface Verification {
   psn_account_id: string
   avatar_url: string | null
   code: string
+  secret_hash?: string
   expires_at: string
 }
 
@@ -14,11 +15,12 @@ export async function saveVerification(v: {
   psn_account_id: string
   avatar_url: string | null
   code: string
+  secret_hash: string
   minutes: number
 }): Promise<void> {
   await q(
     `UPSERT verification SET psn_online_id_lower = $lower, psn_online_id = $id, psn_account_id = $account,
-       avatar_url = $avatar, code = $code, expires_at = time::now() + <duration> $ttl
+       avatar_url = $avatar, code = $code, secret_hash = $secret, expires_at = time::now() + <duration> $ttl
      WHERE psn_online_id_lower = $lower`,
     {
       lower: v.psn_online_id.toLowerCase(),
@@ -26,6 +28,7 @@ export async function saveVerification(v: {
       account: v.psn_account_id,
       avatar: v.avatar_url ?? undefined,
       code: v.code,
+      secret: v.secret_hash,
       ttl: `${v.minutes}m`,
     },
   )

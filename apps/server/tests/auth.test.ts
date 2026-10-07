@@ -179,21 +179,31 @@ test('a right password clears the wrong attempts', async () => {
   await login('Kratos', 'right-one')
 })
 
-test('a claim gives a fresh code, or the one already pending', async () => {
+test('a claim gives a fresh code and secret, and the same code to whoever holds that secret', async () => {
   const save = spyOn(sessions, 'saveVerification')
   const fresh = await startClaim(' Kratos ')
   expect(fresh.code).toMatch(/^TC-[A-HJ-NP-Z2-9]{6}$/)
+  expect(fresh.secret).toMatch(/^[0-9a-f]{64}$/)
   expect(fresh).toMatchObject({ onlineId: 'Kratos', minutes: config.auth.verificationMinutes })
-  expect(save.mock.calls[0][0]).toMatchObject({ psn_account_id: 'acc-1', code: fresh.code })
+  expect(save.mock.calls[0][0]).toMatchObject({
+    psn_account_id: 'acc-1',
+    code: fresh.code,
+    secret_hash: sha(fresh.secret),
+  })
 
   spyOn(sessions, 'getVerification').mockResolvedValue({
     psn_online_id: 'Kratos',
     psn_account_id: 'acc-1',
     avatar_url: null,
     code: 'TC-ABCDEF',
+    secret_hash: sha('mine'),
     expires_at: '',
   })
-  expect((await startClaim('Kratos')).code).toBe('TC-ABCDEF')
+  expect(await startClaim('Kratos', 'mine')).toMatchObject({ code: 'TC-ABCDEF', secret: 'mine' })
+  // Someone else asking for the same account gets a new code, not the pending one.
+  const other = await startClaim('Kratos')
+  expect(other.code).not.toBe('TC-ABCDEF')
+  expect(other.secret).not.toBe('mine')
 })
 
 test('a claim of an unknown PSN id fails', async () => {
@@ -206,22 +216,34 @@ const pending = {
   psn_account_id: 'acc-claim',
   avatar_url: 'avatar.png',
   code: 'TC-ABCDEF',
+  secret_hash: sha('claim-secret'),
   expires_at: '',
 }
 
+test('only whoever started a claim can finish it, even with the code on the profile', async () => {
+  spyOn(sessions, 'getVerification').mockResolvedValue(pending)
+  spyOn(psn, 'aboutMe').mockResolvedValue('TC-ABCDEF')
+  for (const secret of [undefined, '', 'someone-else'])
+    expect(code(await finishClaim('Kratos', 'long enough', false, secret).catch((e) => e))).toBe(
+      'no_pending_verification',
+    )
+  expect(updateUser).not.toHaveBeenCalled()
+  expect(createUser).not.toHaveBeenCalled()
+})
+
 test('finishing a claim needs a pending code found in "About me"', async () => {
-  expect(code(await finishClaim('Kratos', 'long enough', false).catch((e) => e))).toBe(
-    'no_pending_verification',
-  )
+  expect(
+    code(await finishClaim('Kratos', 'long enough', false, 'claim-secret').catch((e) => e)),
+  ).toBe('no_pending_verification')
   spyOn(sessions, 'getVerification').mockResolvedValue(pending)
   spyOn(psn, 'aboutMe').mockResolvedValueOnce(null)
-  expect(code(await finishClaim('Kratos', 'long enough', false).catch((e) => e))).toBe(
-    'profile_private',
-  )
+  expect(
+    code(await finishClaim('Kratos', 'long enough', false, 'claim-secret').catch((e) => e)),
+  ).toBe('profile_private')
   spyOn(psn, 'aboutMe').mockResolvedValueOnce('nothing here')
-  expect(code(await finishClaim('Kratos', 'long enough', false).catch((e) => e))).toBe(
-    'code_not_found',
-  )
+  expect(
+    code(await finishClaim('Kratos', 'long enough', false, 'claim-secret').catch((e) => e)),
+  ).toBe('code_not_found')
 })
 
 test('a claimed account nobody had is created', async () => {
@@ -229,7 +251,7 @@ test('a claimed account nobody had is created', async () => {
   spyOn(psn, 'aboutMe').mockResolvedValue('meu código: tc-abcdef')
   const created = makeUser({ id: 'user:claimed' })
   spyOn(users, 'userByAccount').mockResolvedValueOnce(undefined).mockResolvedValueOnce(created)
-  const { user } = await finishClaim('Kratos', 'long enough', false)
+  const { user } = await finishClaim('Kratos', 'long enough', false, 'claim-secret')
   expect(user).toBe(created)
   expect(createUser).toHaveBeenCalled()
   expect(sessions.deleteVerification).toHaveBeenCalledWith('Kratos')
@@ -240,7 +262,7 @@ test('a claimed account drops its sessions and Telegram, and its data on a clean
   spyOn(sessions, 'getVerification').mockResolvedValue(pending)
   const existing = makeUser({ id: 'user:old' })
   spyOn(users, 'userByAccount').mockResolvedValue(existing)
-  await finishClaim('Kratos', 'long enough', true)
+  await finishClaim('Kratos', 'long enough', true, 'claim-secret')
   expect(psn.aboutMe).not.toHaveBeenCalled()
   expect(sessions.deleteSessionsOf).toHaveBeenCalledWith('user:old')
   expect(users.wipeUserData).toHaveBeenCalledWith('user:old')
@@ -257,7 +279,7 @@ test('a claim without a clean start keeps the data', async () => {
   config.auth.skipVerification = true
   spyOn(sessions, 'getVerification').mockResolvedValue(pending)
   spyOn(users, 'userByAccount').mockResolvedValue(makeUser())
-  await finishClaim('Kratos', 'long enough', false)
+  await finishClaim('Kratos', 'long enough', false, 'claim-secret')
   expect(users.wipeUserData).not.toHaveBeenCalled()
 })
 

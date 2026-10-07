@@ -23,7 +23,7 @@ export function json(
   res: ServerResponse,
   status: number,
   body: unknown,
-  headers: Record<string, string> = {},
+  headers: Record<string, string | string[]> = {},
 ): void {
   res
     .writeHead(status, { 'content-type': 'application/json', ...headers })

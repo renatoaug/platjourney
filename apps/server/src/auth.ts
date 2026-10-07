@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import type { IncomingMessage } from 'node:http'
 import { config } from './config.ts'
 import { demoUser } from './demo.ts'
@@ -28,6 +28,7 @@ import {
 } from './repository/user.ts'
 
 const COOKIE = 'platjourney_session'
+const CLAIM_COOKIE = 'platjourney_claim'
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I
 
 export class AuthError extends Error {
@@ -170,17 +171,32 @@ export interface PendingVerification {
   minutes: number
 }
 
-// Claim, step 1: a code to place in the profile's "About me".
-export async function startClaim(onlineId: string): Promise<PendingVerification> {
+// A claim belongs to whoever started it: they alone hold its secret (a cookie), and finishing
+// needs it. Without that, anyone could finish a claim the owner started, once the code is on
+// the profile.
+const holds = (secret: string | undefined, pending: { secret_hash?: string }) =>
+  !!secret &&
+  !!pending.secret_hash &&
+  timingSafeEqual(Buffer.from(hash(secret)), Buffer.from(pending.secret_hash))
+
+// Claim, step 1: a code to place in the profile's "About me", and the secret that goes with it.
+// Asking again with the same secret keeps the same code.
+export async function startClaim(
+  onlineId: string,
+  heldSecret?: string,
+): Promise<PendingVerification & { secret: string }> {
   const profile = await lookupProfile(onlineId.trim())
   if (!profile) throw new AuthError('psn_not_found')
   const pending = await getVerification(profile.onlineId)
-  const code = pending?.code ?? newCode()
+  const mine = pending && holds(heldSecret, pending)
+  const code = mine ? pending.code : newCode()
+  const secret = mine && heldSecret ? heldSecret : randomBytes(32).toString('hex')
   await saveVerification({
     psn_online_id: profile.onlineId,
     psn_account_id: profile.accountId,
     avatar_url: profile.avatarUrl,
     code,
+    secret_hash: hash(secret),
     minutes: config.auth.verificationMinutes,
   })
   return {
@@ -188,6 +204,7 @@ export async function startClaim(onlineId: string): Promise<PendingVerification>
     avatarUrl: profile.avatarUrl,
     code,
     minutes: config.auth.verificationMinutes,
+    secret,
   }
 }
 
@@ -198,10 +215,11 @@ export async function finishClaim(
   onlineId: string,
   password: string,
   fresh: boolean,
+  heldSecret?: string,
 ): Promise<{ user: User; token: string }> {
   checkPassword(password)
   const pending = await getVerification(onlineId.trim())
-  if (!pending) throw new AuthError('no_pending_verification')
+  if (!pending || !holds(heldSecret, pending)) throw new AuthError('no_pending_verification')
   if (!config.auth.skipVerification) {
     const about = await aboutMe(pending.psn_account_id)
     if (about === null) throw new AuthError('profile_private')
@@ -241,11 +259,21 @@ export function sessionCookie(token: string | null): string {
   return token ? `${base}; Max-Age=${config.auth.sessionDays * 86_400}` : `${base}; Max-Age=0`
 }
 
-function tokenFrom(req: IncomingMessage): string | undefined {
+// Lives only on the claim routes and only for the code's lifetime.
+export function claimCookie(secret: string | null): string {
+  const base = `${CLAIM_COOKIE}=${secret ?? ''}; Path=/api/auth/claim; HttpOnly; SameSite=Strict${config.auth.secureCookie ? '; Secure' : ''}`
+  return secret ? `${base}; Max-Age=${config.auth.verificationMinutes * 60}` : `${base}; Max-Age=0`
+}
+
+export const claimSecretFrom = (req: IncomingMessage) => cookieFrom(req, CLAIM_COOKIE)
+
+const tokenFrom = (req: IncomingMessage) => cookieFrom(req, COOKIE)
+
+function cookieFrom(req: IncomingMessage, cookie: string): string | undefined {
   const header = req.headers.cookie ?? ''
   for (const part of header.split(';')) {
     const [name, ...rest] = part.trim().split('=')
-    if (name === COOKIE) return rest.join('=') || undefined
+    if (name === cookie) return rest.join('=') || undefined
   }
   return undefined
 }

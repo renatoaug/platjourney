@@ -168,6 +168,19 @@ export async function gamesForTitles(
   return out
 }
 
+// A name typed by a player: the catalog's game, or IGDB's when it knows the name. Nothing is
+// stored for a name IGDB does not know, so free text never becomes a catalog game.
+export async function catalogGameForName(
+  name: string,
+  platform?: string,
+): Promise<Game | undefined> {
+  const known = await gameByName(name)
+  if (known) return known
+  const entry = await resolveGame(name).catch(() => null)
+  return entry ? upsertFromCatalog(entry, name, undefined, platform) : undefined
+}
+
+// A name PSN reported (a played title): stored even when IGDB does not know it.
 export async function gameForName(name: string, platform?: string): Promise<Game> {
   const known = await gameByName(name)
   if (known) return known
