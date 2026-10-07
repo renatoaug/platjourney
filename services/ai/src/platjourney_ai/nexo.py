@@ -224,9 +224,34 @@ def start_prompt(ctx: GameContext) -> str:
     return f'O jogador acabou de começar {ctx.title.name} ({ctx.title.earned} troféus até agora). Mande uma mensagem curta e animada: pergunte o que ele achou até aqui, diga em uma linha como é a platina (dificuldade, horas, se tem missable) e dê 3 dicas concretas para quem está nas primeiras horas — principalmente missables e coisas que economizam tempo depois. Ele ainda não conhece os termos do jogo.'  # noqa: E501
 
 
-def unlock_prompt(unlocked: list[Trophy]) -> str:
+# The guide's standout trophies, as the unlock notice calls them out.
+STANDOUT = {'hardest': 'o mais difícil', 'mostTedious': 'o mais demorado'}
+
+
+def standout(unlocked: list[Trophy], guide: dict[str, Any] | None) -> list[str]:
+    """What makes an unlocked trophy special per the guide: 'Sobrevivente era o mais difícil da
+    platina (horda de 500)'. Matched by name, in either language."""
+    lines: list[str] = []
+    for key, label in STANDOUT.items():
+        item = cast(dict[str, Any] | None, (guide or {}).get(key))
+        name = str((item or {}).get('trophy') or '').casefold().strip()
+        hit = next((t for t in unlocked if name in (t.name.casefold(), t.name_en.casefold())), None)
+        if name and hit:
+            why = f' ({item.get("why")})' if item and item.get('why') else ''
+            lines.append(f'{hit.name} era {label} da platina{why}')
+    return lines
+
+
+def unlock_prompt(unlocked: list[Trophy], guide: dict[str, Any] | None = None) -> str:
     names = ', '.join(f'{t.name} / {t.name_en} ({t.type}, {t.rarity})' for t in unlocked)
-    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome (mencione raridade se for rara ou melhor), diga em uma linha onde ele provavelmente está no roadmap, e aponte UM próximo troféu que faz sentido agora e como pegar. Se houver missable chegando neste ponto do jogo, avise primeiro. Máximo 6 linhas, sem repetir dicas já dadas.'  # noqa: E501
+    big = standout(unlocked, guide)
+    cheer = (
+        f' Pelo guia, {"; ".join(big)}: abra a comemoração com um emoji de conquista e uma frase '
+        'engraçada sobre ter vencido justamente esse, antes do resto.'
+        if big
+        else ''
+    )
+    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome (mencione raridade se for rara ou melhor), diga em uma linha onde ele provavelmente está no roadmap, e aponte UM próximo troféu que faz sentido agora e como pegar. Se houver missable chegando neste ponto do jogo, avise primeiro. Máximo 6 linhas, sem repetir dicas já dadas.{cheer}'  # noqa: E501
 
 
 def session_prompt(unlocked: list[Trophy], minutes: float) -> str:
@@ -276,7 +301,7 @@ async def tip(
         case 'start':
             prompt = start_prompt(ctx)
         case 'unlock':
-            prompt = unlock_prompt(unlocked)
+            prompt = unlock_prompt(unlocked, ctx.guide)
         case 'session':
             prompt = session_prompt(unlocked, minutes)
     if route:
