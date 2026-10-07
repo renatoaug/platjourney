@@ -37,6 +37,8 @@ export interface PluginRequest {
 }
 
 type Handler = (r: PluginRequest) => Promise<void>
+/** What a route answers to; anything else gets 405. Reads are GET, changes POST and up. */
+export type RouteMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 type Hook = (work: ModelWork) => Promise<void>
 // Account events: created after sign-up, deleted before the account and its data go.
 type Events = { 'user:created': User; 'user:deleted': User }
@@ -51,8 +53,9 @@ export interface PluginContext {
   readBody: typeof readBody
   /** Answers JSON. */
   json: typeof json
-  /** Answers `/api/ext/<path>`; `public` routes skip sign-in. */
-  route(path: string, handler: Handler, options?: { public?: boolean }): void
+  /** Answers `/api/ext/<path>` for one method (GET unless `method` says otherwise); `public`
+   * routes skip sign-in. A route that changes anything must not be GET: a link opens a GET. */
+  route(path: string, handler: Handler, options?: { public?: boolean; method?: RouteMethod }): void
   /** Runs before model work; throw Refused to stop it. */
   beforeModel(hook: Hook): void
   /** Runs when model work failed after beforeModel let it through. */
@@ -65,7 +68,7 @@ export interface Plugin {
   register(context: PluginContext): void | Promise<void>
 }
 
-const routes = new Map<string, { handler: Handler; public: boolean }>()
+const routes = new Map<string, { handler: Handler; public: boolean; method: RouteMethod }>()
 const before: Hook[] = []
 const failed: Hook[] = []
 type Listener = (payload: never) => Promise<void>
@@ -82,7 +85,11 @@ const context = (name: string): PluginContext => ({
   route(path, handler, options) {
     const key = path.replace(/^\/+/, '')
     if (routes.has(key)) throw new Error(`plugin ${name}: route ${key} is taken`)
-    routes.set(key, { handler, public: options?.public ?? false })
+    routes.set(key, {
+      handler,
+      public: options?.public ?? false,
+      method: options?.method ?? 'GET',
+    })
   },
   beforeModel: (hook) => before.push(hook),
   modelFailed: (hook) => failed.push(hook),

@@ -7,7 +7,9 @@ once, and `indexing` says whether a game's job is still running.
 """
 
 import asyncio
+import ipaddress
 import logging
+import socket
 from datetime import UTC, datetime, timedelta
 from http.cookiejar import CookieJar, DefaultCookiePolicy
 from typing import Any
@@ -38,7 +40,8 @@ def reader_client(transport: httpx.AsyncBaseTransport | None = None) -> httpx.As
     that sets one with a non-ASCII value would break every later request to that site."""
     return httpx.AsyncClient(
         headers={'user-agent': USER_AGENT},
-        follow_redirects=True,
+        # Redirects are followed by hand in _fetch, so each hop's host is checked.
+        follow_redirects=False,
         timeout=30,
         cookies=CookieJar(policy=_NoCookies()),
         transport=transport,
@@ -111,6 +114,57 @@ def allowed(robots: str, path: str) -> bool:
 
 _robots: dict[str, str] = {}
 
+# A guide page is text; anything bigger is cut off rather than held in memory.
+MAX_PAGE_BYTES = 5_000_000
+MAX_REDIRECTS = 5
+
+
+async def _addresses(host: str, port: int) -> list[str]:
+    infos = await asyncio.get_running_loop().getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    return [str(info[4][0]) for info in infos]
+
+
+async def public_url(url: str) -> bool:
+    """Only http(s) pages on the public internet: no credentials in the address, and a host that
+    resolves to no private, loopback, link-local or reserved address. The reader fetches pages
+    named by search results and model answers, so it must not reach the database, the other
+    services on its network or the machine it runs on."""
+    parts = urlsplit(url)
+    if (
+        parts.scheme not in ('http', 'https')
+        or not parts.hostname
+        or parts.username
+        or parts.password
+    ):
+        return False
+    try:
+        found = await _addresses(
+            parts.hostname, parts.port or (443 if parts.scheme == 'https' else 80)
+        )
+    except OSError:
+        return False
+    return bool(found) and all(ipaddress.ip_address(a.split('%')[0]).is_global for a in found)
+
+
+async def _fetch(http: httpx.AsyncClient, url: str, accept: str) -> tuple[int, str] | None:
+    """GETs a public URL, following redirects one hop at a time, each hop checked again."""
+    for _ in range(MAX_REDIRECTS + 1):
+        if not await public_url(url):
+            return None
+        async with http.stream('GET', url, headers={'accept': accept}) as r:
+            if r.is_redirect and 'location' in r.headers:
+                url = str(r.url.join(r.headers['location']))
+                continue
+            body = bytearray()
+            async for chunk in r.aiter_bytes():
+                body += chunk
+                if len(body) > MAX_PAGE_BYTES:
+                    break
+            return r.status_code, bytes(body[:MAX_PAGE_BYTES]).decode(
+                r.encoding or 'utf-8', 'replace'
+            )
+    return None
+
 
 async def allowed_by_robots(http: httpx.AsyncClient, url: str) -> bool:
     parts = urlsplit(url)
@@ -118,8 +172,8 @@ async def allowed_by_robots(http: httpx.AsyncClient, url: str) -> bool:
     robots = _robots.get(origin)
     if robots is None:
         try:
-            r = await http.get(f'{origin}/robots.txt')
-            robots = r.text if r.is_success else ''
+            got = await _fetch(http, f'{origin}/robots.txt', 'text/plain')
+            robots = got[1] if got and 200 <= got[0] < 300 else ''
         except httpx.HTTPError:
             robots = ''
         _robots[origin] = robots
@@ -128,13 +182,15 @@ async def allowed_by_robots(http: httpx.AsyncClient, url: str) -> bool:
 
 async def read_page(http: httpx.AsyncClient, url: str) -> tuple[str, str | None] | None:
     """The page as text and the date it says it was updated."""
-    if not await allowed_by_robots(http, url):
+    if not await public_url(url) or not await allowed_by_robots(http, url):
         return None
     try:
-        r = await http.get(url, headers={'accept': 'text/html'})
+        got = await _fetch(http, url, 'text/html')
     except httpx.HTTPError:
         return None
-    return (html_to_text(r.text), page_date(r.text)) if r.is_success else None
+    if not got or not 200 <= got[0] < 300:
+        return None
+    return html_to_text(got[1]), page_date(got[1])
 
 
 async def find_pages(game: Game) -> list[GuidePage]:

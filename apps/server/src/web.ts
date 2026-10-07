@@ -7,6 +7,8 @@ import {
   accountStatus,
   authenticate,
   changePassword,
+  claimCookie,
+  claimSecretFrom,
   deleteAccount,
   demoSession,
   finishClaim,
@@ -54,9 +56,9 @@ import {
   unreadNotifications,
 } from './repository/activity.ts'
 import {
+  catalogGameForName,
   type Game,
   gameByName,
-  gameForName,
   gameForTitle,
   getGame,
   searchCatalog,
@@ -209,6 +211,25 @@ async function currentView(user: User, ctx = getCurrent(user)) {
 
 // Guide research takes a minute; the page polls while one of these is in flight.
 const building = new Map<string, Promise<Guide>>()
+// Researching a guide searches the web with a paid model: a few at a time for the whole
+// instance, and a daily number per player. Past either, the game waits on the list of guides
+// to write, like it does with automatic research off.
+const MAX_BUILDING = 3
+const RESEARCH_PER_DAY = 10
+const researched = new Map<string, { day: string; count: number }>()
+
+/** For tests: forgets today's research counts. */
+export const forgetResearch = () => researched.clear()
+
+function mayResearch(user: User): boolean {
+  if (building.size >= MAX_BUILDING) return false
+  const day = new Date().toISOString().slice(0, 10)
+  const seen = researched.get(user.id)
+  const count = seen?.day === day ? seen.count : 0
+  if (count >= RESEARCH_PER_DAY) return false
+  researched.set(user.id, { day, count: count + 1 })
+  return true
+}
 async function guideOrBuild(
   user: User,
   game: Game,
@@ -225,6 +246,10 @@ async function guideOrBuild(
     return { guide: cached ?? null, queued: !cached }
   }
   if (!building.has(game.id)) {
+    if (!mayResearch(user)) {
+      if (!cached) await requestGuide(game.id)
+      return { guide: cached ?? null, queued: !cached }
+    }
     const job = build().finally(() => building.delete(game.id))
     job.catch((e) => console.error('guide failed:', (e as Error).message))
     building.set(game.id, job)
@@ -242,7 +267,8 @@ async function titleDetail(url: URL, user: User) {
   let game: Game | undefined
   if (gameParam) game = await getGame(gameParam)
   // A name the catalog does not know would be looked up on IGDB and stored; the demo only reads.
-  else if (name) game = isDemo(user) ? await gameByName(name) : await gameForName(name, platform)
+  else if (name)
+    game = isDemo(user) ? await gameByName(name) : await catalogGameForName(name, platform)
   const titles = await library(user.psn_account_id)
   const owned = titles.filter((t) =>
     np ? t.npCommunicationId === np : game?.np_communication_ids.includes(t.npCommunicationId),
@@ -396,15 +422,32 @@ async function authRoutes(
     case '/api/auth/login':
       signIn(await login(onlineId, secret))
       return true
-    case '/api/auth/claim':
-      json(res, 200, {
-        ...(await startClaim(onlineId)),
-        skipVerification: config.auth.skipVerification,
-      })
+    case '/api/auth/claim': {
+      const { secret: claimSecret, ...claim } = await startClaim(onlineId, claimSecretFrom(req))
+      json(
+        res,
+        200,
+        { ...claim, skipVerification: config.auth.skipVerification },
+        { 'set-cookie': claimCookie(claimSecret) },
+      )
       return true
-    case '/api/auth/claim/finish':
-      signIn(await finishClaim(onlineId, secret, fresh === true))
+    }
+    case '/api/auth/claim/finish': {
+      const { user, token } = await finishClaim(
+        onlineId,
+        secret,
+        fresh === true,
+        claimSecretFrom(req),
+      )
+      watchNow(user)
+      json(
+        res,
+        200,
+        { user: publicUser(user) },
+        { 'set-cookie': [sessionCookie(token), claimCookie(null)] },
+      )
       return true
+    }
     default:
       return false
   }
@@ -674,21 +717,45 @@ function withShareImage(req: IncomingMessage, file: URL): string {
   return html.replace('content="/og.png"', `content="${proto}://${host}/og.png"`)
 }
 
+const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
+// The request's Origin, when it has one, names this same host.
+function sameOrigin(req: IncomingMessage): boolean {
+  const origin = req.headers.origin
+  if (!origin) return true
+  try {
+    return new URL(origin).host === req.headers.host
+  } catch {
+    return false
+  }
+}
+
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', 'http://localhost')
   const path = url.pathname
   const method = req.method ?? 'GET'
 
   if (path.startsWith('/api/')) {
-    // Plugin routes (/api/ext/…): public ones, like a payment provider's webhook, skip sign-in.
+    // A browser always says where a request comes from; a change asked by another site's page
+    // is refused. Server-to-server calls (a payment provider's webhook) send no Origin.
+    if (!READ_METHODS.has(method) && !sameOrigin(req))
+      return json(res, 403, { error: 'cross_origin' })
+    // Plugin routes (/api/ext/…) answer only their own method; public ones, like a payment
+    // provider's webhook, skip sign-in.
     const ext = pluginRoute(path)
+    if (ext && ext.method !== method)
+      return json(res, 405, { error: 'method_not_allowed' }, { allow: ext.method })
     if (ext?.public) return ext.handler({ req, res, url, method })
     if (await authRoutes(req, res, path, method)) return
     const me = await authenticate(req)
     if (!me) return json(res, 401, { error: 'unauthenticated' })
     noteAccess(req, me).catch((e) => console.warn('access not noted:', (e as Error).message))
     const tag = isDemo(me) ? { user: me.id, demo: true } : { user: me.id }
-    if (ext) return tagged(tag, () => ext.handler({ req, res, url, method, me }))
+    if (ext) {
+      // The demo account is shared: like the app's own routes, plugin routes only read for it.
+      if (isDemo(me) && ext.method !== 'GET') throw new DemoReadOnly()
+      return tagged(tag, () => ext.handler({ req, res, url, method, me }))
+    }
     return tagged(tag, () => api(req, res, url, method, me))
   }
   if (method === 'GET' && DEV_WEB) {

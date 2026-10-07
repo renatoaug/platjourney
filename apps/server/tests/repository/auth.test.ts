@@ -23,6 +23,7 @@ test('a verification is upserted by the lowercased online id with its ttl', asyn
     psn_account_id: 'acc',
     avatar_url: null,
     code: 'ABC',
+    secret_hash: 'h',
     minutes: 30,
   })
   const [sql, vars] = q.mock.calls[0]
@@ -34,6 +35,7 @@ test('a verification is upserted by the lowercased online id with its ttl', asyn
     account: 'acc',
     avatar: undefined,
     code: 'ABC',
+    secret: 'h',
     ttl: '30m',
   })
 })

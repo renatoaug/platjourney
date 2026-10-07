@@ -513,3 +513,95 @@ async def test_a_failed_batch_removes_what_it_wrote_and_keeps_the_old(
     assert len(deletes) == 1
     assert 'guide_chunk:old' not in deletes[0]
     assert len(deletes[0]) == guidestore.WRITE_BATCH
+
+
+ADDRESSES = {
+    'guides.example': ['93.184.216.34'],
+    'localhost': ['127.0.0.1'],
+    'surrealdb': ['172.18.0.3'],
+    'router.lan': ['192.168.0.1'],
+    'metadata': ['169.254.169.254'],
+    'v6.example': ['2606:4700::1111'],
+    'loop6.example': ['::1'],
+    'mixed.example': ['93.184.216.34', '10.0.0.5'],
+    '127.0.0.1': ['127.0.0.1'],
+}
+
+
+@pytest.fixture
+def resolver(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def addresses(host: str, port: int) -> list[str]:
+        if host not in ADDRESSES:
+            raise OSError('unknown host')
+        return ADDRESSES[host]
+
+    monkeypatch.setattr(deepguide, '_addresses', addresses)
+    monkeypatch.setattr(deepguide, '_robots', {})
+
+
+@pytest.mark.parametrize(
+    ('url', 'ok'),
+    [
+        ('https://guides.example/far-cry-3', True),
+        ('http://guides.example/far-cry-3', True),
+        ('https://v6.example/guide', True),
+        ('ftp://guides.example/file', False),
+        ('file:///etc/passwd', False),
+        ('https://user:pass@guides.example/guide', False),
+        ('http://localhost:8000/', False),
+        ('http://surrealdb:8000/version', False),
+        ('http://router.lan/', False),
+        ('http://metadata/latest/meta-data/', False),
+        ('http://loop6.example/', False),
+        ('http://mixed.example/', False),
+        ('http://nowhere.example/', False),
+        ('http://127.0.0.1:11434/api/tags', False),
+    ],
+)
+async def test_the_reader_reaches_only_public_addresses(resolver: None, url: str, ok: bool) -> None:
+    assert await deepguide.public_url(url) is ok
+
+
+async def test_a_redirect_into_the_network_is_not_followed(resolver: None) -> None:
+    asked: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        asked.append(str(request.url))
+        if request.url.path == '/robots.txt':
+            return httpx.Response(200, text='')
+        if request.url.host == 'guides.example' and request.url.path == '/moved':
+            return httpx.Response(302, headers={'location': '/guide'})
+        if request.url.host == 'guides.example' and request.url.path == '/guide':
+            return httpx.Response(200, text='<h2>Roadmap</h2><p>Step one.</p>')
+        return httpx.Response(302, headers={'location': 'http://surrealdb:8000/version'})
+
+    async with deepguide.reader_client(httpx.MockTransport(handler)) as http:
+        assert await deepguide.read_page(http, 'https://guides.example/sneaky') is None
+        page = await deepguide.read_page(http, 'https://guides.example/moved')
+    assert page is not None and 'Step one.' in page[0]
+    assert not any('surrealdb' in u for u in asked)
+
+
+async def test_a_huge_page_is_cut_off(resolver: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(deepguide, 'MAX_PAGE_BYTES', 1000)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == '/robots.txt':
+            return httpx.Response(404)
+        return httpx.Response(200, text='<p>' + 'x' * 50_000 + '</p>')
+
+    async with deepguide.reader_client(httpx.MockTransport(handler)) as http:
+        page = await deepguide.read_page(http, 'https://guides.example/big')
+    assert page is not None and len(page[0]) <= 1000
+
+
+async def test_robots_rules_still_apply_after_a_redirect(resolver: None) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == '/robots.txt' and request.url.scheme == 'http':
+            return httpx.Response(301, headers={'location': 'https://guides.example/robots.txt'})
+        if request.url.path == '/robots.txt':
+            return httpx.Response(200, text='User-agent: *\nDisallow: /private')
+        return httpx.Response(200, text='<p>secret</p>')
+
+    async with deepguide.reader_client(httpx.MockTransport(handler)) as http:
+        assert await deepguide.read_page(http, 'http://guides.example/private/page') is None
