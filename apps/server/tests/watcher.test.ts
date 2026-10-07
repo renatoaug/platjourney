@@ -12,6 +12,7 @@ import { Refused } from '../src/plugins.ts'
 import * as psn from '../src/psn.ts'
 import * as ranking from '../src/ranking.ts'
 import * as activity from '../src/repository/activity.ts'
+import * as sessions from '../src/repository/auth.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
@@ -74,6 +75,7 @@ let getUser: ReturnType<typeof spyOn<typeof users, 'getUser'>>
 let getGuide: ReturnType<typeof spyOn<typeof guides, 'getGuide'>>
 
 beforeEach(() => {
+  spyOn(sessions, 'pruneExpired').mockResolvedValue()
   config.automatic.notices = true
   config.automatic.research = false
   recent = spyOn(psn, 'recentTitles').mockResolvedValue([makeTitle()])
@@ -375,17 +377,22 @@ describe('background runs', () => {
     for (let i = 0; i < 50 && check.mock.calls.length < 2; i++) await Bun.sleep(1)
     await Bun.sleep(1)
     timeouts.mockRestore()
-    expect(intervals.mock.calls.map((c) => c[1])).toEqual([15 * 60_000, 24 * 60 * 60_000])
+    expect(intervals.mock.calls.map((c) => c[1])).toEqual([
+      15 * 60_000,
+      60 * 60_000,
+      24 * 60 * 60_000,
+    ])
     expect(send).toHaveBeenCalledWith('42', '⚠️ fecha')
     expect(error).toHaveBeenCalledWith('server check failed for Hidden:', 'search down')
     expect(error.mock.calls.some((c) => String(c[0]).startsWith('watcher failed'))).toBe(false)
   })
 
-  test('without research the watcher only sweeps trophies', () => {
+  test('without research the watcher sweeps trophies and prunes expired sessions', () => {
     const intervals = spyOn(globalThis, 'setInterval').mockImplementation((() => 0) as never)
     spyOn(users, 'listUsers').mockResolvedValue([])
     startWatcher(5)
-    expect(intervals).toHaveBeenCalledTimes(1)
+    expect(intervals.mock.calls.map((c) => c[1])).toEqual([5 * 60_000, 60 * 60_000])
+    expect(sessions.pruneExpired).toHaveBeenCalled()
   })
 })
 

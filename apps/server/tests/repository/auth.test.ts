@@ -8,6 +8,7 @@ import {
   deleteSessionsOf,
   deleteVerification,
   getVerification,
+  pruneExpired,
   saveVerification,
   sessionUser,
 } from '../../src/repository/auth.ts'
@@ -80,4 +81,12 @@ test('sessions are deleted one, all but one, or all', async () => {
     ['DELETE auth_session WHERE user = $user AND token_hash != $keep', { user, keep: 'keep' }],
     ['DELETE auth_session WHERE user = $user', { user }],
   ])
+})
+
+test('expired sessions and claim codes are pruned', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await pruneExpired()
+  const [sql] = q.mock.calls[0]
+  expect(sql).toContain('DELETE auth_session WHERE expires_at < time::now()')
+  expect(sql).toContain('DELETE verification WHERE expires_at < time::now()')
 })

@@ -6,6 +6,7 @@ import {
   deleteUser,
   getUser,
   listUsers,
+  setLinkCode,
   touchUser,
   updateUser,
   userByAccount,
@@ -44,7 +45,10 @@ test('a user is found by account, chat or link code', async () => {
   expect(one.mock.calls).toEqual([
     ['SELECT * FROM user WHERE psn_account_id = $a LIMIT 1', { a: 'acc' }],
     ['SELECT * FROM user WHERE telegram_chat_id = $c LIMIT 1', { c: '42' }],
-    ['SELECT * FROM user WHERE telegram_link_code = $c LIMIT 1', { c: 'CODE' }],
+    [
+      'SELECT * FROM user WHERE telegram_link_code = $c AND telegram_link_expires_at > time::now() LIMIT 1',
+      { c: 'CODE' },
+    ],
   ])
 })
 
@@ -142,4 +146,20 @@ test('objects kept on the user are stored in snake_case and read in camelCase', 
     play_session: { npCommunicationId: 'NP', unlockedIds: [1] },
     taste_profile: null,
   } as never)
+})
+
+test('a Telegram link code is stored with its expiry', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await setLinkCode('user:u1', 'CODE')
+  const [sql, vars] = q.mock.calls[0]
+  expect(sql).toContain('telegram_link_expires_at = time::now() + <duration> $ttl')
+  expect(vars).toMatchObject({ code: 'CODE', ttl: '15m' })
+})
+
+test('a rename moves the lowercase id with it', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await updateUser('user:u1', { psn_online_id: 'NewName' })
+  const [sql, vars] = q.mock.calls[0]
+  expect(sql).toContain('psn_online_id_lower = $psn_online_id_lower')
+  expect(vars).toMatchObject({ psn_online_id: 'NewName', psn_online_id_lower: 'newname' })
 })

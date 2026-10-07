@@ -18,6 +18,7 @@ import { Refused } from './plugins.ts'
 import { PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
 import { loadGroups } from './ranking.ts'
 import { logTip, type TipKind } from './repository/activity.ts'
+import { pruneExpired } from './repository/auth.ts'
 import { gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
@@ -312,6 +313,9 @@ export function startWatcher(minutes: number): void {
   const run = () => sweep(checkUser, 'watcher')
   run()
   setInterval(run, minutes * 60_000)
+  const prune = () => pruneExpired().catch((e) => console.error('prune failed:', e.message))
+  prune()
+  setInterval(prune, 60 * 60_000)
 
   // Checking servers searches the web; without automatic research it runs only by hand
   // (scripts/check-servers.ts).
