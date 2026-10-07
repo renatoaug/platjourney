@@ -12,7 +12,7 @@ import {
   userLocale,
 } from './i18n.ts'
 import { library } from './library.ts'
-import { type GameContext, proactiveTip, sessionSummary, unlockReaction } from './nexo.ts'
+import { type GameContext, proactiveTip, unlockReaction } from './nexo.ts'
 import { hours, playtimes } from './playtime.ts'
 import { Refused } from './plugins.ts'
 import { PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
@@ -23,7 +23,7 @@ import { gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
-import { getUser, listUsers, type User, updateUser } from './repository/user.ts'
+import { listUsers, type User } from './repository/user.ts'
 import { reachedMilestone, routeNotice, stillOpen } from './route.ts'
 import { checkServers } from './servers.ts'
 import { sendMessage } from './telegram.ts'
@@ -142,56 +142,6 @@ export async function setCurrent(user: User, title: TitleProgress): Promise<Game
   return ctx
 }
 
-interface PlaySession {
-  npCommunicationId: string
-  startedAt: string
-  lastActivity: string
-  unlockedIds: number[]
-}
-
-// A session opens on the first trophy activity and closes after
-// sessionIdleMinutes without a new one; closing sends the summary.
-async function trackSession(
-  user: User,
-  ctx: GameContext,
-  unlocked: number[],
-  activityAt: string,
-): Promise<void> {
-  let session = ((await getUser(user.id))?.play_session ?? null) as PlaySession | null
-  const sameGame = session?.npCommunicationId === ctx.title.npCommunicationId
-  if (unlocked.length > 0) {
-    if (!session || !sameGame) {
-      session = {
-        npCommunicationId: ctx.title.npCommunicationId,
-        startedAt: activityAt,
-        lastActivity: activityAt,
-        unlockedIds: [],
-      }
-    }
-    session.lastActivity = activityAt
-    session.unlockedIds.push(...unlocked)
-    await updateUser(user.id, { play_session: session })
-    return
-  }
-  if (!session || !sameGame) return
-  const idleMinutes = (Date.now() - new Date(session.lastActivity).getTime()) / 60_000
-  if (idleMinutes < config.sessionIdleMinutes) return
-  const ids = new Set(session.unlockedIds)
-  const trophies = ctx.trophies.filter((t) => ids.has(t.id))
-  console.log(`${user.psn_online_id}: session over for ${ctx.title.name}`)
-  await updateUser(user.id, { play_session: null })
-  // A plugin may refuse the summary (see plugins.ts): then there is none, as with notices off.
-  if (nexoNotices(user))
-    await sessionSummary(user, ctx, trophies, Math.round(idleMinutes))
-      .then((text) => notify(user, text))
-      .catch((e) =>
-        console.warn(
-          `${user.psn_online_id}: session summary skipped:`,
-          (e as Error).message.slice(0, 80),
-        ),
-      )
-}
-
 // One check per player at a time: the sweep and a sign-in (watchNow) running together would both
 // see the same trophies as new, before either saves them, and send the notice twice.
 const checks = new Map<string, Promise<void>>()
@@ -208,7 +158,7 @@ export function checkUser(user: User): Promise<void> {
 
 // Compares the user's PSN title list against the stored snapshot. A title we
 // have never tipped that is still early triggers the intro; newly earned trophies
-// on the current title trigger a reaction and feed the session tracker.
+// on the current title trigger a reaction.
 async function check(user: User): Promise<void> {
   // The demo player has no PSN profile to watch.
   if (isDemo(user)) return
@@ -282,12 +232,6 @@ async function check(user: User): Promise<void> {
       }
     }
   await saveEarnedIds(user.id, latest.npCommunicationId, earnedIds)
-  await trackSession(
-    user,
-    ctx,
-    unlocked.map((t) => t.id),
-    latest.lastUpdated,
-  )
 }
 
 // Users are visited one after the other so PSN sees a steady, modest stream.

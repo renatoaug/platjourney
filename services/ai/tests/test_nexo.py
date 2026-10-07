@@ -116,11 +116,6 @@ def test_unlock_prompt_cheers_the_guides_hardest_and_most_tedious() -> None:
     assert 'Pelo guia' not in nexo.unlock_prompt(unlocked)
 
 
-def test_session_prompt_without_trophies() -> None:
-    prompt = nexo.session_prompt([], 25)
-    assert '(última atividade há ~25 min). Troféus desta sessão: nenhum troféu novo.' in prompt
-
-
 def test_trophy_help_prompt_carries_progress_only_when_tracked() -> None:
     tracked = nexo.trophy_help_prompt(Trophy.model_validate(trophy(progressTarget=10)))
     assert tracked.startswith(
@@ -159,7 +154,7 @@ def model(monkeypatch: pytest.MonkeyPatch) -> Model:
 
 
 async def test_start_tip_asks_with_the_context_and_no_history(model: Model) -> None:
-    text = await nexo.tip('start', context(), [], 0)
+    text = await nexo.tip('start', context(), [])
     assert text == 'Vai no Trophy Guides.'
     [call] = model.calls
     assert call['instructions'] == nexo.SYSTEM
@@ -387,11 +382,11 @@ async def test_moderation_needs_a_key_and_fails_open(monkeypatch: pytest.MonkeyP
 
 async def test_a_tip_folds_the_guide_route_into_the_same_message(model: Model) -> None:
     route = '🧭 Depois de Segundo:\n🚧 A missão Riding Nomad Again é um ponto sem volta.'
-    await nexo.tip('unlock', context(), [], 0, route)
+    await nexo.tip('unlock', context(), [], route)
     content = model.calls[0]['input'][0]['content']
     assert content.endswith(nexo.ROUTE_PROMPT.format(route=route))
     assert 'Escreva em português os nomes de missões' in content
-    await nexo.tip('unlock', context(), [], 0)
+    await nexo.tip('unlock', context(), [])
     assert 'orientação do guia' not in model.calls[1]['input'][0]['content']
 
 

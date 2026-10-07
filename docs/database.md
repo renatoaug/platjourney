@@ -42,7 +42,6 @@ erDiagram
         telegram_link_code option(string)
         goal_targets object
         taste_profile option(object)
-        play_session option(object)
         session_plan option(object)
         include_dlc_progress bool
         ai_notices bool

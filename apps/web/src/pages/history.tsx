@@ -25,8 +25,7 @@ const messages = defineMessages({
       chat: 'chat',
     },
     emptyTitle: 'Nada no histórico ainda',
-    empty:
-      'Tudo que o Nexo te mandar, dicas, avisos de troféu e fim de sessão, fica guardado aqui.',
+    empty: 'Tudo que o Nexo te mandar, dicas e avisos de troféu, fica guardado aqui.',
     emptyKind: 'Nada de {kind} ainda',
     emptyKindHint: 'Quando o Nexo mandar uma mensagem desse tipo, ela aparece aqui.',
     seeAll: 'Ver todos',
@@ -46,7 +45,7 @@ const messages = defineMessages({
       chat: 'chat',
     },
     emptyTitle: 'Nothing in the history yet',
-    empty: 'Everything Nexo sends you, tips, trophy notices and session ends, is kept here.',
+    empty: 'Everything Nexo sends you, tips and trophy notices, is kept here.',
     emptyKind: 'No {kind} yet',
     emptyKindHint: 'When Nexo sends a message of this kind, it shows up here.',
     seeAll: 'See all',

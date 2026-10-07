@@ -55,10 +55,9 @@ const messages = defineMessages({
     notices: {
       eyebrow: 'O NEXO JOGA JUNTO',
       title: 'Dicas enquanto você joga.',
-      body: 'Sem você pedir, o Nexo acompanha a sessão: avisa o que focar quando você começa um jogo, comenta cada troféu desbloqueado e fecha a sessão com o próximo passo. Tudo chega no sininho e, se você conectar, no Telegram.',
+      body: 'Sem você pedir, o Nexo acompanha a sessão: avisa o que focar quando você começa um jogo, e comenta cada troféu desbloqueado com o próximo passo. Tudo chega no sininho e, se você conectar, no Telegram.',
       start: 'Começou Days Gone: pegue os colecionáveis do capítulo 1 antes de avançar.',
       unlock: 'Troféu Corcel Fiel! O próximo mais perto é Mestre das Hordas.',
-      end: 'Sessão encerrada: 3 troféus novos. Amanhã, foque nas hordas.',
     },
     trophies: {
       eyebrow: 'CADA TROFÉU, EXPLICADO',
@@ -164,10 +163,9 @@ const messages = defineMessages({
     notices: {
       eyebrow: 'NEXO PLAYS ALONG',
       title: 'Tips while you play.',
-      body: 'Without you asking, Nexo follows the session: it says what to focus on when you start a game, comments on every trophy you unlock and closes the session with the next step. It all arrives under the bell and, if you connect it, on Telegram.',
+      body: 'Without you asking, Nexo follows the session: it says what to focus on when you start a game, and comments on every trophy you unlock with the next step. It all arrives under the bell and, if you connect it, on Telegram.',
       start: 'Started Days Gone: grab chapter 1’s collectibles before moving on.',
       unlock: 'Loyal Steed unlocked! The closest one now is Horde Master.',
-      end: 'Session over: 3 new trophies. Tomorrow, focus on the hordes.',
     },
     trophies: {
       eyebrow: 'EVERY TROPHY, EXPLAINED',
@@ -766,7 +764,6 @@ function Stage({ phase, me, data }: { phase: Phase; me: Me; data: AppStateData |
     const notes = [
       { icon: 'gamepad', text: t('notices.start') },
       { icon: 'trophy', text: t('notices.unlock') },
-      { icon: 'check', text: t('notices.end') },
     ]
     return (
       <div className="onb-notices">

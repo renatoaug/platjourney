@@ -17,13 +17,11 @@ import type { User } from './repository/user.ts'
 const messages = defineMessages({
   [Language.PtBR]: {
     trophyTip: 'Dica para o troféu **{trophy}**',
-    sessionTitle: '🎮 Fim da sessão em {game}',
     moderated:
       'Essa mensagem eu não posso responder. Bora voltar pro jogo? Me pergunta de troféu, guia ou do que fazer agora.',
   },
   [Language.En]: {
     trophyTip: 'Tip for the trophy **{trophy}**',
-    sessionTitle: '🎮 Session over in {game}',
     moderated:
       'I cannot answer that message. Back to the game? Ask me about a trophy, the guide or what to do next.',
   },
@@ -109,25 +107,6 @@ export async function unlockReaction(
   // The trophy as the message's title, then Nexo's words: the same first line as a plain notice.
   const titled = `${unlocked.map((t) => `🏆 ${t.name}`).join('\n')}\n\n${text}`
   await logTip(user.id, 'unlock', titled, ctx.game.id)
-  return titled
-}
-
-export async function sessionSummary(
-  user: User,
-  ctx: GameContext,
-  unlockedThisSession: TrophyStatus[],
-  minutes: number,
-): Promise<string> {
-  const text = await ask(user, 'tip', '/nexo/tip', {
-    kind: 'session',
-    context: aiContext(ctx, user),
-    unlocked: unlockedThisSession,
-    minutes,
-  })
-  // A controller as the title, so the summary reads apart from the trophy notices.
-  const title = translator(messages, user)('sessionTitle', { game: ctx.game.name })
-  const titled = `${title}\n\n${text}`
-  await logTip(user.id, 'session', titled, ctx.game.id)
   return titled
 }
 

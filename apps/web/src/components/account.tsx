@@ -44,7 +44,7 @@ const messages = defineMessages({
         'A platina só pede o jogo base. Ligue para ver o progresso com as DLCs em todo o app, no Telegram e no Nexo.',
       notices: 'Avisos escritos pelo Nexo',
       noticesHint:
-        'Ao começar um jogo, a cada troféu e no fim da sessão, o Nexo comenta e diz o próximo passo. Desligado, você recebe um aviso simples, sem o comentário.',
+        'Ao começar um jogo e a cada troféu, o Nexo comenta e diz o próximo passo. Desligado, você recebe um aviso simples, sem o comentário.',
       noticesOn: 'O Nexo volta a escrever seus avisos.',
       noticesOff: 'Seus avisos agora são simples.',
       intro: 'Introdução',
@@ -96,7 +96,7 @@ const messages = defineMessages({
         'The platinum only needs the base game. Turn on to see progress with DLC across the app, on Telegram and in Nexo.',
       notices: 'Notices written by Nexo',
       noticesHint:
-        'When you start a game, on every trophy and when a session ends, Nexo comments and says the next step. Off, you get a plain notice, without the comment.',
+        'When you start a game and on every trophy, Nexo comments and says the next step. Off, you get a plain notice, without the comment.',
       noticesOn: 'Nexo writes your notices again.',
       noticesOff: 'Your notices are now plain.',
       intro: 'Introduction',

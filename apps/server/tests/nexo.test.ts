@@ -2,7 +2,7 @@ import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
 import { currentTag } from '../src/costs.ts'
-import { proactiveTip, reply, sessionSummary, trophyHelp, unlockReaction } from '../src/nexo.ts'
+import { proactiveTip, reply, trophyHelp, unlockReaction } from '../src/nexo.ts'
 import * as plugins from '../src/plugins.ts'
 import * as activity from '../src/repository/activity.ts'
 import { makeContext, makeTrophy, makeUser } from './fixtures.ts'
@@ -75,18 +75,6 @@ test('an unlock reaction sends the trophies just earned, and opens with them as 
   expect(ai).toHaveBeenCalledWith('/nexo/tip', { kind: 'unlock', context, unlocked })
   expect(text).toBe(`🏆 ${unlocked[0].name}\n\nResposta`)
   expect(logTip).toHaveBeenCalledWith('user:u1', 'unlock', text, 'game:1')
-})
-
-test('a session summary sends the trophies and minutes played, under a controller title', async () => {
-  const text = await sessionSummary(user, ctx, [], 90)
-  expect(text).toBe(`🎮 Fim da sessão em ${ctx.game.name}\n\nResposta`)
-  expect(ai).toHaveBeenCalledWith('/nexo/tip', {
-    kind: 'session',
-    context,
-    unlocked: [],
-    minutes: 90,
-  })
-  expect(logTip).toHaveBeenCalledWith('user:u1', 'session', text, 'game:1')
 })
 
 test('trophy help is stored in the chat so the player can follow up', async () => {

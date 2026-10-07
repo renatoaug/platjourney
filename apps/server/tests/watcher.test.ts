@@ -70,8 +70,6 @@ let send: ReturnType<typeof spyOn<typeof telegram, 'sendMessage'>>
 let logTip: ReturnType<typeof spyOn<typeof activity, 'logTip'>>
 let markTip: ReturnType<typeof spyOn<typeof titles, 'markTipSent'>>
 let saveEarned: ReturnType<typeof spyOn<typeof titles, 'saveEarnedIds'>>
-let updateUser: ReturnType<typeof spyOn<typeof users, 'updateUser'>>
-let getUser: ReturnType<typeof spyOn<typeof users, 'getUser'>>
 let getGuide: ReturnType<typeof spyOn<typeof guides, 'getGuide'>>
 
 beforeEach(() => {
@@ -104,8 +102,6 @@ beforeEach(() => {
   markTip = spyOn(titles, 'markTipSent').mockResolvedValue(undefined)
   logTip = spyOn(activity, 'logTip').mockResolvedValue(undefined)
   send = spyOn(telegram, 'sendMessage').mockResolvedValue(undefined)
-  getUser = spyOn(users, 'getUser').mockResolvedValue(user)
-  updateUser = spyOn(users, 'updateUser').mockResolvedValue(undefined)
   spyOn(console, 'log').mockImplementation(() => {})
   spyOn(console, 'warn').mockImplementation(() => {})
 })
@@ -138,20 +134,12 @@ describe('checkUser', () => {
     expect(getCurrent(user)?.hoursPlayed).toBe(2)
   })
 
-  test('new trophies get one reaction from Nexo, with the route in it, and open a session', async () => {
+  test('new trophies get one reaction from Nexo, with the route in it', async () => {
     const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
     await checkUser(user)
     expect(reaction.mock.calls[0][2].map((t) => t.id)).toEqual([2])
     expect(reaction.mock.calls[0][3]).toBe('Agora vale saber:\n• Compre o arco.')
     expect(send.mock.calls.map((c) => c[1])).toEqual(['Boa!'])
-    expect(updateUser).toHaveBeenCalledWith(user.id, {
-      play_session: {
-        npCommunicationId: 'NPWR1_00',
-        startedAt: '2026-05-01T10:00:00.000Z',
-        lastActivity: '2026-05-01T10:00:00.000Z',
-        unlockedIds: [2],
-      },
-    })
   })
 
   test('two checks at once send the reaction once', async () => {
@@ -233,71 +221,6 @@ describe('checkUser', () => {
     await checkUser(user)
     expect(getCurrent(user)).toBe(ctx)
     expect(psn.titleTrophies).toHaveBeenCalledTimes(1)
-  })
-
-  test('a session idle long enough closes with Nexo’s summary', async () => {
-    getTitle.mockResolvedValue(row({ earned_ids: [1, 2] }))
-    getUser.mockResolvedValue(
-      makeUser({
-        play_session: {
-          npCommunicationId: 'NPWR1_00',
-          startedAt: '2026-05-01T08:00:00.000Z',
-          lastActivity: '2026-05-01T10:00:00.000Z',
-          unlockedIds: [2],
-        },
-      }),
-    )
-    const summary = spyOn(nexo, 'sessionSummary').mockResolvedValue('Sessão boa!')
-    await checkUser(user)
-    expect(updateUser).toHaveBeenCalledWith(user.id, { play_session: null })
-    expect(summary.mock.calls[0][2].map((t) => t.id)).toEqual([2])
-    expect(send).toHaveBeenCalledWith('42', 'Sessão boa!')
-  })
-
-  test('a failed summary still closes the session', async () => {
-    getTitle.mockResolvedValue(row({ earned_ids: [1, 2] }))
-    getUser.mockResolvedValue(
-      makeUser({
-        play_session: {
-          npCommunicationId: 'NPWR1_00',
-          startedAt: '2026-05-01T08:00:00.000Z',
-          lastActivity: '2026-05-01T10:00:00.000Z',
-          unlockedIds: [],
-        },
-      }),
-    )
-    spyOn(nexo, 'sessionSummary').mockRejectedValue(new Error('down'))
-    await checkUser(user)
-    expect(updateUser).toHaveBeenCalledWith(user.id, { play_session: null })
-    expect(send).not.toHaveBeenCalled()
-  })
-
-  test('a recent session or another game’s session stays open', async () => {
-    getTitle.mockResolvedValue(row({ earned_ids: [1, 2] }))
-    const now = new Date().toISOString()
-    getUser.mockResolvedValueOnce(
-      makeUser({
-        play_session: {
-          npCommunicationId: 'NPWR1_00',
-          startedAt: now,
-          lastActivity: now,
-          unlockedIds: [],
-        },
-      }),
-    )
-    await checkUser(user)
-    getUser.mockResolvedValueOnce(
-      makeUser({
-        play_session: {
-          npCommunicationId: 'OTHER',
-          startedAt: now,
-          lastActivity: now,
-          unlockedIds: [],
-        },
-      }),
-    )
-    await checkUser(user)
-    expect(updateUser).not.toHaveBeenCalled()
   })
 
   test('a route tip that fails to send is skipped', async () => {

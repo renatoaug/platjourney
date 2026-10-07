@@ -2,7 +2,7 @@
 
 PlatJourney keeps you company on the way to every PlayStation platinum. It watches the PSN profile of everyone who signs in, notices when you start a game or unlock a trophy, and Nexo, your platinum partner, talks to you about it on Telegram and in a web app, with guides researched from the web, a catalog of every game, and recommendations built from what you actually play.
 
-- **Watches your PSN profile** every few minutes: new game started, trophy unlocked, play session over.
+- **Watches your PSN profile** every few minutes: new game started, trophy unlocked.
 - **Nexo helps you** on Telegram and in the web chat: what to do next, missables ahead, tricks for the trophy you are stuck on. Answers use your real trophy list (in pt-BR, with English names for guide matching) and a per-game guide researched from community trophy guides.
 - **Guides** with roadmap, missables, glossary for beginners and the key trophies: online requirements, easiest, hardest, most tedious, tricks, glitched ones, collectibles, points of no return, PS4/PS5 auto-pop.
 - **Next platinum** ranking of your library by remaining effort, counting only the base game (DLC is shown separately).
