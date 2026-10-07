@@ -205,11 +205,28 @@ describe('Account', () => {
     expect(JSON.parse(String(init?.body))).toEqual({ onlineId: 'JOGADOR' })
   })
 
-  test('signing out starts over from the login screen', async () => {
-    spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
+  test('signing out starts over from the login screen once the server confirms', async () => {
+    spyOn(globalThis, 'fetch').mockResolvedValue(json({ ok: true }))
     show()
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
     expect(screen.getByRole('button', { name: 'Saindo…' })).toBeTruthy()
+    await waitFor(() => expect(reload).toHaveBeenCalled())
+  })
+
+  test('a sign out the server did not confirm keeps the player in and says so', async () => {
+    const fetchSpy = spyOn(globalThis, 'fetch')
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(json({}, 500))
+      .mockResolvedValueOnce(json({ ok: true }))
+    show()
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
+    expect(await screen.findByText('Não conseguimos sair agora. Tente de novo.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(reload).not.toHaveBeenCalled()
+    // The same button tries again.
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
     await waitFor(() => expect(reload).toHaveBeenCalled())
   })
 

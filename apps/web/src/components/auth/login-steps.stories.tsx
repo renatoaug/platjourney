@@ -5,7 +5,6 @@ import {
   type AccountStatus,
   ClaimStep,
   LookupStep,
-  OfflineStep,
   PasswordStep,
   PrivateStep,
   RegisterStep,
@@ -117,14 +116,6 @@ export const Claim: Story = {
         onBack={noop}
         onFail={noop}
       />
-    </AuthLayout>
-  ),
-}
-
-export const Offline: Story = {
-  render: () => (
-    <AuthLayout>
-      <OfflineStep />
     </AuthLayout>
   ),
 }

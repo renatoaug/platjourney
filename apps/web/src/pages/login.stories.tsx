@@ -14,8 +14,5 @@ type Story = StoryObj<typeof Login>
 /** First step: the PSN id. The other steps are in Auth/Login steps. */
 export const Lookup: Story = {}
 
-/** /api/me failed with something other than 401. */
-export const Offline: Story = { args: { offline: true } }
-
 // The same screen in English (the toolbar switches any story).
 export const English: Story = { ...Lookup, globals: { locale: Language.En } }

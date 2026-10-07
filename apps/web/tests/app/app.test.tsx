@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { App } from '../../src/app/app'
 import { SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
@@ -24,10 +24,41 @@ test('without a session it asks for the PSN id', async () => {
   expect(await screen.findByLabelText('Seu PSN ID')).toBeTruthy()
 })
 
-test('when the server is down it says so', async () => {
+test('when the server is down it says so instead of asking to sign in', async () => {
   mockApi({ '/api/me': reply(503) })
   render(<App />)
-  expect(await screen.findByRole('heading', { name: 'Fora do ar' })).toBeTruthy()
+  expect(
+    await screen.findByRole('heading', { name: 'Perdemos a conexão por um instante' }),
+  ).toBeTruthy()
+  expect(screen.queryByLabelText('Seu PSN ID')).toBeNull()
+})
+
+test('a network failure or an answer that is not JSON is the server being down', async () => {
+  spyOn(globalThis, 'fetch').mockRejectedValueOnce(new TypeError('Failed to fetch'))
+  const first = render(<App />)
+  expect(
+    await screen.findByRole('heading', { name: 'Perdemos a conexão por um instante' }),
+  ).toBeTruthy()
+  first.unmount()
+  mockApi({ '/api/me': new Response('<html>bad gateway</html>', { status: 200 }) })
+  render(<App />)
+  expect(
+    await screen.findByRole('heading', { name: 'Perdemos a conexão por um instante' }),
+  ).toBeTruthy()
+})
+
+test('trying again opens the app once the server answers, and says so while it does not', async () => {
+  let down = true
+  mockApi({
+    '/api/me': () => (down ? reply(503) : { user: SAMPLE_ME }),
+    '/api/state': SAMPLE_DATA,
+  })
+  render(<App />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Tentar de novo' }))
+  expect(await screen.findByText('Ainda sem conexão. Tente de novo em instantes.')).toBeTruthy()
+  down = false
+  fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+  expect(await screen.findByRole('navigation', { name: 'Navegação principal' })).toBeTruthy()
 })
 
 test('a session that ends mid-use goes back to the login', async () => {

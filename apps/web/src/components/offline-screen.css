@@ -1,0 +1,189 @@
+@layer screens {
+  .offline {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    padding: 24px 16px;
+    background:
+      radial-gradient(
+        640px 360px at 50% 0,
+        color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent),
+        transparent 70%
+      ),
+      var(--color-bg);
+  }
+
+  .offline:focus {
+    outline: none;
+  }
+
+  .offline-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+  }
+
+  .offline-card {
+    align-self: center;
+    justify-self: center;
+    width: min(100%, 480px);
+    display: grid;
+    justify-items: center;
+    padding-bottom: 48px;
+    text-align: center;
+  }
+
+  .offline-card h1 {
+    margin-top: 8px;
+    font-family: var(--font-display);
+    font-size: var(--text-4xl);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .offline-lead {
+    margin: 12px 0 24px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+  }
+
+  .offline-status {
+    min-height: 20px;
+    margin: 12px 0 0;
+    color: var(--color-fg-soft);
+    font-size: var(--text-sm);
+  }
+
+  .offline-hint {
+    margin: 4px 0 0;
+    color: var(--color-fg-subtle);
+    font-size: var(--text-xs);
+  }
+
+  .offline-spin {
+    animation: offline-spin 0.9s linear infinite;
+  }
+
+  /* ---------- the art: Nexo waiting for the signal ---------- */
+  .offline-art {
+    position: relative;
+    width: 260px;
+    aspect-ratio: 240 / 200;
+  }
+
+  .offline-sky {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .offline-glow {
+    fill: color-mix(in srgb, var(--color-accent) var(--alpha-faint), transparent);
+  }
+
+  .offline-orbit {
+    fill: none;
+    stroke: var(--color-border-strong);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 8;
+  }
+
+  .offline-star {
+    fill: var(--color-accent);
+    stroke: var(--color-accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+    opacity: 0.2;
+    animation: offline-twinkle 2.4s ease-in-out infinite;
+  }
+
+  .offline-shadow {
+    fill: color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: offline-shadow 6s ease-in-out infinite;
+  }
+
+  /* The signal Nexo is waiting for: the inner arcs lit, the outer one dark and searching. */
+  .offline-signal-dot {
+    fill: var(--color-accent);
+  }
+
+  .offline-signal-on,
+  .offline-signal-off {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+  }
+
+  .offline-signal-on {
+    stroke: var(--color-accent);
+  }
+
+  .offline-signal-off {
+    stroke: var(--color-border-strong);
+    stroke-dasharray: 2 9;
+    animation: offline-search 2.4s ease-in-out infinite;
+  }
+
+  .offline-float {
+    position: absolute;
+    top: 30%;
+    left: 18%;
+    width: 46%;
+    animation: offline-drift 6s ease-in-out infinite;
+  }
+
+  /* Turned toward the signal, up and to the right. */
+  .offline-nexo {
+    display: block;
+    width: 80%;
+    height: auto;
+    transform: rotate(8deg);
+  }
+
+  @keyframes offline-drift {
+    50% {
+      transform: translate(4px, -8px) rotate(3deg);
+    }
+  }
+
+  @keyframes offline-shadow {
+    50% {
+      transform: scaleX(0.84);
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes offline-search {
+    50% {
+      stroke: var(--color-accent-muted);
+    }
+  }
+
+  @keyframes offline-twinkle {
+    50% {
+      opacity: 0.85;
+    }
+  }
+
+  @keyframes offline-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .offline-card h1 {
+      font-size: var(--text-3xl);
+    }
+
+    .offline-art {
+      width: 220px;
+    }
+  }
+}
