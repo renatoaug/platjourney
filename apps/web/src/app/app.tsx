@@ -1,6 +1,7 @@
 /** Nothing renders until we know who is signed in: the login screen, the app, or an offline notice. */
 import { useEffect, useState } from 'react'
 import { HashRouter } from 'react-router'
+import { OfflineScreen } from '../components/offline-screen'
 import {
   applySavedLocale,
   defineMessages,
@@ -45,13 +46,24 @@ export function App() {
     setSession({ kind: 'in', me })
   }
 
-  useEffect(() => {
+  // Only a 401 means nobody is signed in; anything else (a network error, a 500, an answer that
+  // is not JSON) means the server cannot be reached. Says whether the server answered.
+  const loadSession = () =>
     api<{ user: Me }>('/api/me')
       .then((r) => {
         applySavedLocale(r.user.locale)
         setSession({ kind: 'in', me: r.user })
+        return true
       })
-      .catch((e) => setSession({ kind: e.status === 401 ? 'out' : 'offline' }))
+      .catch((e) => {
+        const out = e.status === 401
+        setSession({ kind: out ? 'out' : 'offline' })
+        return out
+      })
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loads once, on the first render.
+  useEffect(() => {
+    loadSession()
     const out = () => setSession({ kind: 'out' })
     document.addEventListener('api:unauthorized', out)
     return () => document.removeEventListener('api:unauthorized', out)
@@ -78,7 +90,7 @@ export function App() {
         </HashRouter>
       )}
       {session.kind === 'out' && <Login onSignedIn={signIn} />}
-      {session.kind === 'offline' && <Login offline onSignedIn={signIn} />}
+      {session.kind === 'offline' && <OfflineScreen onRetry={loadSession} />}
       <TooltipHost />
       <ToastHost />
     </>

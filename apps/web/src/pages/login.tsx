@@ -6,7 +6,6 @@ import {
   type Claim,
   ClaimStep,
   LookupStep,
-  OfflineStep,
   PasswordStep,
   PrivateStep,
   RegisterStep,
@@ -31,13 +30,7 @@ const t = translator(messages)
 
 const friendly = (e: unknown) => (e instanceof ApiError ? e.friendly : undefined)
 
-export function Login({
-  offline = false,
-  onSignedIn,
-}: {
-  offline?: boolean
-  onSignedIn: (me: Me) => void
-}) {
+export function Login({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
   // account: once the PSN id is known. claim: the pending code while proving the profile is theirs.
   const [account, setAccount] = useState<AccountStatus | null>(null)
   const [claim, setClaim] = useState<Claim | null>(null)
@@ -77,7 +70,6 @@ export function Login({
   const lookup = (onlineId: string) => api<AccountStatus>('/api/auth/lookup', { onlineId })
 
   const step = () => {
-    if (offline) return <OfflineStep />
     if (!account)
       return (
         <LookupStep

@@ -25,12 +25,6 @@ async function newPassword(label: string) {
   fill('Repita a senha', 'segredo123')
 }
 
-test('offline: only the notice', () => {
-  render(<Login offline onSignedIn={() => {}} />)
-  expect(screen.getByRole('heading', { name: 'Fora do ar' })).toBeTruthy()
-  expect(screen.queryByLabelText('Seu PSN ID')).toBeNull()
-})
-
 test('a returning player signs in with the password', async () => {
   const onSignedIn = mock()
   const calls = mockApi({

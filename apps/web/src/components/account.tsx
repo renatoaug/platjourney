@@ -23,6 +23,7 @@ const messages = defineMessages({
     cancel: 'Cancelar',
     logout: 'Sair',
     leaving: 'Saindo…',
+    logoutFailed: 'Não conseguimos sair agora. Tente de novo.',
     telegram: {
       tapStart: 'Toque em Iniciar no Telegram para concluir.',
       linkFailed: 'Não conseguimos gerar o link. Tente de novo.',
@@ -74,6 +75,7 @@ const messages = defineMessages({
     cancel: 'Cancel',
     logout: 'Sign out',
     leaving: 'Signing out…',
+    logoutFailed: 'Could not sign out right now. Try again.',
     telegram: {
       tapStart: 'Tap Start in Telegram to finish.',
       linkFailed: 'Could not create the link. Try again.',
@@ -379,11 +381,20 @@ function AccountCard({ user, onEditing }: { user: Me; onEditing?: (editing: bool
     toast(t('password.changed'), 'success')
   }
   // Stays busy until the page reloads into the login screen.
+  // Ends the session only when the server confirms it: otherwise the session stays alive there and
+  // a reload would sign the player back in. On a failure the player stays, told why.
   const [leaving, setLeaving] = useState(false)
+  const [logoutFailed, setLogoutFailed] = useState(false)
   const logout = async () => {
     setLeaving(true)
-    await api('/api/auth/logout', {}).catch(() => {})
-    restart()
+    setLogoutFailed(false)
+    try {
+      await api('/api/auth/logout', {})
+      restart()
+    } catch {
+      setLeaving(false)
+      setLogoutFailed(true)
+    }
   }
 
   return (
@@ -424,6 +435,11 @@ function AccountCard({ user, onEditing }: { user: Me; onEditing?: (editing: bool
           {leaving ? t('leaving') : t('logout')}
         </button>
       </div>
+      {logoutFailed && (
+        <p className="auth-error" role="alert">
+          {t('logoutFailed')}
+        </p>
+      )}
       {user.demo && <DemoNote />}
       <form
         className="auth-form account-form"

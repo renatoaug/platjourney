@@ -65,10 +65,6 @@ const messages = defineMessages({
         other: 'O código vale por {count} minutos. Depois de entrar você pode apagar do perfil.',
       },
     },
-    offline: {
-      title: 'Fora do ar',
-      lead: 'Não conseguimos falar com o servidor. Atualize a página em instantes.',
-    },
   },
   [Language.En]: {
     back: 'Use another PSN ID',
@@ -125,10 +121,6 @@ const messages = defineMessages({
         other:
           'The code is valid for {count} minutes. Once you are in, you can remove it from your profile.',
       },
-    },
-    offline: {
-      title: 'Offline',
-      lead: 'We could not reach the server. Reload the page in a moment.',
     },
   },
 })
@@ -479,17 +471,6 @@ export function ClaimStep({
       </form>
       <BackButton onBack={onBack} />
       <small className="muted">{t('claim.validity', { count: claim.minutes })}</small>
-    </>
-  )
-}
-
-/** /api/me failed with something other than 401: the server is unreachable. */
-export function OfflineStep() {
-  const t = useMessages(messages)
-  return (
-    <>
-      <h1>{t('offline.title')}</h1>
-      <p className="muted">{t('offline.lead')}</p>
     </>
   )
 }

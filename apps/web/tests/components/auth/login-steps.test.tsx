@@ -6,7 +6,6 @@ import {
   type AccountStatus,
   ClaimStep,
   LookupStep,
-  OfflineStep,
   PasswordStep,
   PrivateStep,
   RegisterStep,
@@ -42,9 +41,9 @@ const button = (name: string | RegExp) => screen.getByRole('button', { name }) a
 
 describe('AuthLayout', () => {
   test('frames the step with the story and the footnote', () => {
-    show(<OfflineStep />)
+    show(<h1>Um passo</h1>)
     expect(screen.getByRole('region', { name: 'PlatJourney' })).toBeTruthy()
-    expect(screen.getByRole('heading', { name: 'Fora do ar' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Um passo' })).toBeTruthy()
     expect(screen.getByText(/sem vínculo com a PlayStation/)).toBeTruthy()
   })
 })
