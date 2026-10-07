@@ -21,6 +21,8 @@ export interface User {
   demo?: boolean
   // When the first-visit introduction was finished or skipped.
   onboarded_at?: string | Date | null
+  // When the last session-start notice went out.
+  session_notice_at?: string | Date | null
   created_at: string
   last_seen_at: string
 }

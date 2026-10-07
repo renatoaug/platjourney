@@ -15,7 +15,7 @@ import { library } from './library.ts'
 import { type GameContext, proactiveTip, unlockReaction } from './nexo.ts'
 import { hours, playtimes } from './playtime.ts'
 import { Refused } from './plugins.ts'
-import { PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
+import { nowPlaying, PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
 import { loadGroups } from './ranking.ts'
 import { logTip, type TipKind } from './repository/activity.ts'
 import { pruneExpired } from './repository/auth.ts'
@@ -23,7 +23,7 @@ import { gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
-import { listUsers, type User } from './repository/user.ts'
+import { listUsers, type User, updateUser } from './repository/user.ts'
 import { reachedMilestone, routeNotice, stillOpen } from './route.ts'
 import { checkServers } from './servers.ts'
 import { sendMessage } from './telegram.ts'
@@ -31,6 +31,12 @@ import { sendMessage } from './telegram.ts'
 const messages = defineMessages({
   [Language.PtBR]: {
     started: 'Você começou {game}. O guia da platina está no PlatJourney.',
+    sessionOpen: '🎮 {game} aberto. Bom jogo!',
+    sessionLeft: {
+      one: 'Falta 1 troféu do jogo base para a platina.',
+      other: 'Faltam {count} troféus do jogo base para a platina.',
+    },
+    sessionNext: 'Próximo no roteiro ({phase}): {trophies}.',
     unlocked: '🏆 {trophy} ({type}) em {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% de quem joga) em {game}',
     types: {
@@ -42,6 +48,12 @@ const messages = defineMessages({
   },
   [Language.En]: {
     started: 'You started {game}. The platinum guide is on PlatJourney.',
+    sessionOpen: '🎮 {game} is on. Have a good session!',
+    sessionLeft: {
+      one: '1 base-game trophy left for the platinum.',
+      other: '{count} base-game trophies left for the platinum.',
+    },
+    sessionNext: 'Next on the roadmap ({phase}): {trophies}.',
     unlocked: '🏆 {trophy} ({type}) in {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% of players) in {game}',
     types: {
@@ -64,7 +76,7 @@ export const forgetUser = (id: string) => contexts.delete(id)
 const TYPES = new Set(['platinum', 'gold', 'silver', 'bronze'])
 
 // A notice without the model: logged like any tip (so it reaches the bell) and sent to Telegram.
-async function plainNotice(user: User, kind: TipKind, text: string, game: string) {
+async function plainNotice(user: User, kind: TipKind, text: string, game?: string) {
   await logTip(user.id, kind, text, game)
   await notify(user, text)
 }
@@ -232,6 +244,52 @@ async function check(user: User): Promise<void> {
       }
     }
   await saveEarnedIds(user.id, latest.npCommunicationId, earnedIds)
+  await sessionStart(user, ctx, justStarted)
+}
+
+// One session-start notice every few hours at most; until then the player's presence is not
+// even asked, which also spares PSN a call per sweep.
+export const SESSION_NOTICE_HOURS = 6
+
+const comparable = (name: string) =>
+  name
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, '')
+
+// What a session-start notice says about the game: what is left for the platinum and the
+// roadmap phase the player is in, with up to three of its trophies still missing.
+export function sessionNotice(user: User, game: string, ctx?: GameContext): string {
+  const t = translator(messages, user)
+  if (!ctx) return t('sessionOpen', { game })
+  const missing = ctx.trophies.filter(
+    (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
+  )
+  const parts = [t('sessionOpen', { game: gameName(ctx) })]
+  if (missing.length) parts.push(t('sessionLeft', { count: missing.length }))
+  const names = new Set(missing.map((x) => x.name))
+  const phase = ctx.guide?.roadmap?.find((r) => r.trophies?.some((n) => names.has(n)))
+  if (phase) {
+    const trophies = phase.trophies.filter((n) => names.has(n)).slice(0, 3)
+    parts.push(t('sessionNext', { phase: phase.phase, trophies: trophies.join(', ') }))
+  }
+  return parts.join('\n')
+}
+
+// Tells the player once when they open a game, from PSN presence (players who hide their online
+// status never get it). The game they play is the one in context when the names match.
+async function sessionStart(user: User, ctx: GameContext, noticed: boolean): Promise<void> {
+  const last = user.session_notice_at ? new Date(user.session_notice_at).getTime() : 0
+  if (Date.now() - last < SESSION_NOTICE_HOURS * 3_600_000) return
+  const playing = await nowPlaying(user.psn_account_id)
+  if (!playing) return
+  // The start notice of a new game already went out in this sweep: it counts as this one.
+  if (!noticed) {
+    const same = comparable(playing) === comparable(ctx.title.name)
+    const text = sessionNotice(user, playing, same ? ctx : undefined)
+    await plainNotice(user, 'session', text, same ? ctx.game.id : undefined)
+  }
+  await updateUser(user.id, { session_notice_at: new Date() })
 }
 
 // Users are visited one after the other so PSN sees a steady, modest stream.

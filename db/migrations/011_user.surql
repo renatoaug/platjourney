@@ -22,6 +22,8 @@ DEFINE FIELD IF NOT EXISTS ai_notices ON user TYPE bool DEFAULT true;
 DEFINE FIELD IF NOT EXISTS locale ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['pt-BR', 'en'];
 -- The demo player (db/demo-seed.json): anyone can open it without a password, and it is read-only.
 DEFINE FIELD IF NOT EXISTS demo ON user TYPE bool DEFAULT false;
+-- When the last session-start notice went out: one every few hours, and no presence check before then.
+DEFINE FIELD IF NOT EXISTS session_notice_at ON user TYPE option<datetime>;
 -- When the player finished or skipped the first-visit introduction; NONE shows it.
 DEFINE FIELD IF NOT EXISTS onboarded_at ON user TYPE option<datetime>;
 DEFINE FIELD IF NOT EXISTS created_at ON user TYPE datetime DEFAULT time::now() READONLY;

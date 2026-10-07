@@ -26,6 +26,8 @@ import {
   demoContext,
   forgetUser,
   getCurrent,
+  SESSION_NOTICE_HOURS,
+  sessionNotice,
   setCurrent,
   startWatcher,
   watchNow,
@@ -71,6 +73,8 @@ let logTip: ReturnType<typeof spyOn<typeof activity, 'logTip'>>
 let markTip: ReturnType<typeof spyOn<typeof titles, 'markTipSent'>>
 let saveEarned: ReturnType<typeof spyOn<typeof titles, 'saveEarnedIds'>>
 let getGuide: ReturnType<typeof spyOn<typeof guides, 'getGuide'>>
+let playing: ReturnType<typeof spyOn<typeof psn, 'nowPlaying'>>
+let updateUser: ReturnType<typeof spyOn<typeof users, 'updateUser'>>
 
 beforeEach(() => {
   spyOn(sessions, 'pruneExpired').mockResolvedValue()
@@ -102,6 +106,8 @@ beforeEach(() => {
   markTip = spyOn(titles, 'markTipSent').mockResolvedValue(undefined)
   logTip = spyOn(activity, 'logTip').mockResolvedValue(undefined)
   send = spyOn(telegram, 'sendMessage').mockResolvedValue(undefined)
+  playing = spyOn(psn, 'nowPlaying').mockResolvedValue(null)
+  updateUser = spyOn(users, 'updateUser').mockResolvedValue(undefined)
   spyOn(console, 'log').mockImplementation(() => {})
   spyOn(console, 'warn').mockImplementation(() => {})
 })
@@ -113,6 +119,74 @@ afterEach(() => {
 })
 
 const started = () => makeTitle({ progress: 5, earned: 1 })
+
+describe('session start', () => {
+  const roadmapGuide = {
+    ...routeGuide,
+    roadmap: [
+      { phase: 'Fase 1', goal: '', trophies: ['Primeiro'] },
+      { phase: 'Fase 2', goal: '', trophies: ['Segundo', 'Terceiro'] },
+    ],
+  } as unknown as Guide
+  const unchanged = () =>
+    getTitle.mockResolvedValue(
+      row({ earned_ids: [1, 2], earned: 10, last_updated_at: '2026-05-01T10:00:00.000Z' }),
+    )
+
+  test('opening the game in context sends one notice with what is left and the roadmap phase', async () => {
+    unchanged()
+    getGuide.mockResolvedValue(roadmapGuide)
+    playing.mockResolvedValue('DAYS GONE')
+    await checkUser(user)
+    const text =
+      '🎮 Days Gone aberto. Bom jogo!\nFalta 1 troféu do jogo base para a platina.\nPróximo no roteiro (Fase 2): Terceiro.'
+    expect(logTip).toHaveBeenCalledWith(user.id, 'session', text, game.id)
+    expect(send.mock.calls).toEqual([['42', text]])
+    expect(updateUser.mock.calls[0][1].session_notice_at).toBeInstanceOf(Date)
+  })
+
+  test('another game gets the notice with its name only', async () => {
+    unchanged()
+    playing.mockResolvedValue('ASTRO BOT')
+    await checkUser(user)
+    expect(logTip).toHaveBeenCalledWith(
+      user.id,
+      'session',
+      '🎮 ASTRO BOT aberto. Bom jogo!',
+      undefined,
+    )
+  })
+
+  test(`within ${SESSION_NOTICE_HOURS} hours of the last one, presence is not even asked`, async () => {
+    unchanged()
+    await checkUser({ ...user, session_notice_at: new Date(Date.now() - 3_600_000) })
+    expect(playing).not.toHaveBeenCalled()
+    await checkUser({ ...user, session_notice_at: new Date(Date.now() - 7 * 3_600_000) })
+    expect(playing).toHaveBeenCalledTimes(1)
+  })
+
+  test('nothing open, nothing sent and nothing stamped', async () => {
+    unchanged()
+    await checkUser(user)
+    expect(send).not.toHaveBeenCalled()
+    expect(updateUser).not.toHaveBeenCalled()
+  })
+
+  test('a game just started already got its start notice: no second one, but it counts', async () => {
+    getTitle.mockResolvedValue(undefined)
+    recent.mockResolvedValue([started()])
+    spyOn(nexo, 'proactiveTip').mockResolvedValue('Bora!')
+    playing.mockResolvedValue('Days Gone')
+    await checkUser(user)
+    expect(send.mock.calls).toEqual([['42', 'Bora!']])
+    expect(updateUser).toHaveBeenCalledTimes(1)
+  })
+
+  test('the notice without a game in context, in English', () => {
+    const en = { ...user, locale: 'en' as const }
+    expect(sessionNotice(en, 'Days Gone')).toBe('🎮 Days Gone is on. Have a good session!')
+  })
+})
 
 describe('checkUser', () => {
   test('nothing happens without recent titles', async () => {

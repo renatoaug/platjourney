@@ -8,6 +8,7 @@ import {
   forgetProfiles,
   forgetTrophyLists,
   lookupProfile,
+  nowPlaying,
   PrivateProfile,
   playedGames,
   profileSummary,
@@ -437,4 +438,17 @@ test('hidden played games read as none, other failures propagate', async () => {
 test('an empty page ends the listing', async () => {
   spyOn(api, 'getUserPlayedGames').mockResolvedValue({ titles: [], totalItemCount: 50 } as never)
   expect(await playedGames('acc')).toEqual([])
+})
+
+test('now playing is the open game, or null when offline, hidden or failing', async () => {
+  const presence = spyOn(api, 'getBasicPresence').mockResolvedValue({
+    basicPresence: { gameTitleInfoList: [{ titleName: 'DAYS GONE' }] },
+  } as never)
+  expect(await nowPlaying('acc')).toBe('DAYS GONE')
+  presence.mockResolvedValue({ basicPresence: {} } as never)
+  expect(await nowPlaying('acc')).toBeNull()
+  presence.mockResolvedValue({ error: { code: 2240526, message: 'Not permitted' } } as never)
+  expect(await nowPlaying('acc')).toBeNull()
+  presence.mockRejectedValue(new Error('down'))
+  expect(await nowPlaying('acc')).toBeNull()
 })
