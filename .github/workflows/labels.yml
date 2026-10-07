@@ -3,13 +3,13 @@ name: Labels from the title
 # The title follows Conventional Commits, `type(scope): subject`, so it already says the type and
 # the scope: this keeps the `type:` and `scope:` labels in step with it. A scope gets a label only
 # when the repository has one with that name. Priority is a person's call: an issue opened without
-# one gets `needs: triage`, which goes away once a `priority:` label is added.
+# one gets `needs: triage`, which goes away once a `priority:` label is added or the issue is closed.
 
 on:
   pull_request_target:
     types: [opened, edited, reopened]
   issues:
-    types: [opened, edited, reopened, labeled]
+    types: [opened, edited, reopened, labeled, closed]
 
 jobs:
   labels:
@@ -32,6 +32,12 @@ jobs:
               labels.length && github.rest.issues.addLabels({ owner, repo, issue_number, labels })
             const remove = (name) =>
               github.rest.issues.removeLabel({ owner, repo, issue_number, name }).catch(() => {})
+
+            // A closed issue waits for nothing: only `needs: triage` goes; the rest still describes it.
+            if (context.payload.action === 'closed') {
+              if (current.includes('needs: triage')) await remove('needs: triage')
+              return
+            }
 
             if (context.payload.action === 'labeled') {
               if (context.payload.label.name.startsWith('priority: ') && current.includes('needs: triage'))
