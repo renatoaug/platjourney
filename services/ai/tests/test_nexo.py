@@ -90,9 +90,13 @@ def test_mentioned_trophies_match_either_language_and_come_back_in_english() -> 
 def test_unlock_prompt_names_the_trophies() -> None:
     prompt = nexo.unlock_prompt([Trophy.model_validate(trophy())])
     assert prompt.startswith(
-        'O jogador acabou de desbloquear: Sobrevivente / Survivor (gold, Muito raro). A mensagem '
-        'já abre com o nome do troféu como título: comemore'
+        'O jogador acabou de desbloquear: Sobrevivente / Survivor (gold, 3.2% de quem joga tem). '
+        'A mensagem já abre com o nome do troféu como título: comemore'
     )
+    assert 'só quando até 15% de quem joga tem o troféu' in prompt
+    assert 'Muito raro' not in prompt
+    unknown = nexo.unlock_prompt([Trophy.model_validate(trophy(earnedRate=0))])
+    assert 'Sobrevivente / Survivor (gold).' in unknown
 
 
 def test_unlock_prompt_cheers_the_guides_hardest_and_most_tedious() -> None:

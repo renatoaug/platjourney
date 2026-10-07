@@ -243,7 +243,13 @@ def standout(unlocked: list[Trophy], guide: dict[str, Any] | None) -> list[str]:
 
 
 def unlock_prompt(unlocked: list[Trophy], guide: dict[str, Any] | None = None) -> str:
-    names = ', '.join(f'{t.name} / {t.name_en} ({t.type}, {t.rarity})' for t in unlocked)
+    # The share of players, not PSN's label: its "Rara" covers 15% to 50%, most story trophies.
+    names = ', '.join(
+        f'{t.name} / {t.name_en} ({t.type}'
+        + (f', {num(t.earned_rate)}% de quem joga tem' if t.earned_rate else '')
+        + ')'
+        for t in unlocked
+    )
     big = standout(unlocked, guide)
     cheer = (
         f' Pelo guia, {"; ".join(big)}: abra a comemoração com um emoji de conquista e uma frase '
@@ -251,7 +257,7 @@ def unlock_prompt(unlocked: list[Trophy], guide: dict[str, Any] | None = None) -
         if big
         else ''
     )
-    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome (mencione raridade se for rara ou melhor), diga em uma linha onde ele provavelmente está no roadmap, e aponte UM próximo troféu que faz sentido agora e como pegar. Se houver missable chegando neste ponto do jogo, avise primeiro. Máximo 6 linhas, sem repetir dicas já dadas.{cheer}'  # noqa: E501
+    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome (cite a raridade só quando até 15% de quem joga tem o troféu, com o percentual, ex.: "só 8% têm"; acima disso não chame de raro), diga em uma linha onde ele provavelmente está no roadmap, e aponte UM próximo troféu que faz sentido agora e como pegar. Se houver missable chegando neste ponto do jogo, avise primeiro. Máximo 6 linhas, sem repetir dicas já dadas.{cheer}'  # noqa: E501
 
 
 def session_prompt(unlocked: list[Trophy], minutes: float) -> str:
