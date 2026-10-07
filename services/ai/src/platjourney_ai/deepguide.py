@@ -9,6 +9,7 @@ once, and `indexing` says whether a game's job is still running.
 import asyncio
 import logging
 from datetime import UTC, datetime, timedelta
+from http.cookiejar import CookieJar, DefaultCookiePolicy
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -25,6 +26,25 @@ __all__ = ['GuidePage', 'Passage', 'Status', 'ensure', 'retrieve', 'start', 'sta
 log = logging.getLogger(__name__)
 
 USER_AGENT = 'platjourney/0.1 (+https://github.com/renatoaug/platjourney)'
+
+
+class _NoCookies(DefaultCookiePolicy):
+    def set_ok(self, cookie: object, request: object) -> bool:
+        return False
+
+
+def reader_client(transport: httpx.AsyncBaseTransport | None = None) -> httpx.AsyncClient:
+    """The client that reads guide pages. It keeps no cookies: the reader needs none, and a site
+    that sets one with a non-ASCII value would break every later request to that site."""
+    return httpx.AsyncClient(
+        headers={'user-agent': USER_AGENT},
+        follow_redirects=True,
+        timeout=30,
+        cookies=CookieJar(policy=_NoCookies()),
+        transport=transport,
+    )
+
+
 # Pages the model's own search may bring; pages someone chose are all read.
 MAX_PAGES = 10
 # Guides get corrected after patches and server shutdowns; refresh monthly.
@@ -133,9 +153,7 @@ async def _index(game: Game, trophy_total: int | None, given: list[GuidePage] | 
     log.info('indexing deep guide for %s', game.name)
     pages = given if given is not None else (await find_pages(game))[:MAX_PAGES]
     chunks: list[dict[str, Any]] = []
-    async with httpx.AsyncClient(
-        headers={'user-agent': USER_AGENT}, follow_redirects=True, timeout=30
-    ) as http:
+    async with reader_client() as http:
         for page in pages:
             read = await read_page(http, page.url)
             if not read:
