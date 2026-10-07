@@ -12,6 +12,7 @@ import {
 } from './i18n.ts'
 import { reply } from './nexo.ts'
 import { loadPlugins, Refused } from './plugins.ts'
+import { allow } from './rate-limit.ts'
 import { updateUser, userByChat, userByLinkCode } from './repository/user.ts'
 import {
   incomingMessages,
@@ -51,43 +52,64 @@ async function main(): Promise<void> {
     setCommands(commandMenu(Language.PtBR), 'pt'),
   ]).catch((e) => console.warn('telegram commands not set:', (e as Error).message))
 
-  for await (const { chatId, text, languageCode } of incomingMessages()) {
-    // Before we know who it is, answer in the language of their Telegram app.
-    let locale: Locale = languageCode ? fromLanguage(languageCode) : DEFAULT_LOCALE
-    try {
-      const startCode = /^\/start\s+(\S+)/.exec(text)?.[1]
-      if (startCode) {
-        await sendMessage(chatId, await link(chatId, startCode, locale))
-        continue
-      }
-      const user = await userByChat(chatId)
-      if (!user) {
-        await sendMessage(chatId, translator(telegramMessages, locale)('notLinked'))
-        continue
-      }
-      locale = userLocale(user)
-      if (text.startsWith('/')) {
-        const out = await handleCommand(user, text)
-        await sendMessage(
-          chatId,
-          out ?? `${translator(telegramMessages, locale)('unknownCommand')}\n\n${help(locale)}`,
-        )
-        continue
-      }
-      await sendTyping(chatId)
+  // Each chat is answered in order, chats in parallel: one slow answer no longer holds everyone
+  // else. A chat sending more than 20 messages a minute is ignored until it slows down.
+  const chats = new Map<string, Promise<void>>()
+  for await (const message of incomingMessages()) {
+    if (!allow(`telegram|${message.chatId}`, 20, 60_000)) continue
+    const next = (chats.get(message.chatId) ?? Promise.resolve())
+      .then(() => answerTelegram(message))
+      .finally(() => {
+        if (chats.get(message.chatId) === next) chats.delete(message.chatId)
+      })
+    chats.set(message.chatId, next)
+  }
+}
+
+async function answerTelegram({
+  chatId,
+  text,
+  languageCode,
+}: {
+  chatId: string
+  text: string
+  languageCode?: string
+}): Promise<void> {
+  // Before we know who it is, answer in the language of their Telegram app.
+  let locale: Locale = languageCode ? fromLanguage(languageCode) : DEFAULT_LOCALE
+  try {
+    const startCode = /^\/start\s+(\S+)/.exec(text)?.[1]
+    if (startCode) {
+      await sendMessage(chatId, await link(chatId, startCode, locale))
+      return
+    }
+    const user = await userByChat(chatId)
+    if (!user) {
+      await sendMessage(chatId, translator(telegramMessages, locale)('notLinked'))
+      return
+    }
+    locale = userLocale(user)
+    if (text.startsWith('/')) {
+      const out = await handleCommand(user, text)
       await sendMessage(
         chatId,
-        await reply(user, text.slice(0, config.chat.maxChars), getCurrent(user)),
+        out ?? `${translator(telegramMessages, locale)('unknownCommand')}\n\n${help(locale)}`,
       )
-    } catch (e) {
-      // A plugin refused the model work: its message says why and what to do.
-      if (e instanceof Refused) {
-        await sendMessage(chatId, e.message)
-        continue
-      }
-      console.error('handler failed:', e)
-      await sendMessage(chatId, translator(telegramMessages, locale)('failed'))
+      return
     }
+    await sendTyping(chatId)
+    await sendMessage(
+      chatId,
+      await reply(user, text.slice(0, config.chat.maxChars), getCurrent(user)),
+    )
+  } catch (e) {
+    // A plugin refused the model work: its message says why and what to do.
+    if (e instanceof Refused) {
+      await sendMessage(chatId, e.message)
+      return
+    }
+    console.error('handler failed:', e)
+    await sendMessage(chatId, translator(telegramMessages, locale)('failed'))
   }
 }
 

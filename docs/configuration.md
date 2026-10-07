@@ -58,7 +58,7 @@ and open http://localhost:3000 (only this machine can reach it). The first time,
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | OpenAI key and default model (not needed with local models) |
 | `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET` | The IGDB app |
 | `SURREAL_URL`, `SURREAL_USER`, `SURREAL_PASS`, `SURREAL_NS`, `SURREAL_DB` | SurrealDB; Docker Compose reads the user and password too |
-| `AI_URL`, `AI_TOKEN` | Where the AI service listens and the token the server calls it with (`openssl rand -hex 24`) |
+| `AI_URL`, `AI_TOKEN` | Where the AI service listens and the token the server calls it with (`openssl rand -hex 24`); the service refuses to start with a token under 32 characters |
 
 ## What the instance spends on its own
 
@@ -114,7 +114,7 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | `AUTH_SKIP_VERIFICATION` | 0 | `1` skips the "About me" check when claiming an account. Local development only |
 | `ACCESS_HASH_SECRET` | empty | Records where accounts are used from, as an HMAC of the IP (`openssl rand -hex 32`). Empty records nothing |
 | `ACCESS_KEEP_DAYS` | 180 | Days an unused address is kept |
-| `TRUST_PROXY` | 0 | `1` reads the address from `X-Forwarded-For`, only behind a proxy that sets it |
+| `TRUST_PROXY` | 0 | `1` reads the address from Cloudflare's `CF-Connecting-IP`, or else the last `X-Forwarded-For` hop. Only behind a proxy that sets them |
 
 ## Optional
 
@@ -124,3 +124,7 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | `SESSION_IDLE_MINUTES` | 60 | Without a new trophy for this long, a play session is over |
 | `PORT` | 3000 | The server's port |
 | `PLUGINS`, `PLUGINS_WEB` | empty | Plugin modules to load ([plugins](plugins.md)) |
+| `WEB_DEV_URL` | empty | Development only: the Vite server the page is proxied from (`bun run dev` sets it) |
+| `AI_HOST`, `AI_PORT` | 127.0.0.1, 8100 | Where the AI service listens |
+| `CHAT_MAX_OUTPUT_TOKENS` | 1500 | Caps each Nexo answer |
+| `EMBEDDING_MODEL` | text-embedding-3-small | OpenAI embedding model (with `EMBEDDING_PROVIDER=openai`) |
