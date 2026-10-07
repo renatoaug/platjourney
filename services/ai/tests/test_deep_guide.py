@@ -661,3 +661,76 @@ def test_a_token_with_other_characters_is_refused_not_an_error() -> None:
     headers: list[tuple[bytes, bytes]] = [(b'x-internal-token', token)]
     r = TestClient(app).post('/deep-guide/stats', json={}, headers=headers)
     assert r.status_code == 403
+
+
+def tiny_pdf(text: str) -> bytes:
+    """A one-page PDF with `text` on it, written by hand: enough for the reader's PDF path."""
+    stream = f'BT /F1 12 Tf 72 720 Td ({text}) Tj ET'.encode()
+    objects = [
+        b'<< /Type /Catalog /Pages 2 0 R >>',
+        b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R '
+        b'/Resources << /Font << /F1 5 0 R >> >> >>',
+        b'<< /Length %d >>\nstream\n' % len(stream) + stream + b'\nendstream',
+        b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    ]
+    out = bytearray(b'%PDF-1.4\n')
+    offsets: list[int] = []
+    for n, body in enumerate(objects, 1):
+        offsets.append(len(out))
+        out += b'%d 0 obj\n' % n + body + b'\nendobj\n'
+    xref = len(out)
+    out += b'xref\n0 %d\n0000000000 65535 f \n' % (len(objects) + 1)
+    out += b''.join(b'%010d 00000 n \n' % o for o in offsets)
+    out += b'trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n' % (
+        len(objects) + 1,
+        xref,
+    )
+    return bytes(out)
+
+
+async def test_a_pdf_guide_is_read_as_text_and_other_files_are_not(resolver: None) -> None:
+    pdf = tiny_pdf('Collect all 12 relics before chapter 9')
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == '/robots.txt':
+            return httpx.Response(404)
+        if request.url.path == '/guide.pdf':
+            return httpx.Response(200, content=pdf, headers={'content-type': 'application/pdf'})
+        if request.url.path == '/map.png':
+            return httpx.Response(200, content=b'\x89PNG\r\n\x1a\n' + bytes(500))
+        return httpx.Response(
+            200, content=b'%PDF-1.4 broken', headers={'content-type': 'application/pdf'}
+        )
+
+    async with deepguide.reader_client(httpx.MockTransport(handler)) as http:
+        page = await deepguide.read_page(http, 'https://guides.example/guide.pdf')
+        assert page is not None and 'Collect all 12 relics before chapter 9' in page[0]
+        assert await deepguide.read_page(http, 'https://guides.example/broken.pdf') is None
+
+
+async def test_files_that_are_not_pages_are_not_read(resolver: None) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == '/robots.txt':
+            return httpx.Response(404)
+        return httpx.Response(
+            200, content=bytes(range(256)) * 10, headers={'content-type': 'image/png'}
+        )
+
+    async with deepguide.reader_client(httpx.MockTransport(handler)) as http:
+        assert await deepguide.read_page(http, 'https://guides.example/map.png') is None
+
+
+async def test_a_pdf_too_big_to_read_whole_is_left_out(
+    resolver: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(deepguide, 'MAX_PDF_BYTES', 100)
+    pdf = tiny_pdf('A long walkthrough')
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == '/robots.txt':
+            return httpx.Response(404)
+        return httpx.Response(200, content=pdf, headers={'content-type': 'application/pdf'})
+
+    async with deepguide.reader_client(httpx.MockTransport(handler)) as http:
+        assert await deepguide.read_page(http, 'https://guides.example/walkthrough.pdf') is None

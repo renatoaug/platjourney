@@ -7,6 +7,7 @@ once, and `indexing` says whether a game's job is still running.
 """
 
 import asyncio
+import io
 import ipaddress
 import logging
 import socket
@@ -18,6 +19,7 @@ from urllib.parse import urlsplit
 
 import httpx
 from pydantic import BaseModel
+from pypdf import PdfReader
 
 from . import guidestore, llm
 from .guidestore import Passage, Source
@@ -118,9 +120,14 @@ _robots: dict[str, str] = {}
 # A guide page is text; anything bigger is cut off rather than held in memory.
 MAX_PAGE_BYTES = 5_000_000
 MAX_REDIRECTS = 5
+# Guides published as PDFs (walkthroughs, strategy guides) run to tens of megabytes.
+MAX_PDF_BYTES = 40_000_000
+MAX_PDF_PAGES = 600
+# Pages read as text: HTML, and plain text. Some servers send no type at all.
+READABLE = {'text/html', 'application/xhtml+xml', 'text/plain', ''}
 # A page or a game cannot grow past this many passages: each one is embedded and stored.
-MAX_PASSAGES_PER_PAGE = 400
-MAX_PASSAGES = 2000
+MAX_PASSAGES_PER_PAGE = 1500
+MAX_PASSAGES = 6000
 
 
 async def _addresses(host: str, port: int) -> list[str]:
@@ -150,8 +157,21 @@ async def public_url(url: str) -> bool:
     return bool(found) and all(ipaddress.ip_address(a.split('%')[0]).is_global for a in found)
 
 
-async def _fetch(http: httpx.AsyncClient, url: str, accept: str) -> tuple[int, str] | None:
-    """GETs a public URL, following redirects one hop at a time, each hop checked again."""
+class _Fetched(BaseModel):
+    status: int
+    kind: str
+    body: bytes
+    encoding: str
+    whole: bool
+
+    @property
+    def text(self) -> str:
+        return self.body.decode(self.encoding, 'replace')
+
+
+async def _fetch(http: httpx.AsyncClient, url: str, accept: str) -> _Fetched | None:
+    """GETs a public URL, following redirects one hop at a time, each hop checked again. Reads
+    at most MAX_PDF_BYTES of a PDF and MAX_PAGE_BYTES of anything else."""
     for _ in range(MAX_REDIRECTS + 1):
         if not await public_url(url):
             return None
@@ -159,15 +179,31 @@ async def _fetch(http: httpx.AsyncClient, url: str, accept: str) -> tuple[int, s
             if r.is_redirect and 'location' in r.headers:
                 url = str(r.url.join(r.headers['location']))
                 continue
+            kind = r.headers.get('content-type', '').split(';')[0].strip().lower()
+            limit = MAX_PDF_BYTES if kind == 'application/pdf' else MAX_PAGE_BYTES
             body = bytearray()
             async for chunk in r.aiter_bytes():
                 body += chunk
-                if len(body) > MAX_PAGE_BYTES:
+                if len(body) > limit:
                     break
-            return r.status_code, bytes(body[:MAX_PAGE_BYTES]).decode(
-                r.encoding or 'utf-8', 'replace'
+            return _Fetched(
+                status=r.status_code,
+                kind=kind,
+                body=bytes(body[:limit]),
+                encoding=r.encoding or 'utf-8',
+                whole=len(body) <= limit,
             )
     return None
+
+
+def pdf_text(data: bytes) -> str:
+    """A PDF's text, page after page, up to MAX_PDF_PAGES; empty when it cannot be read."""
+    try:
+        reader = PdfReader(io.BytesIO(data))
+        pages = reader.pages[:MAX_PDF_PAGES]
+        return '\n\n'.join((page.extract_text() or '').strip() for page in pages).strip()
+    except Exception:
+        return ''
 
 
 async def allowed_by_robots(http: httpx.AsyncClient, url: str) -> bool:
@@ -177,7 +213,7 @@ async def allowed_by_robots(http: httpx.AsyncClient, url: str) -> bool:
     if robots is None:
         try:
             got = await _fetch(http, f'{origin}/robots.txt', 'text/plain')
-            robots = got[1] if got and 200 <= got[0] < 300 else ''
+            robots = got.text if got and 200 <= got.status < 300 else ''
         except httpx.HTTPError:
             robots = ''
         _robots[origin] = robots
@@ -185,17 +221,27 @@ async def allowed_by_robots(http: httpx.AsyncClient, url: str) -> bool:
 
 
 async def read_page(http: httpx.AsyncClient, url: str) -> tuple[str, str | None] | None:
-    """The page as text and the date it says it was updated."""
+    """The page as text and the date it says it was updated. Web pages and PDFs only: anything
+    else (an image, a zip, an unknown type) read as text is noise."""
     if not await public_url(url) or not await allowed_by_robots(http, url):
         return None
     try:
-        got = await _fetch(http, url, 'text/html')
+        got = await _fetch(http, url, 'text/html, application/pdf;q=0.9')
     except httpx.HTTPError:
         return None
-    if not got or not 200 <= got[0] < 300:
+    if not got or not 200 <= got.status < 300:
+        return None
+    if got.kind == 'application/pdf':
+        # A PDF cut at the size limit cannot be parsed; a guide that big is left out.
+        if not got.whole:
+            return None
+        text = await asyncio.to_thread(pdf_text, got.body)
+        return (text, None) if text else None
+    if got.kind not in READABLE:
         return None
     # Parsing a big page takes a while: off the event loop, so chat keeps answering meanwhile.
-    return await asyncio.to_thread(lambda: (html_to_text(got[1]), page_date(got[1])))
+    html = got.text
+    return await asyncio.to_thread(lambda: (html_to_text(html), page_date(html)))
 
 
 async def find_pages(game: Game) -> list[GuidePage]:
