@@ -86,7 +86,12 @@ export async function createUser(u: {
 export async function updateUser(id: string, fields: Partial<Omit<User, 'id'>>): Promise<void> {
   const set: string[] = []
   const vars: Record<string, unknown> = { id: userRef(id) }
-  for (const [key, value] of Object.entries(fields)) {
+  // The unique index is on the lowercase id: a rename moves it too, or the old name stays taken.
+  const all =
+    typeof fields.psn_online_id === 'string'
+      ? { ...fields, psn_online_id_lower: fields.psn_online_id.toLowerCase() }
+      : fields
+  for (const [key, value] of Object.entries(all)) {
     if (!/^[a-z_]+$/.test(key)) continue
     if (value === null) set.push(`${key} = NONE`)
     else {

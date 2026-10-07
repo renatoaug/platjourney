@@ -21,6 +21,7 @@ import * as profile from '../src/profile.ts'
 import * as psn from '../src/psn.ts'
 import { PrivateProfile } from '../src/psn.ts'
 import * as ranking from '../src/ranking.ts'
+import { resetRateLimits } from '../src/rate-limit.ts'
 import * as recommend from '../src/recommend.ts'
 import * as activity from '../src/repository/activity.ts'
 import * as games from '../src/repository/game.ts'
@@ -86,6 +87,7 @@ const saved = { research: config.automatic.research, skip: config.auth.skipVerif
 
 beforeEach(() => {
   forgetResearch()
+  resetRateLimits()
   config.automatic.research = true
   spyOn(console, 'error').mockImplementation(() => {})
   spyOn(auth, 'authenticate').mockResolvedValue(me)
@@ -169,7 +171,7 @@ test('register and login sign in, start watching and set the cookie', async () =
     })
   }
   expect(register).toHaveBeenCalledWith('Kratos', 'secret12')
-  expect(login).toHaveBeenCalledWith('Kratos', 'secret12')
+  expect(login).toHaveBeenCalledWith('Kratos', 'secret12', '')
   expect(watcher.watchNow).toHaveBeenCalledTimes(2)
 })
 
@@ -234,6 +236,17 @@ test('a change asked from another site is refused; the same site and server call
       })
     ).status,
   ).not.toBe(403)
+})
+
+test('sign-in routes and the demo are limited per address', async () => {
+  spyOn(auth, 'accountStatus').mockResolvedValue({} as never)
+  for (let i = 0; i < 30; i++) await send('POST', '/api/auth/lookup', { onlineId: 'Kratos' })
+  const cut = await send('POST', '/api/auth/lookup', { onlineId: 'Kratos' })
+  expect(cut).toMatchObject({ status: 429, body: { error: 'too_many_requests' } })
+  expect(auth.accountStatus).toHaveBeenCalledTimes(30)
+  spyOn(auth, 'demoSession').mockResolvedValue(null)
+  for (let i = 0; i < 5; i++) await send('POST', '/api/auth/demo')
+  expect((await send('POST', '/api/auth/demo')).status).toBe(429)
 })
 
 test('auth failures answer with their status and message', async () => {

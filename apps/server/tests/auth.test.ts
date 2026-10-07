@@ -168,6 +168,18 @@ test('too many wrong passwords block the account for a while', async () => {
   expect(code(await login('Kratos', 'right-one').catch((e) => e))).toBe('too_many_attempts')
 })
 
+test('wrong passwords lock one address out, not the owner elsewhere', async () => {
+  spyOn(psn, 'lookupProfile').mockResolvedValue(profile('acc-targeted'))
+  spyOn(users, 'userByAccount').mockResolvedValue(
+    makeUser({ avatar_url: 'avatar.png', password_hash: 'hash:owner-pass' }),
+  )
+  for (let i = 0; i < 8; i++) await login('Kratos', 'guess-guess', '198.51.100.1').catch(() => {})
+  expect(code(await login('Kratos', 'owner-pass', '198.51.100.1').catch((e) => e))).toBe(
+    'too_many_attempts',
+  )
+  expect((await login('Kratos', 'owner-pass', '203.0.113.5')).user).toBeDefined()
+})
+
 test('a right password clears the wrong attempts', async () => {
   spyOn(psn, 'lookupProfile').mockResolvedValue(profile('acc-forgetful'))
   spyOn(users, 'userByAccount').mockResolvedValue(

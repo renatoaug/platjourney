@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { extname } from 'node:path'
-import { noteAccess } from './access.ts'
+import { clientIp, noteAccess } from './access.ts'
 import {
   AuthError,
   accountStatus,
@@ -46,6 +46,7 @@ import { pluginRoute, Refused } from './plugins.ts'
 import { profilePage } from './profile.ts'
 import { catalogTrophies, PrivateProfile, profileSummary, titleTrophies } from './psn.ts'
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
+import { allow } from './rate-limit.ts'
 import { dismissRecommendation, recommendations } from './recommend.ts'
 import {
   markNotificationsRead,
@@ -79,6 +80,7 @@ const messages = defineMessages({
     taken: 'Esse PSN ID já tem conta. Entre com a senha.',
     wrongPassword: 'Senha incorreta.',
     tooManyAttempts: 'Muitas tentativas. Espere 15 minutos ou recupere o acesso.',
+    tooManyRequests: 'Muitos pedidos seguidos. Espere um minuto e tente de novo.',
     confirmationMismatch: 'O PSN ID digitado não confere.',
     trophiesPrivate:
       'Seus troféus estão privados na PSN. Deixe "Troféus" visível para "Qualquer pessoa" nas configurações de privacidade e tente de novo.',
@@ -102,6 +104,7 @@ const messages = defineMessages({
     taken: 'This PSN ID already has an account. Sign in with the password.',
     wrongPassword: 'Wrong password.',
     tooManyAttempts: 'Too many attempts. Wait 15 minutes or recover access.',
+    tooManyRequests: 'Too many requests in a row. Wait a minute and try again.',
     confirmationMismatch: "The PSN ID you typed doesn't match.",
     trophiesPrivate:
       'Your trophies are private on PSN. Set "Trophies" to "Anyone" in the privacy settings and try again.',
@@ -369,6 +372,17 @@ async function authRoutes(
   method: string,
 ): Promise<boolean> {
   if (!path.startsWith('/api/auth/') || method !== 'POST') return false
+  // Each of these asks PSN or opens a session: a loop from one address is cut short, so it can
+  // neither wear out the instance's PSN account nor fill the database with demo sessions.
+  const ip = clientIp(req) ?? ''
+  const demo = path === '/api/auth/demo'
+  if (!allow(`${demo ? 'demo' : 'auth'}|${ip}`, demo ? 5 : 30, 60_000)) {
+    json(res, 429, {
+      error: 'too_many_requests',
+      message: translator(messages, requestLocale(req))('tooManyRequests'),
+    })
+    return true
+  }
   if (path === '/api/auth/logout') {
     await logout(req)
     json(res, 200, { ok: true }, { 'set-cookie': sessionCookie(null) })
@@ -420,7 +434,7 @@ async function authRoutes(
       return true
     }
     case '/api/auth/login':
-      signIn(await login(onlineId, secret))
+      signIn(await login(onlineId, secret, ip))
       return true
     case '/api/auth/claim': {
       const { secret: claimSecret, ...claim } = await startClaim(onlineId, claimSecretFrom(req))
