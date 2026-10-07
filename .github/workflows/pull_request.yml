@@ -20,7 +20,7 @@ jobs:
     # The AI service refuses to start without these; the tests never reach a database or a model.
     env:
       SURREAL_PASS: ci
-      AI_TOKEN: ci
+      AI_TOKEN: ci-token-for-tests-0123456789abcdef
 
     steps:
       - uses: actions/checkout@v7
