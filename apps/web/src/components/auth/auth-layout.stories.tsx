@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { AuthLayout } from './auth-layout'
+import { LookupStep } from './login-steps'
 
 const meta: Meta<typeof AuthLayout> = {
   title: 'Auth/Layout',
@@ -9,11 +10,12 @@ const meta: Meta<typeof AuthLayout> = {
 export default meta
 type Story = StoryObj<typeof AuthLayout>
 
+const wait = () => new Promise<void>(() => {})
+
 export const WithStep: Story = {
   render: () => (
     <AuthLayout>
-      <h1>Um passo do login</h1>
-      <p className="muted">O quadro à esquerda, o passo à direita e a nota de rodapé.</p>
+      <LookupStep message="" onLookup={wait} onFail={() => {}} />
     </AuthLayout>
   ),
 }
