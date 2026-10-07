@@ -6,6 +6,7 @@ import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -155,6 +156,22 @@ def test_robots_blocks_disallowed_prefixes_for_every_agent() -> None:
 def test_robots_ignores_rules_for_other_agents_and_empty_files() -> None:
     assert deepguide.allowed('User-agent: Bingbot\nDisallow: /', '/guide')
     assert deepguide.allowed('', '/guide')
+
+
+async def test_the_reader_keeps_no_cookies() -> None:
+    # A site that sets a cookie with a non-ASCII value used to break every later request to it.
+    sent: list[str | None] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent.append(request.headers.get('cookie'))
+        headers = [(b'set-cookie', 'region=São Paulo; Path=/'.encode('latin-1'))]
+        return httpx.Response(200, headers=headers, text='<p>guide</p>')
+
+    async with deepguide.reader_client(httpx.MockTransport(handler)) as http:
+        await http.get('https://guides.example/robots.txt')
+        await http.get('https://guides.example/guide')
+
+    assert sent == [None, None]
 
 
 # Refresh rules
