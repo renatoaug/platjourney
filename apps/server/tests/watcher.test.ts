@@ -354,9 +354,28 @@ describe('checkUser', () => {
     expect(saveEarned).toHaveBeenCalledWith(user.id, 'NPWR1_00', [1, 2])
   })
 
-  test('an unchanged title reuses the loaded context', async () => {
+  test('a trophy list that lagged behind the summary is read again on the next sweep', async () => {
+    const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
+    const list = spyOn(psn, 'titleTrophies')
+    // First sweep: the summary already says 10 earned, the list still has only the first trophy.
+    list.mockResolvedValueOnce([trophies[0], { ...trophies[1], earned: false }, trophies[2]])
+    getTitle.mockResolvedValue(row({ earned_ids: [1], earned: 9 }))
+    recent.mockResolvedValue([makeTitle({ earned: 2 })])
+    await checkUser(user)
+    expect(reaction).not.toHaveBeenCalled()
+    // Second sweep: the summary is unchanged, but the list is read again and has the trophy.
     getTitle.mockResolvedValue(
-      row({ earned_ids: [1, 2], earned: 10, last_updated_at: '2026-05-01T10:00:00.000Z' }),
+      row({ earned_ids: [1], earned: 2, last_updated_at: '2026-05-01T10:00:00.000Z' }),
+    )
+    await checkUser(user)
+    expect(reaction.mock.calls[0][2].map((t) => t.id)).toEqual([2])
+  })
+
+  test('an unchanged title reuses the loaded context', async () => {
+    // The summary and the list agree: two trophies earned.
+    recent.mockResolvedValue([makeTitle({ earned: 2 })])
+    getTitle.mockResolvedValue(
+      row({ earned_ids: [1, 2], earned: 2, last_updated_at: '2026-05-01T10:00:00.000Z' }),
     )
     await checkUser(user)
     const ctx = getCurrent(user)
