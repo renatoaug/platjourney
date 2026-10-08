@@ -43,7 +43,8 @@
 
   @media (max-width: 760px) {
     .nav-label,
-    .sidebar-note {
+    .sidebar-note,
+    .sidebar .app-version {
       display: none;
     }
 
@@ -221,6 +222,23 @@
     border: 1px solid currentColor;
     border-radius: var(--radius-tag);
     opacity: 0.8;
+  }
+
+  /* Which release is running, for bug reports: the quietest line in the sidebar and the sheet. */
+  .app-version {
+    display: block;
+    margin-top: 10px;
+    color: var(--color-fg-subtle);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-caps);
+    text-align: center;
+  }
+
+  /* In the sidebar it sits close under the note, on the note's left edge. */
+  .sidebar .app-version {
+    margin-top: 6px;
+    padding-left: 12px;
+    text-align: left;
   }
 
   .sidebar-note {

@@ -1,3 +1,8 @@
+import pkg from '../../../package.json' with { type: 'json' }
+
+// The platform's version, set by each release in the root package.json.
+export const version = pkg.version
+
 function required(name: string): string {
   const value = process.env[name]
   if (!value) throw new Error(`Missing env var ${name}`)

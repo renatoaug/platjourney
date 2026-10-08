@@ -84,7 +84,7 @@ Messages follow Conventional Commits, with a scope when it makes sense: `feat(we
 
 To open a PR, use the `/create-pr` skill; it applies every rule below.
 
-- The title follows Conventional Commits: `type(scope): subject` (scope when it makes sense), with a lowercase subject.
+- The title follows Conventional Commits: `type(scope): subject` (scope when it makes sense), with a lowercase subject. It becomes the release note: every merge to `main` is a release (`.github/workflows/release.yml`), a `feat` bumps the minor version and any other type the patch.
 - The body follows the template in `.github/PULL_REQUEST_TEMPLATE.md`: the **What?**, **Why?** and **Acceptance criteria** sections.
 - The PR base is `main`.
 - **Acceptance criteria** separate what was already validated (checked) from what only a person can confirm (unchecked). A PR that changes something visible needs visual QA items naming the screen, the state and the theme.
