@@ -73,7 +73,7 @@ CI runs lint, typecheck and the tests with coverage on every pull request.
 
 ## Releases
 
-Every merge to `main` is a release: [semantic-release](https://semantic-release.gitbook.io) reads the Conventional Commit titles since the last tag, bumps the version in `package.json` (a `feat` bumps the minor, anything else the patch), writes [`CHANGELOG.md`](CHANGELOG.md), tags `vX.Y.Z` and publishes the GitHub release. The account page shows the running version, and the server logs it on start.
+Every merge to `main` is a release: [semantic-release](https://semantic-release.gitbook.io) reads the Conventional Commit titles since the last tag, bumps the version in `package.json` (a `feat` bumps the minor, anything else the patch), writes [`CHANGELOG.md`](CHANGELOG.md), tags `vX.Y.Z` and publishes the GitHub release. The menu shows the running version, and the server logs it on start.
 
 ## Docs
 
