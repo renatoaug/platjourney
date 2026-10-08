@@ -8,6 +8,7 @@ import logging
 import re
 from contextvars import ContextVar
 from dataclasses import dataclass
+from typing import Any
 
 from . import db
 
@@ -22,6 +23,10 @@ class CostTag:
 
 _NO_TAG = CostTag()
 current_tag: ContextVar[CostTag] = ContextVar('cost_tag', default=_NO_TAG)
+
+# Set by the evals: calls are collected here instead of stored, so an eval writes nothing to the
+# database it reads (it may be production, with a read-only user).
+collected: ContextVar[list[dict[str, Any]] | None] = ContextVar('collected_calls', default=None)
 
 # USD per 1M tokens (input, cached input, output), from
 # https://developers.openai.com/api/docs/pricing (2026-10-03).
@@ -83,6 +88,10 @@ async def record_call(model: str, u: Usage, ms: int) -> None:
         'cost_usd': cost_usd(model, u),
         'ms': ms,
     }
+    calls = collected.get()
+    if calls is not None:
+        calls.append(data)
+        return
     try:
         if tag.user:
             await db.query(

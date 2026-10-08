@@ -129,6 +129,120 @@
           "relevant": [["dlc trophies do not count"]]
         }
       ]
+    },
+    {
+      "game": "game:19561",
+      "name": "Days Gone",
+      "cases": [
+        {
+          "question": "onde acho um Quebrador pro Isto é uma faca?",
+          "terms": ["This Is a Knife"],
+          "relevant": [["breaker", "knife"]]
+        },
+        {
+          "question": "quantas hordas tem que destruir pra platina?",
+          "terms": [],
+          "relevant": [["hordes", "40"], ["horde", "all"]]
+        }
+      ]
+    },
+    {
+      "game": "game:1877",
+      "name": "Cyberpunk 2077",
+      "cases": [
+        {
+          "question": "onde fica a calça do Johnny?",
+          "terms": [],
+          "relevant": [["johnny", "pants"]]
+        },
+        {
+          "question": "quais escolhas levam a cada final?",
+          "terms": [],
+          "relevant": [["ending", "nocturne"], ["ending", "path"]]
+        }
+      ]
+    },
+    {
+      "game": "game:119133",
+      "name": "Elden Ring",
+      "cases": [
+        {
+          "question": "onde pego a Seta de Gransax antes de mudar Leyndell?",
+          "terms": ["Legendary Armaments"],
+          "relevant": [["bolt of gransax"]]
+        },
+        {
+          "question": "onde ficam os talismãs lendários?",
+          "terms": ["Legendary Talismans"],
+          "relevant": [["legendary talisman"]]
+        }
+      ]
+    },
+    {
+      "game": "game:127044",
+      "name": "Marvel's Spider-Man 2",
+      "cases": [
+        {
+          "question": "onde ficam os Spider-Bots do Brooklyn?",
+          "terms": [],
+          "relevant": [["spider-bot", "brooklyn"]]
+        }
+      ]
+    },
+    {
+      "game": "game:11156",
+      "name": "Horizon Zero Dawn",
+      "cases": [
+        {
+          "question": "em que ordem faço os caldeirões?",
+          "terms": [],
+          "relevant": [["cauldron", "rho"], ["cauldron", "sigma"]]
+        }
+      ]
+    },
+    {
+      "game": "game:75235",
+      "name": "Ghost of Tsushima",
+      "cases": [
+        {
+          "question": "onde ficam os santuários xintoístas?",
+          "terms": [],
+          "relevant": [["shinto shrine"]]
+        }
+      ]
+    },
+    {
+      "game": "game:112875",
+      "name": "God of War Ragnarök",
+      "cases": [
+        {
+          "question": "onde encontro os corvos de Odin em Midgard?",
+          "terms": [],
+          "relevant": [["raven", "midgard"]]
+        }
+      ]
+    },
+    {
+      "game": "game:7331",
+      "name": "Uncharted 4: A Thief's End",
+      "cases": [
+        {
+          "question": "quantos tesouros tem no capítulo 10?",
+          "terms": [],
+          "relevant": [["chapter 10", "treasure"]]
+        }
+      ]
+    },
+    {
+      "game": "game:134584",
+      "name": "Returnal",
+      "cases": [
+        {
+          "question": "onde ficam os Xeno-archives do primeiro bioma?",
+          "terms": [],
+          "relevant": [["xeno-archive", "overgrown ruins"], ["xenoglyph", "overgrown"]]
+        }
+      ]
     }
   ]
 }

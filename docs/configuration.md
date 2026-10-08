@@ -102,6 +102,7 @@ The AI service can run on your own machine, for free, with any server that speak
 | `guide` | Guide research |
 | `guide_index` | Finding deep guide pages |
 | `server_check` | Online server checks |
+| `judge` | The model that grades Nexo's answers in the evals ([evals](evals.md)) |
 
 Web search follows each feature's provider. An OpenAI model needs its price in `services/ai/src/platjourney_ai/costs.py`, or its calls are recorded at $0.
 
@@ -127,3 +128,5 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | `AI_HOST`, `AI_PORT` | 127.0.0.1, 8100 | Where the AI service listens |
 | `CHAT_MAX_OUTPUT_TOKENS` | 1500 | Caps each Nexo answer |
 | `EMBEDDING_MODEL` | text-embedding-3-small | OpenAI embedding model (with `EMBEDDING_PROVIDER=openai`) |
+| `EVAL_SURREAL_URL`, `EVAL_SURREAL_USER`, `EVAL_SURREAL_PASS`, `EVAL_SURREAL_NS`, `EVAL_SURREAL_DB` | the `SURREAL_*` values, database `evals` | Where the evals keep their questions and runs ([evals](evals.md)) |
+| `EVAL_VIEW_PORT` | 8200 | The eval viewer's port |

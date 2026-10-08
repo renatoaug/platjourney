@@ -6,9 +6,7 @@ and overall. Cases whose game no longer has any relevant passage are listed apar
 stale golden set or a re-index, not a retrieval miss.
 """
 
-import json
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
@@ -17,7 +15,9 @@ from platjourney_ai import db, deepguide
 from platjourney_ai.guidestore import Passage
 from platjourney_ai.schemas import Game
 
-DATA = Path(__file__).parent / 'data' / 'retrieval.json'
+from . import questions
+from .runs import Run
+
 K = 6
 
 
@@ -25,16 +25,6 @@ class Case(BaseModel):
     question: str
     terms: list[str] = []
     relevant: list[list[str]]
-
-
-class GameCases(BaseModel):
-    game: str
-    name: str
-    cases: list[Case]
-
-
-class Golden(BaseModel):
-    games: list[GameCases]
 
 
 def relevant(case: Case, p: Passage) -> bool:
@@ -81,37 +71,64 @@ async def all_passages(game: str) -> list[Passage]:
     return [Passage.model_validate(r) for r in rows]
 
 
-async def check(golden: Golden) -> dict[str, list[Case]]:
-    """The cases that can be answered from what is indexed now, per game; no model calls."""
-    usable: dict[str, list[Case]] = {}
-    for g in golden.games:
-        passages = await all_passages(g.game)
-        usable[g.game] = []
-        for case in g.cases:
-            if any(relevant(case, p) for p in passages):
-                usable[g.game].append(case)
-            else:
-                print(f'  stale: {g.name}: "{case.question}" has no relevant passage indexed')
-        print(f'  {g.name}: {len(passages)} passages, {len(usable[g.game])} cases')
-    return usable
-
-
-async def run() -> None:
-    golden = Golden.model_validate(json.loads(DATA.read_text()))
-    print(f'retrieval ({DATA.name})')
-    usable = await check(golden)
+async def run() -> str:
+    asked = await questions.active('retrieval')
+    print(f'retrieval ({len(asked)} questions)')
+    record = Run('retrieval')
+    await record.start(len(asked))
+    by_game: dict[str, list[tuple[str, Case, str]]] = {}
+    for q in asked:
+        data = q['data']
+        by_game.setdefault(data['game'], []).append(
+            (q['id'], Case.model_validate(data), data['name'])
+        )
     overall = Score()
-    lines: list[str] = []
-    for g in golden.games:
-        game = await load_game(g.game)
-        score = Score()
-        for case in usable[g.game]:
-            found = await deepguide.retrieve(game, case.question, case.terms, K)
-            rank = first_hit(case, found)
-            score.ranks.append(rank)
-            if rank is None:
-                print(f'  miss: {g.name}: "{case.question}"')
-        overall.ranks.extend(score.ranks)
-        lines.append(score.line(g.name))
-    print('\n'.join(lines))
-    print(overall.line('overall'))
+    summary: dict[str, str] = {}
+    try:
+        for game_id, cases in by_game.items():
+            game = await load_game(game_id)
+            indexed = await all_passages(game_id)
+            score = Score()
+            for qid, case, name in cases:
+                # A question no indexed passage can answer is a stale golden set, not a miss.
+                if not any(relevant(case, p) for p in indexed):
+                    await record.case(
+                        question=qid,
+                        input=case.question,
+                        passed=False,
+                        reason='no relevant passage indexed for this game',
+                        game=name,
+                        stale=True,
+                    )
+                    continue
+                found, calls = await record.measure(
+                    deepguide.retrieve(game, case.question, case.terms, K)
+                )
+                rank = first_hit(case, found)
+                score.ranks.append(rank)
+                if rank is None:
+                    print(f'  miss: {name}: "{case.question}"')
+                await record.case(
+                    question=qid,
+                    input=case.question,
+                    expected=' or '.join(' + '.join(group) for group in case.relevant),
+                    output='\n\n'.join(
+                        f'[{p.source} — {p.heading}]\n{p.content[:400]}' for p in found
+                    ),
+                    passed=rank is not None,
+                    score=1 / rank if rank else 0,
+                    reason=f'first relevant passage at #{rank}' if rank else f'none in the top {K}',
+                    calls=calls,
+                    game=name,
+                )
+            overall.ranks.extend(score.ranks)
+            print(score.line(cases[0][2]))
+            summary[cases[0][2]] = f'recall@{K} {score.recall:.2f} · MRR {score.mrr:.2f}'
+        print(overall.line('overall'))
+        await record.finish(
+            {'overall': f'recall@{K} {overall.recall:.2f} · MRR {overall.mrr:.2f}', **summary}
+        )
+    except Exception as e:
+        await record.fail(f'{type(e).__name__}: {e}')
+        raise
+    return record.id
