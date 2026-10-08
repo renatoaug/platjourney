@@ -12,7 +12,6 @@ DEFINE FIELD IF NOT EXISTS telegram_link_code ON user TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS telegram_link_expires_at ON user TYPE option<datetime>;
 DEFINE FIELD IF NOT EXISTS goal_targets ON user TYPE object FLEXIBLE DEFAULT {};
 DEFINE FIELD IF NOT EXISTS taste_profile ON user TYPE option<object> FLEXIBLE;
-DEFINE FIELD IF NOT EXISTS play_session ON user TYPE option<object> FLEXIBLE;
 DEFINE FIELD IF NOT EXISTS session_plan ON user TYPE option<object> FLEXIBLE;
 -- Show progress with DLC trophies counted in; off means the base game only (what the platinum needs).
 DEFINE FIELD IF NOT EXISTS include_dlc_progress ON user TYPE bool DEFAULT false;
@@ -23,6 +22,8 @@ DEFINE FIELD IF NOT EXISTS ai_notices ON user TYPE bool DEFAULT true;
 DEFINE FIELD IF NOT EXISTS locale ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['pt-BR', 'en'];
 -- The demo player (db/demo-seed.json): anyone can open it without a password, and it is read-only.
 DEFINE FIELD IF NOT EXISTS demo ON user TYPE bool DEFAULT false;
+-- When the last session-start notice went out: one every few hours, and no presence check before then.
+DEFINE FIELD IF NOT EXISTS session_notice_at ON user TYPE option<datetime>;
 -- When the player finished or skipped the first-visit introduction; NONE shows it.
 DEFINE FIELD IF NOT EXISTS onboarded_at ON user TYPE option<datetime>;
 DEFINE FIELD IF NOT EXISTS created_at ON user TYPE datetime DEFAULT time::now() READONLY;

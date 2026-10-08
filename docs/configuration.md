@@ -121,7 +121,6 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | Setting | Default | What it is |
 |---|---|---|
 | `POLL_MINUTES` | 15 | How often each player's PSN profile is checked |
-| `SESSION_IDLE_MINUTES` | 60 | Without a new trophy for this long, a play session is over |
 | `PORT` | 3000 | The server's port |
 | `PLUGINS`, `PLUGINS_WEB` | empty | Plugin modules to load ([plugins](plugins.md)) |
 | `WEB_DEV_URL` | empty | Development only: the Vite server the page is proxied from (`bun run dev` sets it) |

@@ -12,7 +12,6 @@ export interface User {
   telegram_link_expires_at?: string | Date | null
   goal_targets: Record<string, number>
   taste_profile: unknown | null
-  play_session: unknown | null
   session_plan: unknown | null
   include_dlc_progress?: boolean
   // Nexo's words in automatic notices; off, plain templates (no model).
@@ -22,6 +21,8 @@ export interface User {
   demo?: boolean
   // When the first-visit introduction was finished or skipped.
   onboarded_at?: string | Date | null
+  // When the last session-start notice went out.
+  session_notice_at?: string | Date | null
   created_at: string
   last_seen_at: string
 }
@@ -29,7 +30,7 @@ export interface User {
 export const userRef = (id: string): RecordId => rid('user', id.replace(/^user:/, ''))
 
 // Objects kept on the user, stored with snake_case keys (AGENTS.md, Database).
-const OBJECTS = ['session_plan', 'play_session', 'taste_profile'] as const
+const OBJECTS = ['session_plan', 'taste_profile'] as const
 function fromRow<T extends User | undefined>(row: T): T {
   if (!row) return row
   const out = { ...row }
@@ -137,10 +138,7 @@ export async function wipeUserData(id: string): Promise<void> {
     'playtime',
   ])
     await q(`DELETE ${table} WHERE user = $user`, { user })
-  await q(
-    'UPDATE $user SET goal_targets = {}, taste_profile = NONE, play_session = NONE, session_plan = NONE',
-    { user },
-  )
+  await q('UPDATE $user SET goal_targets = {}, taste_profile = NONE, session_plan = NONE', { user })
 }
 
 export async function deleteUser(id: string): Promise<void> {

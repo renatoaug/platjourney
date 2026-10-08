@@ -90,9 +90,13 @@ def test_mentioned_trophies_match_either_language_and_come_back_in_english() -> 
 def test_unlock_prompt_names_the_trophies() -> None:
     prompt = nexo.unlock_prompt([Trophy.model_validate(trophy())])
     assert prompt.startswith(
-        'O jogador acabou de desbloquear: Sobrevivente / Survivor (gold, Muito raro). A mensagem '
-        'já abre com o nome do troféu como título: comemore'
+        'O jogador acabou de desbloquear: Sobrevivente / Survivor (gold, 3.2% de quem joga tem). '
+        'A mensagem já abre com o nome do troféu como título: comemore'
     )
+    assert 'só quando até 15% de quem joga tem o troféu' in prompt
+    assert 'Muito raro' not in prompt
+    unknown = nexo.unlock_prompt([Trophy.model_validate(trophy(earnedRate=0))])
+    assert 'Sobrevivente / Survivor (gold).' in unknown
 
 
 def test_unlock_prompt_cheers_the_guides_hardest_and_most_tedious() -> None:
@@ -110,11 +114,6 @@ def test_unlock_prompt_cheers_the_guides_hardest_and_most_tedious() -> None:
     assert 'mais fácil' not in prompt
     assert 'Pelo guia' not in nexo.unlock_prompt(unlocked, {'hardest': {'trophy': 'Outro'}})
     assert 'Pelo guia' not in nexo.unlock_prompt(unlocked)
-
-
-def test_session_prompt_without_trophies() -> None:
-    prompt = nexo.session_prompt([], 25)
-    assert '(última atividade há ~25 min). Troféus desta sessão: nenhum troféu novo.' in prompt
 
 
 def test_trophy_help_prompt_carries_progress_only_when_tracked() -> None:
@@ -155,7 +154,7 @@ def model(monkeypatch: pytest.MonkeyPatch) -> Model:
 
 
 async def test_start_tip_asks_with_the_context_and_no_history(model: Model) -> None:
-    text = await nexo.tip('start', context(), [], 0)
+    text = await nexo.tip('start', context(), [])
     assert text == 'Vai no Trophy Guides.'
     [call] = model.calls
     assert call['instructions'] == nexo.SYSTEM
@@ -383,11 +382,11 @@ async def test_moderation_needs_a_key_and_fails_open(monkeypatch: pytest.MonkeyP
 
 async def test_a_tip_folds_the_guide_route_into_the_same_message(model: Model) -> None:
     route = '🧭 Depois de Segundo:\n🚧 A missão Riding Nomad Again é um ponto sem volta.'
-    await nexo.tip('unlock', context(), [], 0, route)
+    await nexo.tip('unlock', context(), [], route)
     content = model.calls[0]['input'][0]['content']
     assert content.endswith(nexo.ROUTE_PROMPT.format(route=route))
     assert 'Escreva em português os nomes de missões' in content
-    await nexo.tip('unlock', context(), [], 0)
+    await nexo.tip('unlock', context(), [])
     assert 'orientação do guia' not in model.calls[1]['input'][0]['content']
 
 

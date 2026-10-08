@@ -26,6 +26,8 @@ import {
   demoContext,
   forgetUser,
   getCurrent,
+  SESSION_NOTICE_HOURS,
+  sessionNotice,
   setCurrent,
   startWatcher,
   watchNow,
@@ -70,9 +72,9 @@ let send: ReturnType<typeof spyOn<typeof telegram, 'sendMessage'>>
 let logTip: ReturnType<typeof spyOn<typeof activity, 'logTip'>>
 let markTip: ReturnType<typeof spyOn<typeof titles, 'markTipSent'>>
 let saveEarned: ReturnType<typeof spyOn<typeof titles, 'saveEarnedIds'>>
-let updateUser: ReturnType<typeof spyOn<typeof users, 'updateUser'>>
-let getUser: ReturnType<typeof spyOn<typeof users, 'getUser'>>
 let getGuide: ReturnType<typeof spyOn<typeof guides, 'getGuide'>>
+let playing: ReturnType<typeof spyOn<typeof psn, 'nowPlaying'>>
+let updateUser: ReturnType<typeof spyOn<typeof users, 'updateUser'>>
 
 beforeEach(() => {
   spyOn(sessions, 'pruneExpired').mockResolvedValue()
@@ -104,7 +106,7 @@ beforeEach(() => {
   markTip = spyOn(titles, 'markTipSent').mockResolvedValue(undefined)
   logTip = spyOn(activity, 'logTip').mockResolvedValue(undefined)
   send = spyOn(telegram, 'sendMessage').mockResolvedValue(undefined)
-  getUser = spyOn(users, 'getUser').mockResolvedValue(user)
+  playing = spyOn(psn, 'nowPlaying').mockResolvedValue(null)
   updateUser = spyOn(users, 'updateUser').mockResolvedValue(undefined)
   spyOn(console, 'log').mockImplementation(() => {})
   spyOn(console, 'warn').mockImplementation(() => {})
@@ -117,6 +119,133 @@ afterEach(() => {
 })
 
 const started = () => makeTitle({ progress: 5, earned: 1 })
+
+describe('session start', () => {
+  const roadmapGuide = {
+    ...routeGuide,
+    roadmap: [
+      { phase: 'Fase 1', goal: '', trophies: ['Primeiro'] },
+      { phase: 'Fase 2', goal: '', trophies: ['Segundo', 'Terceiro'] },
+    ],
+  } as unknown as Guide
+  const briefGuide = {
+    ...roadmapGuide,
+    tricks: [{ trophy: 'Terceiro', trick: 'Use o arco de longe.', source: 'x' }],
+    missables: [{ trophy: 'Terceiro', when: 'antes do capítulo 5.', how: '' }],
+  } as unknown as Guide
+  const unchanged = () =>
+    getTitle.mockResolvedValue(
+      row({ earned_ids: [1, 2], earned: 10, last_updated_at: '2026-05-01T10:00:00.000Z' }),
+    )
+
+  test('opening the game in context sends one notice with what is left and the roadmap phase', async () => {
+    unchanged()
+    getGuide.mockResolvedValue(roadmapGuide)
+    playing.mockResolvedValue('DAYS GONE')
+    spyOn(Math, 'random').mockReturnValue(0)
+    await checkUser(user)
+    const text =
+      '🎮 De volta a Days Gone! Falta 1 troféu do jogo base.\nNo roteiro, você está em **Fase 2**.\n\n**Foco de hoje**: Terceiro\nFaça algo'
+    expect(logTip).toHaveBeenCalledWith(user.id, 'session', text, game.id)
+    expect(send.mock.calls).toEqual([['42', text]])
+    expect(updateUser.mock.calls[0][1].session_notice_at).toBeInstanceOf(Date)
+  })
+
+  test('another game gets the notice with its name only', async () => {
+    unchanged()
+    playing.mockResolvedValue('ASTRO BOT')
+    await checkUser(user)
+    expect(logTip).toHaveBeenCalledWith(
+      user.id,
+      'session',
+      expect.stringMatching(/^🎮 .*ASTRO BOT[^\n]*$/),
+      undefined,
+    )
+  })
+
+  test(`within ${SESSION_NOTICE_HOURS} hours of the last one, presence is not even asked`, async () => {
+    unchanged()
+    await checkUser({ ...user, session_notice_at: new Date(Date.now() - 3_600_000) })
+    expect(playing).not.toHaveBeenCalled()
+    await checkUser({ ...user, session_notice_at: new Date(Date.now() - 7 * 3_600_000) })
+    expect(playing).toHaveBeenCalledTimes(1)
+  })
+
+  test('nothing open, nothing sent and nothing stamped', async () => {
+    unchanged()
+    await checkUser(user)
+    expect(send).not.toHaveBeenCalled()
+    expect(updateUser).not.toHaveBeenCalled()
+  })
+
+  test('a game just started already got its start notice: no second one, but it counts', async () => {
+    getTitle.mockResolvedValue(undefined)
+    recent.mockResolvedValue([started()])
+    spyOn(nexo, 'proactiveTip').mockResolvedValue('Bora!')
+    playing.mockResolvedValue('Days Gone')
+    await checkUser(user)
+    expect(send.mock.calls).toEqual([['42', 'Bora!']])
+    expect(updateUser).toHaveBeenCalledTimes(1)
+  })
+
+  test('the briefing adds the guide’s tip, a missable still open and a trophy almost done', () => {
+    const ctx = {
+      game,
+      title: makeTitle(),
+      guide: briefGuide,
+      trophies: [
+        ...trophies,
+        makeTrophy({ id: 4, name: 'Colecionador', progressTarget: 50, progressValue: 34 }),
+        makeTrophy({ id: 5, name: 'Longe', progressTarget: 10, progressValue: 2 }),
+        makeTrophy({ id: 6, name: 'Extra', groupId: '001' }),
+        makeTrophy({ id: 7, name: 'Platina', type: 'platinum' }),
+      ],
+    } as unknown as Parameters<typeof sessionNotice>[2]
+    expect(sessionNotice(user, 'x', ctx, () => 0.99)).toBe(
+      [
+        '🎮 Mais uma sessão de Days Gone. Faltam 3 troféus do jogo base.\nNo roteiro, você está em **Fase 2**.',
+        '**Foco de hoje**: Terceiro\nFaça algo',
+        '**Dica**: Use o arco de longe.',
+        '⚠️ **Terceiro** é perdível: antes do capítulo 5.',
+        '**Quase lá**: Colecionador, 34 de 50.',
+      ].join('\n\n'),
+    )
+  })
+
+  test('the focus is a missable first, then a trophy with a trick, then the next in order', () => {
+    const base = [
+      makeTrophy({ id: 3, name: 'Terceiro' }),
+      makeTrophy({ id: 4, name: 'Quarto' }),
+      makeTrophy({ id: 5, name: 'Quinto' }),
+    ]
+    const focusOf = (guide: object) =>
+      sessionNotice(user, 'x', {
+        game,
+        title: makeTitle(),
+        trophies: base,
+        guide: {
+          roadmap: [{ phase: 'F', goal: '', trophies: ['Terceiro', 'Quarto', 'Quinto'] }],
+          ...guide,
+        },
+      } as never)
+        .split('**Foco de hoje**: ')[1]
+        .split('\n')[0]
+    expect(focusOf({})).toBe('Terceiro')
+    expect(focusOf({ tricks: [{ trophy: 'Quinto', trick: 't', source: '' }] })).toBe('Quinto')
+    expect(
+      focusOf({
+        tricks: [{ trophy: 'Quinto', trick: 't', source: '' }],
+        missables: [{ trophy: 'Quarto', when: 'já', how: '' }],
+      }),
+    ).toBe('Quarto')
+  })
+
+  test('without a game in context, only the opening, in English too', () => {
+    const en = { ...user, locale: 'en' as const }
+    expect(sessionNotice(en, 'Days Gone', undefined, () => 0)).toBe('🎮 Back to Days Gone!')
+    expect(sessionNotice(user, 'Days Gone', undefined, () => 0.5)).toBe('🎮 Partiu Days Gone!')
+  })
+})
 
 describe('checkUser', () => {
   test('nothing happens without recent titles', async () => {
@@ -138,20 +267,12 @@ describe('checkUser', () => {
     expect(getCurrent(user)?.hoursPlayed).toBe(2)
   })
 
-  test('new trophies get one reaction from Nexo, with the route in it, and open a session', async () => {
+  test('new trophies get one reaction from Nexo, with the route in it', async () => {
     const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
     await checkUser(user)
     expect(reaction.mock.calls[0][2].map((t) => t.id)).toEqual([2])
     expect(reaction.mock.calls[0][3]).toBe('Agora vale saber:\n• Compre o arco.')
     expect(send.mock.calls.map((c) => c[1])).toEqual(['Boa!'])
-    expect(updateUser).toHaveBeenCalledWith(user.id, {
-      play_session: {
-        npCommunicationId: 'NPWR1_00',
-        startedAt: '2026-05-01T10:00:00.000Z',
-        lastActivity: '2026-05-01T10:00:00.000Z',
-        unlockedIds: [2],
-      },
-    })
   })
 
   test('two checks at once send the reaction once', async () => {
@@ -164,6 +285,15 @@ describe('checkUser', () => {
     await Promise.all([checkUser(user), checkUser(user)])
     expect(reaction).toHaveBeenCalledTimes(1)
     expect(send).toHaveBeenCalledTimes(1)
+  })
+
+  test('a failed Telegram send still saves the trophies as seen, with no second notice', async () => {
+    const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
+    send.mockRejectedValue(new Error('Forbidden: bot was blocked by the user'))
+    await checkUser(user)
+    expect(reaction).toHaveBeenCalledTimes(1)
+    expect(logTip).not.toHaveBeenCalled()
+    expect(saveEarned).toHaveBeenCalledWith(user.id, 'NPWR1_00', [1, 2])
   })
 
   test('with notices off, trophies get a plain notice', async () => {
@@ -233,71 +363,6 @@ describe('checkUser', () => {
     await checkUser(user)
     expect(getCurrent(user)).toBe(ctx)
     expect(psn.titleTrophies).toHaveBeenCalledTimes(1)
-  })
-
-  test('a session idle long enough closes with Nexo’s summary', async () => {
-    getTitle.mockResolvedValue(row({ earned_ids: [1, 2] }))
-    getUser.mockResolvedValue(
-      makeUser({
-        play_session: {
-          npCommunicationId: 'NPWR1_00',
-          startedAt: '2026-05-01T08:00:00.000Z',
-          lastActivity: '2026-05-01T10:00:00.000Z',
-          unlockedIds: [2],
-        },
-      }),
-    )
-    const summary = spyOn(nexo, 'sessionSummary').mockResolvedValue('Sessão boa!')
-    await checkUser(user)
-    expect(updateUser).toHaveBeenCalledWith(user.id, { play_session: null })
-    expect(summary.mock.calls[0][2].map((t) => t.id)).toEqual([2])
-    expect(send).toHaveBeenCalledWith('42', 'Sessão boa!')
-  })
-
-  test('a failed summary still closes the session', async () => {
-    getTitle.mockResolvedValue(row({ earned_ids: [1, 2] }))
-    getUser.mockResolvedValue(
-      makeUser({
-        play_session: {
-          npCommunicationId: 'NPWR1_00',
-          startedAt: '2026-05-01T08:00:00.000Z',
-          lastActivity: '2026-05-01T10:00:00.000Z',
-          unlockedIds: [],
-        },
-      }),
-    )
-    spyOn(nexo, 'sessionSummary').mockRejectedValue(new Error('down'))
-    await checkUser(user)
-    expect(updateUser).toHaveBeenCalledWith(user.id, { play_session: null })
-    expect(send).not.toHaveBeenCalled()
-  })
-
-  test('a recent session or another game’s session stays open', async () => {
-    getTitle.mockResolvedValue(row({ earned_ids: [1, 2] }))
-    const now = new Date().toISOString()
-    getUser.mockResolvedValueOnce(
-      makeUser({
-        play_session: {
-          npCommunicationId: 'NPWR1_00',
-          startedAt: now,
-          lastActivity: now,
-          unlockedIds: [],
-        },
-      }),
-    )
-    await checkUser(user)
-    getUser.mockResolvedValueOnce(
-      makeUser({
-        play_session: {
-          npCommunicationId: 'OTHER',
-          startedAt: now,
-          lastActivity: now,
-          unlockedIds: [],
-        },
-      }),
-    )
-    await checkUser(user)
-    expect(updateUser).not.toHaveBeenCalled()
   })
 
   test('a route tip that fails to send is skipped', async () => {

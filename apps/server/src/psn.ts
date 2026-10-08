@@ -3,6 +3,7 @@ import {
   exchangeAccessCodeForAuthTokens,
   exchangeNpssoForAccessCode,
   exchangeRefreshTokenForAuthTokens,
+  getBasicPresence,
   getProfileFromAccountId,
   getProfileFromUserName,
   getTitleTrophies,
@@ -161,6 +162,17 @@ function toProgress(
 export async function recentTitles(accountId: string, limit = 10): Promise<TitleProgress[]> {
   const { trophyTitles } = checked(await getUserTitles(await auth(), accountId, { limit }))
   return trophyTitles.map(toProgress)
+}
+
+// The game the player has open right now, by its name on the console, or null when they are
+// offline, not in a game or hide their online status.
+export async function nowPlaying(accountId: string): Promise<string | null> {
+  try {
+    const { basicPresence } = checked(await getBasicPresence(await auth(), accountId))
+    return basicPresence?.gameTitleInfoList?.[0]?.titleName ?? null
+  } catch {
+    return null
+  }
 }
 
 // Every title on the profile, most recently played first.

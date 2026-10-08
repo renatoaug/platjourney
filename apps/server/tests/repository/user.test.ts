@@ -82,11 +82,11 @@ test('updating sets values, clears nulls and ignores unsafe keys', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   await updateUser('user:u1', {
     telegram_chat_id: '42',
-    play_session: null,
+    session_plan: null,
     ['bad key' as 'telegram_link_code']: 'x',
   })
   expect(q.mock.calls[0]).toEqual([
-    'UPDATE $id SET telegram_chat_id = $telegram_chat_id, play_session = NONE',
+    'UPDATE $id SET telegram_chat_id = $telegram_chat_id, session_plan = NONE',
     { id: user, telegram_chat_id: '42' },
   ])
 })
@@ -138,12 +138,12 @@ test('objects kept on the user are stored in snake_case and read in camelCase', 
   })
   spyOn(db, 'one').mockResolvedValue({
     id: 'user:u1',
-    play_session: { np_communication_id: 'NP', unlocked_ids: [1] },
+    session_plan: { total_minutes: 60, if_time_left: null },
     taste_profile: null,
   })
   expect(await getUser('user:u1')).toEqual({
     id: 'user:u1',
-    play_session: { npCommunicationId: 'NP', unlockedIds: [1] },
+    session_plan: { totalMinutes: 60, ifTimeLeft: null },
     taste_profile: null,
   } as never)
 })

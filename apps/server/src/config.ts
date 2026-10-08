@@ -9,7 +9,6 @@ export const config = {
   telegramToken: required('TELEGRAM_BOT_TOKEN'),
   pollMinutes: Number(process.env.POLL_MINUTES ?? 15),
   // A play session is considered over after this long without a new trophy.
-  sessionIdleMinutes: Number(process.env.SESSION_IDLE_MINUTES ?? 60),
   port: Number(process.env.PORT ?? 3000),
   // Model work the app starts on its own, without a player asking. Both default on;
   // set to 0 so the instance only spends when a player uses Nexo, a plan or
@@ -19,8 +18,8 @@ export const config = {
     // servers, all with web search. Off: guides come only from the database, and a game
     // without one is listed in guide_request.
     research: process.env.AI_RESEARCH !== '0',
-    // Nexo's messages when a game starts, trophies unlock and a session ends. Off: a plain
-    // notice without the model for the first two, nothing for the session end.
+    // Nexo's messages when a game starts and trophies unlock. Off: a plain notice without
+    // the model.
     notices: process.env.AI_NOTICES !== '0',
   },
   auth: {

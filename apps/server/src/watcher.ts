@@ -12,10 +12,10 @@ import {
   userLocale,
 } from './i18n.ts'
 import { library } from './library.ts'
-import { type GameContext, proactiveTip, sessionSummary, unlockReaction } from './nexo.ts'
+import { type GameContext, proactiveTip, unlockReaction } from './nexo.ts'
 import { hours, playtimes } from './playtime.ts'
 import { Refused } from './plugins.ts'
-import { PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
+import { nowPlaying, PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
 import { loadGroups } from './ranking.ts'
 import { logTip, type TipKind } from './repository/activity.ts'
 import { pruneExpired } from './repository/auth.ts'
@@ -23,7 +23,7 @@ import { gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
-import { getUser, listUsers, type User, updateUser } from './repository/user.ts'
+import { listUsers, type User, updateUser } from './repository/user.ts'
 import { reachedMilestone, routeNotice, stillOpen } from './route.ts'
 import { checkServers } from './servers.ts'
 import { sendMessage } from './telegram.ts'
@@ -31,6 +31,25 @@ import { sendMessage } from './telegram.ts'
 const messages = defineMessages({
   [Language.PtBR]: {
     started: 'Você começou {game}. O guia da platina está no PlatJourney.',
+    // Openings for the session-start notice, picked at random so the same game does not get
+    // the same line every day.
+    open: {
+      a: 'De volta a {game}!',
+      b: '{game} de novo? Bora!',
+      c: 'Hora de {game}.',
+      d: 'Partiu {game}!',
+      e: 'Bom te ver em {game} de novo.',
+      f: 'Mais uma sessão de {game}.',
+    },
+    left: {
+      one: 'Falta 1 troféu do jogo base.',
+      other: 'Faltam {count} troféus do jogo base.',
+    },
+    phase: 'No roteiro, você está em **{phase}**.',
+    focus: '**Foco de hoje**: {trophy}',
+    tip: '**Dica**: {tip}',
+    missable: '⚠️ **{trophy}** é perdível: {when}',
+    almost: '**Quase lá**: {trophy}, {value} de {target}.',
     unlocked: '🏆 {trophy} ({type}) em {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% de quem joga) em {game}',
     types: {
@@ -42,6 +61,23 @@ const messages = defineMessages({
   },
   [Language.En]: {
     started: 'You started {game}. The platinum guide is on PlatJourney.',
+    open: {
+      a: 'Back to {game}!',
+      b: '{game} again? Let’s go!',
+      c: 'Time for {game}.',
+      d: 'Off to {game}!',
+      e: 'Good to see you in {game} again.',
+      f: 'One more {game} session.',
+    },
+    left: {
+      one: '1 base-game trophy left.',
+      other: '{count} base-game trophies left.',
+    },
+    phase: 'On the roadmap, you are at **{phase}**.',
+    focus: '**Today’s focus**: {trophy}',
+    tip: '**Tip**: {tip}',
+    missable: '⚠️ **{trophy}** is missable: {when}',
+    almost: '**Almost there**: {trophy}, {value} of {target}.',
     unlocked: '🏆 {trophy} ({type}) in {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% of players) in {game}',
     types: {
@@ -64,7 +100,7 @@ export const forgetUser = (id: string) => contexts.delete(id)
 const TYPES = new Set(['platinum', 'gold', 'silver', 'bronze'])
 
 // A notice without the model: logged like any tip (so it reaches the bell) and sent to Telegram.
-async function plainNotice(user: User, kind: TipKind, text: string, game: string) {
+async function plainNotice(user: User, kind: TipKind, text: string, game?: string) {
   await logTip(user.id, kind, text, game)
   await notify(user, text)
 }
@@ -109,8 +145,14 @@ function routeFor(user: User, ctx: GameContext, unlocked: string[], started: boo
 // One message per sweep: what happened, then the guide's note on what comes next.
 export const together = (...parts: (string | undefined)[]) => parts.filter(Boolean).join('\n\n')
 
+// A send that fails (the player blocked the bot, Telegram is down) must not stop the sweep: the
+// notice is already in the web history, and the trophies still get saved as seen, or the next
+// sweep would write and pay for the same notice again.
 async function notify(user: User, text: string): Promise<void> {
-  if (user.telegram_chat_id) await sendMessage(user.telegram_chat_id, text)
+  if (!user.telegram_chat_id) return
+  await sendMessage(user.telegram_chat_id, text).catch((e) =>
+    console.warn(`${user.psn_online_id}: telegram send failed:`, (e as Error).message.slice(0, 80)),
+  )
 }
 
 // With automatic research off, the stored guide is used as it is and a missing one is only listed.
@@ -142,56 +184,6 @@ export async function setCurrent(user: User, title: TitleProgress): Promise<Game
   return ctx
 }
 
-interface PlaySession {
-  npCommunicationId: string
-  startedAt: string
-  lastActivity: string
-  unlockedIds: number[]
-}
-
-// A session opens on the first trophy activity and closes after
-// sessionIdleMinutes without a new one; closing sends the summary.
-async function trackSession(
-  user: User,
-  ctx: GameContext,
-  unlocked: number[],
-  activityAt: string,
-): Promise<void> {
-  let session = ((await getUser(user.id))?.play_session ?? null) as PlaySession | null
-  const sameGame = session?.npCommunicationId === ctx.title.npCommunicationId
-  if (unlocked.length > 0) {
-    if (!session || !sameGame) {
-      session = {
-        npCommunicationId: ctx.title.npCommunicationId,
-        startedAt: activityAt,
-        lastActivity: activityAt,
-        unlockedIds: [],
-      }
-    }
-    session.lastActivity = activityAt
-    session.unlockedIds.push(...unlocked)
-    await updateUser(user.id, { play_session: session })
-    return
-  }
-  if (!session || !sameGame) return
-  const idleMinutes = (Date.now() - new Date(session.lastActivity).getTime()) / 60_000
-  if (idleMinutes < config.sessionIdleMinutes) return
-  const ids = new Set(session.unlockedIds)
-  const trophies = ctx.trophies.filter((t) => ids.has(t.id))
-  console.log(`${user.psn_online_id}: session over for ${ctx.title.name}`)
-  await updateUser(user.id, { play_session: null })
-  // A plugin may refuse the summary (see plugins.ts): then there is none, as with notices off.
-  if (nexoNotices(user))
-    await sessionSummary(user, ctx, trophies, Math.round(idleMinutes))
-      .then((text) => notify(user, text))
-      .catch((e) =>
-        console.warn(
-          `${user.psn_online_id}: session summary skipped:`,
-          (e as Error).message.slice(0, 80),
-        ),
-      )
-}
-
 // One check per player at a time: the sweep and a sign-in (watchNow) running together would both
 // see the same trophies as new, before either saves them, and send the notice twice.
 const checks = new Map<string, Promise<void>>()
@@ -208,7 +200,7 @@ export function checkUser(user: User): Promise<void> {
 
 // Compares the user's PSN title list against the stored snapshot. A title we
 // have never tipped that is still early triggers the intro; newly earned trophies
-// on the current title trigger a reaction and feed the session tracker.
+// on the current title trigger a reaction.
 async function check(user: User): Promise<void> {
   // The demo player has no PSN profile to watch.
   if (isDemo(user)) return
@@ -282,12 +274,98 @@ async function check(user: User): Promise<void> {
       }
     }
   await saveEarnedIds(user.id, latest.npCommunicationId, earnedIds)
-  await trackSession(
-    user,
-    ctx,
-    unlocked.map((t) => t.id),
-    latest.lastUpdated,
+  await sessionStart(user, ctx, justStarted)
+}
+
+// One session-start notice every few hours at most; until then the player's presence is not
+// even asked, which also spares PSN a call per sweep.
+export const SESSION_NOTICE_HOURS = 6
+
+const comparable = (name: string) =>
+  name
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, '')
+
+const OPENINGS = ['a', 'b', 'c', 'd', 'e', 'f'] as const
+
+// The session-start notice: a varied opening, then what to do today, from the guide and the PSN
+// list, so it costs no model and gets no count wrong. Lines with nothing to say are left out.
+export function sessionNotice(
+  user: User,
+  game: string,
+  ctx?: GameContext,
+  pick: () => number = Math.random,
+): string {
+  const t = translator(messages, user)
+  const key = `open.${OPENINGS[Math.floor(pick() * OPENINGS.length)]}` as MessageKey<
+    typeof messages
+  >
+  const opening = `🎮 ${t(key, { game: ctx ? gameName(ctx) : game })}`
+  if (!ctx) return opening
+  const missing = ctx.trophies.filter(
+    (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
   )
+  const open = new Map(missing.map((x) => [x.name, x]))
+  const guide = ctx.guide
+  const phase = guide?.roadmap?.find((r) => r.trophies?.some((n) => open.has(n)))
+  // Today's focus: in this phase, a missable first, then a trophy the guide has a trick for, then
+  // the next one in order (story trophies come by themselves and say little).
+  const inPhase = phase?.trophies.filter((n) => open.has(n)) ?? []
+  const missableNames = new Set((guide?.missables ?? []).map((m) => m.trophy))
+  const trickFor = (n: string) =>
+    guide?.tricks?.find((x) => x.trophy === n || x.trophy === open.get(n)?.nameEn)
+  const focusName =
+    inPhase.find((n) => missableNames.has(n)) ?? inPhase.find((n) => trickFor(n)) ?? inPhase[0]
+  const focus = focusName ? open.get(focusName) : undefined
+
+  const head = [missing.length ? `${opening} ${t('left', { count: missing.length })}` : opening]
+  if (phase) head.push(t('phase', { phase: phase.phase }))
+  const blocks = [head.join('\n')]
+  if (focus) {
+    blocks.push(`${t('focus', { trophy: focus.name })}\n${focus.detail}`)
+    const trick = trickFor(focus.name)
+    if (trick) blocks.push(t('tip', { tip: trick.trick }))
+  }
+  // A missable still open, the one in this phase first.
+  const missables = (guide?.missables ?? []).filter((m) => open.has(m.trophy))
+  const missable = missables.find((m) => phase?.trophies.includes(m.trophy)) ?? missables[0]
+  if (missable) blocks.push(t('missable', { trophy: missable.trophy, when: missable.when }))
+  // The tracked trophy closest to done, past halfway.
+  const almost = missing
+    .filter(
+      (x) => x.progressTarget && x !== focus && (x.progressValue ?? 0) / x.progressTarget >= 0.5,
+    )
+    .sort(
+      (a, b) =>
+        (b.progressValue ?? 0) / (b.progressTarget ?? 1) -
+        (a.progressValue ?? 0) / (a.progressTarget ?? 1),
+    )[0]
+  if (almost)
+    blocks.push(
+      t('almost', {
+        trophy: almost.name,
+        value: almost.progressValue ?? 0,
+        target: almost.progressTarget ?? 0,
+      }),
+    )
+  return blocks.join('\n\n')
+}
+
+// Tells the player once when they open a game, from PSN presence (players who hide their online
+// status never get it). The game they play is the one in context when the names match.
+async function sessionStart(user: User, ctx: GameContext, noticed: boolean): Promise<void> {
+  const last = user.session_notice_at ? new Date(user.session_notice_at).getTime() : 0
+  if (Date.now() - last < SESSION_NOTICE_HOURS * 3_600_000) return
+  const playing = await nowPlaying(user.psn_account_id)
+  if (!playing) return
+  // The start notice of a new game already went out in this sweep: it counts as this one.
+  if (!noticed) {
+    const same = comparable(playing) === comparable(ctx.title.name)
+    const text = sessionNotice(user, playing, same ? ctx : undefined)
+    await plainNotice(user, 'session', text, same ? ctx.game.id : undefined)
+  }
+  await updateUser(user.id, { session_notice_at: new Date() })
 }
 
 // Users are visited one after the other so PSN sees a steady, modest stream.

@@ -13,7 +13,6 @@ export const makeUser = (over: Partial<User> = {}): User => ({
   telegram_link_code: null,
   goal_targets: {},
   taste_profile: null,
-  play_session: null,
   session_plan: null,
   created_at: '2026-01-01T00:00:00Z',
   last_seen_at: '2026-01-01T00:00:00Z',

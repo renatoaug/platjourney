@@ -243,7 +243,13 @@ def standout(unlocked: list[Trophy], guide: dict[str, Any] | None) -> list[str]:
 
 
 def unlock_prompt(unlocked: list[Trophy], guide: dict[str, Any] | None = None) -> str:
-    names = ', '.join(f'{t.name} / {t.name_en} ({t.type}, {t.rarity})' for t in unlocked)
+    # The share of players, not PSN's label: its "Rara" covers 15% to 50%, most story trophies.
+    names = ', '.join(
+        f'{t.name} / {t.name_en} ({t.type}'
+        + (f', {num(t.earned_rate)}% de quem joga tem' if t.earned_rate else '')
+        + ')'
+        for t in unlocked
+    )
     big = standout(unlocked, guide)
     cheer = (
         f' Pelo guia, {"; ".join(big)}: abra a comemoração com um emoji de conquista e uma frase '
@@ -251,12 +257,7 @@ def unlock_prompt(unlocked: list[Trophy], guide: dict[str, Any] | None = None) -
         if big
         else ''
     )
-    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome (mencione raridade se for rara ou melhor), diga em uma linha onde ele provavelmente está no roadmap, e aponte UM próximo troféu que faz sentido agora e como pegar. Se houver missable chegando neste ponto do jogo, avise primeiro. Máximo 6 linhas, sem repetir dicas já dadas.{cheer}'  # noqa: E501
-
-
-def session_prompt(unlocked: list[Trophy], minutes: float) -> str:
-    names = ', '.join(t.name for t in unlocked) or 'nenhum troféu novo'
-    return f'A sessão de jogo terminou (última atividade há ~{num(minutes)} min). Troféus desta sessão: {names}. Mande um fechamento curto: 1 linha do que rendeu, 1 linha de quanto falta para a platina, e o alvo sugerido para a próxima sessão com o primeiro passo concreto. Máximo 5 linhas, tom de amigo.'  # noqa: E501
+    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome (cite a raridade só quando até 15% de quem joga tem o troféu, com o percentual, ex.: "só 8% têm"; acima disso não chame de raro), diga em uma linha onde ele provavelmente está no roadmap, e aponte UM próximo troféu que faz sentido agora e como pegar. Se houver missable chegando neste ponto do jogo, avise primeiro. Máximo 6 linhas, sem repetir dicas já dadas.{cheer}'  # noqa: E501
 
 
 def trophy_help_prompt(trophy: Trophy) -> str:
@@ -289,21 +290,18 @@ ROUTE_PROMPT = (
 
 
 async def tip(
-    kind: Literal['start', 'unlock', 'session'],
+    kind: Literal['start', 'unlock'],
     ctx: GameContext,
     unlocked: list[Trophy],
-    minutes: float,
     route: str | None = None,
 ) -> str:
-    """An automatic notice: the player started a game, unlocked trophies or stopped playing.
+    """An automatic notice: the player started a game or unlocked trophies.
     With `route`, the guide's note on what comes next goes into the same message."""
     match kind:
         case 'start':
             prompt = start_prompt(ctx)
         case 'unlock':
             prompt = unlock_prompt(unlocked, ctx.guide)
-        case 'session':
-            prompt = session_prompt(unlocked, minutes)
     if route:
         prompt += ROUTE_PROMPT.format(route=route)
     return await ask(prompt, lean_context(ctx, [t.name_en for t in unlocked]))

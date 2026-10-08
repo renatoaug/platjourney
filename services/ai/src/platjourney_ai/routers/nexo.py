@@ -17,12 +17,10 @@ class Answer(Wire):
 
 
 class TipRequest(Wire):
-    kind: Literal['start', 'unlock', 'session']
+    kind: Literal['start', 'unlock']
     context: GameContext
-    # The trophies just unlocked ("unlock") or earned this session ("session").
+    # The trophies just unlocked ("unlock").
     unlocked: list[Trophy] = Field(default_factory=list[Trophy])
-    # Minutes since the last activity, for "session".
-    minutes: float = 0
     # The guide's note on what comes next, to fold into the same message.
     route: str | None = None
 
@@ -40,9 +38,7 @@ class ReplyRequest(Wire):
 
 @router.post('/tip')
 async def tip(body: TipRequest) -> Answer:
-    return Answer(
-        text=await nexo.tip(body.kind, body.context, body.unlocked, body.minutes, body.route)
-    )
+    return Answer(text=await nexo.tip(body.kind, body.context, body.unlocked, body.route))
 
 
 @router.post('/trophy-help')
