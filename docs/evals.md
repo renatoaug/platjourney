@@ -28,13 +28,16 @@ bun run ai:eval              # every suite from the command line
 bun run ai:eval answers      # one suite
 ```
 
+The command runs the same suites and stores the run the same way as the viewer's **Run** button, without showing the estimated cost first.
+
 ## The viewer
 
 | Part | What it does |
 |---|---|
-| Suites | One card per suite with how many questions it asks and the estimated cost of a run (from the last run, or a default). **Run** asks for confirmation with that cost, then follows the run live. |
-| Runs | Every run, newest first, with version, commit, models and cost. A run opens case by case (question, expected, Nexo's answer, score and why) and compares with an earlier run of the same suite: each case is marked fixed, broke, better or worse. |
-| Questions | Each suite's questions, newest first, to add, edit or archive in a dialog. The game is picked from a search of the games with a stored guide, never typed. An archived question is no longer asked; earlier runs keep its cases. |
+| Suites | One card per suite with how many questions it asks and the estimated cost of a run (from the last run, or a default). **Run** asks for confirmation with that cost, then follows the run live; **Stop** ends it and keeps the cases already answered. |
+| Runs | Every run, newest first, five per page, with version, commit, status, questions and cost. A run opens case by case (question, expected, Nexo's answer, score and why); its pass rate shows once it ends. The run's info lists the start, version, models, the suite's own numbers and the prompts it used, which can be shown in full. |
+| Comparing | A run compares with an earlier run of the same suite: each case shows the score before and now (the verdict before, for a suite without scores) and is marked fixed, broke, better or worse; **Only what changed** hides the rest. |
+| Questions | Each suite's questions, newest first with their creation date, to add, edit or archive in a dialog. The game is picked from a search of the games with a stored guide, never typed; required fields are marked. An archived question is no longer asked; earlier runs keep its cases. |
 
 It listens on 127.0.0.1 only and has no login: run it on your own machine.
 
@@ -45,8 +48,8 @@ Questions and runs live in a database of their own, `evals` by default, on the s
 | Table | Holds |
 |---|---|
 | `eval_question` | A suite's question: `suite`, `data` (its fields, below) and `active` |
-| `eval_run` | A run: `suite`, `status` (running, done, failed), `version` (root `package.json`), `commit` (`+` when the tree had uncommitted changes), `prompt` (a fingerprint of the prompts used) and `prompt_text` (the prompts themselves, shown in the viewer), `models`, `cost_usd`, `passed`, `total`, `planned` and `summary` |
-| `eval_case` | One question in a run: `input`, `expected`, `output`, `passed`, `score`, `reason`, `models`, `cost_usd` and `extra` (the game, the judge's flags) |
+| `eval_run` | A run: `suite`, `status` (running, done, failed, stopped), `version` (root `package.json`), `commit` (`+` when the tree had uncommitted changes), `prompt` (a fingerprint of the prompts used) and `prompt_text` (the prompts themselves, shown in the viewer), `models`, `cost_usd`, `passed`, `total`, `planned` and `summary` |
+| `eval_case` | One question in a run: `input`, `expected`, `output`, `passed`, `score`, `reason`, `models`, `cost_usd` and `extra` (the game, the judge's flags, a scope case's forbidden words and length) |
 
 A question's `data` per suite:
 
