@@ -128,6 +128,11 @@ describe('session start', () => {
       { phase: 'Fase 2', goal: '', trophies: ['Segundo', 'Terceiro'] },
     ],
   } as unknown as Guide
+  const briefGuide = {
+    ...roadmapGuide,
+    tricks: [{ trophy: 'Terceiro', trick: 'Use o arco de longe.', source: 'x' }],
+    missables: [{ trophy: 'Terceiro', when: 'antes do capítulo 5.', how: '' }],
+  } as unknown as Guide
   const unchanged = () =>
     getTitle.mockResolvedValue(
       row({ earned_ids: [1, 2], earned: 10, last_updated_at: '2026-05-01T10:00:00.000Z' }),
@@ -137,9 +142,10 @@ describe('session start', () => {
     unchanged()
     getGuide.mockResolvedValue(roadmapGuide)
     playing.mockResolvedValue('DAYS GONE')
+    spyOn(Math, 'random').mockReturnValue(0)
     await checkUser(user)
     const text =
-      '🎮 Days Gone aberto. Bom jogo!\nFalta 1 troféu do jogo base para a platina.\nPróximo no roteiro (Fase 2): Terceiro.'
+      '🎮 De volta a Days Gone! Falta 1 troféu do jogo base.\nNo roteiro, você está em **Fase 2**.\n\n**Foco de hoje**: Terceiro\nFaça algo'
     expect(logTip).toHaveBeenCalledWith(user.id, 'session', text, game.id)
     expect(send.mock.calls).toEqual([['42', text]])
     expect(updateUser.mock.calls[0][1].session_notice_at).toBeInstanceOf(Date)
@@ -152,7 +158,7 @@ describe('session start', () => {
     expect(logTip).toHaveBeenCalledWith(
       user.id,
       'session',
-      '🎮 ASTRO BOT aberto. Bom jogo!',
+      expect.stringMatching(/^🎮 .*ASTRO BOT[^\n]*$/),
       undefined,
     )
   })
@@ -182,9 +188,62 @@ describe('session start', () => {
     expect(updateUser).toHaveBeenCalledTimes(1)
   })
 
-  test('the notice without a game in context, in English', () => {
+  test('the briefing adds the guide’s tip, a missable still open and a trophy almost done', () => {
+    const ctx = {
+      game,
+      title: makeTitle(),
+      guide: briefGuide,
+      trophies: [
+        ...trophies,
+        makeTrophy({ id: 4, name: 'Colecionador', progressTarget: 50, progressValue: 34 }),
+        makeTrophy({ id: 5, name: 'Longe', progressTarget: 10, progressValue: 2 }),
+        makeTrophy({ id: 6, name: 'Extra', groupId: '001' }),
+        makeTrophy({ id: 7, name: 'Platina', type: 'platinum' }),
+      ],
+    } as unknown as Parameters<typeof sessionNotice>[2]
+    expect(sessionNotice(user, 'x', ctx, () => 0.99)).toBe(
+      [
+        '🎮 Mais uma sessão de Days Gone. Faltam 3 troféus do jogo base.\nNo roteiro, você está em **Fase 2**.',
+        '**Foco de hoje**: Terceiro\nFaça algo',
+        '**Dica**: Use o arco de longe.',
+        '⚠️ **Terceiro** é perdível: antes do capítulo 5.',
+        '**Quase lá**: Colecionador, 34 de 50.',
+      ].join('\n\n'),
+    )
+  })
+
+  test('the focus is a missable first, then a trophy with a trick, then the next in order', () => {
+    const base = [
+      makeTrophy({ id: 3, name: 'Terceiro' }),
+      makeTrophy({ id: 4, name: 'Quarto' }),
+      makeTrophy({ id: 5, name: 'Quinto' }),
+    ]
+    const focusOf = (guide: object) =>
+      sessionNotice(user, 'x', {
+        game,
+        title: makeTitle(),
+        trophies: base,
+        guide: {
+          roadmap: [{ phase: 'F', goal: '', trophies: ['Terceiro', 'Quarto', 'Quinto'] }],
+          ...guide,
+        },
+      } as never)
+        .split('**Foco de hoje**: ')[1]
+        .split('\n')[0]
+    expect(focusOf({})).toBe('Terceiro')
+    expect(focusOf({ tricks: [{ trophy: 'Quinto', trick: 't', source: '' }] })).toBe('Quinto')
+    expect(
+      focusOf({
+        tricks: [{ trophy: 'Quinto', trick: 't', source: '' }],
+        missables: [{ trophy: 'Quarto', when: 'já', how: '' }],
+      }),
+    ).toBe('Quarto')
+  })
+
+  test('without a game in context, only the opening, in English too', () => {
     const en = { ...user, locale: 'en' as const }
-    expect(sessionNotice(en, 'Days Gone')).toBe('🎮 Days Gone is on. Have a good session!')
+    expect(sessionNotice(en, 'Days Gone', undefined, () => 0)).toBe('🎮 Back to Days Gone!')
+    expect(sessionNotice(user, 'Days Gone', undefined, () => 0.5)).toBe('🎮 Partiu Days Gone!')
   })
 })
 

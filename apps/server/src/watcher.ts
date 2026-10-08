@@ -31,12 +31,25 @@ import { sendMessage } from './telegram.ts'
 const messages = defineMessages({
   [Language.PtBR]: {
     started: 'Você começou {game}. O guia da platina está no PlatJourney.',
-    sessionOpen: '🎮 {game} aberto. Bom jogo!',
-    sessionLeft: {
-      one: 'Falta 1 troféu do jogo base para a platina.',
-      other: 'Faltam {count} troféus do jogo base para a platina.',
+    // Openings for the session-start notice, picked at random so the same game does not get
+    // the same line every day.
+    open: {
+      a: 'De volta a {game}!',
+      b: '{game} de novo? Bora!',
+      c: 'Hora de {game}.',
+      d: 'Partiu {game}!',
+      e: 'Bom te ver em {game} de novo.',
+      f: 'Mais uma sessão de {game}.',
     },
-    sessionNext: 'Próximo no roteiro ({phase}): {trophies}.',
+    left: {
+      one: 'Falta 1 troféu do jogo base.',
+      other: 'Faltam {count} troféus do jogo base.',
+    },
+    phase: 'No roteiro, você está em **{phase}**.',
+    focus: '**Foco de hoje**: {trophy}',
+    tip: '**Dica**: {tip}',
+    missable: '⚠️ **{trophy}** é perdível: {when}',
+    almost: '**Quase lá**: {trophy}, {value} de {target}.',
     unlocked: '🏆 {trophy} ({type}) em {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% de quem joga) em {game}',
     types: {
@@ -48,12 +61,23 @@ const messages = defineMessages({
   },
   [Language.En]: {
     started: 'You started {game}. The platinum guide is on PlatJourney.',
-    sessionOpen: '🎮 {game} is on. Have a good session!',
-    sessionLeft: {
-      one: '1 base-game trophy left for the platinum.',
-      other: '{count} base-game trophies left for the platinum.',
+    open: {
+      a: 'Back to {game}!',
+      b: '{game} again? Let’s go!',
+      c: 'Time for {game}.',
+      d: 'Off to {game}!',
+      e: 'Good to see you in {game} again.',
+      f: 'One more {game} session.',
     },
-    sessionNext: 'Next on the roadmap ({phase}): {trophies}.',
+    left: {
+      one: '1 base-game trophy left.',
+      other: '{count} base-game trophies left.',
+    },
+    phase: 'On the roadmap, you are at **{phase}**.',
+    focus: '**Today’s focus**: {trophy}',
+    tip: '**Tip**: {tip}',
+    missable: '⚠️ **{trophy}** is missable: {when}',
+    almost: '**Almost there**: {trophy}, {value} of {target}.',
     unlocked: '🏆 {trophy} ({type}) in {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% of players) in {game}',
     types: {
@@ -263,23 +287,69 @@ const comparable = (name: string) =>
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]/gu, '')
 
-// What a session-start notice says about the game: what is left for the platinum and the
-// roadmap phase the player is in, with up to three of its trophies still missing.
-export function sessionNotice(user: User, game: string, ctx?: GameContext): string {
+const OPENINGS = ['a', 'b', 'c', 'd', 'e', 'f'] as const
+
+// The session-start notice: a varied opening, then what to do today, from the guide and the PSN
+// list, so it costs no model and gets no count wrong. Lines with nothing to say are left out.
+export function sessionNotice(
+  user: User,
+  game: string,
+  ctx?: GameContext,
+  pick: () => number = Math.random,
+): string {
   const t = translator(messages, user)
-  if (!ctx) return t('sessionOpen', { game })
+  const key = `open.${OPENINGS[Math.floor(pick() * OPENINGS.length)]}` as MessageKey<
+    typeof messages
+  >
+  const opening = `🎮 ${t(key, { game: ctx ? gameName(ctx) : game })}`
+  if (!ctx) return opening
   const missing = ctx.trophies.filter(
     (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
   )
-  const parts = [t('sessionOpen', { game: gameName(ctx) })]
-  if (missing.length) parts.push(t('sessionLeft', { count: missing.length }))
-  const names = new Set(missing.map((x) => x.name))
-  const phase = ctx.guide?.roadmap?.find((r) => r.trophies?.some((n) => names.has(n)))
-  if (phase) {
-    const trophies = phase.trophies.filter((n) => names.has(n)).slice(0, 3)
-    parts.push(t('sessionNext', { phase: phase.phase, trophies: trophies.join(', ') }))
+  const open = new Map(missing.map((x) => [x.name, x]))
+  const guide = ctx.guide
+  const phase = guide?.roadmap?.find((r) => r.trophies?.some((n) => open.has(n)))
+  // Today's focus: in this phase, a missable first, then a trophy the guide has a trick for, then
+  // the next one in order (story trophies come by themselves and say little).
+  const inPhase = phase?.trophies.filter((n) => open.has(n)) ?? []
+  const missableNames = new Set((guide?.missables ?? []).map((m) => m.trophy))
+  const trickFor = (n: string) =>
+    guide?.tricks?.find((x) => x.trophy === n || x.trophy === open.get(n)?.nameEn)
+  const focusName =
+    inPhase.find((n) => missableNames.has(n)) ?? inPhase.find((n) => trickFor(n)) ?? inPhase[0]
+  const focus = focusName ? open.get(focusName) : undefined
+
+  const head = [missing.length ? `${opening} ${t('left', { count: missing.length })}` : opening]
+  if (phase) head.push(t('phase', { phase: phase.phase }))
+  const blocks = [head.join('\n')]
+  if (focus) {
+    blocks.push(`${t('focus', { trophy: focus.name })}\n${focus.detail}`)
+    const trick = trickFor(focus.name)
+    if (trick) blocks.push(t('tip', { tip: trick.trick }))
   }
-  return parts.join('\n')
+  // A missable still open, the one in this phase first.
+  const missables = (guide?.missables ?? []).filter((m) => open.has(m.trophy))
+  const missable = missables.find((m) => phase?.trophies.includes(m.trophy)) ?? missables[0]
+  if (missable) blocks.push(t('missable', { trophy: missable.trophy, when: missable.when }))
+  // The tracked trophy closest to done, past halfway.
+  const almost = missing
+    .filter(
+      (x) => x.progressTarget && x !== focus && (x.progressValue ?? 0) / x.progressTarget >= 0.5,
+    )
+    .sort(
+      (a, b) =>
+        (b.progressValue ?? 0) / (b.progressTarget ?? 1) -
+        (a.progressValue ?? 0) / (a.progressTarget ?? 1),
+    )[0]
+  if (almost)
+    blocks.push(
+      t('almost', {
+        trophy: almost.name,
+        value: almost.progressValue ?? 0,
+        target: almost.progressTarget ?? 0,
+      }),
+    )
+  return blocks.join('\n\n')
 }
 
 // Tells the player once when they open a game, from PSN presence (players who hide their online
