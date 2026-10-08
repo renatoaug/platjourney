@@ -58,6 +58,8 @@
     .sidebar > .logo,
     .sidebar > .profile {
       flex: none;
+      /* The version line sits just above: the usual 28px left a gap under it. */
+      margin-top: 12px;
     }
 
     .sidebar > .profile > div {
