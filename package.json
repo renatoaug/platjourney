@@ -1,5 +1,6 @@
 {
   "name": "platjourney",
+  "version": "0.1.0",
   "private": true,
   "description": "Your PlayStation platinum partner: Telegram and web, guides researched from the web, recommendations from what you play.",
   "license": "MIT",
@@ -44,8 +45,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/git": "^11.0.1",
     "@types/bun": "^1.4.2",
+    "conventional-changelog-conventionalcommits": "^10.4.1",
     "pm2": "^7.0.4",
+    "semantic-release": "^25.0.9",
     "typescript": "^7.0.2"
   }
 }

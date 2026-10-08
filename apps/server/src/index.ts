@@ -1,6 +1,6 @@
 import { startAccessCleanup } from './access.ts'
 import { commandMenu, handleCommand, help } from './commands.ts'
-import { config } from './config.ts'
+import { config, version } from './config.ts'
 import { migrate } from './db.ts'
 import {
   DEFAULT_LOCALE,
@@ -42,7 +42,7 @@ async function link(chatId: string, code: string, fallback: Locale): Promise<str
 async function main(): Promise<void> {
   await migrate()
   await loadPlugins()
-  console.log(`platjourney up — sweeping users every ${config.pollMinutes} min`)
+  console.log(`platjourney ${version} up — sweeping users every ${config.pollMinutes} min`)
   startWatcher(config.pollMinutes)
   startWeb()
   startAccessCleanup()

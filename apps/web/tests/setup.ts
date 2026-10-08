@@ -3,6 +3,8 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 
 GlobalRegistrator.register({ url: 'http://localhost:3000/' })
+// Vite puts the platform's version in at build time; tests run without Vite.
+;(globalThis as { __APP_VERSION__?: string }).__APP_VERSION__ = '0.0.0-test'
 // A browser in Portuguese, so the app's own locale resolution lands on pt-BR too.
 Object.defineProperty(navigator, 'language', { value: 'pt-BR', configurable: true })
 

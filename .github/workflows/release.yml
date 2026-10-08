@@ -1,0 +1,35 @@
+name: Release
+
+# Every merge to main is a release: semantic-release reads the Conventional Commit titles since the
+# last tag, bumps the version in package.json (feat a minor, everything else a patch), writes
+# CHANGELOG.md, commits both with [skip ci], tags vX.Y.Z and publishes the GitHub release.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false # releases queue up; none is dropped
+
+permissions:
+  contents: write # the release commit, the tag and the GitHub release
+  issues: write # semantic-release comments on the issues a release closes
+  pull-requests: write # and on the pull requests it ships
+
+jobs:
+  release:
+    name: Version, changelog and tag
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the whole history: the version comes from the commits since the last tag
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - run: bunx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

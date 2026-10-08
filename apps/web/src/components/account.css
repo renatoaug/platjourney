@@ -153,4 +153,11 @@
     color: var(--color-fg-muted);
     font-size: var(--text-md);
   }
+
+  /* Which release is running, for bug reports: quiet, at the card's foot. */
+  .account-version {
+    margin: 16px 0 0;
+    color: var(--color-fg-subtle);
+    font-size: var(--text-xs);
+  }
 }
