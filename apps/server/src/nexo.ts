@@ -1,6 +1,7 @@
 import { AiError, ai } from './ai.ts'
 import { aiContext } from './ai-context.ts'
 import { tagged } from './costs.ts'
+import { focusAfter } from './focus.ts'
 import type { Guide } from './guide.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
 import { aroundModel } from './plugins.ts'
@@ -98,10 +99,25 @@ export async function unlockReaction(
   unlocked: TrophyStatus[],
   route?: string,
 ): Promise<string> {
+  // The target is the server's, the same the session notice named: Nexo does not pick another.
+  const focus = focusAfter(ctx, unlocked)
   const text = await ask(user, 'tip', '/nexo/tip', {
     kind: 'unlock',
     context: aiContext(ctx, user),
     unlocked,
+    // Without a guide there is no phase or focus to keep: Nexo then reads the context as before.
+    ...(focus.phase || focus.trophy || focus.missable
+      ? {
+          focus: {
+            phase: focus.phase,
+            trophy: focus.trophy?.name,
+            detail: focus.trophy?.detail,
+            trick: focus.trick,
+            changed: focus.changed,
+            missable: focus.missable,
+          },
+        }
+      : {}),
     ...(route ? { route } : {}),
   })
   // The trophy as the message's title, then Nexo's words: the same first line as a plain notice.
