@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2](https://github.com/renatoaug/platjourney/compare/v0.1.1...v0.1.2) (2026-10-08)
+
+### Bug Fixes
+
+* **watcher:** read a trophy list again when it lags behind the title summary ([#17](https://github.com/renatoaug/platjourney/issues/17)) ([8f1c806](https://github.com/renatoaug/platjourney/commit/8f1c80675bfb62703127168b81a77694e06a2f7a))
+
 ## [0.1.1](https://github.com/renatoaug/platjourney/compare/v0.1.0...v0.1.1) (2026-10-08)
 
 ### Bug Fixes
