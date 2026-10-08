@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "psn-api": "^2.18.1",
-    "surrealdb": "^2.0.8"
+    "surrealdb": "^2.0.10"
   }
 }
