@@ -23,6 +23,8 @@ class TipRequest(Wire):
     unlocked: list[Trophy] = Field(default_factory=list[Trophy])
     # The guide's note on what comes next, to fold into the same message.
     route: str | None = None
+    # The session's focus, the server's pick ("unlock"): the notice names it, never another.
+    focus: nexo.Focus | None = None
 
 
 class TrophyHelpRequest(Wire):
@@ -38,7 +40,8 @@ class ReplyRequest(Wire):
 
 @router.post('/tip')
 async def tip(body: TipRequest) -> Answer:
-    return Answer(text=await nexo.tip(body.kind, body.context, body.unlocked, body.route))
+    text = await nexo.tip(body.kind, body.context, body.unlocked, body.route, body.focus)
+    return Answer(text=text)
 
 
 @router.post('/trophy-help')

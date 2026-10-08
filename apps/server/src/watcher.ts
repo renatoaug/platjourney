@@ -2,6 +2,7 @@ import { config } from './config.ts'
 import { tagged } from './costs.ts'
 import { ensureDeepGuide } from './deepguide.ts'
 import { isDemo, trophiesFor } from './demo.ts'
+import { focusAfter, todaysFocus } from './focus.ts'
 import { ensureGuide, type Guide } from './guide.ts'
 import {
   defineMessages,
@@ -50,6 +51,8 @@ const messages = defineMessages({
     tip: '**Dica**: {tip}',
     missable: '⚠️ **{trophy}** é perdível: {when}',
     almost: '**Quase lá**: {trophy}, {value} de {target}.',
+    focusStill: '**Foco continua**: {trophy}',
+    focusNew: '**Novo foco**: {trophy}\n{detail}',
     unlocked: '🏆 {trophy} ({type}) em {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% de quem joga) em {game}',
     types: {
@@ -78,6 +81,8 @@ const messages = defineMessages({
     tip: '**Tip**: {tip}',
     missable: '⚠️ **{trophy}** is missable: {when}',
     almost: '**Almost there**: {trophy}, {value} of {target}.',
+    focusStill: '**Still the focus**: {trophy}',
+    focusNew: '**New focus**: {trophy}\n{detail}',
     unlocked: '🏆 {trophy} ({type}) in {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% of players) in {game}',
     types: {
@@ -143,6 +148,17 @@ function routeFor(user: User, ctx: GameContext, unlocked: string[], started: boo
 }
 
 // One message per sweep: what happened, then the guide's note on what comes next.
+// The session's focus after these unlocks, for the plain notice: the same target the session notice
+// named, or the next one when the player just earned it.
+export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
+  const t = translator(messages, user)
+  const focus = focusAfter(ctx, unlocked)
+  if (!focus.trophy) return undefined
+  return focus.changed
+    ? t('focusNew', { trophy: focus.trophy.name, detail: focus.trophy.detail })
+    : t('focusStill', { trophy: focus.trophy.name })
+}
+
 export const together = (...parts: (string | undefined)[]) => parts.filter(Boolean).join('\n\n')
 
 // A send that fails (the player blocked the bot, Telegram is down) must not stop the sweep: the
@@ -246,7 +262,7 @@ async function check(user: User): Promise<void> {
       await plainNotice(
         user,
         'unlock',
-        together(unlockNotice(user, ctx, unlocked), route),
+        together(unlockNotice(user, ctx, unlocked), focusNotice(user, ctx, unlocked), route),
         ctx.game.id,
       )
     else if (route) await plainNotice(user, 'route', route, ctx.game.id)
@@ -310,30 +326,15 @@ export function sessionNotice(
   const missing = ctx.trophies.filter(
     (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
   )
-  const open = new Map(missing.map((x) => [x.name, x]))
-  const guide = ctx.guide
-  const phase = guide?.roadmap?.find((r) => r.trophies?.some((n) => open.has(n)))
-  // Today's focus: in this phase, a missable first, then a trophy the guide has a trick for, then
-  // the next one in order (story trophies come by themselves and say little).
-  const inPhase = phase?.trophies.filter((n) => open.has(n)) ?? []
-  const missableNames = new Set((guide?.missables ?? []).map((m) => m.trophy))
-  const trickFor = (n: string) =>
-    guide?.tricks?.find((x) => x.trophy === n || x.trophy === open.get(n)?.nameEn)
-  const focusName =
-    inPhase.find((n) => missableNames.has(n)) ?? inPhase.find((n) => trickFor(n)) ?? inPhase[0]
-  const focus = focusName ? open.get(focusName) : undefined
+  const { phase, trophy: focus, trick, missable } = todaysFocus(ctx)
 
   const head = [missing.length ? `${opening} ${t('left', { count: missing.length })}` : opening]
-  if (phase) head.push(t('phase', { phase: phase.phase }))
+  if (phase) head.push(t('phase', { phase }))
   const blocks = [head.join('\n')]
   if (focus) {
     blocks.push(`${t('focus', { trophy: focus.name })}\n${focus.detail}`)
-    const trick = trickFor(focus.name)
-    if (trick) blocks.push(t('tip', { tip: trick.trick }))
+    if (trick) blocks.push(t('tip', { tip: trick }))
   }
-  // A missable still open, the one in this phase first.
-  const missables = (guide?.missables ?? []).filter((m) => open.has(m.trophy))
-  const missable = missables.find((m) => phase?.trophies.includes(m.trophy)) ?? missables[0]
   if (missable) blocks.push(t('missable', { trophy: missable.trophy, when: missable.when }))
   // The tracked trophy closest to done, past halfway.
   const almost = missing

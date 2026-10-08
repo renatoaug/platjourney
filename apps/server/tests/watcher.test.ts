@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:
 import { config } from '../src/config.ts'
 import * as deepguide from '../src/deepguide.ts'
 import { DEMO_ACCOUNT_ID } from '../src/demo.ts'
+import { focusAfter } from '../src/focus.ts'
 import type { Guide } from '../src/guide.ts'
 import * as guide from '../src/guide.ts'
 import * as lib from '../src/library.ts'
@@ -24,6 +25,7 @@ import * as telegram from '../src/telegram.ts'
 import {
   checkUser,
   demoContext,
+  focusNotice,
   forgetUser,
   getCurrent,
   SESSION_NOTICE_HOURS,
@@ -238,6 +240,49 @@ describe('session start', () => {
         missables: [{ trophy: 'Quarto', when: 'já', how: '' }],
       }),
     ).toBe('Quarto')
+  })
+
+  test('a trophy notice keeps the session focus, and names the next one when it was earned', () => {
+    const guide = {
+      roadmap: [{ phase: 'F', goal: '', trophies: ['Terceiro', 'Quarto', 'Quinto'] }],
+      tricks: [
+        { trophy: 'Quarto', trick: 'Use o arco.', source: '' },
+        { trophy: 'Quinto', trick: 't', source: '' },
+      ],
+    }
+    const ctxWith = (earned: number[]) =>
+      ({
+        game,
+        title: makeTitle(),
+        guide,
+        trophies: [3, 4, 5].map((id) =>
+          makeTrophy({
+            id,
+            name: ['Terceiro', 'Quarto', 'Quinto'][id - 3],
+            detail: `Faça o ${id}`,
+            earned: earned.includes(id),
+          }),
+        ),
+      }) as never as Parameters<typeof focusNotice>[1]
+    // The session named Quarto (it has a trick). Earning Terceiro does not move it.
+    const other = ctxWith([3])
+    expect(focusAfter(other, [other.trophies[0]])).toMatchObject({
+      phase: 'F',
+      changed: false,
+      trophy: { name: 'Quarto' },
+      trick: 'Use o arco.',
+    })
+    expect(focusNotice(user, other, [other.trophies[0]])).toBe('**Foco continua**: Quarto')
+    // Earning Quarto, the focus, names the next one by the same rule.
+    const same = ctxWith([4])
+    expect(focusAfter(same, [same.trophies[1]])).toMatchObject({
+      changed: true,
+      trophy: { name: 'Quinto' },
+    })
+    expect(focusNotice(user, same, [same.trophies[1]])).toBe('**Novo foco**: Quinto\nFaça o 5')
+    // Nothing left in the base game: no focus line.
+    const all = ctxWith([3, 4, 5])
+    expect(focusNotice(user, all, [all.trophies[2]])).toBeUndefined()
   })
 
   test('without a game in context, only the opening, in English too', () => {

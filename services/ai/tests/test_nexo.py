@@ -396,3 +396,37 @@ def test_nexo_answers_carry_no_addresses() -> None:
         'Veja [o guia](https://powerpyx.com/x) para detalhes.'
     )
     assert llm.strip_urls(text) == 'Faça login em para liberar o troféu Veja o guia para detalhes.'
+
+
+def test_an_unlock_notice_follows_the_servers_focus_instead_of_picking_one() -> None:
+    unlocked = [Trophy.model_validate(trophy())]
+    kept = nexo.unlock_prompt(unlocked, None, nexo.Focus(phase='Fase 1', trophy='Variedade'))
+    assert 'está em "Fase 1" no roteiro: diga isso, sem hesitar' in kept
+    assert 'O foco da sessão continua Variedade' in kept
+    assert 'aponte UM próximo troféu' not in kept
+    assert 'Não sugira outro troféu como próximo alvo.' in kept
+    moved = nexo.unlock_prompt(
+        unlocked,
+        None,
+        nexo.Focus.model_validate(
+            {
+                'trophy': 'Burnout',
+                'detail': 'Derrape por 5 s',
+                'trick': 'Use nitro.',
+                'changed': True,
+                'missable': {'trophy': 'Faca', 'when': 'antes do capítulo 3'},
+            }
+        ),
+    )
+    assert moved.index('Faca é perdível (antes do capítulo 3)') < moved.index('novo foco, Burnout')
+    assert 'Macete do guia: Use nitro.' in moved
+
+
+async def test_an_automatic_notice_cites_no_source(
+    model: Model, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def answer(*_args: Any, **_kw: Any) -> str:
+        return 'Boa! Próximo: Burnout.\n\nFonte: PowerPyx'
+
+    monkeypatch.setattr(nexo, 'ask', answer)
+    assert await nexo.tip('unlock', context(), []) == 'Boa! Próximo: Burnout.'

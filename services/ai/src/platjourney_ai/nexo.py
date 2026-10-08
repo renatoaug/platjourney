@@ -2,6 +2,7 @@
 notice asks for, and the call that answers."""
 
 import logging
+import re
 from typing import Any, Literal, cast
 
 from pydantic import BaseModel
@@ -9,7 +10,7 @@ from pydantic import BaseModel
 from . import costs, db, deepguide, llm
 from .config import settings
 from .guidestore import Passage
-from .schemas import GameContext, Trophy, shown_progress
+from .schemas import GameContext, Trophy, Wire, shown_progress
 
 log = logging.getLogger(__name__)
 
@@ -242,7 +243,49 @@ def standout(unlocked: list[Trophy], guide: dict[str, Any] | None) -> list[str]:
     return lines
 
 
-def unlock_prompt(unlocked: list[Trophy], guide: dict[str, Any] | None = None) -> str:
+class Missable(Wire):
+    trophy: str
+    when: str
+
+
+class Focus(Wire):
+    """The session's focus, picked by the server the same way for every notice."""
+
+    phase: str | None = None
+    trophy: str | None = None
+    detail: str | None = None
+    trick: str | None = None
+    # Whether the player just earned the previous focus, so this one is new.
+    changed: bool = False
+    missable: Missable | None = None
+
+
+def focus_prompt(focus: Focus) -> str:
+    """What the trophy notice says about where the player is and what comes next: the server's
+    phase and focus, so it does not guess the phase or pick a target of its own."""
+    parts: list[str] = []
+    if focus.missable:
+        m = focus.missable
+        parts.append(f'Avise primeiro, em uma linha: {m.trophy} é perdível ({m.when}).')
+    if focus.phase:
+        parts.append(f'O jogador está em "{focus.phase}" no roteiro: diga isso, sem hesitar.')
+    if focus.trophy and focus.changed:
+        trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
+        parts.append(
+            f'O foco anterior acabou de sair: anuncie o novo foco, {focus.trophy} ({focus.detail}),'
+            f' e como pegar.{trick}'
+        )
+    elif focus.trophy:
+        parts.append(
+            f'O foco da sessão continua {focus.trophy}: lembre em uma linha, sem explicar de novo.'
+        )
+    parts.append('Não sugira outro troféu como próximo alvo.')
+    return ' '.join(parts)
+
+
+def unlock_prompt(
+    unlocked: list[Trophy], guide: dict[str, Any] | None = None, focus: Focus | None = None
+) -> str:
     # The share of players, not PSN's label: its "Rara" covers 15% to 50%, most story trophies.
     names = ', '.join(
         f'{t.name} / {t.name_en} ({t.type}'
@@ -257,7 +300,14 @@ def unlock_prompt(unlocked: list[Trophy], guide: dict[str, Any] | None = None) -
         if big
         else ''
     )
-    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome (cite a raridade só quando até 15% de quem joga tem o troféu, com o percentual, ex.: "só 8% têm"; acima disso não chame de raro), diga em uma linha onde ele provavelmente está no roadmap, e aponte UM próximo troféu que faz sentido agora e como pegar. Se houver missable chegando neste ponto do jogo, avise primeiro. Máximo 6 linhas, sem repetir dicas já dadas.{cheer}'  # noqa: E501
+    next_part = (
+        focus_prompt(focus)
+        if focus
+        else 'diga em uma linha onde ele provavelmente está no roadmap, e aponte UM próximo troféu'
+        ' que faz sentido agora e como pegar. Se houver missable chegando neste ponto do jogo,'
+        ' avise primeiro.'
+    )
+    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome (cite a raridade só quando até 15% de quem joga tem o troféu, com o percentual, ex.: "só 8% têm"; acima disso não chame de raro), {next_part} Máximo 6 linhas, sem repetir dicas já dadas.{cheer}'  # noqa: E501
 
 
 def trophy_help_prompt(trophy: Trophy) -> str:
@@ -294,6 +344,7 @@ async def tip(
     ctx: GameContext,
     unlocked: list[Trophy],
     route: str | None = None,
+    focus: Focus | None = None,
 ) -> str:
     """An automatic notice: the player started a game or unlocked trophies.
     With `route`, the guide's note on what comes next goes into the same message."""
@@ -301,10 +352,12 @@ async def tip(
         case 'start':
             prompt = start_prompt(ctx)
         case 'unlock':
-            prompt = unlock_prompt(unlocked, ctx.guide)
+            prompt = unlock_prompt(unlocked, ctx.guide, focus)
     if route:
         prompt += ROUTE_PROMPT.format(route=route)
-    return await ask(prompt, lean_context(ctx, [t.name_en for t in unlocked]))
+    text = await ask(prompt, lean_context(ctx, [t.name_en for t in unlocked]))
+    # Automatic notices cite no source; the model sometimes adds one anyway.
+    return re.sub(r'\n*^[ \t]*Fonte:.*$', '', text, flags=re.M).strip()
 
 
 async def trophy_help(ctx: GameContext, trophy: Trophy) -> str:
