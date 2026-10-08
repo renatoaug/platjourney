@@ -22,7 +22,6 @@ const messages = defineMessages({
     saveFailed: 'Não conseguimos salvar. Tente de novo.',
     cancel: 'Cancelar',
     logout: 'Sair',
-    version: 'PlatJourney {version}',
     leaving: 'Saindo…',
     logoutFailed: 'Não conseguimos sair agora. Tente de novo.',
     telegram: {
@@ -75,7 +74,6 @@ const messages = defineMessages({
     saveFailed: 'Could not save. Try again.',
     cancel: 'Cancel',
     logout: 'Sign out',
-    version: 'PlatJourney {version}',
     leaving: 'Signing out…',
     logoutFailed: 'Could not sign out right now. Try again.',
     telegram: {
@@ -505,7 +503,6 @@ function AccountCard({ user, onEditing }: { user: Me; onEditing?: (editing: bool
           </PanelActions>
         </form>
       </div>
-      <p className="account-version">{t('version', { version: __APP_VERSION__ })}</p>
     </div>
   )
 }

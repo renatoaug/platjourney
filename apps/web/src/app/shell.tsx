@@ -251,6 +251,7 @@ function Nav() {
                   </NavLink>
                 ))}
               </div>
+              <span className="app-version">v{__APP_VERSION__}</span>
             </div>
           </>,
           document.body,
@@ -386,6 +387,7 @@ export function Shell() {
               {t('noteCta')} <Icon name="arrow" />
             </span>
           </Link>
+          <span className="app-version">v{__APP_VERSION__}</span>
         </div>
         <SidebarProfile />
       </aside>
