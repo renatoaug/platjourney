@@ -50,3 +50,5 @@ venv = ".venv"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# The evals package sits next to src: its tests import it from the project root.
+pythonpath = ["."]

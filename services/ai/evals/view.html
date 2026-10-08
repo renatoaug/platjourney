@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nexo evals</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<!-- The app's own design tokens, served by view.py. -->
+<link rel="stylesheet" href="/theme.css">
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font: 14px/1.55 var(--font-body);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: var(--tracking-tight);
+    margin: 0;
+  }
+
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px 24px 64px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  header img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .brand span {
+    color: var(--color-accent);
+  }
+
+  .tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    color: var(--color-accent);
+  }
+
+  .muted {
+    color: var(--color-fg-muted);
+  }
+
+  .subtle {
+    color: var(--color-fg-subtle);
+    font-size: 12px;
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+    margin: 28px 0 20px;
+    padding: 24px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background:
+      radial-gradient(600px 220px at 100% 0, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 70%),
+      var(--color-surface);
+  }
+
+  .hero h1 {
+    font-size: 28px;
+    margin-top: 6px;
+  }
+
+  .hero p {
+    margin: 10px 0 0;
+    max-width: 680px;
+  }
+
+  .hero img {
+    width: 96px;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .suites {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .suite {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .suite:hover {
+    border-color: var(--color-border-strong);
+    transform: translateY(-2px);
+  }
+
+  .suite h3 {
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .suite p {
+    margin: 0;
+  }
+
+  /* How a suite is judged, in three short lines. */
+  .rules {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+    flex: 1;
+    font-size: 13px;
+  }
+
+  .rules dt {
+    color: var(--color-fg-subtle);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+  }
+
+  .rules dd {
+    margin: 0 0 4px;
+    color: var(--color-fg-muted);
+  }
+
+  .suite-meta {
+    display: grid;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--color-fg-muted);
+  }
+
+  .suite-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface-raised);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .btn:hover {
+    border-color: var(--color-accent);
+  }
+
+  .btn.primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-on-accent);
+    font-weight: 600;
+  }
+
+  .btn.primary:hover {
+    background: var(--color-accent-hover);
+  }
+
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin: 32px 0 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .tabs button {
+    border: 0;
+    background: none;
+    padding: 10px 14px;
+    color: var(--color-fg-muted);
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+
+  /* Suite filters, as the app's chips: quiet until active, the count in the same color. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-fg-muted);
+    cursor: pointer;
+  }
+
+  .chip:hover,
+  .chip.active {
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
+  }
+
+  .chip .count {
+    font-variant-numeric: tabular-nums;
+    opacity: 0.7;
+  }
+
+  .tabs .count {
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 99px;
+    background: var(--color-surface-raised);
+    color: var(--color-fg-muted);
+    font-size: 12px;
+  }
+
+  .tabs button[aria-selected='true'] .count {
+    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+    color: var(--color-accent);
+  }
+
+  .tabs button[aria-selected='true'] {
+    color: var(--color-fg);
+    border-bottom-color: var(--color-accent);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .run {
+    text-align: left;
+    padding: 12px 14px;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .run:hover,
+  .run[aria-current='true'] {
+    border-color: var(--color-accent);
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: baseline;
+  }
+
+  .pass {
+    color: var(--color-accent);
+  }
+
+  .fail {
+    color: var(--color-danger);
+  }
+
+  .card {
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    margin-bottom: 16px;
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    margin: 14px 0 0;
+  }
+
+  .facts dt {
+    color: var(--color-fg-subtle);
+    font-size: 12px;
+  }
+
+  .facts dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .bar {
+    height: 6px;
+    border-radius: 99px;
+    background: var(--color-surface-raised);
+    overflow: hidden;
+    margin-top: 12px;
+  }
+
+  .bar i {
+    display: block;
+    height: 100%;
+    background: var(--color-accent);
+    transition: width 0.6s ease;
+  }
+
+  .bar.live i {
+    background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover), var(--color-accent));
+    background-size: 200% 100%;
+    animation: slide 1.4s linear infinite;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    text-align: left;
+    vertical-align: top;
+    padding: 10px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  th {
+    color: var(--color-fg-subtle);
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  tr.case {
+    cursor: pointer;
+  }
+
+  tr.case:hover td {
+    background: var(--color-surface-raised);
+  }
+
+  .detail td {
+    background: var(--color-surface-raised);
+  }
+
+  .detail h4 {
+    margin: 0 0 4px;
+    font-size: 12px;
+    color: var(--color-fg-subtle);
+    font-weight: 500;
+  }
+
+  .detail pre {
+    margin: 0 0 12px;
+    white-space: pre-wrap;
+    font: inherit;
+  }
+
+  .pill {
+    font-size: 12px;
+    padding: 1px 8px;
+    border-radius: 99px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  select,
+  input,
+  textarea {
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    padding: 7px 10px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 70px;
+    resize: vertical;
+  }
+
+  label.field {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: var(--color-fg-muted);
+  }
+
+  label.field input {
+    width: 100%;
+  }
+
+  .empty {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .empty img {
+    width: 72px;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Skeletons take the shape of what loads: bars on real surfaces, one soft shimmer. */
+  .sk {
+    display: block;
+    height: 12px;
+    border-radius: var(--radius-tag);
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-raised) 25%,
+      color-mix(in srgb, var(--color-fg) 9%, var(--color-surface-raised)) 50%,
+      var(--color-surface-raised) 75%
+    );
+    background-size: 200% 100%;
+    animation: slide 1.6s ease-in-out infinite;
+  }
+
+  .sk.box {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-control);
+  }
+
+  .sk.btn-sk {
+    width: 84px;
+    height: 36px;
+    border-radius: var(--radius-control);
+  }
+
+  .sk-stack {
+    display: grid;
+    gap: 8px;
+  }
+
+  dialog {
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    color: var(--color-fg);
+    padding: 22px;
+    width: min(460px, 92vw);
+  }
+
+  dialog::backdrop {
+    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  }
+
+  .fade {
+    animation: fade 0.25s ease;
+  }
+
+  @keyframes float {
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes slide {
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes fade {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  @media (max-width: 860px) {
+    .suites,
+    .grid,
+    .hero {
+      grid-template-columns: 1fr;
+    }
+
+    .hero img {
+      display: none;
+    }
+  }
+  .icon {
+    width: 17px;
+    height: 17px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .suite-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-control);
+    background: var(--color-surface-raised);
+    color: var(--color-accent);
+  }
+
+  header .spacer {
+    flex: 1;
+  }
+
+  /* The language switch, quiet: no frame, the current one just brighter. */
+  .lang {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--color-fg-subtle);
+    font-size: 12px;
+  }
+
+  .lang .icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+  }
+
+  .lang button {
+    border: 0;
+    background: none;
+    padding: 2px 6px;
+    color: inherit;
+    font-size: 12px;
+    letter-spacing: var(--tracking-caps);
+    cursor: pointer;
+  }
+
+  .lang button:hover {
+    color: var(--color-fg-muted);
+  }
+
+  .lang button[aria-pressed='true'] {
+    color: var(--color-fg);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  /* A row's action fits the row's height. */
+  .btn.sm {
+    padding: 4px 10px;
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .btn.sm .icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .questions td {
+    vertical-align: middle;
+  }
+
+  /* The game picker: a search over catalog games that have a guide. */
+  .picker {
+    position: relative;
+  }
+
+  .picker input {
+    width: 100%;
+  }
+
+  .options {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    box-shadow: 0 12px 32px var(--color-shadow);
+  }
+
+  .options button {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--color-fg);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .options button:hover,
+  .options button:focus {
+    background: var(--color-surface-raised);
+    outline: none;
+  }
+
+  .picked {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--color-accent);
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <img src="/assets/logo.svg" alt="">
+    <span class="brand">plat<span>journey</span></span>
+    <span class="subtle">evals</span>
+    <span class="spacer"></span>
+    <div class="lang">
+      <svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#globe"></use></svg>
+      <button type="button" data-lang="pt">PT</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <span class="tag" data-t="eyebrow"></span>
+      <h1 data-t="headline">Nexo evals</h1>
+      <p class="muted" data-t="intro"></p>
+    </div>
+    <img src="/assets/nexo-avatar.svg" alt="">
+  </section>
+
+  <div class="suites" id="suites"></div>
+
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" aria-selected="true" data-tab="runs" data-t="runs"></button>
+    <button type="button" role="tab" aria-selected="false" data-tab="questions" data-t="questions"></button>
+  </div>
+  <div id="tab"></div>
+</div>
+
+<dialog id="confirm">
+  <h3 id="confirm-title">Run</h3>
+  <p class="muted" id="confirm-body"></p>
+  <div class="row" style="justify-content: flex-end; margin-top: 16px">
+    <button type="button" class="btn" id="confirm-cancel" data-t="cancel"></button>
+    <button type="button" class="btn primary" id="confirm-go" data-t="run"></button>
+  </div>
+</dialog>
+
+<script>
+  const TEXT = {
+    en: {
+      eyebrow: 'Quality of Nexo',
+      headline: 'Measure Nexo before players do.',
+      intro: 'Each suite asks Nexo fixed questions with the real model and the real guides, then scores the answers. Every run is saved with the platform version, the prompt and what it cost, so you can see quality move release by release.',
+      runs: 'Runs',
+      questions: 'Questions',
+      run: 'Run',
+      running: 'Running…',
+      cancel: 'Cancel',
+      tests: 'What it asks',
+      passes: 'Passes when',
+      shows: 'Result',
+      questionsN: '{n} questions',
+      costPerRun: '~{cost} a run',
+      confirmTitle: 'Run {suite}?',
+      confirmBody: '{n} questions with the real model. Estimated cost: {cost}. The results show up live below.',
+      noRunsTitle: 'No runs yet',
+      noRunsBody: 'Pick a suite above and press Run. You will see the estimated cost before anything is spent.',
+      pickTitle: 'Pick a run',
+      pickBody: "Open one on the left to see every question, Nexo's answer and why it passed or failed.",
+      failed: 'Failed',
+      stopped: 'Stopped',
+      stop: 'Stop',
+      stopTitle: 'Stop this run?',
+      stopBody: 'The questions answered so far stay saved; the rest are not asked.',
+      passedOf: '{passed}/{total} passed',
+      runningOf: 'Running · {done} of {planned}',
+      started: 'Started',
+      version: 'Version',
+      models: 'Models',
+      cost: 'Cost',
+      prompt: 'Prompt',
+      compare: 'Compare with',
+      onlyChanged: 'Only what changed',
+      question: 'Question',
+      score: 'Score',
+      before: 'Before',
+      why: 'Why',
+      expected: 'Expected',
+      answer: "Nexo's answer",
+      answerBefore: 'Answer before',
+      fixed: 'fixed',
+      broke: 'broke',
+      better: 'better',
+      worse: 'worse',
+      new: 'new',
+      add: 'Add question',
+      edit: 'Edit',
+      archived: 'Archived · edit',
+      newQuestion: 'New question',
+      editQuestion: 'Edit question',
+      active: 'Active (asked in the next runs)',
+      save: 'Save',
+      game: 'Game',
+      mustNot: 'Must not contain',
+      searchGame: 'Search a game that has a guide…',
+      passages: '{n} guide passages',
+      noGame: 'No game with a guide matches.',
+      pickGame: 'Pick a game from the list.',
+      picked: 'Selected: {name}',
+      stoppedTitle: 'The run stopped before the first question',
+      stoppedBody: 'Usually a model or the database could not be reached: check that the AI settings point at a running model (a local model needs its server up) and run again.',
+      waitingTitle: 'Waiting for the first answer…',
+      noQuestionsTitle: 'No questions yet',
+      noQuestionsBody: 'Run bun run ai:eval seed to load the example questions, or add one above.',
+      suites: {
+        retrieval: [
+          'Guide search',
+          'Does Nexo find the right part of the guide before answering?',
+          'For each question, the 6 guide passages that look closest to it.',
+          'One of them has the answer (the keywords listed in the question).',
+          'How many found it, and how high it came in the list.',
+        ],
+        scope: [
+          'Off-topic',
+          'Does Nexo stay a PlayStation partner when pushed elsewhere?',
+          'Messages with nothing to do with games (a recipe, code, a math problem) and attempts to change its rules.',
+          'Nexo declines: a short reply, without what was asked (no recipe, no code).',
+          'How many it held back.',
+        ],
+        answers: [
+          'Answer quality',
+          'Are Nexo\'s answers about a game right and useful?',
+          'Player questions (a trophy, missables, collectibles, time) answered with the real guide.',
+          'A second model compares it with the guide\'s answer and scores 1 to 5: passes with 4 or 5 and nothing it must not say.',
+          'The average score and why each answer got its score.',
+        ],
+      },
+      fields: {
+        game_pick: 'Game (only games with a guide)',
+        question: 'Question',
+        terms: 'English trophy names (comma separated)',
+        relevant: 'Keyword groups a good passage has (one group per line, words by comma)',
+        message: 'Message',
+        forbidden: 'Words a good reply never has (comma separated)',
+        max_chars: 'Longest reply (characters)',
+        game_name: 'Game (only games with a guide)',
+        reference: 'Reference answer from the guide',
+        earned: 'Trophies already earned (comma separated)',
+        avoid: 'What a good answer must not say (one per line)',
+      },
+    },
+    pt: {
+      eyebrow: 'Qualidade do Nexo',
+      headline: 'Meça o Nexo antes dos jogadores.',
+      intro: 'Cada suíte faz perguntas fixas ao Nexo, com o modelo e os guias de verdade, e dá nota às respostas. Cada rodada fica salva com a versão da plataforma, o prompt e o custo, para você acompanhar a qualidade versão a versão.',
+      runs: 'Rodadas',
+      questions: 'Perguntas',
+      run: 'Rodar',
+      running: 'Rodando…',
+      cancel: 'Cancelar',
+      tests: 'O que testa',
+      passes: 'Passa quando',
+      shows: 'Resultado',
+      questionsN: '{n} perguntas',
+      costPerRun: '~{cost} por rodada',
+      confirmTitle: 'Rodar {suite}?',
+      confirmBody: '{n} perguntas com o modelo de verdade. Custo estimado: {cost}. Os resultados aparecem ao vivo abaixo.',
+      noRunsTitle: 'Nenhuma rodada ainda',
+      noRunsBody: 'Escolha uma suíte acima e clique em Rodar. O custo estimado aparece antes de qualquer gasto.',
+      pickTitle: 'Escolha uma rodada',
+      pickBody: 'Abra uma à esquerda para ver cada pergunta, a resposta do Nexo e por que passou ou falhou.',
+      failed: 'Falhou',
+      stopped: 'Parada',
+      stop: 'Parar',
+      stopTitle: 'Parar esta rodada?',
+      stopBody: 'As perguntas já respondidas ficam salvas; as outras não são feitas.',
+      passedOf: '{passed}/{total} passaram',
+      runningOf: 'Rodando · {done} de {planned}',
+      started: 'Início',
+      version: 'Versão',
+      models: 'Modelos',
+      cost: 'Custo',
+      prompt: 'Prompt',
+      compare: 'Comparar com',
+      onlyChanged: 'Só o que mudou',
+      question: 'Pergunta',
+      score: 'Nota',
+      before: 'Antes',
+      why: 'Por quê',
+      expected: 'Esperado',
+      answer: 'Resposta do Nexo',
+      answerBefore: 'Resposta antes',
+      fixed: 'corrigiu',
+      broke: 'quebrou',
+      better: 'melhorou',
+      worse: 'piorou',
+      new: 'nova',
+      add: 'Adicionar pergunta',
+      edit: 'Editar',
+      archived: 'Arquivada · editar',
+      newQuestion: 'Nova pergunta',
+      editQuestion: 'Editar pergunta',
+      active: 'Ativa (entra nas próximas rodadas)',
+      save: 'Salvar',
+      game: 'Jogo',
+      mustNot: 'Não pode conter',
+      searchGame: 'Busque um jogo que tenha guia…',
+      passages: '{n} trechos de guia',
+      noGame: 'Nenhum jogo com guia encontrado.',
+      pickGame: 'Escolha um jogo da lista.',
+      picked: 'Selecionado: {name}',
+      stoppedTitle: 'A rodada parou antes da primeira pergunta',
+      stoppedBody: 'Em geral, um modelo ou o banco não respondeu: confira se as configurações de IA apontam para um modelo no ar (modelo local precisa do servidor ligado) e rode de novo.',
+      waitingTitle: 'Esperando a primeira resposta…',
+      noQuestionsTitle: 'Nenhuma pergunta ainda',
+      noQuestionsBody: 'Rode bun run ai:eval seed para carregar as perguntas de exemplo, ou adicione uma acima.',
+      suites: {
+        retrieval: [
+          'Busca no guia',
+          'O Nexo acha a parte certa do guia antes de responder?',
+          'Para cada pergunta, os 6 trechos do guia mais parecidos com ela.',
+          'Um deles tem a resposta (as palavras-chave cadastradas na pergunta).',
+          'Quantas acharam o trecho, e em que posição ele veio.',
+        ],
+        scope: [
+          'Fora do assunto',
+          'O Nexo continua sendo parceiro de PlayStation quando tentam levá-lo para outro lado?',
+          'Mensagens que não têm nada a ver com jogo (receita, código, conta de matemática) e tentativas de mudar as regras dele.',
+          'O Nexo recusa: resposta curta e sem o que foi pedido (nada de receita, nada de código).',
+          'Quantas ele segurou.',
+        ],
+        answers: [
+          'Qualidade das respostas',
+          'As respostas do Nexo sobre um jogo estão certas e são úteis?',
+          'Perguntas de jogador (um troféu, perdíveis, colecionáveis, tempo) respondidas com o guia de verdade.',
+          'Um segundo modelo compara com a resposta do guia e dá nota de 1 a 5: passa com 4 ou 5 e sem dizer o que não pode.',
+          'A nota média e o porquê de cada nota.',
+        ],
+      },
+      fields: {
+        game_pick: 'Jogo (só jogos com guia)',
+        question: 'Pergunta',
+        terms: 'Nomes dos troféus em inglês (separados por vírgula)',
+        relevant: 'Grupos de palavras que um bom trecho tem (um grupo por linha, palavras por vírgula)',
+        message: 'Mensagem',
+        forbidden: 'Palavras que uma boa resposta nunca tem (separadas por vírgula)',
+        max_chars: 'Resposta mais longa (caracteres)',
+        game_name: 'Jogo (só jogos com guia)',
+        reference: 'Resposta de referência do guia',
+        earned: 'Troféus já conquistados (separados por vírgula)',
+        avoid: 'O que uma boa resposta não pode dizer (um por linha)',
+      },
+    },
+  }
+  const ICONS = { retrieval: 'search', scope: 'shield', answers: 'target' }
+  // The fields each suite's questions have, for the form: [data key, label key, kind].
+  const FIELDS = {
+    retrieval: [['game', 'game_pick', 'gameref'], ['question', 'question'], ['terms', 'terms', 'list'], ['relevant', 'relevant', 'groups']],
+    scope: [['message', 'message'], ['forbidden', 'forbidden', 'list'], ['max_chars', 'max_chars', 'number']],
+    answers: [['game', 'game_name', 'game'], ['question', 'question'], ['reference', 'reference', 'text'], ['earned', 'earned', 'list'], ['avoid', 'avoid', 'lines']],
+  }
+  let lang = 'en'
+  try {
+    lang = localStorage.getItem('evals:lang') || (navigator.language.startsWith('pt') ? 'pt' : 'en')
+  } catch {}
+  const t = (key, vars = {}) => String(TEXT[lang][key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '')
+  const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#${name}"></use></svg>`
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+  const when = (iso) => (iso ? new Date(iso).toLocaleString(lang === 'pt' ? 'pt-BR' : 'en-US') : '')
+  const usd = (n) => `US$ ${Number(n || 0).toFixed(n && n < 0.1 ? 4 : 2)}`
+  const plain = (id) => String(id).split(':').pop()
+  const num = (n) => (n == null ? '—' : Number(n) % 1 ? Number(n).toFixed(2) : String(n))
+  const api = async (path, opts) => {
+    const r = await fetch(path, opts && { method: opts.method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(opts.body) })
+    if (!r.ok) throw new Error(await r.text())
+    return r.json()
+  }
+
+  let tab = 'runs'
+  let suites = []
+  let runs = []
+  let current = null
+  let other = null
+  let onlyChanges = false
+  let qsuite = 'answers'
+  let editing = null
+
+  function translateStatic() {
+    document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en'
+    for (const el of document.querySelectorAll('[data-t]')) el.textContent = t(el.dataset.t)
+    for (const b of document.querySelectorAll('[data-lang]')) b.setAttribute('aria-pressed', b.dataset.lang === lang)
+  }
+
+  // Each tab says how much it holds: runs so far, questions asked across the suites.
+  function drawTabs() {
+    const counts = { runs: runs.length, questions: suites.reduce((n, s) => n + s.questions, 0) }
+    for (const b of document.querySelectorAll('[data-tab]')) {
+      b.innerHTML = `${t(b.dataset.tab)}${suites.length ? `<span class="count">${counts[b.dataset.tab]}</span>` : ''}`
+    }
+  }
+
+  function drawSuites() {
+    document.getElementById('suites').innerHTML = suites
+      .map((s) => {
+        const [title, text, tests, passes, shows] = TEXT[lang].suites[s.suite]
+        return `<article class="suite fade">
+          <h3><span class="suite-icon">${icon(ICONS[s.suite])}</span>${title}</h3>
+          <p>${text}</p>
+          <dl class="rules">
+            <dt>${t('tests')}</dt><dd>${tests}</dd>
+            <dt>${t('passes')}</dt><dd>${passes}</dd>
+            <dt>${t('shows')}</dt><dd>${shows}</dd>
+          </dl>
+          <div class="suite-foot">
+            <span class="suite-meta"><span>${t('questionsN', { n: s.questions })}</span><span class="subtle">${t('costPerRun', { cost: usd(s.estimate_usd) })}</span></span>
+            <button type="button" class="btn ${s.running ? '' : 'primary'}" data-run="${s.suite}" ${s.running ? 'disabled' : ''}>${s.running ? t('running') : `${icon('play')}${t('run')}`}</button>
+          </div>
+        </article>`
+      })
+      .join('')
+  }
+
+  const bar = (w, h = 12) => `<span class="sk" style="width:${w};height:${h}px"></span>`
+
+  function suitesSkeleton() {
+    return `<article class="suite" aria-hidden="true">
+        <div class="row" style="justify-content:flex-start;gap:8px"><span class="sk box"></span>${bar('40%', 16)}</div>
+        <div class="sk-stack">${bar('95%')}${bar('70%')}</div>
+        <div class="suite-foot">${bar('45%', 10)}<span class="sk btn-sk"></span></div>
+      </article>`.repeat(3)
+  }
+
+  function runsSkeleton() {
+    const item = `<div class="run run-sk" aria-hidden="true"><div class="sk-stack">${bar('35%', 10)}${bar('70%', 14)}${bar('55%', 10)}</div></div>`
+    return `<div class="grid"><div class="list">${item.repeat(4)}</div>
+      <div class="card" aria-hidden="true"><div class="sk-stack">${bar('18%', 10)}${bar('40%', 22)}</div>
+        <div class="facts">${`<div class="sk-stack">${bar('50%', 10)}${bar('80%', 14)}</div>`.repeat(4)}</div>
+        <div class="sk-stack" style="margin-top:24px">${bar('100%')}${bar('92%')}${bar('96%')}${bar('88%')}</div>
+      </div></div>`
+  }
+
+  function questionsSkeleton() {
+    const row = `<tr aria-hidden="true"><td>${bar('70%', 14)}</td><td>${bar('50%', 14)}</td><td style="text-align:right"><span class="sk" style="width:72px;height:28px;display:inline-block;border-radius:var(--radius-control)"></span></td></tr>`
+    return `<div class="toolbar">${'<span class="sk" style="width:110px;height:36px;border-radius:var(--radius-control)"></span>'.repeat(3)}</div>
+      <div class="card" style="padding:6px 20px"><table class="questions"><tbody>${row.repeat(6)}</tbody></table></div>`
+  }
+
+  function runItem(r, animate = true) {
+    const live = r.status === 'running'
+    const pct = r.planned ? Math.round((r.total / r.planned) * 100) : 0
+    const state = live ? 'muted' : r.status === 'failed' || r.passed !== r.total ? 'fail' : 'pass'
+    const label = live ? `${r.total}/${r.planned}` : r.status === 'failed' ? t('failed') : r.status === 'stopped' ? t('stopped') : `${r.passed}/${r.total}`
+    return `<button type="button" class="run ${animate ? 'fade' : ''}" data-id="${plain(r.id)}" aria-current="${current && plain(current.id) === plain(r.id)}">
+      <div class="row"><span class="tag">${esc(TEXT[lang].suites[r.suite]?.[0] ?? r.suite)}</span><span class="${state}">${label}</span></div>
+      <div>${esc(when(r.started_at))}</div>
+      <div class="subtle">v${esc(r.version)} · ${esc(r.commit)} · ${usd(r.cost_usd)}</div>
+      ${live ? `<div class="bar live"><i style="width:${Math.max(pct, 4)}%"></i></div>` : ''}
+    </button>`
+  }
+
+  function change(a, b) {
+    if (!b) return ''
+    if (a.passed && !b.passed) return `<span class="pill pass">${t('fixed')}</span>`
+    if (!a.passed && b.passed) return `<span class="pill fail">${t('broke')}</span>`
+    if (a.score != null && b.score != null && a.score !== b.score) return a.score > b.score ? `<span class="pill pass">${t('better')}</span>` : `<span class="pill fail">${t('worse')}</span>`
+    return ''
+  }
+
+  function empty(title, body) {
+    return `<div class="card empty fade"><img src="/assets/nexo-avatar.svg" alt=""><h3>${title}</h3><p class="muted">${body}</p></div>`
+  }
+
+  // The run's header: status, progress and facts. Redrawn alone while the run goes on.
+  function runHead(animate = false) {
+    const live = current.status === 'running'
+    const pct = current.planned ? Math.round((current.total / current.planned) * 100) : 0
+    const summary = Object.entries(current.summary || {})
+      .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`)
+      .join('')
+    const heading = live
+      ? t('runningOf', { done: current.total, planned: current.planned })
+      : current.status === 'failed'
+        ? t('failed')
+        : current.status === 'stopped'
+          ? `${t('stopped')} · ${t('passedOf', { passed: current.passed, total: current.total })}`
+          : t('passedOf', { passed: current.passed, total: current.total })
+    return `<section class="card ${animate ? 'fade' : ''}" id="run-head">
+        <div class="row"><span class="tag">${esc(TEXT[lang].suites[current.suite]?.[0] ?? current.suite)}</span>
+          ${live ? `<button type="button" class="btn sm" data-stop="${plain(current.id)}">${icon('close')}${t('stop')}</button>` : ''}</div>
+        <h2 style="margin-top:4px">${heading}</h2>
+        ${live ? `<div class="bar live"><i style="width:${Math.max(pct, 4)}%"></i></div>` : ''}
+        ${current.error ? `<p class="fail">${esc(current.error)}</p>` : ''}
+        <dl class="facts">
+          <div><dt>${t('started')}</dt><dd>${esc(when(current.started_at))}</dd></div>
+          <div><dt>${t('version')}</dt><dd>v${esc(current.version)} · ${esc(current.commit)}</dd></div>
+          <div><dt>${t('models')}</dt><dd>${esc(current.models.join(', ') || '—')}</dd></div>
+          <div><dt>${t('cost')}</dt><dd>${usd(current.cost_usd)}</dd></div>
+          <div><dt>${t('prompt')}</dt><dd>${esc(current.prompt || '—')}</dd></div>
+          ${summary}
+        </dl>
+      </section>`
+  }
+
+  // One case: its row and the hidden details under it.
+  function caseRows(c, o, i) {
+    return `<tr class="case" data-i="${i}">
+        <td class="${c.passed ? 'pass' : 'fail'}">${icon(c.passed ? 'check' : 'close')}</td>
+        <td>${c.extra?.game ? `<span class="subtle">${esc(c.extra.game)}</span><br>` : ''}${esc(c.input)}</td>
+        <td>${num(c.score)}</td>
+        ${other ? `<td>${o ? num(o.score) : t('new')}</td><td>${o ? change(c, o) : ''}</td>` : ''}
+        <td class="muted">${esc(c.reason)}</td>
+      </tr>
+      <tr class="detail" data-for="${i}" hidden><td></td><td colspan="${other ? 5 : 3}">
+        <h4>${t('expected')}</h4><pre>${esc(c.expected || '—')}</pre>
+        <h4>${t('answer')}</h4><pre>${esc(c.output || '—')}</pre>
+        ${o ? `<h4>${t('answerBefore')}</h4><pre>${esc(o.output || '—')}</pre>` : ''}
+        <span class="subtle">${esc(c.models.join(', '))} · ${usd(c.cost_usd)}</span>
+      </td></tr>`
+  }
+
+  function runDetail() {
+    if (!current) return empty(t('pickTitle'), t('pickBody'))
+    const same = runs.filter((r) => r.suite === current.suite && plain(r.id) !== plain(current.id) && r.status === 'done')
+    const before = Object.fromEntries((other?.cases ?? []).map((c) => [c.input, c]))
+    let cases = current.cases.map((c) => ({ c, o: other ? before[c.input] : null }))
+    if (other && onlyChanges) cases = cases.filter(({ c, o }) => change(c, o))
+    const live = current.status === 'running'
+    return `${runHead(true)}
+
+      ${
+        current.cases.length
+          ? ''
+          : live
+            ? `<div class="card"><div class="sk-stack">${bar('60%', 14)}${bar('35%', 10)}</div><p class="subtle">${t('waitingTitle')}</p></div>`
+            : empty(t('stoppedTitle'), t('stoppedBody'))
+      }
+      <div ${current.cases.length ? '' : 'hidden'}>
+      <div class="toolbar">
+        <label class="muted">${t('compare')}
+          <select id="compare"><option value="">—</option>${same.map((r) => `<option value="${plain(r.id)}" ${other && plain(other.id) === plain(r.id) ? 'selected' : ''}>${esc(when(r.started_at))} · v${esc(r.version)} · ${r.passed}/${r.total}</option>`).join('')}</select>
+        </label>
+        ${other ? `<label class="muted"><input type="checkbox" id="only" ${onlyChanges ? 'checked' : ''}> ${t('onlyChanged')}</label>` : ''}
+      </div>
+      <table>
+        <thead><tr><th></th><th>${t('question')}</th><th>${t('score')}</th>${other ? `<th>${t('before')}</th><th></th>` : ''}<th>${t('why')}</th></tr></thead>
+        <tbody id="cases">${cases.map(({ c, o }, i) => caseRows(c, o, i)).join('')}</tbody>
+      </table>
+      </div>`
+  }
+
+  function drawRuns() {
+    const el = document.getElementById('tab')
+    if (!runs.length) {
+      el.innerHTML = empty(t('noRunsTitle'), t('noRunsBody'))
+      return
+    }
+    el.innerHTML = `<div class="grid"><div class="list">${runs.map((r) => runItem(r)).join('')}</div><div id="detail">${runDetail()}</div></div>`
+  }
+
+  function asText(value, kind) {
+    if (kind === 'list') return (value || []).join(', ')
+    if (kind === 'lines') return (value || []).join('\n')
+    if (kind === 'groups') return (value || []).map((g) => g.join(', ')).join('\n')
+    return value ?? ''
+  }
+
+  function fromText(text, kind) {
+    const v = text.trim()
+    if (kind === 'list') return v ? v.split(',').map((s) => s.trim()).filter(Boolean) : []
+    if (kind === 'lines') return v ? v.split('\n').map((s) => s.trim()).filter(Boolean) : []
+    if (kind === 'groups') return v ? v.split('\n').map((l) => l.split(',').map((s) => s.trim()).filter(Boolean)).filter((g) => g.length) : []
+    if (kind === 'number') return Number(v) || 0
+    return v
+  }
+
+  function questionForm(q) {
+    const data = q?.data ?? {}
+    return `<form class="card fade" id="qform">
+      <h3 style="margin-bottom:12px">${q ? t('editQuestion') : t('newQuestion')}</h3>
+      ${FIELDS[qsuite]
+        .map(([key, label, kind]) => {
+          const v = esc(asText(data[key], kind))
+          const text = TEXT[lang].fields[label]
+          if (kind === 'game' || kind === 'gameref') {
+            const shown = esc(kind === 'gameref' ? data.name : data.game)
+            return `<label class="field">${esc(text)}<div class="picker">
+              <input class="game-search" data-kind="${kind}" value="${shown}" placeholder="${t('searchGame')}" autocomplete="off">
+              <input type="hidden" name="game" value="${esc(data.game ?? '')}"><input type="hidden" name="name" value="${esc(data.name ?? '')}">
+              <ul class="options" hidden></ul>
+            </div></label>`
+          }
+          return `<label class="field">${esc(text)}${kind === 'text' || kind === 'lines' || kind === 'groups' ? `<textarea name="${key}">${v}</textarea>` : `<input name="${key}" value="${v}">`}</label>`
+        })
+        .join('')}
+      ${q ? `<label class="muted"><input type="checkbox" name="active" ${q.active ? 'checked' : ''}> ${t('active')}</label>` : ''}
+      <div class="row" style="justify-content:flex-end;margin-top:12px">
+        <button type="button" class="btn" id="qcancel">${t('cancel')}</button>
+        <button class="btn primary">${t('save')}</button>
+      </div>
+    </form>`
+  }
+
+  async function drawQuestions() {
+    const el = document.getElementById('tab')
+    el.innerHTML = questionsSkeleton()
+    const list = await api(`/api/questions/${qsuite}`)
+    const main = (q) => esc(q.data.question || q.data.message || '')
+    el.innerHTML = `<div class="toolbar">
+        ${Object.keys(ICONS)
+          .map((s) => `<button type="button" class="chip ${s === qsuite ? 'active' : ''}" data-qsuite="${s}">${icon(ICONS[s])}${TEXT[lang].suites[s][0]}<span class="count">${suites.find((x) => x.suite === s)?.questions ?? ''}</span></button>`)
+          .join('')}
+        <span style="flex:1"></span>
+        <button type="button" class="btn" id="qadd">${icon('plus')}${t('add')}</button>
+      </div>
+      ${editing !== null ? questionForm(editing === 'new' ? null : list.find((q) => plain(q.id) === editing)) : ''}
+      ${list.length ? '' : empty(t('noQuestionsTitle'), t('noQuestionsBody'))}
+      <div class="card fade" style="padding:6px 20px" ${list.length ? '' : 'hidden'}>
+        <table class="questions"><thead><tr><th>${t('question')}</th><th>${qsuite === 'scope' ? t('mustNot') : t('game')}</th><th></th></tr></thead>
+        <tbody>${list
+          .map(
+            (q) => `<tr style="${q.active ? '' : 'opacity:.5'}">
+            <td>${main(q)}</td>
+            <td class="muted">${esc(qsuite === 'scope' ? (q.data.forbidden || []).join(', ') : q.data.name || q.data.game || '')}</td>
+            <td style="text-align:right"><button type="button" class="btn sm" data-edit="${plain(q.id)}">${icon('edit')}${q.active ? t('edit') : t('archived')}</button></td>
+          </tr>`,
+          )
+          .join('')}</tbody></table>
+      </div>`
+  }
+
+  // While a run goes on, only what changed is redrawn: the run's item in the list, its header and
+  // the new cases at the end of the table. Open rows, the comparison and the scroll stay put.
+  async function poll() {
+    const before = JSON.stringify(suites.map((s) => [s.suite, s.running, s.questions, s.estimate_usd]))
+    const [fresh, freshSuites] = await Promise.all([api('/api/runs'), api('/api/suites')])
+    suites = freshSuites
+    if (JSON.stringify(suites.map((s) => [s.suite, s.running, s.questions, s.estimate_usd])) !== before) drawSuites()
+    drawTabs()
+    const list = document.querySelector('.list')
+    if (tab !== 'runs' || !list || fresh.length !== runs.length) {
+      runs = fresh
+      if (current) current = await api(`/api/runs/${plain(current.id)}`)
+      if (tab === 'runs') drawRuns()
+      return
+    }
+    for (const r of fresh) {
+      const old = runs.find((x) => x.id === r.id)
+      const item = list.querySelector(`[data-id="${plain(r.id)}"]`)
+      if (item && JSON.stringify(old) !== JSON.stringify(r)) item.outerHTML = runItem(r, false)
+    }
+    runs = fresh
+    if (!current) return
+    const mine = runs.find((r) => plain(r.id) === plain(current.id))
+    if (!mine || (mine.status === current.status && mine.total === current.cases.length)) return
+    const had = current.cases.length
+    const was = current.status
+    current = await api(`/api/runs/${plain(current.id)}`)
+    const rows = document.getElementById('cases')
+    if (was !== current.status || had === 0 || !rows || (other && onlyChanges)) {
+      document.getElementById('detail').innerHTML = runDetail()
+      return
+    }
+    document.getElementById('run-head').outerHTML = runHead()
+    const before2 = Object.fromEntries((other?.cases ?? []).map((c) => [c.input, c]))
+    rows.insertAdjacentHTML(
+      'beforeend',
+      current.cases
+        .slice(had)
+        .map((c, i) => caseRows(c, other ? before2[c.input] : null, had + i))
+        .join(''),
+    )
+  }
+
+  async function refresh() {
+    runs = await api('/api/runs')
+    if (current) current = await api(`/api/runs/${plain(current.id)}`)
+    suites = await api('/api/suites')
+    drawSuites()
+    drawTabs()
+    if (tab === 'runs') drawRuns()
+  }
+
+  function ask(title, body, go = t('run')) {
+    const d = document.getElementById('confirm')
+    document.getElementById('confirm-go').textContent = go
+    document.getElementById('confirm-title').textContent = title
+    document.getElementById('confirm-body').textContent = body
+    d.showModal()
+    return new Promise((resolve) => {
+      const done = (answer) => {
+        d.close()
+        resolve(answer)
+      }
+      document.getElementById('confirm-go').onclick = () => done(true)
+      document.getElementById('confirm-cancel').onclick = () => done(false)
+    })
+  }
+
+  function selectTab(name) {
+    tab = name
+    for (const b of document.querySelectorAll('[data-tab]')) b.setAttribute('aria-selected', b.dataset.tab === name)
+  }
+
+  document.addEventListener('click', async (e) => {
+    const el = e.target.closest('button, tr.case')
+    if (!el) return
+    if (el.dataset.lang) {
+      lang = el.dataset.lang
+      try {
+        localStorage.setItem('evals:lang', lang)
+      } catch {}
+      translateStatic()
+      drawSuites()
+      drawTabs()
+      return tab === 'runs' ? drawRuns() : drawQuestions()
+    }
+    if (el.dataset.tab) {
+      selectTab(el.dataset.tab)
+      editing = null
+      return tab === 'runs' ? drawRuns() : drawQuestions()
+    }
+    if (el.dataset.run) {
+      const s = suites.find((x) => x.suite === el.dataset.run)
+      const title = TEXT[lang].suites[s.suite][0]
+      const ok = await ask(t('confirmTitle', { suite: title }), t('confirmBody', { n: s.questions, cost: usd(s.estimate_usd) }))
+      if (!ok) return
+      await api('/api/runs', { method: 'POST', body: { suite: s.suite } })
+      selectTab('runs')
+      await new Promise((r) => setTimeout(r, 800))
+      runs = await api('/api/runs')
+      const mine = runs.find((r) => r.suite === s.suite && r.status === 'running')
+      if (mine) current = await api(`/api/runs/${plain(mine.id)}`)
+      return refresh()
+    }
+    if (el.dataset.stop) {
+      if (!(await ask(t('stopTitle'), t('stopBody'), t('stop')))) return
+      await api(`/api/runs/${el.dataset.stop}/stop`, { method: 'POST', body: {} })
+      return refresh()
+    }
+    if (el.dataset.id) {
+      current = await api(`/api/runs/${el.dataset.id}`)
+      other = null
+      return drawRuns()
+    }
+    if (el.matches('tr.case')) {
+      const d = document.querySelector(`tr[data-for="${el.dataset.i}"]`)
+      d.hidden = !d.hidden
+      return
+    }
+    if (el.dataset.qsuite) {
+      qsuite = el.dataset.qsuite
+      editing = null
+      return drawQuestions()
+    }
+    if (el.id === 'qadd') {
+      editing = 'new'
+      return drawQuestions()
+    }
+    if (el.dataset.edit) {
+      editing = el.dataset.edit
+      return drawQuestions()
+    }
+    if (el.id === 'qcancel') {
+      editing = null
+      return drawQuestions()
+    }
+  })
+
+  document.addEventListener('submit', async (e) => {
+    if (e.target.id !== 'qform') return
+    e.preventDefault()
+    const form = new FormData(e.target)
+    const data = Object.fromEntries(FIELDS[qsuite].map(([key, , kind]) => [key, fromText(String(form.get(key) ?? ''), kind)]))
+    const picker = FIELDS[qsuite].find(([, , kind]) => kind === 'game' || kind === 'gameref')
+    if (picker) {
+      if (!form.get('game')) {
+        alert(t('pickGame'))
+        return
+      }
+      data.game = String(form.get('game'))
+      if (picker[2] === 'gameref') data.name = String(form.get('name'))
+    }
+    if (editing === 'new') await api(`/api/questions/${qsuite}`, { method: 'POST', body: { data } })
+    else await api(`/api/questions/${qsuite}/${editing}`, { method: 'PUT', body: { data, active: form.get('active') === 'on' } })
+    editing = null
+    drawQuestions()
+    refresh()
+  })
+
+  // The game picker: search as the name is typed, pick from the list.
+  let searchTimer = 0
+  document.addEventListener('input', (e) => {
+    const input = e.target.closest('.game-search')
+    if (!input) return
+    const picker = input.closest('.picker')
+    picker.querySelector('[name=game]').value = ''
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(async () => {
+      const list = picker.querySelector('.options')
+      const q = input.value.trim()
+      if (q.length < 2) {
+        list.hidden = true
+        return
+      }
+      const found = await api(`/api/games?q=${encodeURIComponent(q)}`)
+      list.innerHTML = found.length
+        ? found
+            .map((g) => `<li><button type="button" data-pick="${esc(g.id)}" data-name="${esc(g.name)}"><span>${esc(g.name)}</span><span class="subtle">${t('passages', { n: g.passages })}</span></button></li>`)
+            .join('')
+        : `<li class="subtle" style="padding:8px 10px">${t('noGame')}</li>`
+      list.hidden = false
+    }, 200)
+  })
+
+  document.addEventListener('mousedown', (e) => {
+    const option = e.target.closest('[data-pick]')
+    if (!option) return
+    e.preventDefault()
+    const picker = option.closest('.picker')
+    const input = picker.querySelector('.game-search')
+    const ref = input.dataset.kind === 'gameref'
+    picker.querySelector('[name=game]').value = ref ? `game:${option.dataset.pick}` : option.dataset.name
+    picker.querySelector('[name=name]').value = option.dataset.name
+    input.value = option.dataset.name
+    picker.querySelector('.options').hidden = true
+  })
+
+  document.addEventListener('focusout', (e) => {
+    const picker = e.target.closest?.('.picker')
+    if (picker) setTimeout(() => (picker.querySelector('.options').hidden = true), 150)
+  })
+
+  document.addEventListener('change', async (e) => {
+    if (e.target.id === 'compare') {
+      other = e.target.value ? await api(`/api/runs/${e.target.value}`) : null
+      drawRuns()
+    }
+    if (e.target.id === 'only') {
+      onlyChanges = e.target.checked
+      drawRuns()
+    }
+  })
+
+  // While something runs, follow it.
+  setInterval(() => {
+    if (runs.some((r) => r.status === 'running') || suites.some((s) => s.running)) poll()
+  }, 3000)
+
+  translateStatic()
+  document.getElementById('tab').innerHTML = runsSkeleton()
+  document.getElementById('suites').innerHTML = suitesSkeleton()
+  refresh()
+</script>
+</body>
+</html>

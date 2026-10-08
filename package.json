@@ -41,7 +41,8 @@
     "test:server": "bun test apps/server/tests",
     "test:web": "bun test apps/web/tests --preload ./apps/web/tests/setup.ts",
     "test:coverage": "bun scripts/check-coverage.ts",
-    "ai:eval": "cd services/ai && uv run python -m evals"
+    "ai:eval": "cd services/ai && uv run python -m evals",
+    "ai:eval:view": "cd services/ai && uv run python -m evals.view"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     ai_model_guide: str = ''
     ai_model_guide_index: str = ''
     ai_model_server_check: str = ''
+    # The model that grades Nexo's answers in the evals (`bun run ai:eval answers`).
+    ai_model_judge: str = ''
 
     # Hosted web search (OpenAI only). Off, every answer comes from the stored guides, the deep
     # guide passages and the catalog, which is cheaper and faster; a local model never searches.

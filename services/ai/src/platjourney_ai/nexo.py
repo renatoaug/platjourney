@@ -6,7 +6,7 @@ from typing import Any, Literal, cast
 
 from pydantic import BaseModel
 
-from . import db, deepguide, llm
+from . import costs, db, deepguide, llm
 from .config import settings
 from .guidestore import Passage
 from .schemas import GameContext, Trophy, shown_progress
@@ -319,6 +319,9 @@ async def trophy_help(ctx: GameContext, trophy: Trophy) -> str:
 
 async def record_gap(ctx: GameContext, question: str) -> None:
     """A question the deep guide had no passage for: what the guides should cover next."""
+    # An eval's questions are not players' questions, and an eval writes nothing.
+    if costs.collected.get() is not None:
+        return
     try:
         await db.query(
             'LET $game = type::record($id);'

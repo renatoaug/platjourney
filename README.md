@@ -66,7 +66,9 @@ bun run test                 # server, web and AI service
 bun run test:coverage        # the same, failing under 80% per app
 bun run stories:check        # every story renders
 bun run ui:check             # every screen at 1280 and 375 with axe (app and database running)
-bun run ai:eval              # deep guide retrieval and Nexo's scope, against the real model (ai:eval scope for one)
+bun run ai:eval              # retrieval, scope and answers against the real model (ai:eval answers for one)
+bun run ai:eval seed         # load the example eval questions (once, before the viewer)
+bun run ai:eval:view         # run suites, compare runs and edit questions on 127.0.0.1:8200
 ```
 
 CI runs lint, typecheck and the tests with coverage on every pull request.
@@ -81,6 +83,7 @@ Every merge to `main` is a release: [semantic-release](https://semantic-release.
 - [`docs/features.md`](docs/features.md): what PlatJourney does, the demo and the Telegram commands
 - [`docs/architecture.md`](docs/architecture.md): the parts, how they talk and where the code lives
 - [`docs/configuration.md`](docs/configuration.md): every setting in `.env`, local models and per-feature models
+- [`docs/evals.md`](docs/evals.md): measuring Nexo against fixed questions, the evals database and the viewer
 - [`docs/database.md`](docs/database.md): why SurrealDB, every table and how they link (with diagrams), migrations, seeds and the catalog
 - [`docs/rag.md`](docs/rag.md): how the deep guide is indexed and how Nexo retrieves passages for an answer
 - [`docs/sources.md`](docs/sources.md): PSN, the web sources behind guides and how they are used

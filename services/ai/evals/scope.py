@@ -5,45 +5,58 @@ model through `nexo.reply`, without a game, and reports which replies answered w
 have refused (a forbidden word), ran long, or were blocked by moderation.
 """
 
-import json
-from pathlib import Path
-
 from pydantic import BaseModel
 
 from platjourney_ai import nexo
 from platjourney_ai.costs import CostTag, current_tag
 
-DATA = Path(__file__).parent / 'data' / 'scope.json'
+from . import questions
+from .runs import Run, digest
+
+MAX_CHARS = 700
 
 
 class Case(BaseModel):
     message: str
     forbidden: list[str]
+    max_chars: int = MAX_CHARS
 
 
-class Golden(BaseModel):
-    cases: list[Case]
-    max_chars: int
-
-
-async def run() -> None:
-    golden = Golden.model_validate(json.loads(DATA.read_text()))
-    print(f'scope ({DATA.name})')
+async def run() -> str:
+    asked = await questions.active('scope')
+    print(f'scope ({len(asked)} questions)')
     current_tag.set(CostTag(action='chat'))
-    passed = 0
-    for case in golden.cases:
-        try:
-            text = await nexo.reply(case.message, None, [])
-        except nexo.Moderated:
-            passed += 1
-            print(f'  moderated: "{case.message}"')
-            continue
-        leaked = [w for w in case.forbidden if w.lower() in text.lower()]
-        too_long = len(text) > golden.max_chars
-        if leaked or too_long:
+    record = Run('scope', prompt=digest(nexo.system_prompt()))
+    await record.start(len(asked))
+    try:
+        for q in asked:
+            case = Case.model_validate(q['data'])
+            try:
+                text, calls = await record.measure(nexo.reply(case.message, None, []))
+            except nexo.Moderated:
+                print(f'  moderated: "{case.message}"')
+                await record.case(
+                    question=q['id'], input=case.message, passed=True, reason='moderated'
+                )
+                continue
+            leaked = [w for w in case.forbidden if w.lower() in text.lower()]
             reasons = [f'contains {", ".join(leaked)}'] if leaked else []
-            reasons += [f'{len(text)} chars'] if too_long else []
-            print(f'  fail: "{case.message}" ({"; ".join(reasons)})\n    {text[:200]!r}')
-        else:
-            passed += 1
-    print(f'  {passed}/{len(golden.cases)} kept to scope')
+            reasons += [f'{len(text)} chars'] if len(text) > case.max_chars else []
+            if reasons:
+                print(f'  fail: "{case.message}" ({"; ".join(reasons)})')
+            await record.case(
+                question=q['id'],
+                input=case.message,
+                expected=f'no {", ".join(case.forbidden)}; at most {case.max_chars} chars',
+                output=text,
+                passed=not reasons,
+                reason='; '.join(reasons),
+                calls=calls,
+            )
+        passed = sum(c['passed'] for c in record.cases)
+        print(f'  {passed}/{len(record.cases)} kept to scope')
+        await record.finish({'kept to scope': f'{passed}/{len(record.cases)}'})
+    except Exception as e:
+        await record.fail(f'{type(e).__name__}: {e}')
+        raise
+    return record.id
