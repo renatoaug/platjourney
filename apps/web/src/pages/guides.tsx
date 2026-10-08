@@ -170,6 +170,13 @@ export function Guides({
   const sort = params.get('sort') ?? ''
   const page = Number(params.get('page')) || 1
   const [typed, setTyped] = useState(q)
+  // The address changed from outside the field (the Guides link in the menu, back, a link):
+  // the field follows it, or the pending search below would put the old text back.
+  const [seen, setSeen] = useState(q)
+  if (q !== seen) {
+    setSeen(q)
+    if (typed.trim() !== q) setTyped(q)
+  }
   const [load, setLoad] = useState<Load>({ status: 'loading' })
 
   // Every change goes to the address, so a link or the back button gives the same list.
