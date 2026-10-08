@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1](https://github.com/renatoaug/platjourney/compare/v0.2.0...v0.2.1) (2026-10-08)
+
+### Bug Fixes
+
+* **notices:** keep one session focus across notices and cite no source in them ([#19](https://github.com/renatoaug/platjourney/issues/19)) ([cd39dea](https://github.com/renatoaug/platjourney/commit/cd39dea21773679751695c5c905ce77ebd6f0191))
+
 ## [0.2.0](https://github.com/renatoaug/platjourney/compare/v0.1.2...v0.2.0) (2026-10-08)
 
 ### Features
