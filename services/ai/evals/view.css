@@ -198,18 +198,54 @@
     border-radius: var(--radius-round);
   }
 
-  .controller-keys {
+  /* The four buttons scattered around the orbit, each drifting and lighting up in turn. */
+  .controller-keys span {
     position: absolute;
-    right: -28px;
-    top: 40px;
-    display: grid;
-    gap: 10px;
     color: var(--color-accent);
     font: 18px / 1 var(--font-mono);
+    opacity: 0.5;
+    animation:
+      key-light 4s ease-in-out infinite,
+      float 5s ease-in-out infinite;
   }
 
   .controller-keys span:nth-child(even) {
     color: var(--color-trophy-platinum);
+  }
+
+  .controller-keys span:nth-child(1) {
+    top: 6px;
+    right: 18px;
+  }
+
+  .controller-keys span:nth-child(2) {
+    top: 46%;
+    right: -34px;
+    animation-delay: 1s, 1.2s;
+  }
+
+  .controller-keys span:nth-child(3) {
+    bottom: 56px;
+    left: -22px;
+    animation-delay: 2s, 2.4s;
+  }
+
+  .controller-keys span:nth-child(4) {
+    top: 24%;
+    left: -32px;
+    animation-delay: 3s, 0.6s;
+  }
+
+  @keyframes key-light {
+    0%,
+    30%,
+    100% {
+      opacity: 0.5;
+    }
+
+    12% {
+      opacity: 1;
+    }
   }
 
   #overview {
@@ -477,11 +513,6 @@
     font-size: 14px;
     font-weight: 500;
     letter-spacing: normal;
-  }
-
-  .list {
-    max-height: 330px;
-    overflow: auto;
   }
 
   .run {
@@ -878,6 +909,60 @@
   }
 
   /* Column labels over the run rows, on the rows' own grid. */
+  /* The runs pager, as the trophy list's in the app. */
+  .pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .pager button {
+    display: grid;
+    place-items: center;
+    min-width: 30px;
+    height: 32px;
+    padding: 0 7px;
+    border: 0;
+    border-radius: var(--radius-tag);
+    background: transparent;
+    color: var(--color-fg-muted);
+    font-size: 12px;
+  }
+
+  .pager button .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .pager button:hover:not(:disabled) {
+    background: var(--color-border);
+    color: var(--color-fg);
+  }
+
+  .pager button[aria-current="page"] {
+    background: var(--color-border);
+    color: var(--color-accent);
+  }
+
+  .pager button:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .page-gap {
+    font-size: 12px;
+    color: var(--color-fg-muted);
+  }
+
   .run-cols {
     display: grid;
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(
@@ -1629,10 +1714,6 @@
 
     .runs-layout.has-selection .history {
       position: static;
-    }
-
-    .has-selection .list {
-      max-height: 300px;
     }
 
     .run .run-action {

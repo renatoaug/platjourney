@@ -61,6 +61,10 @@
       workspaceTitle: 'Run history',
       mission: 'Mission {n}',
       history: 'Runs',
+      pages: 'Pages',
+      page: 'Page {n}',
+      previousPage: 'Previous page',
+      nextPage: 'Next page',
       historyHint: 'Select a run to inspect its results.',
       colSuite: 'Suite',
       colStarted: 'Started',
@@ -205,6 +209,10 @@
       workspaceTitle: 'Histórico de runs',
       mission: 'Missão {n}',
       history: 'Runs',
+      pages: 'Páginas',
+      page: 'Página {n}',
+      previousPage: 'Página anterior',
+      nextPage: 'Próxima página',
       historyHint: 'Clique em uma run para abrir os resultados.',
       colSuite: 'Suíte',
       colStarted: 'Início',
@@ -422,6 +430,9 @@
   let tab = 'runs'
   let suites = []
   let runs = []
+  // The runs list shows a page at a time, like the trophy list in the app.
+  const RUNS_PAGE = 5
+  let runPage = 1
   let current = null
   let other = null
   let onlyChanges = false
@@ -552,6 +563,27 @@
       <div class="card" style="padding:6px 20px"><table class="questions"><tbody>${row.repeat(6)}</tbody></table></div>`
   }
 
+  function pagedRuns() {
+    const pages = Math.max(1, Math.ceil(runs.length / RUNS_PAGE))
+    runPage = Math.min(runPage, pages)
+    return runs.slice((runPage - 1) * RUNS_PAGE, runPage * RUNS_PAGE)
+  }
+
+  // Previous, the page numbers (first, last and the ones beside the current, gaps as …), next.
+  function runPager() {
+    const pages = Math.ceil(runs.length / RUNS_PAGE)
+    if (pages <= 1) return ''
+    const shown = Array.from({ length: pages }, (_, i) => i + 1).filter((n) => n === 1 || n === pages || Math.abs(n - runPage) <= 1)
+    const numbers = shown
+      .map((n, i) => `${i > 0 && n - shown[i - 1] > 1 ? '<span class="page-gap">…</span>' : ''}<button type="button" data-page="${n}" aria-label="${t('page', { n })}" ${n === runPage ? 'aria-current="page"' : ''}>${n}</button>`)
+      .join('')
+    return `<nav class="pager" aria-label="${t('pages')}">
+      <button type="button" data-page="${runPage - 1}" aria-label="${t('previousPage')}" ${runPage === 1 ? 'disabled' : ''}>${icon('chevron-left')}</button>
+      <div class="page-numbers">${numbers}</div>
+      <button type="button" data-page="${runPage + 1}" aria-label="${t('nextPage')}" ${runPage === pages ? 'disabled' : ''}>${icon('chevron-right')}</button>
+    </nav>`
+  }
+
   function runItem(r, animate = true) {
     const live = r.status === 'running'
     const state = r.status === 'failed' ? 'fail' : r.status === 'stopped' ? 'neutral' : live ? 'live' : 'pass'
@@ -671,7 +703,7 @@
       el.innerHTML = empty(t('noRunsTitle'), t('noRunsBody'))
       return
     }
-    el.innerHTML = `<div id="runs-layout" class="runs-layout ${current ? 'has-selection' : ''}"><div class="history"><div class="history-heading"><h3>${t('history')}</h3><p class="subtle">${t('historyHint')}</p></div><div class="list"><div class="run-cols" aria-hidden="true"><span>${t('colSuite')}</span><span>${t('colStarted')}</span><span>${t('colStatus')}</span><span>${t('colQuestions')}</span><span>${t('colCost')}</span><span></span></div>${runs.map((r) => runItem(r, animate)).join('')}</div></div>${current ? `<div id="detail" role="region" aria-labelledby="report-title">${runDetail()}</div>` : ''}</div>`
+    el.innerHTML = `<div id="runs-layout" class="runs-layout ${current ? 'has-selection' : ''}"><div class="history"><div class="history-heading"><h3>${t('history')}</h3><p class="subtle">${t('historyHint')}</p></div><div class="list"><div class="run-cols" aria-hidden="true"><span>${t('colSuite')}</span><span>${t('colStarted')}</span><span>${t('colStatus')}</span><span>${t('colQuestions')}</span><span>${t('colCost')}</span><span></span></div>${pagedRuns().map((r) => runItem(r, animate)).join('')}</div>${runPager()}</div>${current ? `<div id="detail" role="region" aria-labelledby="report-title">${runDetail()}</div>` : ''}</div>`
   }
 
   function asText(value, kind) {
@@ -884,6 +916,10 @@
       d.hidden = !d.hidden
       document.querySelector(`[data-case="${index}"]`).setAttribute('aria-expanded', !d.hidden)
       return
+    }
+    if (el.dataset.page) {
+      runPage = Number(el.dataset.page)
+      return drawRuns(false)
     }
     if (el.dataset.qsuite) {
       qsuite = el.dataset.qsuite
