@@ -412,7 +412,16 @@ export function NexoChat({
       <div className="nexo-chat-top">
         <div className="page-head" style={{ marginBottom: 0 }}>
           <div className="nexo-chat-heading">
-            <img className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
+            {/* Nexo floats beside the controller's four buttons, which light up in turn. */}
+            <span className="nexo-hero" aria-hidden="true">
+              <img className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
+              <span className="nexo-keys">
+                <span>△</span>
+                <span>○</span>
+                <span>×</span>
+                <span>□</span>
+              </span>
+            </span>
             <div>
               <span className="eyebrow">{t('eyebrow')}</span>
               <h1>Nexo</h1>
