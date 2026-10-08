@@ -208,7 +208,8 @@
       color 0.2s;
   }
 
-  .nav a:hover {
+  /* The active item keeps its own colours: the hover grey over the accent made its text unreadable. */
+  .nav a:not(.active):hover {
     color: var(--color-fg);
     background: color-mix(in srgb, var(--color-overlay) var(--alpha-faint), transparent);
   }
