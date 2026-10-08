@@ -215,7 +215,11 @@ async function check(user: User): Promise<void> {
     !prev ||
     prev.earned !== latest.earned ||
     new Date(prev.last_updated_at).getTime() !== new Date(latest.lastUpdated).getTime()
-  const ctx = switched || changed || !current ? await setCurrent(user, latest) : current
+  // PSN updates a title's summary before its trophy list: a list read in between has fewer
+  // earned trophies than the summary, and once the summary stops changing it would be reused
+  // forever, missing those trophies. Such a list is read again until the two agree.
+  const stale = !!current && current.trophies.filter((t) => t.earned).length < latest.earned
+  const ctx = switched || changed || stale || !current ? await setCurrent(user, latest) : current
 
   for (const t of titles) await upsertTitle(user.id, t)
 
