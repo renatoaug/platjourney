@@ -88,13 +88,14 @@ async def test_a_run_records_its_version_each_case_as_it_goes_and_its_end(
 ) -> None:
     monkeypatch.setattr(runs, 'git_commit', lambda: 'abc1234')
     monkeypatch.setattr(runs, 'version', lambda: '0.1.2')
-    run = runs.Run('answers', prompt='p1')
+    run = runs.Run('answers', {'Nexo': 'Você é o Nexo.', 'Judge': 'Dê nota.'})
     assert await run.start(2) == 'eval_run:r1'
     assert fake.sent[0][1]['data'] == {
         'suite': 'answers',
         'version': '0.1.2',
         'commit': 'abc1234',
-        'prompt': 'p1',
+        'prompt': runs.digest('Você é o Nexo.', 'Dê nota.'),
+        'prompt_text': '## Nexo\n\nVocê é o Nexo.\n\n## Judge\n\nDê nota.',
         'planned': 2,
     }
     call = {'model': 'gpt-5.6-terra', 'cost_usd': 0.01}

@@ -11,7 +11,7 @@ from platjourney_ai import nexo
 from platjourney_ai.costs import CostTag, current_tag
 
 from . import questions
-from .runs import Run, digest
+from .runs import Run
 
 MAX_CHARS = 700
 
@@ -26,7 +26,7 @@ async def run() -> str:
     asked = await questions.active('scope')
     print(f'scope ({len(asked)} questions)')
     current_tag.set(CostTag(action='chat'))
-    record = Run('scope', prompt=digest(nexo.system_prompt()))
+    record = Run('scope', {'Nexo': nexo.system_prompt()})
     await record.start(len(asked))
     try:
         for q in asked:
@@ -52,6 +52,8 @@ async def run() -> str:
                 passed=not reasons,
                 reason='; '.join(reasons),
                 calls=calls,
+                forbidden=case.forbidden,
+                max_chars=case.max_chars,
             )
         passed = sum(c['passed'] for c in record.cases)
         print(f'  {passed}/{len(record.cases)} kept to scope')

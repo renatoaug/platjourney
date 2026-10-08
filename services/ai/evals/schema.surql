@@ -14,6 +14,8 @@ DEFINE FIELD IF NOT EXISTS status ON eval_run TYPE string DEFAULT 'running';
 DEFINE FIELD IF NOT EXISTS version ON eval_run TYPE string;
 DEFINE FIELD IF NOT EXISTS commit ON eval_run TYPE string;
 DEFINE FIELD IF NOT EXISTS prompt ON eval_run TYPE string DEFAULT '';
+-- The prompts themselves, as they were for this run: they change between versions.
+DEFINE FIELD IF NOT EXISTS prompt_text ON eval_run TYPE string DEFAULT '';
 DEFINE FIELD IF NOT EXISTS models ON eval_run TYPE array<string> DEFAULT [];
 DEFINE FIELD IF NOT EXISTS cost_usd ON eval_run TYPE float DEFAULT 0;
 DEFINE FIELD IF NOT EXISTS passed ON eval_run TYPE int DEFAULT 0;

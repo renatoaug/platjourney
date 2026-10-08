@@ -34,7 +34,7 @@ bun run ai:eval answers      # one suite
 |---|---|
 | Suites | One card per suite with how many questions it asks and the estimated cost of a run (from the last run, or a default). **Run** asks for confirmation with that cost, then follows the run live. |
 | Runs | Every run, newest first, with version, commit, models and cost. A run opens case by case (question, expected, Nexo's answer, score and why) and compares with an earlier run of the same suite: each case is marked fixed, broke, better or worse. |
-| Questions | Each suite's questions, to add, edit or archive. An archived question is no longer asked; earlier runs keep its cases. |
+| Questions | Each suite's questions, newest first, to add, edit or archive in a dialog. The game is picked from a search of the games with a stored guide, never typed. An archived question is no longer asked; earlier runs keep its cases. |
 
 It listens on 127.0.0.1 only and has no login: run it on your own machine.
 
@@ -45,7 +45,7 @@ Questions and runs live in a database of their own, `evals` by default, on the s
 | Table | Holds |
 |---|---|
 | `eval_question` | A suite's question: `suite`, `data` (its fields, below) and `active` |
-| `eval_run` | A run: `suite`, `status` (running, done, failed), `version` (root `package.json`), `commit` (`+` when the tree had uncommitted changes), `prompt` (a fingerprint of the prompts used), `models`, `cost_usd`, `passed`, `total`, `planned` and `summary` |
+| `eval_run` | A run: `suite`, `status` (running, done, failed), `version` (root `package.json`), `commit` (`+` when the tree had uncommitted changes), `prompt` (a fingerprint of the prompts used) and `prompt_text` (the prompts themselves, shown in the viewer), `models`, `cost_usd`, `passed`, `total`, `planned` and `summary` |
 | `eval_case` | One question in a run: `input`, `expected`, `output`, `passed`, `score`, `reason`, `models`, `cost_usd` and `extra` (the game, the judge's flags) |
 
 A question's `data` per suite:

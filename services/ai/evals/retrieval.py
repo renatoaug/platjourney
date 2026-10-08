@@ -74,7 +74,7 @@ async def all_passages(game: str) -> list[Passage]:
 async def run() -> str:
     asked = await questions.active('retrieval')
     print(f'retrieval ({len(asked)} questions)')
-    record = Run('retrieval', prompt=f'k={K}')
+    record = Run('retrieval')
     await record.start(len(asked))
     by_game: dict[str, list[tuple[str, Case, str]]] = {}
     for q in asked:

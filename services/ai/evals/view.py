@@ -36,6 +36,11 @@ async def page() -> HTMLResponse:
     return HTMLResponse((HERE / 'view.html').read_text(), headers={'cache-control': 'no-store'})
 
 
+@app.get('/view.css')
+async def stylesheet() -> FileResponse:
+    return FileResponse(HERE / 'view.css', media_type='text/css')
+
+
 @app.get('/theme.css')
 async def theme() -> FileResponse:
     return FileResponse(THEME, media_type='text/css')
@@ -136,11 +141,24 @@ async def games(q: str = '') -> list[dict[str, Any]]:
     if len(q.strip()) < 2:
         return []
     return await db.rows(
-        'SELECT record::id(game) AS id, game.name AS name, passages FROM guide'
+        'SELECT record::id(game) AS id, game.name AS name, game.cover_url AS cover_url,'
+        ' game.platforms AS platforms, game.release_year AS release_year, passages FROM guide'
         ' WHERE guide != NONE AND string::lowercase(game.name) CONTAINS string::lowercase($q)'
         ' ORDER BY passages DESC LIMIT 10',
         {'q': q.strip()},
     )
+
+
+@app.get('/api/game')
+async def game(ref: str) -> dict[str, Any] | None:
+    """One game as the picker shows it, by record id (game:…) or by its exact name."""
+    source = 'type::record($ref)' if ref.startswith('game:') else 'game WHERE name = $ref'
+    found = await db.rows(
+        'SELECT record::id(id) AS id, name, cover_url, platforms, release_year'
+        f' FROM {source} LIMIT 1',
+        {'ref': ref},
+    )
+    return found[0] if found else None
 
 
 @app.get('/api/questions/{suite}')
@@ -149,7 +167,7 @@ async def list_questions(suite: str) -> list[dict[str, Any]]:
         raise HTTPException(404)
     return await store.rows(
         'SELECT id, data, active, created_at, updated_at FROM eval_question WHERE suite = $suite'
-        ' ORDER BY active DESC, created_at',
+        ' ORDER BY created_at DESC',
         {'suite': suite},
     )
 

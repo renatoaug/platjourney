@@ -17,7 +17,7 @@ from platjourney_ai.costs import CostTag, current_tag
 from platjourney_ai.schemas import GameContext
 
 from . import questions
-from .runs import Run, digest
+from .runs import Run
 
 # A case passes from this score up, with nothing from `avoid` in the answer.
 PASS = 4
@@ -152,7 +152,7 @@ async def run() -> str:
     asked = await questions.active('answers')
     print(f'answers ({len(asked)} questions)')
     current_tag.set(CostTag(action='chat'))
-    record = Run('answers', prompt=digest(nexo.system_prompt(), JUDGE))
+    record = Run('answers', {'Nexo': nexo.system_prompt(), 'Judge': JUDGE})
     await record.start(len(asked))
     try:
         for q in asked:

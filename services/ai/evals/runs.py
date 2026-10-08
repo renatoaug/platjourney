@@ -50,9 +50,13 @@ def digest(*parts: str) -> str:
 class Run:
     """One run of a suite. `start` creates it, `case` records each question, `finish` closes it."""
 
-    def __init__(self, suite: str, prompt: str = '') -> None:
+    def __init__(self, suite: str, prompts: dict[str, str] | None = None) -> None:
+        """`prompts` are the instructions the run used, by role (Nexo, the judge): stored whole,
+        with a short fingerprint to tell two runs' prompts apart at a glance."""
         self.suite = suite
-        self.prompt = prompt
+        prompts = prompts or {}
+        self.prompt = digest(*prompts.values()) if prompts else ''
+        self.prompt_text = '\n\n'.join(f'## {role}\n\n{text}' for role, text in prompts.items())
         self.id = ''
         self.cases: list[dict[str, Any]] = []
 
@@ -65,6 +69,7 @@ class Run:
                     'version': version(),
                     'commit': git_commit(),
                     'prompt': self.prompt,
+                    'prompt_text': self.prompt_text,
                     'planned': planned,
                 }
             },

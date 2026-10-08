@@ -7,667 +7,10 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <!-- The app's own design tokens, served by view.py. -->
 <link rel="stylesheet" href="/theme.css">
-<style>
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    background: var(--color-bg);
-    color: var(--color-fg);
-    font: 14px/1.55 var(--font-body);
-  }
-
-  button,
-  input,
-  textarea,
-  select {
-    font: inherit;
-    color: inherit;
-  }
-
-  h1,
-  h2,
-  h3 {
-    font-family: var(--font-display);
-    letter-spacing: var(--tracking-tight);
-    margin: 0;
-  }
-
-  .shell {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 24px 24px 64px;
-  }
-
-  header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  header img {
-    width: 36px;
-    height: 36px;
-  }
-
-  .brand {
-    font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 600;
-  }
-
-  .brand span {
-    color: var(--color-accent);
-  }
-
-  .tag {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-caps);
-    color: var(--color-accent);
-  }
-
-  .muted {
-    color: var(--color-fg-muted);
-  }
-
-  .subtle {
-    color: var(--color-fg-subtle);
-    font-size: 12px;
-  }
-
-  .hero {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 24px;
-    align-items: center;
-    margin: 28px 0 20px;
-    padding: 24px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    background:
-      radial-gradient(600px 220px at 100% 0, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 70%),
-      var(--color-surface);
-  }
-
-  .hero h1 {
-    font-size: 28px;
-    margin-top: 6px;
-  }
-
-  .hero p {
-    margin: 10px 0 0;
-    max-width: 680px;
-  }
-
-  .hero img {
-    width: 96px;
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .suites {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-
-  .suite {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 18px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    transition: border-color 0.2s, transform 0.2s;
-  }
-
-  .suite:hover {
-    border-color: var(--color-border-strong);
-    transform: translateY(-2px);
-  }
-
-  .suite h3 {
-    font-size: 17px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .suite p {
-    margin: 0;
-  }
-
-  /* How a suite is judged, in three short lines. */
-  .rules {
-    display: grid;
-    gap: 6px;
-    margin: 0;
-    padding-top: 10px;
-    border-top: 1px solid var(--color-border);
-    flex: 1;
-    font-size: 13px;
-  }
-
-  .rules dt {
-    color: var(--color-fg-subtle);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-caps);
-  }
-
-  .rules dd {
-    margin: 0 0 4px;
-    color: var(--color-fg-muted);
-  }
-
-  .suite-meta {
-    display: grid;
-    gap: 2px;
-    font-size: 13px;
-    color: var(--color-fg-muted);
-  }
-
-  .suite-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: var(--radius-control);
-    border: 1px solid var(--color-border-strong);
-    background: var(--color-surface-raised);
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-  }
-
-  .btn:hover {
-    border-color: var(--color-accent);
-  }
-
-  .btn.primary {
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: var(--color-on-accent);
-    font-weight: 600;
-  }
-
-  .btn.primary:hover {
-    background: var(--color-accent-hover);
-  }
-
-  .btn:disabled {
-    opacity: 0.55;
-    cursor: default;
-  }
-
-  .tabs {
-    display: flex;
-    gap: 6px;
-    margin: 32px 0 16px;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .tabs button {
-    border: 0;
-    background: none;
-    padding: 10px 14px;
-    color: var(--color-fg-muted);
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-  }
-
-  /* Suite filters, as the app's chips: quiet until active, the count in the same color. */
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 12px;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-control);
-    background: transparent;
-    color: var(--color-fg-muted);
-    cursor: pointer;
-  }
-
-  .chip:hover,
-  .chip.active {
-    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
-    color: var(--color-accent);
-    border-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
-  }
-
-  .chip .count {
-    font-variant-numeric: tabular-nums;
-    opacity: 0.7;
-  }
-
-  .tabs .count {
-    margin-left: 6px;
-    padding: 1px 7px;
-    border-radius: 99px;
-    background: var(--color-surface-raised);
-    color: var(--color-fg-muted);
-    font-size: 12px;
-  }
-
-  .tabs button[aria-selected='true'] .count {
-    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
-    color: var(--color-accent);
-  }
-
-  .tabs button[aria-selected='true'] {
-    color: var(--color-fg);
-    border-bottom-color: var(--color-accent);
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-
-  .list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .run {
-    text-align: left;
-    padding: 12px 14px;
-    border-radius: var(--radius-control);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-
-  .run:hover,
-  .run[aria-current='true'] {
-    border-color: var(--color-accent);
-  }
-
-  .row {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    align-items: baseline;
-  }
-
-  .pass {
-    color: var(--color-accent);
-  }
-
-  .fail {
-    color: var(--color-danger);
-  }
-
-  .card {
-    padding: 20px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    margin-bottom: 16px;
-  }
-
-  .facts {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 12px;
-    margin: 14px 0 0;
-  }
-
-  .facts dt {
-    color: var(--color-fg-subtle);
-    font-size: 12px;
-  }
-
-  .facts dd {
-    margin: 0;
-    overflow-wrap: anywhere;
-  }
-
-  .bar {
-    height: 6px;
-    border-radius: 99px;
-    background: var(--color-surface-raised);
-    overflow: hidden;
-    margin-top: 12px;
-  }
-
-  .bar i {
-    display: block;
-    height: 100%;
-    background: var(--color-accent);
-    transition: width 0.6s ease;
-  }
-
-  .bar.live i {
-    background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover), var(--color-accent));
-    background-size: 200% 100%;
-    animation: slide 1.4s linear infinite;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th,
-  td {
-    text-align: left;
-    vertical-align: top;
-    padding: 10px;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  th {
-    color: var(--color-fg-subtle);
-    font-weight: 500;
-    font-size: 12px;
-  }
-
-  tr.case {
-    cursor: pointer;
-  }
-
-  tr.case:hover td {
-    background: var(--color-surface-raised);
-  }
-
-  .detail td {
-    background: var(--color-surface-raised);
-  }
-
-  .detail h4 {
-    margin: 0 0 4px;
-    font-size: 12px;
-    color: var(--color-fg-subtle);
-    font-weight: 500;
-  }
-
-  .detail pre {
-    margin: 0 0 12px;
-    white-space: pre-wrap;
-    font: inherit;
-  }
-
-  .pill {
-    font-size: 12px;
-    padding: 1px 8px;
-    border-radius: 99px;
-    border: 1px solid currentColor;
-    white-space: nowrap;
-  }
-
-  .toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-
-  select,
-  input,
-  textarea {
-    background: var(--color-surface-raised);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-control);
-    padding: 7px 10px;
-  }
-
-  textarea {
-    width: 100%;
-    min-height: 70px;
-    resize: vertical;
-  }
-
-  label.field {
-    display: grid;
-    gap: 4px;
-    margin-bottom: 10px;
-    font-size: 13px;
-    color: var(--color-fg-muted);
-  }
-
-  label.field input {
-    width: 100%;
-  }
-
-  .empty {
-    display: grid;
-    justify-items: center;
-    gap: 8px;
-    padding: 40px 20px;
-    text-align: center;
-  }
-
-  .empty img {
-    width: 72px;
-    animation: float 6s ease-in-out infinite;
-  }
-
-  /* Skeletons take the shape of what loads: bars on real surfaces, one soft shimmer. */
-  .sk {
-    display: block;
-    height: 12px;
-    border-radius: var(--radius-tag);
-    background: linear-gradient(
-      90deg,
-      var(--color-surface-raised) 25%,
-      color-mix(in srgb, var(--color-fg) 9%, var(--color-surface-raised)) 50%,
-      var(--color-surface-raised) 75%
-    );
-    background-size: 200% 100%;
-    animation: slide 1.6s ease-in-out infinite;
-  }
-
-  .sk.box {
-    width: 34px;
-    height: 34px;
-    border-radius: var(--radius-control);
-  }
-
-  .sk.btn-sk {
-    width: 84px;
-    height: 36px;
-    border-radius: var(--radius-control);
-  }
-
-  .sk-stack {
-    display: grid;
-    gap: 8px;
-  }
-
-  dialog {
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    color: var(--color-fg);
-    padding: 22px;
-    width: min(460px, 92vw);
-  }
-
-  dialog::backdrop {
-    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
-  }
-
-  .fade {
-    animation: fade 0.25s ease;
-  }
-
-  @keyframes float {
-    50% {
-      transform: translateY(-6px);
-    }
-  }
-
-  @keyframes slide {
-    to {
-      background-position: -200% 0;
-    }
-  }
-
-  @keyframes fade {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-  }
-
-  @media (max-width: 860px) {
-    .suites,
-    .grid,
-    .hero {
-      grid-template-columns: 1fr;
-    }
-
-    .hero img {
-      display: none;
-    }
-  }
-  .icon {
-    width: 17px;
-    height: 17px;
-    flex: none;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.75;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .suite-icon {
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: var(--radius-control);
-    background: var(--color-surface-raised);
-    color: var(--color-accent);
-  }
-
-  header .spacer {
-    flex: 1;
-  }
-
-  /* The language switch, quiet: no frame, the current one just brighter. */
-  .lang {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    color: var(--color-fg-subtle);
-    font-size: 12px;
-  }
-
-  .lang .icon {
-    width: 14px;
-    height: 14px;
-    margin-right: 4px;
-  }
-
-  .lang button {
-    border: 0;
-    background: none;
-    padding: 2px 6px;
-    color: inherit;
-    font-size: 12px;
-    letter-spacing: var(--tracking-caps);
-    cursor: pointer;
-  }
-
-  .lang button:hover {
-    color: var(--color-fg-muted);
-  }
-
-  .lang button[aria-pressed='true'] {
-    color: var(--color-fg);
-  }
-
-  tbody tr:last-child td {
-    border-bottom: 0;
-  }
-
-  /* A row's action fits the row's height. */
-  .btn.sm {
-    padding: 4px 10px;
-    font-size: 13px;
-    gap: 6px;
-  }
-
-  .btn.sm .icon {
-    width: 15px;
-    height: 15px;
-  }
-
-  .questions td {
-    vertical-align: middle;
-  }
-
-  /* The game picker: a search over catalog games that have a guide. */
-  .picker {
-    position: relative;
-  }
-
-  .picker input {
-    width: 100%;
-  }
-
-  .options {
-    position: absolute;
-    z-index: 5;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    margin: 0;
-    padding: 4px;
-    list-style: none;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-control);
-    background: var(--color-surface);
-    box-shadow: 0 12px 32px var(--color-shadow);
-  }
-
-  .options button {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    padding: 8px 10px;
-    border: 0;
-    border-radius: 6px;
-    background: none;
-    color: var(--color-fg);
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .options button:hover,
-  .options button:focus {
-    background: var(--color-surface-raised);
-    outline: none;
-  }
-
-  .picked {
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--color-accent);
-  }
-</style>
+<link rel="stylesheet" href="/view.css">
 </head>
 <body>
-<div class="shell">
+<main class="shell">
   <header>
     <img src="/assets/logo.svg" alt="">
     <span class="brand">plat<span>journey</span></span>
@@ -686,19 +29,20 @@
       <h1 data-t="headline">Nexo evals</h1>
       <p class="muted" data-t="intro"></p>
     </div>
-    <img src="/assets/nexo-avatar.svg" alt="">
+    <div class="hero-art"><div class="orbit" aria-hidden="true"><div class="controller-keys"><span>△</span><span>○</span><span>×</span><span>□</span></div></div><img src="/assets/nexo-avatar.svg" alt="Nexo"><div id="overview" aria-live="polite"></div></div>
   </section>
 
+  <div class="section-heading"><h2 data-t="suiteTitle">What do you want to evaluate?</h2><p data-t="suiteHint"></p></div>
   <div class="suites" id="suites"></div>
 
-  <div class="tabs" role="tablist">
+  <section class="workspace"><div class="workspace-top"><div><span class="tag" data-t="workspaceLabel"></span><h2 data-t="workspaceTitle">Evaluation history</h2></div><div class="tabs" role="tablist" aria-label="Evals">
     <button type="button" role="tab" aria-selected="true" data-tab="runs" data-t="runs"></button>
     <button type="button" role="tab" aria-selected="false" data-tab="questions" data-t="questions"></button>
   </div>
-  <div id="tab"></div>
-</div>
+  </div><div id="tab" role="tabpanel"></div></section>
+</main>
 
-<dialog id="confirm">
+<dialog id="confirm" aria-labelledby="confirm-title">
   <h3 id="confirm-title">Run</h3>
   <p class="muted" id="confirm-body"></p>
   <div class="row" style="justify-content: flex-end; margin-top: 16px">
@@ -707,12 +51,51 @@
   </div>
 </dialog>
 
+<dialog id="qdialog" class="wide" aria-labelledby="qdialog-title"></dialog>
+
 <script>
   const TEXT = {
     en: {
-      eyebrow: 'Quality of Nexo',
-      headline: 'Measure Nexo before players do.',
-      intro: 'Each suite asks Nexo fixed questions with the real model and the real guides, then scores the answers. Every run is saved with the platform version, the prompt and what it cost, so you can see quality move release by release.',
+      eyebrow: 'Nexo / Evaluation lab',
+      workspaceLabel: 'Evaluations',
+      workspaceTitle: 'Run history',
+      mission: 'Mission {n}',
+      history: 'Runs',
+      historyHint: 'Select a run to inspect its results.',
+      colSuite: 'Suite',
+      colStarted: 'Started',
+      colStatus: 'Status',
+      colQuestions: 'Questions',
+      colCost: 'Cost',
+      showPrompt: 'Show prompt',
+      hidePrompt: 'Hide prompt',
+      approved: 'Passed',
+      rejected: 'Needs attention',
+      completed: 'Completed',
+      inspected: 'Questions evaluated',
+      noScore: 'No answers evaluated',
+      ratePending: 'In progress',
+      ratePendingNote: 'The pass rate shows when the run ends',
+      cancelledTitle: 'Run stopped before any answers',
+      cancelledBody: 'No questions were completed. Start a new run from the mission cards when you are ready.',
+      technical: 'Run information',
+      selected: 'Selected run',
+      viewResults: 'View results',
+      closeResults: 'Close results',
+      headline: 'Better answers. More confidence.',
+      intro: 'Test the search, the boundaries and the answers. Compare releases and understand exactly where Nexo can improve.',
+      suiteTitle: 'Choose your next mission',
+      suiteHint: 'Choose a suite. Review the cost before running.',
+      methodology: 'How this test works',
+      latest: 'Latest completed run',
+      metrics: { passed: 'Passed', 'mean score': 'Average score', 'kept to scope': 'Stayed on topic', overall: 'Overall' },
+      approval: 'of questions passed',
+      ready: 'Ready to evaluate',
+      readyHint: 'Your first run starts with a suite below.',
+      unchanged: 'No changes in this comparison',
+      unchangedHint: 'Turn off “Only what changed” to see all questions.',
+      loadError: 'Could not load the evaluations',
+      retry: 'Try again',
       runs: 'Runs',
       questions: 'Questions',
       run: 'Run',
@@ -728,7 +111,7 @@
       noRunsTitle: 'No runs yet',
       noRunsBody: 'Pick a suite above and press Run. You will see the estimated cost before anything is spent.',
       pickTitle: 'Pick a run',
-      pickBody: "Open one on the left to see every question, Nexo's answer and why it passed or failed.",
+      pickBody: "Select a run above to see every question, Nexo's answer and why it passed or failed.",
       failed: 'Failed',
       stopped: 'Stopped',
       stop: 'Stop',
@@ -742,11 +125,11 @@
       cost: 'Cost',
       prompt: 'Prompt',
       compare: 'Compare with',
+      noComparison: 'No comparison',
       onlyChanged: 'Only what changed',
       question: 'Question',
       score: 'Score',
       before: 'Before',
-      why: 'Why',
       expected: 'Expected',
       answer: "Nexo's answer",
       answerBefore: 'Answer before',
@@ -764,11 +147,16 @@
       save: 'Save',
       game: 'Game',
       mustNot: 'Must not contain',
+      atMost: 'At most {n} characters',
+      createdAt: 'Created',
       searchGame: 'Search a game that has a guide…',
       passages: '{n} guide passages',
       noGame: 'No game with a guide matches.',
+      typeMore: 'Type one more letter to search.',
+      searchFailed: 'The search is unavailable right now.',
       pickGame: 'Pick a game from the list.',
-      picked: 'Selected: {name}',
+      changeGame: 'Change game',
+      requiredField: 'Required',
       stoppedTitle: 'The run stopped before the first question',
       stoppedBody: 'Usually a model or the database could not be reached: check that the AI settings point at a running model (a local model needs its server up) and run again.',
       waitingTitle: 'Waiting for the first answer…',
@@ -812,10 +200,47 @@
       },
     },
     pt: {
-      eyebrow: 'Qualidade do Nexo',
-      headline: 'Meça o Nexo antes dos jogadores.',
-      intro: 'Cada suíte faz perguntas fixas ao Nexo, com o modelo e os guias de verdade, e dá nota às respostas. Cada rodada fica salva com a versão da plataforma, o prompt e o custo, para você acompanhar a qualidade versão a versão.',
-      runs: 'Rodadas',
+      eyebrow: 'Nexo / Laboratório de avaliações',
+      workspaceLabel: 'Avaliações',
+      workspaceTitle: 'Histórico de runs',
+      mission: 'Missão {n}',
+      history: 'Runs',
+      historyHint: 'Clique em uma run para abrir os resultados.',
+      colSuite: 'Suíte',
+      colStarted: 'Início',
+      colStatus: 'Situação',
+      colQuestions: 'Perguntas',
+      colCost: 'Custo',
+      showPrompt: 'Ver prompt',
+      hidePrompt: 'Esconder prompt',
+      approved: 'Aprovada',
+      rejected: 'Requer atenção',
+      completed: 'Concluída',
+      inspected: 'Perguntas avaliadas',
+      noScore: 'Sem respostas avaliadas',
+      ratePending: 'Em andamento',
+      ratePendingNote: 'A aprovação aparece quando a rodada termina',
+      cancelledTitle: 'Rodada encerrada sem respostas',
+      cancelledBody: 'Nenhuma pergunta foi concluída. Quando quiser, inicie outra rodada no painel de missões.',
+      technical: 'Informações da rodada',
+      selected: 'Run selecionada',
+      viewResults: 'Ver resultados',
+      closeResults: 'Fechar resultados',
+      headline: 'Respostas melhores. Mais confiança.',
+      intro: 'Teste a busca, os limites e as respostas. Compare versões e entenda exatamente onde o Nexo pode melhorar.',
+      suiteTitle: 'Escolha a próxima missão',
+      suiteHint: 'Escolha uma suíte. Confira o custo antes de rodar.',
+      methodology: 'Como funciona o teste',
+      latest: 'Última rodada concluída',
+      metrics: { passed: 'Aprovadas', 'mean score': 'Nota média', 'kept to scope': 'Dentro do assunto', overall: 'Geral' },
+      approval: 'das perguntas passaram',
+      ready: 'Pronto para avaliar',
+      readyHint: 'Sua primeira rodada começa em uma suíte abaixo.',
+      unchanged: 'Nenhuma mudança nesta comparação',
+      unchangedHint: 'Desmarque “Só o que mudou” para ver todas as perguntas.',
+      loadError: 'Não foi possível carregar as avaliações',
+      retry: 'Tentar novamente',
+      runs: 'Runs',
       questions: 'Perguntas',
       run: 'Rodar',
       running: 'Rodando…',
@@ -830,7 +255,7 @@
       noRunsTitle: 'Nenhuma rodada ainda',
       noRunsBody: 'Escolha uma suíte acima e clique em Rodar. O custo estimado aparece antes de qualquer gasto.',
       pickTitle: 'Escolha uma rodada',
-      pickBody: 'Abra uma à esquerda para ver cada pergunta, a resposta do Nexo e por que passou ou falhou.',
+      pickBody: 'Selecione uma rodada acima para ver cada pergunta, a resposta do Nexo e por que passou ou falhou.',
       failed: 'Falhou',
       stopped: 'Parada',
       stop: 'Parar',
@@ -844,11 +269,11 @@
       cost: 'Custo',
       prompt: 'Prompt',
       compare: 'Comparar com',
+      noComparison: 'Sem comparação',
       onlyChanged: 'Só o que mudou',
       question: 'Pergunta',
       score: 'Nota',
       before: 'Antes',
-      why: 'Por quê',
       expected: 'Esperado',
       answer: 'Resposta do Nexo',
       answerBefore: 'Resposta antes',
@@ -866,11 +291,16 @@
       save: 'Salvar',
       game: 'Jogo',
       mustNot: 'Não pode conter',
+      atMost: 'No máximo {n} caracteres',
+      createdAt: 'Criada em',
       searchGame: 'Busque um jogo que tenha guia…',
       passages: '{n} trechos de guia',
       noGame: 'Nenhum jogo com guia encontrado.',
+      typeMore: 'Digite mais uma letra para buscar.',
+      searchFailed: 'A busca está indisponível no momento.',
       pickGame: 'Escolha um jogo da lista.',
-      picked: 'Selecionado: {name}',
+      changeGame: 'Trocar jogo',
+      requiredField: 'Obrigatório',
       stoppedTitle: 'A rodada parou antes da primeira pergunta',
       stoppedBody: 'Em geral, um modelo ou o banco não respondeu: confira se as configurações de IA apontam para um modelo no ar (modelo local precisa do servidor ligado) e rode de novo.',
       waitingTitle: 'Esperando a primeira resposta…',
@@ -914,12 +344,18 @@
       },
     },
   }
-  const ICONS = { retrieval: 'search', scope: 'shield', answers: 'target' }
+  const SUITES = ['retrieval', 'scope', 'answers']
   // The fields each suite's questions have, for the form: [data key, label key, kind].
   const FIELDS = {
     retrieval: [['game', 'game_pick', 'gameref'], ['question', 'question'], ['terms', 'terms', 'list'], ['relevant', 'relevant', 'groups']],
     scope: [['message', 'message'], ['forbidden', 'forbidden', 'list'], ['max_chars', 'max_chars', 'number']],
     answers: [['game', 'game_name', 'game'], ['question', 'question'], ['reference', 'reference', 'text'], ['earned', 'earned', 'list'], ['avoid', 'avoid', 'lines']],
+  }
+  // What each suite cannot run without (its case model); the other fields have defaults.
+  const REQUIRED = {
+    retrieval: ['game', 'question', 'relevant'],
+    scope: ['message', 'forbidden'],
+    answers: ['game', 'question', 'reference'],
   }
   let lang = 'en'
   try {
@@ -927,8 +363,53 @@
   } catch {}
   const t = (key, vars = {}) => String(TEXT[lang][key] ?? key).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '')
   const icon = (name) => `<svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#${name}"></use></svg>`
+
+  // The game picker, like the interests search in the app: a game is only ever picked from the
+  // list and then shows as a chip; there is no free text.
+  const gameMeta = (g) =>
+    [g.platforms?.join(' · '), g.release_year, g.passages != null ? t('passages', { n: g.passages }) : ''].filter(Boolean).join(' · ')
+  const cover = (g, cls) => (g.cover_url ? `<img class="${cls}" src="${esc(g.cover_url)}" alt="" loading="lazy">` : `<i class="${cls}"></i>`)
+  const chipHtml = (g) => `${cover(g, 'chip-cover')}<span class="chip-text"><b>${esc(g.name)}</b>${gameMeta(g) ? `<small>${esc(gameMeta(g))}</small>` : ''}</span>
+    <button type="button" class="pick-clear" aria-label="${t('changeGame')}" title="${t('changeGame')}">${icon('close')}</button>`
+  function pickerHtml(kind, data) {
+    const name = kind === 'gameref' ? data.name : data.game
+    return `<div class="picker${name ? ' has-pick' : ''}" data-kind="${kind}">
+      ${icon('search')}
+      <input class="game-search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="${t('searchGame')}" placeholder="${t('searchGame')}" autocomplete="off" ${name ? 'readonly' : ''}>
+      <span class="pick-spin" aria-hidden="true"></span>
+      <span class="pick-chip" ${name ? '' : 'hidden'}>${name ? chipHtml({ name }) : ''}</span>
+      <input type="hidden" name="game" value="${esc(data.game ?? '')}"><input type="hidden" name="name" value="${esc(data.name ?? '')}">
+      <div class="options" role="listbox" hidden></div>
+      <p class="pick-error" hidden>${t('pickGame')}</p>
+    </div>`
+  }
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
-  const when = (iso) => (iso ? new Date(iso).toLocaleString(lang === 'pt' ? 'pt-BR' : 'en-US') : '')
+  // 08/10/2026, 13:51:27 in Portuguese; Oct 8, 2026, 1:51:27 PM in English (the month spelled out, so
+  // the day and the month never read swapped).
+  // What a case expected, in the viewer's language. Scope cases store their rule (forbidden words and
+  // a length); older runs only have it as English text, read back here.
+  function expectedText(c) {
+    let rule = c.extra?.forbidden ? { forbidden: c.extra.forbidden, max: c.extra.max_chars } : null
+    const old = !rule && /^no (.*); at most (\d+) chars$/.exec(c.expected || '')
+    if (old) rule = { forbidden: old[1].split(', '), max: Number(old[2]) }
+    if (!rule) return c.expected || '—'
+    return [rule.forbidden.length ? `${t('mustNot')}: ${rule.forbidden.map((w) => `“${w}”`).join(', ')}` : '', rule.max ? t('atMost', { n: rule.max }) : '']
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  // The score now and before; a suite without scores (scope) compares the verdicts instead.
+  function scoreLine(c, o) {
+    const verdict = (x) => t(x.passed ? 'approved' : 'rejected')
+    const scored = c.score != null || o?.score != null
+    const before = !other ? '' : !o ? t('new') : `${t('before')} ${scored ? num(o.score) : verdict(o).toLowerCase()}`
+    const line = [scored ? `${t('score')} ${num(c.score)}` : '', before].filter(Boolean).join(' · ')
+    return line ? `<span class="subtle">${line}</span>` : ''
+  }
+  const when = (iso) =>
+    iso
+      ? new Date(iso).toLocaleString(lang === 'pt' ? 'pt-BR' : 'en-US', lang === 'pt' ? undefined : { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' })
+      : ''
   const usd = (n) => `US$ ${Number(n || 0).toFixed(n && n < 0.1 ? 4 : 2)}`
   const plain = (id) => String(id).split(':').pop()
   const num = (n) => (n == null ? '—' : Number(n) % 1 ? Number(n).toFixed(2) : String(n))
@@ -946,6 +427,30 @@
   let onlyChanges = false
   let qsuite = 'answers'
   let editing = null
+  let qlist = []
+
+  // Adding and editing a question happen in a modal over the list.
+  function openQuestion(id) {
+    editing = id
+    const d = document.getElementById('qdialog')
+    d.innerHTML = questionForm(id === 'new' ? null : qlist.find((q) => plain(q.id) === id))
+    d.showModal()
+    d.querySelector('.game-search:not([readonly]), input:not([type=hidden]), textarea')?.focus()
+    // A saved question keeps only the game's name or id: fetch the rest (cover, platforms) for the chip.
+    const ref = d.querySelector('.picker.has-pick [name=game]')?.value
+    if (ref)
+      api(`/api/game?ref=${encodeURIComponent(ref)}`)
+        .then((g) => {
+          const chip = d.querySelector('.picker.has-pick .pick-chip')
+          if (g && chip && editing === id) chip.innerHTML = chipHtml(g)
+        })
+        .catch(() => {})
+  }
+
+  function closeQuestion() {
+    const d = document.getElementById('qdialog')
+    if (d.open) d.close()
+  }
 
   function translateStatic() {
     document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en'
@@ -961,32 +466,76 @@
     }
   }
 
+  function drawOverview() {
+    const latest = runs.find((r) => r.status === 'done' && r.total > 0)
+    document.getElementById('overview').innerHTML = latest
+      ? `<span class="status-dot" aria-hidden="true"></span><span>${t('latest')}<strong>${Math.round(latest.passed / latest.total * 100)}% · ${esc(TEXT[lang].suites[latest.suite]?.[0] ?? latest.suite)}</strong></span>`
+      : `<span class="status-dot" aria-hidden="true"></span><span>${t('ready')}<strong>${t('readyHint')}</strong></span>`
+  }
+
+  const suiteHeights = { closed: 0, open: 0 }
+
+  function applySuiteHeights() {
+    for (const card of document.querySelectorAll('#suites .suite')) {
+      card.style.minHeight = `${card.querySelector('details')?.open ? suiteHeights.open : suiteHeights.closed}px`
+    }
+  }
+
+  // Measure both states off screen, so opening one card never stretches its closed siblings.
+  function equalizeSuites() {
+    const source = document.getElementById('suites')
+    if (!source.children.length) return
+    const measure = source.cloneNode(true)
+    measure.removeAttribute('id')
+    measure.inert = true
+    measure.setAttribute('aria-hidden', 'true')
+    Object.assign(measure.style, {
+      position: 'absolute', visibility: 'hidden', left: '0', top: '0',
+      width: `${source.getBoundingClientRect().width}px`,
+    })
+    for (const card of measure.querySelectorAll('.suite')) {
+      card.style.minHeight = '0'
+      card.classList.remove('fade')
+    }
+    document.body.append(measure)
+    for (const state of ['closed', 'open']) {
+      for (const details of measure.querySelectorAll('details')) details.open = state === 'open'
+      suiteHeights[state] = Math.ceil(Math.max(0, ...[...measure.children].map((card) => card.getBoundingClientRect().height)))
+    }
+    measure.remove()
+    applySuiteHeights()
+  }
+
+  document.getElementById('suites').addEventListener('toggle', applySuiteHeights, true)
+
   function drawSuites() {
+    drawOverview()
     document.getElementById('suites').innerHTML = suites
-      .map((s) => {
+      .map((s, i) => {
         const [title, text, tests, passes, shows] = TEXT[lang].suites[s.suite]
         return `<article class="suite fade">
-          <h3><span class="suite-icon">${icon(ICONS[s.suite])}</span>${title}</h3>
+          <div class="suite-index"><span>0${i + 1}</span><span>${t('mission', { n: String(i + 1).padStart(2, '0') })} / ${esc(s.suite)}</span></div><h3>${title}</h3>
           <p>${text}</p>
-          <dl class="rules">
+          <details><summary>${t('methodology')}</summary><dl class="rules">
             <dt>${t('tests')}</dt><dd>${tests}</dd>
             <dt>${t('passes')}</dt><dd>${passes}</dd>
             <dt>${t('shows')}</dt><dd>${shows}</dd>
-          </dl>
+          </dl></details>
           <div class="suite-foot">
             <span class="suite-meta"><span>${t('questionsN', { n: s.questions })}</span><span class="subtle">${t('costPerRun', { cost: usd(s.estimate_usd) })}</span></span>
-            <button type="button" class="btn ${s.running ? '' : 'primary'}" data-run="${s.suite}" ${s.running ? 'disabled' : ''}>${s.running ? t('running') : `${icon('play')}${t('run')}`}</button>
+            <button type="button" class="btn ${s.running ? '' : 'primary'}" data-run="${s.suite}" ${s.running ? 'disabled' : ''}>${s.running ? t('running') : `${t('run')}<span aria-hidden="true">↗</span>`}</button>
           </div>
         </article>`
       })
       .join('')
+    equalizeSuites()
   }
 
   const bar = (w, h = 12) => `<span class="sk" style="width:${w};height:${h}px"></span>`
 
   function suitesSkeleton() {
     return `<article class="suite" aria-hidden="true">
-        <div class="row" style="justify-content:flex-start;gap:8px"><span class="sk box"></span>${bar('40%', 16)}</div>
+        <div class="suite-index">${bar('28px', 28)}${bar('45%', 10)}</div>${bar('75%', 24)}
         <div class="sk-stack">${bar('95%')}${bar('70%')}</div>
         <div class="suite-foot">${bar('45%', 10)}<span class="sk btn-sk"></span></div>
       </article>`.repeat(3)
@@ -994,29 +543,26 @@
 
   function runsSkeleton() {
     const item = `<div class="run run-sk" aria-hidden="true"><div class="sk-stack">${bar('35%', 10)}${bar('70%', 14)}${bar('55%', 10)}</div></div>`
-    return `<div class="grid"><div class="list">${item.repeat(4)}</div>
-      <div class="card" aria-hidden="true"><div class="sk-stack">${bar('18%', 10)}${bar('40%', 22)}</div>
-        <div class="facts">${`<div class="sk-stack">${bar('50%', 10)}${bar('80%', 14)}</div>`.repeat(4)}</div>
-        <div class="sk-stack" style="margin-top:24px">${bar('100%')}${bar('92%')}${bar('96%')}${bar('88%')}</div>
-      </div></div>`
+    return `<div class="history" aria-hidden="true"><div class="history-heading">${bar('160px', 16)}</div><div class="list">${item.repeat(4)}</div></div>`
   }
 
   function questionsSkeleton() {
-    const row = `<tr aria-hidden="true"><td>${bar('70%', 14)}</td><td>${bar('50%', 14)}</td><td style="text-align:right"><span class="sk" style="width:72px;height:28px;display:inline-block;border-radius:var(--radius-control)"></span></td></tr>`
+    const row = `<tr aria-hidden="true"><td>${bar('70%', 14)}</td><td>${bar('50%', 14)}</td><td>${bar('60%', 14)}</td><td style="text-align:right"><span class="sk" style="width:72px;height:28px;display:inline-block;border-radius:var(--radius-control)"></span></td></tr>`
     return `<div class="toolbar">${'<span class="sk" style="width:110px;height:36px;border-radius:var(--radius-control)"></span>'.repeat(3)}</div>
       <div class="card" style="padding:6px 20px"><table class="questions"><tbody>${row.repeat(6)}</tbody></table></div>`
   }
 
   function runItem(r, animate = true) {
     const live = r.status === 'running'
-    const pct = r.planned ? Math.round((r.total / r.planned) * 100) : 0
-    const state = live ? 'muted' : r.status === 'failed' || r.passed !== r.total ? 'fail' : 'pass'
-    const label = live ? `${r.total}/${r.planned}` : r.status === 'failed' ? t('failed') : r.status === 'stopped' ? t('stopped') : `${r.passed}/${r.total}`
-    return `<button type="button" class="run ${animate ? 'fade' : ''}" data-id="${plain(r.id)}" aria-current="${current && plain(current.id) === plain(r.id)}">
-      <div class="row"><span class="tag">${esc(TEXT[lang].suites[r.suite]?.[0] ?? r.suite)}</span><span class="${state}">${label}</span></div>
-      <div>${esc(when(r.started_at))}</div>
-      <div class="subtle">v${esc(r.version)} · ${esc(r.commit)} · ${usd(r.cost_usd)}</div>
-      ${live ? `<div class="bar live"><i style="width:${Math.max(pct, 4)}%"></i></div>` : ''}
+    const state = r.status === 'failed' ? 'fail' : r.status === 'stopped' ? 'neutral' : live ? 'live' : 'pass'
+    const selected = Boolean(current && plain(current.id) === plain(r.id))
+    const label = live ? t('running') : r.status === 'failed' ? t('failed') : r.status === 'stopped' ? t('stopped') : t('completed')
+    return `<button type="button" class="run ${animate ? 'fade' : ''}" data-id="${plain(r.id)}" style="view-transition-name: run-${plain(r.id)}" aria-current="${selected}" aria-expanded="${selected}" ${selected ? 'aria-controls="detail"' : ''}>
+      <span class="run-name"><strong>${esc(TEXT[lang].suites[r.suite]?.[0] ?? r.suite)}</strong><span class="subtle">v${esc(r.version)} · ${esc(r.commit)}</span></span>
+      <time>${esc(when(r.started_at))}</time>
+      <span class="status ${state}"><span class="status-dot" aria-hidden="true"></span>${label}</span>
+      <span class="run-count">${r.total}/${r.planned}</span>
+      <span class="run-cost">${usd(r.cost_usd)}</span><span class="run-action">${t(selected ? 'closeResults' : 'viewResults')}<span class="run-arrow" aria-hidden="true">${selected ? '−' : '→'}</span></span>
     </button>`
   }
 
@@ -1029,7 +575,7 @@
   }
 
   function empty(title, body) {
-    return `<div class="card empty fade"><img src="/assets/nexo-avatar.svg" alt=""><h3>${title}</h3><p class="muted">${body}</p></div>`
+    return `<div class="empty fade"><span class="empty-mark" aria-hidden="true">—</span><h3>${title}</h3><p class="muted">${body}</p></div>`
   }
 
   // The run's header: status, progress and facts. Redrawn alone while the run goes on.
@@ -1037,47 +583,55 @@
     const live = current.status === 'running'
     const pct = current.planned ? Math.round((current.total / current.planned) * 100) : 0
     const summary = Object.entries(current.summary || {})
-      .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`)
+      .map(([k, v]) => `<div><dt>${esc(TEXT[lang].metrics[k] ?? k)}</dt><dd>${esc(v)}</dd></div>`)
       .join('')
     const heading = live
       ? t('runningOf', { done: current.total, planned: current.planned })
       : current.status === 'failed'
         ? t('failed')
         : current.status === 'stopped'
-          ? `${t('stopped')} · ${t('passedOf', { passed: current.passed, total: current.total })}`
+          ? current.total ? `${t('stopped')} · ${t('passedOf', { passed: current.passed, total: current.total })}` : t('stopped')
           : t('passedOf', { passed: current.passed, total: current.total })
-    return `<section class="card ${animate ? 'fade' : ''}" id="run-head">
-        <div class="row"><span class="tag">${esc(TEXT[lang].suites[current.suite]?.[0] ?? current.suite)}</span>
-          ${live ? `<button type="button" class="btn sm" data-stop="${plain(current.id)}">${icon('close')}${t('stop')}</button>` : ''}</div>
-        <h2 style="margin-top:4px">${heading}</h2>
-        ${live ? `<div class="bar live"><i style="width:${Math.max(pct, 4)}%"></i></div>` : ''}
-        ${current.error ? `<p class="fail">${esc(current.error)}</p>` : ''}
+    const rate = current.total ? Math.round(current.passed / current.total * 100) : null
+    return `<section class="run-report ${animate ? 'fade' : ''}" id="run-head">
+      <div class="report-title"><div><span class="tag">${t('selected')}</span><h3 id="report-title" tabindex="-1">${esc(TEXT[lang].suites[current.suite]?.[0] ?? current.suite)}</h3><p class="muted">${heading}</p></div>
+        <div class="report-actions"><button type="button" class="btn sm" id="close-results" aria-label="${t('closeResults')}">×</button>${live ? `<button type="button" class="btn sm" data-stop="${plain(current.id)}">${t('stop')}</button>` : ''}</div>
+      </div>
+      <div class="report-metrics"><div class="report-rate">${live ? `<strong class="pending">${t('ratePending')}</strong><span>${t('ratePendingNote')}</span>` : `<strong>${rate == null ? '—' : `${rate}<small>%</small>`}</strong><span>${t(rate == null ? 'noScore' : 'approval')}</span>`}</div><div><strong>${current.total}<small>/ ${current.planned}</small></strong><span>${t('inspected')}</span></div><div><strong>${usd(current.cost_usd)}</strong><span>${t('cost')}</span></div></div>
+      ${live ? `<div class="bar live"><i style="width:${Math.max(pct, 4)}%"></i></div>` : ''}
+      ${current.error ? `<p class="error-notice">${esc(current.error)}</p>` : ''}
+      ${current.cases.length ? `<div class="score-track" role="img" aria-label="${t('passedOf', { passed: current.passed, total: current.total })}">${current.cases.map((c) => `<span class="${c.passed ? 'hit' : 'miss'}"></span>`).join('')}</div>` : ''}
+      ${!current.cases.length ? `<div class="report-notice">${live ? `<div class="sk-stack">${bar('60%', 14)}${bar('35%', 10)}</div><p>${t('waitingTitle')}</p>` : `<h4>${t(current.status === 'stopped' ? 'cancelledTitle' : 'stoppedTitle')}</h4><p>${t(current.status === 'stopped' ? 'cancelledBody' : 'stoppedBody')}</p>`}</div>` : ''}
+      <details class="run-meta"><summary>${t('technical')}</summary>
         <dl class="facts">
           <div><dt>${t('started')}</dt><dd>${esc(when(current.started_at))}</dd></div>
           <div><dt>${t('version')}</dt><dd>v${esc(current.version)} · ${esc(current.commit)}</dd></div>
-          <div><dt>${t('models')}</dt><dd>${esc(current.models.join(', ') || '—')}</dd></div>
-          <div><dt>${t('cost')}</dt><dd>${usd(current.cost_usd)}</dd></div>
-          <div><dt>${t('prompt')}</dt><dd>${esc(current.prompt || '—')}</dd></div>
+          <div class="fact-models"><dt>${t('models')}</dt><dd>${esc(current.models.join(', ') || '—')}</dd></div>
+          <div class="fact-prompt"><dt>${t('prompt')}</dt><dd>${esc(current.prompt || '—')}${current.prompt_text ? ` <button type="button" class="link-btn" data-prompt>${t('showPrompt')}</button>` : ''}</dd></div>
           ${summary}
         </dl>
-      </section>`
+        ${current.prompt_text ? `<pre class="prompt-text" hidden>${esc(current.prompt_text)}</pre>` : ''}
+      </details>
+    </section>`
   }
+
 
   // One case: its row and the hidden details under it.
   function caseRows(c, o, i) {
-    return `<tr class="case" data-i="${i}">
-        <td class="${c.passed ? 'pass' : 'fail'}">${icon(c.passed ? 'check' : 'close')}</td>
-        <td>${c.extra?.game ? `<span class="subtle">${esc(c.extra.game)}</span><br>` : ''}${esc(c.input)}</td>
-        <td>${num(c.score)}</td>
-        ${other ? `<td>${o ? num(o.score) : t('new')}</td><td>${o ? change(c, o) : ''}</td>` : ''}
-        <td class="muted">${esc(c.reason)}</td>
-      </tr>
-      <tr class="detail" data-for="${i}" hidden><td></td><td colspan="${other ? 5 : 3}">
-        <h4>${t('expected')}</h4><pre>${esc(c.expected || '—')}</pre>
-        <h4>${t('answer')}</h4><pre>${esc(c.output || '—')}</pre>
-        ${o ? `<h4>${t('answerBefore')}</h4><pre>${esc(o.output || '—')}</pre>` : ''}
-        <span class="subtle">${esc(c.models.join(', '))} · ${usd(c.cost_usd)}</span>
-      </td></tr>`
+    return `<article class="case ${c.passed ? 'case-pass' : 'case-fail'}">
+      <button type="button" class="case-toggle" data-case="${i}" aria-expanded="false" aria-controls="case-${i}">
+        <span class="case-number">${String(i + 1).padStart(2, '0')}</span>
+        <span class="case-question"><span class="subtle">${esc(c.extra?.game || t('question'))}</span><strong>${esc(c.input)}</strong></span>
+        <span class="case-verdict"><span class="${c.passed ? 'pass' : 'fail'}">${c.passed ? t('approved') : t('rejected')}</span>${scoreLine(c, o)}${o ? change(c, o) : ''}</span>
+        <span class="case-chevron" aria-hidden="true">+</span>
+      </button>
+      ${c.reason ? `<p class="case-reason">${esc(c.reason)}</p>` : ''}
+      <div class="case-detail" id="case-${i}" data-for="${i}" hidden>
+        <div class="detail-content"><section><h4>${t('expected')}</h4><pre>${esc(expectedText(c))}</pre></section><section><h4>${t('answer')}</h4><pre>${esc(c.output || '—')}</pre></section></div>
+        ${o ? `<section class="answer-before"><h4>${t('answerBefore')}</h4><pre>${esc(o.output || '—')}</pre></section>` : ''}
+        <p class="subtle">${esc(c.models.join(', '))} · ${usd(c.cost_usd)}</p>
+      </div>
+    </article>`
   }
 
   function runDetail() {
@@ -1085,38 +639,39 @@
     const same = runs.filter((r) => r.suite === current.suite && plain(r.id) !== plain(current.id) && r.status === 'done')
     const before = Object.fromEntries((other?.cases ?? []).map((c) => [c.input, c]))
     let cases = current.cases.map((c) => ({ c, o: other ? before[c.input] : null }))
-    if (other && onlyChanges) cases = cases.filter(({ c, o }) => change(c, o))
-    const live = current.status === 'running'
+    if (other && onlyChanges) cases = cases.filter(({ c, o }) => !o || change(c, o))
     return `${runHead(true)}
 
-      ${
-        current.cases.length
-          ? ''
-          : live
-            ? `<div class="card"><div class="sk-stack">${bar('60%', 14)}${bar('35%', 10)}</div><p class="subtle">${t('waitingTitle')}</p></div>`
-            : empty(t('stoppedTitle'), t('stoppedBody'))
-      }
       <div ${current.cases.length ? '' : 'hidden'}>
-      <div class="toolbar">
-        <label class="muted">${t('compare')}
-          <select id="compare"><option value="">—</option>${same.map((r) => `<option value="${plain(r.id)}" ${other && plain(other.id) === plain(r.id) ? 'selected' : ''}>${esc(when(r.started_at))} · v${esc(r.version)} · ${r.passed}/${r.total}</option>`).join('')}</select>
+      ${same.length ? `<div class="toolbar comparison-toolbar">
+        <label class="comparison-field">${t('compare')}
+          <select id="compare"><option value="">${t('noComparison')}</option>${same.map((r) => `<option value="${plain(r.id)}" ${other && plain(other.id) === plain(r.id) ? 'selected' : ''}>${esc(when(r.started_at))} · v${esc(r.version)} · ${r.passed}/${r.total}</option>`).join('')}</select>
         </label>
-        ${other ? `<label class="muted"><input type="checkbox" id="only" ${onlyChanges ? 'checked' : ''}> ${t('onlyChanged')}</label>` : ''}
-      </div>
-      <table>
-        <thead><tr><th></th><th>${t('question')}</th><th>${t('score')}</th>${other ? `<th>${t('before')}</th><th></th>` : ''}<th>${t('why')}</th></tr></thead>
-        <tbody id="cases">${cases.map(({ c, o }, i) => caseRows(c, o, i)).join('')}</tbody>
-      </table>
+        ${other ? `<label class="check"><input type="checkbox" id="only" ${onlyChanges ? 'checked' : ''}><span>${t('onlyChanged')}</span></label>` : ''}
+      </div>` : ''}
+      ${!cases.length ? empty(t('unchanged'), t('unchangedHint')) : ''}
+      <div id="cases" class="cases" ${cases.length ? '' : 'hidden'}>${cases.map(({ c, o }, i) => caseRows(c, o, i)).join('')}</div>
       </div>`
   }
 
-  function drawRuns() {
+  // Opening or closing a run morphs the layout: the list narrows to a column, each row slides to
+  // its new place and the results fade in beside it. Without View Transitions (or with reduced
+  // motion) the page just switches.
+  function morph(update) {
+    if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      update()
+      return Promise.resolve()
+    }
+    return document.startViewTransition(update).finished
+  }
+
+  function drawRuns(animate = true) {
     const el = document.getElementById('tab')
     if (!runs.length) {
       el.innerHTML = empty(t('noRunsTitle'), t('noRunsBody'))
       return
     }
-    el.innerHTML = `<div class="grid"><div class="list">${runs.map((r) => runItem(r)).join('')}</div><div id="detail">${runDetail()}</div></div>`
+    el.innerHTML = `<div id="runs-layout" class="runs-layout ${current ? 'has-selection' : ''}"><div class="history"><div class="history-heading"><h3>${t('history')}</h3><p class="subtle">${t('historyHint')}</p></div><div class="list"><div class="run-cols" aria-hidden="true"><span>${t('colSuite')}</span><span>${t('colStarted')}</span><span>${t('colStatus')}</span><span>${t('colQuestions')}</span><span>${t('colCost')}</span><span></span></div>${runs.map((r) => runItem(r, animate)).join('')}</div></div>${current ? `<div id="detail" role="region" aria-labelledby="report-title">${runDetail()}</div>` : ''}</div>`
   }
 
   function asText(value, kind) {
@@ -1137,21 +692,17 @@
 
   function questionForm(q) {
     const data = q?.data ?? {}
-    return `<form class="card fade" id="qform">
-      <h3 style="margin-bottom:12px">${q ? t('editQuestion') : t('newQuestion')}</h3>
+    return `<form id="qform" method="dialog">
+      <div class="dialog-head"><h3 id="qdialog-title">${q ? t('editQuestion') : t('newQuestion')}</h3>
+        <button type="button" class="btn sm" id="qclose" aria-label="${t('cancel')}">${icon('close')}</button></div>
       ${FIELDS[qsuite]
         .map(([key, label, kind]) => {
           const v = esc(asText(data[key], kind))
-          const text = TEXT[lang].fields[label]
-          if (kind === 'game' || kind === 'gameref') {
-            const shown = esc(kind === 'gameref' ? data.name : data.game)
-            return `<label class="field">${esc(text)}<div class="picker">
-              <input class="game-search" data-kind="${kind}" value="${shown}" placeholder="${t('searchGame')}" autocomplete="off">
-              <input type="hidden" name="game" value="${esc(data.game ?? '')}"><input type="hidden" name="name" value="${esc(data.name ?? '')}">
-              <ul class="options" hidden></ul>
-            </div></label>`
-          }
-          return `<label class="field">${esc(text)}${kind === 'text' || kind === 'lines' || kind === 'groups' ? `<textarea name="${key}">${v}</textarea>` : `<input name="${key}" value="${v}">`}</label>`
+          const required = REQUIRED[qsuite].includes(key)
+          const text = `${esc(TEXT[lang].fields[label])}${required ? ` <span class="required" title="${t('requiredField')}">*</span>` : ''}`
+          if (kind === 'game' || kind === 'gameref') return `<div class="field"><span>${text}</span>${pickerHtml(kind, data)}</div>`
+          const req = required ? ' required' : ''
+          return `<label class="field"><span>${text}</span>${kind === 'text' || kind === 'lines' || kind === 'groups' ? `<textarea name="${key}"${req}>${v}</textarea>` : `<input name="${key}" value="${v}"${kind === 'number' ? ' type="number" min="1"' : ''}${req}>`}</label>`
         })
         .join('')}
       ${q ? `<label class="muted"><input type="checkbox" name="active" ${q.active ? 'checked' : ''}> ${t('active')}</label>` : ''}
@@ -1166,23 +717,24 @@
     const el = document.getElementById('tab')
     el.innerHTML = questionsSkeleton()
     const list = await api(`/api/questions/${qsuite}`)
+    qlist = list
     const main = (q) => esc(q.data.question || q.data.message || '')
     el.innerHTML = `<div class="toolbar">
-        ${Object.keys(ICONS)
-          .map((s) => `<button type="button" class="chip ${s === qsuite ? 'active' : ''}" data-qsuite="${s}">${icon(ICONS[s])}${TEXT[lang].suites[s][0]}<span class="count">${suites.find((x) => x.suite === s)?.questions ?? ''}</span></button>`)
+        ${SUITES
+          .map((s) => `<button type="button" class="chip ${s === qsuite ? 'active' : ''}" data-qsuite="${s}">${TEXT[lang].suites[s][0]}<span class="count">${suites.find((x) => x.suite === s)?.questions ?? ''}</span></button>`)
           .join('')}
         <span style="flex:1"></span>
         <button type="button" class="btn" id="qadd">${icon('plus')}${t('add')}</button>
       </div>
-      ${editing !== null ? questionForm(editing === 'new' ? null : list.find((q) => plain(q.id) === editing)) : ''}
       ${list.length ? '' : empty(t('noQuestionsTitle'), t('noQuestionsBody'))}
-      <div class="card fade" style="padding:6px 20px" ${list.length ? '' : 'hidden'}>
-        <table class="questions"><thead><tr><th>${t('question')}</th><th>${qsuite === 'scope' ? t('mustNot') : t('game')}</th><th></th></tr></thead>
+      <div class="table-wrap fade" tabindex="0" role="region" aria-label="${t('questions')}" ${list.length ? '' : 'hidden'}>
+        <table class="questions"><thead><tr><th>${t('question')}</th><th>${qsuite === 'scope' ? t('mustNot') : t('game')}</th><th>${t('createdAt')}</th><th></th></tr></thead>
         <tbody>${list
           .map(
             (q) => `<tr style="${q.active ? '' : 'opacity:.5'}">
             <td>${main(q)}</td>
             <td class="muted">${esc(qsuite === 'scope' ? (q.data.forbidden || []).join(', ') : q.data.name || q.data.game || '')}</td>
+            <td class="muted nowrap">${when(q.created_at)}</td>
             <td style="text-align:right"><button type="button" class="btn sm" data-edit="${plain(q.id)}">${icon('edit')}${q.active ? t('edit') : t('archived')}</button></td>
           </tr>`,
           )
@@ -1191,7 +743,7 @@
   }
 
   // While a run goes on, only what changed is redrawn: the run's item in the list, its header and
-  // the new cases at the end of the table. Open rows, the comparison and the scroll stay put.
+  // the new question panels at the end of the report. Open rows, the comparison and the scroll stay put.
   async function poll() {
     const before = JSON.stringify(suites.map((s) => [s.suite, s.running, s.questions, s.estimate_usd]))
     const [fresh, freshSuites] = await Promise.all([api('/api/runs'), api('/api/suites')])
@@ -1211,6 +763,7 @@
       if (item && JSON.stringify(old) !== JSON.stringify(r)) item.outerHTML = runItem(r, false)
     }
     runs = fresh
+    drawOverview()
     if (!current) return
     const mine = runs.find((r) => plain(r.id) === plain(current.id))
     if (!mine || (mine.status === current.status && mine.total === current.cases.length)) return
@@ -1235,7 +788,8 @@
 
   async function refresh() {
     runs = await api('/api/runs')
-    if (current) current = await api(`/api/runs/${plain(current.id)}`)
+    const selected = current?.id
+    if (selected) current = await api(`/api/runs/${plain(selected)}`)
     suites = await api('/api/suites')
     drawSuites()
     drawTabs()
@@ -1264,8 +818,9 @@
   }
 
   document.addEventListener('click', async (e) => {
-    const el = e.target.closest('button, tr.case')
+    const el = e.target.closest('button')
     if (!el) return
+    if (el.id === 'retry') return refresh().catch(showError)
     if (el.dataset.lang) {
       lang = el.dataset.lang
       try {
@@ -1294,19 +849,40 @@
       if (mine) current = await api(`/api/runs/${plain(mine.id)}`)
       return refresh()
     }
+    if ('prompt' in el.dataset) {
+      const text = el.closest('.run-meta').querySelector('.prompt-text')
+      text.hidden = !text.hidden
+      el.textContent = t(text.hidden ? 'showPrompt' : 'hidePrompt')
+      return
+    }
     if (el.dataset.stop) {
       if (!(await ask(t('stopTitle'), t('stopBody'), t('stop')))) return
       await api(`/api/runs/${el.dataset.stop}/stop`, { method: 'POST', body: {} })
       return refresh()
     }
+    if (el.id === 'close-results' || (el.dataset.id && current && el.dataset.id === plain(current.id))) {
+      const previous = plain(current.id)
+      current = null
+      other = null
+      await morph(() => drawRuns(false))
+      document.querySelector(`[data-id="${previous}"]`)?.focus({ preventScroll: true })
+      return
+    }
     if (el.dataset.id) {
+      const opening = !current
       current = await api(`/api/runs/${el.dataset.id}`)
       other = null
-      return drawRuns()
+      await (opening ? morph(() => drawRuns(false)) : Promise.resolve(drawRuns(false)))
+      document.getElementById('report-title').focus({ preventScroll: true })
+      const target = matchMedia('(max-width: 760px)').matches ? 'detail' : 'runs-layout'
+      document.getElementById(target).scrollIntoView({ block: 'start' })
+      return
     }
-    if (el.matches('tr.case')) {
-      const d = document.querySelector(`tr[data-for="${el.dataset.i}"]`)
+    if (el.dataset.case !== undefined) {
+      const index = el.dataset.case
+      const d = document.querySelector(`[data-for="${index}"]`)
       d.hidden = !d.hidden
+      document.querySelector(`[data-case="${index}"]`).setAttribute('aria-expanded', !d.hidden)
       return
     }
     if (el.dataset.qsuite) {
@@ -1314,18 +890,9 @@
       editing = null
       return drawQuestions()
     }
-    if (el.id === 'qadd') {
-      editing = 'new'
-      return drawQuestions()
-    }
-    if (el.dataset.edit) {
-      editing = el.dataset.edit
-      return drawQuestions()
-    }
-    if (el.id === 'qcancel') {
-      editing = null
-      return drawQuestions()
-    }
+    if (el.id === 'qadd') return openQuestion('new')
+    if (el.dataset.edit) return openQuestion(el.dataset.edit)
+    if (el.id === 'qcancel' || el.id === 'qclose') return closeQuestion()
   })
 
   document.addEventListener('submit', async (e) => {
@@ -1336,7 +903,9 @@
     const picker = FIELDS[qsuite].find(([, , kind]) => kind === 'game' || kind === 'gameref')
     if (picker) {
       if (!form.get('game')) {
-        alert(t('pickGame'))
+        const p = e.target.querySelector('.picker')
+        p.querySelector('.pick-error').hidden = false
+        p.querySelector('.game-search').focus()
         return
       }
       data.game = String(form.get('game'))
@@ -1344,52 +913,156 @@
     }
     if (editing === 'new') await api(`/api/questions/${qsuite}`, { method: 'POST', body: { data } })
     else await api(`/api/questions/${qsuite}/${editing}`, { method: 'PUT', body: { data, active: form.get('active') === 'on' } })
-    editing = null
+    closeQuestion()
     drawQuestions()
     refresh()
   })
 
-  // The game picker: search as the name is typed, pick from the list.
+  document.getElementById('qdialog').addEventListener('close', (e) => {
+    editing = null
+    e.target.innerHTML = ''
+  })
+  // A click on the backdrop (outside the box) closes it, like Escape.
+  document.getElementById('qdialog').addEventListener('mousedown', (e) => {
+    if (e.target === e.currentTarget) closeQuestion()
+  })
+
+  // The game picker: search as the name is typed, pick from the list with the mouse or the keys.
   let searchTimer = 0
+  let searchVersion = 0
+  const pickerOf = (el) => el.closest?.('.picker')
+
+  function setActive(picker, index) {
+    picker.active = index
+    const options = [...picker.querySelectorAll('[role=option]')]
+    for (const [i, o] of options.entries()) o.setAttribute('aria-selected', String(i === index))
+    options[index]?.scrollIntoView({ block: 'nearest' })
+  }
+
+  function showList(picker, html) {
+    const list = picker.querySelector('.options')
+    list.innerHTML = html
+    list.hidden = false
+    picker.querySelector('.game-search').setAttribute('aria-expanded', 'true')
+  }
+
+  function hideList(picker) {
+    picker.querySelector('.options').hidden = true
+    picker.querySelector('.game-search').setAttribute('aria-expanded', 'false')
+    picker.active = -1
+  }
+
+  function choose(picker, index) {
+    const g = picker.found?.[index]
+    if (!g) return
+    picker.querySelector('[name=game]').value = picker.dataset.kind === 'gameref' ? `game:${g.id}` : g.name
+    picker.querySelector('[name=name]').value = g.name
+    const input = picker.querySelector('.game-search')
+    input.value = ''
+    input.readOnly = true
+    const chip = picker.querySelector('.pick-chip')
+    chip.innerHTML = chipHtml(g)
+    chip.hidden = false
+    picker.classList.add('has-pick')
+    picker.querySelector('.pick-error').hidden = true
+    hideList(picker)
+  }
+
+  function clearPick(picker) {
+    picker.querySelector('[name=game]').value = ''
+    picker.querySelector('[name=name]').value = ''
+    picker.querySelector('.pick-chip').hidden = true
+    picker.classList.remove('has-pick')
+    const input = picker.querySelector('.game-search')
+    input.readOnly = false
+    input.focus()
+  }
+
   document.addEventListener('input', (e) => {
     const input = e.target.closest('.game-search')
     if (!input) return
-    const picker = input.closest('.picker')
-    picker.querySelector('[name=game]').value = ''
+    const picker = pickerOf(input)
     clearTimeout(searchTimer)
+    const version = ++searchVersion
+    const q = input.value.trim()
+    picker.classList.remove('is-searching')
+    if (q.length < 2) {
+      picker.found = []
+      if (q) showList(picker, `<p class="options-note">${t('typeMore')}</p>`)
+      else hideList(picker)
+      return
+    }
+    picker.classList.add('is-searching')
+    // Skeleton only the first time; later the last answer stays on screen while the next loads.
+    if (!picker.found?.length)
+      showList(picker, `<div class="options-sk">${'<div><i class="sk"></i><span><b class="sk"></b><small class="sk"></small></span></div>'.repeat(3)}</div>`)
     searchTimer = setTimeout(async () => {
-      const list = picker.querySelector('.options')
-      const q = input.value.trim()
-      if (q.length < 2) {
-        list.hidden = true
-        return
-      }
-      const found = await api(`/api/games?q=${encodeURIComponent(q)}`)
-      list.innerHTML = found.length
-        ? found
-            .map((g) => `<li><button type="button" data-pick="${esc(g.id)}" data-name="${esc(g.name)}"><span>${esc(g.name)}</span><span class="subtle">${t('passages', { n: g.passages })}</span></button></li>`)
-            .join('')
-        : `<li class="subtle" style="padding:8px 10px">${t('noGame')}</li>`
-      list.hidden = false
-    }, 200)
+      const found = await api(`/api/games?q=${encodeURIComponent(q)}`).catch(() => null)
+      if (version !== searchVersion) return
+      picker.classList.remove('is-searching')
+      picker.found = found ?? []
+      showList(
+        picker,
+        found?.length
+          ? found
+              .map(
+                (g, i) =>
+                  `<div role="option" aria-selected="false" data-index="${i}">${cover(g, 'option-cover')}<span><b>${esc(g.name)}</b><small>${esc(gameMeta(g))}</small></span>${icon('plus')}</div>`,
+              )
+              .join('')
+          : `<p class="options-note">${t(found ? 'noGame' : 'searchFailed')}</p>`,
+      )
+      picker.active = -1
+    }, 250)
+  })
+
+  document.addEventListener('keydown', (e) => {
+    const input = e.target.closest?.('.game-search')
+    if (!input) return
+    const picker = pickerOf(input)
+    if (picker.classList.contains('has-pick')) {
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault()
+        clearPick(picker)
+      } else if (e.key === 'Enter') e.preventDefault()
+      return
+    }
+    const count = picker.querySelectorAll('[role=option]').length
+    if (e.key === 'Escape' && !picker.querySelector('.options').hidden) {
+      e.preventDefault()
+      hideList(picker)
+    } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && count) {
+      e.preventDefault()
+      const step = e.key === 'ArrowDown' ? 1 : -1
+      setActive(picker, ((picker.active ?? -1) + step + count) % count)
+    } else if (e.key === 'Enter') {
+      // Enter picks the highlighted game; typed text never goes in.
+      e.preventDefault()
+      if ((picker.active ?? -1) >= 0) choose(picker, picker.active)
+    }
   })
 
   document.addEventListener('mousedown', (e) => {
-    const option = e.target.closest('[data-pick]')
-    if (!option) return
-    e.preventDefault()
-    const picker = option.closest('.picker')
-    const input = picker.querySelector('.game-search')
-    const ref = input.dataset.kind === 'gameref'
-    picker.querySelector('[name=game]').value = ref ? `game:${option.dataset.pick}` : option.dataset.name
-    picker.querySelector('[name=name]').value = option.dataset.name
-    input.value = option.dataset.name
-    picker.querySelector('.options').hidden = true
+    const option = e.target.closest('.picker [role=option]')
+    if (option) {
+      e.preventDefault()
+      choose(pickerOf(option), Number(option.dataset.index))
+      return
+    }
+    if (e.target.closest('.picker .options')) e.preventDefault()
   })
 
+  document.addEventListener('click', (e) => {
+    const clear = e.target.closest('.pick-clear')
+    if (clear) clearPick(pickerOf(clear))
+  })
+
+  // Leaving the field without picking drops what was typed: only a game from the list counts.
   document.addEventListener('focusout', (e) => {
-    const picker = e.target.closest?.('.picker')
-    if (picker) setTimeout(() => (picker.querySelector('.options').hidden = true), 150)
+    if (!e.target.classList?.contains('game-search')) return
+    const picker = pickerOf(e.target)
+    hideList(picker)
+    if (!picker.classList.contains('has-pick')) e.target.value = ''
   })
 
   document.addEventListener('change', async (e) => {
@@ -1403,15 +1076,33 @@
     }
   })
 
+  function showError(error) {
+    document.getElementById('tab').innerHTML = `<div role="alert">${empty(t('loadError'), esc(error.message))}<button type="button" class="btn" id="retry">${t('retry')}</button></div>`
+    document.querySelectorAll('.sk').forEach((el) => { el.remove() })
+  }
+
+  window.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault()
+    showError(event.reason)
+  })
+
   // While something runs, follow it.
   setInterval(() => {
     if (runs.some((r) => r.status === 'running') || suites.some((s) => s.running)) poll()
   }, 3000)
 
+  let suitesWidth = 0
+  new ResizeObserver(([entry]) => {
+    if (entry.contentRect.width === suitesWidth) return
+    suitesWidth = entry.contentRect.width
+    equalizeSuites()
+  }).observe(document.getElementById('suites'))
+  document.fonts.ready.then(equalizeSuites)
+
   translateStatic()
   document.getElementById('tab').innerHTML = runsSkeleton()
   document.getElementById('suites').innerHTML = suitesSkeleton()
-  refresh()
+  refresh().catch(showError)
 </script>
 </body>
 </html>
