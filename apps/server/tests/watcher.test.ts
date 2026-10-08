@@ -228,6 +228,15 @@ describe('checkUser', () => {
     expect(send).toHaveBeenCalledTimes(1)
   })
 
+  test('a failed Telegram send still saves the trophies as seen, with no second notice', async () => {
+    const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
+    send.mockRejectedValue(new Error('Forbidden: bot was blocked by the user'))
+    await checkUser(user)
+    expect(reaction).toHaveBeenCalledTimes(1)
+    expect(logTip).not.toHaveBeenCalled()
+    expect(saveEarned).toHaveBeenCalledWith(user.id, 'NPWR1_00', [1, 2])
+  })
+
   test('with notices off, trophies get a plain notice', async () => {
     config.automatic.notices = false
     const reaction = spyOn(nexo, 'unlockReaction')
