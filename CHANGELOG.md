@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.0](https://github.com/renatoaug/platjourney/compare/v0.1.2...v0.2.0) (2026-10-08)
+
+### Features
+
+* **evals:** store runs in a database and add a viewer to run and compare them ([#18](https://github.com/renatoaug/platjourney/issues/18)) ([c7f6d5b](https://github.com/renatoaug/platjourney/commit/c7f6d5bc0e62472341f9b6354fc5c5f63a5957e7))
+
 ## [0.1.2](https://github.com/renatoaug/platjourney/compare/v0.1.1...v0.1.2) (2026-10-08)
 
 ### Bug Fixes
