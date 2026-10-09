@@ -24,7 +24,6 @@ const messages = defineMessages({
     subtitleGame: 'Falando sobre {name} ({progress}%).',
     subtitleNoGame: 'Escolha um jogo para começar a conversa.',
     subtitleNotOwned: 'Falando sobre {name}, antes de você comprar.',
-    switched: 'Agora falando sobre {name}.',
     switchFailed: 'Não consegui trocar o jogo. Tenta de novo.',
     readOnlyGeneral: 'Conversas de antes de o Nexo separar por jogo.',
     backToCurrent: 'Voltar para {name}',
@@ -36,7 +35,6 @@ const messages = defineMessages({
     subtitleGame: 'Talking about {name} ({progress}%).',
     subtitleNoGame: 'Pick a game to start the conversation.',
     subtitleNotOwned: 'Talking about {name}, before you buy it.',
-    switched: 'Now talking about {name}.',
     switchFailed: 'Could not switch the game. Try again.',
     readOnlyGeneral: 'Conversations from before Nexo kept one per game.',
     backToCurrent: 'Back to {name}',
@@ -160,8 +158,8 @@ function LiveNexo() {
     try {
       await api('/api/current', game.np ? { np: game.np } : { game: game.game })
       await loadState()
+      // The subtitle and the conversation change in place: that is the confirmation.
       setViewing(null)
-      toast(t('switched', { name: game.name }), 'success')
     } catch (e) {
       if (!(e instanceof ApiError && e.handled)) toast(t('switchFailed'))
     } finally {
