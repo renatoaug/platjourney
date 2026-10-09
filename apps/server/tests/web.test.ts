@@ -1042,3 +1042,37 @@ test('the chat game switch lists the player titles by name and loads the one pic
   expect(set.mock.calls[0][1]).toMatchObject({ npCommunicationId: 'NPWR2' })
   expect((await send('POST', '/api/current', { np: 'NOPE' })).status).toBe(404)
 })
+
+test('the game switch also offers catalog games outside the library and talks about them', async () => {
+  spyOn(lib, 'library').mockResolvedValue([
+    makeTitle({ npCommunicationId: 'NPWR2', name: 'Jogo Exemplo Dois' }),
+  ])
+  spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
+  const outside = makeGame({
+    id: 'game:9',
+    name: 'Jogo Exemplo Novo',
+    np_communication_ids: ['NPWR9'],
+  })
+  const owned = makeGame({
+    id: 'game:2',
+    name: 'Jogo Exemplo Dois',
+    np_communication_ids: ['NPWR2'],
+  })
+  spyOn(games, 'searchCatalog').mockResolvedValue([outside, owned])
+  const found = await send('GET', '/api/library?q=jogo exemplo')
+  expect(found.body).toEqual([
+    expect.objectContaining({ np: 'NPWR2', owned: true }),
+    expect.objectContaining({ game: 'game:9', name: 'Jogo Exemplo Novo', owned: false }),
+  ])
+  spyOn(games, 'getGame').mockImplementation((async (id: string) =>
+    id === 'game:9' ? outside : owned) as never)
+  const fromCatalog = spyOn(watcher, 'setCurrentFromCatalog').mockResolvedValue(makeContext())
+  const set = spyOn(watcher, 'setCurrent').mockResolvedValue(makeContext())
+  expect((await send('POST', '/api/current', { game: 'game:9' })).status).toBe(200)
+  expect(fromCatalog.mock.calls[0][1]).toBe(outside)
+  // A catalog game the player owns goes through the title, with progress.
+  await send('POST', '/api/current', { game: 'game:2' })
+  expect(set.mock.calls[0][1]).toMatchObject({ npCommunicationId: 'NPWR2' })
+  fromCatalog.mockResolvedValueOnce(null)
+  expect((await send('POST', '/api/current', { game: 'game:9' })).status).toBe(404)
+})

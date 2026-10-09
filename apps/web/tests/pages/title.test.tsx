@@ -87,6 +87,12 @@ test('a game the player does not own: the overview and saving it', async () => {
   expect(meta()).toContain('~70 horas')
   // The catalog trophies still list, beside the guide.
   expect(document.getElementById('title-trophies')?.textContent).toContain('De raspão')
+  // Nexo can talk about it before the player buys it.
+  expect(
+    screen.getByRole('link', { name: /Perguntar ao Nexo sobre ele/ }).getAttribute('href'),
+  ).toBe(
+    `/nexo?game=${encodeURIComponent(recommendedData.game.id)}&name=${encodeURIComponent(recommendedData.name).replace(/%20/g, '+')}`,
+  )
   fireEvent.click(screen.getByRole('button', { name: /Salvar nos interesses/ }))
   expect(await screen.findByRole('button', { name: 'Nos interesses', pressed: true })).toBeTruthy()
   expect(calls.at(-1)?.body).toEqual({ command: 'add game:19561' })

@@ -243,7 +243,7 @@ export interface GuideGame {
   deepGuide?: DeepGuideStats | null
   /** No guide yet and none being researched now: it was put on the list to be written. */
   queued?: boolean
-  /** The player's PSN list for this game, when they own it: "ask Nexo" opens the chat on it. */
+  /** Where "ask Nexo" opens the chat: the player's PSN list when they own the game, else its id. */
   np?: string | null
 }
 

@@ -39,6 +39,7 @@ const messages = defineMessages({
     inLibrary: 'NA SUA BIBLIOTECA',
     notInLibrary: 'FORA DA SUA BIBLIOTECA',
     talkToNexo: 'Conversar com o Nexo',
+    askNexo: 'Perguntar ao Nexo sobre ele',
     notOwned: 'Você ainda não tem este jogo.',
     webOnlyNote:
       'Guia montado pela web, sem a sua lista de troféus. Quando você começar o jogo, a página passa a mostrar cada troféu com o seu progresso.',
@@ -64,6 +65,7 @@ const messages = defineMessages({
     inLibrary: 'IN YOUR LIBRARY',
     notInLibrary: 'NOT IN YOUR LIBRARY',
     talkToNexo: 'Talk to Nexo',
+    askNexo: 'Ask Nexo about it',
     notOwned: "You don't own this game yet.",
     webOnlyNote:
       'Guide built from the web, without your trophy list. Once you start the game, this page shows every trophy with your progress.',
@@ -215,7 +217,8 @@ export function TitleView({ d }: { d: TitleDetail }) {
         trophies: d.trophies,
         deepGuide: d.deepGuide,
         queued: d.queued === true,
-        np: owned ? d.np : null,
+        // "Ask Nexo" opens the chat on this game: its list when owned, the game itself when not.
+        np: owned ? d.np : d.game.id,
       }}
     />
   )
@@ -256,6 +259,11 @@ export function TitleView({ d }: { d: TitleDetail }) {
               </p>
               <div className="cta">
                 <SaveButton d={d} />
+                {d.trophies?.length ? (
+                  <Link className="button ghost" to={nexoHref(d.game.id, d.name)}>
+                    {t('askNexo')} <Icon name="arrow" />
+                  </Link>
+                ) : null}
               </div>
             </div>
           )}

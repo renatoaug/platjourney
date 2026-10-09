@@ -194,20 +194,41 @@ test('a conversation of another game in the library switches the chat to that ga
   )
 })
 
-test('a conversation outside the library is read only, with a way back', async () => {
+test('a conversation about a game outside the library switches by the game', async () => {
   const calls = mockApi({
     '/api/chat/threads': [thread({ np: null, name: 'Jogo Antigo' })],
     '/api/chat': messages,
+    'POST /api/current': { current: null },
   })
   renderApp(<Nexo />)
   fireEvent.click(await screen.findByRole('button', { name: /Jogo Antigo/ }))
-  expect(
-    await screen.findByText(
-      'Esta é a conversa de Jogo Antigo, que não está na sua biblioteca agora.',
-    ),
-  ).toBeTruthy()
-  expect(calls.some((c) => c.path === '/api/chat?game=game%3A1')).toBe(true)
+  await waitFor(() =>
+    expect(calls.find((c) => c.path === '/api/current')?.body).toEqual({ game: 'game:1' }),
+  )
+})
+
+test('the older messages without a game are read only, with a way back', async () => {
+  const calls = mockApi({
+    '/api/chat/threads': [
+      thread({}),
+      thread({ game: null, np: null, name: null, last_question: null }),
+    ],
+    '/api/chat': messages,
+  })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, { value: { data: { ...SAMPLE_DATA, current: game } } })
+  fireEvent.click(await screen.findByRole('button', { name: /Geral/ }))
+  expect(await screen.findByText('Conversas de antes de o Nexo separar por jogo.')).toBeTruthy()
+  expect(calls.some((c) => c.path === '/api/chat?game=none')).toBe(true)
   expect(screen.queryByRole('combobox', { name: 'Mensagem para Nexo' })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Voltar para a conversa' }))
+  fireEvent.click(screen.getByRole('button', { name: `Voltar para ${game.name}` }))
   expect(await screen.findByRole('combobox', { name: 'Mensagem para Nexo' })).toBeTruthy()
+})
+
+test('without any conversation the list stays hidden', async () => {
+  const calls = mockApi({ '/api/chat/threads': [], '/api/chat': [] })
+  renderApp(<Nexo />)
+  await waitFor(() => expect(calls.some((c) => c.path === '/api/chat/threads')).toBe(true))
+  expect(screen.queryByRole('complementary', { name: 'Conversas' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Conversas' })).toBeNull()
 })

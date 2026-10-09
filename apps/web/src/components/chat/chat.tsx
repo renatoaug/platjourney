@@ -63,8 +63,9 @@ const messages = defineMessages({
     menu: {
       label: 'Comandos e jogos',
       game: 'Trocar o jogo da conversa',
-      noGame: 'Nenhum jogo seu com esse nome.',
+      noGame: 'Nenhum jogo com esse nome.',
       current: 'atual',
+      notOwned: 'fora da biblioteca',
       switch: 'Trocar o jogo da conversa',
       switching: 'Trocando para {name}…',
     },
@@ -128,8 +129,9 @@ const messages = defineMessages({
     menu: {
       label: 'Commands and games',
       game: 'Switch the game we talk about',
-      noGame: 'None of your games has that name.',
+      noGame: 'No game with that name.',
       current: 'current',
+      notOwned: 'not in your library',
       switch: 'Switch the game we talk about',
       switching: 'Switching to {name}…',
     },
@@ -463,11 +465,15 @@ export function NexoChat({
         : []
       : mode === 'game'
         ? (games ?? []).map((g) => ({
-            key: g.np,
+            key: g.np ?? g.game ?? g.name,
             title: g.name,
-            detail: `${g.platform} · ${g.progress}%`,
+            detail: g.progress === null ? g.platform : `${g.platform} · ${g.progress}%`,
             icon: g.icon,
-            badge: g.current ? t('menu.current') : undefined,
+            badge: g.current
+              ? t('menu.current')
+              : g.owned === false
+                ? t('menu.notOwned')
+                : undefined,
           }))
         : []
   const pick = (index: number) => {

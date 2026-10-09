@@ -72,7 +72,14 @@ import { isDismissReason } from './repository/recommendation.ts'
 import { listServerStatuses } from './repository/server-status.ts'
 import { setLinkCode, type User, updateUser } from './repository/user.ts'
 import { botInfo, botUsername } from './telegram.ts'
-import { demoContext, forgetUser, getCurrent, setCurrent, watchNow } from './watcher.ts'
+import {
+  demoContext,
+  forgetUser,
+  getCurrent,
+  setCurrent,
+  setCurrentFromCatalog,
+  watchNow,
+} from './watcher.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -698,26 +705,54 @@ async function api(
     if (isDemo(me)) return json(res, 200, [])
     const q = (url.searchParams.get('q') ?? '').trim().toLowerCase()
     const current = getCurrent(me)?.title.npCommunicationId
-    const hits = (await titles()).filter((ti) => ti.name.toLowerCase().includes(q)).slice(0, 8)
-    return json(
-      res,
-      200,
-      hits.map((ti) => ({
-        np: ti.npCommunicationId,
-        name: ti.name,
-        platform: ti.platform,
-        icon: ti.iconUrl,
-        progress: ti.progress,
-        current: ti.npCommunicationId === current,
-      })),
-    )
+    const own = await titles()
+    const hits = own.filter((ti) => ti.name.toLowerCase().includes(q)).slice(0, 8)
+    const mine = hits.map((ti) => ({
+      np: ti.npCommunicationId,
+      name: ti.name,
+      platform: ti.platform,
+      icon: ti.iconUrl,
+      progress: ti.progress,
+      current: ti.npCommunicationId === current,
+      owned: true,
+    }))
+    // Then games outside the library, to talk about one before buying it.
+    const owned = new Set(own.map((ti) => ti.npCommunicationId))
+    const currentGame = getCurrent(me)?.game.id
+    const others =
+      q.length < 2 || mine.length >= 8
+        ? []
+        : (await searchCatalog(q))
+            .filter((g) => g.np_communication_ids?.length)
+            .filter((g) => !g.np_communication_ids.some((np) => owned.has(np)))
+            .slice(0, 8 - mine.length)
+            .map((g) => ({
+              game: g.id,
+              name: g.name,
+              platform: g.platforms?.[0] ?? '',
+              icon: g.cover_url ?? null,
+              progress: null,
+              current: g.id === currentGame,
+              owned: false,
+            }))
+    return json(res, 200, [...mine, ...others])
   }
   if (path === '/api/current' && method === 'POST') {
     if (isDemo(me)) return json(res, 403, { error: 'demo' })
-    const { np } = await readBody(req)
-    const hit = (await titles()).find((ti) => ti.npCommunicationId === np)
-    if (!hit) return json(res, 404, { error: 'title not found' })
-    const ctx = await setCurrent(me, hit)
+    const { np, game } = await readBody(req)
+    const own = await titles()
+    // A catalog game the player owns after all is switched to through its title, with progress.
+    const found =
+      typeof game === 'string' && game.startsWith('game:') ? await getGame(game) : undefined
+    const hit = own.find(
+      (ti) =>
+        ti.npCommunicationId === np || found?.np_communication_ids?.includes(ti.npCommunicationId),
+    )
+    if (hit)
+      return json(res, 200, { current: (await currentView(me, await setCurrent(me, hit))) ?? null })
+    if (!found) return json(res, 404, { error: 'title not found' })
+    const ctx = await setCurrentFromCatalog(me, found)
+    if (!ctx) return json(res, 404, { error: 'no trophy list' })
     return json(res, 200, { current: (await currentView(me, ctx)) ?? null })
   }
   if (path === '/api/guides' && method === 'GET') {

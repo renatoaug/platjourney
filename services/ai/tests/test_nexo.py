@@ -464,3 +464,10 @@ def test_a_guide_without_difficulty_or_hours_tells_nexo_not_to_estimate() -> Non
     text = nexo.lean_context(ctx)
     assert 'Dificuldade e tempo: os guias ainda não dizem; não estime.' in text
     assert '0/10' not in text
+
+
+def test_a_game_the_player_does_not_own_is_talked_about_before_buying() -> None:
+    ctx = context()
+    assert 'ainda não tem este jogo' not in nexo.lean_context(ctx)
+    ctx.owned = False
+    assert 'O jogador ainda não tem este jogo' in nexo.lean_context(ctx)

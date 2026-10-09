@@ -17,6 +17,7 @@ const context = {
   groups: null,
   hoursPlayed: null,
   includeDlcProgress: false,
+  owned: true,
 }
 
 let ai: ReturnType<typeof spyOn<typeof aiModule, 'ai'>>

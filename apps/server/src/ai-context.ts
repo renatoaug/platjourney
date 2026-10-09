@@ -10,4 +10,5 @@ export const aiContext = (ctx: GameContext, user: User) => ({
   groups: ctx.groups ?? null,
   hoursPlayed: ctx.hoursPlayed ?? null,
   includeDlcProgress: user.include_dlc_progress === true,
+  owned: ctx.owned !== false,
 })

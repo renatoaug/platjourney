@@ -25,7 +25,6 @@ const messages = defineMessages({
     subtitleNoGame: 'Pergunta qualquer coisa sobre a platina ou o game.',
     switched: 'Agora falando sobre {name}.',
     switchFailed: 'Não consegui trocar o jogo. Tenta de novo.',
-    readOnlyGame: 'Esta é a conversa de {name}, que não está na sua biblioteca agora.',
     readOnlyGeneral: 'Conversas de antes de o Nexo separar por jogo.',
     backToCurrent: 'Voltar para {name}',
     backToChat: 'Voltar para a conversa',
@@ -37,7 +36,6 @@ const messages = defineMessages({
     subtitleNoGame: 'Ask anything about the platinum or the game.',
     switched: 'Now talking about {name}.',
     switchFailed: 'Could not switch the game. Try again.',
-    readOnlyGame: 'This is the conversation about {name}, which is not in your library now.',
     readOnlyGeneral: 'Conversations from before Nexo kept one per game.',
     backToCurrent: 'Back to {name}',
     backToChat: 'Back to the conversation',
@@ -156,7 +154,7 @@ function LiveNexo() {
   const pickGame = async (game: LibraryGame) => {
     setSwitching(game.name)
     try {
-      await api('/api/current', { np: game.np })
+      await api('/api/current', game.np ? { np: game.np } : { game: game.game })
       await loadState()
       setViewing(null)
       toast(t('switched', { name: game.name }), 'success')
@@ -171,12 +169,17 @@ function LiveNexo() {
   const [params, setParams] = useSearchParams()
   const asked = useRef(false)
   useEffect(() => {
-    const np = params.get('game')
-    if (!np || asked.current || !data) return
+    const wanted = params.get('game')
+    if (!wanted || asked.current || !data) return
     asked.current = true
     setParams({}, { replace: true })
-    if (data.current?.np === np) return
-    void pickGame({ np, name: params.get('name') ?? '' } as LibraryGame)
+    // A PSN list id for a game in the library, a game id for one outside it.
+    const byGame = wanted.startsWith('game:')
+    if (byGame ? data.current?.game.id === wanted : data.current?.np === wanted) return
+    void pickGame({
+      ...(byGame ? { game: wanted } : { np: wanted }),
+      name: params.get('name') ?? '',
+    } as LibraryGame)
   })
 
   // A conversation from the list: the chat's game is just shown; another game of the library becomes
@@ -186,17 +189,15 @@ function LiveNexo() {
     const k = threadKey(thread)
     if (k === currentKey) setViewing(null)
     else if (thread.np) void pickGame({ np: thread.np, name: thread.name ?? '' } as LibraryGame)
+    // A game outside the library is still a conversation: Nexo talks about it before buying.
+    else if (thread.game)
+      void pickGame({ game: thread.game, name: thread.name ?? '' } as LibraryGame)
     else setViewing(k)
   }
   const reading = viewing !== null && viewing !== currentKey
-  const readingThread = reading ? threads?.find((x) => threadKey(x) === viewing) : undefined
   const readOnly = reading ? (
     <>
-      <span>
-        {readingThread?.game
-          ? t('readOnlyGame', { name: readingThread.name ?? '' })
-          : t('readOnlyGeneral')}
-      </span>
+      <span>{t('readOnlyGeneral')}</span>
       <button type="button" className="button ghost sm" onClick={() => setViewing(null)}>
         {current ? t('backToCurrent', { name: current.name }) : t('backToChat')}
       </button>
@@ -206,14 +207,19 @@ function LiveNexo() {
   return (
     <Page path="/nexo">
       <div className="nexo-layout">
-        <ChatThreadsToggle onOpen={() => setSheet(true)} />
-        <ChatThreads
-          threads={threads}
-          active={key}
-          onPick={pickThread}
-          open={sheet}
-          onClose={() => setSheet(false)}
-        />
+        {/* The list shows once there is a conversation to go back to. */}
+        {threads?.length ? (
+          <>
+            <ChatThreadsToggle onOpen={() => setSheet(true)} />
+            <ChatThreads
+              threads={threads}
+              active={key}
+              onPick={pickThread}
+              open={sheet}
+              onClose={() => setSheet(false)}
+            />
+          </>
+        ) : null}
         <NexoChat
           readOnly={readOnly}
           chat={chat}
