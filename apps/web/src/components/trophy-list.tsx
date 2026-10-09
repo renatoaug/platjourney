@@ -20,6 +20,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote, splitSource } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
 import { toast } from '../ui/toast'
+import { nexoHref } from './tip'
 import './trophy-list.css'
 
 const messages = defineMessages({
@@ -217,7 +218,7 @@ function savedFilters(): SavedFilters {
 // Exported so stories can show an answer without asking Nexo.
 export const helpAnswers = new Map<string, Map<number, string>>()
 
-function TrophyHelp({ answer }: { answer?: string }) {
+function TrophyHelp({ answer, chat }: { answer?: string; chat: string }) {
   const t = useMessages(messages)
   if (!answer) return null
   if (answer === 'loading')
@@ -242,7 +243,7 @@ function TrophyHelp({ answer }: { answer?: string }) {
         <Markdown text={body} />
         {source && <SourceNote text={source} />}
       </div>
-      <Link className="text-link" to="/nexo">
+      <Link className="text-link" to={chat}>
         {t('help.continueInChat')} <Icon name="arrow" />
       </Link>
     </div>
@@ -253,10 +254,13 @@ function TrophyCard({
   t,
   answers,
   onHelp,
+  chat,
 }: {
   t: Trophy
   answers: Map<number, string> | null
   onHelp: (id: number) => void
+  /** Where "continue in the chat" goes: Nexo on this game. */
+  chat: string
 }) {
   const tr = useMessages(messages)
   const help = answers && !t.earned
@@ -299,7 +303,7 @@ function TrophyCard({
             </span>
           </div>
         ) : null}
-        {help && <TrophyHelp answer={answers.get(t.id)} />}
+        {help && <TrophyHelp answer={answers.get(t.id)} chat={chat} />}
       </div>
       {help && t.type !== 'platinum' && !answers.has(t.id) && (
         <button
@@ -610,7 +614,15 @@ export function TrophyList({
             {shown.length ? (
               shown
                 .slice(start, start + TROPHY_PAGE_SIZE)
-                .map((t) => <TrophyCard key={t.id} t={t} answers={answers} onHelp={askHelp} />)
+                .map((t) => (
+                  <TrophyCard
+                    key={t.id}
+                    t={t}
+                    answers={answers}
+                    onHelp={askHelp}
+                    chat={nexoHref(np)}
+                  />
+                ))
             ) : (
               <div className="trophy-empty">{t('noResultsHint')}</div>
             )}

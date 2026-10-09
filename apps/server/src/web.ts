@@ -49,6 +49,7 @@ import { loadGroups, rankNextPlatinum } from './ranking.ts'
 import { allow } from './rate-limit.ts'
 import { dismissRecommendation, recommendations } from './recommend.ts'
 import {
+  chatThreads,
   markNotificationsRead,
   notificationsPage,
   recentMessages,
@@ -667,13 +668,29 @@ async function api(
     await markNotificationsRead(me.id)
     return json(res, 200, { ok: true })
   }
-  if (path === '/api/chat' && method === 'GET')
-    return json(res, 200, await recentMessages(me.id, 40))
+  // Each game is its own conversation: `?game=game:…` reads that one, `?game=none` the messages
+  // without a game, and no parameter the current game's.
+  if (path === '/api/chat' && method === 'GET') {
+    const asked = url.searchParams.get('game')
+    const game =
+      asked === 'none'
+        ? null
+        : asked?.startsWith('game:')
+          ? asked
+          : (getCurrent(me)?.game.id ?? null)
+    return json(res, 200, await recentMessages(me.id, 40, game))
+  }
+  if (path === '/api/chat/threads' && method === 'GET')
+    return json(res, 200, await chatThreads(me.id))
   if (path === '/api/chat' && method === 'POST') {
     const { text } = await readBody(req)
     if (typeof text !== 'string' || !text.trim()) return json(res, 400, { error: 'text required' })
-    const response = await reply(me, text.trim().slice(0, config.chat.maxChars), getCurrent(me))
-    return json(res, 200, { text: response, messages: await recentMessages(me.id, 40) })
+    const ctx = getCurrent(me)
+    const response = await reply(me, text.trim().slice(0, config.chat.maxChars), ctx)
+    return json(res, 200, {
+      text: response,
+      messages: await recentMessages(me.id, 40, ctx?.game.id ?? null),
+    })
   }
   // The chat's game, as /game in Telegram: the player's own titles, searched by name, and the
   // switch, which loads that game's context for the chat and the notices alike.

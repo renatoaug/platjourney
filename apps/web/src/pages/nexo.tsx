@@ -1,8 +1,15 @@
-/** Chat with Nexo. The conversation is fetched once and kept in the app cache, so navigating away and back keeps it (and an answer still in flight). */
-import { useCallback, useEffect, useState } from 'react'
+/** Chat with Nexo, one conversation per game. Each conversation is fetched once and kept in the app cache, so navigating away and back keeps it (and an answer still in flight). */
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { type ChatLoad, type ChatMessage, NexoChat } from '../components/chat/chat'
+import {
+  type ChatThread,
+  ChatThreads,
+  ChatThreadsToggle,
+  threadKey,
+} from '../components/chat/threads'
 import { connectAccount, useDemo } from '../components/demo'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
@@ -18,6 +25,10 @@ const messages = defineMessages({
     subtitleNoGame: 'Pergunta qualquer coisa sobre a platina ou o game.',
     switched: 'Agora falando sobre {name}.',
     switchFailed: 'Não consegui trocar o jogo. Tenta de novo.',
+    readOnlyGame: 'Esta é a conversa de {name}, que não está na sua biblioteca agora.',
+    readOnlyGeneral: 'Conversas de antes de o Nexo separar por jogo.',
+    backToCurrent: 'Voltar para {name}',
+    backToChat: 'Voltar para a conversa',
   },
   [Language.En]: {
     sendFailed: 'Could not reach Nexo. Try again.',
@@ -26,6 +37,10 @@ const messages = defineMessages({
     subtitleNoGame: 'Ask anything about the platinum or the game.',
     switched: 'Now talking about {name}.',
     switchFailed: 'Could not switch the game. Try again.',
+    readOnlyGame: 'This is the conversation about {name}, which is not in your library now.',
+    readOnlyGeneral: 'Conversations from before Nexo kept one per game.',
+    backToCurrent: 'Back to {name}',
+    backToChat: 'Back to the conversation',
   },
 })
 
@@ -55,38 +70,67 @@ function DemoNexo() {
 function LiveNexo() {
   const t = useMessages(messages)
   const { data, cache, loadState } = useApp()
-  const cached = () => (Array.isArray(cache.chat) ? (cache.chat as ChatMessage[]) : null)
-  const [chat, setChat] = useState<ChatLoad>(() => cached() ?? 'loading')
+  // Each game is its own conversation, kept by its key (the game's id, or "none" without a game).
+  if (!cache.chats) cache.chats = {}
+  const chats = cache.chats as Record<string, ChatMessage[]>
+  const currentKey = data?.current?.game.id ?? 'none'
+  // Another conversation being read, from the list; null is the chat's own game.
+  const [viewing, setViewing] = useState<string | null>(null)
+  const key = viewing ?? currentKey
+  const shown = useRef(key)
+  shown.current = key
+  const [chat, setChat] = useState<ChatLoad>(() => chats[key] ?? 'loading')
   const [sending, setSending] = useState(() => cache.chatSending === true)
+  const [threads, setThreads] = useState<ChatThread[] | null>(
+    () => (cache.chatThreads as ChatThread[] | undefined) ?? null,
+  )
+  const [sheet, setSheet] = useState(false)
 
   // Writes go to the cache first: a reply that lands after the player left is still there on return.
-  const update = useCallback(
-    (next: (list: ChatMessage[]) => ChatMessage[]) => {
-      const list = next(Array.isArray(cache.chat) ? (cache.chat as ChatMessage[]) : [])
-      cache.chat = list
-      setChat(list)
+  const write = useCallback(
+    (k: string, list: ChatMessage[]) => {
+      chats[k] = list
+      if (shown.current === k) setChat(list)
     },
-    [cache],
+    [chats],
   )
 
+  const loadThreads = useCallback(() => {
+    api<ChatThread[]>('/api/chat/threads')
+      .then((list) => {
+        cache.chatThreads = list
+        setThreads(list)
+      })
+      .catch(() => setThreads((old) => old ?? []))
+  }, [cache])
+
   useEffect(() => {
-    if (Array.isArray(cache.chat)) return
-    api<ChatMessage[]>('/api/chat')
-      .then((list) => update(() => list))
-      .catch(() => setChat('error'))
-  }, [cache, update])
+    if (!cache.chatThreads) loadThreads()
+  }, [cache, loadThreads])
+
+  useEffect(() => {
+    if (!data) return
+    const known = chats[key]
+    setChat(known ?? 'loading')
+    if (known) return
+    api<ChatMessage[]>(`/api/chat?game=${encodeURIComponent(key)}`)
+      .then((list) => write(key, list))
+      .catch(() => shown.current === key && setChat('error'))
+  }, [data, key, chats, write])
 
   const send = async (text: string) => {
     if (cache.chatSending === true) return
+    const k = currentKey
     cache.chatSending = true
     setSending(true)
-    update((list) => [...list, { role: 'user', content: text, optimistic: true }])
+    write(k, [...(chats[k] ?? []), { role: 'user', content: text, optimistic: true }])
     try {
       const r = await api<ChatReply>('/api/chat', { text })
       const messages = r.messages
-      if (messages) update(() => messages)
-      else update((list) => [...list, { role: 'assistant', content: r.text ?? r.error ?? '' }])
+      if (messages) write(k, messages)
+      else write(k, [...(chats[k] ?? []), { role: 'assistant', content: r.text ?? r.error ?? '' }])
       modelWorkDone()
+      loadThreads()
     } catch (e) {
       if (!(e instanceof ApiError && e.handled)) toast(t('sendFailed'))
     }
@@ -114,6 +158,7 @@ function LiveNexo() {
     try {
       await api('/api/current', { np: game.np })
       await loadState()
+      setViewing(null)
       toast(t('switched', { name: game.name }), 'success')
     } catch (e) {
       if (!(e instanceof ApiError && e.handled)) toast(t('switchFailed'))
@@ -122,17 +167,64 @@ function LiveNexo() {
     }
   }
 
+  // A game page's "talk to Nexo" link names the game (?game=<np>&name=…): the chat opens on it.
+  const [params, setParams] = useSearchParams()
+  const asked = useRef(false)
+  useEffect(() => {
+    const np = params.get('game')
+    if (!np || asked.current || !data) return
+    asked.current = true
+    setParams({}, { replace: true })
+    if (data.current?.np === np) return
+    void pickGame({ np, name: params.get('name') ?? '' } as LibraryGame)
+  })
+
+  // A conversation from the list: the chat's game is just shown; another game of the library becomes
+  // the chat's game; one outside the library, or the old messages without a game, is read only.
+  const pickThread = (thread: ChatThread) => {
+    setSheet(false)
+    const k = threadKey(thread)
+    if (k === currentKey) setViewing(null)
+    else if (thread.np) void pickGame({ np: thread.np, name: thread.name ?? '' } as LibraryGame)
+    else setViewing(k)
+  }
+  const reading = viewing !== null && viewing !== currentKey
+  const readingThread = reading ? threads?.find((x) => threadKey(x) === viewing) : undefined
+  const readOnly = reading ? (
+    <>
+      <span>
+        {readingThread?.game
+          ? t('readOnlyGame', { name: readingThread.name ?? '' })
+          : t('readOnlyGeneral')}
+      </span>
+      <button type="button" className="button ghost sm" onClick={() => setViewing(null)}>
+        {current ? t('backToCurrent', { name: current.name }) : t('backToChat')}
+      </button>
+    </>
+  ) : undefined
+
   return (
     <Page path="/nexo">
-      <NexoChat
-        chat={chat}
-        sending={sending}
-        subtitle={subtitle}
-        onSend={send}
-        searchGames={searchGames}
-        onPickGame={pickGame}
-        switching={switching}
-      />
+      <div className="nexo-layout">
+        <ChatThreadsToggle onOpen={() => setSheet(true)} />
+        <ChatThreads
+          threads={threads}
+          active={key}
+          onPick={pickThread}
+          open={sheet}
+          onClose={() => setSheet(false)}
+        />
+        <NexoChat
+          readOnly={readOnly}
+          chat={chat}
+          sending={sending}
+          subtitle={subtitle}
+          onSend={send}
+          searchGames={searchGames}
+          onPickGame={pickGame}
+          switching={switching}
+        />
+      </div>
     </Page>
   )
 }

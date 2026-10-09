@@ -11,6 +11,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
 import { NexoHero } from './nexo-hero'
+import { nexoHref } from './tip'
 import './guide.css'
 
 const messages = defineMessages({
@@ -242,6 +243,8 @@ export interface GuideGame {
   deepGuide?: DeepGuideStats | null
   /** No guide yet and none being researched now: it was put on the list to be written. */
   queued?: boolean
+  /** The player's PSN list for this game, when they own it: "ask Nexo" opens the chat on it. */
+  np?: string | null
 }
 
 // Keep generated text free of decorative emoji; the interface uses SVG icons.
@@ -629,7 +632,7 @@ function Glossary({ items }: { items: GuideDetail['glossary'] }) {
   )
 }
 
-function DeepGuide({ dg }: { dg?: DeepGuideStats | null }) {
+function DeepGuide({ dg, chat }: { dg?: DeepGuideStats | null; chat: string }) {
   const t = useMessages(messages)
   if (dg?.chunks)
     return (
@@ -641,7 +644,7 @@ function DeepGuide({ dg }: { dg?: DeepGuideStats | null }) {
           {dg.indexing ? t('deep.updating') : ''}
           {t('deep.askDetails')}
         </span>
-        <Link className="text-link" to="/nexo">
+        <Link className="text-link" to={chat}>
           {t('deep.ask')} <Icon name="arrow" />
         </Link>
       </div>
@@ -883,7 +886,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
         <Icon name="book-open" />
         <span>{heading}</span>
       </h2>
-      <DeepGuide dg={c.deepGuide} />
+      <DeepGuide dg={c.deepGuide} chat={nexoHref(c.np, c.name)} />
       <div
         ref={(el) => {
           tabsRef.current = el

@@ -35,7 +35,7 @@ test('a game from the library: progress, the guide numbers and the trophies', as
   expect(meta()).not.toContain('Troféus online')
   expect(screen.getByRole('progressbar', { name: 'Progresso do jogo' })).toBeTruthy()
   expect(screen.getByRole('link', { name: /Conversar com o Nexo/ }).getAttribute('href')).toBe(
-    '/nexo',
+    '/nexo?game=NPWR17130_00&name=DAYS+GONE',
   )
   expect(document.getElementById('title-trophies')?.textContent).toContain('De raspão')
   expect(screen.getByRole('link', { name: /Voltar/ }).getAttribute('href')).toBe('/discover')

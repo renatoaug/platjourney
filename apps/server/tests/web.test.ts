@@ -252,6 +252,27 @@ test('sign-in routes and the demo are limited per address', async () => {
   expect((await send('POST', '/api/auth/demo')).status).toBe(429)
 })
 
+test("the chat reads the current game's conversation, another game's, or the one without a game", async () => {
+  const read = spyOn(activity, 'recentMessages').mockResolvedValue([])
+  await send('GET', '/api/chat')
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, null)
+  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext())
+  await send('GET', '/api/chat')
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, makeContext().game.id)
+  await send('GET', '/api/chat?game=game:9')
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, 'game:9')
+  await send('GET', '/api/chat?game=none')
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, null)
+  spyOn(nexo, 'reply').mockResolvedValue('ok')
+  await send('POST', '/api/chat', { text: 'oi' })
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, makeContext().game.id)
+})
+
+test('the conversations list comes from the repository', async () => {
+  spyOn(activity, 'chatThreads').mockResolvedValue([])
+  expect((await send('GET', '/api/chat/threads')).body).toEqual([])
+})
+
 test('auth failures answer with their status and message', async () => {
   spyOn(auth, 'login').mockRejectedValue(new AuthError('too_many_attempts'))
   const res = await send('POST', '/api/auth/login', { onlineId: 'Kratos', password: 'x' })

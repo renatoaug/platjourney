@@ -371,6 +371,7 @@ export function NexoChat({
   searchGames,
   onPickGame,
   switching = null,
+  readOnly,
 }: {
   chat: ChatLoad
   /** A question is out: the pending bubble shows and the send controls are disabled. */
@@ -386,6 +387,8 @@ export function NexoChat({
   onPickGame?: (game: LibraryGame) => void
   /** The game being loaded after a pick: the subtitle says so and the box waits. */
   switching?: string | null
+  /** Reading a conversation that is not the chat's game: this note stands in for the box. */
+  readOnly?: ReactNode
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
@@ -603,6 +606,10 @@ export function NexoChat({
         <div className="demo-connect" id="chat-demo-connect">
           <p>{t('demo.connect')}</p>
           <DemoConnectButton onConnect={onConnect} />
+        </div>
+      ) : readOnly ? (
+        <div className="nexo-readonly" role="note">
+          {readOnly}
         </div>
       ) : (
         <ChatForm

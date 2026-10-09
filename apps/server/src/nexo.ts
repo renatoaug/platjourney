@@ -43,9 +43,10 @@ type Turn = { role: 'user' | 'assistant'; content: string }
 // The chat so far plus the latest automatic notices, in order, so a reply like
 // "e o próximo?" to a trophy notice has what it refers to. Notices are not chat
 // turns: they are shown to the model as what Nexo said on its own.
-async function conversation(user: User): Promise<Turn[]> {
+async function conversation(user: User, game?: string): Promise<Turn[]> {
   const [messages, notices] = await Promise.all([
-    recentMessages(user.id, 12),
+    // Each game is its own conversation: the model sees this game's turns only.
+    recentMessages(user.id, 12, game ?? null),
     recentNotifications(user.id, 3),
   ])
   return [
@@ -71,7 +72,7 @@ function ask(
 ): Promise<string> {
   return aroundModel({ user, action }, () =>
     tagged({ user: user.id, action }, async () => {
-      const history = remember ? { history: await conversation(user) } : {}
+      const history = remember ? { history: await conversation(user, remember.game) } : {}
       const { text } = await ai<{ text: string }>(path, { ...body, ...history })
       if (remember) {
         await appendMessage(user.id, 'user', remember.text, remember.game)

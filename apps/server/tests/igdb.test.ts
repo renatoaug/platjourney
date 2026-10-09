@@ -120,6 +120,19 @@ test('quotes and backslashes in a name cannot escape the search string', async (
   expect(String(call?.[1]?.body)).toStartWith('search "Evil ; where id = 1;";')
 })
 
+test('a store name listing its consoles is searched without them', async () => {
+  const fetch = igdbApi(() => [game({ id: 1 })])
+  for (const name of [
+    'Ghost of Tsushima PS4™ & PS5™',
+    'Ghost of Tsushima PS4™ e PS5™',
+    'Ghost of Tsushima (PS5)',
+  ]) {
+    await resolveGame(name)
+    const call = fetch.mock.calls.filter(([url]) => String(url).includes('api.igdb.com')).at(-1)
+    expect(String(call?.[1]?.body)).toStartWith('search "Ghost of Tsushima";')
+  }
+})
+
 test('partial name matches rank above unrelated results', async () => {
   igdbApi(() => [game({ id: 4, name: 'Other' }), game({ id: 5, name: 'Astro Bot Rescue' })])
   expect((await resolveGame('Astro Bot'))?.id).toBe(5)

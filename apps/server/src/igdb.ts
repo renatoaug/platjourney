@@ -93,6 +93,11 @@ function cleanPsnName(name: string): string {
     name
       .replace(/[®™©]/g, ' ')
       .replace(/\s+trophies$/i, '')
+      // A store name that lists its consoles ("It Takes Two PS4™ & PS5™") is the game itself.
+      .replace(
+        /\s*\(?\b(?:PS ?[345]|PS Vita)(?:\s*(?:&|e|and|\/|,)\s*(?:PS ?[345]|PS Vita))*\)?\s*$/i,
+        '',
+      )
       // Quotes and backslashes would end or escape the search string in the query.
       .replace(/["\\]/g, '')
       .replace(/\s+/g, ' ')

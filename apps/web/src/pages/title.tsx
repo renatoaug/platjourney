@@ -17,6 +17,7 @@ import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../
 import { Icon } from '../ui/icon'
 import { ErrorState } from '../ui/states'
 import './title.css'
+import { nexoHref } from '../components/tip'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -214,6 +215,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
         trophies: d.trophies,
         deepGuide: d.deepGuide,
         queued: d.queued === true,
+        np: owned ? d.np : null,
       }}
     />
   )
@@ -242,7 +244,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
                 }}
               />
               <div className="cta">
-                <Link className="button" to="/nexo">
+                <Link className="button" to={nexoHref(d.np, d.name)}>
                   {t('talkToNexo')} <Icon name="arrow" />
                 </Link>
               </div>
