@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0](https://github.com/renatoaug/platjourney/compare/v0.3.0...v0.4.0) (2026-10-09)
+
+### Features
+
+* **chat:** switch the chat's game on the web, link cited sources, and show unknown effort ([#21](https://github.com/renatoaug/platjourney/issues/21)) ([487f967](https://github.com/renatoaug/platjourney/commit/487f9671e6dfd0020627d59f6a96a6aea462455f))
+
 ## [0.3.0](https://github.com/renatoaug/platjourney/compare/v0.2.1...v0.3.0) (2026-10-09)
 
 ### Features
