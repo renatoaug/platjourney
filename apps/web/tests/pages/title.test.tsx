@@ -98,12 +98,14 @@ test('a game the player does not own: the overview and saving it', async () => {
   expect(calls.at(-1)?.body).toEqual({ command: 'add game:19561' })
 })
 
-test('without a trophy list the guide takes the width', async () => {
+test('without a trophy list the trophies column says it is on its way', async () => {
   open('/title/name/Days%20Gone', { ...recommendedData, trophies: null })
   await screen.findByText('FORA DA SUA BIBLIOTECA')
-  expect(document.getElementById('title-trophies')).toBeNull()
-  expect(document.querySelector('.guide-wide#title-guide')).toBeTruthy()
-  expect(screen.getByText(/Guia montado pela web, sem a sua lista de troféus\./)).toBeTruthy()
+  const trophies = document.getElementById('title-trophies')
+  expect(trophies?.textContent).toContain('Buscando a lista de troféus')
+  expect(trophies?.textContent).toContain('Volte em breve')
+  expect(document.getElementById('title-guide')).toBeTruthy()
+  expect(screen.queryByText(/Guia montado pela web/)).toBeNull()
 })
 
 test('a guide with missables, online trophies and several runs', async () => {
