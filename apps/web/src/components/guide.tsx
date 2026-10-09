@@ -3,10 +3,9 @@ import { Fragment, type KeyboardEvent, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtRate } from '../lib/format'
-import { plainText } from '../lib/text'
 import type { DeepGuideStats, GuideDetail, KeyTrophy, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
-import { UserText } from '../ui/markdown'
+import { GuideText, UserText } from '../ui/markdown'
 import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
@@ -289,7 +288,9 @@ function GuideNotes({ g }: { g: GuideDetail }) {
             <span>{title}</span>
             <Icon name="chevron-down" />
           </summary>
-          <p>{plainText(content)}</p>
+          <p>
+            <GuideText text={content} />
+          </p>
         </details>
       ))}
     </section>
@@ -356,7 +357,9 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
           </span>
         </summary>
         <div className="key-feature-content">
-          <p>{plainText(item.why)}</p>
+          <p>
+            <GuideText text={item.why} />
+          </p>
           {trophy && (
             <span className="key-rarity">
               {tr('key.playersEarned', { rate: fmtRate(trophy.earnedRate) })}
@@ -439,7 +442,9 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
                           {tr('key.earnedOn', { date: fmtDate(trophy.earnedAt) })}
                         </small>
                       )}
-                      <p>{plainText(t.trick)}</p>
+                      <p>
+                        <GuideText text={t.trick} />
+                      </p>
                       {t.source && <SourceNote text={tr('key.source', { source: t.source })} />}
                     </div>
                   </details>
@@ -474,7 +479,9 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
               online.map((o) => (
                 <div key={o.trophy} className="key-online-item">
                   <h4>{o.trophy}</h4>
-                  <p>{plainText(o.what)}</p>
+                  <p>
+                    <GuideText text={o.what} />
+                  </p>
                   {o.boostable && <span className="key-boost">{tr('key.boostable')}</span>}
                 </div>
               ))
@@ -511,12 +518,16 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
                       <dl className="key-bug-details">
                         <div>
                           <dt>{tr('key.bugIssue')}</dt>
-                          <dd>{plainText(b.issue)}</dd>
+                          <dd>
+                            <GuideText text={b.issue} />
+                          </dd>
                         </div>
                         {b.workaround && (
                           <div className="key-bug-solution">
                             <dt>{tr('key.bugWorkaround')}</dt>
-                            <dd>{plainText(b.workaround)}</dd>
+                            <dd>
+                              <GuideText text={b.workaround} />
+                            </dd>
                           </div>
                         )}
                       </dl>
@@ -684,7 +695,9 @@ function Missable({ c, m }: { c: GuideGame; m: NonNullable<GuideDetail['missable
           )}
         </div>
         <p className="missable-when">{m.when}</p>
-        <p className="muted">{plainText(m.how)}</p>
+        <p className="muted">
+          <GuideText text={m.how} />
+        </p>
       </div>
     </div>
   )
@@ -819,14 +832,18 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   const panels = [
     <Fragment key="summary">
       <QuickFacts g={g} />
-      <p style={{ margin: 0, color: 'var(--color-fg)' }}>{plainText(g.overview)}</p>
+      <p style={{ margin: 0, color: 'var(--color-fg)' }}>
+        <GuideText text={g.overview} />
+      </p>
       <GuideNotes g={g} />
       {earlyTips.length > 0 && (
         <>
           <h2 style={{ marginTop: 14 }}>{tr('earlyTips')}</h2>
           <ul>
             {earlyTips.map((t) => (
-              <li key={t}>{t}</li>
+              <li key={t}>
+                <GuideText text={t} />
+              </li>
             ))}
           </ul>
         </>
@@ -855,7 +872,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
             {i + 1}. {r.phase}
           </b>
           <br />
-          {plainText(r.goal)}
+          <GuideText text={r.goal} />
           {r.trophies.length > 0 && (
             <>
               <br />

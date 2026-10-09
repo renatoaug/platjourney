@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { esc, md, plainText, uiText, userText } from '../../src/lib/text'
+import { esc, guideText, md, plainText, uiText, userText } from '../../src/lib/text'
 
 test('esc escapes HTML and accepts anything', () => {
   expect(esc('<b class="x">a & b</b>')).toBe('&lt;b class=&quot;x&quot;&gt;a &amp; b&lt;/b&gt;')
@@ -20,6 +20,14 @@ test('uiText drops emoji and escapes', () => {
 test('userText keeps **bold** and escapes the rest', () => {
   expect(userText('pegue **Isto é uma faca** <agora>')).toBe(
     'pegue <strong>Isto é uma faca</strong> &lt;agora&gt;',
+  )
+})
+
+test('guideText bolds the game names and puts each step on its own line', () => {
+  expect(
+    guideText('Depois da missão **Lost Tower**, pegue o **arco**.\nFabrique <um> dardo.'),
+  ).toBe(
+    'Depois da missão <strong>Lost Tower</strong>, pegue o <strong>arco</strong>.<br>Fabrique &lt;um&gt; dardo.',
   )
 })
 
