@@ -452,6 +452,12 @@ def test_the_cited_source_links_to_the_passage_it_came_from() -> None:
     assert nexo.cite('Fonte: Wiki', used) == 'Fonte: Wiki'
 
 
+def test_nexo_is_told_to_cite_every_source_it_used() -> None:
+    # An answer built from a written guide and a video names both, so the video gets its link too.
+    assert 'o nome de cada fonte que usou' in nexo.SYSTEM
+    assert 'citado pelo nome do canal' in nexo.SYSTEM
+
+
 def test_a_guide_without_difficulty_or_hours_tells_nexo_not_to_estimate() -> None:
     ctx = context()
     ctx.guide = {**(ctx.guide or {}), 'difficulty': 0, 'hours': 0, 'overview': 'x'}
