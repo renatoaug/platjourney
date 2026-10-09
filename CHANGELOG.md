@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.0](https://github.com/renatoaug/platjourney/compare/v0.2.1...v0.3.0) (2026-10-09)
+
+### Features
+
+* **chat:** link the source an answer cites to the passage it came from ([#20](https://github.com/renatoaug/platjourney/issues/20)) ([83e3165](https://github.com/renatoaug/platjourney/commit/83e316552410f6c78a32cc4f866dece15fe60544))
+
 ## [0.2.1](https://github.com/renatoaug/platjourney/compare/v0.2.0...v0.2.1) (2026-10-08)
 
 ### Bug Fixes
