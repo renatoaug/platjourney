@@ -1,4 +1,17 @@
 @layer screens {
+  .guide-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .guide-heading .icon {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    color: var(--color-accent);
+  }
+
   .key-note-heading .eyebrow {
     font-size: var(--text-xs);
     letter-spacing: var(--tracking-caps);
@@ -795,36 +808,77 @@
     padding: 16px 0;
   }
 
-  /* A guide on the list to be written: Nexo at work beside two quiet lines, no box around them. */
+  /* The guide's preparation state: decorative workbench, truthful queue/research status. */
   .guide-queued {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 6px 0;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 12px 24px;
+    text-align: center;
   }
 
-  .guide-queued .nexo-hero > .nexo-avatar {
-    width: 52px;
-    height: 52px;
+  .guide-work-copy {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .guide-work-label {
+    color: var(--color-accent);
+    font: var(--text-xs) / var(--leading-snug) var(--font-mono);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
   }
 
   .guide-queued b {
     color: var(--color-fg);
-    font-weight: var(--weight-semibold);
+    font: var(--weight-semibold) var(--text-xl) / var(--leading-tight) var(--font-display);
+    letter-spacing: var(--tracking-snug);
   }
 
   .guide-queued p {
-    margin: 4px 0 0;
-    max-width: 60ch;
+    margin: 0;
+    max-width: 43ch;
     color: var(--color-fg-muted);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     line-height: var(--leading-relaxed);
   }
 
-  .guide-building {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid var(--color-border);
+  .guide-work-hint {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .guide-research-preview {
+    margin: 0 auto;
+    width: 76%;
+    max-height: 42px;
+    overflow: hidden;
+    mask-image: linear-gradient(var(--color-shadow), transparent);
+  }
+
+  .guide-research-preview h2,
+  .guide-research-preview .tabs {
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    .guide-queued {
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding-inline: 0;
+    }
+
+    .guide-queued .nexo-hero {
+      align-self: center;
+    }
   }
 
   /* Deep guide status in the guide card */

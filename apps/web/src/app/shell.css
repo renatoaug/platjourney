@@ -58,8 +58,15 @@
     .sidebar > .logo,
     .sidebar > .profile {
       flex: none;
-      /* The version line sits just above: the usual 28px left a gap under it. */
+    }
+
+    .sidebar > .logo {
       margin-top: 12px;
+    }
+
+    /* Compensate for the separator drawn 10px above the profile. */
+    .sidebar > .profile {
+      margin-top: 10px;
     }
 
     .sidebar > .profile > div {
@@ -238,18 +245,22 @@
 
   /* In the sidebar it sits close under the note, on the note's left edge. */
   .sidebar .app-version {
-    margin-top: 6px;
-    padding-left: 12px;
+    margin-top: 0;
+    padding: 6px 12px;
     text-align: left;
   }
 
+  /* A glow that rises from the corner by the link and fades out before the edges, so the note
+     has no visible box. */
   .sidebar-note {
     margin-top: auto;
     padding: 22px 12px;
+    border-radius: var(--radius-tag);
     background: radial-gradient(
-      ellipse at 0 80%,
-      color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent),
-      transparent 80%
+      120% 85% at 0% 100%,
+      color-mix(in srgb, var(--color-accent) calc(var(--alpha-wash) * 2), transparent) 0%,
+      color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent) 40%,
+      transparent 75%
     );
   }
 

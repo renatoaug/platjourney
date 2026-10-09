@@ -1,4 +1,17 @@
 @layer screens {
+  .trophy-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .trophy-heading .icon {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    color: var(--color-trophy-gold);
+  }
+
   .filters .toggle:has(input:checked) {
     background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
     color: var(--color-accent);

@@ -205,8 +205,10 @@ describe('Guide', () => {
 
   test('a queued guide says it is being prepared', () => {
     show({ name: 'Novo jogo', guide: null, queued: true })
-    expect(screen.getByText('Guia em preparação')).toBeTruthy()
-    expect(screen.getByText(/aparecerá aqui assim que ficar pronto/)).toBeTruthy()
+    expect(screen.getByText('Guia na fila')).toBeTruthy()
+    expect(screen.getByText('Sua próxima conquista começa aqui.')).toBeTruthy()
+    expect(screen.getByText(/O guia está na fila/)).toBeTruthy()
+    expect(screen.queryByText('O guia aparece aqui assim que estiver pronto.')).toBeNull()
   })
 
   test('a list without a platinum calls it the trophy guide', () => {
@@ -218,11 +220,14 @@ describe('Guide', () => {
     expect(screen.getAllByRole('heading', { name: 'Guia da platina' })).toHaveLength(1)
   })
 
-  test('a guide being built shows the skeleton and a pending line', () => {
-    show({ name: 'Novo jogo', guide: null })
-    expect(screen.getByText(/Montando o guia/)).toBeTruthy()
-    const first = screen.getByRole('button', { name: 'Resumo' }) as HTMLButtonElement
-    expect(first.disabled).toBe(true)
+  test('a guide being built says Nexo is researching it, over a hidden preview of the guide', () => {
+    const { container } = show({ name: 'Novo jogo', guide: null })
+    expect(screen.getByText('Pesquisando o guia')).toBeTruthy()
+    expect(screen.getByText('Deixa o mapa comigo.')).toBeTruthy()
+    expect(screen.getByText('O guia aparece aqui assim que estiver pronto.')).toBeTruthy()
+    const preview = container.querySelector('.guide-research-preview')
+    expect(preview?.getAttribute('aria-hidden')).toBe('true')
+    expect(preview?.querySelector('.tabs')).toBeTruthy()
   })
 
   test('the skeleton alone has the heading and disabled tabs', () => {
