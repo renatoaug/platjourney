@@ -78,6 +78,12 @@ test('the summary lists only the sections the guide has', () => {
   )
 })
 
+test('a guide whose sources give no difficulty or hours says so instead of 0/10', () => {
+  expect(guideSummary(guide({ difficulty: 0, hours: 0 })).split('\n')[0]).toBe(
+    'Dificuldade e tempo ainda sem fonte · sem missables',
+  )
+})
+
 test('a full summary shows missables, online, key trophies, tricks and sources', () => {
   const text = guideSummary(
     guide({

@@ -221,3 +221,9 @@ describe('Guide', () => {
     expect(screen.getAllByRole('button')).toHaveLength(5)
   })
 })
+
+test('difficulty, hours and runs the sources do not give show as not known yet, never 0', () => {
+  show({ ...game, guide: { ...guide, difficulty: 0, hours: 0, playthroughs: 0 } })
+  expect(screen.getAllByText('Sem dado ainda')).toHaveLength(3)
+  expect(screen.queryByText('0/10')).toBeNull()
+})

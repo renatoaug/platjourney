@@ -69,6 +69,7 @@ const messages = defineMessages({
       difficulty: 'Dificuldade',
       hours: 'Tempo estimado',
       hoursDetail: 'Para a platina, sem DLC',
+      unknown: 'Sem dado ainda',
       playthroughs: 'Jogadas mínimas',
       difficultyTrophy: 'Troféu de dificuldade',
       missables: 'Perdíveis',
@@ -171,6 +172,7 @@ const messages = defineMessages({
       difficulty: 'Difficulty',
       hours: 'Estimated time',
       hoursDetail: 'For the platinum, without DLC',
+      unknown: 'Not known yet',
       playthroughs: 'Minimum playthroughs',
       difficultyTrophy: 'Difficulty trophy',
       missables: 'Missables',
@@ -523,9 +525,20 @@ function QuickFacts({ g }: { g: GuideDetail }) {
   const missables = g.missables?.length ?? 0
   // [icon, label, value, detail shown on hover]; rows without a known value are left out.
   const facts: [string, string, string, string][] = [
-    ['target', t('facts.difficulty'), `${g.difficulty}/10`, ''],
-    ['clock', t('facts.hours'), `~${g.hours}h`, t('facts.hoursDetail')],
-    ['refresh', t('facts.playthroughs'), String(g.playthroughs), ''],
+    // 0 means the sources do not say yet.
+    ['target', t('facts.difficulty'), g.difficulty ? `${g.difficulty}/10` : t('facts.unknown'), ''],
+    [
+      'clock',
+      t('facts.hours'),
+      g.hours ? `~${g.hours}h` : t('facts.unknown'),
+      t('facts.hoursDetail'),
+    ],
+    [
+      'refresh',
+      t('facts.playthroughs'),
+      g.playthroughs ? String(g.playthroughs) : t('facts.unknown'),
+      '',
+    ],
   ]
   const yesNo = (v: unknown) => (v ? t('facts.yes') : t('facts.no'))
   if (g.difficultyTrophy !== undefined)
