@@ -155,6 +155,8 @@ function LiveNexo() {
   const [switching, setSwitching] = useState<string | null>(null)
   const pickGame = async (game: LibraryGame) => {
     setSwitching(game.name)
+    // The old game's messages leave at once; the skeleton holds until the new game's arrive.
+    setChat('loading')
     try {
       await api('/api/current', game.np ? { np: game.np } : { game: game.game })
       await loadState()
@@ -162,6 +164,7 @@ function LiveNexo() {
       setViewing(null)
     } catch (e) {
       if (!(e instanceof ApiError && e.handled)) toast(t('switchFailed'))
+      setChat(chats[shown.current] ?? 'error')
     } finally {
       setSwitching(null)
     }

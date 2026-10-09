@@ -242,3 +242,18 @@ test('a game outside the library says the conversation is before buying it', () 
   })
   expect(screen.getByText('Falando sobre DAYS GONE, antes de você comprar.')).toBeTruthy()
 })
+
+test('switching the game clears the conversation and shows the skeleton until the new one loads', async () => {
+  mockApi({
+    '/api/chat/threads': [
+      thread({}),
+      thread({ game: 'game:2', np: 'NPWR00002_00', name: 'Outro Jogo' }),
+    ],
+    '/api/chat': messages,
+    'POST /api/current': never,
+  })
+  renderApp(<Nexo />)
+  expect(await within(log()).findByText('E depois disso?')).toBeTruthy()
+  fireEvent.click(await screen.findByRole('button', { name: /Outro Jogo/ }))
+  await waitFor(() => expect(within(log()).queryByText('E depois disso?')).toBeNull())
+})
