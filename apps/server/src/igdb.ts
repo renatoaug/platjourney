@@ -109,24 +109,57 @@ async function searchGame(name: string): Promise<IgdbGame | null> {
   if (rows.length === 0) return null
   const wanted = normalizeName(clean)
   const score = (g: IgdbGame) => {
+    // The game's own name beats an alternative one: "God of War Рагнарёк" loses its Cyrillic and
+    // would otherwise tie with "God of War".
+    if (normalizeName(g.name) === wanted) return 4
     const names = [g.name, ...(g.alternative_names ?? []).map((a) => a.name)].map(normalizeName)
     if (names.includes(wanted)) return 3
     if (names.some((n) => n.startsWith(wanted) || wanted.startsWith(n))) return 2
     if (names.some((n) => n.includes(wanted) || wanted.includes(n))) return 1
     return 0
   }
-  return [...rows].sort((a, b) => score(b) - score(a))[0]
+  // Remakes keep the original's name ("Resident Evil 4", "Dead Space"): between equal names, the
+  // one released for PS4/PS5 wins, then the newest, since that is the copy a player has today.
+  return [...rows].sort(
+    (a, b) =>
+      score(b) - score(a) ||
+      Number(onCurrentConsoles(b)) - Number(onCurrentConsoles(a)) ||
+      (b.first_release_date ?? 0) - (a.first_release_date ?? 0),
+  )[0]
+}
+
+const hasName = (game: IgdbGame, name: string) =>
+  [game.name, ...(game.alternative_names ?? []).map((a) => a.name)]
+    .map(normalizeName)
+    .includes(normalizeName(name))
+
+const CURRENT_CONSOLES = [48, 167]
+const onCurrentConsoles = (game: IgdbGame) =>
+  (game.platforms ?? []).some((p) => CURRENT_CONSOLES.includes(p))
+
+// Words a store adds to a game's name for a richer copy of the same game ("Hogwarts Legacy: Deluxe
+// Edition"); its trophies are the game's own.
+const EDITION_SUFFIX =
+  /\s*(?:[:\-–—]\s*)?(?:(?:digital|deluxe|ultimate|definitive|gold|complete|premium|special|collector'?s|limited|launch|standard|anniversary|enhanced|game of the year|goty)\s*)+edition$/i
+
+/** The game's own name without a store edition's suffix, or null when it has none. */
+export function withoutEdition(name: string): string | null {
+  const base = name.replace(EDITION_SUFFIX, '').trim()
+  return base && base !== name.trim() ? base : null
 }
 
 // Editions, remasters and ports collapse onto the original game so the catalog
-// has one record per game, whatever the player's PSN copy is called.
+// has one record per game, whatever the player's PSN copy is called. A remaster
+// for PS4/PS5 of a game that never came to them keeps its own record: its trophy
+// list is not the original's ("Oblivion Remastered" is not the PS3 "Oblivion").
 export async function canonical(game: IgdbGame): Promise<IgdbGame> {
   const parentId = EDITION_TYPES.has(game.game_type)
     ? (game.parent_game ?? game.version_parent)
     : undefined
   if (!parentId) return game
   const parent = await gameById(parentId)
-  return parent ?? game
+  if (!parent) return game
+  return onCurrentConsoles(game) && !onCurrentConsoles(parent) ? game : parent
 }
 
 export interface CatalogEntry {
@@ -178,7 +211,10 @@ export function toCatalog(game: IgdbGame, extraAliases: string[] = []): CatalogE
 // Resolves a PSN title (or any name) to its canonical catalog entry, keeping the
 // searched name as an alias so later lookups hit without another search.
 export async function resolveGame(name: string): Promise<CatalogEntry | null> {
-  const hit = await searchGame(name)
+  // A store edition is the game itself: look up the game's own name first.
+  const base = withoutEdition(cleanPsnName(name))
+  const baseHit = base ? await searchGame(base) : null
+  const hit = baseHit && hasName(baseHit, base as string) ? baseHit : await searchGame(name)
   if (!hit) return null
   const main = await canonical(hit)
   const aliases = main.id === hit.id ? [name] : [name, hit.name]

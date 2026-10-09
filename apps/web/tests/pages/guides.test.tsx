@@ -88,3 +88,54 @@ test('nothing found and a failed load each have their message', async () => {
     await screen.findByText('Não conseguimos carregar os guias. Recarregue a página.'),
   ).toBeTruthy()
 })
+
+test('an empty search offers to look the game up and keeps a request it cannot find', async () => {
+  mockApi({ '/api/guides': page([]) })
+  const ask = mock(async () => ({ requested: true }))
+  renderApp(<Guides ask={ask} />, { path: '/guides?q=Jogo%20Novo', route: '/guides' })
+  fireEvent.click(await screen.findByRole('button', { name: 'Pedir “Jogo Novo”' }))
+  expect(ask).toHaveBeenCalledWith('Jogo Novo')
+  expect(
+    await screen.findByText(
+      'Ainda não temos “Jogo Novo”. O pedido ficou registrado para o jogo entrar no catálogo.',
+    ),
+  ).toBeTruthy()
+  expect(await screen.findByText('Pedido de “Jogo Novo” registrado.')).toBeTruthy()
+})
+
+test('a game found outside the catalog opens its page', async () => {
+  mockApi({ '/api/guides': page([]) })
+  const ask = mock(async () => ({ game: 'game:9' }))
+  renderApp(<Guides ask={ask} />, { path: '/guides?q=Jogo%20Novo', route: '/guides' })
+  fireEvent.click(await screen.findByRole('button', { name: 'Pedir “Jogo Novo”' }))
+  await waitFor(() =>
+    expect(screen.getByTestId('location').textContent).toBe('/title/game/game%3A9'),
+  )
+})
+
+test('a failed lookup says so and the button stays', async () => {
+  mockApi({ '/api/guides': page([]) })
+  renderApp(<Guides ask={() => Promise.reject(new Error('x'))} />, {
+    path: '/guides?q=Jogo%20Novo',
+    route: '/guides',
+  })
+  fireEvent.click(await screen.findByRole('button', { name: 'Pedir “Jogo Novo”' }))
+  expect(await screen.findByRole('alert')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Pedir “Jogo Novo”' })).toBeTruthy()
+})
+
+test('an empty list without a search does not offer the lookup', async () => {
+  mockApi({ '/api/guides': page([]) })
+  renderApp(<Guides />, { path: '/guides?platform=PS3', route: '/guides' })
+  expect(await screen.findByText('Nenhum jogo encontrado.')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /Pedir/ })).toBeNull()
+})
+
+test('asking again for the same game says it was already asked for', async () => {
+  mockApi({ '/api/guides': page([]) })
+  const ask = mock(async () => ({ requested: true, already: true }))
+  renderApp(<Guides ask={ask} />, { path: '/guides?q=Jogo%20Novo', route: '/guides' })
+  fireEvent.click(await screen.findByRole('button', { name: 'Pedir “Jogo Novo”' }))
+  expect(await screen.findByText(/Você já pediu “Jogo Novo”/)).toBeTruthy()
+  expect(screen.queryByText('Pedido de “Jogo Novo” registrado.')).toBeNull()
+})

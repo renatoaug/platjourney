@@ -53,6 +53,10 @@
     padding: 0 40px 0 12px;
     font-size: var(--text-md);
     background-color: var(--color-bg-subtle);
+    /* Shorter than the default select: the chevron goes back to the middle, level with the text. */
+    background-position:
+      calc(100% - 21px) 50%,
+      calc(100% - 16px) 50%;
   }
 
   .guide-grid {
@@ -139,5 +143,56 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
+  }
+
+  /* The empty search's offer to ask for the game: one line, the button picked out in the accent. */
+  .guides-missing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-top: 16px;
+  }
+
+  .guides-missing-button {
+    color: var(--color-accent);
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+  }
+
+  /* The saved request: the accent's check mark, the same green as the success toast. */
+  .guides-missing-done {
+    width: fit-content;
+    max-width: 100%;
+    flex-wrap: nowrap;
+    padding: 10px 14px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    color: var(--color-fg);
+  }
+
+  .guides-missing-check {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-round);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .guides-missing-check .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .guides-missing-hint {
+    font-size: var(--text-sm);
+  }
+
+  .guides-missing-error {
+    color: var(--color-danger);
+    font-size: var(--text-sm);
   }
 }

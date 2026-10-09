@@ -1,6 +1,6 @@
 /** Guides: every game with a platinum guide, or any catalog game by name, filtered by platform, sorted and paged. */
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Page } from '../app/page'
 import { titleHref } from '../components/tip'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
@@ -10,6 +10,7 @@ import { Icon } from '../ui/icon'
 import { Pager } from '../ui/pager'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
+import { toast } from '../ui/toast'
 import '../components/trophy-list.css'
 import './guides.css'
 
@@ -41,6 +42,15 @@ const messages = defineMessages({
     unobtainable: 'Platina indisponível',
     empty: 'Nenhum jogo encontrado.',
     emptyHint: 'Tente outro nome ou outra plataforma.',
+    missing: 'Pedir “{name}”',
+    missingHint: 'Ainda não está aqui? Peça e ele entra no catálogo.',
+    missingAsking: 'Procurando “{name}”…',
+    missingRequested:
+      'Ainda não temos “{name}”. O pedido ficou registrado para o jogo entrar no catálogo.',
+    missingToast: 'Pedido de “{name}” registrado.',
+    missingAlready:
+      'Você já pediu “{name}”. Vamos atrás do jogo, e ele aparecerá aqui assim que entrar no catálogo.',
+    missingFailed: 'Não deu para procurar agora. Tente de novo em instantes.',
     failed: 'Não conseguimos carregar os guias. Recarregue a página.',
   },
   [Language.En]: {
@@ -70,6 +80,15 @@ const messages = defineMessages({
     unobtainable: 'Platinum unavailable',
     empty: 'No game found.',
     emptyHint: 'Try another name or platform.',
+    missing: 'Request “{name}”',
+    missingHint: 'Not here yet? Ask and it joins the catalog.',
+    missingAsking: 'Looking up “{name}”…',
+    missingRequested:
+      'We do not have “{name}” yet. The request was saved so the game can join the catalog.',
+    missingToast: 'Request for “{name}” saved.',
+    missingAlready:
+      'You already asked for “{name}”. We will look for it, and it will show up here once it joins the catalog.',
+    missingFailed: 'The lookup failed. Try again in a moment.',
     failed: 'We could not load the guides. Reload the page.',
   },
 })
@@ -158,11 +177,78 @@ function GuideGridSkeleton() {
 
 const fetchGuides = (query: string) => api<GuidesPage>(`/api/guides?${query}`)
 
+/** What the server answers when asked for a game the catalog lacks. */
+export interface GameRequestAnswer {
+  game?: string
+  requested?: boolean
+  /** This account had asked for the name before. */
+  already?: boolean
+}
+
+const askForGame = (name: string) => api<GameRequestAnswer>('/api/games/request', { name })
+
+/** A search that found nothing offers to look the name up in the full game database: a game it
+ * knows opens right away, and a name it does not know is left as a request. */
+function MissingGame({
+  name,
+  ask,
+}: {
+  name: string
+  ask: (name: string) => Promise<GameRequestAnswer>
+}) {
+  const t = useMessages(messages)
+  const navigate = useNavigate()
+  const [state, setState] = useState<'idle' | 'asking' | 'requested' | 'already' | 'failed'>('idle')
+  if (state === 'requested' || state === 'already')
+    return (
+      <p className="guides-missing guides-missing-done" role="status">
+        <span className="guides-missing-check">
+          <Icon name="check" />
+        </span>
+        {t(state === 'already' ? 'missingAlready' : 'missingRequested', { name })}
+      </p>
+    )
+  return (
+    <div className="guides-missing">
+      <button
+        type="button"
+        className="button ghost sm guides-missing-button"
+        disabled={state === 'asking'}
+        onClick={() => {
+          setState('asking')
+          ask(name)
+            .then((answer) => {
+              if (answer.game) navigate(titleHref(answer.game))
+              else if (answer.already) setState('already')
+              else {
+                setState('requested')
+                toast(t('missingToast', { name }), 'success')
+              }
+            })
+            .catch(() => setState('failed'))
+        }}
+      >
+        <Icon name="plus" />
+        {t(state === 'asking' ? 'missingAsking' : 'missing', { name })}
+      </button>
+      {state === 'failed' ? (
+        <span className="guides-missing-error" role="alert">
+          {t('missingFailed')}
+        </span>
+      ) : (
+        <span className="guides-missing-hint">{t('missingHint')}</span>
+      )}
+    </div>
+  )
+}
+
 /** `load` answers a query string with a page of games; stories pass sample data instead of the API. */
 export function Guides({
   load: loadPage = fetchGuides,
+  ask = askForGame,
 }: {
   load?: (query: string) => Promise<GuidesPage>
+  ask?: (name: string) => Promise<GameRequestAnswer>
 }) {
   const t = useMessages(messages)
   const [params, setParams] = useSearchParams()
@@ -284,6 +370,7 @@ export function Guides({
           ) : (
             <EmptyState>
               <b>{t('empty')}</b> {t('emptyHint')}
+              {searching && <MissingGame key={q} name={q} ask={ask} />}
             </EmptyState>
           )}
           <Pager

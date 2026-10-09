@@ -205,7 +205,17 @@ describe('Guide', () => {
 
   test('a queued guide says it is being prepared', () => {
     show({ name: 'Novo jogo', guide: null, queued: true })
-    expect(screen.getByText(/está em preparação/)).toBeTruthy()
+    expect(screen.getByText('Guia em preparação')).toBeTruthy()
+    expect(screen.getByText(/aparecerá aqui assim que ficar pronto/)).toBeTruthy()
+  })
+
+  test('a list without a platinum calls it the trophy guide', () => {
+    const bronze = current.trophies.find((t) => t.type !== 'platinum')
+    if (!bronze) throw new Error('fixture has no plain trophy')
+    show({ name: 'Jogo curto', guide: null, queued: true, trophies: [bronze] })
+    expect(screen.getByRole('heading', { name: 'Guia dos troféus' })).toBeTruthy()
+    show({ name: 'Jogo com platina', guide: null, queued: true, trophies: current.trophies })
+    expect(screen.getAllByRole('heading', { name: 'Guia da platina' })).toHaveLength(1)
   })
 
   test('a guide being built shows the skeleton and a pending line', () => {

@@ -1,0 +1,87 @@
+@layer screens {
+  /* Nexo with the controller's four buttons scattered around it, each drifting and lighting up in
+     turn. Working, the buttons light up faster: Nexo pressing them. */
+  .nexo-hero {
+    position: relative;
+    flex: none;
+    padding: 2px 8px;
+  }
+
+  .nexo-hero > .nexo-avatar {
+    display: block;
+    width: 64px;
+    height: 64px;
+    animation: nexo-float 6s ease-in-out infinite;
+  }
+
+  .nexo-keys span {
+    position: absolute;
+    font: 11px / 1 var(--font-mono);
+    color: var(--color-accent);
+    opacity: 0.45;
+    animation:
+      nexo-key 4s ease-in-out infinite,
+      nexo-float 5s ease-in-out infinite;
+  }
+
+  .nexo-keys span:nth-child(even) {
+    color: var(--color-trophy-platinum);
+  }
+
+  /* One button at each corner around Nexo, as on the controller: △ and ○ above, □ and × below. */
+  .nexo-keys span:nth-child(1) {
+    top: 2px;
+    left: 0;
+  }
+
+  .nexo-keys span:nth-child(2) {
+    top: 2px;
+    right: 0;
+    animation-delay: 1s, 1.2s;
+  }
+
+  .nexo-keys span:nth-child(3) {
+    bottom: 6px;
+    right: 0;
+    animation-delay: 2s, 2.4s;
+  }
+
+  .nexo-keys span:nth-child(4) {
+    bottom: 6px;
+    left: 0;
+    animation-delay: 3s, 0.6s;
+  }
+
+  @keyframes nexo-float {
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes nexo-key {
+    0%,
+    30%,
+    100% {
+      opacity: 0.45;
+    }
+
+    12% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nexo-hero > .nexo-avatar,
+    .nexo-keys span {
+      animation: none;
+    }
+
+    .nexo-keys span {
+      opacity: 0.6;
+    }
+  }
+
+  .nexo-hero.working .nexo-keys span {
+    animation-duration: 1.6s, 3s;
+  }
+}

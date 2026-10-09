@@ -11,10 +11,12 @@ import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote } from '../ui/source-note'
 import { EmptyState, PendingState } from '../ui/states'
 import './guide.css'
+import { NexoHero } from './nexo-hero'
 
 const messages = defineMessages({
   [Language.PtBR]: {
     title: 'Guia da platina',
+    titleNoPlatinum: 'Guia dos troféus',
     notes: {
       heading: 'Antes de começar',
       collectibles: 'Colecionáveis',
@@ -111,13 +113,15 @@ const messages = defineMessages({
     },
     earlyTips: 'Dicas para o começo',
     sources: 'Fontes: {sources}',
+    queuedTitle: 'Guia em preparação',
     queued:
-      'O guia deste jogo está em preparação. Ele aparece aqui assim que ficar pronto; enquanto isso, o Nexo responde com o que sabe do jogo.',
+      'Ele aparecerá aqui assim que ficar pronto. Enquanto isso, o Nexo responderá com o que já sabe do jogo.',
     building: 'Montando o guia: pesquisando guias de troféus na web. Chega em ~1 min.',
     noMissables: 'Nenhum troféu perdível neste jogo.',
   },
   [Language.En]: {
     title: 'Platinum guide',
+    titleNoPlatinum: 'Trophy guide',
     notes: {
       heading: 'Before you start',
       collectibles: 'Collectibles',
@@ -214,8 +218,9 @@ const messages = defineMessages({
     },
     earlyTips: 'Tips for the start',
     sources: 'Sources: {sources}',
+    queuedTitle: 'Guide in the works',
     queued:
-      'This game’s guide is being prepared. It shows up here as soon as it’s ready; meanwhile, Nexo answers with what it knows about the game.',
+      'It will show up here as soon as it is ready. Meanwhile, Nexo will answer with what it already knows about the game.',
     building: 'Building the guide: searching trophy guides on the web. Ready in ~1 min.',
     noMissables: 'No missable trophies in this game.',
   },
@@ -758,11 +763,20 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   }
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const g = c?.guide
+  // A list without a platinum (short games, live-service ones) still has a guide: for the 100%.
+  const noPlatinum = !!c?.trophies?.length && !c.trophies.some((t) => t.type === 'platinum')
+  const heading = tr(noPlatinum ? 'titleNoPlatinum' : 'title')
   if (!g && c?.queued)
     return (
       <>
-        <h2>{tr('title')}</h2>
-        <EmptyState>{tr('queued')}</EmptyState>
+        <h2>{heading}</h2>
+        <div className="guide-queued" role="status">
+          <NexoHero working />
+          <div>
+            <b>{tr('queuedTitle')}</b>
+            <p>{tr('queued')}</p>
+          </div>
+        </div>
       </>
     )
   if (!g)
@@ -849,7 +863,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   }
   return (
     <>
-      <h2>{tr('title')}</h2>
+      <h2>{heading}</h2>
       <DeepGuide dg={c.deepGuide} />
       <div
         ref={(el) => {

@@ -795,6 +795,32 @@
     padding: 16px 0;
   }
 
+  /* A guide on the list to be written: Nexo at work beside two quiet lines, no box around them. */
+  .guide-queued {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 0;
+  }
+
+  .guide-queued .nexo-hero > .nexo-avatar {
+    width: 52px;
+    height: 52px;
+  }
+
+  .guide-queued b {
+    color: var(--color-fg);
+    font-weight: var(--weight-semibold);
+  }
+
+  .guide-queued p {
+    margin: 4px 0 0;
+    max-width: 60ch;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+  }
+
   .guide-building {
     margin-top: 14px;
     padding-top: 14px;

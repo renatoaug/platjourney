@@ -26,6 +26,7 @@ import { resetRateLimits } from '../src/rate-limit.ts'
 import * as recommend from '../src/recommend.ts'
 import * as activity from '../src/repository/activity.ts'
 import * as games from '../src/repository/game.ts'
+import * as missing from '../src/repository/game-request.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
@@ -668,6 +669,31 @@ test('game search passes the query on', async () => {
   expect((await send('GET', '/api/games/search?q=days')).body).toHaveLength(1)
   await send('GET', '/api/games/search')
   expect(search).toHaveBeenLastCalledWith('')
+})
+
+test('a game the search missed is looked up in IGDB, or kept as a request', async () => {
+  const ask = (name: unknown) => send('POST', '/api/games/request', { name })
+  expect((await ask(3)).status).toBe(400)
+  expect((await ask(' x ')).status).toBe(400)
+  const lookup = spyOn(games, 'catalogGameForName').mockResolvedValueOnce(game)
+  const keep = spyOn(missing, 'requestMissingGame').mockResolvedValue(false)
+  expect((await ask(' Jogo Exemplo ')).body).toEqual({ game: game.id })
+  expect(lookup).toHaveBeenLastCalledWith('Jogo Exemplo')
+  expect(keep).not.toHaveBeenCalled()
+  lookup.mockResolvedValueOnce(undefined)
+  expect((await ask('Jogo Inexistente')).body).toEqual({ requested: true, already: false })
+  expect(keep).toHaveBeenLastCalledWith('Jogo Inexistente', me.id)
+  lookup.mockResolvedValueOnce(undefined)
+  keep.mockResolvedValueOnce(true)
+  expect((await ask('Jogo Inexistente')).body).toEqual({ requested: true, already: true })
+})
+
+test('asking for missing games is limited per account', async () => {
+  spyOn(games, 'catalogGameForName').mockResolvedValue(undefined)
+  spyOn(missing, 'requestMissingGame').mockResolvedValue(false)
+  for (let i = 0; i < 5; i++)
+    expect((await send('POST', '/api/games/request', { name: 'Jogo Exemplo' })).status).toBe(200)
+  expect((await send('POST', '/api/games/request', { name: 'Jogo Exemplo' })).status).toBe(429)
 })
 
 test('goals accept only catalog games to add', async () => {
