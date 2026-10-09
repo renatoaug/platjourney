@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.0](https://github.com/renatoaug/platjourney/compare/v0.4.1...v0.5.0) (2026-10-09)
+
+### Features
+
+* **catalog:** match remakes and editions, and let players ask for missing games ([#23](https://github.com/renatoaug/platjourney/issues/23)) ([ba07c3e](https://github.com/renatoaug/platjourney/commit/ba07c3e22b1aa324409104c8a77d006cf92b0bbd))
+
 ## [0.4.1](https://github.com/renatoaug/platjourney/compare/v0.4.0...v0.4.1) (2026-10-09)
 
 ### Bug Fixes
