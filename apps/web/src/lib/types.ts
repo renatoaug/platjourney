@@ -205,3 +205,13 @@ export interface AppStateData {
   goals: YearGoals
   servers: ServerStatus[]
 }
+
+/** A game from the player's library, as the chat's game switch lists it. */
+export interface LibraryGame {
+  np: string
+  name: string
+  platform: string
+  icon: string | null
+  progress: number
+  current: boolean
+}

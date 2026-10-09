@@ -112,11 +112,12 @@ export function GuideCard({ item }: { item: GuideCardItem }) {
         </span>
         {g ? (
           <span className="guide-tile-meta">
+            {/* 0 means the sources do not say yet. */}
             <span title={t('difficulty')}>
-              <Icon name="target" /> {g.difficulty}/10
+              <Icon name="target" /> {g.difficulty ? `${g.difficulty}/10` : '—'}
             </span>
             <span title={t('hours')}>
-              <Icon name="clock" /> ~{g.hours}h
+              <Icon name="clock" /> {g.hours ? `~${g.hours}h` : '—'}
             </span>
             {g.hasMissables && (
               <span role="img" title={t('missables')} aria-label={t('missables')}>

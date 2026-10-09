@@ -10,6 +10,7 @@ const messages = defineMessages({
   [Language.PtBR]: {
     runs: { one: '{count} run', other: '{count} runs' },
     difficulty: 'Dificuldade {difficulty}/10 · ~{hours}h · {runs}',
+    unknownEffort: 'Dificuldade e tempo ainda sem fonte',
     hasMissables: ' · TEM missables',
     noMissables: ' · sem missables',
     hasOnline: ' · tem online',
@@ -26,6 +27,7 @@ const messages = defineMessages({
   [Language.En]: {
     runs: { one: '{count} run', other: '{count} runs' },
     difficulty: 'Difficulty {difficulty}/10 · ~{hours}h · {runs}',
+    unknownEffort: 'Difficulty and time not sourced yet',
     hasMissables: ' · HAS missables',
     noMissables: ' · no missables',
     hasOnline: ' · has online',
@@ -117,7 +119,8 @@ export function guideSummary(guide: Guide, locale: Locale = DEFAULT_LOCALE): str
   const runs = t('runs', { count: guide.playthroughs })
   const flags = `${t(guide.hasMissables ? 'hasMissables' : 'noMissables')}${guide.hasOnline ? t('hasOnline') : ''}`
   const lines = [
-    `${t('difficulty', { difficulty: guide.difficulty, hours: guide.hours, runs })}${flags}`,
+    // 0 means the sources do not say yet: say so instead of "0/10".
+    `${guide.difficulty && guide.hours ? t('difficulty', { difficulty: guide.difficulty, hours: guide.hours, runs }) : t('unknownEffort')}${flags}`,
     guide.overview,
   ]
   if (guide.missables.length) {

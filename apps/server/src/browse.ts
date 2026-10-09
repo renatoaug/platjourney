@@ -42,17 +42,17 @@ export function forgetBrowseCache(): void {
 }
 
 const byName = (a: BrowseItem, b: BrowseItem) => a.name.localeCompare(b.name)
-// Games without a guide have no difficulty or hours; they go last in those orders.
+// Games without a guide, or whose guide does not know them yet (0), go last in those orders.
 const ORDERS: Record<Sort, (a: BrowseItem, b: BrowseItem) => number> = {
   rating: (a, b) => (b.rating ?? -1) - (a.rating ?? -1) || byName(a, b),
   name: byName,
   easiest: (a, b) =>
-    (a.guide?.difficulty ?? 99) - (b.guide?.difficulty ?? 99) ||
-    (a.guide?.hours ?? 1e9) - (b.guide?.hours ?? 1e9) ||
+    (a.guide?.difficulty || 99) - (b.guide?.difficulty || 99) ||
+    (a.guide?.hours || 1e9) - (b.guide?.hours || 1e9) ||
     byName(a, b),
   shortest: (a, b) =>
-    (a.guide?.hours ?? 1e9) - (b.guide?.hours ?? 1e9) ||
-    (a.guide?.difficulty ?? 99) - (b.guide?.difficulty ?? 99) ||
+    (a.guide?.hours || 1e9) - (b.guide?.hours || 1e9) ||
+    (a.guide?.difficulty || 99) - (b.guide?.difficulty || 99) ||
     byName(a, b),
 }
 

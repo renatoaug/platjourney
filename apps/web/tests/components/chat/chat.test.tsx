@@ -142,3 +142,88 @@ test('the message box is sized from its text', () => {
   expect(box().style.height).toMatch(/px$/)
   expect(box().style.overflowY).toBe('hidden')
 })
+
+describe('the game switch', () => {
+  const games = [
+    {
+      np: 'NP1',
+      name: 'Ghost of Tsushima',
+      platform: 'PS5',
+      icon: null,
+      progress: 64,
+      current: false,
+    },
+    { np: 'NP2', name: 'Ghostrunner II', platform: 'PS5', icon: null, progress: 0, current: true },
+  ]
+  const setup = () => {
+    const searchGames = mock(async (_q: string) => games)
+    const onPickGame = mock(() => {})
+    const onSend = mock(() => {})
+    render(
+      <MemoryRouter>
+        <NexoChat
+          chat={[]}
+          sending={false}
+          subtitle="Falando sobre DAYS GONE (13%)."
+          onSend={onSend}
+          searchGames={searchGames}
+          onPickGame={onPickGame}
+        />
+      </MemoryRouter>,
+    )
+    return { searchGames, onPickGame, onSend }
+  }
+
+  test('"/" lists the commands and picking /game starts it', () => {
+    setup()
+    fireEvent.change(box(), { target: { value: '/' } })
+    const option = screen.getByRole('option', { name: /\/game/ })
+    fireEvent.click(option)
+    expect(box().value).toBe('/game ')
+  })
+
+  test('"/game" searches the player games; the arrows and Enter pick one, nothing goes to Nexo', async () => {
+    const { searchGames, onPickGame, onSend } = setup()
+    fireEvent.change(box(), { target: { value: '/game gho' } })
+    expect(await screen.findByRole('option', { name: /Ghost of Tsushima/ })).toBeTruthy()
+    expect(searchGames).toHaveBeenCalledWith('gho')
+    expect(screen.getByText('atual')).toBeTruthy()
+    fireEvent.keyDown(box(), { key: 'ArrowDown' })
+    expect(box().getAttribute('aria-activedescendant')).toBe('chat-menu-1')
+    fireEvent.keyDown(box(), { key: 'ArrowUp' })
+    fireEvent.submit(box().closest('form') as HTMLFormElement)
+    expect(onPickGame).toHaveBeenCalledWith(games[0])
+    expect(onSend).not.toHaveBeenCalled()
+    expect(box().value).toBe('')
+  })
+
+  test('Esc clears the command, and the subtitle opens the same list', () => {
+    setup()
+    fireEvent.change(box(), { target: { value: '/game x' } })
+    fireEvent.keyDown(box(), { key: 'Escape' })
+    expect(box().value).toBe('')
+    fireEvent.click(screen.getByRole('button', { name: /Trocar o jogo da conversa/ }))
+    expect(box().value).toBe('/game ')
+  })
+
+  test('while a picked game loads, the subtitle says so and the send button waits', () => {
+    render(
+      <MemoryRouter>
+        <NexoChat
+          chat={[]}
+          sending={false}
+          subtitle="Falando sobre DAYS GONE (13%)."
+          onSend={() => {}}
+          searchGames={async () => []}
+          onPickGame={() => {}}
+          switching="Ghost of Tsushima"
+        />
+      </MemoryRouter>,
+    )
+    const sub = screen.getByRole('button', { name: 'Trocando para Ghost of Tsushima…' })
+    expect((sub as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Enviar' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
+  })
+})

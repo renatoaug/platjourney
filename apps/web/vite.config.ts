@@ -38,7 +38,17 @@ export default defineConfig(({ mode }) => {
       fs: {
         allow: [searchForWorkspaceRoot(process.cwd()), new URL('.', `file://${plugin}`).pathname],
       },
-      proxy: { '/api': `http://localhost:${process.env.PORT ?? 3000}` },
+      // The server refuses a change whose Origin is not its own host (web.ts, sameOrigin). Through
+      // this proxy the page's Origin is localhost:5173, so the Host it sees must be that too.
+      proxy: {
+        '/api': {
+          target: `http://localhost:${process.env.PORT ?? 3000}`,
+          configure: (proxy) =>
+            proxy.on('proxyReq', (outgoing, incoming) => {
+              if (incoming.headers.host) outgoing.setHeader('host', incoming.headers.host)
+            }),
+        },
+      },
     },
     build: { outDir: 'dist', emptyOutDir: true },
   }

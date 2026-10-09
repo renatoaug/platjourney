@@ -131,8 +131,11 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
     parts += [
         '',
         'Guia da platina:',
-        f'Dificuldade {num(guide.get("difficulty") or 0)}/10, ~{num(guide.get("hours") or 0)}h, '
-        f'{num(guide.get("playthroughs") or 1)} jogada(s).',
+        # 0 means the sources do not say yet: Nexo must not estimate it.
+        f'Dificuldade {num(guide["difficulty"])}/10, ~{num(guide["hours"])}h, '
+        f'{num(guide.get("playthroughs") or 1)} jogada(s).'
+        if guide.get('difficulty') and guide.get('hours')
+        else 'Dificuldade e tempo: os guias ainda não dizem; não estime.',
         _words(guide.get('overview')),
     ]
     for key, label in (

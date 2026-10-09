@@ -11,6 +11,16 @@
     line-height: var(--leading-relaxed);
   }
 
+  .source-note a {
+    color: var(--color-fg-tint-muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .source-note a:hover {
+    color: var(--color-accent);
+  }
+
   .source-note .icon {
     width: 12px;
     height: 12px;

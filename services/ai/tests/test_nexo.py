@@ -450,3 +450,11 @@ def test_the_cited_source_links_to_the_passage_it_came_from() -> None:
     # No "Fonte:" line, or a source the passages do not have: the text is left as it is.
     assert nexo.cite('Só o guia.', used) == 'Só o guia.'
     assert nexo.cite('Fonte: Wiki', used) == 'Fonte: Wiki'
+
+
+def test_a_guide_without_difficulty_or_hours_tells_nexo_not_to_estimate() -> None:
+    ctx = context()
+    ctx.guide = {**(ctx.guide or {}), 'difficulty': 0, 'hours': 0, 'overview': 'x'}
+    text = nexo.lean_context(ctx)
+    assert 'Dificuldade e tempo: os guias ainda não dizem; não estime.' in text
+    assert '0/10' not in text

@@ -973,3 +973,25 @@ test('plugin routes: public ones skip sign-in, the others get the player, and a 
     resetPlugins()
   }
 })
+
+test('the chat game switch lists the player titles by name and loads the one picked', async () => {
+  spyOn(lib, 'library').mockResolvedValue([
+    makeTitle({ npCommunicationId: 'NPWR1', name: 'Days Gone' }),
+    makeTitle({ npCommunicationId: 'NPWR2', name: 'Ghost of Tsushima', progress: 64 }),
+  ])
+  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext())
+  const found = await send('GET', '/api/library?q=ghost')
+  expect(found.body).toEqual([
+    expect.objectContaining({
+      np: 'NPWR2',
+      name: 'Ghost of Tsushima',
+      progress: 64,
+      current: false,
+    }),
+  ])
+  const set = spyOn(watcher, 'setCurrent').mockResolvedValue(makeContext())
+  const res = await send('POST', '/api/current', { np: 'NPWR2' })
+  expect(res.status).toBe(200)
+  expect(set.mock.calls[0][1]).toMatchObject({ npCommunicationId: 'NPWR2' })
+  expect((await send('POST', '/api/current', { np: 'NOPE' })).status).toBe(404)
+})

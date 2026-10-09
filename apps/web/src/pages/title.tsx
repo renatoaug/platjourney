@@ -120,14 +120,17 @@ function Meta({ d }: { d: TitleDetail }) {
     )
   return (
     <div className="meta">
-      <span>{t('difficulty', { value: g.difficulty })}</span>
-      <span>
-        <Icon name="clock" />{' '}
-        {d.hoursPlayed != null
-          ? t('hoursOfGuide', { played: fmtHours(d.hoursPlayed), hours: g.hours })
-          : t('hours', { hours: g.hours })}
-      </span>
-      <span>{t('playthroughs', { count: g.playthroughs })}</span>
+      {/* 0 means the sources do not say yet: the fact is left out, never shown as 0. */}
+      {g.difficulty > 0 && <span>{t('difficulty', { value: g.difficulty })}</span>}
+      {g.hours > 0 && (
+        <span>
+          <Icon name="clock" />{' '}
+          {d.hoursPlayed != null
+            ? t('hoursOfGuide', { played: fmtHours(d.hoursPlayed), hours: g.hours })
+            : t('hours', { hours: g.hours })}
+        </span>
+      )}
+      {g.playthroughs > 0 && <span>{t('playthroughs', { count: g.playthroughs })}</span>}
       <span className={g.hasMissables ? 'warn' : 'ok'}>
         <Icon name={g.hasMissables ? 'warning' : 'shield'} />{' '}
         {g.hasMissables ? t('missables') : t('noMissables')}
