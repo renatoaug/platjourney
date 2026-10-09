@@ -257,3 +257,17 @@ test('switching the game clears the conversation and shows the skeleton until th
   fireEvent.click(await screen.findByRole('button', { name: /Outro Jogo/ }))
   await waitFor(() => expect(within(log()).queryByText('E depois disso?')).toBeNull())
 })
+
+test("the chat's game without a conversation shows on top as a new conversation", async () => {
+  mockApi({
+    '/api/chat/threads': [thread({ game: 'game:2', name: 'Outro Jogo' })],
+    '/api/chat': [],
+  })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, { value: { data: { ...SAMPLE_DATA, current: game } } })
+  const list = await screen.findByRole('complementary', { name: 'Conversas' })
+  const items = within(list).getAllByRole('listitem')
+  expect(items[0].textContent).toContain(game.name)
+  expect(items[0].textContent).toContain('Nova conversa')
+  expect(within(items[0]).getByRole('button').getAttribute('aria-current')).toBe('true')
+})

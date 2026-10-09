@@ -18,6 +18,8 @@ export interface ChatThread {
   messages: number
   last_at: string
   last_question: string | null
+  /** The chat's game with nothing said yet: shown on top until a message makes it real. */
+  draft?: boolean
 }
 
 const messages = defineMessages({
@@ -26,6 +28,7 @@ const messages = defineMessages({
     general: 'Geral',
     generalHint: 'Conversas antigas, sem jogo',
     count: { one: '{count} mensagem', other: '{count} mensagens' },
+    newConversation: 'Nova conversa',
     emptyTitle: 'Nenhuma conversa ainda',
     empty:
       'Pergunte algo ao Nexo: cada jogo ganha a sua conversa aqui, para você voltar quando quiser.',
@@ -39,6 +42,7 @@ const messages = defineMessages({
     general: 'General',
     generalHint: 'Older conversations, no game',
     count: { one: '{count} message', other: '{count} messages' },
+    newConversation: 'New conversation',
     emptyTitle: 'No conversations yet',
     empty:
       'Ask Nexo something: each game gets its own conversation here, to come back to any time.',
@@ -150,6 +154,7 @@ export function ChatThreads({
             <li key={key} style={{ '--i': i } as CSSProperties}>
               <button
                 type="button"
+                className={thread.draft ? 'is-draft' : undefined}
                 aria-current={key === active ? 'true' : undefined}
                 aria-label={
                   collapsed && !open
@@ -180,10 +185,18 @@ export function ChatThreads({
                 )}
                 <span className="nexo-thread-text">
                   <b>{thread.game ? thread.name : t('general')}</b>
-                  <span>{bare(thread.last_question) || (thread.game ? '' : t('generalHint'))}</span>
-                  <small>
-                    {when(thread.last_at)} · {t('count', { count: thread.messages })}
-                  </small>
+                  {thread.draft ? (
+                    <small className="nexo-thread-draft">{t('newConversation')}</small>
+                  ) : (
+                    <>
+                      <span>
+                        {bare(thread.last_question) || (thread.game ? '' : t('generalHint'))}
+                      </span>
+                      <small>
+                        {when(thread.last_at)} · {t('count', { count: thread.messages })}
+                      </small>
+                    </>
+                  )}
                 </span>
               </button>
             </li>

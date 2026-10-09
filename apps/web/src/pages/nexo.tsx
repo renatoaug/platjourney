@@ -199,6 +199,22 @@ function LiveNexo() {
       void pickGame({ game: thread.game, name: thread.name ?? '' } as LibraryGame)
     else setViewing(k)
   }
+  // The chat's game with no conversation yet sits on top as a draft; it goes away by itself when
+  // the player leaves without writing, since nothing is stored until a message is sent.
+  const draft: ChatThread | null =
+    current && threads && !threads.some((x) => x.game === current.game.id)
+      ? {
+          game: current.game.id,
+          np: current.np,
+          name: current.name,
+          cover_url: current.game.cover_url ?? null,
+          messages: 0,
+          last_at: new Date().toISOString(),
+          last_question: null,
+          draft: true,
+        }
+      : null
+  const listed = threads && (draft ? [draft, ...threads] : threads)
   const reading = viewing !== null && viewing !== currentKey
   const readOnly = reading ? (
     <>
@@ -212,12 +228,12 @@ function LiveNexo() {
   return (
     <Page path="/nexo">
       <div className="nexo-layout">
-        {/* The list shows once there is a conversation to go back to. */}
-        {threads?.length ? (
+        {/* The list shows once there is a conversation, or the chat's game waits for its first. */}
+        {listed?.length ? (
           <>
             <ChatThreadsToggle onOpen={() => setSheet(true)} />
             <ChatThreads
-              threads={threads}
+              threads={listed}
               active={key}
               onPick={pickThread}
               open={sheet}

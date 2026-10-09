@@ -237,6 +237,15 @@
     font-size: var(--text-xs);
   }
 
+  /* The chat's game before its first message: dashed, until a message makes it a conversation. */
+  .nexo-threads li button.is-draft {
+    border-style: dashed;
+  }
+
+  .nexo-thread-draft {
+    font-style: italic;
+  }
+
   .nexo-threads li button[aria-current] small {
     color: var(--color-accent);
   }
