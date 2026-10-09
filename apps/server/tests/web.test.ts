@@ -1027,6 +1027,7 @@ test('the chat game switch lists the player titles by name and loads the one pic
     makeTitle({ npCommunicationId: 'NPWR2', name: 'Ghost of Tsushima', progress: 64 }),
   ])
   spyOn(watcher, 'getCurrent').mockReturnValue(makeContext())
+  spyOn(games, 'searchCatalog').mockResolvedValue([])
   const found = await send('GET', '/api/library?q=ghost')
   expect(found.body).toEqual([
     expect.objectContaining({
