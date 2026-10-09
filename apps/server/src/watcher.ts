@@ -16,11 +16,17 @@ import { library } from './library.ts'
 import { type GameContext, proactiveTip, unlockReaction } from './nexo.ts'
 import { hours, playtimes } from './playtime.ts'
 import { Refused } from './plugins.ts'
-import { nowPlaying, PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
+import {
+  catalogTrophies,
+  nowPlaying,
+  PrivateProfile,
+  recentTitles,
+  type TitleProgress,
+} from './psn.ts'
 import { loadGroups } from './ranking.ts'
 import { logTip, type TipKind } from './repository/activity.ts'
 import { pruneExpired } from './repository/auth.ts'
-import { gameForTitle } from './repository/game.ts'
+import { type Game, gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
@@ -196,6 +202,43 @@ export async function setCurrent(user: User, title: TitleProgress): Promise<Game
     ensureDeepGuide(game, title.total).catch((e) => console.error('deep guide failed:', e.message))
   const played = await playtimes(user).catch(() => new Map())
   const ctx = { game, title, trophies, guide, groups, hoursPlayed: hours(played.get(game.id)) }
+  contexts.set(user.id, ctx)
+  return ctx
+}
+
+// A game the player does not own, for the chat: its official list with nothing earned and the
+// stored guide (asked for, not researched, when there is none). Null when it has no trophy list.
+export async function setCurrentFromCatalog(user: User, game: Game): Promise<GameContext | null> {
+  const list = await catalogTrophies(game.np_communication_ids ?? [])
+  if (!list) return null
+  const count = (type: string) => list.trophies.filter((t) => t.type === type).length
+  const title: TitleProgress = {
+    npCommunicationId: list.np,
+    name: game.name,
+    platform: list.platform,
+    iconUrl: game.cover_url ?? '',
+    progress: 0,
+    earned: 0,
+    total: list.trophies.length,
+    earnedByType: { bronze: 0, silver: 0, gold: 0, platinum: 0 },
+    definedByType: {
+      bronze: count('bronze'),
+      silver: count('silver'),
+      gold: count('gold'),
+      platinum: count('platinum') ? 1 : 0,
+    },
+    lastUpdated: '',
+  }
+  const guide = await getGuide<Guide>(game.id)
+  if (!guide && !isDemo(user)) await requestGuide(game.id)
+  const ctx: GameContext = {
+    game,
+    title,
+    trophies: list.trophies,
+    guide,
+    groups: null,
+    owned: false,
+  }
   contexts.set(user.id, ctx)
   return ctx
 }
@@ -396,6 +439,15 @@ export async function demoContext(user: User): Promise<GameContext | undefined> 
 }
 
 // Loads a user's context right after they sign in, without waiting for the next sweep.
+// The chat's game for a message: after a restart nothing is loaded until the next sweep, and a
+// message sent then would land in no game's conversation; one check picks the game being played.
+export async function currentOrCheck(user: User): Promise<GameContext | undefined> {
+  const ctx = getCurrent(user)
+  if (ctx || isDemo(user)) return ctx
+  await checkUser(user).catch((e) => console.error('check before chat failed:', e.message))
+  return getCurrent(user)
+}
+
 export function watchNow(user: User): void {
   const work = async () => {
     if (isDemo(user)) await demoContext(user)

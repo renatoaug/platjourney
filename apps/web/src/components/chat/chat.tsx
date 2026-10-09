@@ -63,8 +63,9 @@ const messages = defineMessages({
     menu: {
       label: 'Comandos e jogos',
       game: 'Trocar o jogo da conversa',
-      noGame: 'Nenhum jogo seu com esse nome.',
+      noGame: 'Nenhum jogo com esse nome.',
       current: 'atual',
+      notOwned: 'fora da biblioteca',
       switch: 'Trocar o jogo da conversa',
       switching: 'Trocando para {name}…',
     },
@@ -128,8 +129,9 @@ const messages = defineMessages({
     menu: {
       label: 'Commands and games',
       game: 'Switch the game we talk about',
-      noGame: 'None of your games has that name.',
+      noGame: 'No game with that name.',
       current: 'current',
+      notOwned: 'not in your library',
       switch: 'Switch the game we talk about',
       switching: 'Switching to {name}…',
     },
@@ -371,6 +373,7 @@ export function NexoChat({
   searchGames,
   onPickGame,
   switching = null,
+  readOnly,
 }: {
   chat: ChatLoad
   /** A question is out: the pending bubble shows and the send controls are disabled. */
@@ -386,6 +389,8 @@ export function NexoChat({
   onPickGame?: (game: LibraryGame) => void
   /** The game being loaded after a pick: the subtitle says so and the box waits. */
   switching?: string | null
+  /** Reading a conversation that is not the chat's game: this note stands in for the box. */
+  readOnly?: ReactNode
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
@@ -460,11 +465,15 @@ export function NexoChat({
         : []
       : mode === 'game'
         ? (games ?? []).map((g) => ({
-            key: g.np,
+            key: g.np ?? g.game ?? g.name,
             title: g.name,
-            detail: `${g.platform} · ${g.progress}%`,
+            detail: g.progress === null ? g.platform : `${g.platform} · ${g.progress}%`,
             icon: g.icon,
-            badge: g.current ? t('menu.current') : undefined,
+            badge: g.current
+              ? t('menu.current')
+              : g.owned === false
+                ? t('menu.notOwned')
+                : undefined,
           }))
         : []
   const pick = (index: number) => {
@@ -603,6 +612,10 @@ export function NexoChat({
         <div className="demo-connect" id="chat-demo-connect">
           <p>{t('demo.connect')}</p>
           <DemoConnectButton onConnect={onConnect} />
+        </div>
+      ) : readOnly ? (
+        <div className="nexo-readonly" role="note">
+          {readOnly}
         </div>
       ) : (
         <ChatForm

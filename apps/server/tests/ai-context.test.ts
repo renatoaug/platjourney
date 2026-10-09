@@ -12,6 +12,7 @@ test('missing facts go to the service as null', () => {
     groups: null,
     hoursPlayed: null,
     includeDlcProgress: false,
+    owned: true,
   })
 })
 
@@ -20,4 +21,8 @@ test('the DLC preference and hours ride along', () => {
   const out = aiContext(ctx, makeUser({ include_dlc_progress: true }))
   expect(out.hoursPlayed).toBe(12)
   expect(out.includeDlcProgress).toBe(true)
+})
+
+test('a game outside the library goes as not owned', () => {
+  expect(aiContext({ ...makeContext(), owned: false }, makeUser()).owned).toBe(false)
 })

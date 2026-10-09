@@ -131,12 +131,80 @@ export async function appendMessage(
   })
 }
 
-export async function recentMessages(user: string, limit = 20): Promise<ChatMessage[]> {
+/** The latest messages, oldest first. Each game has its own conversation: `game` picks it (a game
+ * id), `null` is the conversation without a game; left out, every message. */
+export async function recentMessages(
+  user: string,
+  limit = 20,
+  game?: string | null,
+): Promise<ChatMessage[]> {
+  const where = game === undefined ? '' : game === null ? ' AND game = NONE' : ' AND game = $game'
   const rows = plain(
     await q<ChatMessage[]>(
-      'SELECT *, game.* AS game FROM message WHERE user = $user ORDER BY created_at DESC LIMIT $limit',
-      { user: userRef(user), limit },
+      `SELECT *, game.* AS game FROM message WHERE user = $user${where} ORDER BY created_at DESC LIMIT $limit`,
+      { user: userRef(user), limit, ...(game ? { game: gameRef(game) } : {}) },
     ),
   )
   return rows.reverse()
+}
+
+/** One conversation per game the player talked about, the latest first. */
+export interface ChatThread {
+  /** The game's id, or null for the messages without a game. */
+  game: string | null
+  name: string | null
+  cover_url: string | null
+  messages: number
+  last_at: string
+  /** The player's latest question there. */
+  last_question: string | null
+  /** The player's PSN list for the game, to switch the chat to it; null when not in the library. */
+  np: string | null
+}
+
+export async function chatThreads(user: string): Promise<ChatThread[]> {
+  const rows = plain(
+    await q<{ game: string | null; messages: number; last_at: string }[]>(
+      'SELECT game, count() AS messages, time::max(created_at) AS last_at FROM message WHERE user = $user GROUP BY game',
+      { user: userRef(user) },
+    ),
+  )
+  const threads = await Promise.all(
+    rows.map(async (r) => {
+      const game = r.game ? String(r.game) : null
+      const [info] = game
+        ? plain(
+            await q<{ name: string; cover_url: string | null }[]>(
+              'SELECT name, cover_url FROM $game',
+              { game: gameRef(game) },
+            ),
+          )
+        : []
+      // ORDER BY needs its field selected, so the content comes inside a row.
+      const [question] = plain(
+        await q<{ content: string }[]>(
+          `SELECT content, created_at FROM message WHERE user = $user AND role = 'user' AND ${game ? 'game = $game' : 'game = NONE'} ORDER BY created_at DESC LIMIT 1`,
+          { user: userRef(user), ...(game ? { game: gameRef(game) } : {}) },
+        ),
+      )
+      const [np] = game
+        ? plain(
+            await q<string[]>(
+              'SELECT VALUE np_communication_id FROM title WHERE user = $user AND game = $game LIMIT 1',
+              { user: userRef(user), game: gameRef(game) },
+            ),
+          )
+        : []
+      return {
+        game,
+        np: np ?? null,
+        name: info?.name ?? null,
+        cover_url: info?.cover_url ?? null,
+        messages: r.messages,
+        last_at: r.last_at,
+        last_question: question?.content ?? null,
+      }
+    }),
+  )
+  return threads.sort((a, b) => b.last_at.localeCompare(a.last_at))
 }

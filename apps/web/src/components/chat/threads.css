@@ -1,0 +1,310 @@
+@layer screens {
+  /* Nexo's page: the conversations beside the chat; on a phone they become a sheet. */
+  .nexo-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .nexo-layout > .chat-page {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nexo-threads {
+    flex: none;
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    /* Many games: the list stays in view and scrolls on its own while the page moves. */
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transition:
+      width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+      padding 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .nexo-threads-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nexo-threads-close,
+  .nexo-threads-toggle {
+    display: none;
+  }
+
+  .nexo-threads-collapse {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 32px;
+    height: 32px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: none;
+    color: var(--color-fg-muted);
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .nexo-threads-collapse:hover {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  /* A thin line between conversations. */
+  .nexo-threads li + li {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* The conversations come in one after another. */
+  .nexo-threads li {
+    animation: nexo-thread-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+
+  /* Collapsed: a strip of covers; the name shows as a tooltip. */
+  .nexo-threads.collapsed {
+    width: 66px;
+    padding: 12px 8px;
+    gap: 8px;
+  }
+
+  .nexo-threads.collapsed .nexo-threads-head {
+    justify-content: center;
+  }
+
+  .nexo-threads.collapsed .eyebrow,
+  .nexo-threads.collapsed .nexo-thread-text,
+  .nexo-threads.collapsed .nexo-threads-empty {
+    display: none;
+  }
+
+  .nexo-threads.collapsed li button {
+    justify-content: center;
+    padding: 6px 0;
+  }
+
+  /* No sideways nudge in the strip: it would push the cover off the middle. */
+  .nexo-threads.collapsed li button:hover {
+    transform: none;
+  }
+
+  .nexo-threads.collapsed {
+    scrollbar-width: none;
+  }
+
+  @keyframes nexo-thread-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  @keyframes nexo-thread-text-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes nexo-threads-sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nexo-threads,
+    .nexo-threads li,
+    .nexo-thread-text,
+    .nexo-threads li button,
+    .nexo-threads li button .nexo-thread-cover {
+      animation: none;
+      transition: none;
+    }
+
+    .nexo-threads li button:hover {
+      transform: none;
+    }
+  }
+
+  .nexo-thread-skeleton {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .nexo-threads ul {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nexo-threads li button {
+    display: flex;
+    /* Buttons center their content by default; a short question would drift right. */
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    background: none;
+    color: inherit;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  .nexo-threads li button:hover {
+    background: var(--color-bg-subtle);
+    transform: translateX(2px);
+  }
+
+  .nexo-threads li button .nexo-thread-cover {
+    transition: transform 0.2s ease;
+  }
+
+  .nexo-threads li button:hover .nexo-thread-cover {
+    transform: scale(1.04);
+  }
+
+  .nexo-threads li button[aria-current] {
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+  }
+
+  .nexo-thread-cover {
+    flex: none;
+    width: 38px;
+    height: 50px;
+    border-radius: var(--radius-tag);
+    object-fit: cover;
+  }
+
+  .nexo-thread-general {
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--color-border-strong);
+    color: var(--color-fg-muted);
+  }
+
+  .nexo-thread-text {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+    animation: nexo-thread-text-in 0.24s ease both;
+  }
+
+  .nexo-thread-text b {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  .nexo-thread-text span {
+    overflow: hidden;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nexo-thread-text small {
+    color: var(--color-fg-subtle);
+    font-size: var(--text-xs);
+  }
+
+  /* The chat's game before its first message: dashed, until a message makes it a conversation. */
+  .nexo-threads li button.is-draft {
+    border-style: dashed;
+  }
+
+  .nexo-thread-draft {
+    font-style: italic;
+  }
+
+  .nexo-threads li button[aria-current] small {
+    color: var(--color-accent);
+  }
+
+  /* No conversation yet: the panel's own welcome, stacked to fit the narrow column. */
+  .nexo-threads-empty.empty-rich {
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 4px 4px;
+  }
+
+  /* Reading a conversation that is not the chat's game: the box gives way to this note. */
+  .nexo-readonly {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 14px 0 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  @media (max-width: 900px) {
+    .nexo-layout {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .nexo-threads-toggle {
+      display: inline-flex;
+      align-self: flex-start;
+    }
+
+    .nexo-threads {
+      display: none;
+    }
+
+    .nexo-threads-collapse {
+      display: none;
+    }
+
+    .nexo-threads.open {
+      display: flex;
+      position: fixed;
+      inset: auto 0 0;
+      z-index: 50;
+      width: auto;
+      max-height: 75vh;
+      padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+      border-radius: var(--radius-card) var(--radius-card) 0 0;
+      box-shadow: var(--shadow-popover);
+      animation: nexo-threads-sheet-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .nexo-threads.open .nexo-threads-close {
+      display: inline-flex;
+      background: none;
+      color: var(--color-fg-muted);
+      padding: 10px;
+    }
+  }
+}

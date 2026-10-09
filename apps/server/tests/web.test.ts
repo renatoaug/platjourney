@@ -252,6 +252,35 @@ test('sign-in routes and the demo are limited per address', async () => {
   expect((await send('POST', '/api/auth/demo')).status).toBe(429)
 })
 
+test("the chat reads the current game's conversation, another game's, or the one without a game", async () => {
+  const read = spyOn(activity, 'recentMessages').mockResolvedValue([])
+  await send('GET', '/api/chat')
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, null)
+  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext())
+  await send('GET', '/api/chat')
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, makeContext().game.id)
+  await send('GET', '/api/chat?game=game:9')
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, 'game:9')
+  await send('GET', '/api/chat?game=none')
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, null)
+  spyOn(nexo, 'reply').mockResolvedValue('ok')
+  await send('POST', '/api/chat', { text: 'oi' })
+  expect(read).toHaveBeenLastCalledWith(me.id, 40, makeContext().game.id)
+})
+
+test('a chat message with no game loaded first checks what the player is on', async () => {
+  const check = spyOn(watcher, 'currentOrCheck').mockResolvedValue(makeContext())
+  const answer = spyOn(nexo, 'reply').mockResolvedValue('ok')
+  await send('POST', '/api/chat', { text: 'oi' })
+  expect(check).toHaveBeenCalledWith(me)
+  expect(answer.mock.calls[0][2]).toEqual(makeContext())
+})
+
+test('the conversations list comes from the repository', async () => {
+  spyOn(activity, 'chatThreads').mockResolvedValue([])
+  expect((await send('GET', '/api/chat/threads')).body).toEqual([])
+})
+
 test('auth failures answer with their status and message', async () => {
   spyOn(auth, 'login').mockRejectedValue(new AuthError('too_many_attempts'))
   const res = await send('POST', '/api/auth/login', { onlineId: 'Kratos', password: 'x' })
@@ -1006,6 +1035,7 @@ test('the chat game switch lists the player titles by name and loads the one pic
     makeTitle({ npCommunicationId: 'NPWR2', name: 'Ghost of Tsushima', progress: 64 }),
   ])
   spyOn(watcher, 'getCurrent').mockReturnValue(makeContext())
+  spyOn(games, 'searchCatalog').mockResolvedValue([])
   const found = await send('GET', '/api/library?q=ghost')
   expect(found.body).toEqual([
     expect.objectContaining({
@@ -1020,4 +1050,38 @@ test('the chat game switch lists the player titles by name and loads the one pic
   expect(res.status).toBe(200)
   expect(set.mock.calls[0][1]).toMatchObject({ npCommunicationId: 'NPWR2' })
   expect((await send('POST', '/api/current', { np: 'NOPE' })).status).toBe(404)
+})
+
+test('the game switch also offers catalog games outside the library and talks about them', async () => {
+  spyOn(lib, 'library').mockResolvedValue([
+    makeTitle({ npCommunicationId: 'NPWR2', name: 'Jogo Exemplo Dois' }),
+  ])
+  spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
+  const outside = makeGame({
+    id: 'game:9',
+    name: 'Jogo Exemplo Novo',
+    np_communication_ids: ['NPWR9'],
+  })
+  const owned = makeGame({
+    id: 'game:2',
+    name: 'Jogo Exemplo Dois',
+    np_communication_ids: ['NPWR2'],
+  })
+  spyOn(games, 'searchCatalog').mockResolvedValue([outside, owned])
+  const found = await send('GET', '/api/library?q=jogo exemplo')
+  expect(found.body).toEqual([
+    expect.objectContaining({ np: 'NPWR2', owned: true }),
+    expect.objectContaining({ game: 'game:9', name: 'Jogo Exemplo Novo', owned: false }),
+  ])
+  spyOn(games, 'getGame').mockImplementation((async (id: string) =>
+    id === 'game:9' ? outside : owned) as never)
+  const fromCatalog = spyOn(watcher, 'setCurrentFromCatalog').mockResolvedValue(makeContext())
+  const set = spyOn(watcher, 'setCurrent').mockResolvedValue(makeContext())
+  expect((await send('POST', '/api/current', { game: 'game:9' })).status).toBe(200)
+  expect(fromCatalog.mock.calls[0][1]).toBe(outside)
+  // A catalog game the player owns goes through the title, with progress.
+  await send('POST', '/api/current', { game: 'game:2' })
+  expect(set.mock.calls[0][1]).toMatchObject({ npCommunicationId: 'NPWR2' })
+  fromCatalog.mockResolvedValueOnce(null)
+  expect((await send('POST', '/api/current', { game: 'game:9' })).status).toBe(404)
 })

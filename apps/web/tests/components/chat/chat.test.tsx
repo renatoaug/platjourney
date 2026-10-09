@@ -154,6 +154,15 @@ describe('the game switch', () => {
       current: false,
     },
     { np: 'NP2', name: 'Ghostrunner II', platform: 'PS5', icon: null, progress: 0, current: true },
+    {
+      game: 'game:9',
+      name: 'Ghost Exemplo',
+      platform: 'PS5',
+      icon: null,
+      progress: null,
+      current: false,
+      owned: false,
+    },
   ]
   const setup = () => {
     const searchGames = mock(async (_q: string) => games)
@@ -188,6 +197,10 @@ describe('the game switch', () => {
     expect(await screen.findByRole('option', { name: /Ghost of Tsushima/ })).toBeTruthy()
     expect(searchGames).toHaveBeenCalledWith('gho')
     expect(screen.getByText('atual')).toBeTruthy()
+    // A catalog game outside the library comes after, marked, with no progress.
+    const outside = screen.getByRole('option', { name: /Ghost Exemplo/ })
+    expect(outside.textContent).toContain('fora da biblioteca')
+    expect(outside.textContent).not.toContain('%')
     fireEvent.keyDown(box(), { key: 'ArrowDown' })
     expect(box().getAttribute('aria-activedescendant')).toBe('chat-menu-1')
     fireEvent.keyDown(box(), { key: 'ArrowUp' })

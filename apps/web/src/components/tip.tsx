@@ -58,6 +58,11 @@ export const KIND_ICON: Record<string, string> = {
 
 export const titleHref = (gameId: string) => `/title/game/${encodeURIComponent(gameId)}`
 
+/** The chat, opening on a game: a PSN list id for one in the player's library, a game id
+ * (`game:…`) for one outside it. */
+export const nexoHref = (np?: string | null, name?: string | null) =>
+  np ? `/nexo?${new URLSearchParams({ game: np, ...(name ? { name } : {}) })}` : '/nexo'
+
 export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?: boolean }) {
   const tr = useMessages(messages)
   const t = tipItem

@@ -135,6 +135,8 @@ export interface CurrentGame {
   earned: number
   total: number
   np: string
+  /** False for a game outside the library, picked in the chat to talk about before buying. */
+  owned?: boolean
   groups?: { base: ProgressGroup; dlc?: ProgressGroup | null; dlcNames?: string[] } | null
   guide?: GuideDetail | null
   deepGuide?: DeepGuideStats | null
@@ -206,12 +208,16 @@ export interface AppStateData {
   servers: ServerStatus[]
 }
 
-/** A game from the player's library, as the chat's game switch lists it. */
+/** A game the chat's game switch lists: the player's own titles first (by their PSN list), then
+ * catalog games outside the library (by their game id), to talk about one before buying it. */
 export interface LibraryGame {
-  np: string
+  np?: string
+  game?: string
   name: string
   platform: string
   icon: string | null
-  progress: number
+  progress: number | null
   current: boolean
+  /** False for a catalog game the player does not have. */
+  owned?: boolean
 }

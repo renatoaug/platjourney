@@ -107,6 +107,11 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
         f'Jogo: {title.name} ({title.platform}) — {shown.progress}% — '
         f'{shown.earned}/{shown.total} troféus{shown.label}{dlc_line}'
     ]
+    if not ctx.owned:
+        parts.append(
+            'O jogador ainda não tem este jogo: ajude a decidir e a planejar a platina antes de '
+            'comprar (dificuldade, tempo, perdíveis, online), sem falar de progresso dele.'
+        )
     if ctx.hours_played is not None:
         estimate = f' (o guia estima ~{num(guide["hours"])}h)' if guide.get('hours') else ''
         parts.append(f'Tempo jogado: {num(ctx.hours_played)}h{estimate}')

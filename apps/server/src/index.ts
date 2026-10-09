@@ -21,7 +21,7 @@ import {
   setCommands,
   telegramMessages,
 } from './telegram.ts'
-import { getCurrent, startWatcher } from './watcher.ts'
+import { currentOrCheck, startWatcher } from './watcher.ts'
 import { startWeb } from './web.ts'
 
 // "/start <code>" arrives when someone opens the link from their profile page.
@@ -100,7 +100,7 @@ async function answerTelegram({
     await sendTyping(chatId)
     await sendMessage(
       chatId,
-      await reply(user, text.slice(0, config.chat.maxChars), getCurrent(user)),
+      await reply(user, text.slice(0, config.chat.maxChars), await currentOrCheck(user)),
     )
   } catch (e) {
     // A plugin refused the model work: its message says why and what to do.

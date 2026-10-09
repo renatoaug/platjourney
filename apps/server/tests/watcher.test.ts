@@ -24,6 +24,7 @@ import * as servers from '../src/servers.ts'
 import * as telegram from '../src/telegram.ts'
 import {
   checkUser,
+  currentOrCheck,
   demoContext,
   focusNotice,
   forgetUser,
@@ -31,6 +32,7 @@ import {
   SESSION_NOTICE_HOURS,
   sessionNotice,
   setCurrent,
+  setCurrentFromCatalog,
   startWatcher,
   watchNow,
 } from '../src/watcher.ts'
@@ -599,3 +601,53 @@ describe('the demo player', () => {
     expect(recent.mock.calls).toEqual([['acc1', 5]])
   })
 })
+
+test('a game outside the library becomes the chat game with its list, nothing earned and the stored guide', async () => {
+  const trophy = { id: 0, name: 'Platina', type: 'platinum', earned: false } as psn.TrophyStatus
+  spyOn(psn, 'catalogTrophies').mockResolvedValue({
+    np: 'NPWR9',
+    platform: 'PS5',
+    trophies: [trophy],
+  })
+  spyOn(guides, 'getGuide').mockResolvedValue(undefined)
+  const ask = spyOn(requests, 'requestGuide').mockResolvedValue(undefined)
+  const game = {
+    id: 'game:9',
+    name: 'Jogo Exemplo',
+    np_communication_ids: ['NPWR9'],
+    cover_url: null,
+  } as never
+  const ctx = await setCurrentFromCatalog({ id: 'user:z' } as never, game)
+  expect(ctx?.owned).toBe(false)
+  expect(ctx?.title).toMatchObject({
+    npCommunicationId: 'NPWR9',
+    progress: 0,
+    earned: 0,
+    total: 1,
+    platform: 'PS5',
+  })
+  expect(ctx?.title.definedByType.platinum).toBe(1)
+  expect(ask).toHaveBeenCalledWith('game:9')
+  expect(getCurrent({ id: 'user:z' } as never)).toBe(ctx as never)
+  spyOn(psn, 'catalogTrophies').mockResolvedValue(null)
+  expect(await setCurrentFromCatalog({ id: 'user:y' } as never, game)).toBeNull()
+})
+
+test('a loaded game is used as is; the demo player is never checked', async () => {
+  const ctx = await setCurrentFromCatalogStub()
+  expect(await currentOrCheck({ id: 'user:cc' } as never)).toBe(ctx as never)
+  expect(await currentOrCheck({ id: 'user:none', demo: true } as never)).toBeUndefined()
+})
+
+async function setCurrentFromCatalogStub() {
+  spyOn(psn, 'catalogTrophies').mockResolvedValue({ np: 'NPWR8', platform: 'PS5', trophies: [] })
+  spyOn(guides, 'getGuide').mockResolvedValue(undefined)
+  spyOn(requests, 'requestGuide').mockResolvedValue(undefined)
+  const game = {
+    id: 'game:8',
+    name: 'Jogo Exemplo',
+    np_communication_ids: ['NPWR8'],
+    cover_url: null,
+  } as never
+  return setCurrentFromCatalog({ id: 'user:cc' } as never, game)
+}

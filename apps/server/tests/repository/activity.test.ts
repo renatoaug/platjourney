@@ -3,6 +3,7 @@ import { afterEach, expect, mock, spyOn, test } from 'bun:test'
 import * as db from '../../src/db.ts'
 import {
   appendMessage,
+  chatThreads,
   logTip,
   markNotificationsRead,
   notificationsPage,
@@ -109,4 +110,47 @@ test('recent messages come back oldest first', async () => {
   const q = spyOn(db, 'q').mockResolvedValue([{ content: 'b' }, { content: 'a' }])
   expect(await recentMessages('user:u1', 2)).toEqual([{ content: 'a' }, { content: 'b' }] as never)
   expect(q.mock.calls[0][1]).toEqual({ user, limit: 2 })
+})
+
+test("a game's conversation reads only its messages; null reads those without a game", async () => {
+  const q = spyOn(db, 'q').mockResolvedValue([])
+  await recentMessages('user:u1', 5, 'game:7')
+  expect(q.mock.calls[0][0]).toContain('AND game = $game')
+  expect(q.mock.calls[0][1]).toEqual({ user, limit: 5, game })
+  await recentMessages('user:u1', 5, null)
+  expect(q.mock.calls[1][0]).toContain('AND game = NONE')
+  expect(q.mock.calls[1][1]).toEqual({ user, limit: 5 })
+})
+
+test('conversations come one per game, the latest first, with the last question and the list id', async () => {
+  spyOn(db, 'q').mockImplementation((async (sql: string, vars: Record<string, unknown>) => {
+    if (sql.includes('GROUP BY game'))
+      return [
+        { game: 'game:7', messages: 4, last_at: '2026-01-01T10:00:00Z' },
+        { game: null, messages: 2, last_at: '2026-01-02T10:00:00Z' },
+      ]
+    if (sql.includes('FROM $game')) return [{ name: 'Jogo Exemplo', cover_url: null }]
+    if (sql.includes('FROM title')) return ['NPWR00001_00']
+    return [{ content: vars.game ? 'Onde fica o baú?' : 'Oi' }]
+  }) as never)
+  expect(await chatThreads('user:u1')).toEqual([
+    {
+      game: null,
+      np: null,
+      name: null,
+      cover_url: null,
+      messages: 2,
+      last_at: '2026-01-02T10:00:00Z',
+      last_question: 'Oi',
+    },
+    {
+      game: 'game:7',
+      np: 'NPWR00001_00',
+      name: 'Jogo Exemplo',
+      cover_url: null,
+      messages: 4,
+      last_at: '2026-01-01T10:00:00Z',
+      last_question: 'Onde fica o baú?',
+    },
+  ])
 })

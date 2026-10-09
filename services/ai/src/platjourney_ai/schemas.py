@@ -76,6 +76,8 @@ class GameContext(Wire):
     hours_played: float | None = None
     # Account preference: count DLC trophies in the progress shown.
     include_dlc_progress: bool = False
+    # False when the player does not own the game: Nexo talks about it before they buy it.
+    owned: bool = True
 
 
 class Shown(BaseModel):
