@@ -287,3 +287,22 @@ test('opening Nexo from a game page never flashes the previous game conversation
   expect(within(log()).queryByText('E depois disso?')).toBeNull()
   expect(screen.getByText('Trocando para Jogo Novo…')).toBeTruthy()
 })
+
+test('switching away from a draft drops it at once and marks the game being opened', async () => {
+  mockApi({
+    '/api/chat/threads': [thread({ game: 'game:2', np: 'NPWR00002_00', name: 'Outro Jogo' })],
+    '/api/chat': [],
+    'POST /api/current': never,
+  })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, { value: { data: { ...SAMPLE_DATA, current: game } } })
+  const list = await screen.findByRole('complementary', { name: 'Conversas' })
+  expect(within(list).getByText('Nova conversa')).toBeTruthy()
+  fireEvent.click(within(list).getByRole('button', { name: /Outro Jogo/ }))
+  await waitFor(() => expect(within(list).queryByText('Nova conversa')).toBeNull())
+  expect(
+    within(list)
+      .getByRole('button', { name: /Outro Jogo/ })
+      .getAttribute('aria-current'),
+  ).toBe('true')
+})

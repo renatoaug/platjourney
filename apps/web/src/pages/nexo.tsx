@@ -162,11 +162,21 @@ function LiveNexo() {
     [],
   )
   // Loading a game's context takes a few seconds (PSN, guide): the chat says so meanwhile.
+  // The game a switch is heading to: the list marks it (and shows it as the draft) before the
+  // server answers, so the previous game's draft does not linger.
+  const [target, setTarget] = useState<LibraryGame | null>(() => {
+    if (!arriving || !incoming) return null
+    const name = params.get('name') ?? ''
+    return incoming.startsWith('game:')
+      ? ({ game: incoming, name } as LibraryGame)
+      : ({ np: incoming, name } as LibraryGame)
+  })
   const [switching, setSwitching] = useState<string | null>(() =>
     arriving ? params.get('name') || '…' : null,
   )
   const pickGame = async (game: LibraryGame) => {
     setSwitching(game.name)
+    setTarget(game)
     // The old game's messages leave at once; the skeleton holds until the new game's arrive.
     leaving.current = shown.current
     setChat('loading')
@@ -181,6 +191,7 @@ function LiveNexo() {
     } finally {
       leaving.current = null
       setSwitching(null)
+      setTarget(null)
     }
   }
 
@@ -214,8 +225,23 @@ function LiveNexo() {
   }
   // The chat's game with no conversation yet sits on top as a draft; it goes away by itself when
   // the player leaves without writing, since nothing is stored until a message is sent.
-  const draft: ChatThread | null =
-    current && threads && !threads.some((x) => x.game === current.game.id)
+  const heading = target
+    ? (threads?.find((x) => (target.np ? x.np === target.np : x.game === target.game)) ?? null)
+    : undefined
+  const draft: ChatThread | null = target
+    ? heading
+      ? null
+      : {
+          game: target.game ?? `np:${target.np}`,
+          np: target.np ?? null,
+          name: target.name,
+          cover_url: target.icon ?? null,
+          messages: 0,
+          last_at: new Date().toISOString(),
+          last_question: null,
+          draft: true,
+        }
+    : current && threads && !threads.some((x) => x.game === current.game.id)
       ? {
           game: current.game.id,
           np: current.np,
@@ -228,6 +254,8 @@ function LiveNexo() {
         }
       : null
   const listed = threads && (draft ? [draft, ...threads] : threads)
+  // While switching, the conversation heading for the new game is the one marked.
+  const marked = target ? (heading ? threadKey(heading) : draft ? threadKey(draft) : key) : key
   const reading = viewing !== null && viewing !== currentKey
   const readOnly = reading ? (
     <>
@@ -247,7 +275,7 @@ function LiveNexo() {
             <ChatThreadsToggle onOpen={() => setSheet(true)} />
             <ChatThreads
               threads={listed}
-              active={key}
+              active={marked}
               onPick={pickThread}
               open={sheet}
               onClose={() => setSheet(false)}
