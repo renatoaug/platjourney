@@ -260,7 +260,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
               <div className="cta">
                 <SaveButton d={d} />
                 {d.trophies?.length ? (
-                  <Link className="button ghost" to={nexoHref(d.game.id, d.name)}>
+                  <Link className="button secondary" to={nexoHref(d.game.id, d.name)}>
                     {t('askNexo')} <Icon name="arrow" />
                   </Link>
                 ) : null}
