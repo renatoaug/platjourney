@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0](https://github.com/renatoaug/platjourney/compare/v0.6.3...v0.7.0) (2026-10-09)
+
+### Features
+
+* **guide:** highlight the game's names and keep a tip's steps on separate lines ([#28](https://github.com/renatoaug/platjourney/issues/28)) ([bd7f6f5](https://github.com/renatoaug/platjourney/commit/bd7f6f57546a533cc077d8537a821737db67f942))
+
 ## [0.6.3](https://github.com/renatoaug/platjourney/compare/v0.6.2...v0.6.3) (2026-10-09)
 
 ### Bug Fixes
