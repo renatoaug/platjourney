@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.2](https://github.com/renatoaug/platjourney/compare/v0.6.1...v0.6.2) (2026-10-09)
+
+### Bug Fixes
+
+* **ai:** read the longest article on a guide page ([#26](https://github.com/renatoaug/platjourney/issues/26)) ([f42701b](https://github.com/renatoaug/platjourney/commit/f42701b2b566ea8b8f73aa666c09cf532e716c52))
+
 ## [0.6.1](https://github.com/renatoaug/platjourney/compare/v0.6.0...v0.6.1) (2026-10-09)
 
 ### Bug Fixes
