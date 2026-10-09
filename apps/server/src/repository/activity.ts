@@ -180,9 +180,10 @@ export async function chatThreads(user: string): Promise<ChatThread[]> {
             ),
           )
         : []
+      // ORDER BY needs its field selected, so the content comes inside a row.
       const [question] = plain(
-        await q<string[]>(
-          `SELECT VALUE content FROM message WHERE user = $user AND role = 'user' AND ${game ? 'game = $game' : 'game = NONE'} ORDER BY created_at DESC LIMIT 1`,
+        await q<{ content: string }[]>(
+          `SELECT content, created_at FROM message WHERE user = $user AND role = 'user' AND ${game ? 'game = $game' : 'game = NONE'} ORDER BY created_at DESC LIMIT 1`,
           { user: userRef(user), ...(game ? { game: gameRef(game) } : {}) },
         ),
       )
@@ -201,7 +202,7 @@ export async function chatThreads(user: string): Promise<ChatThread[]> {
         cover_url: info?.cover_url ?? null,
         messages: r.messages,
         last_at: r.last_at,
-        last_question: question ?? null,
+        last_question: question?.content ?? null,
       }
     }),
   )

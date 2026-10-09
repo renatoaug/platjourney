@@ -131,7 +131,7 @@ test('conversations come one per game, the latest first, with the last question 
       ]
     if (sql.includes('FROM $game')) return [{ name: 'Jogo Exemplo', cover_url: null }]
     if (sql.includes('FROM title')) return ['NPWR00001_00']
-    return [vars.game ? 'Onde fica o baú?' : 'Oi']
+    return [{ content: vars.game ? 'Onde fica o baú?' : 'Oi' }]
   }) as never)
   expect(await chatThreads('user:u1')).toEqual([
     {
