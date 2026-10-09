@@ -51,6 +51,9 @@ const messages = defineMessages({
 
 const COLLAPSED = 'nexo-threads-collapsed'
 
+/** A question as one plain line: the bold and code marks a tip question carries go. */
+const bare = (text: string | null) => (text ?? '').replace(/\*\*|__|`/g, '').trim()
+
 /** The key a conversation is read by: its game, or "none". */
 export const threadKey = (t: Pick<ChatThread, 'game'>) => t.game ?? 'none'
 
@@ -177,7 +180,7 @@ export function ChatThreads({
                 )}
                 <span className="nexo-thread-text">
                   <b>{thread.game ? thread.name : t('general')}</b>
-                  <span>{thread.last_question ?? (thread.game ? '' : t('generalHint'))}</span>
+                  <span>{bare(thread.last_question) || (thread.game ? '' : t('generalHint'))}</span>
                   <small>
                     {when(thread.last_at)} · {t('count', { count: thread.messages })}
                   </small>

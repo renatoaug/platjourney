@@ -92,7 +92,16 @@
 
   .nexo-threads.collapsed li button {
     justify-content: center;
-    padding: 6px;
+    padding: 6px 0;
+  }
+
+  /* No sideways nudge in the strip: it would push the cover off the middle. */
+  .nexo-threads.collapsed li button:hover {
+    transform: none;
+  }
+
+  .nexo-threads.collapsed {
+    scrollbar-width: none;
   }
 
   @keyframes nexo-thread-in {
@@ -145,6 +154,8 @@
 
   .nexo-threads li button {
     display: flex;
+    /* Buttons center their content by default; a short question would drift right. */
+    justify-content: flex-start;
     gap: 12px;
     width: 100%;
     padding: 10px;
