@@ -207,6 +207,7 @@ erDiagram
     game ||--o{ guide_chunk : "has passages"
     game ||--o| guide_request : "is asked for"
     game ||--o| server_status : "online status"
+    user }o--o{ game_request : "asks for a missing game"
     game {
         id record(game) PK
         name string
@@ -256,6 +257,15 @@ erDiagram
         game record(game) FK "unique"
         requests int
         questions array(object)
+        created_at datetime
+        updated_at datetime
+    }
+    game_request {
+        id record(game_request) PK
+        key string "unique"
+        name string
+        users array(record(user)) FK
+        requests int
         created_at datetime
         updated_at datetime
     }
@@ -346,10 +356,11 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `game` | catalog game | `slug`, `igdb_id` | From IGDB; `np_communication_ids` ties it to PSN lists; `embedding` for recommendations |
+| `game` | catalog game | `slug`, `igdb_id` | From IGDB; `np_communication_ids` ties it to PSN lists; `embedding` for recommendations. A store edition is the game itself, its name kept in `aliases`; a PS4/PS5 remaster of a game that never came to them is its own record |
 | `guide` | game with a researched guide | `game` | The guide itself is an object; also the deep guide's pages and passage count |
 | `guide_chunk` | passage of a deep guide | | Text, heading path, source page and its date, and the vector |
 | `guide_request` | game asked for without a guide | `game` | How many times and the questions, for whoever runs the instance |
+| `game_request` | name searched on Guides that neither the catalog nor IGDB had | `key` (the name normalized for search) | Who asked, each account once, and how many; for whoever runs the instance to add by hand |
 | `server_status` | game whose online servers were checked | `game` | `status`: `active`, `announced`, `closed` or `unknown`; shared by everyone, and who was already warned is in `notification` |
 
 ## Costs
