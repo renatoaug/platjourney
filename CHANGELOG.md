@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.1](https://github.com/renatoaug/platjourney/compare/v0.4.0...v0.4.1) (2026-10-09)
+
+### Bug Fixes
+
+* **nexo:** cite every source an answer used ([#22](https://github.com/renatoaug/platjourney/issues/22)) ([9a5422e](https://github.com/renatoaug/platjourney/commit/9a5422ec43809d019fffb31cbc9f3f8681ed5295))
+
 ## [0.4.0](https://github.com/renatoaug/platjourney/compare/v0.3.0...v0.4.0) (2026-10-09)
 
 ### Features
