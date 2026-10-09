@@ -52,3 +52,12 @@ describe('md', () => {
     expect(md('<img src=x>')).toBe('<p>&lt;img src=x&gt;</p>')
   })
 })
+
+test('md links a cited source, https only, opening in a new tab', () => {
+  expect(md('Fonte: [Canal Exemplo](https://www.youtube.com/watch?v=a&t=9s)')).toBe(
+    '<p>Fonte: <a href="https://www.youtube.com/watch?v=a&amp;t=9s" target="_blank" rel="noopener noreferrer">Canal Exemplo</a></p>',
+  )
+  expect(md('[x](http://evil.example) [y](javascript:alert(1))')).toBe(
+    '<p>[x](http://evil.example) [y](javascript:alert(1))</p>',
+  )
+})

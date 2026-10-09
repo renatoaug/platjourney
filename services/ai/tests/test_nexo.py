@@ -426,7 +426,27 @@ async def test_an_automatic_notice_cites_no_source(
     model: Model, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     async def answer(*_args: Any, **_kw: Any) -> str:
-        return 'Boa! Próximo: Burnout.\n\nFonte: PowerPyx'
+        return 'Boa! Próximo: Burnout.\n\nFonte: Trofeus'
 
     monkeypatch.setattr(nexo, 'ask', answer)
     assert await nexo.tip('unlock', context(), []) == 'Boa! Próximo: Burnout.'
+
+
+def test_the_cited_source_links_to_the_passage_it_came_from() -> None:
+    def p(source: str, url: str) -> Passage:
+        return Passage(source=source, url=url, heading='h', content='c', position=0)
+
+    used = [
+        p('YouTube · Canal Exemplo', 'https://www.youtube.com/watch?v=abc&t=227s'),
+        p('trofeus.example', 'https://trofeus.example/days-gone/'),
+        p('evil.example', 'http://evil.example/login'),
+    ]
+    text = 'Use nitro e derrape.\n\nFonte: Canal Exemplo, Trofeus e Evil'
+    assert nexo.cite(text, used) == (
+        'Use nitro e derrape.\n\nFonte: '
+        '[Canal Exemplo](https://www.youtube.com/watch?v=abc&t=227s), '
+        '[Trofeus](https://trofeus.example/days-gone/), Evil'
+    )
+    # No "Fonte:" line, or a source the passages do not have: the text is left as it is.
+    assert nexo.cite('Só o guia.', used) == 'Só o guia.'
+    assert nexo.cite('Fonte: Wiki', used) == 'Fonte: Wiki'

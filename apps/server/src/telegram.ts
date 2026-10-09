@@ -50,13 +50,17 @@ async function call<T>(method: string, body: Record<string, unknown>): Promise<T
 
 // Nexo writes light markdown; Telegram wants HTML with escaped text.
 function toTelegramHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-    .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
+  return (
+    text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // A cited source: the guide page or the video at its minute (https only, from the guide store).
+      .replace(/\[([^\]<]+)\]\((https:\/\/[^\s)"<]+)\)/g, '<a href="$2">$1</a>')
+  )
 }
 
 export async function sendMessage(chatId: string, text: string): Promise<void> {

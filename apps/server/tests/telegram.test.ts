@@ -21,6 +21,17 @@ test('messages go out as escaped HTML', async () => {
   expect(body.text).toBe('<b>Platina</b> em <i>Days Gone</i> com <code>R2</code> &amp; &lt;3')
 })
 
+test('a cited source becomes a link, https only', async () => {
+  const fetch = spyOn(globalThis, 'fetch').mockImplementation(okFetch)
+  await sendMessage(
+    '42',
+    'Fonte: [Canal Exemplo](https://www.youtube.com/watch?v=a&t=9s), [X](http://x.example)',
+  )
+  expect(sent(fetch)[0].body.text).toBe(
+    'Fonte: <a href="https://www.youtube.com/watch?v=a&amp;t=9s">Canal Exemplo</a>, [X](http://x.example)',
+  )
+})
+
 test('long messages are split in chunks', async () => {
   const fetch = spyOn(globalThis, 'fetch').mockImplementation(okFetch)
   await sendMessage('42', 'a'.repeat(9000))
