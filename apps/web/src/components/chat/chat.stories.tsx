@@ -75,3 +75,27 @@ function Interactive() {
 }
 
 export const Conversation: Story = { render: () => <Interactive /> }
+
+const library = [
+  {
+    np: 'NP1',
+    name: 'Ghost of Tsushima',
+    platform: 'PS5',
+    icon: null,
+    progress: 64,
+    current: false,
+  },
+  { np: 'NP2', name: 'Ghostrunner II', platform: 'PS5', icon: null, progress: 0, current: false },
+  { np: 'NP3', name: 'Days Gone', platform: 'PS4', icon: null, progress: 30, current: true },
+]
+
+/** Typing "/game" (or clicking the subtitle) lists the player's games over the message box. */
+export const GameSwitch: Story = {
+  args: {
+    ...base,
+    chat: MESSAGES,
+    searchGames: async (q: string) =>
+      library.filter((g) => g.name.toLowerCase().includes(q.toLowerCase())),
+    onPickGame: () => {},
+  },
+}

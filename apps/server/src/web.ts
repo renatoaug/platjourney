@@ -70,7 +70,7 @@ import { isDismissReason } from './repository/recommendation.ts'
 import { listServerStatuses } from './repository/server-status.ts'
 import { setLinkCode, type User, updateUser } from './repository/user.ts'
 import { botInfo, botUsername } from './telegram.ts'
-import { demoContext, forgetUser, getCurrent, watchNow } from './watcher.ts'
+import { demoContext, forgetUser, getCurrent, setCurrent, watchNow } from './watcher.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -673,6 +673,34 @@ async function api(
     if (typeof text !== 'string' || !text.trim()) return json(res, 400, { error: 'text required' })
     const response = await reply(me, text.trim().slice(0, config.chat.maxChars), getCurrent(me))
     return json(res, 200, { text: response, messages: await recentMessages(me.id, 40) })
+  }
+  // The chat's game, as /game in Telegram: the player's own titles, searched by name, and the
+  // switch, which loads that game's context for the chat and the notices alike.
+  if (path === '/api/library' && method === 'GET') {
+    if (isDemo(me)) return json(res, 200, [])
+    const q = (url.searchParams.get('q') ?? '').trim().toLowerCase()
+    const current = getCurrent(me)?.title.npCommunicationId
+    const hits = (await titles()).filter((ti) => ti.name.toLowerCase().includes(q)).slice(0, 8)
+    return json(
+      res,
+      200,
+      hits.map((ti) => ({
+        np: ti.npCommunicationId,
+        name: ti.name,
+        platform: ti.platform,
+        icon: ti.iconUrl,
+        progress: ti.progress,
+        current: ti.npCommunicationId === current,
+      })),
+    )
+  }
+  if (path === '/api/current' && method === 'POST') {
+    if (isDemo(me)) return json(res, 403, { error: 'demo' })
+    const { np } = await readBody(req)
+    const hit = (await titles()).find((ti) => ti.npCommunicationId === np)
+    if (!hit) return json(res, 404, { error: 'title not found' })
+    const ctx = await setCurrent(me, hit)
+    return json(res, 200, { current: (await currentView(me, ctx)) ?? null })
   }
   if (path === '/api/guides' && method === 'GET') {
     const p = url.searchParams

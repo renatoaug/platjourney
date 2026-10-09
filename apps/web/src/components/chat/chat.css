@@ -502,4 +502,104 @@
     flex-direction: column;
     gap: 16px;
   }
+
+  /* The game switch: the subtitle opens the same list as "/game". */
+  /* Same look as the subtitle it replaces (.page-head p, .nexo-chat-heading p). */
+  .page-head .nexo-sub-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    margin-top: 4px;
+    color: var(--color-fg-muted);
+    font: inherit;
+    font-size: var(--text-md);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .page-head .nexo-sub-switch:hover {
+    color: var(--color-fg);
+  }
+
+  .nexo-sub-switch .icon {
+    width: 14px;
+    height: 14px;
+    flex: none;
+  }
+
+  /* The list over the message box while a command is typed, as in a terminal's "@". */
+  .chat-box {
+    position: relative;
+  }
+
+  .chat-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 8px);
+    z-index: 5;
+    max-height: 292px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 5px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .chat-menu [role="option"] {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: var(--radius-control);
+    cursor: pointer;
+  }
+
+  .chat-menu [role="option"] + [role="option"] {
+    border-top: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-faint), transparent);
+  }
+
+  .chat-menu [role="option"]:hover,
+  .chat-menu [aria-selected="true"] {
+    background: var(--color-surface);
+  }
+
+  .chat-menu [role="option"] > span:not(.cover-placeholder) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .chat-menu b {
+    display: block;
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+  }
+
+  .chat-menu small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .chat-menu-cover {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    object-fit: cover;
+    border-radius: var(--radius-tag);
+  }
+
+  .chat-menu .chat-menu-badge {
+    color: var(--color-accent);
+  }
+
+  .chat-menu-empty {
+    padding: 14px 10px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+  }
 }

@@ -2,6 +2,7 @@
 import {
   type FormEvent,
   type KeyboardEvent,
+  type ReactNode,
   type RefObject,
   useEffect,
   useLayoutEffect,
@@ -10,8 +11,9 @@ import {
 } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, useMessages } from '../../i18n/i18n'
-import type { Game } from '../../lib/types'
+import type { Game, LibraryGame } from '../../lib/types'
 import { Cover } from '../../ui/cover'
+import { Icon } from '../../ui/icon'
 import { Markdown, UserText } from '../../ui/markdown'
 import { Sk } from '../../ui/skeleton'
 import { SourceNote, splitSource } from '../../ui/source-note'
@@ -19,6 +21,7 @@ import { ErrorState } from '../../ui/states'
 import { DemoConnectButton } from '../demo'
 import { titleHref } from '../tip'
 import '../demo.css'
+import { CommandMenu, type MenuItem } from './command-menu'
 import './chat.css'
 
 const messages = defineMessages({
@@ -55,6 +58,13 @@ const messages = defineMessages({
     cut: 'Texto colado cortado em {max} caracteres · ',
     placeholder: 'Nexo, qual é o próximo passo?',
     send: 'Enviar',
+    menu: {
+      label: 'Comandos e jogos',
+      game: 'Trocar o jogo da conversa',
+      noGame: 'Nenhum jogo seu com esse nome.',
+      current: 'atual',
+      switch: 'Trocar o jogo da conversa',
+    },
     demo: {
       subtitle: 'Exemplos de conversa sobre Red Dead Redemption 2.',
       eyebrow: 'COMO O NEXO RESPONDE',
@@ -111,6 +121,13 @@ const messages = defineMessages({
     cut: 'Pasted text cut at {max} characters · ',
     placeholder: 'Nexo, what is the next step?',
     send: 'Send',
+    menu: {
+      label: 'Commands and games',
+      game: 'Switch the game we talk about',
+      noGame: 'None of your games has that name.',
+      current: 'current',
+      switch: 'Switch the game we talk about',
+    },
     demo: {
       subtitle: 'Sample conversations about Red Dead Redemption 2.',
       eyebrow: 'HOW NEXO ANSWERS',
@@ -346,6 +363,8 @@ export function NexoChat({
   onSend,
   demo = false,
   onConnect,
+  searchGames,
+  onPickGame,
 }: {
   chat: ChatLoad
   /** A question is out: the pending bubble shows and the send controls are disabled. */
@@ -356,9 +375,14 @@ export function NexoChat({
   demo?: boolean
   /** Leaves the demo to connect an account. */
   onConnect?: () => void
+  /** The player's games by name, for "/game" and the subtitle; without it, no game switch. */
+  searchGames?: (query: string) => Promise<LibraryGame[]>
+  onPickGame?: (game: LibraryGame) => void
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
+  const [games, setGames] = useState<LibraryGame[] | null>(null)
+  const [active, setActive] = useState(0)
   const log = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const form = useRef<HTMLFormElement>(null)
@@ -395,17 +419,101 @@ export function NexoChat({
     onSend(value)
   }
 
+  // Commands, as in Telegram: "/" lists them, "/game <name>" lists the player's games. A command
+  // is never sent to Nexo.
+  const mode = !searchGames
+    ? null
+    : text.startsWith('/game ')
+      ? 'game'
+      : /^\/\S*$/.test(text)
+        ? 'command'
+        : null
+  const query = mode === 'game' ? text.slice(6).trim() : ''
+  useEffect(() => {
+    if (mode !== 'game' || !searchGames) {
+      setGames(null)
+      return
+    }
+    let live = true
+    const timer = setTimeout(() => {
+      searchGames(query)
+        .then((found) => live && setGames(found))
+        .catch(() => live && setGames([]))
+    }, 150)
+    return () => {
+      live = false
+      clearTimeout(timer)
+    }
+  }, [mode, query, searchGames])
+  const items: MenuItem[] =
+    mode === 'command'
+      ? '/game'.startsWith(text)
+        ? [{ key: 'game', title: '/game', detail: t('menu.game') }]
+        : []
+      : mode === 'game'
+        ? (games ?? []).map((g) => ({
+            key: g.np,
+            title: g.name,
+            detail: `${g.platform} · ${g.progress}%`,
+            icon: g.icon,
+            badge: g.current ? t('menu.current') : undefined,
+          }))
+        : []
+  const pick = (index: number) => {
+    if (mode === 'command') setText('/game ')
+    if (mode === 'game' && games?.[index]) {
+      setText('')
+      onPickGame?.(games[index])
+    }
+    setActive(0)
+    input.current?.focus()
+  }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: back to the first option when the list changes
+  useEffect(() => setActive(0), [mode, games])
+
   const submit = (e: FormEvent) => {
     e.preventDefault()
+    if (mode) {
+      if (items.length) pick(active)
+      return
+    }
     send(text.trim())
   }
 
-  // Enter sends; Shift+Enter breaks the line.
+  // Enter sends; Shift+Enter breaks the line. With the list open, the arrows move through it, Enter
+  // or Tab picks and Esc clears the command.
   const keyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mode && items.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      e.preventDefault()
+      const step = e.key === 'ArrowDown' ? 1 : -1
+      setActive((active + step + items.length) % items.length)
+      return
+    }
+    if (mode && e.key === 'Tab' && items.length) {
+      e.preventDefault()
+      pick(active)
+      return
+    }
+    if (mode && e.key === 'Escape') {
+      e.preventDefault()
+      setText('')
+      return
+    }
     if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return
     e.preventDefault()
     form.current?.requestSubmit()
   }
+
+  const menu = mode ? (
+    <CommandMenu
+      id="chat-menu"
+      label={t('menu.label')}
+      items={items}
+      active={active}
+      empty={mode === 'game' && games !== null ? t('menu.noGame') : undefined}
+      onPick={pick}
+    />
+  ) : null
 
   return (
     <div className="card chat-page">
@@ -425,7 +533,24 @@ export function NexoChat({
             <div>
               <span className="eyebrow">{t('eyebrow')}</span>
               <h1>Nexo</h1>
-              <p id="nexo-sub">{demo ? t('demo.subtitle') : subtitle}</p>
+              {searchGames && !demo ? (
+                <button
+                  type="button"
+                  id="nexo-sub"
+                  className="nexo-sub-switch"
+                  aria-label={`${subtitle} ${t('menu.switch')}`}
+                  data-tip={t('menu.switch')}
+                  onClick={() => {
+                    setText('/game ')
+                    input.current?.focus()
+                  }}
+                >
+                  {subtitle}
+                  <Icon name="chevron-down" />
+                </button>
+              ) : (
+                <p id="nexo-sub">{demo ? t('demo.subtitle') : subtitle}</p>
+              )}
             </div>
           </div>
         </div>
@@ -474,6 +599,9 @@ export function NexoChat({
           onText={setText}
           onSubmit={submit}
           onKeyDown={keyDown}
+          menu={menu}
+          menuOpen={Boolean(menu && items.length)}
+          activeId={mode && items.length ? `chat-menu-${active}` : undefined}
         />
       )}
     </div>
@@ -489,7 +617,13 @@ function ChatForm({
   onText,
   onSubmit,
   onKeyDown,
+  menu,
+  menuOpen = false,
+  activeId,
 }: {
+  menu?: ReactNode
+  menuOpen?: boolean
+  activeId?: string
   formRef: RefObject<HTMLFormElement | null>
   inputRef: RefObject<HTMLTextAreaElement | null>
   text: string
@@ -520,7 +654,14 @@ function ChatForm({
       <div className="chat-field">
         {/* The counter sits on the text box itself, not on the field with the note below it. */}
         <div className="chat-box">
+          {menu}
           <textarea
+            // The box takes commands too: "/game" opens a list of games under it.
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={menuOpen}
+            aria-controls="chat-menu"
+            aria-activedescendant={activeId}
             ref={inputRef}
             id="chat-input"
             rows={1}

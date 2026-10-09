@@ -15,7 +15,7 @@ const messages = Loaded.args?.chat as ChatMessage[]
 const log = () => screen.getByRole('log', { name: 'Conversa com o Nexo' })
 
 function type(text: string) {
-  fireEvent.change(screen.getByRole('textbox', { name: 'Mensagem para Nexo' }), {
+  fireEvent.change(screen.getByRole('combobox', { name: 'Mensagem para Nexo' }), {
     target: { value: text },
   })
   fireEvent.click(screen.getByRole('button', { name: 'Enviar' }))
