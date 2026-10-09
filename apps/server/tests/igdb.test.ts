@@ -9,6 +9,7 @@ import {
   popularGames,
   resolveGame,
   toCatalog,
+  withoutEdition,
 } from '../src/igdb.ts'
 
 const game = (over: Partial<IgdbGame> = {}): IgdbGame => ({
@@ -137,6 +138,55 @@ test('an edition resolves to its original game, keeping both names', async () =>
   expect(entry?.aliases).toEqual(['Ghost DC'])
 })
 
+test('between games with the same name, the PS4/PS5 one wins, then the newest', async () => {
+  igdbApi(() => [
+    game({ id: 20, name: 'Remake Exemplo', platforms: [9], first_release_date: 1_100_000_000 }),
+    game({
+      id: 21,
+      name: 'Remake Exemplo',
+      platforms: [48, 167],
+      first_release_date: 1_600_000_000,
+    }),
+    game({ id: 22, name: 'Remake Exemplo', platforms: [48], first_release_date: 1_400_000_000 }),
+  ])
+  expect((await resolveGame('Remake Exemplo'))?.id).toBe(21)
+})
+
+test("a match on the game's own name beats one on an alternative name", async () => {
+  igdbApi(() => [
+    game({
+      id: 31,
+      name: 'Saga Exemplo Ragnarök',
+      alternative_names: [{ name: 'Saga Exemplo Рагнарёк' }],
+      platforms: [48, 167],
+      first_release_date: 1_700_000_000,
+    }),
+    game({ id: 30, name: 'Saga Exemplo', platforms: [48], first_release_date: 1_500_000_000 }),
+  ])
+  expect((await resolveGame('Saga Exemplo'))?.id).toBe(30)
+})
+
+test("a store edition resolves to the game's own name, keeping the edition as an alias", async () => {
+  const fetch = igdbApi((body) =>
+    body.startsWith('search "Ghost of Tsushima"')
+      ? [game({ id: 1 })]
+      : [game({ id: 40, name: 'Ghost of Tsushima: Deluxe Edition' })],
+  )
+  const entry = await resolveGame('Ghost of Tsushima: Deluxe Edition')
+  expect(entry?.id).toBe(1)
+  expect(entry?.aliases).toEqual(['Ghost of Tsushima: Deluxe Edition'])
+  const searches = fetch.mock.calls.filter(([url]) => String(url).includes('api.igdb.com'))
+  expect(String(searches[0]?.[1]?.body)).toStartWith('search "Ghost of Tsushima";')
+})
+
+test('an edition suffix is cut from a name; other names are left alone', () => {
+  expect(withoutEdition('Ghost of Tsushima: Deluxe Edition')).toBe('Ghost of Tsushima')
+  expect(withoutEdition('Jogo Exemplo – Digital Deluxe Edition')).toBe('Jogo Exemplo')
+  expect(withoutEdition('Jogo Exemplo Game of the Year Edition')).toBe('Jogo Exemplo')
+  expect(withoutEdition('Ghost of Tsushima')).toBeNull()
+  expect(withoutEdition('Deluxe Edition')).toBeNull()
+})
+
 test('nothing found resolves to null', async () => {
   igdbApi(() => [])
   expect(await resolveGame('Nope')).toBeNull()
@@ -153,6 +203,18 @@ test('an edition whose parent is gone stays itself', async () => {
   igdbApi(() => [])
   const remaster = game({ id: 11, game_type: 9, version_parent: 99 })
   expect(await canonical(remaster)).toBe(remaster)
+})
+
+test('a PS4/PS5 remaster of a game that never came to them keeps its own record', async () => {
+  igdbApi(() => [game({ id: 59, name: 'Clássico Exemplo', platforms: [9] })])
+  const remaster = game({ id: 50, game_type: 9, version_parent: 59, platforms: [167] })
+  expect(await canonical(remaster)).toBe(remaster)
+})
+
+test('a remaster of a game already on PS4/PS5 collapses onto it', async () => {
+  igdbApi(() => [game({ id: 60, name: 'Clássico Exemplo', platforms: [48] })])
+  const remaster = game({ id: 61, game_type: 9, version_parent: 60, platforms: [167] })
+  expect((await canonical(remaster)).id).toBe(60)
 })
 
 test('popular games are queried by rating count with paging', async () => {

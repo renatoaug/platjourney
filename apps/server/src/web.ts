@@ -64,6 +64,7 @@ import {
   getGame,
   searchCatalog,
 } from './repository/game.ts'
+import { requestMissingGame } from './repository/game-request.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
 import { isDismissReason } from './repository/recommendation.ts'
@@ -717,6 +718,20 @@ async function api(
   }
   if (path === '/api/games/search' && method === 'GET') {
     return json(res, 200, await searchCatalog(url.searchParams.get('q') ?? ''))
+  }
+  // A game the search did not find: IGDB is asked for it, and a game it knows joins the catalog
+  // (its page then lists it for a guide). A name IGDB does not know either is kept for whoever
+  // runs the instance.
+  if (path === '/api/games/request' && method === 'POST') {
+    const { name } = await readBody(req)
+    if (typeof name !== 'string' || name.trim().length < 2 || name.length > 100)
+      return json(res, 400, { error: 'name required' })
+    if (!allow(`game-request|${me.id}`, 5, 60_000))
+      return json(res, 429, { error: t('tooManyRequests') })
+    const game = await catalogGameForName(name.trim())
+    if (game) return json(res, 200, { game: game.id })
+    const already = await requestMissingGame(name.trim(), me.id)
+    return json(res, 200, { requested: true, already })
   }
   if (path === '/api/goals' && method === 'POST') {
     const { command } = await readBody(req)

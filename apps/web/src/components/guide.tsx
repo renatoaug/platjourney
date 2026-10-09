@@ -9,12 +9,14 @@ import { Icon } from '../ui/icon'
 import { UserText } from '../ui/markdown'
 import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote } from '../ui/source-note'
-import { EmptyState, PendingState } from '../ui/states'
+import { EmptyState } from '../ui/states'
+import { NexoHero } from './nexo-hero'
 import './guide.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
     title: 'Guia da platina',
+    titleNoPlatinum: 'Guia dos troféus',
     notes: {
       heading: 'Antes de começar',
       collectibles: 'Colecionáveis',
@@ -111,13 +113,19 @@ const messages = defineMessages({
     },
     earlyTips: 'Dicas para o começo',
     sources: 'Fontes: {sources}',
+    queuedTitle: 'Sua próxima conquista começa aqui.',
     queued:
-      'O guia deste jogo está em preparação. Ele aparece aqui assim que ficar pronto; enquanto isso, o Nexo responde com o que sabe do jogo.',
-    building: 'Montando o guia: pesquisando guias de troféus na web. Chega em ~1 min.',
+      'O guia está na fila. Enquanto isso, o Nexo já pode ajudar com suas dúvidas sobre o jogo.',
+    queuedStatus: 'Guia na fila',
+    buildingTitle: 'Deixa o mapa comigo.',
+    building: 'Estou pesquisando os troféus e reunindo as pistas para sua próxima conquista.',
+    buildingStatus: 'Pesquisando o guia',
+    buildingHint: 'O guia aparece aqui assim que estiver pronto.',
     noMissables: 'Nenhum troféu perdível neste jogo.',
   },
   [Language.En]: {
     title: 'Platinum guide',
+    titleNoPlatinum: 'Trophy guide',
     notes: {
       heading: 'Before you start',
       collectibles: 'Collectibles',
@@ -214,9 +222,14 @@ const messages = defineMessages({
     },
     earlyTips: 'Tips for the start',
     sources: 'Sources: {sources}',
+    queuedTitle: 'Your next achievement starts here.',
     queued:
-      'This game’s guide is being prepared. It shows up here as soon as it’s ready; meanwhile, Nexo answers with what it knows about the game.',
-    building: 'Building the guide: searching trophy guides on the web. Ready in ~1 min.',
+      'The guide is queued. In the meantime, Nexo can already help with your questions about the game.',
+    queuedStatus: 'Guide queued',
+    buildingTitle: 'Leave the map to me.',
+    building: 'I’m researching trophies and gathering clues for your next achievement.',
+    buildingStatus: 'Researching the guide',
+    buildingHint: 'Your guide will appear here as soon as it is ready.',
     noMissables: 'No missable trophies in this game.',
   },
 })
@@ -679,7 +692,10 @@ export function GuideSkeleton() {
   const t = useMessages(messages)
   return (
     <>
-      <h2>{t('title')}</h2>
+      <h2 className="guide-heading">
+        <Icon name="book-open" />
+        <span>{t('title')}</span>
+      </h2>
       <div className="tabs">
         {(
           [
@@ -758,18 +774,32 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   }
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const g = c?.guide
-  if (!g && c?.queued)
-    return (
-      <>
-        <h2>{tr('title')}</h2>
-        <EmptyState>{tr('queued')}</EmptyState>
-      </>
-    )
+  // A list without a platinum (short games, live-service ones) still has a guide: for the 100%.
+  const noPlatinum = !!c?.trophies?.length && !c.trophies.some((t) => t.type === 'platinum')
+  const heading = tr(noPlatinum ? 'titleNoPlatinum' : 'title')
   if (!g)
     return (
       <>
-        <GuideSkeleton />
-        <PendingState className="guide-building">{tr('building')}</PendingState>
+        <h2 className="guide-heading">
+          <Icon name="book-open" />
+          <span>{heading}</span>
+        </h2>
+        <div className="guide-queued" role="status">
+          <NexoHero working />
+          <div className="guide-work-copy">
+            <span className="guide-work-label">
+              {tr(c?.queued ? 'queuedStatus' : 'buildingStatus')}
+            </span>
+            <b>{tr(c?.queued ? 'queuedTitle' : 'buildingTitle')}</b>
+            <p>{tr(c?.queued ? 'queued' : 'building')}</p>
+            {!c?.queued && <span className="guide-work-hint">{tr('buildingHint')}</span>}
+          </div>
+        </div>
+        {!c?.queued && (
+          <div className="guide-research-preview" aria-hidden="true">
+            <GuideSkeleton />
+          </div>
+        )}
       </>
     )
   const missables = g.missables ?? []
@@ -849,7 +879,10 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   }
   return (
     <>
-      <h2>{tr('title')}</h2>
+      <h2 className="guide-heading">
+        <Icon name="book-open" />
+        <span>{heading}</span>
+      </h2>
       <DeepGuide dg={c.deepGuide} />
       <div
         ref={(el) => {

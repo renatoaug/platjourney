@@ -504,7 +504,8 @@ export function TrophyList({
 
   return (
     <>
-      <h2>
+      <h2 className="trophy-heading">
+        <Icon name="trophy" />
         {t('heading')}{' '}
         <span id={`${prefix}-count`} className="muted">
           {catalogOnly ? `(${scope.length})` : `(${earned}/${scope.length})`}

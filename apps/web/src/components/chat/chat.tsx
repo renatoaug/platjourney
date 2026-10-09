@@ -19,6 +19,7 @@ import { Sk } from '../../ui/skeleton'
 import { SourceNote, splitSource } from '../../ui/source-note'
 import { ErrorState } from '../../ui/states'
 import { DemoConnectButton } from '../demo'
+import { NexoHero } from '../nexo-hero'
 import { titleHref } from '../tip'
 import '../demo.css'
 import { CommandMenu, type MenuItem } from './command-menu'
@@ -527,16 +528,7 @@ export function NexoChat({
       <div className="nexo-chat-top">
         <div className="page-head" style={{ marginBottom: 0 }}>
           <div className="nexo-chat-heading">
-            {/* Nexo floats beside the controller's four buttons, which light up in turn. */}
-            <span className="nexo-hero" aria-hidden="true">
-              <img className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
-              <span className="nexo-keys">
-                <span>△</span>
-                <span>○</span>
-                <span>×</span>
-                <span>□</span>
-              </span>
-            </span>
+            <NexoHero />
             <div>
               <span className="eyebrow">{t('eyebrow')}</span>
               <h1>Nexo</h1>
