@@ -268,6 +268,14 @@ test("the chat reads the current game's conversation, another game's, or the one
   expect(read).toHaveBeenLastCalledWith(me.id, 40, makeContext().game.id)
 })
 
+test('a chat message with no game loaded first checks what the player is on', async () => {
+  const check = spyOn(watcher, 'currentOrCheck').mockResolvedValue(makeContext())
+  const answer = spyOn(nexo, 'reply').mockResolvedValue('ok')
+  await send('POST', '/api/chat', { text: 'oi' })
+  expect(check).toHaveBeenCalledWith(me)
+  expect(answer.mock.calls[0][2]).toEqual(makeContext())
+})
+
 test('the conversations list comes from the repository', async () => {
   spyOn(activity, 'chatThreads').mockResolvedValue([])
   expect((await send('GET', '/api/chat/threads')).body).toEqual([])

@@ -73,6 +73,7 @@ import { listServerStatuses } from './repository/server-status.ts'
 import { setLinkCode, type User, updateUser } from './repository/user.ts'
 import { botInfo, botUsername } from './telegram.ts'
 import {
+  currentOrCheck,
   demoContext,
   forgetUser,
   getCurrent,
@@ -694,7 +695,7 @@ async function api(
   if (path === '/api/chat' && method === 'POST') {
     const { text } = await readBody(req)
     if (typeof text !== 'string' || !text.trim()) return json(res, 400, { error: 'text required' })
-    const ctx = getCurrent(me)
+    const ctx = await currentOrCheck(me)
     const response = await reply(me, text.trim().slice(0, config.chat.maxChars), ctx)
     return json(res, 200, {
       text: response,

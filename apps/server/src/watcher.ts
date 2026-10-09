@@ -439,6 +439,15 @@ export async function demoContext(user: User): Promise<GameContext | undefined> 
 }
 
 // Loads a user's context right after they sign in, without waiting for the next sweep.
+// The chat's game for a message: after a restart nothing is loaded until the next sweep, and a
+// message sent then would land in no game's conversation; one check picks the game being played.
+export async function currentOrCheck(user: User): Promise<GameContext | undefined> {
+  const ctx = getCurrent(user)
+  if (ctx || isDemo(user)) return ctx
+  await checkUser(user).catch((e) => console.error('check before chat failed:', e.message))
+  return getCurrent(user)
+}
+
 export function watchNow(user: User): void {
   const work = async () => {
     if (isDemo(user)) await demoContext(user)

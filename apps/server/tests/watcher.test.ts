@@ -24,6 +24,7 @@ import * as servers from '../src/servers.ts'
 import * as telegram from '../src/telegram.ts'
 import {
   checkUser,
+  currentOrCheck,
   demoContext,
   focusNotice,
   forgetUser,
@@ -631,3 +632,22 @@ test('a game outside the library becomes the chat game with its list, nothing ea
   spyOn(psn, 'catalogTrophies').mockResolvedValue(null)
   expect(await setCurrentFromCatalog({ id: 'user:y' } as never, game)).toBeNull()
 })
+
+test('a loaded game is used as is; the demo player is never checked', async () => {
+  const ctx = await setCurrentFromCatalogStub()
+  expect(await currentOrCheck({ id: 'user:cc' } as never)).toBe(ctx as never)
+  expect(await currentOrCheck({ id: 'user:none', demo: true } as never)).toBeUndefined()
+})
+
+async function setCurrentFromCatalogStub() {
+  spyOn(psn, 'catalogTrophies').mockResolvedValue({ np: 'NPWR8', platform: 'PS5', trophies: [] })
+  spyOn(guides, 'getGuide').mockResolvedValue(undefined)
+  spyOn(requests, 'requestGuide').mockResolvedValue(undefined)
+  const game = {
+    id: 'game:8',
+    name: 'Jogo Exemplo',
+    np_communication_ids: ['NPWR8'],
+    cover_url: null,
+  } as never
+  return setCurrentFromCatalog({ id: 'user:cc' } as never, game)
+}
