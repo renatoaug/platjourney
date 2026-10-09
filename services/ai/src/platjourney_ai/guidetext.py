@@ -75,11 +75,20 @@ def _next_article(html: str) -> str | None:
     return '\n'.join(blocks) if blocks else None
 
 
+def _main_article(html: str) -> str | None:
+    """The page's <article> with the most text. News-style sites list related posts as small
+    <article>s in menus and sidebars, often before the guide itself."""
+    articles = _ARTICLE.findall(html)
+    if not articles:
+        return None
+    return max(articles, key=lambda a: len(_TAG.sub('', _NOISE.sub(' ', a))))
+
+
 def html_to_text(html: str) -> str:
     """HTML to plain text that keeps headings ("## ", with one "#" per level) and list items
     ("- "). A paragraph of bold text alone becomes the deepest heading level."""
-    found = _FLARUM.search(html) or _ARTICLE.search(html)
-    text = _next_article(html) or (found.group(found.lastindex or 0) if found else html)
+    forum = _FLARUM.search(html)
+    text = _next_article(html) or (forum.group(1) if forum else None) or _main_article(html) or html
     text = _NOISE.sub(' ', text)
     text = _COMMENT.sub(' ', text)
     text = _BOLD_LINE.sub(lambda m: f'\n\n####### {m.group(2).strip().rstrip(":")}\n\n', text)
