@@ -274,6 +274,15 @@ test('catalog search ranks exact names, then prefixes, then the rest', async () 
   expect(await searchCatalog('x')).toEqual([])
 })
 
+test('catalog search finds a dotted or hyphenated name typed without the marks', async () => {
+  const dotted = makeGame({ id: 'game:9961', name: 'O.M.E.G.A', slug: 'omega' })
+  const hyphen = makeGame({ id: 'game:9962', name: 'Rho-Man', slug: 'rho-man' })
+  await indexed(dotted, hyphen)
+  fakeDb([dotted, hyphen])
+  expect((await searchCatalog('omega')).map((g) => g.id)).toEqual(['game:9961'])
+  expect((await searchCatalog('rhoman')).map((g) => g.id)).toEqual(['game:9962'])
+})
+
 test('catalog cards read a few fields of every game', async () => {
   const q = spyOn(db, 'q').mockResolvedValue([{ id: 'game:1', name: 'A' }])
   expect(await catalogCards()).toEqual([{ id: 'game:1', name: 'A' } as never])

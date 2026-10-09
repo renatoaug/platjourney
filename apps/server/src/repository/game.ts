@@ -189,13 +189,19 @@ export async function gameForName(name: string, platform?: string): Promise<Game
 }
 
 // Search only existing catalog records; never create a game from free text.
-// Every catalog game whose name or alias has all the words of the query, exact and prefix matches
-// first; empty for less than two characters.
+// Every catalog game whose name or alias has all the words of the query, or the query with its
+// spaces dropped ("aila" finds "A.I.L.A", "spiderman" finds "Spider-Man"); exact and prefix
+// matches first; empty for less than two characters.
 export async function matchCatalog(query: string): Promise<string[]> {
   const needle = normalizeName(query.slice(0, 100))
   if (needle.length < 2) return []
+  const joined = needle.replaceAll(' ', '')
   const matches = [...(await nameIndex())]
-    .filter(([name]) => needle.split(' ').every((word) => name.includes(word)))
+    .filter(
+      ([name]) =>
+        needle.split(' ').every((word) => name.includes(word)) ||
+        name.replaceAll(' ', '').includes(joined),
+    )
     .sort(
       ([a], [b]) =>
         Number(b === needle) - Number(a === needle) ||
