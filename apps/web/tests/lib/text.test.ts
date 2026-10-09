@@ -24,7 +24,9 @@ test('userText keeps **bold** and escapes the rest', () => {
 })
 
 test('guideText bolds the game names and puts each step on its own line', () => {
-  expect(guideText('Depois da missão **Lost Tower**, pegue o **arco**.\nFabrique <um> dardo.')).toBe(
+  expect(
+    guideText('Depois da missão **Lost Tower**, pegue o **arco**.\nFabrique <um> dardo.'),
+  ).toBe(
     'Depois da missão <strong>Lost Tower</strong>, pegue o <strong>arco</strong>.<br>Fabrique &lt;um&gt; dardo.',
   )
 })
