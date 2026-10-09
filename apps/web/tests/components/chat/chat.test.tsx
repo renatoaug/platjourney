@@ -205,4 +205,25 @@ describe('the game switch', () => {
     fireEvent.click(screen.getByRole('button', { name: /Trocar o jogo da conversa/ }))
     expect(box().value).toBe('/game ')
   })
+
+  test('while a picked game loads, the subtitle says so and the send button waits', () => {
+    render(
+      <MemoryRouter>
+        <NexoChat
+          chat={[]}
+          sending={false}
+          subtitle="Falando sobre DAYS GONE (13%)."
+          onSend={() => {}}
+          searchGames={async () => []}
+          onPickGame={() => {}}
+          switching="Ghost of Tsushima"
+        />
+      </MemoryRouter>,
+    )
+    const sub = screen.getByRole('button', { name: 'Trocando para Ghost of Tsushima…' })
+    expect((sub as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Enviar' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
+  })
 })

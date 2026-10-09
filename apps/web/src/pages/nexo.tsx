@@ -107,13 +107,18 @@ function LiveNexo() {
     (q: string) => api<LibraryGame[]>(`/api/library?q=${encodeURIComponent(q)}`),
     [],
   )
+  // Loading a game's context takes a few seconds (PSN, guide): the chat says so meanwhile.
+  const [switching, setSwitching] = useState<string | null>(null)
   const pickGame = async (game: LibraryGame) => {
+    setSwitching(game.name)
     try {
       await api('/api/current', { np: game.np })
       await loadState()
-      toast(t('switched', { name: game.name }))
+      toast(t('switched', { name: game.name }), 'success')
     } catch (e) {
       if (!(e instanceof ApiError && e.handled)) toast(t('switchFailed'))
+    } finally {
+      setSwitching(null)
     }
   }
 
@@ -126,6 +131,7 @@ function LiveNexo() {
         onSend={send}
         searchGames={searchGames}
         onPickGame={pickGame}
+        switching={switching}
       />
     </Page>
   )

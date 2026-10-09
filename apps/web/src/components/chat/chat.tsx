@@ -57,6 +57,7 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Texto colado cortado em {max} caracteres · ',
     placeholder: 'Nexo, qual é o próximo passo?',
+    placeholderCommands: 'Nexo, qual é o próximo passo? Digite / para ver os comandos',
     send: 'Enviar',
     menu: {
       label: 'Comandos e jogos',
@@ -64,6 +65,7 @@ const messages = defineMessages({
       noGame: 'Nenhum jogo seu com esse nome.',
       current: 'atual',
       switch: 'Trocar o jogo da conversa',
+      switching: 'Trocando para {name}…',
     },
     demo: {
       subtitle: 'Exemplos de conversa sobre Red Dead Redemption 2.',
@@ -120,6 +122,7 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Pasted text cut at {max} characters · ',
     placeholder: 'Nexo, what is the next step?',
+    placeholderCommands: 'Nexo, what is the next step? Type / for commands',
     send: 'Send',
     menu: {
       label: 'Commands and games',
@@ -127,6 +130,7 @@ const messages = defineMessages({
       noGame: 'None of your games has that name.',
       current: 'current',
       switch: 'Switch the game we talk about',
+      switching: 'Switching to {name}…',
     },
     demo: {
       subtitle: 'Sample conversations about Red Dead Redemption 2.',
@@ -365,6 +369,7 @@ export function NexoChat({
   onConnect,
   searchGames,
   onPickGame,
+  switching = null,
 }: {
   chat: ChatLoad
   /** A question is out: the pending bubble shows and the send controls are disabled. */
@@ -378,6 +383,8 @@ export function NexoChat({
   /** The player's games by name, for "/game" and the subtitle; without it, no game switch. */
   searchGames?: (query: string) => Promise<LibraryGame[]>
   onPickGame?: (game: LibraryGame) => void
+  /** The game being loaded after a pick: the subtitle says so and the box waits. */
+  switching?: string | null
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
@@ -538,15 +545,30 @@ export function NexoChat({
                   type="button"
                   id="nexo-sub"
                   className="nexo-sub-switch"
-                  aria-label={`${subtitle} ${t('menu.switch')}`}
+                  aria-label={
+                    switching
+                      ? t('menu.switching', { name: switching })
+                      : `${subtitle} ${t('menu.switch')}`
+                  }
+                  aria-busy={Boolean(switching)}
                   data-tip={t('menu.switch')}
+                  disabled={Boolean(switching)}
                   onClick={() => {
                     setText('/game ')
                     input.current?.focus()
                   }}
                 >
-                  {subtitle}
-                  <Icon name="chevron-down" />
+                  {switching ? (
+                    <>
+                      <span className="chat-switching" aria-hidden="true" />
+                      {t('menu.switching', { name: switching })}
+                    </>
+                  ) : (
+                    <>
+                      {subtitle}
+                      <Icon name="chevron-down" />
+                    </>
+                  )}
                 </button>
               ) : (
                 <p id="nexo-sub">{demo ? t('demo.subtitle') : subtitle}</p>
@@ -595,11 +617,12 @@ export function NexoChat({
           formRef={form}
           inputRef={input}
           text={text}
-          sending={sending}
+          sending={sending || Boolean(switching)}
           onText={setText}
           onSubmit={submit}
           onKeyDown={keyDown}
           menu={menu}
+          commands={Boolean(searchGames)}
           menuOpen={Boolean(menu && items.length)}
           activeId={mode && items.length ? `chat-menu-${active}` : undefined}
         />
@@ -618,10 +641,13 @@ function ChatForm({
   onSubmit,
   onKeyDown,
   menu,
+  commands = false,
   menuOpen = false,
   activeId,
 }: {
   menu?: ReactNode
+  /** The box takes commands ("/game"): its placeholder says so. */
+  commands?: boolean
   menuOpen?: boolean
   activeId?: string
   formRef: RefObject<HTMLFormElement | null>
@@ -667,7 +693,7 @@ function ChatForm({
             rows={1}
             maxLength={CHAT_MAX}
             aria-label={t('inputLabel')}
-            placeholder={t('placeholder')}
+            placeholder={t(commands ? 'placeholderCommands' : 'placeholder')}
             autoComplete="off"
             value={text}
             onChange={(e) => onText(e.target.value)}

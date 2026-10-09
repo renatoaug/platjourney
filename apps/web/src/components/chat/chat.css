@@ -602,4 +602,26 @@
     color: var(--color-fg-muted);
     font-size: var(--text-md);
   }
+
+  .chat-switching {
+    width: 12px;
+    height: 12px;
+    flex: none;
+    border: 1.5px solid var(--color-border-strong);
+    border-top-color: var(--color-accent);
+    border-radius: var(--radius-round);
+    animation: chat-switching-spin 0.7s linear infinite;
+  }
+
+  @keyframes chat-switching-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chat-switching {
+      animation: none;
+    }
+  }
 }
