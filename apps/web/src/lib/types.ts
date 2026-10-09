@@ -135,6 +135,8 @@ export interface CurrentGame {
   earned: number
   total: number
   np: string
+  /** False for a game outside the library, picked in the chat to talk about before buying. */
+  owned?: boolean
   groups?: { base: ProgressGroup; dlc?: ProgressGroup | null; dlcNames?: string[] } | null
   guide?: GuideDetail | null
   deepGuide?: DeepGuideStats | null

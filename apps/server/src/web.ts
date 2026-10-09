@@ -211,6 +211,8 @@ async function currentView(user: User, ctx = getCurrent(user)) {
       earned: ctx.title.earned,
       total: ctx.title.total,
       np: ctx.title.npCommunicationId,
+      // False for a game outside the library, chosen in the chat to talk about before buying.
+      owned: ctx.owned !== false,
       groups: ctx.groups,
       hoursPlayed: ctx.hoursPlayed ?? null,
       guide: ctx.guide,

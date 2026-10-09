@@ -22,7 +22,8 @@ const messages = defineMessages({
     sendFailed: 'Não conseguimos falar com o Nexo. Tenta de novo.',
     subtitleLoading: 'Um passo mais perto da platina.',
     subtitleGame: 'Falando sobre {name} ({progress}%).',
-    subtitleNoGame: 'Pergunta qualquer coisa sobre a platina ou o game.',
+    subtitleNoGame: 'Escolha um jogo para começar a conversa.',
+    subtitleNotOwned: 'Falando sobre {name}, antes de você comprar.',
     switched: 'Agora falando sobre {name}.',
     switchFailed: 'Não consegui trocar o jogo. Tenta de novo.',
     readOnlyGeneral: 'Conversas de antes de o Nexo separar por jogo.',
@@ -33,7 +34,8 @@ const messages = defineMessages({
     sendFailed: 'Could not reach Nexo. Try again.',
     subtitleLoading: 'One step closer to the platinum.',
     subtitleGame: 'Talking about {name} ({progress}%).',
-    subtitleNoGame: 'Ask anything about the platinum or the game.',
+    subtitleNoGame: 'Pick a game to start the conversation.',
+    subtitleNotOwned: 'Talking about {name}, before you buy it.',
     switched: 'Now talking about {name}.',
     switchFailed: 'Could not switch the game. Try again.',
     readOnlyGeneral: 'Conversations from before Nexo kept one per game.',
@@ -140,7 +142,9 @@ function LiveNexo() {
   const subtitle = !data
     ? t('subtitleLoading')
     : current
-      ? t('subtitleGame', { name: current.name, progress: current.progress })
+      ? current.owned === false
+        ? t('subtitleNotOwned', { name: current.name })
+        : t('subtitleGame', { name: current.name, progress: current.progress })
       : t('subtitleNoGame')
 
   // The chat's game, as /game in Telegram: the server loads that game's context, then the screen

@@ -40,7 +40,7 @@ test('the subtitle names the current game', () => {
   expect(screen.getByText('Falando sobre DAYS GONE (13%).')).toBeTruthy()
   unmount()
   const second = renderApp(<Nexo />)
-  expect(screen.getByText('Pergunta qualquer coisa sobre a platina ou o game.')).toBeTruthy()
+  expect(screen.getByText('Escolha um jogo para começar a conversa.')).toBeTruthy()
   second.unmount()
   renderApp(<Nexo />, { value: { data: null } })
   expect(screen.getByText('Um passo mais perto da platina.')).toBeTruthy()
@@ -231,4 +231,14 @@ test('without any conversation the list stays hidden', async () => {
   await waitFor(() => expect(calls.some((c) => c.path === '/api/chat/threads')).toBe(true))
   expect(screen.queryByRole('complementary', { name: 'Conversas' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Conversas' })).toBeNull()
+})
+
+test('a game outside the library says the conversation is before buying it', () => {
+  mockApi({ '/api/chat': never, '/api/chat/threads': [] })
+  renderApp(<Nexo />, {
+    value: {
+      data: { ...SAMPLE_DATA, current: { ...(current as unknown as CurrentGame), owned: false } },
+    },
+  })
+  expect(screen.getByText('Falando sobre DAYS GONE, antes de você comprar.')).toBeTruthy()
 })
