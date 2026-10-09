@@ -15,7 +15,7 @@ import { fmtHours } from '../lib/format'
 import { plainText } from '../lib/text'
 import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
-import { ErrorState } from '../ui/states'
+import { EmptyState, ErrorState } from '../ui/states'
 import './title.css'
 import { nexoHref } from '../components/tip'
 
@@ -41,8 +41,9 @@ const messages = defineMessages({
     talkToNexo: 'Conversar com o Nexo',
     askNexo: 'Perguntar ao Nexo sobre ele',
     notOwned: 'Você ainda não tem este jogo.',
-    webOnlyNote:
-      'Guia montado pela web, sem a sua lista de troféus. Quando você começar o jogo, a página passa a mostrar cada troféu com o seu progresso.',
+    trophiesPendingTitle: 'Buscando a lista de troféus',
+    trophiesPending:
+      'A lista deste jogo ainda está chegando da PSN. Volte em breve para ver cada troféu.',
     back: 'Voltar',
     notFound: 'Não achamos esse jogo.',
   },
@@ -67,8 +68,9 @@ const messages = defineMessages({
     talkToNexo: 'Talk to Nexo',
     askNexo: 'Ask Nexo about it',
     notOwned: "You don't own this game yet.",
-    webOnlyNote:
-      'Guide built from the web, without your trophy list. Once you start the game, this page shows every trophy with your progress.',
+    trophiesPendingTitle: 'Fetching the trophy list',
+    trophiesPending:
+      "This game's list is still on its way from PSN. Come back soon to see each trophy.",
     back: 'Back',
     notFound: "We couldn't find this game.",
   },
@@ -269,36 +271,44 @@ export function TitleView({ d }: { d: TitleDetail }) {
           )}
         </div>
       </div>
-      {/* Owned games get the same two columns as the current game: trophies on the
-          left, the guide beside them. Without a trophy list the guide takes the width. */}
-      {owned || d.trophies?.length ? (
-        <GameColumns
-          style={{ marginTop: 20 }}
-          trophies={
-            <div className="card" id="title-trophies">
-              {/* Games not owned still list their trophies (from the catalog), without the
-                  player's progress and without "Pedir dica", which needs that progress. */}
+      {/* Every game gets the same two columns as the current game: trophies on the left, the
+          guide beside them. A game whose PSN list is not known yet says so where the list goes. */}
+      <GameColumns
+        style={{ marginTop: 20 }}
+        trophies={
+          <div
+            className={`card${owned || d.trophies?.length ? '' : ' title-trophies-pending'}`}
+            id="title-trophies"
+          >
+            {owned || d.trophies?.length ? (
+              // Games not owned still list their trophies (from the catalog), without the
+              // player's progress and without "Pedir dica", which needs that progress.
               <TrophyList trophies={d.trophies ?? []} prefix="title-t" np={owned ? d.np : null} />
-            </div>
-          }
-          guide={
-            <div className="stack">
-              <div className="card" id="title-guide">
-                {guide}
-              </div>
-            </div>
-          }
-        />
-      ) : (
-        <>
-          <div className="card guide-wide" style={{ marginTop: 20 }} id="title-guide">
-            {guide}
+            ) : (
+              <>
+                <h2 className="trophy-heading">
+                  <Icon name="trophy" />
+                  {t('trophies')}
+                </h2>
+                <EmptyState
+                  className="title-trophies-wait"
+                  icon="clock"
+                  title={t('trophiesPendingTitle')}
+                >
+                  {t('trophiesPending')}
+                </EmptyState>
+              </>
+            )}
           </div>
-          <p className="muted" style={{ fontSize: 12, margin: '12px 0 0' }}>
-            {t('webOnlyNote')}
-          </p>
-        </>
-      )}
+        }
+        guide={
+          <div className="stack">
+            <div className="card" id="title-guide">
+              {guide}
+            </div>
+          </div>
+        }
+      />
     </>
   )
 }
