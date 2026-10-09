@@ -203,22 +203,52 @@ def mentioned_trophies(text: str, ctx: GameContext) -> list[str]:
     ]
 
 
-async def passages(ctx: GameContext, question: str, terms: list[str]) -> str:
+async def passages(ctx: GameContext, question: str, terms: list[str]) -> tuple[str, list[Passage]]:
+    """The guide passages for a question, as context text, and the passages themselves (their
+    links go next to the source the answer cites)."""
     # The answer still works from the PSN facts and the guide JSON without passages.
     try:
         chunks = await deepguide.retrieve(ctx.game, question, terms)
     except Exception as e:
         log.error('retrieve failed: %s', e)
-        return ''
+        return '', []
     if not chunks:
-        return ''
+        return '', []
 
     def head(c: Passage) -> str:
         date = f' — atualizado em {c.page_updated_at}' if c.page_updated_at else ''
         return f'[{c.source} — {c.heading}{date}]'
 
     body = '\n\n'.join(f'{head(c)}\n{c.content}' for c in chunks)
-    return f'\n\nTrechos dos guias (use como fonte):\n{body}'
+    return f'\n\nTrechos dos guias (use como fonte):\n{body}', list(chunks)
+
+
+def _key(name: str) -> str:
+    return re.sub(r'[^a-z0-9]', '', name.casefold())
+
+
+def cite(text: str, used: list[Passage]) -> str:
+    """Turns the sources the answer names on its "Fonte:" line into links to the passages it
+    used: a video opens at the minute the passage comes from. The links come from the guide
+    store, never from the model, which cannot write addresses (see llm.strip_urls); a name that
+    matches no passage stays plain text."""
+
+    def link(name: str) -> str:
+        key = _key(name)
+        for p in used:
+            source = _key(p.source)
+            # "YouTube · Canal Exemplo" is cited as "Canal Exemplo"; "trofeus.example" as "Trofeus".
+            plain = p.source.split('·')[-1] if '·' in p.source else p.source.rsplit('.', 1)[0]
+            same = key in (source, _key(plain)) or (len(key) >= 4 and key in source)
+            if key and same and p.url.startswith('https://'):
+                return f'[{name}]({p.url})'
+        return name
+
+    def line(m: re.Match[str]) -> str:
+        names = re.split(r'\s*,\s*|\s+e\s+', m.group(2).strip())
+        return m.group(1) + ', '.join(link(n) for n in names if n)
+
+    return re.sub(r'^([ \t]*Fontes?:[ \t]*)(.+)$', line, text, flags=re.M)
 
 
 def start_prompt(ctx: GameContext) -> str:
@@ -365,9 +395,9 @@ async def trophy_help(ctx: GameContext, trophy: Trophy) -> str:
     what they already earned and the guide's roadmap, so the answer can say whether now is the
     moment or when to do it."""
     prompt = trophy_help_prompt(trophy)
-    guide_passages = await passages(ctx, prompt, [trophy.name_en])
+    guide_passages, used = await passages(ctx, prompt, [trophy.name_en])
     context = lean_context(ctx, [trophy.name_en], prompt)
-    return await ask(prompt, f'Contexto PSN do jogo:\n{context}{guide_passages}')
+    return cite(await ask(prompt, f'Contexto PSN do jogo:\n{context}{guide_passages}'), used)
 
 
 async def record_gap(ctx: GameContext, question: str) -> None:
@@ -401,8 +431,8 @@ async def reply(text: str, ctx: GameContext | None, history: list[Turn]) -> str:
     if not ctx:
         return await ask(text, 'Sem contexto PSN carregado.', history)
     focus = mentioned_trophies(text, ctx)
-    found = await passages(ctx, text, focus)
+    found, used = await passages(ctx, text, focus)
     if not found:
         await record_gap(ctx, text)
     context = f'Contexto PSN do jogo atual:\n{lean_context(ctx, focus, text)}{found}'
-    return await ask(text, context, history)
+    return cite(await ask(text, context, history), used)

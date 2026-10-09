@@ -54,5 +54,11 @@ export const md = (value: unknown): string => {
       .replace(/(?<!<strong>)“([^”<]{2,60})”(?!<\/strong>)/g, '<strong>“$1”</strong>')
       .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
       .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // A cited source links to the guide page or the video minute; https only. The model cannot
+      // write addresses, so these come from the guide store (services/ai, nexo.cite).
+      .replace(
+        /\[([^\]<]+)\]\((https:\/\/[^\s)"<]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+      )
   )
 }
