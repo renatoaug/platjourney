@@ -831,9 +831,9 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
           </ul>
         </>
       )}
-      <p className="muted" style={{ fontSize: 12, marginTop: 14 }}>
-        {tr('sources', { sources: (g.sources ?? []).join(', ') })}
-      </p>
+      {g.sources?.length ? (
+        <SourceNote text={tr('sources', { sources: g.sources.join(', ') })} />
+      ) : null}
     </Fragment>,
     <KeyTrophies key="key" c={c} g={g} />,
     missables.length ? (
