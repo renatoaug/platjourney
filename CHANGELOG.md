@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0](https://github.com/renatoaug/platjourney/compare/v0.5.0...v0.6.0) (2026-10-09)
+
+### Features
+
+* **chat:** one conversation per game, talk about any game, and open Nexo from game pages ([#24](https://github.com/renatoaug/platjourney/issues/24)) ([c50ea2b](https://github.com/renatoaug/platjourney/commit/c50ea2bed2234dced6e6dcff880598e7790de900))
+
 ## [0.5.0](https://github.com/renatoaug/platjourney/compare/v0.4.1...v0.5.0) (2026-10-09)
 
 ### Features
