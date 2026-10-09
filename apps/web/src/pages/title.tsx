@@ -276,7 +276,10 @@ export function TitleView({ d }: { d: TitleDetail }) {
       <GameColumns
         style={{ marginTop: 20 }}
         trophies={
-          <div className="card" id="title-trophies">
+          <div
+            className={`card${owned || d.trophies?.length ? '' : ' title-trophies-pending'}`}
+            id="title-trophies"
+          >
             {owned || d.trophies?.length ? (
               // Games not owned still list their trophies (from the catalog), without the
               // player's progress and without "Pedir dica", which needs that progress.
@@ -287,7 +290,11 @@ export function TitleView({ d }: { d: TitleDetail }) {
                   <Icon name="trophy" />
                   {t('trophies')}
                 </h2>
-                <EmptyState icon="clock" title={t('trophiesPendingTitle')}>
+                <EmptyState
+                  className="title-trophies-wait"
+                  icon="clock"
+                  title={t('trophiesPendingTitle')}
+                >
                   {t('trophiesPending')}
                 </EmptyState>
               </>
