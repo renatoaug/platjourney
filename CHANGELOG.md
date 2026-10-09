@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.1](https://github.com/renatoaug/platjourney/compare/v0.6.0...v0.6.1) (2026-10-09)
+
+### Bug Fixes
+
+* **web:** keep the trophies column while a game's trophy list is on its way ([#25](https://github.com/renatoaug/platjourney/issues/25)) ([da08726](https://github.com/renatoaug/platjourney/commit/da08726389faad3ed67b852d4d8c6498aeb0e998))
+
 ## [0.6.0](https://github.com/renatoaug/platjourney/compare/v0.5.0...v0.6.0) (2026-10-09)
 
 ### Features
