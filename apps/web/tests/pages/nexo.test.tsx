@@ -271,3 +271,19 @@ test("the chat's game without a conversation shows on top as a new conversation"
   expect(items[0].textContent).toContain('Nova conversa')
   expect(within(items[0]).getByRole('button').getAttribute('aria-current')).toBe('true')
 })
+
+test('opening Nexo from a game page never flashes the previous game conversation', async () => {
+  const game = current as unknown as CurrentGame
+  const cache: Record<string, unknown> = {
+    chats: { [game.game.id]: messages },
+    chatThreads: [],
+  }
+  mockApi({ '/api/chat': never, 'POST /api/current': never })
+  renderApp(<Nexo />, {
+    path: '/nexo?game=game%3A77&name=Jogo%20Novo',
+    route: '/nexo',
+    value: { cache, data: { ...SAMPLE_DATA, current: game } },
+  })
+  expect(within(log()).queryByText('E depois disso?')).toBeNull()
+  expect(screen.getByText('Trocando para Jogo Novo…')).toBeTruthy()
+})

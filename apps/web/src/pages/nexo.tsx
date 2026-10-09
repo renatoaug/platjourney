@@ -74,10 +74,20 @@ function LiveNexo() {
   const currentKey = data?.current?.game.id ?? 'none'
   // Another conversation being read, from the list; null is the chat's own game.
   const [viewing, setViewing] = useState<string | null>(null)
+  // A game page's link names the game to open on (?game=…): until the switch lands, the old game's
+  // conversation must not flash on screen.
+  const [params, setParams] = useSearchParams()
+  const incoming = params.get('game')
+  const arriving =
+    incoming !== null && incoming !== data?.current?.np && incoming !== data?.current?.game.id
   const key = viewing ?? currentKey
   const shown = useRef(key)
   shown.current = key
-  const [chat, setChat] = useState<ChatLoad>(() => chats[key] ?? 'loading')
+  const [chat, setChat] = useState<ChatLoad>(() =>
+    arriving ? 'loading' : (chats[key] ?? 'loading'),
+  )
+  // The conversation being left while a switch loads: it is not shown again meanwhile.
+  const leaving = useRef<string | null>(arriving ? key : null)
   const [sending, setSending] = useState(() => cache.chatSending === true)
   const [threads, setThreads] = useState<ChatThread[] | null>(
     () => (cache.chatThreads as ChatThread[] | undefined) ?? null,
@@ -107,7 +117,7 @@ function LiveNexo() {
   }, [cache, loadThreads])
 
   useEffect(() => {
-    if (!data) return
+    if (!data || leaving.current === key) return
     const known = chats[key]
     setChat(known ?? 'loading')
     if (known) return
@@ -152,10 +162,13 @@ function LiveNexo() {
     [],
   )
   // Loading a game's context takes a few seconds (PSN, guide): the chat says so meanwhile.
-  const [switching, setSwitching] = useState<string | null>(null)
+  const [switching, setSwitching] = useState<string | null>(() =>
+    arriving ? params.get('name') || '…' : null,
+  )
   const pickGame = async (game: LibraryGame) => {
     setSwitching(game.name)
     // The old game's messages leave at once; the skeleton holds until the new game's arrive.
+    leaving.current = shown.current
     setChat('loading')
     try {
       await api('/api/current', game.np ? { np: game.np } : { game: game.game })
@@ -166,12 +179,12 @@ function LiveNexo() {
       if (!(e instanceof ApiError && e.handled)) toast(t('switchFailed'))
       setChat(chats[shown.current] ?? 'error')
     } finally {
+      leaving.current = null
       setSwitching(null)
     }
   }
 
   // A game page's "talk to Nexo" link names the game (?game=<np>&name=…): the chat opens on it.
-  const [params, setParams] = useSearchParams()
   const asked = useRef(false)
   useEffect(() => {
     const wanted = params.get('game')
