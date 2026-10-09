@@ -19,6 +19,9 @@ export const uiText = (value: unknown) => esc(plainText(value))
 export const userText = (value: unknown) =>
   uiText(value).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
 
+// A guide's text: plain, with the game's names in **bold** and a tip's steps on separate lines.
+export const guideText = (value: unknown) => userText(value).replace(/\n/g, '<br>')
+
 // Nexo's replies come as light markdown: bold, italics, bullet lists, paragraphs.
 export const md = (value: unknown): string => {
   const text = uiText(value)

@@ -1,4 +1,10 @@
 @layer screens {
+  /* The game's names inside a guide's text: places, missions, items, trophies. */
+  .guide-text strong {
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+  }
+
   .guide-heading {
     display: flex;
     align-items: center;
