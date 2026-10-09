@@ -98,6 +98,15 @@ def test_html_to_text_reads_the_whole_page_without_an_article() -> None:
     assert html_to_text('<div>A</div><aside>skip</aside><div>B</div>') == 'A \nB'
 
 
+def test_html_to_text_reads_the_longest_article_over_sidebar_ones() -> None:
+    html = (
+        '<article><h3>Other news</h3></article>'
+        '<article><h1>Platinum guide</h1><p>Every trophy, step by step.</p></article>'
+        '<article><h3>More news</h3></article>'
+    )
+    assert html_to_text(html) == '# Platinum guide\n\nEvery trophy, step by step.'
+
+
 def test_html_to_text_decodes_entities_and_blanks_unknown_ones() -> None:
     text = html_to_text('<p>Tom &amp; Jerry&#8217;s &quot;guide&quot;&hellip;&nbsp;done</p>')
     assert text == 'Tom & Jerry\u2019s "guide" done'
