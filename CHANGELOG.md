@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.3](https://github.com/renatoaug/platjourney/compare/v0.6.2...v0.6.3) (2026-10-09)
+
+### Bug Fixes
+
+* **search:** find dotted names typed without the marks and match the guide's sources to Nexo's ([#27](https://github.com/renatoaug/platjourney/issues/27)) ([39a4b91](https://github.com/renatoaug/platjourney/commit/39a4b912c590c6f7187cd701467d0733b93b4d2d))
+
 ## [0.6.2](https://github.com/renatoaug/platjourney/compare/v0.6.1...v0.6.2) (2026-10-09)
 
 ### Bug Fixes
