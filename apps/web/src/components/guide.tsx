@@ -122,6 +122,7 @@ const messages = defineMessages({
     buildingStatus: 'Pesquisando o guia',
     buildingHint: 'O guia aparece aqui assim que estiver pronto.',
     noMissables: 'Nenhum troféu perdível neste jogo.',
+    phaseTrophies: 'Saem nesta fase:',
   },
   [Language.En]: {
     title: 'Platinum guide',
@@ -231,6 +232,7 @@ const messages = defineMessages({
     buildingStatus: 'Researching the guide',
     buildingHint: 'Your guide will appear here as soon as it is ready.',
     noMissables: 'No missable trophies in this game.',
+    phaseTrophies: 'Earned in this phase:',
   },
 })
 
@@ -906,7 +908,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
     ),
     <ul key="roadmap" className="clean guide-roadmap">
       {roadmap.map((r, i) => (
-        <li key={r.phase} style={{ margin: '0 0 10px' }}>
+        <li key={r.phase} style={{ margin: '0 0 14px' }}>
           <b className="display" style={{ color: 'var(--color-accent)' }}>
             {i + 1}. {r.phase}
           </b>
@@ -914,7 +916,9 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
           {r.trophies.length > 0 && (
             <p className="phase-trophies">
               <Icon name="trophy" />
-              <span>{r.trophies.join(' · ')}</span>
+              <span>
+                <b>{tr('phaseTrophies')}</b> {r.trophies.join(' · ')}
+              </span>
             </p>
           )}
         </li>
