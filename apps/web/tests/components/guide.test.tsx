@@ -57,15 +57,16 @@ describe('Guide', () => {
     expect(tab(/Glossário/).textContent).toBe('Glossário8')
   })
 
-  test('the key trophies tab shows highlights, tricks, the offline note and bugs', () => {
+  test('the tips tab leads with the highlights, then the other tips, the offline note and bugs', () => {
     show(game)
     fireEvent.click(tab(/Macetes/))
     const key = panel()
-    expect(within(key).getByLabelText('3 destaques')).toBeTruthy()
     expect(within(key).getByText('Mais fácil')).toBeTruthy()
     expect(within(key).getByText('79,6% de quem joga conquistou')).toBeTruthy()
     expect(within(key).getAllByText('Conquistado').length).toBeGreaterThan(0)
-    expect(within(key).getByLabelText('6 dicas')).toBeTruthy()
+    // Three highlights and six tips, one of them for a highlighted trophy: eight entries.
+    expect(within(key).getByLabelText('8 dicas')).toBeTruthy()
+    expect(tab(/Macetes/).textContent).toBe('Macetes8')
     expect(within(key).getAllByText(/Fonte: Trophy Guides/).length).toBeGreaterThan(0)
     expect(within(key).getByText('Pode seguir offline')).toBeTruthy()
     expect(within(key).getByText('Sem troféus online indicados neste guia.')).toBeTruthy()
@@ -143,6 +144,7 @@ describe('Guide', () => {
     expect(within(panel()).getByText('Perdível:')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Ver como pegar/ }))
     expect(tab(/Perdíveis/).getAttribute('aria-selected')).toBe('true')
+    expect(panel().querySelector('.missable.spotlit')?.textContent).toContain('Entrega especial')
     expect(screen.queryByText('Antes de começar')).toBeNull()
     expect(screen.queryByText('Durante a história')).toBeNull()
     fireEvent.click(tab(/Perdíveis/))
