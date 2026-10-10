@@ -32,15 +32,16 @@ const tab = (name: RegExp) => screen.getByRole('tab', { name })
 const panel = () => screen.getByRole('tabpanel')
 
 describe('Guide', () => {
-  test('opens on the summary with the quick facts, notes, tips and sources', () => {
+  test('opens on the summary with the quick facts, notes, the three moments and sources', () => {
     show(game)
     expect(tab(/Resumo/).getAttribute('aria-selected')).toBe('true')
     const summary = panel()
     expect(within(summary).getByText('3/10')).toBeTruthy()
     expect(within(summary).getByText('~70h')).toBeTruthy()
     expect(within(summary).getByText('Antes de começar')).toBeTruthy()
-    expect(within(summary).getByText('Ponto sem retorno')).toBeTruthy()
-    expect(within(summary).getByText('Dicas para o começo')).toBeTruthy()
+    expect(within(summary).queryByText('Ponto sem retorno')).toBeNull()
+    expect(within(summary).getByText('Durante a história')).toBeTruthy()
+    expect(within(summary).getByText('Fique de olho')).toBeTruthy()
     expect(within(summary).getByText(/Fontes: Trophy Guides, Platinum Forum/)).toBeTruthy()
     expect(within(summary).getByText('Dá para continuar')).toBeTruthy()
     expect(screen.getByText(/Pergunte detalhes ao Nexo/).textContent).toMatch(/atualizado em/)
@@ -139,7 +140,7 @@ describe('Guide', () => {
     expect(screen.getByText('Troféu de dificuldade:')).toBeTruthy()
     expect(screen.getByText('1 troféu')).toBeTruthy()
     expect(screen.queryByText('Antes de começar')).toBeNull()
-    expect(screen.queryByText('Dicas para o começo')).toBeNull()
+    expect(screen.queryByText('Durante a história')).toBeNull()
     fireEvent.click(tab(/Perdíveis/))
     expect(within(panel()).getByText('Entrega especial')).toBeTruthy()
     expect(within(panel()).getByText('Capítulo 2').tagName).toBe('STRONG')

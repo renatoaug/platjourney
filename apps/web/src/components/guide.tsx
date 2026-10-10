@@ -22,7 +22,6 @@ const messages = defineMessages({
     notes: {
       heading: 'Antes de começar',
       collectibles: 'Colecionáveis',
-      pointOfNoReturn: 'Ponto sem retorno',
       autopop: 'Autopop PS4 / PS5',
     },
     bugStatus: {
@@ -113,7 +112,9 @@ const messages = defineMessages({
       roadmap: 'Roadmap',
       glossary: 'Glossário',
     },
-    earlyTips: 'Dicas para o começo',
+    earlyTips: 'Durante a história',
+    watchOut: 'Fique de olho',
+    afterEnding: 'Depois do final',
     sources: 'Fontes: {sources}',
     queuedTitle: 'Sua próxima conquista começa aqui.',
     queued:
@@ -132,7 +133,6 @@ const messages = defineMessages({
     notes: {
       heading: 'Before you start',
       collectibles: 'Collectibles',
-      pointOfNoReturn: 'Point of no return',
       autopop: 'PS4 / PS5 autopop',
     },
     bugStatus: {
@@ -223,7 +223,9 @@ const messages = defineMessages({
       roadmap: 'Roadmap',
       glossary: 'Glossary',
     },
-    earlyTips: 'Tips for the start',
+    earlyTips: 'While you play the story',
+    watchOut: 'Watch out',
+    afterEnding: 'After the ending',
     sources: 'Sources: {sources}',
     queuedTitle: 'Your next achievement starts here.',
     queued:
@@ -273,7 +275,6 @@ function GuideNotes({ g }: { g: GuideDetail }) {
   const notes = (
     [
       ['layers', t('notes.collectibles'), g.collectibles],
-      ['compass', t('notes.pointOfNoReturn'), g.pointOfNoReturn],
       ['refresh', t('notes.autopop'), g.autopop],
     ] as const
   ).filter(([, , content]) => content)
@@ -745,6 +746,30 @@ function PhaseGoal({ text }: { text: string }) {
   )
 }
 
+// A guide field written one step per line, as a list.
+const lines = (text?: string | null) =>
+  (text ?? '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+
+// One moment of the game in the summary (during the story, what can be lost, after the ending).
+function MomentList({ title, items }: { title: string; items: string[] }) {
+  if (!items.length) return null
+  return (
+    <>
+      <h2 style={{ marginTop: 14 }}>{title}</h2>
+      <ul>
+        {items.map((t) => (
+          <li key={t}>
+            <GuideText text={t} />
+          </li>
+        ))}
+      </ul>
+    </>
+  )
+}
+
 export function GuideSkeleton() {
   const t = useMessages(messages)
   return (
@@ -865,9 +890,9 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   const earlyTips = g.earlyTips ?? []
   const tabs: [string, number | null][] = [
     [tr('tabs.summary'), null],
+    [tr('tabs.roadmap'), roadmap.length],
     [tr('tabs.key'), null],
     [tr('tabs.missables'), missables.length],
-    [tr('tabs.roadmap'), roadmap.length],
     [tr('tabs.glossary'), glossary.length],
   ]
   const panels = [
@@ -877,35 +902,16 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
         <GuideText text={g.overview} />
       </p>
       <GuideNotes g={g} />
-      {earlyTips.length > 0 && (
-        <>
-          <h2 style={{ marginTop: 14 }}>{tr('earlyTips')}</h2>
-          <ul>
-            {earlyTips.map((t) => (
-              <li key={t}>
-                <GuideText text={t} />
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      <MomentList title={tr('earlyTips')} items={earlyTips} />
+      <MomentList
+        title={tr('watchOut')}
+        items={[...missables.map((m) => `**${m.trophy}**: ${m.when}`), ...lines(g.pointOfNoReturn)]}
+      />
+      <MomentList title={tr('afterEnding')} items={lines(g.postgame)} />
       {g.sources?.length ? (
         <SourceNote text={tr('sources', { sources: g.sources.join(', ') })} />
       ) : null}
     </Fragment>,
-    <KeyTrophies key="key" c={c} g={g} />,
-    missables.length ? (
-      <Fragment key="missables">
-        {missables.map((m, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: one trophy can be missable in two places; the list never reorders
-          <Missable key={`${m.trophy}-${i}`} c={c} m={m} />
-        ))}
-      </Fragment>
-    ) : (
-      <EmptyState key="missables" className="inline-status">
-        <Icon name="shield" /> {tr('noMissables')}
-      </EmptyState>
-    ),
     <ul key="roadmap" className="clean guide-roadmap">
       {roadmap.map((r, i) => (
         <li key={r.phase} style={{ margin: '0 0 14px' }}>
@@ -924,6 +930,19 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
         </li>
       ))}
     </ul>,
+    <KeyTrophies key="key" c={c} g={g} />,
+    missables.length ? (
+      <Fragment key="missables">
+        {missables.map((m, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: one trophy can be missable in two places; the list never reorders
+          <Missable key={`${m.trophy}-${i}`} c={c} m={m} />
+        ))}
+      </Fragment>
+    ) : (
+      <EmptyState key="missables" className="inline-status">
+        <Icon name="shield" /> {tr('noMissables')}
+      </EmptyState>
+    ),
     <Glossary key="glossary" items={glossary} />,
   ]
   const onKeyDown = (event: KeyboardEvent, index: number) => {
