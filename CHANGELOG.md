@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.2](https://github.com/renatoaug/platjourney/compare/v0.8.1...v0.8.2) (2026-10-10)
+
+### Bug Fixes
+
+* **trophies:** show the trophy symbol when PSN no longer serves an icon ([#31](https://github.com/renatoaug/platjourney/issues/31)) ([aeadff7](https://github.com/renatoaug/platjourney/commit/aeadff70a8ceea98148c50d22d6b87f283fab1a0))
+
 ## [0.8.1](https://github.com/renatoaug/platjourney/compare/v0.8.0...v0.8.1) (2026-10-10)
 
 ### Bug Fixes
