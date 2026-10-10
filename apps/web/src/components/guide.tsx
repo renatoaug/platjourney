@@ -3,6 +3,7 @@ import { Fragment, type KeyboardEvent, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtRate } from '../lib/format'
+import { nameText } from '../lib/text'
 import type { DeepGuideStats, GuideDetail, KeyTrophy, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { GuideText, UserText } from '../ui/markdown'
@@ -122,6 +123,7 @@ const messages = defineMessages({
     buildingStatus: 'Pesquisando o guia',
     buildingHint: 'O guia aparece aqui assim que estiver pronto.',
     noMissables: 'Nenhum troféu perdível neste jogo.',
+    phaseTrophies: 'Saem nesta fase:',
   },
   [Language.En]: {
     title: 'Platinum guide',
@@ -231,6 +233,7 @@ const messages = defineMessages({
     buildingStatus: 'Researching the guide',
     buildingHint: 'Your guide will appear here as soon as it is ready.',
     noMissables: 'No missable trophies in this game.',
+    phaseTrophies: 'Earned in this phase:',
   },
 })
 
@@ -609,7 +612,7 @@ function Glossary({ items }: { items: GuideDetail['glossary'] }) {
   const q = normalizeTerm(query.trim())
   // Matches what the entry shows: the term and its meaning, without the bold markers.
   const shown = items.map((t) =>
-    normalizeTerm(`${t.term}${t.meaning.replace(/\*\*/g, '')}`).includes(q),
+    normalizeTerm(`${t.term}${t.meaning}`.replace(/\*\*/g, '')).includes(q),
   )
   const matches = shown.filter(Boolean).length
   return (
@@ -629,7 +632,7 @@ function Glossary({ items }: { items: GuideDetail['glossary'] }) {
       <dl className="glossary-list">
         {items.map((t, i) => (
           <div key={t.term} className="glossary-entry" hidden={!shown[i]}>
-            <dt>{t.term}</dt>
+            <dt>{nameText(t.term)}</dt>
             <dd>
               <UserText text={t.meaning} />
             </dd>
@@ -704,6 +707,45 @@ function Missable({ c, m }: { c: GuideGame; m: NonNullable<GuideDetail['missable
 }
 
 /** The guide skeleton, also shown (with a pending line) while the guide is being researched. */
+/** A roadmap phase: a line of context, numbered steps, then tips and warnings set apart. */
+function PhaseGoal({ text }: { text: string }) {
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+  const step = /^\d+[.)]\s+/
+  const note = /^(Dica|Atenção|Tip|Warning):\s*/
+  const intro = lines.filter((l) => !step.test(l) && !note.test(l))
+  const steps = lines.filter((l) => step.test(l))
+  const notes = lines.filter((l) => note.test(l))
+  return (
+    <div className="phase-goal">
+      {intro.map((l) => (
+        <p key={l}>
+          <GuideText text={l} />
+        </p>
+      ))}
+      {steps.length > 0 && (
+        <ol>
+          {steps.map((l) => (
+            <li key={l}>
+              <GuideText text={l.replace(step, '')} />
+            </li>
+          ))}
+        </ol>
+      )}
+      {notes.map((l) => (
+        <p key={l} className="phase-note">
+          <Icon name={/^(Atenção|Warning)/.test(l) ? 'warning' : 'bolt'} />
+          <span>
+            <b>{l.match(note)?.[1]}:</b> <GuideText text={l.replace(note, '')} />
+          </span>
+        </p>
+      ))}
+    </div>
+  )
+}
+
 export function GuideSkeleton() {
   const t = useMessages(messages)
   return (
@@ -865,19 +907,20 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
         <Icon name="shield" /> {tr('noMissables')}
       </EmptyState>
     ),
-    <ul key="roadmap" className="clean">
+    <ul key="roadmap" className="clean guide-roadmap">
       {roadmap.map((r, i) => (
-        <li key={r.phase} style={{ margin: '0 0 10px' }}>
+        <li key={r.phase} style={{ margin: '0 0 14px' }}>
           <b className="display" style={{ color: 'var(--color-accent)' }}>
-            {i + 1}. {r.phase}
+            {i + 1}. {nameText(r.phase)}
           </b>
-          <br />
-          <GuideText text={r.goal} />
+          <PhaseGoal text={r.goal} />
           {r.trophies.length > 0 && (
-            <>
-              <br />
-              <small className="muted">{r.trophies.join(' · ')}</small>
-            </>
+            <p className="phase-trophies">
+              <Icon name="trophy" />
+              <span>
+                <b>{tr('phaseTrophies')}</b> {r.trophies.join(' · ')}
+              </span>
+            </p>
           )}
         </li>
       ))}

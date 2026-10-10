@@ -485,8 +485,9 @@ export function NexoChat({
     setActive(0)
     input.current?.focus()
   }
+  // Before paint: a key pressed right as the list arrives must not be undone by this reset.
   // biome-ignore lint/correctness/useExhaustiveDependencies: back to the first option when the list changes
-  useEffect(() => setActive(0), [mode, games])
+  useLayoutEffect(() => setActive(0), [mode, games])
 
   const submit = (e: FormEvent) => {
     e.preventDefault()

@@ -12,6 +12,9 @@ const EMOJI =
 /** Generated text for a React text node (React escapes it). */
 export const plainText = (value: unknown) => String(value ?? '').replace(EMOJI, '')
 
+/** A name the interface already sets apart (a phase or glossary title): plain, without the **bold** markers. */
+export const nameText = (value: unknown) => plainText(value).replace(/\*\*/g, '')
+
 /** Generated text for an HTML string. */
 export const uiText = (value: unknown) => esc(plainText(value))
 

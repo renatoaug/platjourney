@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { esc, guideText, md, plainText, uiText, userText } from '../../src/lib/text'
+import { esc, guideText, md, nameText, plainText, uiText, userText } from '../../src/lib/text'
 
 test('esc escapes HTML and accepts anything', () => {
   expect(esc('<b class="x">a & b</b>')).toBe('&lt;b class=&quot;x&quot;&gt;a &amp; b&lt;/b&gt;')
@@ -11,6 +11,13 @@ test('plainText drops decorative emoji', () => {
   expect(plainText('🏆 Achados e perdidos 👍🏽')).toBe(' Achados e perdidos ')
   expect(plainText('1️⃣ passo')).toBe(' passo')
   expect(plainText(undefined)).toBe('')
+})
+
+test('nameText drops the bold markers from a title', () => {
+  expect(nameText('Fase 2 — Depois do final e desafio **Meia-noite**')).toBe(
+    'Fase 2 — Depois do final e desafio Meia-noite',
+  )
+  expect(nameText(null)).toBe('')
 })
 
 test('uiText drops emoji and escapes', () => {

@@ -5,6 +5,93 @@
     font-weight: var(--weight-semibold);
   }
 
+  /* A roadmap phase: context, numbered steps with room between them, tips set apart. */
+  .phase-goal {
+    display: grid;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .phase-goal p {
+    margin: 0;
+  }
+
+  .phase-goal ol {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-left: 22px;
+  }
+
+  /* The grid gap spaces the steps: drop the default list item margin. */
+  .phase-goal ol li {
+    margin: 0;
+  }
+
+  .phase-goal ol li::marker {
+    color: var(--color-fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .phase-note {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .phase-note .icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    margin-top: calc((1lh - 14px) / 2);
+  }
+
+  .phase-note b {
+    font-weight: var(--weight-semibold);
+  }
+
+  /* Each phase closes with a line, after its trophies, so they read as part of it. */
+  .guide-roadmap > li {
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .guide-roadmap > li:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  /* The phase's trophies, set apart from its steps and tips. */
+  .phase-trophies {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 8px 0 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .phase-trophies b {
+    font-weight: var(--weight-semibold);
+  }
+
+  .phase-trophies .icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    /* Centered on the first line of text, however tall the line is. */
+    margin-top: calc((1lh - 14px) / 2);
+    color: var(--color-accent);
+  }
+
+  /* In the roadmap only the phase titles are green; under the title, the summary stays plain. */
+  .guide-roadmap .guide-text strong,
+  .hero-caption .guide-text strong {
+    color: inherit;
+  }
+
   .guide-heading {
     display: flex;
     align-items: center;
