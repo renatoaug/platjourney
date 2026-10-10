@@ -694,7 +694,9 @@ function Missable({ c, m }: { c: GuideGame; m: NonNullable<GuideDetail['missable
             </span>
           )}
         </div>
-        <p className="missable-when">{m.when}</p>
+        <p className="missable-when">
+          <GuideText text={m.when} />
+        </p>
         <p className="muted">
           <GuideText text={m.how} />
         </p>

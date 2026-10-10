@@ -118,7 +118,11 @@ describe('Guide', () => {
         hasMissables: true,
         hasOnline: true,
         missables: [
-          { trophy: 'Entrega especial', when: 'Capítulo 2', how: 'Entregue antes de sair.' },
+          {
+            trophy: 'Entrega especial',
+            when: 'No **Capítulo 2**',
+            how: 'Entregue antes de sair.',
+          },
         ],
         onlineTrophies: [
           { trophy: 'Juntos', what: 'Complete uma partida cooperativa.', boostable: true },
@@ -138,6 +142,7 @@ describe('Guide', () => {
     expect(screen.queryByText('Dicas para o começo')).toBeNull()
     fireEvent.click(tab(/Perdíveis/))
     expect(within(panel()).getByText('Entrega especial')).toBeTruthy()
+    expect(within(panel()).getByText('Capítulo 2').tagName).toBe('STRONG')
     expect(within(panel()).getByText('Entregue antes de sair.')).toBeTruthy()
     fireEvent.click(tab(/Troféus-chave/))
     expect(screen.getByText('1 troféu online')).toBeTruthy()
