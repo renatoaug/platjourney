@@ -12,9 +12,9 @@ import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { fmtHours } from '../lib/format'
-import { plainText } from '../lib/text'
 import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
+import { GuideText } from '../ui/markdown'
 import { EmptyState, ErrorState } from '../ui/states'
 import './title.css'
 import { nexoHref } from '../components/tip'
@@ -257,7 +257,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
           ) : (
             <div className="hero-bottom">
               <p className="hero-caption">
-                {t('notOwned')} {g ? plainText(g.overview) : ''}
+                {t('notOwned')} {g ? <GuideText text={g.overview} /> : ''}
               </p>
               <div className="cta">
                 <SaveButton d={d} />

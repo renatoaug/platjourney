@@ -6,7 +6,7 @@ import { ApiError, api, del } from '../lib/api'
 import { fmtClock, fmtDate, fmtMinutes } from '../lib/format'
 import { plainText } from '../lib/text'
 import { Icon } from '../ui/icon'
-import { Markdown } from '../ui/markdown'
+import { GuideText, Markdown } from '../ui/markdown'
 import { modelWorkDone } from '../ui/plugin-slot'
 import { repeat, Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
@@ -241,7 +241,7 @@ function Step({ s, i, plan }: { s: PlanStep; i: number; plan: SessionPlan }) {
             <div className="plan-trick">
               <Icon name="bookmark" />
               <span>
-                <b>{t('step.trick')}</b> {plainText(s.trick)}
+                <b>{t('step.trick')}</b> <GuideText text={s.trick} />
               </span>
             </div>
           )}
