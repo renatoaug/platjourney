@@ -1,5 +1,12 @@
 /** Trophy guide card: quick facts, roadmap, missables, key trophies and known bugs. */
-import { Fragment, type KeyboardEvent, type ReactNode, useRef, useState } from 'react'
+import {
+  Fragment,
+  type KeyboardEvent,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtRate } from '../lib/format'
@@ -883,6 +890,22 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
     if (el) setMoreTabs(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
   }
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  // The bar under the active tab slides to the chosen one: its place and width go to the tab row as
+  // CSS variables, kept in step with the row's size (fonts loading, a narrower screen).
+  useLayoutEffect(() => {
+    const row = tabsRef.current
+    const place = () => {
+      const tab = tabRefs.current[selected]
+      if (!row || !tab) return
+      row.style.setProperty('--tab-bar-left', `${tab.offsetLeft}px`)
+      row.style.setProperty('--tab-bar-width', `${tab.offsetWidth}px`)
+    }
+    place()
+    if (!row) return
+    const watch = new ResizeObserver(place)
+    watch.observe(row)
+    return () => watch.disconnect()
+  })
   const g = c?.guide
   // A list without a platinum (short games, live-service ones) still has a guide: for the 100%.
   const noPlatinum = !!c?.trophies?.length && !c.trophies.some((t) => t.type === 'platinum')

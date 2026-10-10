@@ -140,6 +140,29 @@
     border-color: var(--color-accent);
   }
 
+  /* In the guide the active tab's line is one bar that slides between tabs. */
+  .guide-tabs {
+    position: relative;
+  }
+
+  .guide-tabs button.active {
+    border-color: transparent;
+  }
+
+  .guide-tabs::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: var(--tab-bar-width, 0);
+    height: 2px;
+    background: var(--color-accent);
+    transform: translateX(var(--tab-bar-left, 0));
+    transition:
+      transform 0.28s cubic-bezier(0.3, 0.7, 0.2, 1),
+      width 0.28s cubic-bezier(0.3, 0.7, 0.2, 1);
+  }
+
   .key-rarity {
     display: block;
     margin-top: 8px;
