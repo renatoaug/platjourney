@@ -95,6 +95,8 @@ def test_unlock_prompt_names_the_trophies() -> None:
     )
     assert 'só quando até 15% de quem joga tem o troféu' in prompt
     assert 'Muito raro' not in prompt
+    assert 'sem título' in prompt
+    assert 'não comece sempre com "Boa!"' in prompt
     unknown = nexo.unlock_prompt([Trophy.model_validate(trophy(earnedRate=0))])
     assert 'Sobrevivente / Survivor (gold).' in unknown
 
@@ -385,7 +387,7 @@ async def test_a_tip_folds_the_guide_route_into_the_same_message(model: Model) -
     await nexo.tip('unlock', context(), [], route)
     content = model.calls[0]['input'][0]['content']
     assert content.endswith(nexo.ROUTE_PROMPT.format(route=route))
-    assert 'Escreva em português os nomes de missões' in content
+    assert 'nunca traduza um nome' in content
     await nexo.tip('unlock', context(), [])
     assert 'orientação do guia' not in model.calls[1]['input'][0]['content']
 

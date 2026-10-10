@@ -2,7 +2,7 @@ import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
 import { currentTag } from '../src/costs.ts'
-import { proactiveTip, reply, trophyHelp, unlockReaction } from '../src/nexo.ts'
+import { proactiveTip, reply, trophyHelp, unlockReaction, withoutTitle } from '../src/nexo.ts'
 import * as plugins from '../src/plugins.ts'
 import * as activity from '../src/repository/activity.ts'
 import { makeContext, makeTrophy, makeUser } from './fixtures.ts'
@@ -76,6 +76,12 @@ test('an unlock reaction sends the trophies just earned, and opens with them as 
   expect(ai).toHaveBeenCalledWith('/nexo/tip', { kind: 'unlock', context, unlocked })
   expect(text).toBe(`🏆 ${unlocked[0].name}\n\nResposta`)
   expect(logTip).toHaveBeenCalledWith('user:u1', 'unlock', text, 'game:1')
+})
+
+test('an unlock reaction drops the trophy name Nexo repeats as a heading', () => {
+  expect(withoutTitle('## Fogo Cruzado\n\nMandou bem.', ['Fogo Cruzado'])).toBe('Mandou bem.')
+  expect(withoutTitle('**Fogo Cruzado**\nMandou bem.', ['Fogo Cruzado'])).toBe('Mandou bem.')
+  expect(withoutTitle('Fogo Cruzado saiu cedo.', ['Fogo Cruzado'])).toBe('Fogo Cruzado saiu cedo.')
 })
 
 test('trophy help is stored in the chat so the player can follow up', async () => {

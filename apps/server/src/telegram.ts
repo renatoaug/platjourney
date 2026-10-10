@@ -55,6 +55,8 @@ function toTelegramHtml(text: string): string {
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
+      // Telegram has no headings: a markdown heading line goes out bold.
+      .replace(/^#{1,6}\s+(.+)$/gm, '<b>$1</b>')
       .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
       .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>')
       .replace(/`([^`]+)`/g, '<code>$1</code>')

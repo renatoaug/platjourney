@@ -21,6 +21,12 @@ test('messages go out as escaped HTML', async () => {
   expect(body.text).toBe('<b>Platina</b> em <i>Days Gone</i> com <code>R2</code> &amp; &lt;3')
 })
 
+test('a markdown heading goes out bold', async () => {
+  const fetch = spyOn(globalThis, 'fetch').mockImplementation(okFetch)
+  await sendMessage('42', '## Fase 1\nJogue a história')
+  expect(sent(fetch)[0].body.text).toBe('<b>Fase 1</b>\nJogue a história')
+})
+
 test('a cited source becomes a link, https only', async () => {
   const fetch = spyOn(globalThis, 'fetch').mockImplementation(okFetch)
   await sendMessage(
