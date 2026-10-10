@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.9.0](https://github.com/renatoaug/platjourney/compare/v0.8.2...v0.9.0) (2026-10-10)
+
+### Features
+
+* **guide:** summary grouped by moment, roadmap as the second tab ([#32](https://github.com/renatoaug/platjourney/issues/32)) ([4cd6ca1](https://github.com/renatoaug/platjourney/commit/4cd6ca15f0e34778b7fd2104b81afbae83b5b296))
+
 ## [0.8.2](https://github.com/renatoaug/platjourney/compare/v0.8.1...v0.8.2) (2026-10-10)
 
 ### Bug Fixes
