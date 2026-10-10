@@ -704,6 +704,45 @@ function Missable({ c, m }: { c: GuideGame; m: NonNullable<GuideDetail['missable
 }
 
 /** The guide skeleton, also shown (with a pending line) while the guide is being researched. */
+/** A roadmap phase: a line of context, numbered steps, then tips and warnings set apart. */
+function PhaseGoal({ text }: { text: string }) {
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+  const step = /^\d+[.)]\s+/
+  const note = /^(Dica|Atenção|Tip|Warning):\s*/
+  const intro = lines.filter((l) => !step.test(l) && !note.test(l))
+  const steps = lines.filter((l) => step.test(l))
+  const notes = lines.filter((l) => note.test(l))
+  return (
+    <div className="phase-goal">
+      {intro.map((l) => (
+        <p key={l}>
+          <GuideText text={l} />
+        </p>
+      ))}
+      {steps.length > 0 && (
+        <ol>
+          {steps.map((l) => (
+            <li key={l}>
+              <GuideText text={l.replace(step, '')} />
+            </li>
+          ))}
+        </ol>
+      )}
+      {notes.map((l) => (
+        <p key={l} className="phase-note">
+          <Icon name={/^(Atenção|Warning)/.test(l) ? 'warning' : 'bolt'} />
+          <span>
+            <b>{l.match(note)?.[1]}:</b> <GuideText text={l.replace(note, '')} />
+          </span>
+        </p>
+      ))}
+    </div>
+  )
+}
+
 export function GuideSkeleton() {
   const t = useMessages(messages)
   return (
@@ -871,13 +910,12 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
           <b className="display" style={{ color: 'var(--color-accent)' }}>
             {i + 1}. {r.phase}
           </b>
-          <br />
-          <GuideText text={r.goal} />
+          <PhaseGoal text={r.goal} />
           {r.trophies.length > 0 && (
-            <>
-              <br />
-              <small className="muted">{r.trophies.join(' · ')}</small>
-            </>
+            <p className="phase-trophies">
+              <Icon name="trophy" />
+              <span>{r.trophies.join(' · ')}</span>
+            </p>
           )}
         </li>
       ))}

@@ -5,6 +5,68 @@
     font-weight: var(--weight-semibold);
   }
 
+  /* A roadmap phase: context, numbered steps with room between them, tips set apart. */
+  .phase-goal {
+    display: grid;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .phase-goal p {
+    margin: 0;
+  }
+
+  .phase-goal ol {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-left: 22px;
+  }
+
+  .phase-goal ol li::marker {
+    color: var(--color-fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .phase-note {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .phase-note .icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    margin-top: 3px;
+  }
+
+  .phase-note b {
+    font-weight: var(--weight-semibold);
+  }
+
+  /* The phase's trophies, set apart from its steps and tips. */
+  .phase-trophies {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 10px 0 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .phase-trophies .icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    margin-top: 3px;
+    color: var(--color-accent);
+  }
+
   /* In the roadmap only the phase titles are green; under the title, the summary stays plain. */
   .guide-roadmap .guide-text strong,
   .hero-caption .guide-text strong {
