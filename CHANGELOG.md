@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.0](https://github.com/renatoaug/platjourney/compare/v0.7.0...v0.8.0) (2026-10-10)
+
+### Features
+
+* **guide:** bold names everywhere and roadmap phases as steps ([#29](https://github.com/renatoaug/platjourney/issues/29)) ([d5b7068](https://github.com/renatoaug/platjourney/commit/d5b70688335b89e7ca389e6331778928decd8c0c))
+
 ## [0.7.0](https://github.com/renatoaug/platjourney/compare/v0.6.3...v0.7.0) (2026-10-09)
 
 ### Features
