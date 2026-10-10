@@ -42,6 +42,7 @@ describe('Guide', () => {
     expect(within(summary).queryByText('Ponto sem retorno')).toBeNull()
     expect(within(summary).getByText('Durante a história')).toBeTruthy()
     expect(within(summary).getByText('Fique de olho')).toBeTruthy()
+    expect(within(summary).getByText('Ponto sem volta:').tagName).toBe('B')
     expect(within(summary).getByText(/Fontes: Trophy Guides, Platinum Forum/)).toBeTruthy()
     expect(within(summary).getByText('Dá para continuar')).toBeTruthy()
     expect(screen.getByText(/Pergunte detalhes ao Nexo/).textContent).toMatch(/atualizado em/)
@@ -58,7 +59,7 @@ describe('Guide', () => {
 
   test('the key trophies tab shows highlights, tricks, the offline note and bugs', () => {
     show(game)
-    fireEvent.click(tab(/Troféus-chave/))
+    fireEvent.click(tab(/Macetes/))
     const key = panel()
     expect(within(key).getByLabelText('3 destaques')).toBeTruthy()
     expect(within(key).getByText('Mais fácil')).toBeTruthy()
@@ -78,7 +79,7 @@ describe('Guide', () => {
       ...game,
       guide: { ...guide, tricks: [{ trophy: 'De raspão', trick: 'Siga a história.' }] },
     })
-    fireEvent.click(tab(/Troféus-chave/))
+    fireEvent.click(tab(/Macetes/))
     expect(screen.getByText(/Conquistado em/)).toBeTruthy()
   })
 
@@ -100,7 +101,7 @@ describe('Guide', () => {
         hasOnline: true,
       },
     })
-    fireEvent.click(tab(/Troféus-chave/))
+    fireEvent.click(tab(/Macetes/))
     expect(screen.getByText('Nenhum macete registrado')).toBeTruthy()
     expect(screen.queryByText('Destaques da platina')).toBeNull()
     expect(screen.getByText('Atenção ao modo online')).toBeTruthy()
@@ -139,13 +140,16 @@ describe('Guide', () => {
     expect(screen.getByText(/Indexando os guias completos/)).toBeTruthy()
     expect(screen.getByText('Troféu de dificuldade:')).toBeTruthy()
     expect(screen.getByText('1 troféu')).toBeTruthy()
+    expect(within(panel()).getByText('Perdível:')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Ver como pegar/ }))
+    expect(tab(/Perdíveis/).getAttribute('aria-selected')).toBe('true')
     expect(screen.queryByText('Antes de começar')).toBeNull()
     expect(screen.queryByText('Durante a história')).toBeNull()
     fireEvent.click(tab(/Perdíveis/))
     expect(within(panel()).getByText('Entrega especial')).toBeTruthy()
     expect(within(panel()).getByText('Capítulo 2').tagName).toBe('STRONG')
     expect(within(panel()).getByText('Entregue antes de sair.')).toBeTruthy()
-    fireEvent.click(tab(/Troféus-chave/))
+    fireEvent.click(tab(/Macetes/))
     expect(screen.getByText('1 troféu online')).toBeTruthy()
     expect(screen.getByText('Dá para combinar com outras pessoas')).toBeTruthy()
   })
@@ -165,7 +169,7 @@ describe('Guide', () => {
     expect(screen.getByText('2 troféus')).toBeTruthy()
     fireEvent.click(tab(/Perdíveis/))
     expect(screen.getByText(/Nenhum troféu perdível neste jogo/)).toBeTruthy()
-    fireEvent.click(tab(/Troféus-chave/))
+    fireEvent.click(tab(/Macetes/))
     expect(screen.getByText('2 troféus online')).toBeTruthy()
   })
 

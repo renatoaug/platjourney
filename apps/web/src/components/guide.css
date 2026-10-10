@@ -632,6 +632,9 @@
   }
 
   .tabs button {
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease;
     background: transparent;
     color: var(--color-fg-muted);
     white-space: nowrap;
@@ -1097,6 +1100,48 @@
   @media (max-width: 480px) {
     .quick-facts {
       grid-template-columns: 1fr;
+    }
+  }
+
+  /* "Perdíveis:", "Ponto sem volta:": the item's kind, in the text color so the names in green stand out. */
+  .moment-label {
+    color: var(--color-fg);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* A quiet way to the details of what was just named: muted, small, the arrow right after the words. */
+  .moment-action {
+    display: inline-flex;
+    gap: 2px;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-fg-muted);
+    font: inherit;
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .moment-action:hover {
+    color: var(--color-fg);
+    text-decoration: underline;
+  }
+
+  .moment-action .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Changing tabs: the new panel fades in. */
+  .guide-panel:not([hidden]) {
+    animation: panel-fade 0.22s ease;
+  }
+
+  @keyframes panel-fade {
+    from {
+      opacity: 0;
     }
   }
 }

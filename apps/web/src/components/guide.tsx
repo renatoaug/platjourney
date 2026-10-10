@@ -1,5 +1,5 @@
 /** Trophy guide card: quick facts, roadmap, missables, key trophies and known bugs. */
-import { Fragment, type KeyboardEvent, useRef, useState } from 'react'
+import { Fragment, type KeyboardEvent, type ReactNode, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtRate } from '../lib/format'
@@ -106,7 +106,7 @@ const messages = defineMessages({
     tabs: {
       label: 'Seções do guia',
       summary: 'Resumo',
-      key: 'Troféus-chave',
+      key: 'Macetes',
       missables: 'Perdíveis',
       missablesSkeleton: 'Perdíveis',
       roadmap: 'Roadmap',
@@ -114,6 +114,10 @@ const messages = defineMessages({
     },
     earlyTips: 'Durante a história',
     watchOut: 'Fique de olho',
+    pointOfNoReturn: 'Ponto sem volta:',
+    missableLabel: { one: 'Perdível:', other: 'Perdíveis:' },
+    missableCount: { one: '{count} troféu', other: '{count} troféus' },
+    missableHow: 'Ver como pegar',
     afterEnding: 'Depois do final',
     sources: 'Fontes: {sources}',
     queuedTitle: 'Sua próxima conquista começa aqui.',
@@ -217,7 +221,7 @@ const messages = defineMessages({
     tabs: {
       label: 'Guide sections',
       summary: 'Summary',
-      key: 'Key trophies',
+      key: 'Tricks',
       missables: 'Missables',
       missablesSkeleton: 'Missables',
       roadmap: 'Roadmap',
@@ -225,6 +229,10 @@ const messages = defineMessages({
     },
     earlyTips: 'While you play the story',
     watchOut: 'Watch out',
+    pointOfNoReturn: 'Point of no return:',
+    missableLabel: { one: 'Missable:', other: 'Missables:' },
+    missableCount: { one: '{count} trophy', other: '{count} trophies' },
+    missableHow: 'See how to get them',
     afterEnding: 'After the ending',
     sources: 'Sources: {sources}',
     queuedTitle: 'Your next achievement starts here.',
@@ -753,22 +761,42 @@ const lines = (text?: string | null) =>
     .map((l) => l.trim())
     .filter(Boolean)
 
-// One moment of the game in the summary (during the story, what can be lost, after the ending).
-function MomentList({ title, items }: { title: string; items: string[] }) {
+// One moment of the game in the summary (during the story, what can be lost, after the ending). An item
+// can open with a label ("Perdíveis:"), set apart from the game's names in bold.
+type Moment = string | { label: string; text: string; action?: ReactNode }
+function MomentList({ title, items }: { title: string; items: Moment[] }) {
   if (!items.length) return null
   return (
     <>
       <h2 style={{ marginTop: 14 }}>{title}</h2>
       <ul>
-        {items.map((t) => (
-          <li key={t}>
-            <GuideText text={t} />
-          </li>
-        ))}
+        {items.map((m) =>
+          typeof m === 'string' ? (
+            <li key={m}>
+              <GuideText text={m} />
+            </li>
+          ) : (
+            <li key={m.label + m.text}>
+              <b className="moment-label">{m.label}</b> <GuideText text={m.text} />
+              {m.action && <> {m.action}</>}
+            </li>
+          ),
+        )}
       </ul>
     </>
   )
 }
+
+// Missables that happen at the same moment read as one line: the moment once, then the trophies.
+function missablesByMoment(missables: GuideDetail['missables']) {
+  const byWhen = new Map<string, string[]>()
+  for (const m of missables) byWhen.set(m.when, [...(byWhen.get(m.when) ?? []), m.trophy])
+  return [...byWhen].map(([when, trophies]) => ({ when, trophies }))
+}
+
+// "Não há ponto sem volta..." is not a warning: leave it out of "watch out".
+const noPointOfNoReturn = (text?: string | null) =>
+  /^(não há|nao ha|não existe|nenhum|sem|there is no|no )\b/i.test(lines(text)[0] ?? '')
 
 export function GuideSkeleton() {
   const t = useMessages(messages)
@@ -905,7 +933,29 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
       <MomentList title={tr('earlyTips')} items={earlyTips} />
       <MomentList
         title={tr('watchOut')}
-        items={[...missables.map((m) => `**${m.trophy}**: ${m.when}`), ...lines(g.pointOfNoReturn)]}
+        items={[
+          ...missablesByMoment(missables).map((m) => ({
+            label: tr('missableLabel', { count: m.trophies.length }),
+            text:
+              m.trophies.length === 1
+                ? `**${m.trophies[0]}** — ${m.when}`
+                : `${tr('missableCount', { count: m.trophies.length })} — ${m.when}`,
+            action: (
+              <button
+                type="button"
+                className="moment-action"
+                onClick={() =>
+                  setSelected(tabs.findIndex(([name]) => name === tr('tabs.missables')))
+                }
+              >
+                {tr('missableHow')} <Icon name="arrow-right" />
+              </button>
+            ),
+          })),
+          ...(g.pointOfNoReturn && !noPointOfNoReturn(g.pointOfNoReturn)
+            ? [{ label: tr('pointOfNoReturn'), text: lines(g.pointOfNoReturn).join('\n') }]
+            : []),
+        ]}
       />
       <MomentList title={tr('afterEnding')} items={lines(g.postgame)} />
       {g.sources?.length ? (
@@ -1007,6 +1057,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
             // biome-ignore lint/suspicious/noArrayIndexKey: the five panels are fixed, one per tab
             key={i}
             role="tabpanel"
+            className="guide-panel"
             id={`${id}-panel-${i}`}
             aria-labelledby={`${id}-tab-${i}`}
             data-panel={i}
