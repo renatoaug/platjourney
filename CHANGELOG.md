@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.1](https://github.com/renatoaug/platjourney/compare/v0.8.0...v0.8.1) (2026-10-10)
+
+### Bug Fixes
+
+* **nexo:** no repeated trophy title, no translated names, less filler in unlock notices ([#30](https://github.com/renatoaug/platjourney/issues/30)) ([983ae79](https://github.com/renatoaug/platjourney/commit/983ae796cf7322324902f5ed74b836382e23aebf))
+
 ## [0.8.0](https://github.com/renatoaug/platjourney/compare/v0.7.0...v0.8.0) (2026-10-10)
 
 ### Features
