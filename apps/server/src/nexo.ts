@@ -124,9 +124,27 @@ export async function unlockReaction(
     ...(route ? { route } : {}),
   })
   // The trophy as the message's title, then Nexo's words: the same first line as a plain notice.
-  const titled = `${unlocked.map((t) => `🏆 ${t.name}`).join('\n')}\n\n${text}`
+  const body = withoutTitle(
+    text,
+    unlocked.map((t) => t.name),
+  )
+  const titled = `${unlocked.map((t) => `🏆 ${t.name}`).join('\n')}\n\n${body}`
   await logTip(user.id, 'unlock', titled, ctx.game.id)
   return titled
+}
+
+// Nexo sometimes opens with the trophy's name again (a heading or a bold line) though the message
+// already has it as its title: drop those leading lines.
+export function withoutTitle(text: string, names: string[]): string {
+  const plain = (line: string) =>
+    line
+      .replace(/[#*_🏆]/gu, '')
+      .trim()
+      .toLowerCase()
+  const titles = new Set(names.map(plain))
+  const lines = text.split('\n')
+  while (lines.length && (titles.has(plain(lines[0])) || !lines[0].trim())) lines.shift()
+  return lines.join('\n')
 }
 
 // Help for one trophy the player has not earned yet, asked from the trophy list.

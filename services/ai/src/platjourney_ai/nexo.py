@@ -345,7 +345,7 @@ def unlock_prompt(
         ' que faz sentido agora e como pegar. Se houver missable chegando neste ponto do jogo,'
         ' avise primeiro.'
     )
-    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome (cite a raridade só quando até 15% de quem joga tem o troféu, com o percentual, ex.: "só 8% têm"; acima disso não chame de raro), {next_part} Máximo 6 linhas, sem repetir dicas já dadas.{cheer}'  # noqa: E501
+    return f'O jogador acabou de desbloquear: {names}. A mensagem já abre com o nome do troféu como título: comemore em uma linha sem repetir o nome e sem título, variando a abertura (não comece sempre com "Boa!"); se não houver nada novo a dizer além do foco, uma linha basta (cite a raridade só quando até 15% de quem joga tem o troféu, com o percentual, ex.: "só 8% têm"; acima disso não chame de raro), {next_part} Máximo 6 linhas, sem repetir dicas já dadas.{cheer}'  # noqa: E501
 
 
 def trophy_help_prompt(trophy: Trophy) -> str:
@@ -371,8 +371,8 @@ async def ask(user_text: str, context: str, history: list[Turn] | None = None) -
 
 ROUTE_PROMPT = (
     '\n\nNa mesma mensagem, com as suas palavras, inclua esta orientação do guia sobre o que vem '
-    'agora. Escreva em português os nomes de missões, locais e itens que estiverem em inglês; '
-    'mantenha o original entre parênteses só quando ajudar a achar no jogo. Pule o que fala de '
+    'agora. Escreva os nomes de missões, locais e itens exatamente como a orientação escreve: '
+    'nunca traduza um nome que está em inglês. Pule o que fala de '
     'troféu que já está em "Conquistados":\n{route}'
 )
 
