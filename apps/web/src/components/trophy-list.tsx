@@ -20,6 +20,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote, splitSource } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
 import { toast } from '../ui/toast'
+import { TrophyArt } from '../ui/trophy-art'
 import { nexoHref } from './tip'
 import './trophy-list.css'
 
@@ -267,7 +268,7 @@ function TrophyCard({
   return (
     <article className={`trophy-row ${t.earned ? 'is-earned' : ''}`}>
       <div className="trophy-art">
-        {t.iconUrl ? <img src={t.iconUrl} alt="" loading="lazy" /> : <Icon name="trophy" />}
+        <TrophyArt url={t.iconUrl} />
         {t.earned && (
           <span className="trophy-earned-mark" title={tr('earned')}>
             <Icon name="check" />

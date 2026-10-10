@@ -10,6 +10,7 @@ import { GuideText, UserText } from '../ui/markdown'
 import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
+import { TrophyArt } from '../ui/trophy-art'
 import { NexoHero } from './nexo-hero'
 import { nexoHref } from './tip'
 import './guide.css'
@@ -262,11 +263,7 @@ const normalize = (name: unknown) =>
 function KeyArt({ trophy }: { trophy?: Trophy }) {
   return (
     <span className="key-art">
-      {trophy?.iconUrl ? (
-        <img src={trophy.iconUrl} alt="" loading="lazy" />
-      ) : (
-        <Icon name="trophy" />
-      )}
+      <TrophyArt url={trophy?.iconUrl} />
     </span>
   )
 }
