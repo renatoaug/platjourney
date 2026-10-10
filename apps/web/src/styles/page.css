@@ -43,6 +43,11 @@
     padding: 0 40px;
   }
 
+  /* Focused by the skip link only to move the keyboard there: no ring around the whole page. */
+  .content:focus {
+    outline: none;
+  }
+
   .page {
     display: none;
     padding-bottom: 30px;

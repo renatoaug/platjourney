@@ -23,6 +23,11 @@
     padding-left: 22px;
   }
 
+  /* The grid gap spaces the steps: drop the default list item margin. */
+  .phase-goal ol li {
+    margin: 0;
+  }
+
   .phase-goal ol li::marker {
     color: var(--color-fg-muted);
     font-variant-numeric: tabular-nums;

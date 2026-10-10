@@ -3,6 +3,7 @@ import { Fragment, type KeyboardEvent, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtRate } from '../lib/format'
+import { nameText } from '../lib/text'
 import type { DeepGuideStats, GuideDetail, KeyTrophy, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { GuideText, UserText } from '../ui/markdown'
@@ -611,7 +612,7 @@ function Glossary({ items }: { items: GuideDetail['glossary'] }) {
   const q = normalizeTerm(query.trim())
   // Matches what the entry shows: the term and its meaning, without the bold markers.
   const shown = items.map((t) =>
-    normalizeTerm(`${t.term}${t.meaning.replace(/\*\*/g, '')}`).includes(q),
+    normalizeTerm(`${t.term}${t.meaning}`.replace(/\*\*/g, '')).includes(q),
   )
   const matches = shown.filter(Boolean).length
   return (
@@ -631,7 +632,7 @@ function Glossary({ items }: { items: GuideDetail['glossary'] }) {
       <dl className="glossary-list">
         {items.map((t, i) => (
           <div key={t.term} className="glossary-entry" hidden={!shown[i]}>
-            <dt>{t.term}</dt>
+            <dt>{nameText(t.term)}</dt>
             <dd>
               <UserText text={t.meaning} />
             </dd>
@@ -910,7 +911,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
       {roadmap.map((r, i) => (
         <li key={r.phase} style={{ margin: '0 0 14px' }}>
           <b className="display" style={{ color: 'var(--color-accent)' }}>
-            {i + 1}. {r.phase}
+            {i + 1}. {nameText(r.phase)}
           </b>
           <PhaseGoal text={r.goal} />
           {r.trophies.length > 0 && (
