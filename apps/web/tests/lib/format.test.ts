@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  compact,
   fmtClock,
   fmtDate,
   fmtDay,
@@ -66,6 +67,13 @@ test('pct clamps to 0..100 and treats junk as 0', () => {
 test('number groups thousands the Brazilian way', () => {
   expect(number(1234567)).toBe('1.234.567')
   expect(number(null)).toBe('0')
+})
+
+test('compact shortens thousands to one decimal and a k', () => {
+  expect(compact(1895)).toBe('1,9k')
+  expect(compact(2408)).toBe('2,4k')
+  expect(compact(12000)).toBe('12k')
+  expect(compact(35)).toBe('35')
 })
 
 describe('fmtMinutes', () => {

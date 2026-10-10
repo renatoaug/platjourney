@@ -19,33 +19,41 @@ test('the profile: identity, tiles, the collection and the yearly rhythm', async
   const { container } = renderApp(<Profile />)
   expect(container.querySelector('#profile-page .sk')).toBeTruthy()
   expect(await screen.findByRole('heading', { level: 1, name: 'jogador' })).toBeTruthy()
-  expect(screen.getByText('PS5 · 24')).toBeTruthy()
-  expect(screen.getByText('40% para o 313')).toBeTruthy()
+  expect(container.querySelector('.profile-platforms')?.textContent).toContain('PS5 24')
+  expect(screen.getAllByText('40% para o 313')).toHaveLength(2)
   const tiles = container.querySelector('.profile-tiles') as HTMLElement
   const year = new Date().getFullYear()
   const count = profileData.byYear.find((y) => y.year === year)?.count ?? 0
   expect(tiles.textContent).toContain(`${count} em ${year}`)
   expect(tiles.textContent).toContain('2.972')
-  expect(tiles.textContent).toContain('mais jogado: God of War (212h)')
-  expect(tiles.textContent).toContain('Platina mais rara')
-  expect(tiles.textContent).toContain('2,4% de quem joga tem')
-  expect(tiles.textContent).toContain('platinas entre')
+  expect(tiles.textContent).not.toContain('mais jogado')
+  expect(tiles.textContent).not.toContain('Platina mais rara')
+  const rarest = container.querySelector('.profile-rarest') as HTMLElement
+  expect(rarest.textContent).toContain('Platina mais rara')
+  expect(rarest.textContent).toContain('2,4% de quem joga tem')
+  expect(tiles.textContent).toContain('Melhor mês')
   expect(screen.getByRole('heading', { name: 'Platinas 10' })).toBeTruthy()
-  expect(results()).toBe('1–6 de 10 platinas')
+  expect(results()).toBe('1–10 de 10 platinas')
   const rows = within(list()).getAllByRole('link')
-  expect(rows).toHaveLength(6)
+  expect(rows).toHaveLength(10)
   expect(rows[0].getAttribute('href')).toBe('/title/game/game%3A0')
   expect(rows[1].textContent).toContain('27h jogadas')
   expect(rows[0].textContent).not.toContain('jogadas')
   expect(container.querySelectorAll('.years .year')).toHaveLength(5)
+  fireEvent.click(screen.getByRole('tab', { name: 'Configurações' }))
+  expect(screen.getByRole('tab', { name: 'Configurações' }).getAttribute('aria-selected')).toBe(
+    'true',
+  )
+  expect(screen.queryByText('Platinas por ano')).toBeNull()
+  fireEvent.click(screen.getByRole('tab', { name: 'Meu perfil' }))
 })
 
-test('pages through the collection, keeping focus on the button pressed', async () => {
+test('pages through the collection with the standard pager', async () => {
   const scroll = mock()
   const original = HTMLElement.prototype.scrollIntoView
   HTMLElement.prototype.scrollIntoView = scroll
-  // Fifteen platinums: three pages, so the middle one has both buttons enabled.
-  const platinums = [0, 1, 2].flatMap((round) =>
+  // Thirty platinums: three pages, so the middle one has both buttons enabled.
+  const platinums = [0, 1, 2, 3, 4, 5].flatMap((round) =>
     profileData.platinums.slice(0, 5).map((p) => ({
       ...p,
       game: { ...p.game, id: `${p.game.id}-${round}` },
@@ -54,24 +62,27 @@ test('pages through the collection, keeping focus on the button pressed', async 
   try {
     mockApi({ '/api/profile': { ...profileData, platinums } })
     renderApp(<Profile />)
-    await screen.findByText('1–6 de 15 platinas')
+    await screen.findByText('1–10 de 30 platinas')
     const pages = screen.getByRole('navigation', { name: 'Páginas de platinas' })
-    const next = within(pages).getByRole('button', { name: 'Próxima' })
-    const prev = within(pages).getByRole('button', { name: 'Anterior' })
+    const next = within(pages).getByRole('button', { name: 'Próxima página' })
+    const prev = within(pages).getByRole('button', { name: 'Página anterior' })
     expect(prev.hasAttribute('disabled')).toBe(true)
     fireEvent.click(next)
-    expect(results()).toBe('7–12 de 15 platinas')
-    expect(within(pages).getByText('2 de 3')).toBeTruthy()
+    expect(results()).toBe('11–20 de 30 platinas')
+    expect(
+      within(pages).getByRole('button', { name: 'Página 2' }).getAttribute('aria-current'),
+    ).toBe('page')
     expect(scroll).toHaveBeenCalled()
-    expect(document.activeElement === next).toBe(true)
     fireEvent.click(next)
-    expect(results()).toBe('13–15 de 15 platinas')
+    expect(results()).toBe('21–30 de 30 platinas')
+    fireEvent.click(within(pages).getByRole('button', { name: 'Página 1' }))
+    expect(results()).toBe('1–10 de 30 platinas')
+    fireEvent.click(within(pages).getByRole('button', { name: 'Página 3' }))
     expect(next.hasAttribute('disabled')).toBe(true)
     fireEvent.click(prev)
-    expect(document.activeElement === prev).toBe(true)
     // The page is kept for the next visit; go back to the first for the other tests.
     fireEvent.click(prev)
-    expect(results()).toBe('1–6 de 15 platinas')
+    expect(results()).toBe('1–10 de 30 platinas')
   } finally {
     HTMLElement.prototype.scrollIntoView = original
   }
@@ -80,11 +91,11 @@ test('pages through the collection, keeping focus on the button pressed', async 
 test('searching the collection, and finding nothing', async () => {
   mockApi({ '/api/profile': profileData })
   renderApp(<Profile />)
-  await screen.findByText('1–6 de 10 platinas')
+  await screen.findByText('1–10 de 10 platinas')
   fireEvent.change(search(), { target: { value: 'GHOST' } })
   expect(results()).toBe('1–1 de 1 platinas')
   expect(within(list()).getByText('Ghost of Tsushima')).toBeTruthy()
-  expect(document.getElementById('platinum-pages')?.hidden).toBe(true)
+  expect(screen.queryByRole('navigation', { name: 'Páginas de platinas' })).toBeNull()
   fireEvent.change(search(), { target: { value: 'zzz' } })
   expect(results()).toBe('Nenhuma platina encontrada')
   expect(screen.getByText('Tente buscar por outro jogo.')).toBeTruthy()
@@ -136,13 +147,15 @@ test('while PSN dates arrive the list refreshes quietly, but never under a form 
   expect(count()).toBe(1)
   fireEvent.blur(search())
 
-  // So does an open password form.
+  // So does an open password form, in the settings tab.
+  fireEvent.click(screen.getByRole('tab', { name: 'Configurações' }))
   fireEvent.click(screen.getByRole('button', { name: 'Trocar senha' }))
   await act(async () => {
     jest.advanceTimersByTime(8000)
   })
   expect(count()).toBe(1)
   fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+  fireEvent.click(screen.getByRole('tab', { name: 'Meu perfil' }))
 
   pending = 0
   await act(async () => {
@@ -150,7 +163,7 @@ test('while PSN dates arrive the list refreshes quietly, but never under a form 
   })
   expect(count()).toBe(2)
   // Quiet: no skeleton in between, and the dates are in.
-  expect(screen.getByText('1–6 de 10 platinas')).toBeTruthy()
+  expect(screen.getByText('1–10 de 10 platinas')).toBeTruthy()
   await act(async () => {
     jest.advanceTimersByTime(20_000)
   })
@@ -186,13 +199,15 @@ test('unlinking Telegram reloads the profile', async () => {
     'DELETE /api/telegram/link': {},
   })
   renderApp(<Profile />)
-  fireEvent.click(await screen.findByRole('button', { name: 'Desconectar' }))
+  fireEvent.click(await screen.findByRole('tab', { name: 'Configurações' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Desconectar' }))
   await waitFor(() => expect(calls.filter((c) => c.path === '/api/profile')).toHaveLength(2))
+  fireEvent.click(screen.getByRole('tab', { name: 'Meu perfil' }))
 })
 
 test('loading stays on the skeleton', () => {
   mockApi({ '/api/profile': never })
   const { container } = renderApp(<Profile />)
   expect(container.querySelectorAll('.profile-tiles .tile')).toHaveLength(5)
-  expect(screen.getByRole('heading', { name: 'Todas as platinas' })).toBeTruthy()
+  expect(container.querySelectorAll('.collection-grid .collection-tile')).toHaveLength(10)
 })

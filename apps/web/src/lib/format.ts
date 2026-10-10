@@ -38,6 +38,14 @@ export const pct = (value: unknown) => Math.max(0, Math.min(100, Number(value) |
 
 export const number = (value: unknown) => Number(value || 0).toLocaleString(getLocale())
 
+/** A short number for tight spaces: 1.895 becomes 1,9k (1.9k in English); below a thousand it stays whole. */
+export const compact = (value: unknown) => {
+  const n = Number(value || 0)
+  return n < 1000
+    ? number(n)
+    : `${(n / 1000).toLocaleString(getLocale(), { maximumFractionDigits: 1 })}k`
+}
+
 export const fmtMinutes = (m: number) =>
   m >= 60
     ? `${Math.floor(m / 60)}h${m % 60 ? String(Math.round(m % 60)).padStart(2, '0') : ''}`

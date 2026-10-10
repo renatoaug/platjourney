@@ -180,7 +180,7 @@ function TelegramCard({ user, onChanged }: { user: Me; onChanged: () => void }) 
             )}
             {t('telegram.connectedRest')}
           </p>
-          <div className="chips" style={{ marginTop: 14 }}>
+          <div className="chips account-actions">
             <button type="button" className="ghost sm" id="telegram-unlink" onClick={unlink}>
               {t('telegram.unlink')}
             </button>
@@ -189,7 +189,7 @@ function TelegramCard({ user, onChanged }: { user: Me; onChanged: () => void }) 
       ) : (
         <>
           <p className="muted">{t('telegram.lead')}</p>
-          <div className="chips" style={{ marginTop: 14 }}>
+          <div className="chips account-actions">
             <button
               type="button"
               className="sm"
@@ -413,7 +413,7 @@ function AccountCard({ user, onEditing }: { user: Me; onEditing?: (editing: bool
           <small>{t('psnId')}</small>
         </div>
       </div>
-      <div className="chips" style={{ marginTop: 14 }}>
+      <div className="chips account-actions">
         <button
           type="button"
           className="ghost sm"

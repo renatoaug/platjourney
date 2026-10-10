@@ -1,11 +1,5 @@
 @layer screens {
-  .profile-tiles .tile b {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .profile-hero .grow {
+  .profile-hero .profile-name {
     flex: 1;
     min-width: 200px;
   }
@@ -14,79 +8,6 @@
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
-  }
-
-  .profile-hero .level {
-    min-width: 150px;
-  }
-
-  .profile-hero .level b {
-    display: block;
-    font-family: var(--font-display);
-    font-size: var(--text-6xl);
-    line-height: var(--leading-none);
-    margin: 4px 0 8px;
-  }
-
-  @media (max-width: 1100px) {
-    .profile-tiles .tile:nth-child(4) {
-      border-left: 0;
-    }
-
-    .profile-tiles .tile:nth-child(n + 4) {
-      border-top: 1px solid var(--color-border);
-    }
-  }
-
-  @media (max-width: 480px) {
-    .profile-tiles .tile:nth-child(4) {
-      border-left: 1px solid var(--color-border);
-    }
-
-    .profile-tiles .tile:nth-child(odd) {
-      border-left: 0;
-    }
-
-    .profile-tiles .tile:nth-child(n + 3) {
-      border-top: 1px solid var(--color-border);
-    }
-  }
-
-  .profile-identity .level {
-    padding-left: 28px;
-    border-left: 1px solid var(--color-border-strong);
-  }
-
-  .profile-identity .level b {
-    color: var(--color-accent);
-  }
-
-  #profile-page .profile-tiles .tile {
-    grid-column: span 1;
-    padding: 22px;
-    border: 0;
-    border-right: 1px solid var(--color-border);
-    background: transparent;
-  }
-
-  #profile-page .profile-tiles .tile:nth-child(n + 4) {
-    border-top: 0;
-  }
-
-  #profile-page .profile-tiles .tile:last-child {
-    border-right: 0;
-  }
-
-  #profile-page .profile-tiles .tile b {
-    white-space: normal;
-    overflow-wrap: anywhere;
-    font-size: var(--text-5xl);
-  }
-
-  #profile-page .profile-tiles .sub {
-    white-space: normal;
-    overflow: visible;
-    line-height: var(--leading-body);
   }
 
   .collection-heading > .icon {
@@ -103,63 +24,23 @@
     margin-top: 14px;
   }
 
-  .collection-row > .icon {
-    width: 15px;
-    height: 15px;
-    color: var(--color-fg-muted);
-  }
-
-  .collection-row:hover h3,
-  .collection-row:hover > .icon {
-    color: var(--color-accent);
-  }
-
-  .profile-sidebar .card h2 {
+  .profile-band .card h2 {
     font-size: var(--text-xl);
   }
 
-  .profile-sidebar .year i {
+  .profile-band .year i {
     flex: none;
     max-width: 28px;
   }
 
-  .profile-sidebar .muted {
+  .profile-band .muted {
     font-size: var(--text-md);
     line-height: var(--leading-relaxed);
   }
 
   @media (max-width: 760px) {
-    .profile-identity .grow {
+    .profile-identity .profile-name {
       min-width: 0;
-    }
-
-    .profile-identity .level {
-      width: 100%;
-      border-left: 0;
-      border-top: 1px solid var(--color-border);
-      padding: 18px 0 0;
-    }
-
-    #profile-page .profile-tiles .tile,
-    #profile-page .profile-tiles .tile:nth-child(n + 4) {
-      grid-column: span 1;
-      padding: 18px;
-    }
-
-    #profile-page .profile-tiles .tile:nth-child(n + 3) {
-      border-top: 1px solid var(--color-border);
-    }
-
-    #profile-page .profile-tiles .tile:nth-child(odd) {
-      border-right: 1px solid var(--color-border);
-    }
-
-    #profile-page .profile-tiles .tile:nth-child(even) {
-      border-right: 0;
-    }
-
-    #profile-page .profile-tiles .tile:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
     }
   }
 
@@ -189,37 +70,27 @@
 
   /* Personal collection and account activity. */
   .profile-identity {
-    padding: 32px;
+    padding: 22px 28px;
     border-color: color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
     background: linear-gradient(115deg, var(--color-surface-raised), var(--color-surface));
   }
 
   .profile-identity .profile-avatar {
-    width: 76px;
-    height: 76px;
+    width: 64px;
+    height: 64px;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-round);
   }
 
   .profile-identity h1 {
-    font-size: var(--text-5xl);
+    font-size: var(--text-4xl);
     letter-spacing: var(--tracking-tight);
     overflow-wrap: anywhere;
   }
 
-  #profile-page .profile-tiles {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    overflow: hidden;
-  }
-
   .profile-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+    grid-template-columns: 1fr;
     gap: 20px;
     align-items: start;
   }
@@ -241,95 +112,134 @@
     font-size: var(--text-2xl);
   }
 
-  .collection-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 17px 0;
-    border-bottom: 1px solid var(--color-border);
-    text-decoration: none;
-    color: var(--color-fg);
-  }
-
-  .collection-row .plat-cover {
-    width: 58px;
-    height: 72px;
-    object-fit: cover;
-    border-radius: var(--radius-tag);
-    flex: none;
-  }
-
-  .collection-row > div {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .collection-row h3 {
-    font-size: var(--text-body);
-    line-height: var(--leading-snug);
-    margin: 0 0 5px;
-    font-weight: var(--weight-medium);
-  }
-
-  .collection-row p {
-    font-size: var(--text-xs);
-    color: var(--color-fg-muted);
-    line-height: var(--leading-body);
-    margin: 0 0 4px;
-  }
-
-  .collection-row p span {
-    padding: 0 4px;
-  }
-
-  .collection-row time {
-    font-size: var(--text-xs);
-    color: var(--color-fg-tint);
-  }
-
-  .collection-pages {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  .collection-pages[hidden] {
-    display: none;
-  }
-
-  .collection-pages > span {
-    font-size: var(--text-sm);
-    color: var(--color-fg-muted);
-  }
-
-  .collection-pages button {
-    min-height: 34px;
-  }
-
-  .collection-pages button:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-
-  .profile-sidebar .years {
-    height: 180px;
+  .profile-band .years {
+    height: 120px;
     gap: 8px;
   }
 
-  @media (max-width: 1100px) {
-    .profile-layout {
-      grid-template-columns: 1fr;
-    }
+  /* Above the platinums: the yearly rhythm, the most played games and any plugin card, side by side
+     and the same height. */
+  .profile-band {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
 
-    .profile-sidebar {
+  .profile-band .card {
+    margin: 0;
+  }
+
+  /* The chart grows to the height of the column beside it. */
+  .profile-band > .card:first-child {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .profile-band > .card:first-child .years {
+    height: 84px;
+    margin-top: auto;
+    padding-top: 12px;
+  }
+
+  .profile-band-side {
+    grid-template-rows: auto 1fr;
+  }
+
+  .profile-band-side h2 {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .profile-rarest {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+
+  .profile-rarest .plat-cover {
+    flex: none;
+    width: 48px;
+    height: 62px;
+    object-fit: cover;
+    border-radius: var(--radius-tag);
+  }
+
+  .profile-rarest > span {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .profile-rarest b {
+    overflow: hidden;
+    font-weight: var(--weight-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .profile-rarest:hover b {
+    color: var(--color-accent);
+  }
+
+  .profile-band-side {
+    display: grid;
+    gap: 20px;
+  }
+
+  @media (max-width: 1100px) {
+    .profile-band {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .profile-sidebar > :first-child {
+    .profile-band > .card:first-child {
       grid-column: 1 / -1;
     }
+  }
+
+  .profile-most ol {
+    display: grid;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .profile-most a {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+
+  .profile-most .plat-cover {
+    flex: none;
+    width: 28px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: var(--radius-tag);
+  }
+
+  .profile-most span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--text-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .profile-most b {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  .profile-most a:hover span {
+    color: var(--color-accent);
   }
 
   @media (max-width: 760px) {
@@ -347,22 +257,382 @@
       height: 56px;
       border-radius: var(--radius-round);
     }
+  }
 
-    #profile-page .profile-tiles {
+  /* The platinums as a grid of covers: the date and rarity under each one. */
+  .collection-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px 16px;
+    margin-top: 12px;
+  }
+
+  .collection-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+
+  .collection-tile .plat-cover {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+  }
+
+  .collection-tile h3 {
+    display: -webkit-box;
+    margin: 0 0 4px;
+    overflow: hidden;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    line-height: var(--leading-snug);
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .collection-tile p {
+    margin: 0 0 2px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    line-height: var(--leading-body);
+  }
+
+  .collection-tile p span {
+    padding: 0 3px;
+  }
+
+  .collection-tile time {
+    color: var(--color-fg-tint);
+    font-size: var(--text-xs);
+  }
+
+  .collection-tile:hover h3 {
+    color: var(--color-accent);
+  }
+
+  /* Profile and settings: an underlined tab row under the player's card. */
+  .profile-tabs {
+    display: flex;
+    gap: 2px;
+    margin: 16px 0 20px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .profile-tabs button {
+    padding: 10px 12px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .profile-tabs button.active {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  /* Settings in two columns: Telegram over the account on the left, the preferences on the right. */
+  .profile-settings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* Telegram and the account in two columns: what it is on the left, its buttons on the right. */
+  .profile-settings .account-card,
+  .profile-settings #telegram-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 16px;
+    align-items: center;
+  }
+
+  .profile-settings .account-card > :not(.account-id, .account-actions),
+  .profile-settings #telegram-card > :not(p.muted, .account-actions) {
+    grid-column: 1 / -1;
+  }
+
+  .profile-settings .account-actions {
+    margin-top: 0;
+  }
+
+  .profile-settings #telegram-card > p.muted {
+    margin: 0;
+  }
+
+  .profile-settings > :nth-child(2) {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+
+  .profile-settings .card {
+    margin: 0;
+  }
+
+  @media (max-width: 760px) {
+    .collection-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 12px;
+    }
+  }
+
+  /* The player's numbers inside the header card, between the name and the level. */
+  .profile-identity .profile-tiles {
+    display: flex;
+    flex: 3;
+    flex-wrap: wrap;
+    gap: 14px 0;
+    min-width: 0;
+  }
+
+  .profile-tiles .tile {
+    flex: 1 1 120px;
+    min-width: 0;
+    padding: 0 16px;
+    border-left: 1px solid var(--color-border);
+    background: none;
+  }
+
+  .profile-tiles .tile-label {
+    white-space: nowrap;
+  }
+
+  .profile-tiles .tile b {
+    display: block;
+    margin: 4px 0 2px;
+    overflow: hidden;
+    font-size: var(--text-2xl);
+    line-height: var(--leading-snug);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* The line under a number wraps to a second line instead of being cut. */
+  .profile-tiles .sub {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    line-height: var(--leading-snug);
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .profile-identity > .profile-name {
+    flex: 0 1 auto;
+  }
+
+  @media (max-width: 1280px) {
+    .profile-identity .profile-tiles {
+      order: 3;
+      flex-basis: 100%;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border);
     }
 
-    .profile-sidebar {
+    .profile-tiles .tile:first-child {
+      padding-left: 0;
+      border-left: 0;
+    }
+  }
+
+  .profile-level-line {
+    display: none;
+  }
+
+  /* Phone: the level under the name, then the four numbers in one row. */
+  @media (max-width: 760px) {
+    /* Four numbers in one row, each over its name; icons and captions stay on the desktop. */
+    .profile-identity .profile-tiles {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0;
+      text-align: center;
+    }
+
+    .profile-tiles .tile,
+    .profile-tiles .tile:first-child {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      border: 0;
+    }
+
+    .profile-tiles .tile + .tile {
+      border-left: 1px solid var(--color-border);
+    }
+
+    .profile-tiles .tile b {
+      order: -1;
+      margin: 0 0 2px;
+      font-size: var(--text-lg);
+    }
+
+    .profile-identity .profile-tiles .stat-full,
+    .profile-identity .profile-tiles .stat-unit,
+    .profile-tiles .tile .sub,
+    .profile-tiles .tile-label .icon {
+      display: none;
+    }
+
+    .profile-tiles .tile-label {
+      justify-content: center;
+      white-space: normal;
+    }
+
+    .profile-identity .profile-tiles .stat-short {
+      display: inline;
+    }
+
+    .profile-tiles .stat-unit-short {
+      color: var(--color-fg-muted);
+      font-size: var(--text-xs);
+    }
+
+    .profile-tiles .profile-level {
+      display: none;
+    }
+
+    .profile-level-line {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 6px 0 0;
+      color: var(--color-fg-muted);
+      font-size: var(--text-xs);
+    }
+
+    .profile-level-line b {
+      color: var(--color-accent);
+      font-size: var(--text-sm);
+    }
+
+    .profile-level-line .bar {
+      flex: none;
+      width: 48px;
+      margin: 0;
+    }
+  }
+
+  .profile-most-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .profile-platforms {
+    margin: 6px 0 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  /* Gold, silver and bronze counts, each after a trophy in its color. */
+  .profile-tiles .trophy-counts {
+    display: flex;
+    overflow: visible;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .trophy-counts > span {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .trophy-counts .icon {
+    width: 12px;
+    height: 12px;
+    margin: 0;
+  }
+
+  /* The number's box trimmed to the height of its digits, so the trophy centers on them. */
+  .trophy-counts .trophy-count {
+    display: block;
+    text-box: trim-both cap alphabetic;
+  }
+
+  .trophy-counts .gold .icon {
+    color: var(--color-trophy-gold);
+  }
+
+  .trophy-counts .silver .icon {
+    color: var(--color-trophy-silver);
+  }
+
+  .trophy-counts .bronze .icon {
+    color: var(--color-trophy-bronze);
+  }
+
+  /* "3 platinas": the unit small, on the number's baseline. */
+  .profile-tiles .stat-unit {
+    font-size: var(--text-sm);
+  }
+
+  /* The shared tile style mutes any span in a number: these are the number itself. */
+  .profile-tiles .tile b .stat-full,
+  .profile-tiles .tile b .stat-short {
+    color: inherit;
+    font-size: inherit;
+  }
+
+  /* Full numbers and names on the desktop, short ones (1,9k, Horas) on a phone. */
+  .profile-tiles .stat-short {
+    display: none;
+  }
+
+  .profile-level b {
+    color: var(--color-accent);
+  }
+
+  .profile-level .sub {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .profile-level .bar {
+    flex: none;
+    width: 48px;
+    margin: 0;
+  }
+
+  /* Phone: one column everywhere, and the settings' buttons under their text. Last in the file so it
+     overrides the desktop rules above. */
+  @media (max-width: 760px) {
+    .profile-band,
+    .profile-settings {
       grid-template-columns: 1fr;
     }
 
-    .collection-row {
-      gap: 10px;
+    .profile-band > .card:first-child {
+      grid-column: auto;
     }
 
-    .collection-row .plat-cover {
-      width: 46px;
-      height: 58px;
+    .profile-settings > :nth-child(2) {
+      grid-row: auto;
+      grid-column: auto;
+    }
+
+    .profile-settings .account-card,
+    .profile-settings #telegram-card {
+      grid-template-columns: 1fr;
+    }
+
+    .profile-settings .account-actions {
+      margin-top: 14px;
     }
   }
 }
