@@ -153,4 +153,8 @@
     color: var(--color-fg-muted);
     font-size: var(--text-md);
   }
+
+  .account-actions {
+    margin-top: 14px;
+  }
 }

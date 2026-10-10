@@ -1,5 +1,12 @@
 /** Trophy guide card: quick facts, roadmap, missables, key trophies and known bugs. */
-import { Fragment, type KeyboardEvent, useRef, useState } from 'react'
+import {
+  Fragment,
+  type KeyboardEvent,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtRate } from '../lib/format'
@@ -22,7 +29,6 @@ const messages = defineMessages({
     notes: {
       heading: 'Antes de começar',
       collectibles: 'Colecionáveis',
-      pointOfNoReturn: 'Ponto sem retorno',
       autopop: 'Autopop PS4 / PS5',
     },
     bugStatus: {
@@ -107,13 +113,19 @@ const messages = defineMessages({
     tabs: {
       label: 'Seções do guia',
       summary: 'Resumo',
-      key: 'Troféus-chave',
+      key: 'Macetes',
       missables: 'Perdíveis',
       missablesSkeleton: 'Perdíveis',
       roadmap: 'Roadmap',
       glossary: 'Glossário',
     },
-    earlyTips: 'Dicas para o começo',
+    earlyTips: 'Durante a história',
+    watchOut: 'Fique de olho',
+    pointOfNoReturn: 'Ponto sem volta:',
+    missableLabel: { one: 'Perdível:', other: 'Perdíveis:' },
+    missableCount: { one: '{count} troféu', other: '{count} troféus' },
+    missableHow: 'Ver como pegar',
+    afterEnding: 'Depois do final',
     sources: 'Fontes: {sources}',
     queuedTitle: 'Sua próxima conquista começa aqui.',
     queued:
@@ -132,7 +144,6 @@ const messages = defineMessages({
     notes: {
       heading: 'Before you start',
       collectibles: 'Collectibles',
-      pointOfNoReturn: 'Point of no return',
       autopop: 'PS4 / PS5 autopop',
     },
     bugStatus: {
@@ -217,13 +228,19 @@ const messages = defineMessages({
     tabs: {
       label: 'Guide sections',
       summary: 'Summary',
-      key: 'Key trophies',
+      key: 'Tricks',
       missables: 'Missables',
       missablesSkeleton: 'Missables',
       roadmap: 'Roadmap',
       glossary: 'Glossary',
     },
-    earlyTips: 'Tips for the start',
+    earlyTips: 'While you play the story',
+    watchOut: 'Watch out',
+    pointOfNoReturn: 'Point of no return:',
+    missableLabel: { one: 'Missable:', other: 'Missables:' },
+    missableCount: { one: '{count} trophy', other: '{count} trophies' },
+    missableHow: 'See how to get them',
+    afterEnding: 'After the ending',
     sources: 'Sources: {sources}',
     queuedTitle: 'Your next achievement starts here.',
     queued:
@@ -273,7 +290,6 @@ function GuideNotes({ g }: { g: GuideDetail }) {
   const notes = (
     [
       ['layers', t('notes.collectibles'), g.collectibles],
-      ['compass', t('notes.pointOfNoReturn'), g.pointOfNoReturn],
       ['refresh', t('notes.autopop'), g.autopop],
     ] as const
   ).filter(([, , content]) => content)
@@ -694,7 +710,9 @@ function Missable({ c, m }: { c: GuideGame; m: NonNullable<GuideDetail['missable
             </span>
           )}
         </div>
-        <p className="missable-when">{m.when}</p>
+        <p className="missable-when">
+          <GuideText text={m.when} />
+        </p>
         <p className="muted">
           <GuideText text={m.how} />
         </p>
@@ -742,6 +760,50 @@ function PhaseGoal({ text }: { text: string }) {
     </div>
   )
 }
+
+// A guide field written one step per line, as a list.
+const lines = (text?: string | null) =>
+  (text ?? '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+
+// One moment of the game in the summary (during the story, what can be lost, after the ending). An item
+// can open with a label ("Perdíveis:"), set apart from the game's names in bold.
+type Moment = string | { label: string; text: string; action?: ReactNode }
+function MomentList({ title, items }: { title: string; items: Moment[] }) {
+  if (!items.length) return null
+  return (
+    <>
+      <h2 style={{ marginTop: 14 }}>{title}</h2>
+      <ul>
+        {items.map((m) =>
+          typeof m === 'string' ? (
+            <li key={m}>
+              <GuideText text={m} />
+            </li>
+          ) : (
+            <li key={m.label + m.text}>
+              <b className="moment-label">{m.label}</b> <GuideText text={m.text} />
+              {m.action && <> {m.action}</>}
+            </li>
+          ),
+        )}
+      </ul>
+    </>
+  )
+}
+
+// Missables that happen at the same moment read as one line: the moment once, then the trophies.
+function missablesByMoment(missables: GuideDetail['missables']) {
+  const byWhen = new Map<string, string[]>()
+  for (const m of missables) byWhen.set(m.when, [...(byWhen.get(m.when) ?? []), m.trophy])
+  return [...byWhen].map(([when, trophies]) => ({ when, trophies }))
+}
+
+// "Não há ponto sem volta..." is not a warning: leave it out of "watch out".
+const noPointOfNoReturn = (text?: string | null) =>
+  /^(não há|nao ha|não existe|nenhum|sem|there is no|no )\b/i.test(lines(text)[0] ?? '')
 
 export function GuideSkeleton() {
   const t = useMessages(messages)
@@ -828,6 +890,22 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
     if (el) setMoreTabs(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
   }
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  // The bar under the active tab slides to the chosen one: its place and width go to the tab row as
+  // CSS variables, kept in step with the row's size (fonts loading, a narrower screen).
+  useLayoutEffect(() => {
+    const row = tabsRef.current
+    const place = () => {
+      const tab = tabRefs.current[selected]
+      if (!row || !tab) return
+      row.style.setProperty('--tab-bar-left', `${tab.offsetLeft}px`)
+      row.style.setProperty('--tab-bar-width', `${tab.offsetWidth}px`)
+    }
+    place()
+    if (!row) return
+    const watch = new ResizeObserver(place)
+    watch.observe(row)
+    return () => watch.disconnect()
+  })
   const g = c?.guide
   // A list without a platinum (short games, live-service ones) still has a guide: for the 100%.
   const noPlatinum = !!c?.trophies?.length && !c.trophies.some((t) => t.type === 'platinum')
@@ -863,9 +941,9 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   const earlyTips = g.earlyTips ?? []
   const tabs: [string, number | null][] = [
     [tr('tabs.summary'), null],
+    [tr('tabs.roadmap'), roadmap.length],
     [tr('tabs.key'), null],
     [tr('tabs.missables'), missables.length],
-    [tr('tabs.roadmap'), roadmap.length],
     [tr('tabs.glossary'), glossary.length],
   ]
   const panels = [
@@ -875,35 +953,38 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
         <GuideText text={g.overview} />
       </p>
       <GuideNotes g={g} />
-      {earlyTips.length > 0 && (
-        <>
-          <h2 style={{ marginTop: 14 }}>{tr('earlyTips')}</h2>
-          <ul>
-            {earlyTips.map((t) => (
-              <li key={t}>
-                <GuideText text={t} />
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      <MomentList title={tr('earlyTips')} items={earlyTips} />
+      <MomentList
+        title={tr('watchOut')}
+        items={[
+          ...missablesByMoment(missables).map((m) => ({
+            label: tr('missableLabel', { count: m.trophies.length }),
+            text:
+              m.trophies.length === 1
+                ? `**${m.trophies[0]}** — ${m.when}`
+                : `${tr('missableCount', { count: m.trophies.length })} — ${m.when}`,
+            action: (
+              <button
+                type="button"
+                className="moment-action"
+                onClick={() =>
+                  setSelected(tabs.findIndex(([name]) => name === tr('tabs.missables')))
+                }
+              >
+                {tr('missableHow')} <Icon name="arrow-right" />
+              </button>
+            ),
+          })),
+          ...(g.pointOfNoReturn && !noPointOfNoReturn(g.pointOfNoReturn)
+            ? [{ label: tr('pointOfNoReturn'), text: lines(g.pointOfNoReturn).join('\n') }]
+            : []),
+        ]}
+      />
+      <MomentList title={tr('afterEnding')} items={lines(g.postgame)} />
       {g.sources?.length ? (
         <SourceNote text={tr('sources', { sources: g.sources.join(', ') })} />
       ) : null}
     </Fragment>,
-    <KeyTrophies key="key" c={c} g={g} />,
-    missables.length ? (
-      <Fragment key="missables">
-        {missables.map((m, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: one trophy can be missable in two places; the list never reorders
-          <Missable key={`${m.trophy}-${i}`} c={c} m={m} />
-        ))}
-      </Fragment>
-    ) : (
-      <EmptyState key="missables" className="inline-status">
-        <Icon name="shield" /> {tr('noMissables')}
-      </EmptyState>
-    ),
     <ul key="roadmap" className="clean guide-roadmap">
       {roadmap.map((r, i) => (
         <li key={r.phase} style={{ margin: '0 0 14px' }}>
@@ -922,6 +1003,19 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
         </li>
       ))}
     </ul>,
+    <KeyTrophies key="key" c={c} g={g} />,
+    missables.length ? (
+      <Fragment key="missables">
+        {missables.map((m, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: one trophy can be missable in two places; the list never reorders
+          <Missable key={`${m.trophy}-${i}`} c={c} m={m} />
+        ))}
+      </Fragment>
+    ) : (
+      <EmptyState key="missables" className="inline-status">
+        <Icon name="shield" /> {tr('noMissables')}
+      </EmptyState>
+    ),
     <Glossary key="glossary" items={glossary} />,
   ]
   const onKeyDown = (event: KeyboardEvent, index: number) => {
@@ -986,6 +1080,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
             // biome-ignore lint/suspicious/noArrayIndexKey: the five panels are fixed, one per tab
             key={i}
             role="tabpanel"
+            className="guide-panel"
             id={`${id}-panel-${i}`}
             aria-labelledby={`${id}-tab-${i}`}
             data-panel={i}
