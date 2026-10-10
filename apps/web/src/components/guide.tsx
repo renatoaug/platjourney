@@ -865,7 +865,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
         <Icon name="shield" /> {tr('noMissables')}
       </EmptyState>
     ),
-    <ul key="roadmap" className="clean">
+    <ul key="roadmap" className="clean guide-roadmap">
       {roadmap.map((r, i) => (
         <li key={r.phase} style={{ margin: '0 0 10px' }}>
           <b className="display" style={{ color: 'var(--color-accent)' }}>
