@@ -347,11 +347,12 @@ describe('checkUser', () => {
 
   test('with notices off, trophies get a plain notice', async () => {
     config.automatic.notices = false
+    spyOn(Math, 'random').mockReturnValue(0)
     const reaction = spyOn(nexo, 'unlockReaction')
     await checkUser(user)
     expect(reaction).not.toHaveBeenCalled()
     const text =
-      '🏆 Segundo (ouro, 12,5% de quem joga) em Days Gone\n\nAgora vale saber:\n• Compre o arco.'
+      '🏆 Segundo (ouro, 12,5% de quem joga) em Days Gone\n\nMetade do jogo base: 2 de 3 troféus. Metade do caminho! Daqui pra frente a platina só fica mais perto.\n\nAgora vale saber:\n• Compre o arco.'
     expect(logTip).toHaveBeenCalledWith(user.id, 'unlock', text, game.id)
     expect(send.mock.calls).toEqual([['42', text]])
   })

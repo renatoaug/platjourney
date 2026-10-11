@@ -25,6 +25,8 @@ class TipRequest(Wire):
     route: str | None = None
     # The session's focus, the server's pick ("unlock"): the notice names it, never another.
     focus: nexo.Focus | None = None
+    # The point of the journey this unlock reached, the server's pick ("unlock").
+    mark: nexo.Mark | None = None
 
 
 class TrophyHelpRequest(Wire):
@@ -40,7 +42,7 @@ class ReplyRequest(Wire):
 
 @router.post('/tip')
 async def tip(body: TipRequest) -> Answer:
-    text = await nexo.tip(body.kind, body.context, body.unlocked, body.route, body.focus)
+    text = await nexo.tip(body.kind, body.context, body.unlocked, body.route, body.focus, body.mark)
     return Answer(text=text)
 
 
