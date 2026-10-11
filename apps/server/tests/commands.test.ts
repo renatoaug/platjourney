@@ -20,7 +20,7 @@ let send: ReturnType<typeof spyOn>
 
 beforeEach(() => {
   send = spyOn(telegram, 'sendMessage').mockResolvedValue()
-  spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
+  spyOn(watcher, 'getChat').mockReturnValue(undefined)
   spyOn(lib, 'library').mockResolvedValue(titles)
   spyOn(lib, 'ownedGames').mockResolvedValue([])
 })
@@ -44,7 +44,7 @@ test('game commands wait for the profile to load', async () => {
 })
 
 test('status lists the most common missing trophies', async () => {
-  spyOn(watcher, 'getCurrent').mockReturnValue(
+  spyOn(watcher, 'getChat').mockReturnValue(
     makeContext({
       trophies: [
         makeTrophy({ name: 'Raro', earnedRate: 2 }),
@@ -64,18 +64,18 @@ test('status lists the most common missing trophies', async () => {
 })
 
 test('guide sums up the guide, or says it is not ready', async () => {
-  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext())
+  spyOn(watcher, 'getChat').mockReturnValue(makeContext())
   expect(await handleCommand(user, '/guide')).toBe(
     'Ainda não montei o guia de Days Gone. Tenta de novo em 1 minuto.',
   )
   spyOn(guide, 'guideSummary').mockReturnValue('resumo')
-  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext({ guide: {} as Guide }))
+  spyOn(watcher, 'getChat').mockReturnValue(makeContext({ guide: {} as Guide }))
   expect(await handleCommand(user, '/guide')).toBe('Days Gone\nresumo')
 })
 
 test('plan checks the minutes and tells a linked chat it is working', async () => {
   const ctx = makeContext()
-  spyOn(watcher, 'getCurrent').mockReturnValue(ctx)
+  spyOn(watcher, 'getChat').mockReturnValue(ctx)
   const plan = spyOn(planner, 'planSession').mockResolvedValue({} as never)
   spyOn(planner, 'planReport').mockReturnValue('o plano')
   expect(await handleCommand(user, '/plan 5')).toBe('Uso: /plan <minutos entre 15 e 600>')
@@ -88,7 +88,7 @@ test('plan checks the minutes and tells a linked chat it is working', async () =
 })
 
 test('next lists the closest platinums, skipping the current game', async () => {
-  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext())
+  spyOn(watcher, 'getChat').mockReturnValue(makeContext())
   const rank = spyOn(ranking, 'rankNextPlatinum').mockResolvedValue([
     { game: makeGame({ name: 'Ghost' }), baseProgress: 90, remaining: 3 },
   ] as never)
@@ -96,13 +96,13 @@ test('next lists the closest platinums, skipping the current game', async () => 
   expect(out).toContain('1. Ghost — 90%, faltam 3 troféus')
   expect(rank).toHaveBeenCalledWith(titles, user, 8, ['NPWR1'])
   rank.mockResolvedValue([])
-  spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
+  spyOn(watcher, 'getChat').mockReturnValue(undefined)
   expect(await handleCommand(user, '/next')).toBe('Não achei jogo em andamento com platina.')
   expect(rank).toHaveBeenLastCalledWith(titles, user, 8, [])
 })
 
 test('game switches the conversation to a title found by part of its name', async () => {
-  const set = spyOn(watcher, 'setCurrent').mockResolvedValue(
+  const set = spyOn(watcher, 'setChat').mockResolvedValue(
     makeContext({ title: titles[1], guide: {} as Guide }),
   )
   expect(await handleCommand(user, '/game')).toBe('Uso: /game <parte do nome>')

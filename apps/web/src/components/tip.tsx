@@ -60,8 +60,11 @@ export const titleHref = (gameId: string) => `/title/game/${encodeURIComponent(g
 
 /** The chat, opening on a game: a PSN list id for one in the player's library, a game id
  * (`game:…`) for one outside it. */
-export const nexoHref = (np?: string | null, name?: string | null) =>
-  np ? `/nexo?${new URLSearchParams({ game: np, ...(name ? { name } : {}) })}` : '/nexo'
+/** Nexo on a game; with a trophy, the chat opens with it attached to the question box. */
+export const nexoHref = (np?: string | null, name?: string | null, trophy?: string | null) =>
+  np
+    ? `/nexo?${new URLSearchParams({ game: np, ...(name ? { name } : {}), ...(trophy ? { trophy } : {}) })}`
+    : '/nexo'
 
 export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?: boolean }) {
   const tr = useMessages(messages)

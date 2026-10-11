@@ -17,7 +17,7 @@ import { recommendationReport, recommendations } from './recommend.ts'
 import { type User, updateUser } from './repository/user.ts'
 import { serverReport } from './servers.ts'
 import { sendMessage } from './telegram.ts'
-import { getCurrent, setCurrent } from './watcher.ts'
+import { getChat, setChat } from './watcher.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -163,7 +163,7 @@ export function commandMenu(locale: Locale): { command: string; description: str
 export async function handleCommand(user: User, text: string): Promise<string | undefined> {
   const [cmd, ...rest] = text.split(' ')
   const arg = rest.join(' ').trim()
-  const ctx = getCurrent(user)
+  const ctx = getChat(user)
   const locale = userLocale(user)
   const t = translator(messages, locale)
   const say = (s: string) =>
@@ -224,7 +224,7 @@ export async function handleCommand(user: User, text: string): Promise<string | 
       const hit = (await titles()).find((ti) => ti.name.toLowerCase().includes(arg.toLowerCase()))
       if (!hit) return t('gameNotFound', { query: arg })
       await say(t('gameLoading', { name: hit.name }))
-      const next = await setCurrent(user, hit)
+      const next = await setChat(user, hit)
       const switched = t('gameSwitched', {
         name: next.title.name,
         progress: shownProgress(user, next.title, next.groups).progress,

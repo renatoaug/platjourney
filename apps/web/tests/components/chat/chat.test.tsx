@@ -69,6 +69,37 @@ describe('NexoChat', () => {
     expect(screen.getByRole('img', { name: 'Nexo está preparando uma resposta' })).toBeTruthy()
   })
 
+  test('a trophy from a tip link sits on the box and every question names it', () => {
+    const onSend = mock()
+    const onClearTrophy = mock()
+    render(
+      <MemoryRouter>
+        <NexoChat
+          chat={[]}
+          sending={false}
+          subtitle="Falando sobre DAYS GONE (13%)."
+          onSend={onSend}
+          trophy="Variedade dá gosto à vida"
+          onClearTrophy={onClearTrophy}
+          note="Você estava em Ghost of Tsushima."
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('Você estava em Ghost of Tsushima.')).toBeTruthy()
+    expect(box().getAttribute('placeholder')).toBe('Pergunte algo sobre esse troféu…')
+    fireEvent.click(screen.getByRole('button', { name: 'Como pegar?' }))
+    expect(onSend).toHaveBeenCalledWith('Sobre o troféu **Variedade dá gosto à vida**: Como pegar?')
+    fireEvent.change(box(), { target: { value: 'Onde fica a besta?' } })
+    fireEvent.keyDown(box(), { key: 'Enter' })
+    expect(onSend).toHaveBeenLastCalledWith(
+      'Sobre o troféu **Variedade dá gosto à vida**: Onde fica a besta?',
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Tirar o troféu Variedade dá gosto à vida da pergunta' }),
+    )
+    expect(onClearTrophy).toHaveBeenCalled()
+  })
+
   test('a suggestion sends its full question', () => {
     const onSend = mock()
     show(messages, { onSend })

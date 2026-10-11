@@ -274,6 +274,12 @@
       align-items: stretch;
     }
 
+    /* In a column, flex: 1 would stretch the chat to its whole conversation and the page would
+       scroll instead of the log: the chat keeps its own height. */
+    .nexo-layout > .chat-page {
+      flex: none;
+    }
+
     .nexo-threads-toggle {
       display: inline-flex;
       align-self: flex-start;

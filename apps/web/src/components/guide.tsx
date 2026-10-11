@@ -51,6 +51,7 @@ const messages = defineMessages({
         other: '{count} dicas',
       },
       source: 'Fonte: {source}',
+      ask: 'Perguntar ao Nexo',
       noTricks: 'Nenhum macete registrado',
       noTricksHint: 'Consulte o roadmap para planejar a ordem das conquistas.',
       cautions: 'Cuidados para a platina',
@@ -161,6 +162,7 @@ const messages = defineMessages({
         other: '{count} tips',
       },
       source: 'Source: {source}',
+      ask: 'Ask Nexo',
       noTricks: 'No tricks recorded',
       noTricksHint: 'Check the roadmap to plan the order of your trophies.',
       cautions: 'Platinum watch-outs',
@@ -430,6 +432,7 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
                         {tr('key.playersEarned', { rate: fmtRate(trophy.earnedRate) })}
                       </span>
                     )}
+                    <AskNexo c={c} trophy={f.item.trophy} earned={trophy?.earned} />
                   </div>
                 </details>
               )
@@ -468,6 +471,7 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
                         <GuideText text={t.trick} />
                       </p>
                       {t.source && <SourceNote text={tr('key.source', { source: t.source })} />}
+                      <AskNexo c={c} trophy={t.trophy} earned={trophy?.earned} />
                     </div>
                   </details>
                 )
@@ -730,8 +734,21 @@ function Missable({
         <p className="muted">
           <GuideText text={m.how} />
         </p>
+        <AskNexo c={c} trophy={m.trophy} earned={trophy?.earned} />
       </div>
     </div>
+  )
+}
+
+// A trophy's way into the chat: Nexo opens on the game with this trophy attached to the question.
+function AskNexo({ c, trophy, earned }: { c: GuideGame; trophy: string; earned?: boolean }) {
+  const tr = useMessages(messages)
+  if (earned || !c.np) return null
+  return (
+    <Link className="key-ask" to={nexoHref(c.np, c.name, trophy)}>
+      <Icon name="nexo" />
+      {tr('key.ask')}
+    </Link>
   )
 }
 

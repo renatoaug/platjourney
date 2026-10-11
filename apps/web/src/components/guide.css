@@ -1192,4 +1192,24 @@
       background: color-mix(in srgb, var(--color-trophy-gold) var(--alpha-soft), transparent);
     }
   }
+
+  /* Under a tip or a missable: ask Nexo about that trophy, quiet until hovered. */
+  .key-ask {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 10px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    text-decoration: none;
+  }
+
+  .key-ask:hover {
+    color: var(--color-accent);
+  }
+
+  .key-ask .icon {
+    width: 14px;
+    height: 14px;
+  }
 }

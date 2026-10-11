@@ -58,6 +58,15 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Texto colado cortado em {max} caracteres · ',
     placeholder: 'Nexo, qual é o próximo passo?',
+    trophy: {
+      about: 'Sobre o troféu **{trophy}**: {text}',
+      placeholder: 'Pergunte algo sobre esse troféu…',
+      label: 'Perguntando sobre o troféu',
+      remove: 'Tirar o troféu {trophy} da pergunta',
+      how: 'Como pegar?',
+      missable: 'Dá pra perder?',
+      when: 'Quando fazer?',
+    },
     placeholderCommands: 'Nexo, qual é o próximo passo? Digite / para ver os comandos',
     send: 'Enviar',
     menu: {
@@ -124,6 +133,15 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Pasted text cut at {max} characters · ',
     placeholder: 'Nexo, what is the next step?',
+    trophy: {
+      about: 'About the trophy **{trophy}**: {text}',
+      placeholder: 'Ask something about this trophy…',
+      label: 'Asking about the trophy',
+      remove: 'Take the trophy {trophy} out of the question',
+      how: 'How do I get it?',
+      missable: 'Can I miss it?',
+      when: 'When should I do it?',
+    },
     placeholderCommands: 'Nexo, what is the next step? Type / for commands',
     send: 'Send',
     menu: {
@@ -374,6 +392,9 @@ export function NexoChat({
   onPickGame,
   switching = null,
   readOnly,
+  trophy = null,
+  onClearTrophy,
+  note,
 }: {
   chat: ChatLoad
   /** A question is out: the pending bubble shows and the send controls are disabled. */
@@ -391,6 +412,11 @@ export function NexoChat({
   switching?: string | null
   /** Reading a conversation that is not the chat's game: this note stands in for the box. */
   readOnly?: ReactNode
+  /** A trophy the player came to ask about: it sits on the box and every question names it. */
+  trophy?: string | null
+  onClearTrophy?: () => void
+  /** A discreet line under the subtitle (the game the player was on before a link switched it). */
+  note?: ReactNode
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
@@ -414,6 +440,14 @@ export function NexoChat({
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll whenever the log changes
   useLayoutEffect(() => {
     if (log.current && !demo) log.current.scrollTop = log.current.scrollHeight
+    // Late layout (fonts, covers, a phone where the page scrolls rather than the log) can leave the
+    // view short of the last message: put it in view once things settle.
+    const raf = requestAnimationFrame(() => {
+      if (!log.current || demo) return
+      log.current.scrollTop = log.current.scrollHeight
+      log.current.lastElementChild?.scrollIntoView?.({ block: 'end' })
+    })
+    return () => cancelAnimationFrame(raf)
   }, [chat, sending])
 
   // Opening the screen: jump to the latest message; on desktop, ready to type.
@@ -429,7 +463,8 @@ export function NexoChat({
   const send = (value: string) => {
     if (!value || sending) return
     setText('')
-    onSend(value)
+    // The trophy goes in the message itself, so Nexo focuses on it and the log says what was asked.
+    onSend(trophy ? t('trophy.about', { trophy, text: value }) : value)
   }
 
   // Commands, as in Telegram: "/" lists them, "/game <name>" lists the player's games. A command
@@ -567,7 +602,7 @@ export function NexoChat({
                     </>
                   ) : (
                     <>
-                      {subtitle}
+                      <span className="nexo-sub-text">{subtitle}</span>
                       <Icon name="chevron-down" />
                     </>
                   )}
@@ -575,26 +610,39 @@ export function NexoChat({
               ) : (
                 <p id="nexo-sub">{demo ? t('demo.subtitle') : subtitle}</p>
               )}
+              {note && <p className="nexo-note">{note}</p>}
             </div>
           </div>
         </div>
         {!demo && (
           <div className="chips" id="chat-chips">
-            {SUGGESTIONS.map((s) => {
-              const q = t(`suggestions.${s}.q`)
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  className="chip"
-                  data-q={q}
-                  disabled={sending}
-                  onClick={() => send(q)}
-                >
-                  {t(`suggestions.${s}.label`)}
-                </button>
-              )
-            })}
+            {trophy
+              ? (['how', 'missable', 'when'] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    className="chip"
+                    disabled={sending}
+                    onClick={() => send(t(`trophy.${k}`))}
+                  >
+                    {t(`trophy.${k}`)}
+                  </button>
+                ))
+              : SUGGESTIONS.map((s) => {
+                  const q = t(`suggestions.${s}.q`)
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      className="chip"
+                      data-q={q}
+                      disabled={sending}
+                      onClick={() => send(q)}
+                    >
+                      {t(`suggestions.${s}.label`)}
+                    </button>
+                  )
+                })}
           </div>
         )}
       </div>
@@ -631,10 +679,59 @@ export function NexoChat({
           commands={Boolean(searchGames)}
           menuOpen={Boolean(menu && items.length)}
           activeId={mode && items.length ? `chat-menu-${active}` : undefined}
+          attachment={
+            trophy ? (
+              <span className="chat-trophy">
+                <Icon name="trophy" />
+                <b title={t('trophy.label')}>{trophy}</b>
+                <button
+                  type="button"
+                  aria-label={t('trophy.remove', { trophy })}
+                  onClick={() => {
+                    onClearTrophy?.()
+                    input.current?.focus()
+                  }}
+                >
+                  <Icon name="close" />
+                </button>
+              </span>
+            ) : undefined
+          }
         />
       )}
     </div>
   )
+}
+
+// Whether the last line of a text field runs into the counter at its bottom right: the text is laid
+// out again in a hidden copy with the field's font and width, and the end of its last line measured.
+function lastLineReaches(el: HTMLTextAreaElement): boolean {
+  const counter = el.parentElement?.querySelector<HTMLElement>('.chat-count')
+  if (!counter || !el.value) return false
+  const style = getComputedStyle(el)
+  const copy = document.createElement('div')
+  for (const p of [
+    'font',
+    'letterSpacing',
+    'wordSpacing',
+    'lineHeight',
+    'paddingLeft',
+    'boxSizing',
+  ] as const)
+    copy.style[p] = style[p]
+  copy.style.width = `${el.clientWidth - Number.parseFloat(style.paddingRight)}px`
+  copy.style.position = 'absolute'
+  copy.style.visibility = 'hidden'
+  copy.style.whiteSpace = 'pre-wrap'
+  copy.style.overflowWrap = 'break-word'
+  copy.textContent = el.value
+  const end = document.createElement('span')
+  end.textContent = '\u200b'
+  copy.append(end)
+  document.body.append(copy)
+  const reach = end.offsetLeft
+  copy.remove()
+  return reach > el.clientWidth - counter.offsetWidth - 20
 }
 
 /** The message box under the conversation. */
@@ -650,8 +747,11 @@ function ChatForm({
   commands = false,
   menuOpen = false,
   activeId,
+  attachment,
 }: {
   menu?: ReactNode
+  /** What the question is about (a trophy), shown on the box above the text. */
+  attachment?: ReactNode
   /** The box takes commands ("/game"): its placeholder says so. */
   commands?: boolean
   menuOpen?: boolean
@@ -665,16 +765,21 @@ function ChatForm({
   onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void
 }) {
   const t = useMessages(messages)
-  // The field grows with what is typed and only scrolls past its tallest size.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: measure again whenever the text changes
+  // The field grows with what is typed and only scrolls past its tallest size; a trophy coming or
+  // going changes its width, so it is measured again then too.
+  const attached = Boolean(attachment)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: measure again whenever the text or the trophy changes
   useLayoutEffect(() => {
     const el = inputRef.current
     if (!el) return
+    // The counter sits at the end of the last line. Only when that line runs into it does the field
+    // get a strip under the text for the counter; every other line uses the full width.
+    el.classList.toggle('crowded', lastLineReaches(el))
     el.style.height = 'auto'
     const tallest = Number.parseFloat(getComputedStyle(el).maxHeight) || Number.POSITIVE_INFINITY
     el.style.height = `${Math.min(el.scrollHeight + 2, tallest)}px`
     el.style.overflowY = el.scrollHeight + 2 > tallest ? 'auto' : 'hidden'
-  }, [text, inputRef])
+  }, [text, inputRef, attached])
   // A paste longer than what is left is cut by the field; say so instead of losing it quietly.
   const [cut, setCut] = useState(false)
   useEffect(() => {
@@ -687,6 +792,7 @@ function ChatForm({
         {/* The counter sits on the text box itself, not on the field with the note below it. */}
         <div className="chat-box">
           {menu}
+          {attachment}
           <textarea
             // The box takes commands too: "/game" opens a list of games under it.
             role="combobox"
@@ -699,7 +805,11 @@ function ChatForm({
             rows={1}
             maxLength={CHAT_MAX}
             aria-label={t('inputLabel')}
-            placeholder={t(commands ? 'placeholderCommands' : 'placeholder')}
+            placeholder={
+              attachment
+                ? t('trophy.placeholder')
+                : t(commands ? 'placeholderCommands' : 'placeholder')
+            }
             autoComplete="off"
             value={text}
             onChange={(e) => onText(e.target.value)}

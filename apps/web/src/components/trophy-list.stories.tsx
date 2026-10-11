@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
 import { current } from '../fixtures'
 import type { Trophy } from '../lib/types'
-import { helpAnswers, TrophyList } from './trophy-list'
+import { TrophyList } from './trophy-list'
 
 const meta: Meta = { title: 'Game/TrophyList' }
 export default meta
@@ -47,21 +47,9 @@ const card = (children: ReactNode) => (
 
 export const Loaded: Story = { render: () => card(<TrophyList trophies={many} />) }
 
-/** "Pedir dica" with one answer in and one on its way. The other buttons would ask the real server. */
+/** "Pedir dica" on each trophy still to earn: a link to Nexo with that trophy attached. */
 export const WithHelp: Story = {
-  render: () => {
-    helpAnswers.set(
-      'story-np',
-      new Map([
-        [
-          8,
-          'Aparece na missão **Segura firme**, no capítulo 3.\n\n- Siga a trilha até a ponte\n- Assista a cena\n\nFonte: Trophy Guides',
-        ],
-        [100, 'loading'],
-      ]),
-    )
-    return card(<TrophyList trophies={many} np="story-np" />)
-  },
+  render: () => card(<TrophyList trophies={many} np="story-np" />),
 }
 
 export const CatalogOnly: Story = {

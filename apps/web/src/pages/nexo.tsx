@@ -25,6 +25,8 @@ const messages = defineMessages({
     subtitleNoGame: 'Escolha um jogo para começar a conversa.',
     subtitleNotOwned: 'Falando sobre {name}, antes de você comprar.',
     switchFailed: 'Não consegui trocar o jogo. Tenta de novo.',
+    playing: 'Seu jogo atual continua {name}.',
+    backTo: 'Falar dele',
     readOnlyGeneral: 'Conversas de antes de o Nexo separar por jogo.',
     backToCurrent: 'Voltar para {name}',
     backToChat: 'Voltar para a conversa',
@@ -36,6 +38,8 @@ const messages = defineMessages({
     subtitleNoGame: 'Pick a game to start the conversation.',
     subtitleNotOwned: 'Talking about {name}, before you buy it.',
     switchFailed: 'Could not switch the game. Try again.',
+    playing: 'Your current game is still {name}.',
+    backTo: 'Talk about it',
     readOnlyGeneral: 'Conversations from before Nexo kept one per game.',
     backToCurrent: 'Back to {name}',
     backToChat: 'Back to the conversation',
@@ -71,15 +75,16 @@ function LiveNexo() {
   // Each game is its own conversation, kept by its key (the game's id, or "none" without a game).
   if (!cache.chats) cache.chats = {}
   const chats = cache.chats as Record<string, ChatMessage[]>
-  const currentKey = data?.current?.game.id ?? 'none'
+  // The chat's game: its own pick when there is one, else the game being played.
+  const chatGame = data?.chat ?? data?.current
+  const currentKey = chatGame?.game.id ?? 'none'
   // Another conversation being read, from the list; null is the chat's own game.
   const [viewing, setViewing] = useState<string | null>(null)
   // A game page's link names the game to open on (?game=…): until the switch lands, the old game's
   // conversation must not flash on screen.
   const [params, setParams] = useSearchParams()
   const incoming = params.get('game')
-  const arriving =
-    incoming !== null && incoming !== data?.current?.np && incoming !== data?.current?.game.id
+  const arriving = incoming !== null && incoming !== chatGame?.np && incoming !== chatGame?.game.id
   const key = viewing ?? currentKey
   const shown = useRef(key)
   shown.current = key
@@ -146,7 +151,7 @@ function LiveNexo() {
     setSending(false)
   }
 
-  const current = data?.current
+  const current = chatGame
   const subtitle = !data
     ? t('subtitleLoading')
     : current
@@ -174,6 +179,10 @@ function LiveNexo() {
   const [switching, setSwitching] = useState<string | null>(() =>
     arriving ? params.get('name') || '…' : null,
   )
+  // The trophy the player came to ask about.
+  const [trophy, setTrophy] = useState<string | null>(null)
+  // The game being played, when the chat talks about another one: a line away, to go back to.
+  const playing = data?.chat && data.current ? data.current : null
   const pickGame = async (game: LibraryGame) => {
     setSwitching(game.name)
     setTarget(game)
@@ -196,15 +205,17 @@ function LiveNexo() {
   }
 
   // A game page's "talk to Nexo" link names the game (?game=<np>&name=…): the chat opens on it.
+  // A trophy tip link names the trophy too (&trophy=…): it is attached to the box.
   const asked = useRef(false)
   useEffect(() => {
     const wanted = params.get('game')
     if (!wanted || asked.current || !data) return
     asked.current = true
+    setTrophy(params.get('trophy'))
     setParams({}, { replace: true })
     // A PSN list id for a game in the library, a game id for one outside it.
     const byGame = wanted.startsWith('game:')
-    if (byGame ? data.current?.game.id === wanted : data.current?.np === wanted) return
+    if (byGame ? chatGame?.game.id === wanted : chatGame?.np === wanted) return
     void pickGame({
       ...(byGame ? { game: wanted } : { np: wanted }),
       name: params.get('name') ?? '',
@@ -213,8 +224,14 @@ function LiveNexo() {
 
   // A conversation from the list: the chat's game is just shown; another game of the library becomes
   // the chat's game; one outside the library, or the old messages without a game, is read only.
+  // A game the player chose here (a command or the list): the trophy and the way back no longer apply.
+  const chooseGame = (game: LibraryGame) => {
+    setTrophy(null)
+    void pickGame(game)
+  }
   const pickThread = (thread: ChatThread) => {
     setSheet(false)
+    setTrophy(null)
     const k = threadKey(thread)
     if (k === currentKey) setViewing(null)
     else if (thread.np) void pickGame({ np: thread.np, name: thread.name ?? '' } as LibraryGame)
@@ -289,8 +306,28 @@ function LiveNexo() {
           subtitle={subtitle}
           onSend={send}
           searchGames={searchGames}
-          onPickGame={pickGame}
+          onPickGame={chooseGame}
           switching={switching}
+          trophy={trophy}
+          onClearTrophy={() => setTrophy(null)}
+          note={
+            playing && !switching ? (
+              <>
+                {t('playing', { name: playing.name })}{' '}
+                <button
+                  type="button"
+                  onClick={() =>
+                    chooseGame({
+                      ...(playing.np ? { np: playing.np } : { game: playing.game.id }),
+                      name: playing.name,
+                    } as LibraryGame)
+                  }
+                >
+                  {t('backTo')}
+                </button>
+              </>
+            ) : undefined
+          }
         />
       </div>
     </Page>
