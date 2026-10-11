@@ -318,8 +318,15 @@ MARK_PROMPTS = {
 }
 
 
+# The message already opens with our own line for the mark: Nexo goes straight to the content.
+MARK_OPENING = (
+    ' A mensagem já abre com uma frase nossa comemorando este momento: não comemore de novo, '
+    'vá direto ao conteúdo.'
+)
+
+
 def mark_prompt(mark: Mark) -> str:
-    return MARK_PROMPTS[mark.kind].format(
+    return MARK_OPENING + MARK_PROMPTS[mark.kind].format(
         earned=mark.earned,
         total=mark.total,
         left=len(mark.remaining),

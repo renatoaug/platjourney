@@ -196,7 +196,7 @@ export const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['
     count: mark.remaining.length,
     remaining: mark.remaining.join(', '),
   })
-  return `${line} ${markCheer(user, mark.kind)}`
+  return `${markCheer(user, mark.kind)} ${line}`
 }
 
 export const together = (...parts: (string | undefined)[]) => parts.filter(Boolean).join('\n\n')
@@ -360,8 +360,9 @@ async function check(user: User): Promise<void> {
         user,
         'unlock',
         together(
-          unlockNotice(user, ctx, unlocked),
-          markNotice(user, ctx, unlocked),
+          [unlockNotice(user, ctx, unlocked), markNotice(user, ctx, unlocked)]
+            .filter(Boolean)
+            .join('\n'),
           focusNotice(user, ctx, unlocked),
           route,
         ),

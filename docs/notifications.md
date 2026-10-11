@@ -38,7 +38,7 @@ Some unlocks reach a point of the journey, and that notice marks it. The count i
 
 When one unlock reaches two marks (a short list), the later one wins: platinum, then final stretch, then halfway, then first trophy.
 
-After Nexo's words, the notice closes with a line in PlatJourney's own voice, one of three per mark picked at random, written in `apps/server/src/marks.ts` (for example "Tá aberta a porteira! Agora é um troféu atrás do outro até a platina."). The plain notice gets a fixed line for the mark ("Metade do jogo base: 20 de 40 troféus.") followed by the same kind of line.
+Right under the 🏆 title, the notice opens with a line in PlatJourney's own voice, one of three per mark picked at random, written in `apps/server/src/marks.ts` (for example "Tá aberta a porteira! Agora é um troféu atrás do outro até a platina."). Nexo's words follow it, told not to celebrate again. The plain notice opens with the same kind of line, followed by a fixed line for the mark ("Metade do jogo base: 20 de 40 troféus.").
 
 ## Rules that keep it clean
 
