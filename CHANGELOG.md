@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.0](https://github.com/renatoaug/platjourney/compare/v0.9.0...v0.10.0) (2026-10-11)
+
+### Features
+
+* **nexo:** ask about a trophy from anywhere, the chat keeps its own game ([#33](https://github.com/renatoaug/platjourney/issues/33)) ([f721b64](https://github.com/renatoaug/platjourney/commit/f721b6410517ff0af494568aed8be7f2dd3ab92b))
+
 ## [0.9.0](https://github.com/renatoaug/platjourney/compare/v0.8.2...v0.9.0) (2026-10-10)
 
 ### Features
