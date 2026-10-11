@@ -779,8 +779,9 @@
     margin-top: 2px;
   }
 
-  .chatform .chat-trophy {
-    margin-top: 1px;
+  /* The tag is taller than a line of text: the first line drops to its middle, the next lines follow. */
+  .chatform .chat-box .chat-line:has(.chat-trophy) textarea {
+    padding-top: 6px;
   }
 
   /* Phone: the tag takes its own line above the text, smaller and quieter. */
@@ -789,8 +790,9 @@
       flex-wrap: wrap;
     }
 
-    .chat-line:has(.chat-trophy) textarea {
+    .chatform .chat-box .chat-line:has(.chat-trophy) textarea {
       flex-basis: 100%;
+      padding-top: 0;
     }
 
     .chatform .chat-trophy {
