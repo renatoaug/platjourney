@@ -473,3 +473,15 @@ def test_a_game_the_player_does_not_own_is_talked_about_before_buying() -> None:
     assert 'ainda não tem este jogo' not in nexo.lean_context(ctx)
     ctx.owned = False
     assert 'O jogador ainda não tem este jogo' in nexo.lean_context(ctx)
+
+
+def test_unlock_prompt_marks_the_journey() -> None:
+    first = nexo.mark_prompt(nexo.Mark(kind='first', earned=1, total=40))
+    assert 'primeiro troféu' in first
+    half = nexo.mark_prompt(nexo.Mark(kind='half', earned=20, total=40))
+    assert '20 de 40' in half
+    final = nexo.mark_prompt(
+        nexo.Mark(kind='final', earned=37, total=40, remaining=['A', 'B', 'C'])
+    )
+    assert 'faltam 3' in final and 'A, B, C' in final
+    assert 'platina' in nexo.mark_prompt(nexo.Mark(kind='platinum', earned=40, total=40))

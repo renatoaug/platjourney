@@ -5,7 +5,7 @@ import logging
 import re
 from typing import Any, Literal, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from . import costs, db, deepguide, llm
 from .config import settings
@@ -286,6 +286,54 @@ class Missable(Wire):
     when: str
 
 
+class Mark(Wire):
+    """A point in the player's progress that this unlock reached, picked by the server: the first
+    trophy, half of the base game, the final stretch or the platinum."""
+
+    kind: Literal['first', 'half', 'final', 'platinum']
+    earned: int
+    total: int
+    # The base game's trophies still to earn, by name ("final").
+    remaining: list[str] = Field(default_factory=list[str])
+
+
+MARK_PROMPTS = {
+    'first': (
+        ' É o primeiro troféu deste jogo: dê as boas-vindas à jornada e diga em uma frase como a '
+        'platina costuma ser (tamanho e dificuldade), sem lista.'
+    ),
+    'half': (
+        ' Com este troféu o jogador passou da metade do jogo base ({earned} de {total}): marque a '
+        'metade com entusiasmo e diga o que mais pesa no que falta.'
+    ),
+    'final': (
+        ' É a reta final: faltam {left} troféus do jogo base para a platina: {remaining}. Liste-os '
+        'pelo nome, um por linha, cada um com a dica mais curta para pegar.'
+    ),
+    'platinum': (
+        ' É a platina! Comemore de verdade em duas ou três linhas: cite a raridade quando até '
+        '15% de quem joga tem, as horas jogadas quando o contexto trouxer, e feche com uma '
+        'despedida do jogo. Não aponte próximo troféu nem passo do roteiro.'
+    ),
+}
+
+
+# The message already opens with our own line for the mark: Nexo goes straight to the content.
+MARK_OPENING = (
+    ' A mensagem já abre com uma frase nossa comemorando este momento: não comemore de novo, '
+    'vá direto ao conteúdo.'
+)
+
+
+def mark_prompt(mark: Mark) -> str:
+    return MARK_OPENING + MARK_PROMPTS[mark.kind].format(
+        earned=mark.earned,
+        total=mark.total,
+        left=len(mark.remaining),
+        remaining=', '.join(mark.remaining),
+    )
+
+
 class Focus(Wire):
     """The session's focus, picked by the server the same way for every notice."""
 
@@ -383,14 +431,21 @@ async def tip(
     unlocked: list[Trophy],
     route: str | None = None,
     focus: Focus | None = None,
+    mark: Mark | None = None,
 ) -> str:
     """An automatic notice: the player started a game or unlocked trophies.
-    With `route`, the guide's note on what comes next goes into the same message."""
+    With `route`, the guide's note on what comes next goes into the same message; with `mark`, the
+    notice marks that point of the journey (first trophy, halfway, final stretch, platinum)."""
     match kind:
         case 'start':
             prompt = start_prompt(ctx)
         case 'unlock':
-            prompt = unlock_prompt(unlocked, ctx.guide, focus)
+            # The platinum closes the journey: no next trophy to point at.
+            prompt = unlock_prompt(
+                unlocked, ctx.guide, None if mark and mark.kind == 'platinum' else focus
+            )
+            if mark:
+                prompt += mark_prompt(mark)
     if route:
         prompt += ROUTE_PROMPT.format(route=route)
     text = await ask(prompt, lean_context(ctx, [t.name_en for t in unlocked]))

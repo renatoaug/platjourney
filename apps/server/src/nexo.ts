@@ -4,6 +4,7 @@ import { tagged } from './costs.ts'
 import { focusAfter } from './focus.ts'
 import type { Guide } from './guide.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
+import { markCheer, progressMark } from './marks.ts'
 import { aroundModel } from './plugins.ts'
 import type { TitleGroups, TitleProgress, TrophyStatus } from './psn.ts'
 import {
@@ -104,10 +105,13 @@ export async function unlockReaction(
 ): Promise<string> {
   // The target is the server's, the same the session notice named: Nexo does not pick another.
   const focus = focusAfter(ctx, unlocked)
+  // The first trophy, halfway, the final stretch or the platinum: the notice marks it.
+  const mark = progressMark(ctx.trophies, unlocked)
   const text = await ask(user, 'tip', '/nexo/tip', {
     kind: 'unlock',
     context: aiContext(ctx, user),
     unlocked,
+    ...(mark ? { mark } : {}),
     // Without a guide there is no phase or focus to keep: Nexo then reads the context as before.
     ...(focus.phase || focus.trophy || focus.missable
       ? {
@@ -128,7 +132,9 @@ export async function unlockReaction(
     text,
     unlocked.map((t) => t.name),
   )
-  const titled = `${unlocked.map((t) => `🏆 ${t.name}`).join('\n')}\n\n${body}`
+  // At a mark, our own line opens the message under the trophy, and Nexo's words follow it.
+  const cheer = mark ? `\n${markCheer(user, mark.kind)}` : ''
+  const titled = `${unlocked.map((t) => `🏆 ${t.name}`).join('\n')}${cheer}\n\n${body}`
   await logTip(user.id, 'unlock', titled, ctx.game.id)
   return titled
 }

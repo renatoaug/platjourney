@@ -13,6 +13,7 @@ import {
   userLocale,
 } from './i18n.ts'
 import { library } from './library.ts'
+import { markCheer, progressMark } from './marks.ts'
 import { type GameContext, proactiveTip, unlockReaction } from './nexo.ts'
 import { hours, playtimes } from './playtime.ts'
 import { Refused } from './plugins.ts'
@@ -58,6 +59,12 @@ const messages = defineMessages({
     missable: '⚠️ **{trophy}** é perdível: {when}',
     almost: '**Quase lá**: {trophy}, {value} de {target}.',
     focusStill: '**Foco continua**: {trophy}',
+    mark: {
+      first: 'Primeiro troféu de {game}: a jornada começou.',
+      half: 'Metade do jogo base: {earned} de {total} troféus.',
+      final: 'Reta final: faltam {count} para a platina: {remaining}.',
+      platinum: 'Platina de {game}! Parabéns.',
+    },
     focusNew: '**Novo foco**: {trophy}\n{detail}',
     unlocked: '🏆 {trophy} ({type}) em {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% de quem joga) em {game}',
@@ -88,6 +95,12 @@ const messages = defineMessages({
     missable: '⚠️ **{trophy}** is missable: {when}',
     almost: '**Almost there**: {trophy}, {value} of {target}.',
     focusStill: '**Still the focus**: {trophy}',
+    mark: {
+      first: 'First trophy in {game}: the journey has begun.',
+      half: 'Halfway through the base game: {earned} of {total} trophies.',
+      final: 'Final stretch: {count} left to the platinum: {remaining}.',
+      platinum: 'Platinum in {game}! Congratulations.',
+    },
     focusNew: '**New focus**: {trophy}\n{detail}',
     unlocked: '🏆 {trophy} ({type}) in {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% of players) in {game}',
@@ -170,6 +183,20 @@ export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext[
   return focus.changed
     ? t('focusNew', { trophy: focus.trophy.name, detail: focus.trophy.detail })
     : t('focusStill', { trophy: focus.trophy.name })
+}
+
+// The first trophy, halfway, the final stretch or the platinum, for the plain notice.
+export const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
+  const mark = progressMark(ctx.trophies, unlocked)
+  if (!mark) return undefined
+  const line = translator(messages, user)(`mark.${mark.kind}`, {
+    game: gameName(ctx),
+    earned: mark.earned,
+    total: mark.total,
+    count: mark.remaining.length,
+    remaining: mark.remaining.join(', '),
+  })
+  return `${markCheer(user, mark.kind)} ${line}`
 }
 
 export const together = (...parts: (string | undefined)[]) => parts.filter(Boolean).join('\n\n')
@@ -332,7 +359,13 @@ async function check(user: User): Promise<void> {
       await plainNotice(
         user,
         'unlock',
-        together(unlockNotice(user, ctx, unlocked), focusNotice(user, ctx, unlocked), route),
+        together(
+          [unlockNotice(user, ctx, unlocked), markNotice(user, ctx, unlocked)]
+            .filter(Boolean)
+            .join('\n'),
+          focusNotice(user, ctx, unlocked),
+          route,
+        ),
         ctx.game.id,
       )
     else if (route) await plainNotice(user, 'route', route, ctx.game.id)

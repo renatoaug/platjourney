@@ -570,13 +570,19 @@ function PlatinumCollection({
   )
 }
 
+// The same three parts as a number in the header (label, number, caption), so a phone lays it out
+// the same way: number over label, caption hidden. The fifth is the level, hidden on a phone.
 const tileSkeleton = (i: number) => (
-  <div key={i} className="tile">
+  <div key={i} className={`tile${i === 4 ? ' profile-level' : ''}`}>
     <div className="tile-label">
       <Sk w="55%" h={10} />
     </div>
-    <Sk w="40%" h={30} style={{ marginTop: 10 }} />
-    <Sk w="70%" h={9} style={{ marginTop: 10 }} />
+    <b>
+      <Sk w="48px" h={22} />
+    </b>
+    <div className="sub">
+      <Sk w="70%" h={9} />
+    </div>
   </div>
 )
 
@@ -587,8 +593,11 @@ export function ProfileSkeleton() {
       <div className="card profile-hero profile-identity">
         <Sk w="64px" h={64} style={{ borderRadius: '50%', flex: 'none' }} />
         <div className="profile-name">
-          <Sk w="200px" h={30} />
-          <Sk w="160px" h={11} style={{ marginTop: 10 }} />
+          <Sk w="180px" h={28} />
+          <p className="profile-level-line">
+            <Sk w="140px" h={10} />
+          </p>
+          <Sk w="150px" h={11} style={{ marginTop: 8 }} />
         </div>
         {/* Five numbers, the level last, as a full profile shows in its header. */}
         <section className="profile-tiles">
