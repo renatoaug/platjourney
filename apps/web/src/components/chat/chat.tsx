@@ -58,9 +58,10 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Texto colado cortado em {max} caracteres · ',
     placeholder: 'Nexo, qual é o próximo passo?',
+    placeholderShort: 'Pergunte ao Nexo…',
     trophy: {
       about: 'Sobre o troféu **{trophy}**: {text}',
-      placeholder: 'Pergunte algo sobre esse troféu…',
+      placeholder: 'Pergunte sobre o troféu…',
       label: 'Perguntando sobre o troféu',
       remove: 'Tirar o troféu {trophy} da pergunta',
       how: 'Como pegar?',
@@ -133,9 +134,10 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Pasted text cut at {max} characters · ',
     placeholder: 'Nexo, what is the next step?',
+    placeholderShort: 'Ask Nexo…',
     trophy: {
       about: 'About the trophy **{trophy}**: {text}',
-      placeholder: 'Ask something about this trophy…',
+      placeholder: 'Ask about this trophy…',
       label: 'Asking about the trophy',
       remove: 'Take the trophy {trophy} out of the question',
       how: 'How do I get it?',
@@ -703,11 +705,11 @@ export function NexoChat({
   )
 }
 
-// Whether the last line of a text field runs into the counter at its bottom right: the text is laid
-// out again in a hidden copy with the field's font and width, and the end of its last line measured.
-function lastLineReaches(el: HTMLTextAreaElement): boolean {
-  const counter = el.parentElement?.querySelector<HTMLElement>('.chat-count')
-  if (!counter || !el.value) return false
+// Whether the end of a text field's last line runs into a counter of the given width at its bottom
+// right. The text is laid out again in a hidden copy with the field's own font, padding and width,
+// and the point where it ends is read from a marker placed after it.
+function lastLineReaches(el: HTMLTextAreaElement, counterWidth: number): boolean {
+  if (!el.value) return false
   const style = getComputedStyle(el)
   const copy = document.createElement('div')
   for (const p of [
@@ -715,11 +717,15 @@ function lastLineReaches(el: HTMLTextAreaElement): boolean {
     'letterSpacing',
     'wordSpacing',
     'lineHeight',
+    'textTransform',
+    'tabSize',
     'paddingLeft',
-    'boxSizing',
+    'paddingRight',
+    'wordBreak',
   ] as const)
     copy.style[p] = style[p]
-  copy.style.width = `${el.clientWidth - Number.parseFloat(style.paddingRight)}px`
+  copy.style.boxSizing = 'border-box'
+  copy.style.width = `${el.clientWidth}px`
   copy.style.position = 'absolute'
   copy.style.visibility = 'hidden'
   copy.style.whiteSpace = 'pre-wrap'
@@ -731,7 +737,7 @@ function lastLineReaches(el: HTMLTextAreaElement): boolean {
   document.body.append(copy)
   const reach = end.offsetLeft
   copy.remove()
-  return reach > el.clientWidth - counter.offsetWidth - 20
+  return reach > el.clientWidth - counterWidth - 8
 }
 
 /** The message box under the conversation. */
@@ -772,13 +778,22 @@ function ChatForm({
   useLayoutEffect(() => {
     const el = inputRef.current
     if (!el) return
-    // The counter sits at the end of the last line. Only when that line runs into it does the field
-    // get a strip under the text for the counter; every other line uses the full width.
-    el.classList.toggle('crowded', lastLineReaches(el))
-    el.style.height = 'auto'
-    const tallest = Number.parseFloat(getComputedStyle(el).maxHeight) || Number.POSITIVE_INFINITY
-    el.style.height = `${Math.min(el.scrollHeight + 2, tallest)}px`
-    el.style.overflowY = el.scrollHeight + 2 > tallest ? 'auto' : 'hidden'
+    const fit = () => {
+      // The counter sits at the end of the last line, inside the box. Only when the text reaches it
+      // does it move to a line of its own under the text.
+      const box = el.closest('.chat-box')
+      const counter = box?.querySelector<HTMLElement>('.chat-count')
+      box?.classList.toggle('crowded', !!counter && lastLineReaches(el, counter.offsetWidth))
+      el.style.height = 'auto'
+      const tallest = Number.parseFloat(getComputedStyle(el).maxHeight) || Number.POSITIVE_INFINITY
+      el.style.height = `${Math.min(el.scrollHeight + 2, tallest)}px`
+      el.style.overflowY = el.scrollHeight + 2 > tallest ? 'auto' : 'hidden'
+    }
+    fit()
+    // A narrower or wider box wraps the text differently: measure again then.
+    const watch = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit)
+    watch?.observe(el)
+    return () => watch?.disconnect()
   }, [text, inputRef, attached])
   // A paste longer than what is left is cut by the field; say so instead of losing it quietly.
   const [cut, setCut] = useState(false)
@@ -786,48 +801,57 @@ function ChatForm({
     if (text.length < CHAT_MAX) setCut(false)
   }, [text])
   const near = text.length >= CHAT_MAX * 0.8
+  // A phone has no keyboard shortcut to discover and its text is 16px: a short placeholder, on one line.
+  const narrow = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches
   return (
     <form ref={formRef} className="chatform" id="chat-form" onSubmit={onSubmit}>
       <div className="chat-field">
         {/* The counter sits on the text box itself, not on the field with the note below it. */}
         <div className="chat-box">
           {menu}
-          {attachment}
-          <textarea
-            // The box takes commands too: "/game" opens a list of games under it.
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded={menuOpen}
-            aria-controls="chat-menu"
-            aria-activedescendant={activeId}
-            ref={inputRef}
-            id="chat-input"
-            rows={1}
-            maxLength={CHAT_MAX}
-            aria-label={t('inputLabel')}
-            placeholder={
-              attachment
-                ? t('trophy.placeholder')
-                : t(commands ? 'placeholderCommands' : 'placeholder')
-            }
-            autoComplete="off"
-            value={text}
-            onChange={(e) => onText(e.target.value)}
-            onKeyDown={onKeyDown}
-            onPaste={(e) => {
-              const el = e.currentTarget
-              const kept = el.value.length - (el.selectionEnd - el.selectionStart)
-              if (kept + e.clipboardData.getData('text').length > CHAT_MAX) setCut(true)
-            }}
-          />
-          {text.length > 0 && (
-            <span
-              className={`chat-count${near ? ' near' : ''}${text.length >= CHAT_MAX ? ' full' : ''}`}
-              aria-live="polite"
-            >
-              {t('count', { count: text.length, max: CHAT_MAX })}
-            </span>
-          )}
+          <div className="chat-line">
+            {attachment}
+            <textarea
+              // The box takes commands too: "/game" opens a list of games under it.
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={menuOpen}
+              aria-controls="chat-menu"
+              aria-activedescendant={activeId}
+              ref={inputRef}
+              id="chat-input"
+              rows={1}
+              maxLength={CHAT_MAX}
+              aria-label={t('inputLabel')}
+              placeholder={
+                attachment
+                  ? t('trophy.placeholder')
+                  : t(
+                      narrow
+                        ? 'placeholderShort'
+                        : commands
+                          ? 'placeholderCommands'
+                          : 'placeholder',
+                    )
+              }
+              autoComplete="off"
+              value={text}
+              onChange={(e) => onText(e.target.value)}
+              onKeyDown={onKeyDown}
+              onPaste={(e) => {
+                const el = e.currentTarget
+                const kept = el.value.length - (el.selectionEnd - el.selectionStart)
+                if (kept + e.clipboardData.getData('text').length > CHAT_MAX) setCut(true)
+              }}
+            />
+          </div>
+          {/* The count has its own line inside the box, under the text, so it never covers it. */}
+          <span
+            className={`chat-count${near ? ' near' : ''}${text.length >= CHAT_MAX ? ' full' : ''}`}
+            aria-live="polite"
+          >
+            {t('count', { count: text.length, max: CHAT_MAX })}
+          </span>
         </div>
         {cut && (
           <span className="chat-cut" role="status">

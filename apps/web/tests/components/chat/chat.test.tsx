@@ -86,7 +86,7 @@ describe('NexoChat', () => {
       </MemoryRouter>,
     )
     expect(screen.getByText('Você estava em Ghost of Tsushima.')).toBeTruthy()
-    expect(box().getAttribute('placeholder')).toBe('Pergunte algo sobre esse troféu…')
+    expect(box().getAttribute('placeholder')).toBe('Pergunte sobre o troféu…')
     fireEvent.click(screen.getByRole('button', { name: 'Como pegar?' }))
     expect(onSend).toHaveBeenCalledWith('Sobre o troféu **Variedade dá gosto à vida**: Como pegar?')
     fireEvent.change(box(), { target: { value: 'Onde fica a besta?' } })
@@ -142,10 +142,10 @@ describe('NexoChat', () => {
   })
 })
 
-test('the message box counts as you type and takes up to the limit', () => {
+test('the count always sits in the box, and the box takes up to the limit', () => {
   show(messages)
   expect(box().maxLength).toBe(CHAT_MAX)
-  expect(screen.queryByText(new RegExp(`/${CHAT_MAX}$`))).toBeNull()
+  expect(screen.getByText(`0/${CHAT_MAX}`)).toBeTruthy()
   fireEvent.change(box(), { target: { value: 'a'.repeat(7) } })
   expect(screen.getByText(`7/${CHAT_MAX}`).className).toBe('chat-count')
   fireEvent.change(box(), { target: { value: 'a'.repeat(CHAT_MAX * 0.9) } })
