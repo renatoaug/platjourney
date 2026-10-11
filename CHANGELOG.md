@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.10.1](https://github.com/renatoaug/platjourney/compare/v0.10.0...v0.10.1) (2026-10-11)
+
+### Bug Fixes
+
+* **chat:** no zoom on iPhone fields, the counter in the box on the last line ([#34](https://github.com/renatoaug/platjourney/issues/34)) ([5252b4f](https://github.com/renatoaug/platjourney/commit/5252b4f043e9fd58d713fcfa81a26508918e72e8))
+
 ## [0.10.0](https://github.com/renatoaug/platjourney/compare/v0.9.0...v0.10.0) (2026-10-11)
 
 ### Features
