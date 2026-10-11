@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.11.0](https://github.com/renatoaug/platjourney/compare/v0.10.1...v0.11.0) (2026-10-11)
+
+### Features
+
+* **telegram:** progress marks in trophy notices, profile skeleton on phones ([#35](https://github.com/renatoaug/platjourney/issues/35)) ([7b91153](https://github.com/renatoaug/platjourney/commit/7b911534503ee8254dd3e16818333a01a2968413))
+
 ## [0.10.1](https://github.com/renatoaug/platjourney/compare/v0.10.0...v0.10.1) (2026-10-11)
 
 ### Bug Fixes
