@@ -3,7 +3,7 @@
   "version": "0.11.0",
   "private": true,
   "description": "Your PlayStation platinum partner: Telegram and web, guides researched from the web, recommendations from what you play.",
-  "license": "MIT",
+  "license": "FSL-1.1-ALv2",
   "type": "module",
   "workspaces": [
     "apps/*"

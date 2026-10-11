@@ -101,4 +101,4 @@ We follow [Conventional Commits](https://www.conventionalcommits.org).
 
 ## License
 
-PlatJourney is MIT licensed. See [LICENSE](LICENSE) for details.
+PlatJourney is licensed under the [Functional Source License 1.1](LICENSE) (FSL-1.1-ALv2): use, study, modify and share it for anything except a competing product or service. Each version becomes Apache 2.0 two years after its release.

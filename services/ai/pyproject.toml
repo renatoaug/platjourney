@@ -2,7 +2,7 @@
 name = "platjourney-ai"
 version = "0.1.0"
 description = "PlatJourney AI service: Nexo, guides, plans, recommendations and the deep guide search"
-license = "MIT"
+license = "FSL-1.1-ALv2"
 requires-python = ">=3.14"
 dependencies = [
     "cbor2>=6.1.5",
