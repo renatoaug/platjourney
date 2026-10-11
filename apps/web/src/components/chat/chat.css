@@ -113,8 +113,8 @@
     overflow-y: hidden;
   }
 
-  .chatform textarea {
-    padding-right: 84px;
+  .chat-count.near {
+    color: var(--color-fg-muted);
   }
 
   .chat-count.full {
@@ -152,11 +152,6 @@
     .chatform textarea {
       font-size: var(--text-md);
       padding: 10px;
-    }
-
-    /* The count sits inside the field, bottom right: the text keeps clear of it. */
-    .chatform textarea {
-      padding-right: 84px;
     }
 
     .chatform button {
@@ -342,10 +337,10 @@
   }
 
   .chat-count {
-    /* Inside the field, bottom right; the text keeps clear of it with the field's right padding. */
-    position: absolute;
-    right: 12px;
-    bottom: 9px;
+    /* Under the box, right aligned, from the first character. */
+    display: block;
+    margin-top: 4px;
+    text-align: right;
     font-size: var(--text-xs);
     color: var(--color-fg-subtle);
     pointer-events: none;
@@ -356,10 +351,6 @@
     margin-top: 4px;
     font-size: var(--text-xs);
     color: var(--color-danger);
-  }
-
-  .chat-count.near {
-    color: var(--color-fg-muted);
   }
 
   .nexo-chat-heading {
@@ -621,81 +612,6 @@
     align-self: center;
   }
 
-  /* With a trophy, the box holds it as a tag before the text, all in one field. */
-  .chatform .chat-box:has(.chat-trophy) {
-    display: flex;
-    gap: 6px;
-    /* With several lines typed, the tag stays by the first one. */
-    align-items: flex-start;
-    padding: 4px 8px;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-control);
-    background: var(--color-bg);
-  }
-
-  .chatform .chat-box:has(.chat-trophy):focus-within {
-    border-color: var(--color-accent-dim);
-    box-shadow: var(--shadow-focus);
-  }
-
-  .chatform .chat-box:has(.chat-trophy) textarea {
-    flex: 1;
-    min-width: 0;
-    padding-left: 4px;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  /* A long trophy name must not widen the form past the card. */
-  .chatform .chat-field,
-  .chatform .chat-box {
-    min-width: 0;
-  }
-
-  /* Phone: the tag takes its own line above the text. */
-  @media (max-width: 760px) {
-    .chatform .chat-box:has(.chat-trophy) {
-      flex-wrap: wrap;
-      padding: 6px 8px;
-    }
-
-    /* Smaller and quieter on a phone: a hint of gold, not a button. */
-    .chatform .chat-box:has(.chat-trophy) .chat-trophy {
-      gap: 4px;
-      max-width: 100%;
-      padding: 1px 2px 1px 7px;
-      border-color: color-mix(in srgb, var(--color-trophy-gold) 25%, transparent);
-      background: color-mix(in srgb, var(--color-trophy-gold) var(--alpha-wash), transparent);
-      font-size: var(--text-xs);
-    }
-
-    .chat-trophy > .icon {
-      width: 11px;
-      height: 11px;
-    }
-
-    .chat-trophy button {
-      width: 18px;
-      height: 18px;
-      min-height: 0;
-      min-width: 0;
-    }
-
-    .chat-trophy button .icon {
-      width: 10px;
-      height: 10px;
-    }
-
-    .chatform .chat-box:has(.chat-trophy) textarea {
-      flex-basis: 100%;
-      min-height: 30px;
-      padding-top: 4px;
-      padding-right: 8px;
-      padding-bottom: 0;
-    }
-  }
-
   /* Phone header: Nexo a little smaller, its tagline beside the name, the game on one line. */
   @media (max-width: 760px) {
     .nexo-chat-heading {
@@ -804,30 +720,105 @@
     background: var(--color-surface-raised);
   }
 
-  /* The text runs the full width; the counter shares the last line until that line reaches it, then
-     a strip under the text holds it (the crowded class, set from chat.tsx). */
-  .chatform textarea:not(:placeholder-shown) {
-    padding-right: 12px;
+  /* The message box is one field: the trophy tag and the text on top, the counter on its own line at
+     the bottom right, inside the border. The text area itself has no border, so nothing overlaps. */
+  .chatform .chat-field,
+  .chatform .chat-box {
+    min-width: 0;
   }
 
-  .chatform .chat-box:has(.chat-trophy) textarea:not(:placeholder-shown) {
-    padding-right: 8px;
+  .chatform .chat-box {
+    display: grid;
+    gap: 0;
+    padding: 8px 12px 5px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background: var(--color-bg);
   }
 
-  .chatform textarea.crowded {
-    padding-bottom: 24px;
+  .chatform .chat-box:focus-within {
+    border-color: var(--color-accent-dim);
+    box-shadow: var(--shadow-focus);
   }
 
-  .chatform .chat-box:has(.chat-trophy) textarea.crowded {
-    padding-bottom: 22px;
+  .chat-line {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    min-width: 0;
   }
 
-  .chatform .chat-box:has(.chat-trophy) .chat-count {
-    right: 10px;
-    bottom: 6px;
+  .chatform .chat-box textarea,
+  .chatform .chat-box textarea:focus-visible {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
   }
 
-  .chatform .chat-box:has(.chat-trophy) .chat-trophy {
-    margin-top: 6px;
+  /* The counter at the end of the last line, bottom right; with the text reaching it (crowded, set
+     from chat.tsx), on a line of its own under the text. */
+  .chatform .chat-box {
+    position: relative;
+  }
+
+  .chatform .chat-box .chat-count {
+    position: absolute;
+    right: 12px;
+    bottom: 9px;
+    margin: 0;
+    line-height: 1;
+  }
+
+  .chatform .chat-box.crowded .chat-count {
+    position: static;
+    margin-top: 2px;
+  }
+
+  /* The tag is taller than a line of text: the first line drops to its middle, the next lines follow. */
+  .chatform .chat-box .chat-line:has(.chat-trophy) textarea {
+    padding-top: 6px;
+  }
+
+  /* Phone: the tag takes its own line above the text, smaller and quieter. */
+  @media (max-width: 760px) {
+    .chat-line:has(.chat-trophy) {
+      flex-wrap: wrap;
+    }
+
+    .chatform .chat-box .chat-line:has(.chat-trophy) textarea {
+      flex-basis: 100%;
+      padding-top: 0;
+    }
+
+    .chatform .chat-trophy {
+      gap: 4px;
+      max-width: 100%;
+      padding: 1px 2px 1px 7px;
+      border-color: color-mix(in srgb, var(--color-trophy-gold) 25%, transparent);
+      background: color-mix(in srgb, var(--color-trophy-gold) var(--alpha-wash), transparent);
+      font-size: var(--text-xs);
+    }
+
+    .chat-trophy > .icon {
+      width: 11px;
+      height: 11px;
+    }
+
+    .chat-trophy button {
+      width: 18px;
+      height: 18px;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .chat-trophy button .icon {
+      width: 10px;
+      height: 10px;
+    }
   }
 }

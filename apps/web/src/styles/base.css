@@ -171,6 +171,17 @@
     }
   }
 
+  /* iPhone zooms the page into any field whose text is under 16px when it gets focus: on a phone the
+     fields' text is 16px, so typing never zooms. */
+  @media (max-width: 760px) {
+    input,
+    textarea,
+    select {
+      /* biome-ignore lint/complexity/noImportantStyles: wins over each screen's own field size, on phones only. */
+      font-size: var(--text-lg) !important;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
