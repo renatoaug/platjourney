@@ -9,6 +9,7 @@ import { number } from '../lib/format'
 import type { AppStateData, Me } from '../lib/types'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
+import { InstallGuide, installGuideDue, installPlatform } from './install-guide'
 import './onboarding.css'
 
 const messages = defineMessages({
@@ -295,6 +296,9 @@ export function Onboarding() {
   const [open, setOpen] = useState(() => (me.demo ? !sessionSeen() : !me.onboarded))
   const [step, setStep] = useState(0)
   const [phases, setPhases] = useState<readonly Phase[]>(PHASES)
+  const [installStep, setInstallStep] = useState(
+    () => !me.demo && !me.onboarded && installGuideDue(),
+  )
   useEffect(() => {
     const show = () => {
       setStep(0)
@@ -321,6 +325,11 @@ export function Onboarding() {
     [me, setMe, navigate],
   )
   if (!open) return null
+  // On a phone, before the introduction: put the app on the home screen first.
+  if (step === 0 && installStep) {
+    const platform = installPlatform()
+    if (platform) return <InstallGuide platform={platform} onDone={() => setInstallStep(false)} />
+  }
   if (step === 0)
     return (
       <WelcomeDialog

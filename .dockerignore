@@ -10,3 +10,6 @@ services/ai/.venv
 services/ai/.ruff_cache
 services/ai/.coverage
 **/__pycache__
+apps/mobile/android
+apps/mobile/ios
+apps/mobile/assets

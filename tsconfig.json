@@ -14,6 +14,7 @@
     "apps/server/scripts",
     "apps/server/tests",
     "apps/web/scripts",
+    "apps/mobile/capacitor.config.ts",
     "scripts"
   ]
 }

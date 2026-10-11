@@ -1,0 +1,18 @@
+{
+  "name": "@platjourney/mobile",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "bun run --cwd ../web build && cap sync",
+    "ios": "cap open ios",
+    "android": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/ios": "^8.5.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3"
+  }
+}
