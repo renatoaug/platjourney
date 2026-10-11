@@ -14,6 +14,9 @@ on:
 jobs:
   labels:
     name: Labels
+    # An edit counts only when it changed the title: ticking a checkbox in the description is an
+    # edit too, and would run this once per box.
+    if: github.event.action != 'edited' || github.event.changes.title
     runs-on: ubuntu-latest
 
     permissions:
