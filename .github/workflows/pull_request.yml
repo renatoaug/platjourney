@@ -31,9 +31,8 @@ jobs:
         with:
           bun-version-file: .bun-version
 
+      # uv reads services/ai/.python-version itself when it runs the service's commands.
       - uses: astral-sh/setup-uv@v7
-        with:
-          python-version-file: services/ai/.python-version
 
       - run: bun install --frozen-lockfile
 
