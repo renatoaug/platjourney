@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test'
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, describe, expect, mock, test } from 'bun:test'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { MockAppState } from '../../src/app/app-state'
-import { helpAnswers, TrophyList, TrophyListSkeleton } from '../../src/components/trophy-list'
+import { TrophyList, TrophyListSkeleton } from '../../src/components/trophy-list'
 import { current } from '../../src/fixtures'
 import type { Trophy } from '../../src/lib/types'
 import { ToastHost } from '../../src/ui/toast'
@@ -52,7 +52,6 @@ const names = () => screen.getAllByRole('heading', { level: 4 }).map((h) => h.te
 
 afterEach(() => {
   mock.restore()
-  helpAnswers.clear()
 })
 
 describe('TrophyList', () => {
@@ -172,56 +171,14 @@ describe('TrophyList', () => {
   test('a catalog list counts trophies without the earned share', () => {
     show(catalog, { prefix: 'title-t' })
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Troféus (8)')
-    expect(screen.queryByRole('button', { name: /Pedir dica/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: /Pedir dica/ })).toBeNull()
   })
 
-  test('asking for a tip shows Nexo thinking, then the answer with its source', async () => {
-    let reply: (r: Response) => void = () => {}
-    const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(((url: string) =>
-      url === '/api/trophy-tip'
-        ? new Promise<Response>((resolve) => {
-            reply = resolve
-          })
-        : Promise.resolve(new Response('{}'))) as typeof fetch)
+  test('asking for a tip opens Nexo on the game with the trophy attached', () => {
     show(base, { np: 'NPWR1' })
-    expect(screen.queryByRole('button', { name: 'Pedir dica sobre Um por cento' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Pedir dica sobre Irmãos de armas' }))
-    expect(screen.getByText(/Nexo está olhando o seu progresso/)).toBeTruthy()
-    const [, init] = fetchSpy.mock.calls[0]
-    expect(JSON.parse(String(init?.body))).toEqual({ np: 'NPWR1', trophyId: 5 })
-    await act(async () =>
-      reply(
-        new Response(
-          JSON.stringify({ text: 'Fale com ele no acampamento.\n\nFonte: Trophy Guides' }),
-        ),
-      ),
-    )
-    expect(await screen.findByText('Dica do Nexo')).toBeTruthy()
-    expect(screen.getByText('Fale com ele no acampamento.')).toBeTruthy()
-    expect(screen.getByRole('link', { name: /Continuar no chat/ })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Pedir dica sobre Irmãos de armas' })).toBeNull()
-  })
-
-  test('a failed tip brings the button back and says so', async () => {
-    spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ message: 'falhou' }), { status: 500 }),
-    )
-    show(base, { np: 'NPWR2' })
-    fireEvent.click(screen.getByRole('button', { name: 'Pedir dica sobre Segura firme' }))
-    expect(await screen.findByText('Não conseguimos falar com o Nexo. Tente de novo.')).toBeTruthy()
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Pedir dica sobre Segura firme' })).toBeTruthy(),
-    )
-  })
-
-  test('a refused tip fails quietly, with the refusal notice only', async () => {
-    spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ message: 'agora não' }), { status: 402 }),
-    )
-    show(base, { np: 'NPWR3' })
-    fireEvent.click(screen.getByRole('button', { name: 'Pedir dica sobre Segura firme' }))
-    expect(await screen.findByText('agora não')).toBeTruthy()
-    const row = screen.getByText('Segura firme').closest('article') as HTMLElement
-    expect(within(row).getByRole('button', { name: /Pedir dica/ })).toBeTruthy()
+    // Earned trophies have nothing to ask.
+    expect(screen.queryByRole('link', { name: 'Pedir dica sobre Um por cento' })).toBeNull()
+    const link = screen.getByRole('link', { name: 'Pedir dica sobre Irmãos de armas' })
+    expect(link.getAttribute('href')).toBe('/nexo?game=NPWR1&trophy=Irm%C3%A3os+de+armas')
   })
 })

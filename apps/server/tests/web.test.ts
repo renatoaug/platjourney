@@ -123,7 +123,9 @@ beforeEach(() => {
   spyOn(telegram, 'botUsername').mockResolvedValue('nexo_bot')
   spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
   spyOn(watcher, 'watchNow').mockImplementation(() => {})
-  spyOn(watcher, 'forgetUser').mockReturnValue(true)
+  spyOn(watcher, 'forgetUser').mockImplementation(() => {})
+  // The chat follows the game being played unless a test picks another.
+  spyOn(watcher, 'getChat').mockImplementation((u) => watcher.getCurrent(u))
 })
 
 afterEach(() => {
@@ -269,7 +271,7 @@ test("the chat reads the current game's conversation, another game's, or the one
 })
 
 test('a chat message with no game loaded first checks what the player is on', async () => {
-  const check = spyOn(watcher, 'currentOrCheck').mockResolvedValue(makeContext())
+  const check = spyOn(watcher, 'chatOrCheck').mockResolvedValue(makeContext())
   const answer = spyOn(nexo, 'reply').mockResolvedValue('ok')
   await send('POST', '/api/chat', { text: 'oi' })
   expect(check).toHaveBeenCalledWith(me)
@@ -1045,7 +1047,7 @@ test('the chat game switch lists the player titles by name and loads the one pic
       current: false,
     }),
   ])
-  const set = spyOn(watcher, 'setCurrent').mockResolvedValue(makeContext())
+  const set = spyOn(watcher, 'setChat').mockResolvedValue(makeContext())
   const res = await send('POST', '/api/current', { np: 'NPWR2' })
   expect(res.status).toBe(200)
   expect(set.mock.calls[0][1]).toMatchObject({ npCommunicationId: 'NPWR2' })
@@ -1075,8 +1077,8 @@ test('the game switch also offers catalog games outside the library and talks ab
   ])
   spyOn(games, 'getGame').mockImplementation((async (id: string) =>
     id === 'game:9' ? outside : owned) as never)
-  const fromCatalog = spyOn(watcher, 'setCurrentFromCatalog').mockResolvedValue(makeContext())
-  const set = spyOn(watcher, 'setCurrent').mockResolvedValue(makeContext())
+  const fromCatalog = spyOn(watcher, 'setChatFromCatalog').mockResolvedValue(makeContext())
+  const set = spyOn(watcher, 'setChat').mockResolvedValue(makeContext())
   expect((await send('POST', '/api/current', { game: 'game:9' })).status).toBe(200)
   expect(fromCatalog.mock.calls[0][1]).toBe(outside)
   // A catalog game the player owns goes through the title, with progress.

@@ -100,11 +100,18 @@ const messages = defineMessages({
   },
 })
 
-// The game each user is talking about: the last one they played, or the one they
-// picked with /game.
+// The game each user is playing: the last one PSN shows. It drives the notices, the session plan
+// and the current game page.
 const contexts = new Map<string, GameContext>()
 export const getCurrent = (user: User) => contexts.get(user.id)
-export const forgetUser = (id: string) => contexts.delete(id)
+// The game the chat talks about when the player picked another with /game or a link: only the chat
+// follows it. Starting to play another game brings the chat back to that game.
+const chatContexts = new Map<string, GameContext>()
+export const getChat = (user: User) => chatContexts.get(user.id) ?? contexts.get(user.id)
+export const forgetUser = (id: string) => {
+  contexts.delete(id)
+  chatContexts.delete(id)
+}
 
 // Proactive messages go to Telegram when the user linked it; they are always in
 // the web history through the tip log. Plain notices are written in the player's language.
@@ -190,8 +197,8 @@ async function guideFor(user: User, title: TitleProgress, ctxTrophies: GameConte
   return ensureGuide(game, ctxTrophies, { name: title.name, platform: title.platform })
 }
 
-// Switches the chat context to another title (used by /game and the detail page).
-export async function setCurrent(user: User, title: TitleProgress): Promise<GameContext> {
+// Loads a title's context: its game, trophies, groups, guide and hours played.
+async function loadContext(user: User, title: TitleProgress): Promise<GameContext> {
   const game = await gameForTitle(title)
   const [trophies, groups] = await Promise.all([trophiesFor(title, user), loadGroups(title, user)])
   const guide = await guideFor(user, title, trophies).catch((e) => {
@@ -201,14 +208,32 @@ export async function setCurrent(user: User, title: TitleProgress): Promise<Game
   if (guide && !isDemo(user))
     ensureDeepGuide(game, title.total).catch((e) => console.error('deep guide failed:', e.message))
   const played = await playtimes(user).catch(() => new Map())
-  const ctx = { game, title, trophies, guide, groups, hoursPlayed: hours(played.get(game.id)) }
+  return { game, title, trophies, guide, groups, hoursPlayed: hours(played.get(game.id)) }
+}
+
+// The game being played changes: the watcher's own switch.
+export async function setCurrent(user: User, title: TitleProgress): Promise<GameContext> {
+  const ctx = await loadContext(user, title)
   contexts.set(user.id, ctx)
+  return ctx
+}
+
+// The chat's game, picked with /game or a link: the game being played stays as it is. Picking the
+// game being played again just drops the chat's own pick.
+export async function setChat(user: User, title: TitleProgress): Promise<GameContext> {
+  const playing = contexts.get(user.id)
+  if (playing?.title.npCommunicationId === title.npCommunicationId) {
+    chatContexts.delete(user.id)
+    return playing
+  }
+  const ctx = await loadContext(user, title)
+  chatContexts.set(user.id, ctx)
   return ctx
 }
 
 // A game the player does not own, for the chat: its official list with nothing earned and the
 // stored guide (asked for, not researched, when there is none). Null when it has no trophy list.
-export async function setCurrentFromCatalog(user: User, game: Game): Promise<GameContext | null> {
+export async function setChatFromCatalog(user: User, game: Game): Promise<GameContext | null> {
   const list = await catalogTrophies(game.np_communication_ids ?? [])
   if (!list) return null
   const count = (type: string) => list.trophies.filter((t) => t.type === type).length
@@ -239,7 +264,7 @@ export async function setCurrentFromCatalog(user: User, game: Game): Promise<Gam
     groups: null,
     owned: false,
   }
-  contexts.set(user.id, ctx)
+  chatContexts.set(user.id, ctx)
   return ctx
 }
 
@@ -279,6 +304,8 @@ async function check(user: User): Promise<void> {
   // forever, missing those trophies. Such a list is read again until the two agree.
   const stale = !!current && current.trophies.filter((t) => t.earned).length < latest.earned
   const ctx = switched || changed || stale || !current ? await setCurrent(user, latest) : current
+  // Playing another game brings the chat to it too.
+  if (switched && current) chatContexts.delete(user.id)
 
   for (const t of titles) await upsertTitle(user.id, t)
 
@@ -441,11 +468,11 @@ export async function demoContext(user: User): Promise<GameContext | undefined> 
 // Loads a user's context right after they sign in, without waiting for the next sweep.
 // The chat's game for a message: after a restart nothing is loaded until the next sweep, and a
 // message sent then would land in no game's conversation; one check picks the game being played.
-export async function currentOrCheck(user: User): Promise<GameContext | undefined> {
-  const ctx = getCurrent(user)
+export async function chatOrCheck(user: User): Promise<GameContext | undefined> {
+  const ctx = getChat(user)
   if (ctx || isDemo(user)) return ctx
   await checkUser(user).catch((e) => console.error('check before chat failed:', e.message))
-  return getCurrent(user)
+  return getChat(user)
 }
 
 export function watchNow(user: User): void {

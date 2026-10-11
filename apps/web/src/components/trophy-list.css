@@ -286,21 +286,6 @@
     height: 13px;
   }
 
-  .trophy-help-head .nexo-avatar {
-    width: 22px;
-    height: 22px;
-  }
-
-  .trophy-help .md p {
-    margin: 0 0 8px;
-  }
-
-  .trophy-help .text-link {
-    display: inline-flex;
-    margin-top: 4px;
-    font-size: var(--text-md);
-  }
-
   input[type="checkbox"],
   .trophy-progress-filter input {
     accent-color: var(--color-accent);
@@ -570,36 +555,12 @@
     color: var(--color-accent);
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
+    text-decoration: none;
   }
 
   .trophy-help-btn:hover {
     border-color: var(--color-accent);
     background: color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
-  }
-
-  .trophy-help {
-    margin-top: 12px;
-    padding: 12px 14px;
-    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
-    border-radius: var(--radius-control);
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
-    font-size: var(--text-base);
-  }
-
-  .trophy-help.is-loading {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--color-fg-muted);
-  }
-
-  .trophy-help-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-    font-family: var(--font-display);
-    color: var(--color-accent);
   }
 
   @media (max-width: 760px) {

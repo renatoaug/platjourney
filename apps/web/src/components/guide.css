@@ -176,7 +176,6 @@
     container-type: inline-size;
   }
 
-  .key-highlights,
   .key-strategies {
     min-width: 0;
     padding: 6px;
@@ -1166,5 +1165,51 @@
     from {
       opacity: 0;
     }
+  }
+
+  /* The easiest, hardest and most tedious trophies lead the tips, on a faint tint of their color. */
+  .key-strategy.key-feature {
+    margin-bottom: 4px;
+    background: color-mix(in srgb, var(--key-accent) var(--alpha-faint), transparent);
+  }
+
+  .key-strategy.key-feature::before {
+    display: none;
+  }
+
+  .key-feature + .key-strategy:not(.key-feature) {
+    margin-top: 8px;
+  }
+
+  /* A missable reached from the summary's "see how" link lights up for a moment. */
+  .missable.spotlit {
+    animation: missable-spotlight 2.4s ease-out;
+  }
+
+  @keyframes missable-spotlight {
+    0%,
+    35% {
+      background: color-mix(in srgb, var(--color-trophy-gold) var(--alpha-soft), transparent);
+    }
+  }
+
+  /* Under a tip or a missable: ask Nexo about that trophy, quiet until hovered. */
+  .key-ask {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 10px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    text-decoration: none;
+  }
+
+  .key-ask:hover {
+    color: var(--color-accent);
+  }
+
+  .key-ask .icon {
+    width: 14px;
+    height: 14px;
   }
 }

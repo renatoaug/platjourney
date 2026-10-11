@@ -201,6 +201,8 @@ export interface AppStateData {
   /** Null while PSN has not answered for this player yet. */
   profile: ProfileSummary | null
   current: CurrentGame | null
+  /** The chat's own game, when the player picked another one there; the game played stays in current. */
+  chat?: CurrentGame | null
   tips: Tip[]
   unread: number
   ranking: RankingItem[]

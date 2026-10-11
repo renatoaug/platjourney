@@ -3,6 +3,7 @@ import {
   Fragment,
   type KeyboardEvent,
   type ReactNode,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -11,7 +12,7 @@ import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtRate } from '../lib/format'
 import { nameText } from '../lib/text'
-import type { DeepGuideStats, GuideDetail, KeyTrophy, Trophy } from '../lib/types'
+import type { DeepGuideStats, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { GuideText, UserText } from '../ui/markdown'
 import { repeat, Sk } from '../ui/skeleton'
@@ -41,11 +42,6 @@ const messages = defineMessages({
       earned: 'Conquistado',
       earnedOn: 'Conquistado em {date}',
       playersEarned: '{rate}% de quem joga conquistou',
-      highlights: 'Destaques da platina',
-      highlightsCount: {
-        one: '{count} destaque',
-        other: '{count} destaques',
-      },
       easiest: 'Mais fácil',
       hardest: 'Maior desafio',
       mostTedious: 'Mais trabalhoso',
@@ -55,6 +51,7 @@ const messages = defineMessages({
         other: '{count} dicas',
       },
       source: 'Fonte: {source}',
+      ask: 'Perguntar ao Nexo',
       noTricks: 'Nenhum macete registrado',
       noTricksHint: 'Consulte o roadmap para planejar a ordem das conquistas.',
       cautions: 'Cuidados para a platina',
@@ -156,11 +153,6 @@ const messages = defineMessages({
       earned: 'Earned',
       earnedOn: 'Earned on {date}',
       playersEarned: '{rate}% of players earned it',
-      highlights: 'Platinum highlights',
-      highlightsCount: {
-        one: '{count} highlight',
-        other: '{count} highlights',
-      },
       easiest: 'Easiest',
       hardest: 'Hardest',
       mostTedious: 'Most tedious',
@@ -170,6 +162,7 @@ const messages = defineMessages({
         other: '{count} tips',
       },
       source: 'Source: {source}',
+      ask: 'Ask Nexo',
       noTricks: 'No tricks recorded',
       noTricksHint: 'Check the roadmap to plan the order of your trophies.',
       cautions: 'Platinum watch-outs',
@@ -348,70 +341,42 @@ const trophyNamed = (c: GuideGame, name: string) =>
     (t) => normalize(t.name) === normalize(name) || normalize(t.nameEn) === normalize(name),
   )
 
+// The tips tab in one list: the easiest, hardest and most tedious trophies first, set apart, then the
+// other tips. A highlighted trophy with its own tip shows both in one entry, so nothing repeats.
+function keyTips(g: GuideDetail) {
+  const tricks = g.tricks ?? []
+  const featured = (
+    [
+      ['easiest', 'easy', g.easiest],
+      ['hardest', 'hard', g.hardest],
+      ['mostTedious', 'tedious', g.mostTedious],
+    ] as const
+  ).flatMap(([label, tone, item]) =>
+    item
+      ? [
+          {
+            label,
+            tone,
+            item,
+            trick: tricks.find((t) => normalize(t.trophy) === normalize(item.trophy)),
+          },
+        ]
+      : [],
+  )
+  const named = new Set(featured.map((f) => normalize(f.item.trophy)))
+  const rest = tricks.filter((t) => !named.has(normalize(t.trophy)))
+  return { featured, rest, count: featured.length + rest.length }
+}
+
 function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
   const tr = useMessages(messages)
   const findTrophy = (name: string) => trophyNamed(c, name)
-  const featured = (label: string, tone: string, item?: KeyTrophy | null) => {
-    if (!item) return null
-    const trophy = findTrophy(item.trophy)
-    return (
-      <details className={`key-feature ${tone}`} data-key-detail={`featured-${tone}`}>
-        <summary>
-          <KeyArt trophy={trophy} />
-          <span className="key-feature-title">
-            <span className="key-feature-label">{label}</span>
-            <span>{item.trophy}</span>
-          </span>
-          {trophy?.earned && (
-            <span className="key-earned">
-              <Icon name="check" />
-              <span>{tr('key.earned')}</span>
-            </span>
-          )}
-          <span className="key-disclosure">
-            <Icon name="chevron-down" />
-          </span>
-        </summary>
-        <div className="key-feature-content">
-          <p>
-            <GuideText text={item.why} />
-          </p>
-          {trophy && (
-            <span className="key-rarity">
-              {tr('key.playersEarned', { rate: fmtRate(trophy.earnedRate) })}
-            </span>
-          )}
-        </div>
-      </details>
-    )
-  }
-  const tricks = g.tricks ?? []
+  const { featured, rest: tricks, count } = keyTips(g)
   const online = g.onlineTrophies ?? []
   const buggy = bugsByTrophy(g.buggy)
-  const highlightCount = [g.easiest, g.hardest, g.mostTedious].filter(Boolean).length
   const hasOnline = online.length > 0 || g.hasOnline
   return (
     <div className="key-guide">
-      {highlightCount > 0 && (
-        <section className="key-highlights" aria-label={tr('key.highlights')}>
-          <div className="key-section-head">
-            <h3>
-              <Icon name="trophy" />
-              <span>{tr('key.highlights')}</span>
-            </h3>
-            {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: the counter reads as a sentence for screen readers */}
-            <span
-              className="key-count"
-              aria-label={tr('key.highlightsCount', { count: highlightCount })}
-            >
-              {highlightCount}
-            </span>
-          </div>
-          {featured(tr('key.easiest'), 'easy', g.easiest)}
-          {featured(tr('key.hardest'), 'hard', g.hardest)}
-          {featured(tr('key.mostTedious'), 'tedious', g.mostTedious)}
-        </section>
-      )}
       <div className="key-workspace">
         <section className="key-strategies">
           <div className="key-section-head">
@@ -420,15 +385,59 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
               <span>{tr('key.tricks')}</span>
             </h3>
             {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: the counter reads as a sentence for screen readers */}
-            <span
-              className="key-count"
-              aria-label={tr('key.tricksCount', { count: tricks.length })}
-            >
-              {tricks.length}
+            <span className="key-count" aria-label={tr('key.tricksCount', { count })}>
+              {count}
             </span>
           </div>
           <div className="key-strategy-list">
-            {tricks.length ? (
+            {featured.map((f) => {
+              const trophy = findTrophy(f.item.trophy)
+              return (
+                <details
+                  key={f.tone}
+                  className={`key-strategy key-feature ${f.tone} ${trophy?.earned ? 'earned' : ''}`}
+                  data-key-detail={`featured-${f.tone}`}
+                >
+                  <summary>
+                    <KeyArt trophy={trophy} />
+                    <span className="key-strategy-title key-feature-title">
+                      <span className="key-feature-label">{tr(`key.${f.label}`)}</span>
+                      <span>{f.item.trophy}</span>
+                    </span>
+                    {trophy?.earned && (
+                      <span className="key-earned key-earned-badge">
+                        <Icon name="check" /> <span>{tr('key.earned')}</span>
+                      </span>
+                    )}
+                    <span className="key-disclosure">
+                      <Icon name="chevron-down" />
+                    </span>
+                  </summary>
+                  <div className="key-strategy-content">
+                    {trophy?.earnedAt && (
+                      <small className="key-earned-date">
+                        {tr('key.earnedOn', { date: fmtDate(trophy.earnedAt) })}
+                      </small>
+                    )}
+                    <p>
+                      <GuideText text={f.item.why} />
+                    </p>
+                    {f.trick && (
+                      <p>
+                        <GuideText text={f.trick.trick} />
+                      </p>
+                    )}
+                    {trophy && (
+                      <span className="key-rarity">
+                        {tr('key.playersEarned', { rate: fmtRate(trophy.earnedRate) })}
+                      </span>
+                    )}
+                    <AskNexo c={c} trophy={f.item.trophy} earned={trophy?.earned} />
+                  </div>
+                </details>
+              )
+            })}
+            {count ? (
               tricks.map((t, i) => {
                 const trophy = findTrophy(t.trophy)
                 return (
@@ -462,6 +471,7 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
                         <GuideText text={t.trick} />
                       </p>
                       {t.source && <SourceNote text={tr('key.source', { source: t.source })} />}
+                      <AskNexo c={c} trophy={t.trophy} earned={trophy?.earned} />
                     </div>
                   </details>
                 )
@@ -694,11 +704,19 @@ function DeepGuide({ dg, chat }: { dg?: DeepGuideStats | null; chat: string }) {
 }
 
 /** A missable trophy: its art, when it can be lost, and how to get it in time. */
-function Missable({ c, m }: { c: GuideGame; m: NonNullable<GuideDetail['missables']>[number] }) {
+function Missable({
+  c,
+  m,
+  spotlit = false,
+}: {
+  c: GuideGame
+  m: NonNullable<GuideDetail['missables']>[number]
+  spotlit?: boolean
+}) {
   const tr = useMessages(messages)
   const trophy = trophyNamed(c, m.trophy)
   return (
-    <div className="missable">
+    <div className={`missable${spotlit ? ' spotlit' : ''}`}>
       <KeyArt trophy={trophy} />
       <div className="missable-body">
         <div className="missable-head">
@@ -716,8 +734,21 @@ function Missable({ c, m }: { c: GuideGame; m: NonNullable<GuideDetail['missable
         <p className="muted">
           <GuideText text={m.how} />
         </p>
+        <AskNexo c={c} trophy={m.trophy} earned={trophy?.earned} />
       </div>
     </div>
+  )
+}
+
+// A trophy's way into the chat: Nexo opens on the game with this trophy attached to the question.
+function AskNexo({ c, trophy, earned }: { c: GuideGame; trophy: string; earned?: boolean }) {
+  const tr = useMessages(messages)
+  if (earned || !c.np) return null
+  return (
+    <Link className="key-ask" to={nexoHref(c.np, c.name, trophy)}>
+      <Icon name="nexo" />
+      {tr('key.ask')}
+    </Link>
   )
 }
 
@@ -853,6 +884,16 @@ export function GuideSkeleton() {
 export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; id?: string }) {
   const tr = useMessages(messages)
   const [selected, setSelectedState] = useState(0)
+  // The missables a "see how" link pointed at: the Missables tab marks them and scrolls to the first.
+  const [spotlight, setSpotlight] = useState<string[]>([])
+  useEffect(() => {
+    if (!spotlight.length) return
+    requestAnimationFrame(() =>
+      document
+        .querySelector('.missable.spotlit')
+        ?.scrollIntoView({ block: 'center', behavior: 'smooth' }),
+    )
+  }, [spotlight])
   const tabsRef = useRef<HTMLDivElement>(null)
   const [moreTabs, setMoreTabs] = useState(false)
   // A shorter panel shrinks the page; when the tabs had scrolled out of sight above, bring them back
@@ -861,6 +902,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
     const row = tabsRef.current
     const above = row ? row.getBoundingClientRect().top < 0 : false
     setSelectedState(i)
+    setSpotlight([])
     // Slide the chosen tab into view inside the row, without moving the page.
     const tab = tabRefs.current[i]
     if (
@@ -942,7 +984,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   const tabs: [string, number | null][] = [
     [tr('tabs.summary'), null],
     [tr('tabs.roadmap'), roadmap.length],
-    [tr('tabs.key'), null],
+    [tr('tabs.key'), keyTips(g).count],
     [tr('tabs.missables'), missables.length],
     [tr('tabs.glossary'), glossary.length],
   ]
@@ -967,9 +1009,10 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
               <button
                 type="button"
                 className="moment-action"
-                onClick={() =>
+                onClick={() => {
                   setSelected(tabs.findIndex(([name]) => name === tr('tabs.missables')))
-                }
+                  setSpotlight(m.trophies)
+                }}
               >
                 {tr('missableHow')} <Icon name="arrow-right" />
               </button>
@@ -1008,7 +1051,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
       <Fragment key="missables">
         {missables.map((m, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: one trophy can be missable in two places; the list never reorders
-          <Missable key={`${m.trophy}-${i}`} c={c} m={m} />
+          <Missable key={`${m.trophy}-${i}`} c={c} m={m} spotlit={spotlight.includes(m.trophy)} />
         ))}
       </Fragment>
     ) : (

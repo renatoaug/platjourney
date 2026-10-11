@@ -7,19 +7,13 @@ import {
   Language,
   type MessageKey,
   type Translator,
-  translator,
   useMessages,
 } from '../i18n/i18n'
-import { ApiError, api } from '../lib/api'
 import { fmtDate, fmtRate } from '../lib/format'
 import type { Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
-import { Markdown } from '../ui/markdown'
-import { modelWorkDone } from '../ui/plugin-slot'
 import { repeat, Sk } from '../ui/skeleton'
-import { SourceNote, splitSource } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
-import { toast } from '../ui/toast'
 import { TrophyArt } from '../ui/trophy-art'
 import { nexoHref } from './tip'
 import './trophy-list.css'
@@ -39,12 +33,8 @@ const messages = defineMessages({
       common: 'Comum',
     },
     help: {
-      loading: 'Nexo está olhando o seu progresso e o guia…',
-      title: 'Dica do Nexo',
-      continueInChat: 'Continuar no chat',
       ask: 'Pedir dica',
       askAbout: 'Pedir dica sobre {name}',
-      failed: 'Não conseguimos falar com o Nexo. Tente de novo.',
     },
     earned: 'Conquistado',
     earnedOn: 'Conquistado · {date}',
@@ -99,12 +89,8 @@ const messages = defineMessages({
       common: 'Common',
     },
     help: {
-      loading: 'Nexo is checking your progress and the guide…',
-      title: 'Nexo’s tip',
-      continueInChat: 'Continue in chat',
       ask: 'Ask for a tip',
       askAbout: 'Ask for a tip on {name}',
-      failed: 'We couldn’t reach Nexo. Try again.',
     },
     earned: 'Earned',
     earnedOn: 'Earned · {date}',
@@ -146,7 +132,6 @@ const messages = defineMessages({
     page: 'Page {n}',
   },
 })
-const translate = translator(messages)
 
 /** A trophy as /api/state and /api/title send it: trophies with a counter carry their progress. */
 const TYPE_ORDER: Record<string, number> = { platinum: 0, gold: 1, silver: 2, bronze: 3 }
@@ -212,59 +197,15 @@ function savedFilters(): SavedFilters {
 }
 
 // `np` is the trophy list's id on PSN; with it, trophies not yet earned get a
-// "Pedir dica" button that asks Nexo about that trophy.
-// Answers live outside the list, per trophy list, so they survive the list being
-// remounted (leaving the page and coming back, the title page reloading).
-// An answer is the text, or 'loading' while Nexo thinks.
-// Exported so stories can show an answer without asking Nexo.
-export const helpAnswers = new Map<string, Map<number, string>>()
-
-function TrophyHelp({ answer, chat }: { answer?: string; chat: string }) {
-  const t = useMessages(messages)
-  if (!answer) return null
-  if (answer === 'loading')
-    return (
-      <div className="trophy-help is-loading">
-        <span className="typing">
-          <i />
-          <i />
-          <i />
-        </span>{' '}
-        {t('help.loading')}
-      </div>
-    )
-  const [body, source] = splitSource(answer)
-  return (
-    <div className="trophy-help">
-      <div className="trophy-help-head">
-        <img className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
-        <b>{t('help.title')}</b>
-      </div>
-      <div className="md">
-        <Markdown text={body} />
-        {source && <SourceNote text={source} />}
-      </div>
-      <Link className="text-link" to={chat}>
-        {t('help.continueInChat')} <Icon name="arrow" />
-      </Link>
-    </div>
-  )
-}
-
 function TrophyCard({
   t,
-  answers,
-  onHelp,
-  chat,
+  ask,
 }: {
-  t: Trophy
-  answers: Map<number, string> | null
-  onHelp: (id: number) => void
-  /** Where "continue in the chat" goes: Nexo on this game. */
-  chat: string
+  t: Trophy /** Nexo with this trophy attached; none in the demo. */
+  ask: string | null
 }) {
   const tr = useMessages(messages)
-  const help = answers && !t.earned
+  const help = ask && !t.earned
   return (
     <article className={`trophy-row ${t.earned ? 'is-earned' : ''}`}>
       <div className="trophy-art">
@@ -304,18 +245,16 @@ function TrophyCard({
             </span>
           </div>
         ) : null}
-        {help && <TrophyHelp answer={answers.get(t.id)} chat={chat} />}
       </div>
-      {help && t.type !== 'platinum' && !answers.has(t.id) && (
-        <button
-          type="button"
+      {help && t.type !== 'platinum' && (
+        <Link
           className="trophy-help-btn"
           aria-label={tr('help.askAbout', { name: t.name })}
-          onClick={() => onHelp(t.id)}
+          to={ask}
         >
           <Icon name="nexo" />
           <span>{tr('help.ask')}</span>
-        </button>
+        </Link>
       )}
     </article>
   )
@@ -416,14 +355,12 @@ export function TrophyList({
   const [chosenSort, setChosenSort] = useState<string | null>(null)
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
-  const [, setVersion] = useState(0)
   const controlsRef = useRef<HTMLDivElement>(null)
   const pagerRef = useRef<HTMLElement>(null)
   const paged = useRef(false)
 
-  if (np && !helpAnswers.has(np)) helpAnswers.set(np, new Map())
-  // Asking Nexo about a trophy calls the model, which the demo never does.
-  const answers = np && !me.demo ? (helpAnswers.get(np) ?? null) : null
+  // "Pedir dica" opens Nexo with the trophy attached; the demo never asks the model.
+  const askHref = (name: string) => (np && !me.demo ? nexoHref(np, null, name) : null)
 
   const list = trophies ?? []
   // A platinumed game opens in the game's own order, like the PSN; otherwise the
@@ -482,21 +419,6 @@ export function TrophyList({
       set(v)
       setPage(1)
     }
-
-  const askHelp = async (id: number) => {
-    if (!np || !answers) return
-    answers.set(id, 'loading')
-    setVersion((v) => v + 1)
-    try {
-      const r = await api<{ text: string }>('/api/trophy-tip', { np, trophyId: id })
-      answers.set(id, r.text)
-      modelWorkDone()
-    } catch (e) {
-      answers.delete(id)
-      if (!(e instanceof ApiError && e.handled)) toast(translate('help.failed'))
-    }
-    setVersion((v) => v + 1)
-  }
 
   const goTo = (n: number) => {
     paged.current = true
@@ -615,15 +537,7 @@ export function TrophyList({
             {shown.length ? (
               shown
                 .slice(start, start + TROPHY_PAGE_SIZE)
-                .map((t) => (
-                  <TrophyCard
-                    key={t.id}
-                    t={t}
-                    answers={answers}
-                    onHelp={askHelp}
-                    chat={nexoHref(np)}
-                  />
-                ))
+                .map((t) => <TrophyCard key={t.id} t={t} ask={askHref(t.name)} />)
             ) : (
               <div className="trophy-empty">{t('noResultsHint')}</div>
             )}

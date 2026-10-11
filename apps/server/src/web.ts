@@ -73,12 +73,13 @@ import { listServerStatuses } from './repository/server-status.ts'
 import { setLinkCode, type User, updateUser } from './repository/user.ts'
 import { botInfo, botUsername } from './telegram.ts'
 import {
-  currentOrCheck,
+  chatOrCheck,
   demoContext,
   forgetUser,
+  getChat,
   getCurrent,
-  setCurrent,
-  setCurrentFromCatalog,
+  setChat,
+  setChatFromCatalog,
   watchNow,
 } from './watcher.ts'
 
@@ -595,6 +596,9 @@ async function api(
       profile: await profile(me),
       // null, not missing: the web app reads a missing game as still loading.
       current: (await currentView(me, ctx)) ?? null,
+      // The chat's own game when the player picked another one there; null when it is the game played.
+      chat:
+        getChat(me) && getChat(me) !== ctx ? ((await currentView(me, getChat(me))) ?? null) : null,
       tips: await recentTips(me.id, 50),
       unread: await unreadNotifications(me.id),
       ranking: ranked.map((r) => ({
@@ -683,11 +687,7 @@ async function api(
   if (path === '/api/chat' && method === 'GET') {
     const asked = url.searchParams.get('game')
     const game =
-      asked === 'none'
-        ? null
-        : asked?.startsWith('game:')
-          ? asked
-          : (getCurrent(me)?.game.id ?? null)
+      asked === 'none' ? null : asked?.startsWith('game:') ? asked : (getChat(me)?.game.id ?? null)
     return json(res, 200, await recentMessages(me.id, 40, game))
   }
   if (path === '/api/chat/threads' && method === 'GET')
@@ -695,7 +695,7 @@ async function api(
   if (path === '/api/chat' && method === 'POST') {
     const { text } = await readBody(req)
     if (typeof text !== 'string' || !text.trim()) return json(res, 400, { error: 'text required' })
-    const ctx = await currentOrCheck(me)
+    const ctx = await chatOrCheck(me)
     const response = await reply(me, text.trim().slice(0, config.chat.maxChars), ctx)
     return json(res, 200, {
       text: response,
@@ -707,7 +707,7 @@ async function api(
   if (path === '/api/library' && method === 'GET') {
     if (isDemo(me)) return json(res, 200, [])
     const q = (url.searchParams.get('q') ?? '').trim().toLowerCase()
-    const current = getCurrent(me)?.title.npCommunicationId
+    const current = getChat(me)?.title.npCommunicationId
     const own = await titles()
     const hits = own.filter((ti) => ti.name.toLowerCase().includes(q)).slice(0, 8)
     const mine = hits.map((ti) => ({
@@ -721,7 +721,7 @@ async function api(
     }))
     // Then games outside the library, to talk about one before buying it.
     const owned = new Set(own.map((ti) => ti.npCommunicationId))
-    const currentGame = getCurrent(me)?.game.id
+    const currentGame = getChat(me)?.game.id
     const others =
       q.length < 2 || mine.length >= 8
         ? []
@@ -752,9 +752,9 @@ async function api(
         ti.npCommunicationId === np || found?.np_communication_ids?.includes(ti.npCommunicationId),
     )
     if (hit)
-      return json(res, 200, { current: (await currentView(me, await setCurrent(me, hit))) ?? null })
+      return json(res, 200, { current: (await currentView(me, await setChat(me, hit))) ?? null })
     if (!found) return json(res, 404, { error: 'title not found' })
-    const ctx = await setCurrentFromCatalog(me, found)
+    const ctx = await setChatFromCatalog(me, found)
     if (!ctx) return json(res, 404, { error: 'no trophy list' })
     return json(res, 200, { current: (await currentView(me, ctx)) ?? null })
   }

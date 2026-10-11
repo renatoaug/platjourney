@@ -23,16 +23,18 @@ import * as users from '../src/repository/user.ts'
 import * as servers from '../src/servers.ts'
 import * as telegram from '../src/telegram.ts'
 import {
+  chatOrCheck,
   checkUser,
-  currentOrCheck,
   demoContext,
   focusNotice,
   forgetUser,
+  getChat,
   getCurrent,
   SESSION_NOTICE_HOURS,
   sessionNotice,
+  setChat,
+  setChatFromCatalog,
   setCurrent,
-  setCurrentFromCatalog,
   startWatcher,
   watchNow,
 } from '../src/watcher.ts'
@@ -448,6 +450,20 @@ describe('checkUser', () => {
 })
 
 describe('setCurrent', () => {
+  test('the chat can talk about another game while the game played stays; picking that one again drops the pick', async () => {
+    getGuide.mockResolvedValue(undefined)
+    spyOn(requests, 'requestGuide').mockResolvedValue(undefined)
+    const playing = await setCurrent(user, makeTitle())
+    const other = await setChat(
+      user,
+      makeTitle({ npCommunicationId: 'NPWR2_00', name: 'Far Cry 3' }),
+    )
+    expect(getCurrent(user)).toBe(playing)
+    expect(getChat(user)).toBe(other)
+    expect(await setChat(user, makeTitle())).toBe(playing)
+    expect(getChat(user)).toBe(playing)
+  })
+
   test('without automatic research a missing guide is only requested', async () => {
     getGuide.mockResolvedValue(undefined)
     const request = spyOn(requests, 'requestGuide').mockResolvedValue(undefined)
@@ -617,7 +633,7 @@ test('a game outside the library becomes the chat game with its list, nothing ea
     np_communication_ids: ['NPWR9'],
     cover_url: null,
   } as never
-  const ctx = await setCurrentFromCatalog({ id: 'user:z' } as never, game)
+  const ctx = await setChatFromCatalog({ id: 'user:z' } as never, game)
   expect(ctx?.owned).toBe(false)
   expect(ctx?.title).toMatchObject({
     npCommunicationId: 'NPWR9',
@@ -628,18 +644,20 @@ test('a game outside the library becomes the chat game with its list, nothing ea
   })
   expect(ctx?.title.definedByType.platinum).toBe(1)
   expect(ask).toHaveBeenCalledWith('game:9')
-  expect(getCurrent({ id: 'user:z' } as never)).toBe(ctx as never)
+  // Only the chat follows it: the game being played stays as it was.
+  expect(getChat({ id: 'user:z' } as never)).toBe(ctx as never)
+  expect(getCurrent({ id: 'user:z' } as never)).toBeUndefined()
   spyOn(psn, 'catalogTrophies').mockResolvedValue(null)
-  expect(await setCurrentFromCatalog({ id: 'user:y' } as never, game)).toBeNull()
+  expect(await setChatFromCatalog({ id: 'user:y' } as never, game)).toBeNull()
 })
 
 test('a loaded game is used as is; the demo player is never checked', async () => {
-  const ctx = await setCurrentFromCatalogStub()
-  expect(await currentOrCheck({ id: 'user:cc' } as never)).toBe(ctx as never)
-  expect(await currentOrCheck({ id: 'user:none', demo: true } as never)).toBeUndefined()
+  const ctx = await setChatFromCatalogStub()
+  expect(await chatOrCheck({ id: 'user:cc' } as never)).toBe(ctx as never)
+  expect(await chatOrCheck({ id: 'user:none', demo: true } as never)).toBeUndefined()
 })
 
-async function setCurrentFromCatalogStub() {
+async function setChatFromCatalogStub() {
   spyOn(psn, 'catalogTrophies').mockResolvedValue({ np: 'NPWR8', platform: 'PS5', trophies: [] })
   spyOn(guides, 'getGuide').mockResolvedValue(undefined)
   spyOn(requests, 'requestGuide').mockResolvedValue(undefined)
@@ -649,5 +667,5 @@ async function setCurrentFromCatalogStub() {
     np_communication_ids: ['NPWR8'],
     cover_url: null,
   } as never
-  return setCurrentFromCatalog({ id: 'user:cc' } as never, game)
+  return setChatFromCatalog({ id: 'user:cc' } as never, game)
 }

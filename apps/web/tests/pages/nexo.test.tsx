@@ -142,6 +142,37 @@ test('a link naming a game opens the chat on it, once, and clears the address', 
   expect(calls.filter((c) => c.path === '/api/current')).toHaveLength(1)
 })
 
+test('a trophy tip link attaches the trophy to the box', async () => {
+  const calls = mockApi({ '/api/chat': messages, 'POST /api/current': { current: null } })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, {
+    path: '/nexo?game=NPWR99999_00&name=Jogo%20Exemplo&trophy=Mestre',
+    route: '/nexo',
+    value: { data: { ...SAMPLE_DATA, current: game } },
+  })
+  await waitFor(() => expect(calls.some((c) => c.path === '/api/current')).toBe(true))
+  expect(await screen.findByText('Mestre')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Como pegar?' })).toBeTruthy()
+})
+
+test('when the chat talks about another game, the game still being played is a line away', async () => {
+  mockApi({ '/api/chat': messages })
+  const game = current as unknown as CurrentGame
+  const other = {
+    ...game,
+    name: 'Far Cry 3',
+    np: 'NPWR00003_00',
+    game: { ...game.game, id: 'game:3' },
+  }
+  renderApp(<Nexo />, {
+    path: '/nexo',
+    route: '/nexo',
+    value: { data: { ...SAMPLE_DATA, current: game, chat: other } },
+  })
+  expect(await screen.findByText(new RegExp(`Seu jogo atual continua ${game.name}`))).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Falar dele' })).toBeTruthy()
+})
+
 test('a link naming the game already in the chat does not switch', async () => {
   const calls = mockApi({ '/api/chat': messages })
   const game = current as unknown as CurrentGame
