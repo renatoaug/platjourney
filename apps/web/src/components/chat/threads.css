@@ -300,7 +300,7 @@
       z-index: 50;
       width: auto;
       max-height: 75vh;
-      padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
       border-radius: var(--radius-card) var(--radius-card) 0 0;
       box-shadow: var(--shadow-popover);
       animation: nexo-threads-sheet-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);

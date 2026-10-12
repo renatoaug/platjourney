@@ -659,6 +659,28 @@
     .onb-stats dd {
       font-size: var(--text-2xl);
     }
+
+    /* On a phone the welcome is one centred column: the player, the words, then the button across
+       the card, with the hint under it. The bar at the top already counts the phases. */
+    .onb-card .onb-copy {
+      justify-items: center;
+      text-align: center;
+    }
+
+    .onb-card .onb-phase {
+      display: none;
+    }
+
+    .onb-card .onb-controls {
+      flex-direction: column-reverse;
+      align-items: stretch;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .onb-card .onb-nav > .button {
+      flex: 1;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -714,6 +736,120 @@
     max-width: none;
   }
 
+  /* The guide card is light, with Nexo at its corner: it reads as someone showing the app, never
+     as a part of it. Its illustration keeps the app's dark colours. */
+  .tour-card[data-placed] {
+    border-color: var(--color-guide-line);
+    background: var(--color-guide);
+    color: var(--color-on-guide);
+    box-shadow:
+      var(--shadow-popover),
+      0 0 0 4px color-mix(in srgb, var(--color-guide) var(--alpha-line), transparent);
+  }
+
+  .tour-card .tour-guide {
+    flex: none;
+    width: 30px;
+    height: 30px;
+  }
+
+  .tour-card .onb-copy h2 {
+    color: var(--color-on-guide);
+  }
+
+  .tour-card .onb-copy p,
+  .tour-card .onb-copy .eyebrow,
+  .tour-card .onb-skip {
+    color: var(--color-on-guide-muted);
+  }
+
+  .tour-card .onb-phase {
+    color: var(--color-on-guide);
+  }
+
+  .tour-card .onb-xp span {
+    background: color-mix(in srgb, var(--color-on-guide) var(--alpha-soft), transparent);
+  }
+
+  .tour-card .onb-xp span.on::after {
+    background: var(--color-on-guide);
+    box-shadow: none;
+  }
+
+  .tour-card .onb-dots button {
+    border-color: color-mix(in srgb, var(--color-on-guide) var(--alpha-strong), transparent);
+  }
+
+  .tour-card .onb-dots button[aria-current] {
+    background: var(--color-on-guide);
+    border-color: var(--color-on-guide);
+  }
+
+  .tour-card .onb-nav .button,
+  .tour-card .onb-nav .button:hover {
+    background: var(--color-on-guide);
+    color: var(--color-guide);
+  }
+
+  .tour-card .onb-nav .ghost,
+  .tour-card .onb-skip.ghost {
+    border-color: color-mix(in srgb, var(--color-on-guide) var(--alpha-line), transparent);
+    background: transparent;
+    color: var(--color-on-guide);
+  }
+
+  .tour-card .tour-stage {
+    color: var(--color-fg);
+    background: var(--color-bg);
+    border-color: var(--color-guide-line);
+  }
+
+  /* Folded on a phone: one bar with Nexo, the phase and its title; a tap opens the card. */
+  .tour-card[data-folded] {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .tour-fold {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 14px 8px 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-on-guide);
+    font-weight: var(--weight-medium);
+    text-align: left;
+  }
+
+  .tour-fold:hover {
+    background: transparent;
+  }
+
+  .tour-fold-step {
+    flex: none;
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-display);
+    color: var(--color-on-guide-muted);
+  }
+
+  .tour-fold-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tour-fold .icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+  }
+
   .tour-body {
     display: grid;
     gap: 16px;
@@ -767,11 +903,12 @@
   }
 
   @media (max-width: 760px) {
+    /* Above the bottom bar (shell.css). */
     .tour-card {
       top: auto;
       right: 12px;
       left: 12px;
-      bottom: 84px;
+      bottom: calc(var(--bottom-bar) + 16px);
       width: auto;
       max-height: calc(100vh - 160px);
       padding: 16px;
@@ -779,6 +916,40 @@
 
     .tour-stage {
       display: none;
+    }
+
+    /* A phone card says one thing: the bar at the top counts the phases (no "Fase" line, no dots),
+       a shorter title and text, and the buttons share the card's width. */
+    .tour-card,
+    .tour-body {
+      gap: 12px;
+    }
+
+    .tour-card .onb-phase,
+    .tour-card .onb-dots {
+      display: none;
+    }
+
+    .tour-card .onb-copy {
+      gap: 8px;
+    }
+
+    .tour-card .onb-copy h2 {
+      font-size: var(--text-2xl);
+    }
+
+    .tour-card .onb-skip {
+      padding: 6px 10px;
+    }
+
+    .tour-card .onb-nav {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+    }
+
+    .tour-card .onb-nav > :only-child {
+      grid-column: 1 / -1;
     }
   }
 

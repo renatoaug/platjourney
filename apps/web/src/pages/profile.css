@@ -28,9 +28,12 @@
     font-size: var(--text-xl);
   }
 
+  /* Each bar's share of the tallest year, inside the chart's height minus the count and the year
+     under it: a narrow card (a phone) shrinks the bars instead of pushing them over the title. */
   .profile-band .year i {
     flex: none;
     max-width: 28px;
+    height: calc(var(--share, 1) * (100% - 48px));
   }
 
   .profile-band .muted {
@@ -136,7 +139,7 @@
   }
 
   .profile-band > .card:first-child .years {
-    height: 84px;
+    height: 168px;
     margin-top: auto;
     padding-top: 12px;
   }

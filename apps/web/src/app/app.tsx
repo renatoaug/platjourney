@@ -1,6 +1,8 @@
-/** Nothing renders until we know who is signed in: the login screen, the app, or an offline notice. */
-import { useEffect, useState } from 'react'
+/** Nothing renders until we know who is signed in: the login screen, the app, or an offline notice.
+ * The boot screen covers the start, until the session is known and, signed in, the first data. */
+import { useCallback, useEffect, useState } from 'react'
 import { HashRouter } from 'react-router'
+import { BootScreen } from '../components/boot-screen'
 import { OfflineScreen } from '../components/offline-screen'
 import {
   applySavedLocale,
@@ -15,7 +17,7 @@ import type { Me } from '../lib/types'
 import { Login } from '../pages/login'
 import { ToastHost } from '../ui/toast'
 import { TooltipHost } from '../ui/tooltip'
-import { AppStateProvider } from './app-state'
+import { AppStateProvider, useApp } from './app-state'
 import { Shell } from './shell'
 import './app.css'
 
@@ -30,9 +32,37 @@ const messages = defineMessages({
 
 type Session = { kind: 'loading' } | { kind: 'in'; me: Me } | { kind: 'out' } | { kind: 'offline' }
 
+// How long the boot screen takes to fade out (boot-screen.css).
+const BOOT_FADE_MS = 250
+
+/** Tells the app the first /api/state answered, or will not: a private profile or a failure. */
+function FirstData({ onReady }: { onReady: () => void }) {
+  const { data, sync } = useApp()
+  const ready = data !== null || sync !== 'connecting'
+  useEffect(() => {
+    if (ready) onReady()
+  }, [ready, onReady])
+  return null
+}
+
+/** The boot screen's life: shown, fading out once `ready`, then gone. */
+function useBoot(ready: boolean): 'shown' | 'leaving' | 'gone' {
+  const [boot, setBoot] = useState<'shown' | 'leaving' | 'gone'>('shown')
+  useEffect(() => {
+    if (!ready || boot !== 'shown') return
+    setBoot('leaving')
+    const id = setTimeout(() => setBoot('gone'), BOOT_FADE_MS)
+    return () => clearTimeout(id)
+  }, [ready, boot])
+  return boot
+}
+
 export function App() {
   const t = useMessages(messages)
   const [session, setSession] = useState<Session>({ kind: 'loading' })
+  const [firstData, setFirstData] = useState(false)
+  const markFirstData = useCallback(() => setFirstData(true), [])
+  const boot = useBoot(session.kind !== 'loading' && (session.kind !== 'in' || firstData))
   // The account's saved language wins over the browser's guess, unless the player just picked
   // one on the sign-in screen: then that one is kept and saved to the account.
   const signIn = (me: Me) => {
@@ -85,12 +115,14 @@ export function App() {
       {session.kind === 'in' && (
         <HashRouter>
           <AppStateProvider me={session.me}>
+            <FirstData onReady={markFirstData} />
             <Shell />
           </AppStateProvider>
         </HashRouter>
       )}
       {session.kind === 'out' && <Login onSignedIn={signIn} />}
       {session.kind === 'offline' && <OfflineScreen onRetry={loadSession} />}
+      {boot !== 'gone' && <BootScreen leaving={boot === 'leaving'} />}
       <TooltipHost />
       <ToastHost />
     </>

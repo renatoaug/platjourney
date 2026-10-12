@@ -3,7 +3,9 @@
   .app {
     display: grid;
     grid-template-columns: var(--sidebar) minmax(0, 1fr);
-    min-height: 100vh;
+    min-height: 100dvh;
+    /* Under the status bar in the native app (viewport-fit=cover); zero in a browser tab. */
+    padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   }
 
   .logo {
@@ -56,6 +58,51 @@
 
   .page.active {
     display: block;
+  }
+
+  /* On a phone a screen arrives like in a native app (shell.tsx, useArrival): a deeper screen slides
+     in from the right, going back slides in from the left, and the menu's screens fade. */
+  @media (max-width: 760px) {
+    .content {
+      overflow-x: clip;
+    }
+
+    [data-arrival="push"] .page {
+      animation: page-push 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    [data-arrival="pop"] .page {
+      animation: page-pop 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    [data-arrival="tab"] .page {
+      animation: page-fade 0.18s ease;
+    }
+
+    /* The native app's back swipe already slides the screen in: it only fades. */
+    [data-native] [data-arrival="pop"] .page {
+      animation: page-fade 0.18s ease;
+    }
+  }
+
+  @keyframes page-push {
+    from {
+      opacity: 0.4;
+      transform: translateX(28%);
+    }
+  }
+
+  @keyframes page-pop {
+    from {
+      opacity: 0.4;
+      transform: translateX(-22%);
+    }
+  }
+
+  @keyframes page-fade {
+    from {
+      opacity: 0;
+    }
   }
 
   .page-head {

@@ -1,6 +1,6 @@
 @layer screens {
   .offline {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: grid;
     grid-template-rows: auto 1fr;
     padding: 24px 16px;

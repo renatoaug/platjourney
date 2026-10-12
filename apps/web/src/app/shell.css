@@ -48,8 +48,9 @@
       display: none;
     }
 
-    /* The sliding pill (.nav-indicator) draws the active background, so it can travel between items. */
-    .nav a.active {
+    .nav a.active,
+    .nav a.active:hover {
+      background: none;
       color: var(--color-accent);
     }
   }
@@ -328,6 +329,16 @@
   }
 
   @media (max-width: 760px) {
+    /* The bottom bar's height: what screens and sheets above it keep free. The home indicator's
+       space is mostly empty, so the items sit a little into it. */
+    :root {
+      --bottom-bar-space: max(
+        6px,
+        calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) - 14px)
+      );
+      --bottom-bar: calc(51px + var(--bottom-bar-space));
+    }
+
     .sidebar {
       position: fixed;
       top: auto;
@@ -339,7 +350,7 @@
       border-top: 1px solid var(--color-border-strong);
       background: color-mix(in srgb, var(--color-bg-subtle) var(--alpha-heavy), transparent);
       backdrop-filter: blur(15px);
-      padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+      padding: 4px 8px var(--bottom-bar-space);
     }
 
     .nav {
@@ -351,9 +362,9 @@
     .nav a {
       flex: 1;
       flex-direction: column;
-      padding: 7px 2px;
-      gap: 5px;
-      min-height: 48px;
+      padding: 6px 2px;
+      gap: 4px;
+      min-height: 46px;
       font-size: var(--text-xs);
     }
 
@@ -491,13 +502,9 @@
   }
 
   @media (max-width: 760px) {
+    /* On a phone the active item is only its colour, as in a native tab bar: no pill behind it. */
     .nav-indicator {
-      background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 22%, transparent);
-      transition:
-        transform 420ms cubic-bezier(0.34, 1.4, 0.5, 1),
-        width 420ms cubic-bezier(0.34, 1.4, 0.5, 1),
-        opacity 0.2s;
+      display: none;
     }
 
     /* The icon of the item just chosen gives a small hop as the pill lands under it. */
@@ -511,8 +518,7 @@
      account's picture at the end of the top bar. On a wide screen the sidebar shows every link. */
   .nav-more,
   .nav-sheet,
-  .nav-sheet-scrim,
-  .topbar-avatar {
+  .nav-sheet-scrim {
     display: none;
   }
 
@@ -561,7 +567,7 @@
       position: fixed;
       left: 10px;
       right: 10px;
-      bottom: calc(78px + env(safe-area-inset-bottom));
+      bottom: calc(var(--bottom-bar) + 14px);
       z-index: 21;
       padding: 8px 12px 14px;
       border: 1px solid var(--color-border-strong);
@@ -635,23 +641,6 @@
     }
 
     .nav-sheet-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .topbar-avatar {
-      display: grid;
-      place-items: center;
-      width: 32px;
-      height: 32px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-round);
-      overflow: hidden;
-      color: var(--color-fg-muted);
-    }
-
-    .topbar-avatar img {
       width: 100%;
       height: 100%;
       object-fit: cover;

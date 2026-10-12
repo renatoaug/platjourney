@@ -12,7 +12,16 @@ const config: CapacitorConfig = {
   webDir: '../web/dist',
   backgroundColor: '#10120f',
   ...(url ? { server: { url, cleartext: url.startsWith('http://') } } : {}),
-  ios: { contentInset: 'automatic' },
+  // The launch screen shows briefly, then fades into the app's own boot screen (Nexo pressing the
+  // controller's buttons), which stays until the first data arrives.
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 500,
+      launchFadeOutDuration: 300,
+      backgroundColor: '#10120f',
+      showSpinner: false,
+    },
+  },
 }
 
 export default config

@@ -207,7 +207,9 @@ function TrophyCard({
   const tr = useMessages(messages)
   const help = ask && !t.earned
   return (
-    <article className={`trophy-row ${t.earned ? 'is-earned' : ''}`}>
+    <article
+      className={`trophy-row${t.earned ? ' is-earned' : ''}${t.type === 'platinum' ? ' is-platinum' : ''}`}
+    >
       <div className="trophy-art">
         <TrophyArt url={t.iconUrl} />
         {t.earned && (

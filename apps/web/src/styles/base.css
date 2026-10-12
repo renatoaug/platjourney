@@ -53,6 +53,45 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* On a touch screen the app behaves like one: holding something that can be tapped does not
+     select its text or open the link preview, and it sinks a little under the finger. */
+  @media (hover: none) {
+    a,
+    button,
+    label,
+    summary,
+    [role="tab"] {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    img {
+      -webkit-touch-callout: none;
+    }
+
+    a,
+    button,
+    summary {
+      transition: scale 0.12s ease;
+    }
+
+    button:active,
+    .button:active {
+      scale: 0.97;
+    }
+
+    a.card:active,
+    a.row:active,
+    a.trophy-row:active,
+    a.game-card:active,
+    a.guide-tile:active,
+    a.collection-tile:active,
+    summary:active {
+      scale: 0.985;
+    }
+  }
+
   /* Keyboard focus is a soft halo that follows the control's shape, the same as the fields', instead
      of a second border around it. */
   a:focus-visible,

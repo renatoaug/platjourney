@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
@@ -348,21 +349,32 @@ export function Title() {
   const spec = useParams()['*'] ?? ''
   const { search } = useLocation()
   const { query, owned } = titleQuery(spec, search)
-  const [load, setLoad] = useState<TitleLoad>({ kind: 'loading' })
+  const { cache } = useApp()
+  const key = `title:${query}`
+  const cached = () => cache[key] as TitleDetail | undefined
+  const [load, setLoad] = useState<TitleLoad>(() => {
+    const d = cached()
+    return d ? { kind: 'ready', d } : { kind: 'loading' }
+  })
 
-  // Fetch the title, then poll every 6 s while its guide is being researched.
+  // Fetch the title, then poll every 6 s while its guide is being researched. A title seen before
+  // shows at once and is refreshed in place, without the skeleton.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the key follows the query
   useEffect(() => {
     let live = true
     let timer: ReturnType<typeof setTimeout> | undefined
-    setLoad({ kind: 'loading' })
+    const seen = cached()
+    setLoad(seen ? { kind: 'ready', d: seen } : { kind: 'loading' })
     const fetchTitle = async () => {
       try {
         const d = await api<TitleDetail>(`/api/title?${query}`)
         if (!live) return
+        cache[key] = d
         setLoad({ kind: 'ready', d })
         if (d.building) timer = setTimeout(fetchTitle, 6000)
       } catch {
-        if (live) setLoad({ kind: 'error' })
+        // A failed refresh keeps what was already on screen.
+        if (live && !cached()) setLoad({ kind: 'error' })
       }
     }
     fetchTitle()

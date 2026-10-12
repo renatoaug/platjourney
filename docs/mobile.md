@@ -8,6 +8,20 @@ PlatJourney reaches a phone two ways: installed from the browser (a progressive 
 
 Phone fields use 16px text, so iOS does not zoom the page when one gets focus.
 
+## Feeling like an app
+
+What makes the web app behave like a native one, in the browser, the installed app and the native app alike:
+
+| What | Where |
+|---|---|
+| A boot screen while the app starts: Nexo pressing the controller's four buttons, until the session and the first data arrive, then a fade | `components/boot-screen.tsx`, `app/app.tsx` |
+| On a phone, a deeper screen slides in from the right, going back slides in from the left, and the menu's screens fade | `useArrival` in `app/shell.tsx`, `styles/page.css` |
+| Holding something that can be tapped does not select its text or open the link preview, and it sinks a little under the finger | `styles/base.css` |
+| The profile and a game's page show at once when seen before, and refresh in place | the app cache (`useApp().cache`) |
+| Pulling down at the top refreshes the screen (installed and native app only: Safari has its own) | `components/pull-refresh.tsx` |
+
+The page covers the whole screen (`viewport-fit=cover`); the app frame and the sign-in screen keep the status bar's height free with `env(safe-area-inset-top)`.
+
 ## Native app (Capacitor)
 
 `apps/mobile` holds the Capacitor project: `capacitor.config.ts` and the generated `android/` and `ios/` projects, with icons and splash screens made from the logo (`apps/mobile/assets`, regenerated with `npx @capacitor/assets generate --ios --android`).
@@ -28,6 +42,14 @@ Building for a store needs Xcode (iOS) or Android Studio (Android), a developer 
 | Not set | The web build copied into the app (`apps/web/dist`) | Looking at the interface offline; the API is not reachable from it |
 
 `MOBILE_URL` is read when `cap sync` runs, so set it before syncing.
+
+### Native touches
+
+| What | How |
+|---|---|
+| Launch screen | `@capacitor/splash-screen` shows the logo for half a second, then fades into the boot screen |
+| Back swipe | A swipe from the left edge goes back a screen, with the iPhone's own animation (`MainViewController.swift`) |
+| Haptics | `@capacitor/haptics` gives a light tick on the menu, tab bars, switches and pull-to-refresh (`lib/native.ts`); in a browser it does nothing |
 
 ### Plugins
 

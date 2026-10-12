@@ -44,7 +44,7 @@ import { currentPlan, discardPlan, planSession } from './planner.ts'
 import { hours, playtimes } from './playtime.ts'
 import { pluginRoute, Refused } from './plugins.ts'
 import { profilePage } from './profile.ts'
-import { catalogTrophies, PrivateProfile, profileSummary, titleTrophies } from './psn.ts'
+import { catalogTrophies, PrivateProfile, profileSummary, secureUrl, titleTrophies } from './psn.ts'
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
 import { allow } from './rate-limit.ts'
 import { dismissRecommendation, recommendations } from './recommend.ts'
@@ -168,7 +168,8 @@ async function profile(user: User) {
 const publicUser = (u: User) => ({
   id: u.id,
   onlineId: u.psn_online_id,
-  avatarUrl: u.avatar_url,
+  // Avatars saved before PSN's were moved to https still say http.
+  avatarUrl: secureUrl(u.avatar_url),
   telegramLinked: !!u.telegram_chat_id,
   includeDlcProgress: u.include_dlc_progress === true,
   aiNotices: u.ai_notices !== false,

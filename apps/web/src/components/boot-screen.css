@@ -1,0 +1,152 @@
+@layer screens {
+  /* Full screen over everything while the app starts; fades out when the first data arrives. */
+  .boot-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 26px;
+    background: var(--color-bg);
+    transition: opacity 0.25s ease;
+  }
+
+  .boot-screen.leaving {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .boot-stage {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: grid;
+    place-items: center;
+  }
+
+  .boot-nexo {
+    width: 108px;
+    height: 108px;
+    animation: boot-float 3s ease-in-out infinite;
+  }
+
+  /* The controller's buttons around Nexo: △ above, ○ right, × below, □ left. Each is pressed in
+     turn, a quarter of the cycle after the one before. */
+  .boot-key {
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-round);
+    color: var(--color-fg-subtle);
+    animation: boot-press 1.6s infinite;
+  }
+
+  .boot-key svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .boot-key-triangle {
+    top: 0;
+    left: 81px;
+  }
+
+  .boot-key-circle {
+    top: 81px;
+    right: 0;
+    animation-delay: 0.4s;
+  }
+
+  .boot-key-cross {
+    bottom: 0;
+    left: 81px;
+    animation-delay: 0.8s;
+  }
+
+  .boot-key-square {
+    top: 81px;
+    left: 0;
+    animation-delay: 1.2s;
+  }
+
+  .boot-bar {
+    width: 120px;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--color-border);
+    overflow: hidden;
+  }
+
+  .boot-bar::after {
+    content: "";
+    display: block;
+    width: 40%;
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--color-accent);
+    animation: boot-slide 1.6s ease-in-out infinite;
+  }
+
+  .boot-line {
+    font: 500 var(--text-sm) / 1 var(--font-body);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--color-fg-subtle);
+  }
+
+  @keyframes boot-float {
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes boot-press {
+    0%,
+    30%,
+    100% {
+      transform: scale(1);
+      color: var(--color-fg-subtle);
+      border-color: var(--color-border);
+      box-shadow: none;
+    }
+
+    10% {
+      transform: scale(0.88);
+      color: var(--color-accent);
+      border-color: var(--color-accent);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    }
+  }
+
+  @keyframes boot-slide {
+    from {
+      translate: -100% 0;
+    }
+
+    to {
+      translate: 250% 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .boot-nexo,
+    .boot-key,
+    .boot-bar::after {
+      animation: none;
+    }
+
+    .boot-screen {
+      transition: none;
+    }
+  }
+}

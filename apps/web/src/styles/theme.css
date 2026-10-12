@@ -29,6 +29,7 @@
   --palette-gold-400: #e6c47e;
   --palette-silver-300: #c3ced6;
   --palette-bronze-400: #ca9774;
+  --palette-platinum-100: #e3edf5;
   --palette-platinum-300: #bad2e4;
   --palette-peach-300: #e6b5a5;
   --palette-olive-300: #b0bc9f;
@@ -60,6 +61,11 @@
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
   --color-highlight-warm: var(--palette-peach-300);
+  /* The tour's guide card: light, so it never reads as a part of the product */
+  --color-guide: var(--palette-platinum-100);
+  --color-guide-line: var(--palette-platinum-300);
+  --color-on-guide: var(--palette-neutral-950);
+  --color-on-guide-muted: var(--palette-neutral-700);
   /* Trophies */
   --color-trophy-platinum: var(--palette-platinum-300);
   --color-trophy-gold: var(--palette-gold-400);
