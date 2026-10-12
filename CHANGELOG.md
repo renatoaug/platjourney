@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.0](https://github.com/renatoaug/platjourney/compare/v0.11.1...v0.12.0) (2026-10-12)
+
+### Features
+
+* **mobile:** install from the browser, and a Capacitor app from the same code ([#36](https://github.com/renatoaug/platjourney/issues/36)) ([18aa127](https://github.com/renatoaug/platjourney/commit/18aa12761ac57fec94fc52dcc855747255a4ee94))
+
 ## [0.11.1](https://github.com/renatoaug/platjourney/compare/v0.11.0...v0.11.1) (2026-10-11)
 
 ## [0.11.0](https://github.com/renatoaug/platjourney/compare/v0.10.1...v0.11.0) (2026-10-11)
