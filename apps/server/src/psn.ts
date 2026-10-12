@@ -92,6 +92,10 @@ export async function lookupProfile(onlineId: string): Promise<PsnProfile | null
 /** For tests: forgets looked-up profiles. */
 export const forgetProfiles = () => profiles.clear()
 
+/** PSN hands some avatars over http; pages over https (and the native app) refuse to load those. */
+export const secureUrl = <T extends string | null | undefined>(url: T): T =>
+  (url?.replace(/^http:/, 'https:') ?? url) as T
+
 async function findProfile(onlineId: string): Promise<PsnProfile | null> {
   const a = await auth()
   const search = await makeUniversalSearch(a, onlineId, 'SocialAllAccounts')
@@ -102,7 +106,7 @@ async function findProfile(onlineId: string): Promise<PsnProfile | null> {
     return {
       accountId: hit.socialMetadata.accountId,
       onlineId: hit.socialMetadata.onlineId,
-      avatarUrl: hit.socialMetadata.avatarUrl ?? null,
+      avatarUrl: secureUrl(hit.socialMetadata.avatarUrl ?? null),
     }
   const direct = await getProfileFromUserName(a, onlineId).catch(() => null)
   const p = direct?.profile
@@ -111,9 +115,7 @@ async function findProfile(onlineId: string): Promise<PsnProfile | null> {
   return {
     accountId: p.accountId,
     onlineId: p.onlineId,
-    avatarUrl:
-      (avatars.find((v) => v.size === 'l') ?? avatars[0])?.avatarUrl?.replace(/^http:/, 'https:') ??
-      null,
+    avatarUrl: secureUrl((avatars.find((v) => v.size === 'l') ?? avatars[0])?.avatarUrl ?? null),
   }
 }
 
@@ -385,7 +387,7 @@ export async function profileSummary(
   const avatar = [...p.avatars].sort((x, y) => Number(y.size === 'xl') - Number(x.size === 'xl'))[0]
   return {
     onlineId: p.onlineId ?? onlineId ?? '',
-    avatarUrl: avatar?.url,
+    avatarUrl: secureUrl(avatar?.url),
     level: Number(s.trophyLevel),
     levelProgress: s.progress,
     earned: s.earnedTrophies,

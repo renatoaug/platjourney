@@ -375,6 +375,36 @@
     border-bottom: 1px solid var(--color-border);
   }
 
+  /* The platinum stands out from the list: a platinum glow that fades to the right, no border, and
+     its metal as a badge. */
+  .trophy-row.is-platinum {
+    margin: 10px 0;
+    padding: 16px;
+    border-bottom: 0;
+    border-radius: var(--radius-tag);
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-soft), transparent),
+      transparent 85%
+    );
+  }
+
+  .trophy-row.is-platinum .trophy-art {
+    box-shadow: 0 0 22px
+      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
+  }
+
+  .trophy-row.is-platinum h4 {
+    color: var(--color-trophy-platinum);
+  }
+
+  .trophy-row.is-platinum .trophy-metal {
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-soft), transparent);
+    font-weight: var(--weight-semibold);
+  }
+
   .trophy-art {
     flex: none;
     width: 46px;

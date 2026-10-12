@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>PlatJourney</title>
 <meta name="theme-color" content="#10120f">
 <meta name="description" content="Acompanhe seus troféus do PlayStation, defina metas de platina e converse com o Nexo, seu assistente.">
@@ -18,11 +18,20 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="alternate icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PlatJourney">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-<div id="root"></div>
+<div id="root">
+<!-- The boot screen before any script runs (components/boot-screen.tsx draws the same once the app starts).
+     Hidden until the stylesheet shows it, so it never appears unstyled. -->
+<div class="boot-screen" hidden role="status" aria-label="PlatJourney"><div class="boot-stage" aria-hidden="true"><span class="boot-key boot-key-triangle"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3 17.5 16h-15Z"/></svg></span><span class="boot-key boot-key-circle"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/></svg></span><span class="boot-key boot-key-cross"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 4 12 12M16 4 4 16"/></svg></span><span class="boot-key boot-key-square"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3.5" y="3.5" width="13" height="13" rx="1"/></svg></span><img class="boot-nexo" src="/nexo-avatar.svg" alt=""></div><span class="boot-bar" aria-hidden="true"></span><span class="boot-line" aria-hidden="true"></span></div>
+</div>
 <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

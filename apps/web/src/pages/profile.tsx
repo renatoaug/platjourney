@@ -1,6 +1,7 @@
 /** Profile page: level, platinums with search and pages, and the account cards. */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { AccountCards } from '../components/account'
 import { titleHref } from '../components/tip'
@@ -162,28 +163,36 @@ const lower = (s: string) => s.toLocaleLowerCase(getLocale())
 
 export function Profile() {
   const t = useMessages(messages)
-  const [load, setLoad] = useState<Load>({ kind: 'loading' })
+  const { cache } = useApp()
+  // Seen before: shown at once and refreshed in place, without the skeleton.
+  const [load, setLoad] = useState<Load>(() =>
+    cache.profile ? { kind: 'ready', data: cache.profile as ProfileData } : { kind: 'loading' },
+  )
   const editing = useRef(false)
   const searching = useRef(false)
 
   // quiet: refresh in place, without the skeleton (used while platinums arrive).
-  const fetchProfile = useCallback(async (quiet = false) => {
-    if (!quiet) setLoad({ kind: 'loading' })
-    try {
-      const d = await api<ProfileData>('/api/profile')
-      setLoad({ kind: 'ready', data: d })
-    } catch (e) {
-      const me =
-        e instanceof ApiError && e.code === 'trophies_private'
-          ? await api<{ user: Me }>('/api/me').catch(() => null)
-          : null
-      setLoad(me ? { kind: 'account', user: me.user } : { kind: 'error' })
-    }
-  }, [])
+  const fetchProfile = useCallback(
+    async (quiet = false) => {
+      if (!quiet) setLoad({ kind: 'loading' })
+      try {
+        const d = await api<ProfileData>('/api/profile')
+        cache.profile = d
+        setLoad({ kind: 'ready', data: d })
+      } catch (e) {
+        const me =
+          e instanceof ApiError && e.code === 'trophies_private'
+            ? await api<{ user: Me }>('/api/me').catch(() => null)
+            : null
+        setLoad(me ? { kind: 'account', user: me.user } : { kind: 'error' })
+      }
+    },
+    [cache],
+  )
 
   useEffect(() => {
-    fetchProfile()
-  }, [fetchProfile])
+    fetchProfile(cache.profile !== undefined)
+  }, [fetchProfile, cache])
 
   // Keep the list growing while PSN dates arrive, but never under an open form or a search in progress.
   // Each arrival is a new object, so the wait restarts after every refresh.
@@ -394,7 +403,7 @@ export function ProfileView({
                     {d.byYear.map((y) => (
                       <div key={y.year} className="year">
                         <b>{y.count}</b>
-                        <i style={{ height: `${Math.round((y.count / maxYear) * 120)}px` }} />
+                        <i style={{ '--share': y.count / maxYear } as CSSProperties} />
                         <small>{y.year}</small>
                       </div>
                     ))}

@@ -1,0 +1,46 @@
+@layer screens {
+  /* A round badge that comes down with the finger and turns as it goes; past the trigger it lights
+     up, and while refreshing it spins. */
+  .pull-refresh {
+    position: fixed;
+    top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - 36px);
+    left: 50%;
+    z-index: 150;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-round);
+    background: var(--color-surface-raised);
+    color: var(--color-fg-muted);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+    translate: -50% var(--pull);
+    transition: color 0.15s ease;
+  }
+
+  .pull-refresh .icon {
+    width: 18px;
+    height: 18px;
+    rotate: var(--turn);
+  }
+
+  .pull-refresh.armed,
+  .pull-refresh.refreshing {
+    color: var(--color-accent);
+  }
+
+  .pull-refresh.refreshing {
+    transition: translate 0.2s ease;
+  }
+
+  .pull-refresh.refreshing .icon {
+    animation: pull-spin 0.8s linear infinite;
+  }
+
+  @keyframes pull-spin {
+    to {
+      rotate: calc(var(--turn) + 360deg);
+    }
+  }
+}

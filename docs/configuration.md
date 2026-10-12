@@ -124,6 +124,7 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | `POLL_MINUTES` | 15 | How often each player's PSN profile is checked |
 | `PORT` | 3000 | The server's port |
 | `PLUGINS`, `PLUGINS_WEB` | empty | Plugin modules to load ([plugins](plugins.md)) |
+| `MOBILE_URL` | empty | The instance the native app opens, read by `cap sync` ([mobile](mobile.md)); empty ships the web build inside the app |
 | `WEB_DEV_URL` | empty | Development only: the Vite server the page is proxied from (`bun run dev` sets it) |
 | `AI_HOST`, `AI_PORT` | 127.0.0.1, 8100 | Where the AI service listens |
 | `CHAT_MAX_OUTPUT_TOKENS` | 1500 | Caps each Nexo answer |

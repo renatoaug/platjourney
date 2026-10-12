@@ -9,6 +9,7 @@ import { number } from '../lib/format'
 import type { AppStateData, Me } from '../lib/types'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
+import { InstallGuide, installGuideDue, installPlatform } from './install-guide'
 import './onboarding.css'
 
 const messages = defineMessages({
@@ -22,6 +23,7 @@ const messages = defineMessages({
     tourHint: '{count} paradas rápidas, menos de dois minutos.',
     phase: 'FASE {n}/{total}',
     goTo: 'Ir para a fase {n}',
+    expand: 'Abrir o tour, fase {n} de {total}: {title}',
     xp: '+{xp} XP',
     welcome: {
       eyebrow: 'NOVA JORNADA DESBLOQUEADA',
@@ -130,6 +132,7 @@ const messages = defineMessages({
     tourHint: '{count} quick stops, under two minutes.',
     phase: 'PHASE {n}/{total}',
     goTo: 'Go to phase {n}',
+    expand: 'Open the tour, phase {n} of {total}: {title}',
     xp: '+{xp} XP',
     welcome: {
       eyebrow: 'NEW JOURNEY UNLOCKED',
@@ -295,6 +298,9 @@ export function Onboarding() {
   const [open, setOpen] = useState(() => (me.demo ? !sessionSeen() : !me.onboarded))
   const [step, setStep] = useState(0)
   const [phases, setPhases] = useState<readonly Phase[]>(PHASES)
+  const [installStep, setInstallStep] = useState(
+    () => !me.demo && !me.onboarded && installGuideDue(),
+  )
   useEffect(() => {
     const show = () => {
       setStep(0)
@@ -321,6 +327,11 @@ export function Onboarding() {
     [me, setMe, navigate],
   )
   if (!open) return null
+  // On a phone, before the introduction: put the app on the home screen first.
+  if (step === 0 && installStep) {
+    const platform = installPlatform()
+    if (platform) return <InstallGuide platform={platform} onDone={() => setInstallStep(false)} />
+  }
   if (step === 0)
     return (
       <WelcomeDialog
@@ -466,6 +477,9 @@ export function WelcomeDialog({
   )
 }
 
+// How far the player scrolls, in px, before the card folds on a phone.
+const FOLD_AFTER = 40
+
 /** Phases 2 to 5: each opens its screen, selects its tab and explains it in a card beside the page. */
 export function Tour({
   step,
@@ -490,7 +504,28 @@ export function Tour({
   const last = step === phases.length - 1
   const { leaving, leave } = useLeaving(onDone)
   const [place, setPlace] = useState<{ left?: number; bottom?: boolean } | null>(null)
+  // On a phone the card folds into a small bar once the player scrolls, so the page behind can be
+  // seen whole; a tap opens it again. Each phase starts open.
+  const [foldedAt, setFoldedAt] = useState<number | null>(null)
+  const folded = foldedAt === step
   const go = (to: number) => setStep(Math.max(1, Math.min(phases.length - 1, to)))
+
+  useEffect(() => {
+    if (!place || folded || window.innerWidth > 760) return
+    let from = window.scrollY
+    // The phase scrolls its parts into view first: wait for that before watching the player.
+    const start = window.setTimeout(() => {
+      from = window.scrollY
+      window.addEventListener('scroll', fold, { passive: true })
+    }, 400)
+    const fold = () => {
+      if (Math.abs(window.scrollY - from) > FOLD_AFTER) setFoldedAt(step)
+    }
+    return () => {
+      window.clearTimeout(start)
+      window.removeEventListener('scroll', fold)
+    }
+  }, [place, folded, step])
 
   useEffect(() => {
     navigate(route)
@@ -594,64 +629,95 @@ export function Tour({
       }
       aria-label={t('label')}
       aria-live="polite"
+      data-folded={folded ? '' : undefined}
     >
-      <header className="onb-top">
-        <XpBar step={step} phases={phases} />
-        <button type="button" className="ghost sm onb-skip" onClick={() => leave()}>
-          {t('skip')}
+      {folded ? (
+        <button
+          type="button"
+          className="tour-fold"
+          aria-label={t('expand', {
+            n: step + 1,
+            total: phases.length,
+            title: t(`${phase}.title`),
+          })}
+          onClick={() => setFoldedAt(null)}
+        >
+          <img className="tour-guide" src="/nexo-avatar.svg" alt="" />
+          <span className="tour-fold-step">
+            {step + 1}/{phases.length}
+          </span>
+          <span className="tour-fold-title">{t(`${phase}.title`)}</span>
+          <Icon name="chevron-up" />
         </button>
-      </header>
-      <div className="tour-body" key={phase}>
-        <div className="tour-stage" aria-hidden="true">
-          <Stage phase={phase} me={me} data={data} />
-          <span className="onb-xp-pop">{t('xp', { xp: step * 250 })}</span>
-        </div>
-        <div className="onb-copy">
-          <span className="onb-phase">{t('phase', { n: step + 1, total: phases.length })}</span>
-          <span className="eyebrow">{t(`${phase}.eyebrow`)}</span>
-          <h2>{t(`${phase}.title`)}</h2>
-          <p>
-            {me.demo && DEMO_TEXT.includes(phase)
-              ? t(`${phase as 'nexo'}.demoBody`)
-              : t(`${phase}.body`)}
-          </p>
-        </div>
-      </div>
-      <footer className="onb-controls">
-        <div className="onb-dots">
-          {phases.map((p, i) =>
-            i === 0 ? null : (
-              <button
-                key={p}
-                type="button"
-                aria-label={t('goTo', { n: i + 1 })}
-                aria-current={i === step ? 'step' : undefined}
-                onClick={() => go(i)}
-              />
-            ),
-          )}
-        </div>
-        <div className="onb-nav">
-          {step > 1 && (
-            <button type="button" className="ghost" onClick={() => go(step - 1)}>
-              {t('back')}
-            </button>
-          )}
-          {last ? (
-            <button type="button" className="button onb-start" onClick={() => leave(true)}>
-              <Icon name="trophy" /> {t('start')}
-            </button>
-          ) : (
-            <button type="button" className="button" onClick={() => go(step + 1)}>
-              {t('next')} <Icon name="arrow-right" />
-            </button>
-          )}
-        </div>
-      </footer>
+      ) : (
+        content()
+      )}
       {leaving && <Burst />}
     </section>,
     document.body,
   )
+
+  // A plain function, not a component: a component declared here would mount anew on every render.
+  function content() {
+    return (
+      <>
+        <header className="onb-top">
+          <img className="tour-guide" src="/nexo-avatar.svg" alt="" />
+          <XpBar step={step} phases={phases} />
+          <button type="button" className="ghost sm onb-skip" onClick={() => leave()}>
+            {t('skip')}
+          </button>
+        </header>
+        <div className="tour-body" key={phase}>
+          <div className="tour-stage" aria-hidden="true">
+            <Stage phase={phase} me={me} data={data} />
+            <span className="onb-xp-pop">{t('xp', { xp: step * 250 })}</span>
+          </div>
+          <div className="onb-copy">
+            <span className="onb-phase">{t('phase', { n: step + 1, total: phases.length })}</span>
+            <span className="eyebrow">{t(`${phase}.eyebrow`)}</span>
+            <h2>{t(`${phase}.title`)}</h2>
+            <p>
+              {me.demo && DEMO_TEXT.includes(phase)
+                ? t(`${phase as 'nexo'}.demoBody`)
+                : t(`${phase}.body`)}
+            </p>
+          </div>
+        </div>
+        <footer className="onb-controls">
+          <div className="onb-dots">
+            {phases.map((p, i) =>
+              i === 0 ? null : (
+                <button
+                  key={p}
+                  type="button"
+                  aria-label={t('goTo', { n: i + 1 })}
+                  aria-current={i === step ? 'step' : undefined}
+                  onClick={() => go(i)}
+                />
+              ),
+            )}
+          </div>
+          <div className="onb-nav">
+            {step > 1 && (
+              <button type="button" className="ghost" onClick={() => go(step - 1)}>
+                {t('back')}
+              </button>
+            )}
+            {last ? (
+              <button type="button" className="button onb-start" onClick={() => leave(true)}>
+                <Icon name="trophy" /> {t('start')}
+              </button>
+            ) : (
+              <button type="button" className="button" onClick={() => go(step + 1)}>
+                {t('next')} <Icon name="arrow-right" />
+              </button>
+            )}
+          </div>
+        </footer>
+      </>
+    )
+  }
 }
 
 function Stage({ phase, me, data }: { phase: Phase; me: Me; data: AppStateData | null }) {

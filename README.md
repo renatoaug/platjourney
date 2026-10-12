@@ -82,6 +82,7 @@ Every merge to `main` is a release: [semantic-release](https://semantic-release.
 - [`AGENTS.md`](AGENTS.md): code rules, conventions and the checks before calling a change done
 - [`docs/features.md`](docs/features.md): what PlatJourney does, the demo and the Telegram commands
 - [`docs/notifications.md`](docs/notifications.md): what PlatJourney sends on its own (game start, trophies, sessions, progress marks), when, and the rules that keep it from repeating.
+- [`docs/mobile.md`](docs/mobile.md): installing PlatJourney on a phone from the browser, and the native app built with Capacitor from the same code.
 - [`docs/architecture.md`](docs/architecture.md): the parts, how they talk and where the code lives
 - [`docs/configuration.md`](docs/configuration.md): every setting in `.env`, local models and per-feature models
 - [`docs/evals.md`](docs/evals.md): measuring Nexo against fixed questions, the evals database and the viewer

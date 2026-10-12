@@ -7,7 +7,9 @@
       "!data",
       "!dist",
       "!apps/web/src/styles/tailwind.css",
-      "!db/demo-seed.json"
+      "!db/demo-seed.json",
+      "!apps/mobile/android",
+      "!apps/mobile/ios"
     ]
   },
   "vcs": {

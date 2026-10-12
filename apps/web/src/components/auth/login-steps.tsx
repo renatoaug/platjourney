@@ -174,10 +174,13 @@ function BackButton({ onBack }: { onBack: () => void }) {
   )
 }
 
-// Each step puts the cursor in its first field when it appears.
+// Each step puts the cursor in its first field when it appears, except on a touch screen, where
+// focusing would open the keyboard over the screen before the player chose to type.
 function useFocus() {
   const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => ref.current?.focus(), [])
+  useEffect(() => {
+    if (!window.matchMedia?.('(pointer: coarse)').matches) ref.current?.focus()
+  }, [])
   return ref
 }
 

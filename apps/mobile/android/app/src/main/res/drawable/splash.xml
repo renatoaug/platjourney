@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launch screen before Android 12 (from 12 on, styles.xml draws it): the app's dark background
+     with Nexo in the middle, in any orientation and density. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/ic_launcher_background" />
+    <item>
+        <bitmap android:gravity="center" android:src="@drawable/splash_nexo" />
+    </item>
+</layer-list>

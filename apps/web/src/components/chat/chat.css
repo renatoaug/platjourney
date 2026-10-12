@@ -122,9 +122,14 @@
   }
 
   @media (max-width: 760px) {
-    /* The screen minus the top bar, the conversations button and the menu fixed at the bottom. */
+    /* The screen minus the status bar, the top bar, the conversations button and the bottom bar. */
     .chat-page {
-      height: calc(100dvh - 236px - env(safe-area-inset-bottom, 0px));
+      height: calc(
+        100dvh -
+        172px -
+        var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) -
+        var(--bottom-bar)
+      );
       min-height: 400px;
       padding: 20px;
     }

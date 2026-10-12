@@ -18,7 +18,7 @@
   }
 
   .auth {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: grid;
     place-items: center;
     padding: 24px 16px;
@@ -162,7 +162,8 @@
 
   @media (max-width: 480px) {
     .auth {
-      padding: 12px;
+      padding: calc(12px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 12px
+        calc(12px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
     }
   }
 

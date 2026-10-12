@@ -35,7 +35,7 @@ test('the breadcrumb and the tab title follow the route', async () => {
   mockApi({ '/api/title': never })
   const { unmount } = renderApp(<Shell />, { path: '/discover' })
   expect(screen.getByText('Descobrir', { selector: '#route-label' })).toBeTruthy()
-  await waitFor(() => expect(document.title).toBe('Descobrir · PlatJourney'))
+  await waitFor(() => expect(document.title).toBe('Descobrir'))
   unmount()
   renderApp(<Shell />, { path: '/title/game/game%3A1' })
   expect(screen.getByText('Jogo', { selector: '#route-label' })).toBeTruthy()
@@ -163,7 +163,7 @@ test("a plugin's page gets an item in the menu, its route and its title", async 
     const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
     expect(within(nav).getByRole('link', { name: 'Olá' }).className).toContain('active')
     expect(screen.getByRole('heading', { name: 'Página do plugin' })).toBeTruthy()
-    await waitFor(() => expect(document.title).toBe('Olá · PlatJourney'))
+    await waitFor(() => expect(document.title).toBe('Olá'))
   } finally {
     delete pluginModule.pages
   }

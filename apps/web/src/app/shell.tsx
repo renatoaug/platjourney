@@ -1,11 +1,21 @@
 /** The signed-in layout: sidebar, top bar and the screen for the current route. */
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router'
+import {
+  Link,
+  Navigate,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+  useNavigationType,
+} from 'react-router'
+import { AccountMenu } from '../components/account-menu'
 import { DemoBanner } from '../components/demo'
 import { Notifications } from '../components/notifications'
 import { Onboarding } from '../components/onboarding'
 import { PrivateNotice } from '../components/private-notice'
+import { PullRefresh } from '../components/pull-refresh'
 import {
   defineMessages,
   getLocale,
@@ -47,7 +57,6 @@ const messages = defineMessages({
     mainNav: 'Navegação principal',
     ai: 'IA',
     profileLabel: 'Meu perfil',
-    avatarLabel: 'Abrir meu perfil',
     profileLine: 'Nível {level} · {platinums} platinas',
     profileUnavailable: 'Perfil indisponível',
     waitingPsn: 'Aguardando a PSN',
@@ -88,7 +97,6 @@ const messages = defineMessages({
     mainNav: 'Main navigation',
     ai: 'AI',
     profileLabel: 'My profile',
-    avatarLabel: 'Open my profile',
     profileLine: 'Level {level} · {platinums} platinums',
     profileUnavailable: 'Profile unavailable',
     waitingPsn: 'Waiting for PSN',
@@ -137,6 +145,24 @@ const LABELS: Record<string, MessageKey<typeof messages>> = {
   '/guides': 'nav.guides',
   '/history': 'nav.history',
   '/profile': 'nav.profile',
+}
+
+/** How the screen was reached, for its entrance on a phone (page.css): `tab` between the menu's
+ * screens fades, `push` into a deeper screen slides in from the right, `pop` (back) from the left. */
+type Arrival = 'tab' | 'push' | 'pop'
+
+function useArrival(pathname: string): Arrival {
+  const type = useNavigationType()
+  const previous = useRef(pathname)
+  const arrival = useRef<Arrival>('tab')
+  if (previous.current !== pathname) {
+    const isTab = (path: string) =>
+      path in LABELS || pluginModule.pages?.some((p) => p.path === path)
+    arrival.current =
+      type === 'POP' ? 'pop' : isTab(pathname) && isTab(previous.current) ? 'tab' : 'push'
+    previous.current = pathname
+  }
+  return arrival.current
 }
 
 function Nav() {
@@ -295,17 +321,6 @@ function SidebarProfile() {
 }
 
 /** The account's picture at the end of the top bar, a way to the profile on a phone. */
-function TopbarAvatar() {
-  const t = useMessages(messages)
-  const { data } = useApp()
-  const avatar = data?.profile?.avatarUrl
-  return (
-    <Link className="topbar-avatar" to="/profile" aria-label={t('avatarLabel')}>
-      {avatar ? <img src={avatar} alt="" /> : <Icon name="circle" />}
-    </Link>
-  )
-}
-
 function SyncButton() {
   const t = useMessages(messages)
   const { loadState, loading, sync, syncedAt } = useApp()
@@ -344,17 +359,25 @@ function SyncButton() {
 export function Shell() {
   const t = useMessages(messages)
   const { pathname } = useLocation()
-  const { me } = useApp()
+  const { me, loadState } = useApp()
   const [privateProfile, setPrivateProfile] = useState(false)
+  // Pulling down refreshes the app's data and mounts the screen again, so it fetches its own too
+  // (a screen seen before keeps showing while it does).
+  const [refreshes, setRefreshes] = useState(0)
+  const pullRefresh = async () => {
+    await loadState()
+    setRefreshes((n) => n + 1)
+  }
   const locale = useLocale()
   const isTitle = pathname.startsWith('/title/')
+  const arrival = useArrival(pathname)
   const page = pluginModule.pages?.find((p) => p.path === pathname)
   const label = page
     ? page.label[locale]
     : t(isTitle ? 'nav.title' : (LABELS[pathname] ?? 'nav.home'))
 
   useEffect(() => {
-    document.title = `${label} · PlatJourney`
+    document.title = label
     window.scrollTo({ top: 0 })
   }, [label])
 
@@ -365,7 +388,7 @@ export function Shell() {
   }, [])
 
   return (
-    <div className="app" id="app">
+    <div className="app" id="app" data-arrival={arrival}>
       <aside className="sidebar">
         <Link className="logo" to="/" aria-label={t('logoLabel')}>
           <img className="brand-mark" src="/logo.svg" alt="" width="40" height="40" />
@@ -401,13 +424,14 @@ export function Shell() {
             <PluginSlot name="top-bar" />
             <Notifications />
             <SyncButton />
-            <TopbarAvatar />
+            <AccountMenu />
           </div>
         </header>
         {me.demo && <DemoBanner />}
         <Onboarding />
         {privateProfile && <PrivateNotice />}
-        <Routes>
+        <PullRefresh onRefresh={pullRefresh} />
+        <Routes key={refreshes}>
           <Route path="/" element={<Home />} />
           <Route path="/game" element={<Game />} />
           <Route path="/nexo" element={<Nexo />} />
