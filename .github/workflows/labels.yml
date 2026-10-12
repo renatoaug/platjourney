@@ -5,18 +5,17 @@ name: Labels from the title
 # when the repository has one with that name. Priority is a person's call: an issue opened without
 # one gets `needs: triage`, which goes away once a `priority:` label is added or the issue is closed.
 
+# A pull request is labelled when it opens and again when it closes, from the title it ends with
+# (the release note reads it); edits in between run nothing.
 on:
   pull_request_target:
-    types: [opened, edited, reopened]
+    types: [opened, closed]
   issues:
-    types: [opened, edited, reopened, labeled, closed]
+    types: [opened, reopened, labeled, closed]
 
 jobs:
   labels:
     name: Labels
-    # An edit counts only when it changed the title: ticking a checkbox in the description is an
-    # edit too, and would run this once per box.
-    if: github.event.action != 'edited' || github.event.changes.title
     runs-on: ubuntu-latest
 
     permissions:
@@ -37,7 +36,7 @@ jobs:
               github.rest.issues.removeLabel({ owner, repo, issue_number, name }).catch(() => {})
 
             // A closed issue waits for nothing: only `needs: triage` goes; the rest still describes it.
-            if (context.payload.action === 'closed') {
+            if (context.payload.issue && context.payload.action === 'closed') {
               if (current.includes('needs: triage')) await remove('needs: triage')
               return
             }
@@ -64,10 +63,11 @@ jobs:
             }
             const wanted = fromTitle(item.title)
 
-            // A title edit drops what the old title said and the new one does not; labels added by
-            // hand stay.
-            for (const l of fromTitle(context.payload.changes?.title?.from))
-              if (!wanted.includes(l) && current.includes(l)) await remove(l)
+            // A pull request closing with another type in its title drops the old `type:` label; scope
+            // labels may have been added by hand, so they stay.
+            if (context.payload.pull_request)
+              for (const l of current)
+                if (l.startsWith('type: ') && !wanted.includes(l)) await remove(l)
             const missing = wanted.filter((l) => !current.includes(l))
             if (context.payload.issue && context.payload.action === 'opened' && !current.some((l) => l.startsWith('priority: ')))
               missing.push('needs: triage')
