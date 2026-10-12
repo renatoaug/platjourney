@@ -375,27 +375,23 @@
     border-bottom: 1px solid var(--color-border);
   }
 
-  /* The platinum stands out from the list: a soft platinum card, its art ringed and its metal as a
-     badge. */
+  /* The platinum stands out from the list: a platinum glow that fades to the right, no border, and
+     its metal as a badge. */
   .trophy-row.is-platinum {
     margin: 10px 0;
     padding: 16px;
-    border: 1px solid
-      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-line), transparent);
-    border-radius: var(--radius-card);
-    background:
-      radial-gradient(
-        circle at 0% 0%,
-        color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-soft), transparent),
-        transparent 60%
-      ),
-      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-wash), transparent);
+    border-bottom: 0;
+    border-radius: var(--radius-tag);
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-soft), transparent),
+      transparent 85%
+    );
   }
 
   .trophy-row.is-platinum .trophy-art {
-    box-shadow:
-      0 0 0 2px color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-strong), transparent),
-      0 0 18px color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-line), transparent);
+    box-shadow: 0 0 22px
+      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
   }
 
   .trophy-row.is-platinum h4 {

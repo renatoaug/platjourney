@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test'
-import { isNative, tick, tickOnChoices } from '../../src/lib/native'
+import { hideLaunchScreen, isNative, tick, tickOnChoices } from '../../src/lib/native'
 
 const w = window as Window & { Capacitor?: unknown }
 
@@ -23,5 +23,12 @@ describe('native bridge', () => {
     document.querySelector('span')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     document.querySelector('p')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     expect(selectionChanged).toHaveBeenCalledTimes(1)
+  })
+
+  test('in the app, the launch screen fades out when asked', () => {
+    const hide = mock(() => Promise.resolve())
+    w.Capacitor = { isNativePlatform: () => true, Plugins: { SplashScreen: { hide } } }
+    hideLaunchScreen()
+    expect(hide).toHaveBeenCalledWith({ fadeOutDuration: 200 })
   })
 })

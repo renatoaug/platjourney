@@ -3,7 +3,10 @@
 
 interface Bridge {
   isNativePlatform?: () => boolean
-  Plugins?: { Haptics?: { selectionChanged?: () => Promise<void> } }
+  Plugins?: {
+    Haptics?: { selectionChanged?: () => Promise<void> }
+    SplashScreen?: { hide?: (options?: { fadeOutDuration?: number }) => Promise<void> }
+  }
 }
 
 const bridge = (): Bridge | undefined => (window as Window & { Capacitor?: Bridge }).Capacitor
@@ -16,6 +19,14 @@ export function isNative(): boolean {
 export function tick(): void {
   bridge()
     ?.Plugins?.Haptics?.selectionChanged?.()
+    ?.catch(() => {})
+}
+
+/** Fades the native launch screen out: called once the page's own boot screen is on screen, so
+ * the launch screen hands over to it with no gap. */
+export function hideLaunchScreen(): void {
+  bridge()
+    ?.Plugins?.SplashScreen?.hide?.({ fadeOutDuration: 200 })
     ?.catch(() => {})
 }
 

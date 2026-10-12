@@ -1,6 +1,8 @@
 @layer screens {
   /* Full screen over everything while the app starts; fades out when the first data arrives. */
-  .boot-screen {
+  /* The copy in index.html carries [hidden] so it stays out of sight until this stylesheet arrives. */
+  .boot-screen,
+  .boot-screen[hidden] {
     position: fixed;
     inset: 0;
     z-index: 200;

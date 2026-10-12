@@ -12,12 +12,12 @@ const config: CapacitorConfig = {
   webDir: '../web/dist',
   backgroundColor: '#10120f',
   ...(url ? { server: { url, cleartext: url.startsWith('http://') } } : {}),
-  // The launch screen shows briefly, then fades into the app's own boot screen (Nexo pressing the
-  // controller's buttons), which stays until the first data arrives.
+  // The launch screen (Nexo) stays until the page's own boot screen is drawn (lib/native.ts hides
+  // it), then fades into it; the long duration only covers a page that never loads.
   plugins: {
     SplashScreen: {
-      launchShowDuration: 500,
-      launchFadeOutDuration: 300,
+      launchShowDuration: 6000,
+      launchFadeOutDuration: 200,
       backgroundColor: '#10120f',
       showSpinner: false,
     },
