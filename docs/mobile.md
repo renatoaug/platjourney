@@ -24,7 +24,7 @@ The page covers the whole screen (`viewport-fit=cover`); the app frame and the s
 
 ## Native app (Capacitor)
 
-`apps/mobile` holds the Capacitor project: `capacitor.config.ts` and the generated `android/` and `ios/` projects, with icons and splash screens made from the logo (`apps/mobile/assets`, regenerated with `npx @capacitor/assets generate --ios --android`).
+`apps/mobile` holds the Capacitor project: `capacitor.config.ts` and the generated `android/` and `ios/` projects, with icons and launch images made from `apps/mobile/assets` (regenerated with `npx @capacitor/assets generate --ios --android`). Android's launch screen is not generated: Android 12 and later draw it from `values/styles.xml` and older versions from `drawable/splash.xml`, both Nexo (`drawable-xxxhdpi/splash_nexo.png`) on the dark background, so delete the `splash.png` files the generator writes under `android/`.
 
 | Step | Command |
 |---|---|
