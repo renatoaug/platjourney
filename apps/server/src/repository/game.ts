@@ -18,6 +18,10 @@ export interface Game {
   summary: string | null
   release_year: number | null
   rating: number | null
+  screenshot_ids?: string[]
+  developers?: string[]
+  website?: string | null
+  released_at?: string | null
 }
 
 export const gameRef = (id: string): RecordId => gameId(id.replace(/^game:/, ''))
@@ -116,6 +120,14 @@ export async function upsertFromCatalog(
     summary: entry?.summary ?? existing?.summary ?? undefined,
     release_year: entry?.release_year ?? existing?.release_year ?? undefined,
     rating: entry?.rating ?? existing?.rating ?? undefined,
+    screenshot_ids: entry?.screenshot_ids.length ? entry.screenshot_ids : existing?.screenshot_ids,
+    developers: entry?.developers.length ? entry.developers : existing?.developers,
+    website: entry?.website ?? existing?.website ?? undefined,
+    released_at: entry?.released_at
+      ? new Date(entry.released_at)
+      : existing?.released_at
+        ? new Date(existing.released_at)
+        : undefined,
   }
   const clean = Object.fromEntries(
     Object.entries(data).filter(([, v]) => v !== null && v !== undefined),

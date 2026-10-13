@@ -61,6 +61,15 @@ export const fmtLong = (iso: string) =>
     year: 'numeric',
   })
 
+/** A release day, written out: 26 de abril de 2019. Stored as midnight UTC, so read in UTC. */
+export const fmtRelease = (iso: string) =>
+  new Date(iso).toLocaleDateString(getLocale(), {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+
 // The allowance resets at midnight UTC on the 1st; show that calendar day.
 export const fmtReset = (iso: string) =>
   new Date(iso).toLocaleDateString(getLocale(), {

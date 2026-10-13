@@ -5,6 +5,8 @@ import {
   artUrl,
   canonical,
   type IgdbGame,
+  igdbImage,
+  media,
   normalizeName,
   popularGames,
   resolveGame,
@@ -67,6 +69,14 @@ test('a catalog entry keeps only aliases a person would type', () => {
       summary: 'Samurai.',
       first_release_date: 1595548800,
       total_rating: 87.6,
+      involved_companies: [
+        { company: { name: 'Sucker Punch' }, developer: true },
+        { company: { name: 'Sony' }, developer: false },
+      ],
+      websites: [
+        { url: 'https://wiki.example/got', type: 2 },
+        { url: 'https://suckerpunch.example/got', type: 1 },
+      ],
     }),
     ['Ghost of Tsushima Director’s Cut'],
   )
@@ -84,6 +94,10 @@ test('a catalog entry keeps only aliases a person would type', () => {
     summary: 'Samurai.',
     release_year: 2020,
     rating: 88,
+    screenshot_ids: ['shot'],
+    developers: ['Sucker Punch'],
+    website: 'https://suckerpunch.example/got',
+    released_at: '2020-07-24',
   })
 })
 
@@ -95,7 +109,18 @@ test('a bare game has empty lists and null details', () => {
     summary: null,
     release_year: null,
     rating: null,
+    screenshot_ids: [],
+    developers: [],
+    website: null,
+    released_at: null,
   })
+})
+
+test('a game without screenshots shows its artwork in the gallery', () => {
+  expect(media({ artworks: [{ image_id: 'art' }] }).screenshot_ids).toEqual(['art'])
+  expect(igdbImage('art', 't_screenshot_big')).toBe(
+    'https://images.igdb.com/igdb/image/upload/t_screenshot_big/art.jpg',
+  )
 })
 
 test('a PSN title resolves to the best matching game with its name kept as an alias', async () => {

@@ -25,6 +25,7 @@
     "check-servers": "bun run --cwd apps/server check-servers",
     "build-seed": "bun run --cwd apps/server build-seed",
     "catalog:expand": "bun run --cwd apps/server catalog:expand",
+    "catalog:media": "bun run --cwd apps/server catalog:media",
     "embed": "cd services/ai && uv run python -m platjourney_ai.jobs.embed_catalog",
     "db:reset": "bun run --cwd apps/server db:reset",
     "db:up": "docker compose up -d",

@@ -1,0 +1,383 @@
+@layer screens {
+  /* The gallery takes two thirds and the facts the rest; alone, either takes the whole width. The
+     facts set the row's height and the gallery fills it, cropping the image, so neither leaves a
+     hole beside the other at any width. */
+  .game-showcase {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .game-showcase.no-gallery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .game-showcase:empty {
+    display: none;
+  }
+
+  .gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .gallery-stage {
+    position: relative;
+    flex: 1;
+    min-height: 300px;
+    overflow: hidden;
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+    touch-action: pan-y;
+    user-select: none;
+  }
+
+  .game-showcase.no-gallery .gallery-stage,
+  .gallery:only-child .gallery-stage {
+    flex: none;
+    aspect-ratio: 16 / 9;
+  }
+
+  /* Out of the flow, so the image's own size never stretches the row. */
+  .gallery-stage img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: gallery-in 0.25s ease-out;
+  }
+
+  @keyframes gallery-in {
+    from {
+      opacity: 0.4;
+    }
+  }
+
+  .gallery-nav {
+    position: absolute;
+    top: 50%;
+    translate: 0 -50%;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-border-strong);
+    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+    color: var(--color-fg);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .gallery-nav.prev {
+    left: 12px;
+  }
+
+  .gallery-nav.next {
+    right: 12px;
+  }
+
+  .gallery-nav .icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .gallery:hover .gallery-nav,
+  .gallery-nav:focus-visible {
+    opacity: 1;
+  }
+
+  .gallery-stage img {
+    cursor: zoom-in;
+  }
+
+  .gallery-expand {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-border-strong);
+    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+    color: var(--color-fg);
+  }
+
+  .gallery-expand .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Full screen: the image as large as it fits, on a dark backdrop. */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 24px 72px;
+    border: 0;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    display: grid;
+    place-items: center;
+    touch-action: pan-y;
+  }
+
+  /* The dialog itself covers the screen; a ::backdrop does not inherit the theme in every browser. */
+  .lightbox::backdrop {
+    background: transparent;
+  }
+
+  .lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: var(--radius-control);
+    user-select: none;
+  }
+
+  .lightbox .gallery-nav {
+    opacity: 1;
+  }
+
+  .lightbox .gallery-nav.prev {
+    left: 16px;
+  }
+
+  .lightbox .gallery-nav.next {
+    right: 16px;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-border-strong);
+    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+    color: var(--color-fg);
+  }
+
+  .lightbox-close .icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .lightbox-count {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    translate: -50% 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-base);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gallery-dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+
+  .gallery-dots i {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-fg) 45%, transparent);
+  }
+
+  .gallery-dots i.on {
+    background: var(--color-fg);
+  }
+
+  .gallery-thumbs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .gallery-thumbs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gallery-thumbs button {
+    flex: none;
+    width: 112px;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--radius-control);
+    border: 2px solid transparent;
+    background: var(--color-bg-subtle);
+    opacity: 0.6;
+    transition:
+      opacity 0.15s,
+      border-color 0.15s;
+  }
+
+  .gallery-thumbs button:hover,
+  .gallery-thumbs button.on {
+    opacity: 1;
+  }
+
+  .gallery-thumbs button.on {
+    border-color: var(--color-accent);
+  }
+
+  .gallery-thumbs img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* As tall as the gallery beside it: the head on top, the facts at the bottom. */
+  .game-about {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 20px;
+    min-width: 0;
+  }
+
+  .game-about-head {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .game-about-cover {
+    flex: none;
+    width: 120px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+  }
+
+  .game-about-title {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .game-about .eyebrow {
+    color: var(--color-accent);
+    text-transform: uppercase;
+  }
+
+  .game-about-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .game-about-facts {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+  }
+
+  .game-about-facts > div {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  /* A dotted leader joins each label to its value. */
+  .game-about-facts dt {
+    display: flex;
+    align-items: baseline;
+    flex: 1;
+    gap: 10px;
+    min-width: max-content;
+    color: var(--color-fg-muted);
+    font-size: var(--text-base);
+  }
+
+  .game-about-facts dt::after {
+    content: "";
+    flex: 1;
+    min-width: 16px;
+    border-bottom: 1px dashed var(--color-border-strong);
+  }
+
+  .game-about-facts dd {
+    margin: 0;
+    text-align: right;
+    font-size: var(--text-body);
+    overflow-wrap: anywhere;
+  }
+
+  .game-about-facts a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-accent);
+  }
+
+  .game-about-facts a .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .game-about-platforms {
+    display: inline-flex;
+    gap: 6px;
+  }
+
+  @media (max-width: 760px) {
+    .game-showcase {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .gallery-stage {
+      flex: none;
+      min-height: 0;
+      aspect-ratio: 16 / 9;
+    }
+
+    .game-about-cover {
+      width: 84px;
+      height: 112px;
+    }
+
+    /* On a phone the dots say where you are; the strip of thumbnails would crowd the screen. */
+    .gallery-thumbs {
+      display: none;
+    }
+
+    .gallery-nav {
+      opacity: 1;
+      width: 34px;
+      height: 34px;
+    }
+
+    .lightbox {
+      padding: 64px 8px;
+    }
+  }
+}

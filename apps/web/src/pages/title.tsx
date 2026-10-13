@@ -7,6 +7,7 @@ import { Page } from '../app/page'
 import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
 import { GameColumns } from '../components/game-columns'
+import { GameShowcase, GameShowcaseSkeleton } from '../components/game-showcase'
 import { Guide, GuideSkeleton } from '../components/guide'
 import { HeroProgress, HeroSkeleton, UnobtainableBanner } from '../components/hero'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
@@ -179,6 +180,7 @@ export function TitleSkeleton({ owned = true }: { owned?: boolean }) {
       <div className={`card hero${owned ? '' : ' hero-compact'}`}>
         <HeroSkeleton />
       </div>
+      <GameShowcaseSkeleton />
       {owned ? (
         <GameColumns
           style={{ marginTop: 20 }}
@@ -272,6 +274,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
           )}
         </div>
       </div>
+      <GameShowcase game={d.game} name={d.name} />
       {/* Every game gets the same two columns as the current game: trophies on the left, the
           guide beside them. A game whose PSN list is not known yet says so where the list goes. */}
       <GameColumns
