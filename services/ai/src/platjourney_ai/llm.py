@@ -208,6 +208,17 @@ async def research_json(name: str, instructions: str, input: str, schema: dict[s
     return json.loads(strip_links(response.output_text))
 
 
+async def answer_json(name: str, instructions: str, input: str, schema: dict[str, Any]) -> Any:
+    """One call that answers only from the data given, as JSON matching `schema`: no web search."""
+    response = await respond(
+        instructions=instructions,
+        reasoning={'effort': 'medium'},
+        text={'format': {'type': 'json_schema', 'name': name, 'schema': schema, 'strict': True}},
+        input=input,
+    )
+    return json.loads(strip_links(response.output_text))
+
+
 def embedding_model() -> str:
     """The model behind every stored vector. Vectors from different models do not compare:
     after switching, run `bun run embed --all`."""

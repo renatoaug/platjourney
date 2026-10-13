@@ -25,13 +25,10 @@ INSTRUCTIONS = (
     'they accept, what they drop) and explain it citing their games. Then choose 6 games ONLY '
     "from the candidate list (they were pre-selected by similarity to the player's library), "
     'preferring variety across genres and mixing 2 quick platinums with 4 that match the '
-    'profile. Prefer candidates whose line carries guide numbers ("guia: ..."): PlatJourney has a '
-    'full guide for those. When a candidate line carries guide numbers, use them as they are. '
-    "Otherwise search the web for each pick's platinum difficulty, hours, and minimum full "
-    'playthroughs on the recommended platform, from trophy guides. Also verify whether any '
-    'base-game trophy requires a specific difficulty. Use null for playthroughs or '
-    'hasDifficultyTrophy when unverified; never confuse difficulty-specific trophies with the '
-    'platinum difficulty rating. Every "why" must reference the profile and the games it '
+    'profile. Every candidate has a PlatJourney guide: use the numbers on its line ("guia: ...") '
+    'as they are, and null for a number the line does not carry; never invent or look up '
+    'numbers, and never confuse difficulty-specific trophies with the platinum difficulty '
+    'rating. Every "why" must reference the profile and the games it '
     'resembles. The player may have said why they turned games down: steer away from games '
     'like those for that reason (too long, too hard, a genre they do not enjoy, online play) '
     'and say it in "avoid" as a kind of game, never as a game\'s name; a game turned down '
@@ -213,6 +210,13 @@ def candidate_line(c: Candidate, facts: str = '') -> str:
     )
 
 
+async def guided_games() -> list[str]:
+    """Every game PlatJourney has a guide for."""
+    return [
+        str(g) for g in await db.rows('SELECT VALUE <string> game FROM guide WHERE guide != NONE')
+    ]
+
+
 async def guide_rows(ids: Sequence[str]) -> dict[str, dict[str, Any]]:
     """What the guides we already have say about each game: the numbers and the traits a
     player's rules look at."""
@@ -227,8 +231,7 @@ async def guide_rows(ids: Sequence[str]) -> dict[str, dict[str, Any]]:
 
 
 def facts_line(r: dict[str, Any]) -> str:
-    """Difficulty, hours and playthroughs, so the picks rest on researched numbers instead of
-    a web search."""
+    """Difficulty, hours and playthroughs from the guide, the numbers the picks rest on."""
     if r.get('difficulty') is None or r.get('hours') is None:
         return ''
     return f'dificuldade {r["difficulty"]}/10, ~{r["hours"]}h, {r["playthroughs"]} jogada(s)'
@@ -360,22 +363,22 @@ def resolve(
 
 async def recommend(req: RecommendRequest) -> RecommendResponse:
     filters = req.preferences.filters
-    # More are drawn than shown, so the games PlatJourney has a guide for can come first.
-    wanted = CANDIDATES * 3
-    drawn = await candidates(req.library, [*req.exclude, *req.seen], wanted)
+    # Only games PlatJourney has a guide for: their numbers are ours, so nothing is looked up.
+    # More are drawn than shown, so the player's rules can still leave enough.
+    guided = await guided_games()
+    wanted = CANDIDATES * 2
+    drawn = await candidates(req.library, [*req.exclude, *req.seen], wanted, only=guided)
     if len(drawn) < wanted and req.seen:
         # Not enough unseen games: the ones shown longest ago come back first.
         order = {g: i for i, g in enumerate(req.seen)}
-        again = await candidates(req.library, req.exclude, wanted + len(req.seen))
+        again = await candidates(req.library, req.exclude, wanted + len(req.seen), only=guided)
         back = sorted((c for c in again if c.id in order), key=lambda c: order[c.id])
         drawn = [*drawn, *back[: wanted - len(drawn)]]
     known = await guide_rows([c.id for c in drawn])
-    allowed = [c for c in drawn if not breaks(filters, known.get(c.id))]
-    # Games with a guide first, each group still in taste order.
-    found = sorted(allowed, key=lambda c: c.id not in known)[:CANDIDATES]
+    found = [c for c in drawn if c.id in known and not breaks(filters, known[c.id])][:CANDIDATES]
     log.info('building recommendations from %d candidates (%d drawn)', len(found), len(drawn))
     facts = {i: line for i, r in known.items() if (line := facts_line(r))}
-    result = await llm.research_json(
+    result = await llm.answer_json(
         'recommendations',
         INSTRUCTIONS,
         build_input(req.library, found, req.dismissed, facts, req.preferences),
