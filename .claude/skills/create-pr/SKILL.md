@@ -61,14 +61,15 @@ Split it in two, in this order:
 1. **What you validated** — tick these (`[x]`). Commands you actually ran, with their result. Never tick a box you did not run.
 2. **What only a person can confirm** — leave these unticked (`[ ]`). They are the reason the section exists: they tell the reviewer where to look.
 
-**A PR that changes anything user-visible must carry visual QA items**, and they have to be specific enough to follow without guessing. Name the screen, the state and the theme:
+**A PR that changes anything user-visible must carry visual QA items**, and they have to be specific enough to follow without guessing. Name the screen and the state:
 
 - the screen or view (a game page, the guide, the account page, the Telegram card)
 - the state that matters (empty, loading skeleton, error, a game without a guide, a long name that could clip)
-- light **and** dark, since the two use different tokens
 - mobile, when the layout changes at the breakpoint
 
-Good: `run the app locally, open a game you do not own — the trophy list shows the count and no rarity, in both themes`.
+The app has one theme (dark). Never ask to check a light theme or "both themes".
+
+Good: `run the app locally, open a game you do not own — the trophy list shows the count and no rarity`.
 
 Useless: `the layout is correct`.
 

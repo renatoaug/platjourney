@@ -29,10 +29,16 @@ export interface IgdbGame {
   first_release_date?: number
   total_rating?: number
   total_rating_count?: number
+  involved_companies?: { company?: { name: string }; developer?: boolean }[]
+  websites?: { url: string; type?: number }[]
 }
 
 const FIELDS =
-  'name,slug,game_type,parent_game,version_parent,platforms,alternative_names.name,cover.image_id,artworks.image_id,screenshots.image_id,genres.name,themes.name,game_modes.name,summary,first_release_date,total_rating,total_rating_count'
+  'name,slug,game_type,parent_game,version_parent,platforms,alternative_names.name,cover.image_id,artworks.image_id,screenshots.image_id,genres.name,themes.name,game_modes.name,summary,first_release_date,total_rating,total_rating_count,involved_companies.company.name,involved_companies.developer,websites.url,websites.type'
+// IGDB's website type for the game's official site.
+const OFFICIAL_SITE = 1
+// Enough scenes for a gallery; IGDB has a dozen at most for most games.
+const MAX_SCREENSHOTS = 16
 
 let token: { value: string; expiresAt: number } | null = null
 let lastCall = 0
@@ -181,7 +187,17 @@ export interface CatalogEntry {
   summary: string | null
   release_year: number | null
   rating: number | null
+  /** IGDB image ids of the game's scenes, artwork when it has no screenshot. */
+  screenshot_ids: string[]
+  developers: string[]
+  website: string | null
+  /** First release, as an ISO date. */
+  released_at: string | null
 }
+
+/** A catalog image at a given IGDB size (`t_screenshot_big`, `t_screenshot_med`, `t_1080p`…). */
+export const igdbImage = (id: string, size: string) =>
+  `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg`
 
 // Keep aliases a person would type: latin script, no executables or internal codenames.
 const usefulAlias = (a: string) =>
@@ -210,7 +226,45 @@ export function toCatalog(game: IgdbGame, extraAliases: string[] = []): CatalogE
       ? new Date(game.first_release_date * 1000).getUTCFullYear()
       : null,
     rating: game.total_rating != null ? Math.round(game.total_rating) : null,
+    ...media(game),
   }
+}
+
+/** The gallery and the "about" facts of a game: scenes, studios, official site and release date. */
+export function media(
+  game: Pick<
+    IgdbGame,
+    'screenshots' | 'artworks' | 'involved_companies' | 'websites' | 'first_release_date'
+  >,
+): Pick<CatalogEntry, 'screenshot_ids' | 'developers' | 'website' | 'released_at'> {
+  const scenes = game.screenshots?.length ? game.screenshots : (game.artworks ?? [])
+  return {
+    screenshot_ids: scenes.map((s) => s.image_id).slice(0, MAX_SCREENSHOTS),
+    developers: [
+      ...new Set(
+        (game.involved_companies ?? [])
+          .filter((c) => c.developer && c.company?.name)
+          .map((c) => c.company?.name as string),
+      ),
+    ],
+    website: game.websites?.find((w) => w.type === OFFICIAL_SITE)?.url ?? null,
+    released_at: game.first_release_date
+      ? new Date(game.first_release_date * 1000).toISOString().slice(0, 10)
+      : null,
+  }
+}
+
+/** The media fields of many catalog games at once, by IGDB id (500 per call). */
+export async function mediaByIds(ids: number[]): Promise<Map<number, ReturnType<typeof media>>> {
+  const out = new Map<number, ReturnType<typeof media>>()
+  for (let i = 0; i < ids.length; i += 500) {
+    const page = await igdb<IgdbGame[]>(
+      'games',
+      `fields screenshots.image_id,artworks.image_id,involved_companies.company.name,involved_companies.developer,websites.url,websites.type,first_release_date; where id = (${ids.slice(i, i + 500).join(',')}); limit 500;`,
+    )
+    for (const g of page) out.set(g.id, media(g))
+  }
+  return out
 }
 
 // Resolves a PSN title (or any name) to its canonical catalog entry, keeping the

@@ -11,7 +11,7 @@
 <!--
   Checked: what the author already validated (command run, known result).
   Unchecked: what only a person can confirm, which is where visual QA lives.
-  Changed something visible? Name the screen, the state and the theme. Nothing visible? Say so in one line.
+  Changed something visible? Name the screen and the state (the app has one theme, dark). Nothing visible? Say so in one line.
 -->
 
 - [x]

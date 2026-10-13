@@ -11,7 +11,8 @@ Every game screen has the same anatomy. Do not invent another one. `example.tsx`
 
 1. **Hero** (`.card.hero`): cover art as `.bgimg`, `<UnobtainableBanner>` when the platinum is gone, then `.hero-top` (a live label on the left, the platform on the right), the game name in `.hero-title`, the `.meta` line (difficulty, hours, playthroughs, missables, online) and `.hero-bottom` with `<HeroProgress>` and one primary `.button` (all in `src/components/hero.tsx`).
 2. **Session plan** (`#plan-card`, `<PlanCard>`), only for the game being played now.
-3. **Two columns** (`.grid.cols-2.game-columns`): the trophy list on the left (`<TrophyList>`, see the `page-list` skill) and the guide on the right (`<Guide>`). Without a trophy list the guide takes the whole width (`.guide-wide`).
+3. **Showcase** (`<GameShowcase>` in `src/components/game-showcase.tsx`): the gallery of the game's scenes and the "Sobre" card (genres, studio, release, platforms, official site), from the catalog. Either one alone takes the whole width; a game without both shows nothing. On a phone the gallery drops its thumbnails.
+4. **Two columns** (`.grid.cols-2.game-columns`): the trophy list on the left (`<TrophyList>`, see the `page-list` skill) and the guide on the right (`<Guide>`). Without a trophy list the guide takes the whole width (`.guide-wide`).
 
 ## What changes with ownership
 
@@ -37,7 +38,7 @@ Every game screen has the same anatomy. Do not invent another one. `example.tsx`
 
 ## Before saying done
 
-- [ ] Uses `HeroProgress`, `UnobtainableBanner`, `TrophyList`, `Guide`, not local versions
+- [ ] Uses `HeroProgress`, `UnobtainableBanner`, `GameShowcase`, `TrophyList`, `Guide`, not local versions
 - [ ] Its stories cover the four states
 - [ ] The four states exist
 - [ ] `bun run lint` passes

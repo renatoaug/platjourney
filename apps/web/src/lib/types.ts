@@ -39,6 +39,11 @@ export interface Game {
   aliases?: string[]
   igdb_id?: number
   np_communication_ids?: string[]
+  /** IGDB image ids of the game's scenes, for the gallery. */
+  screenshot_ids?: string[]
+  developers?: string[]
+  website?: string | null
+  released_at?: string | null
 }
 
 export interface ProfileSummary {

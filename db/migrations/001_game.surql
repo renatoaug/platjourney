@@ -15,6 +15,11 @@ DEFINE FIELD IF NOT EXISTS themes ON game TYPE array<string> DEFAULT [];
 DEFINE FIELD IF NOT EXISTS modes ON game TYPE array<string> DEFAULT [];
 DEFINE FIELD IF NOT EXISTS summary ON game TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS release_year ON game TYPE option<int>;
+-- The gallery and the "about" facts, from IGDB: scene image ids, studios, official site and first release day.
+DEFINE FIELD IF NOT EXISTS screenshot_ids ON game TYPE array<string> DEFAULT [];
+DEFINE FIELD IF NOT EXISTS developers ON game TYPE array<string> DEFAULT [];
+DEFINE FIELD IF NOT EXISTS website ON game TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS released_at ON game TYPE option<datetime>;
 DEFINE FIELD IF NOT EXISTS rating ON game TYPE option<float>;
 DEFINE FIELD IF NOT EXISTS embedding ON game TYPE option<array<float>>;
 DEFINE FIELD IF NOT EXISTS created_at ON game TYPE datetime DEFAULT time::now() READONLY;

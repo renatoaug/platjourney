@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { GameColumns } from '../components/game-columns'
+import { GameShowcase, GameShowcaseSkeleton } from '../components/game-showcase'
 import { Guide, GuideSkeleton } from '../components/guide'
 import { Hero, HeroSkeleton } from '../components/hero'
 import { PlanCard } from '../components/plan'
@@ -57,6 +58,11 @@ export function GameScreen({
       {current !== null && (
         <>
           {plan}
+          {loading ? (
+            <GameShowcaseSkeleton />
+          ) : current ? (
+            <GameShowcase game={current.game} name={current.name} />
+          ) : null}
           <GameColumns
             style={{ marginTop: 16 }}
             trophies={
