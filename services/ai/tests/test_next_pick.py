@@ -67,13 +67,15 @@ def test_the_game_being_played_goes_as_context_not_as_an_option() -> None:
     assert 'Playing now' not in build_input(NextRequest(choices=[NEW]))
 
 
-async def test_a_pick_outside_the_list_falls_back_to_the_first(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_the_pick_is_the_game_the_answer_names(monkeypatch: pytest.MonkeyPatch) -> None:
     answers = iter(
         [
-            {'game': 'game:2', 'why': 'Curto', 'firstStep': 'Comece'},
-            {'game': 'game:99', 'why': 'x', 'firstStep': 'y'},
+            {'game': 'game:2', 'name': 'Inside', 'why': 'Curto', 'firstStep': 'Comece'},
+            # A model that copies the whole line still names its game.
+            {'game': 'game:2 — Inside', 'name': 'Inside', 'why': 'x', 'firstStep': 'y'},
+            {'game': '', 'name': 'days gone', 'why': 'x', 'firstStep': 'y'},
+            # Naming no listed game: no pick, rather than another game under this text.
+            {'game': 'game:99', 'name': 'Hellblade II', 'why': 'x', 'firstStep': 'y'},
         ]
     )
 
@@ -84,8 +86,11 @@ async def test_a_pick_outside_the_list_falls_back_to_the_first(
     req = NextRequest(choices=[STARTED, NEW])
     first = await next_pick.next_pick(req)
     assert first and (first.game, first.why, first.first_step) == ('game:2', 'Curto', 'Comece')
-    second = await next_pick.next_pick(req)
-    assert second and second.game == 'game:1'
+    copied = await next_pick.next_pick(req)
+    assert copied and copied.game == 'game:2'
+    by_name = await next_pick.next_pick(req)
+    assert by_name and by_name.game == 'game:1'
+    assert await next_pick.next_pick(req) is None
     assert await next_pick.next_pick(NextRequest(choices=[])) is None
 
 

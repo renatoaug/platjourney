@@ -16,6 +16,7 @@ const done = makeGame({ id: 'game:3', name: 'Elden Ring', np_communication_ids: 
 
 beforeEach(() => {
   spyOn(plugins, 'aroundModel')
+  spyOn(interests, 'markNextPick').mockResolvedValue()
   spyOn(ranking, 'loadGroups').mockResolvedValue(null)
 })
 
@@ -69,6 +70,7 @@ test('the service gets each saved game with its guide and progress, and the last
     why: 'Curto depois de um longo',
     firstStep: 'Comece pelo capítulo 1',
   })
+  expect(interests.markNextPick).toHaveBeenCalledWith(user.id, 'game:2')
   const [path, body] = ai.mock.calls[0] as [string, Record<string, unknown>]
   expect(path).toBe('/interests/next')
   expect(body.locale).toBe('en')

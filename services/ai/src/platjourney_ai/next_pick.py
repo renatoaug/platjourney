@@ -2,6 +2,7 @@
 fits now and what to do first."""
 
 import json
+import re
 from typing import Any, Literal
 
 from pydantic import Field
@@ -55,9 +56,13 @@ class NextPick(Wire):
 SCHEMA: dict[str, Any] = {
     'type': 'object',
     'additionalProperties': False,
-    'required': ['game', 'why', 'firstStep'],
+    'required': ['game', 'name', 'why', 'firstStep'],
     'properties': {
-        'game': {'type': 'string', 'description': 'The chosen game id, exactly as listed (game:…)'},
+        'game': {
+            'type': 'string',
+            'description': 'Only the chosen game id, exactly as listed (game:…), without its name',
+        },
+        'name': {'type': 'string', 'description': 'The chosen game name, exactly as listed'},
         'why': {
             'type': 'string',
             'description': 'Why this one now, at most two short sentences, citing the numbers '
@@ -127,8 +132,23 @@ def build_input(req: NextRequest) -> str:
     )
 
 
+def chosen(out: dict[str, Any], choices: list[Choice]) -> Choice | None:
+    """The listed game the answer names: its id as given, an id inside what it wrote (a model
+    may copy the whole line), or its name. None when it names none of them."""
+    by_id = {c.game: c for c in choices}
+    said = str(out.get('game', '')).strip()
+    if said in by_id:
+        return by_id[said]
+    for found in re.findall(r'game:[\w-]+', said):
+        if found in by_id:
+            return by_id[found]
+    name = str(out.get('name', '')).strip().casefold()
+    return next((c for c in choices if c.name.casefold() == name), None)
+
+
 async def next_pick(req: NextRequest) -> NextPick | None:
-    """None with nothing saved. A pick outside the list falls back to the first saved game."""
+    """None with nothing saved, or when the answer names no listed game: the why is written
+    for the game it chose, so another game would get the wrong text."""
     if not req.choices:
         return None
     response = await llm.respond(
@@ -140,6 +160,7 @@ async def next_pick(req: NextRequest) -> NextPick | None:
         input=build_input(req),
     )
     out = json.loads(response.output_text)
-    ids = {c.game for c in req.choices}
-    game = out['game'] if out['game'] in ids else req.choices[0].game
-    return NextPick(game=game, why=str(out['why']), first_step=str(out['firstStep']))
+    pick = chosen(out, req.choices)
+    if pick is None:
+        return None
+    return NextPick(game=pick.game, why=str(out['why']), first_step=str(out['firstStep']))

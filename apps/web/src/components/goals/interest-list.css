@@ -85,6 +85,24 @@
     color: var(--color-accent);
   }
 
+  .goal-recommended {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+  }
+
+  .goal-recommended.next {
+    color: var(--color-accent);
+  }
+
+  .goal-recommended img {
+    width: 14px;
+    height: 14px;
+  }
+
   .goal-list li .sk {
     display: inline-block;
     margin: 0 6px 0 0;

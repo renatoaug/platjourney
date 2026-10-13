@@ -136,3 +136,23 @@ describe('InterestList', () => {
     expect(container.querySelectorAll('li')).toHaveLength(6)
   })
 })
+
+test('a game Nexo recommended says so, with the date', () => {
+  const [first, ...rest] = sampleGoals.interests
+  render(<Demo interests={[{ ...first, recommendedAt: '2026-10-13T14:00:00Z' }, ...rest]} />)
+  expect(screen.getAllByText(/Recomendado pelo Nexo em/)).toHaveLength(1)
+})
+
+test('the game Nexo picked as the next platinum says so', () => {
+  const [first, ...rest] = sampleGoals.interests
+  const open = sampleGoals.interests.find((g) => !g.done) ?? first
+  render(
+    <Demo
+      interests={[
+        { ...open, nextPickAt: '2026-10-13T14:00:00Z' },
+        ...rest.filter((g) => g !== open),
+      ]}
+    />,
+  )
+  expect(screen.getAllByText(/Próxima platina, escolhida pelo Nexo em/)).toHaveLength(1)
+})

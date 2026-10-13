@@ -178,6 +178,10 @@ export interface Interest {
   progress: number | null
   hours?: number | null
   done: boolean
+  /** When Nexo recommended it, for a game saved from its recommendations. */
+  recommendedAt?: string | null
+  /** When "Nexo decide" picked it as the next platinum; one interest at a time. */
+  nextPickAt?: string | null
 }
 
 export interface YearGoals {

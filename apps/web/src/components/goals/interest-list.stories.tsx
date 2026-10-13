@@ -44,6 +44,22 @@ function Demo({
 
 export const Loaded: Story = { render: () => <Demo /> }
 
+// A game saved from Nexo's recommendations says so under its name, and the one "Nexo decide"
+// picked as the next platinum too.
+export const Recommended: Story = {
+  render: () => (
+    <Demo
+      interests={sampleGoals.interests.map((g, i) =>
+        i === 0
+          ? { ...g, nextPickAt: '2026-10-13T15:00:00Z', recommendedAt: '2026-10-13T14:00:00Z' }
+          : i < 3
+            ? { ...g, recommendedAt: '2026-10-13T14:00:00Z' }
+            : g,
+      )}
+    />
+  ),
+}
+
 export const EmptyFilter: Story = {
   render: () => <Demo interests={sampleGoals.interests.filter((g) => !g.done)} filter="done" />,
 }

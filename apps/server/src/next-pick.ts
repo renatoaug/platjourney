@@ -9,7 +9,7 @@ import type { TitleProgress } from './psn.ts'
 import { loadGroups } from './ranking.ts'
 import { gamesForTitles } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
-import { listInterests } from './repository/interest.ts'
+import { listInterests, markNextPick } from './repository/interest.ts'
 import type { User } from './repository/user.ts'
 
 interface GuideFacts {
@@ -121,6 +121,7 @@ export async function nextPick(
   const chosen =
     interests.find((i) => i.game.id === answer.game) ??
     (interests.find((i) => i.game.id === choices[0].game) as (typeof interests)[number])
+  await markNextPick(user.id, chosen.game.id)
   return {
     game: { id: chosen.game.id, name: chosen.game.name, cover_url: chosen.game.cover_url ?? null },
     why: answer.why,

@@ -60,6 +60,8 @@ export interface InterestView {
   progress: number | null
   done: boolean
   hours: number | null
+  recommendedAt: string | null
+  nextPickAt: string | null
 }
 
 export interface YearProgress {
@@ -102,6 +104,8 @@ export async function yearProgress(
         position: i.position,
         progress: base ? Math.round((base.earned / base.total) * 100) : (t?.progress ?? null),
         hours: hoursOf(i.game.id),
+        recommendedAt: i.recommended_at ? String(i.recommended_at) : null,
+        nextPickAt: i.next_pick_at ? String(i.next_pick_at) : null,
         done: t?.earnedByType.platinum === 1 && t.lastUpdated.startsWith(String(year)),
       }
     }),

@@ -105,7 +105,30 @@ export function GoalsView({
   nextPick?: ReactNode
 }) {
   const t = useMessages(messages)
-  const { cache } = useApp()
+  const { cache, setData } = useApp()
+  /** The pick also marks its row as the next platinum, as the server just did. */
+  const ask = async () => {
+    const res = await askNext()
+    const id = res.pick?.game.id
+    if (id) {
+      const at = new Date().toISOString()
+      setData((d) =>
+        d?.goals
+          ? {
+              ...d,
+              goals: {
+                ...d.goals,
+                interests: d.goals.interests.map((i) => ({
+                  ...i,
+                  nextPickAt: i.game.id === id ? at : null,
+                })),
+              },
+            }
+          : d,
+      )
+    }
+    return res
+  }
   const shared = useInterests().command
   const command = fake ?? shared
   const [filter, setFilter] = useKept<GoalFilter>('goals.filter', 'all')
@@ -222,7 +245,7 @@ export function GoalsView({
           />
           {!readOnly &&
             p.interests.length > 1 &&
-            (nextPick ?? <NextPickBox ask={askNext} cache={cache} onDone={modelWorkDone} />)}
+            (nextPick ?? <NextPickBox ask={ask} cache={cache} onDone={modelWorkDone} />)}
           {p.interests.length ? (
             <InterestList
               interests={p.interests}
