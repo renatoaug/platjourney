@@ -5,6 +5,7 @@ import type { Guide } from '../src/guide.ts'
 import * as guide from '../src/guide.ts'
 import * as interests from '../src/interests.ts'
 import * as lib from '../src/library.ts'
+import * as nextPickModule from '../src/next-pick.ts'
 import * as planner from '../src/planner.ts'
 import * as ranking from '../src/ranking.ts'
 import * as recommend from '../src/recommend.ts'
@@ -123,6 +124,19 @@ test('goals shows the year, or runs the subcommand', async () => {
   expect(await handleCommand(user, '/goals')).toBe('o ano')
   expect(await handleCommand(user, '/goals set 12')).toBe('feito')
   expect(cmd).toHaveBeenCalledWith(user, 'set 12', titles)
+})
+
+test('pick answers with the chosen interest, or how to save one', async () => {
+  spyOn(nextPickModule, 'nextPick').mockResolvedValueOnce({
+    game: { id: 'game:2', name: 'Inside' },
+    why: 'Curto',
+    firstStep: 'Comece',
+  })
+  expect(await handleCommand(linked, '/pick')).toBe(
+    '🎯 Sua próxima platina: Inside\nCurto\n\nPor onde começar: Comece',
+  )
+  spyOn(nextPickModule, 'nextPick').mockResolvedValueOnce(null)
+  expect(await handleCommand(linked, '/pick')).toStartWith('Salve jogos nos seus interesses')
 })
 
 test('recommend searches, and refresh forces a new list', async () => {

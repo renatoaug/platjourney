@@ -14,6 +14,7 @@ import {
   listRecommendations,
   type RecommendationRow,
   replaceRecommendations,
+  seenGames,
 } from './repository/recommendation.ts'
 import { type User, updateUser } from './repository/user.ts'
 
@@ -35,12 +36,114 @@ const messages = defineMessages({
 })
 
 const CACHE_DAYS = 7
+// A game shown as a recommendation stays out of new batches while there are unseen candidates; the
+// marks are kept this long.
+export const SEEN_KEEP_DAYS = 365
 
 export interface TasteProfile {
   summary: string
   genres: string[]
   traits: string[]
   avoid: string[]
+}
+
+/** The profile's lists the player can change. */
+export const TASTE_LISTS = ['genres', 'traits', 'avoid'] as const
+export type TasteList = (typeof TASTE_LISTS)[number]
+type Lists = Record<TasteList, string[]>
+
+/** Rules every recommendation follows, checked against the guides we have. */
+export interface RecFilters {
+  noMissables?: boolean
+  onePlaythrough?: boolean
+  noDifficultyTrophy?: boolean
+  noOnline?: boolean
+  maxHours?: number | null
+  maxDifficulty?: number | null
+}
+
+/** The player's changes to the model's profile, kept when it writes the profile again, and their
+ * rules. */
+export interface TastePrefs {
+  added: Lists
+  removed: Lists
+  filters: RecFilters
+}
+
+const emptyLists = (): Lists => ({ genres: [], traits: [], avoid: [] })
+export const emptyPrefs = (): TastePrefs => ({
+  added: emptyLists(),
+  removed: emptyLists(),
+  filters: {},
+})
+
+const MAX_ITEMS = 8
+const MAX_TEXT = 40
+const FLAGS = ['noMissables', 'onePlaythrough', 'noDifficultyTrophy', 'noOnline'] as const
+
+/** Stored or sent preferences, kept to what is valid: short texts, a few per list, sane numbers.
+ * Null when the shape is wrong. */
+export function readPrefs(raw: unknown): TastePrefs | null {
+  if (raw == null) return emptyPrefs()
+  if (typeof raw !== 'object') return null
+  const r = raw as Record<string, unknown>
+  const lists = (value: unknown): Lists | null => {
+    const v = (value ?? {}) as Record<string, unknown>
+    if (typeof v !== 'object') return null
+    const out = emptyLists()
+    for (const key of TASTE_LISTS) {
+      const items = v[key] ?? []
+      if (!Array.isArray(items)) return null
+      const seen = new Set<string>()
+      out[key] = items
+        .filter((x): x is string => typeof x === 'string')
+        .map((x) => x.trim().slice(0, MAX_TEXT))
+        .filter((x) => {
+          const k = x.toLocaleLowerCase()
+          if (!x || seen.has(k)) return false
+          seen.add(k)
+          return true
+        })
+        .slice(0, MAX_ITEMS)
+    }
+    return out
+  }
+  const added = lists(r.added)
+  const removed = lists(r.removed)
+  if (!added || !removed) return null
+  const f = (r.filters ?? {}) as Record<string, unknown>
+  const filters: RecFilters = {}
+  for (const flag of FLAGS) if (f[flag] === true) filters[flag] = true
+  const bounded = (value: unknown, lo: number, hi: number) =>
+    typeof value === 'number' && Number.isFinite(value)
+      ? Math.min(hi, Math.max(lo, Math.round(value)))
+      : null
+  const hours = bounded(f.maxHours, 1, 500)
+  const difficulty = bounded(f.maxDifficulty, 1, 10)
+  if (hours) filters.maxHours = hours
+  if (difficulty) filters.maxDifficulty = difficulty
+  return { added, removed, filters }
+}
+
+/** The profile the player sees: the model's, without what they removed and with what they added. */
+export function effectiveProfile(
+  profile: TasteProfile | null,
+  prefs: TastePrefs,
+): TasteProfile | null {
+  const anyAdded = TASTE_LISTS.some((k) => prefs.added[k].length)
+  if (!profile && !anyAdded) return null
+  const base = profile ?? { summary: '', genres: [], traits: [], avoid: [] }
+  const same = (a: string, b: string) => a.toLocaleLowerCase() === b.toLocaleLowerCase()
+  const merged = (key: TasteList) => {
+    const kept = (base[key] ?? []).filter((x) => !prefs.removed[key].some((r) => same(r, x)))
+    return [...kept, ...prefs.added[key].filter((x) => !kept.some((k) => same(k, x)))]
+  }
+  return {
+    summary: base.summary,
+    genres: merged('genres'),
+    traits: merged('traits'),
+    avoid: merged('avoid'),
+  }
 }
 
 export interface Recommendation {
@@ -56,7 +159,11 @@ export interface Recommendation {
 }
 
 export interface Recommendations {
+  /** The model's profile with the player's changes applied. */
   profile: TasteProfile | null
+  /** The model's profile as it wrote it, so the page can preview changes before saving them. */
+  baseProfile?: TasteProfile | null
+  prefs: TastePrefs
   items: Recommendation[]
   generatedAt: string | null
   /** No library to learn a taste from: nothing was searched. */
@@ -110,15 +217,20 @@ export async function recommendations(
   library: TitleProgress[],
   accountGames: Game[],
   force = false,
+  /** Only what is stored, never a new batch: answering a change of preferences. */
+  storedOnly = false,
 ): Promise<Recommendations> {
+  const prefs = readPrefs(user.taste_prefs) ?? emptyPrefs()
   const current = await listRecommendations(user.id)
   const generatedAt = current[0]?.generated_at ?? null
   const fresh =
     generatedAt && Date.now() - new Date(generatedAt).getTime() < CACHE_DAYS * 86_400_000
   // The demo player keeps the stored batch, however old: a new one would call the model.
-  if (isDemo(user) || (current.length && fresh && !force)) {
+  if (isDemo(user) || storedOnly || (current.length && fresh && !force)) {
     return {
-      profile: (user.taste_profile as TasteProfile | null) ?? null,
+      profile: effectiveProfile((user.taste_profile as TasteProfile | null) ?? null, prefs),
+      baseProfile: (user.taste_profile as TasteProfile | null) ?? null,
+      prefs,
       items: await Promise.all(current.map(toView)),
       generatedAt,
     }
@@ -126,14 +238,15 @@ export async function recommendations(
 
   // Without a single game there is no taste to start from; the model is not asked.
   if (library.length === 0)
-    return { profile: null, items: [], generatedAt: null, reason: 'no-library' }
+    return { profile: null, prefs, items: [], generatedAt: null, reason: 'no-library' }
 
   const owned = new Set(accountGames.map((g) => g.id))
-  const [dismissed, interests, games] = await Promise.all([
+  const [dismissed, interests, games, seen] = await Promise.all([
     listDismissed(user.id),
     listInterests(user.id, new Date().getFullYear()),
     // Games outside the catalog have no embedding, so they cannot shape the taste.
     gamesForTitles(library, false),
+    seenGames(user.id, SEEN_KEEP_DAYS),
   ])
   const dismissedIds = new Set(dismissed.map((d) => d.game.id))
 
@@ -152,10 +265,19 @@ export async function recommendations(
           game: games.get(t.npCommunicationId)?.id ?? null,
         })),
         exclude: [...new Set([...owned, ...dismissedIds, ...interests.map((i) => i.game.id)])],
+        // Already shown, the longest ago first: they come back only when the unseen run out.
+        seen,
         // A game turned down before the player bought it says nothing about their taste now.
         dismissed: dismissed
           .filter((d) => !owned.has(d.game.id))
           .map((d) => ({ name: d.game.name, reason: d.reason ?? null })),
+        // What the player said wins over what the library suggests.
+        preferences: {
+          likes: [...prefs.added.genres, ...prefs.added.traits],
+          avoid: prefs.added.avoid,
+          wrong: TASTE_LISTS.flatMap((k) => prefs.removed[k]),
+          filters: prefs.filters,
+        },
       }),
     ),
   )
@@ -184,7 +306,9 @@ export async function recommendations(
   await updateUser(user.id, { taste_profile: result.profile })
   const saved = await listRecommendations(user.id)
   return {
-    profile: result.profile,
+    profile: effectiveProfile(result.profile, prefs),
+    baseProfile: result.profile,
+    prefs,
     items: await Promise.all(saved.map(toView)),
     generatedAt: saved[0]?.generated_at ?? null,
   }

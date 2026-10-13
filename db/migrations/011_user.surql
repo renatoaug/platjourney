@@ -12,6 +12,9 @@ DEFINE FIELD IF NOT EXISTS telegram_link_code ON user TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS telegram_link_expires_at ON user TYPE option<datetime>;
 DEFINE FIELD IF NOT EXISTS goal_targets ON user TYPE object FLEXIBLE DEFAULT {};
 DEFINE FIELD IF NOT EXISTS taste_profile ON user TYPE option<object> FLEXIBLE;
+-- What the player changed in that profile (added and removed likes, genres and things to avoid) and
+-- the rules every recommendation must follow; kept when the model writes the profile again.
+DEFINE FIELD IF NOT EXISTS taste_prefs ON user TYPE option<object> FLEXIBLE;
 DEFINE FIELD IF NOT EXISTS session_plan ON user TYPE option<object> FLEXIBLE;
 -- Show progress with DLC trophies counted in; off means the base game only (what the platinum needs).
 DEFINE FIELD IF NOT EXISTS include_dlc_progress ON user TYPE bool DEFAULT false;

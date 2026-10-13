@@ -210,6 +210,53 @@
   }
 
   /* Dismiss a recommendation */
+  /* Under the reason: the "similar to" line takes the room and wraps; the actions and the arrow keep
+     to its end, on its first line. */
+  .rec-foot {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .rec-foot-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .rec-foot .similar-to {
+    margin-top: 0;
+  }
+
+  .rec-foot .row-arrow {
+    display: grid;
+    place-items: center;
+    height: 26px;
+  }
+
+  /* While a batch is built: Nexo thinking, over the rows' skeleton. */
+  .recs-thinking {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0 12px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .recs-thinking img {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    animation: recs-think 1.6s ease-in-out infinite;
+  }
+
+  @keyframes recs-think {
+    50% {
+      transform: translateY(-3px) rotate(4deg);
+    }
+  }
+
   .rec-actions {
     display: flex;
     gap: 2px;
@@ -247,6 +294,14 @@
   .rec-dismiss:hover {
     color: var(--color-danger);
     background: color-mix(in srgb, var(--color-danger) var(--alpha-wash), transparent);
+  }
+
+  /* The row's buttons show on hover or keyboard focus; on a touch screen, always. */
+  a.row:hover .rec-save,
+  a.row:hover .rec-dismiss,
+  a.row:focus-within .rec-save,
+  a.row:focus-within .rec-dismiss {
+    opacity: 1;
   }
 
   @media (hover: none) {

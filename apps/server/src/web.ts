@@ -40,6 +40,7 @@ import {
 import { handleInterestCommand, yearProgress } from './interests.ts'
 import { library, ownedGames } from './library.ts'
 import { reply, trophyHelp } from './nexo.ts'
+import { nextPick } from './next-pick.ts'
 import { currentPlan, discardPlan, planSession } from './planner.ts'
 import { hours, playtimes } from './playtime.ts'
 import { pluginRoute, Refused } from './plugins.ts'
@@ -47,7 +48,7 @@ import { profilePage } from './profile.ts'
 import { catalogTrophies, PrivateProfile, profileSummary, secureUrl, titleTrophies } from './psn.ts'
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
 import { allow } from './rate-limit.ts'
-import { dismissRecommendation, recommendations } from './recommend.ts'
+import { dismissRecommendation, readPrefs, recommendations } from './recommend.ts'
 import {
   chatThreads,
   markNotificationsRead,
@@ -802,6 +803,10 @@ async function api(
     await handleInterestCommand(me, command, await titles())
     return json(res, 200, await yearProgress(me, await titles(), undefined, await playtimes(me)))
   }
+  if (path === '/api/interests/next' && method === 'POST') {
+    // Model work: Nexo picks which saved game to platinum now.
+    return json(res, 200, { pick: await nextPick(me, await titles(), requestLocale(req, me)) })
+  }
   if (path === '/api/recommendations/dismiss' && method === 'POST') {
     const { game, reason } = await readBody(req)
     if (typeof game !== 'string' || !game.startsWith('game:'))
@@ -813,6 +818,24 @@ async function api(
       res,
       200,
       await recommendations(me, await titles(), await ownedGames(me.psn_account_id)),
+    )
+  }
+  if (path === '/api/recommendations/preferences' && method === 'POST') {
+    // The player's changes to the taste profile and their rules; the stored batch answers, and a new
+    // one (model work) waits for the refresh button.
+    const prefs = readPrefs(await readBody(req))
+    if (!prefs) return json(res, 400, { error: 'invalid' })
+    await updateUser(me.id, { taste_prefs: prefs })
+    return json(
+      res,
+      200,
+      await recommendations(
+        { ...me, taste_prefs: prefs },
+        await titles(),
+        await ownedGames(me.psn_account_id),
+        false,
+        true,
+      ),
     )
   }
   if (path === '/api/recommendations' && method === 'GET') {

@@ -25,7 +25,8 @@ INSTRUCTIONS = (
     'they accept, what they drop) and explain it citing their games. Then choose 6 games ONLY '
     "from the candidate list (they were pre-selected by similarity to the player's library), "
     'preferring variety across genres and mixing 2 quick platinums with 4 that match the '
-    'profile. When a candidate line carries guide numbers ("guia: ..."), use them as they are. '
+    'profile. Prefer candidates whose line carries guide numbers ("guia: ..."): PlatJourney has a '
+    'full guide for those. When a candidate line carries guide numbers, use them as they are. '
     "Otherwise search the web for each pick's platinum difficulty, hours, and minimum full "
     'playthroughs on the recommended platform, from trophy guides. Also verify whether any '
     'base-game trophy requires a specific difficulty. Use null for playthroughs or '
@@ -34,7 +35,10 @@ INSTRUCTIONS = (
     'resembles. The player may have said why they turned games down: steer away from games '
     'like those for that reason (too long, too hard, a genre they do not enjoy, online play) '
     'and say it in "avoid" as a kind of game, never as a game\'s name; a game turned down '
-    'without a reason only stays out of the picks. Write everything in Brazilian Portuguese, '
+    'without a reason only stays out of the picks. The player may also have said what they like '
+    'and what to avoid, and set rules: they win over anything the library suggests, so the '
+    'profile keeps what they said in its lists and no pick breaks a rule. '
+    'Write everything in Brazilian Portuguese, '
     'second person, without the '
     'player\'s grammatical gender (no "bem-vindo", "pronto", "campeão"; use neutral wording).'
 )
@@ -140,12 +144,36 @@ class Dismissed(Wire):
     reason: DismissReason | None = None
 
 
+class Filters(Wire):
+    """Rules the player set for every pick, checked against the guides we have."""
+
+    no_missables: bool = False
+    one_playthrough: bool = False
+    no_difficulty_trophy: bool = False
+    no_online: bool = False
+    max_hours: float | None = None
+    max_difficulty: float | None = None
+
+
+class Preferences(Wire):
+    """What the player said about their taste, over what the library suggests."""
+
+    likes: list[str] = Field(default_factory=list[str])
+    avoid: list[str] = Field(default_factory=list[str])
+    # What an earlier profile said about them and they took out: not their taste.
+    wrong: list[str] = Field(default_factory=list[str])
+    filters: Filters = Field(default_factory=Filters)
+
+
 class RecommendRequest(Wire):
     library: list[LibraryTitle]
     # Owned, dismissed and already-saved interests: never candidates.
     exclude: list[str] = Field(default_factory=list[str])
     # The games the player dismissed, which the model must never suggest, with why when they said.
     dismissed: list[Dismissed] = Field(default_factory=list[Dismissed])
+    # Shown before, the longest ago first: candidates only when the unseen ones run out.
+    seen: list[str] = Field(default_factory=list[str])
+    preferences: Preferences = Field(default_factory=Preferences)
 
 
 class TasteProfile(Wire):
@@ -185,21 +213,84 @@ def candidate_line(c: Candidate, facts: str = '') -> str:
     )
 
 
-async def guide_facts(ids: Sequence[str]) -> dict[str, str]:
-    """Difficulty, hours and playthroughs from the guides we already have, so the picks rest
-    on researched numbers instead of a web search."""
+async def guide_rows(ids: Sequence[str]) -> dict[str, dict[str, Any]]:
+    """What the guides we already have say about each game: the numbers and the traits a
+    player's rules look at."""
     rows = await db.rows(
         'SELECT game, guide.difficulty AS difficulty, guide.hours AS hours, '
-        'guide.playthroughs AS playthroughs FROM guide '
+        'guide.playthroughs AS playthroughs, guide.has_missables AS has_missables, '
+        'guide.has_online AS has_online, guide.difficulty_trophy AS difficulty_trophy FROM guide '
         'WHERE game IN $ids.map(|$i| type::record($i)) AND guide != NONE',
         {'ids': list(ids)},
     )
-    return {
-        str(r['game']): f'dificuldade {r["difficulty"]}/10, ~{r["hours"]}h, '
-        f'{r["playthroughs"]} jogada(s)'
-        for r in rows
-        if r.get('difficulty') is not None and r.get('hours') is not None
-    }
+    return {str(r['game']): r for r in rows}
+
+
+def facts_line(r: dict[str, Any]) -> str:
+    """Difficulty, hours and playthroughs, so the picks rest on researched numbers instead of
+    a web search."""
+    if r.get('difficulty') is None or r.get('hours') is None:
+        return ''
+    return f'dificuldade {r["difficulty"]}/10, ~{r["hours"]}h, {r["playthroughs"]} jogada(s)'
+
+
+def breaks(f: Filters, r: dict[str, Any] | None) -> bool:
+    """Whether what we know of a game breaks one of the player's rules. A game we know
+    nothing about passes: the model checks it."""
+    if not r:
+        return False
+
+    def num(key: str) -> float | None:
+        v = r.get(key)
+        return float(v) if isinstance(v, int | float) else None
+
+    return bool(
+        (f.no_missables and r.get('has_missables') is True)
+        or (f.no_online and r.get('has_online') is True)
+        or (f.no_difficulty_trophy and r.get('difficulty_trophy'))
+        or (f.one_playthrough and (num('playthroughs') or 1) > 1)
+        or (f.max_hours is not None and (num('hours') or 0) > f.max_hours)
+        or (f.max_difficulty is not None and (num('difficulty') or 0) > f.max_difficulty)
+    )
+
+
+def pick_breaks(f: Filters, item: dict[str, Any]) -> bool:
+    """Whether the model's own numbers for a pick break a rule."""
+    return breaks(
+        f,
+        {
+            'has_missables': item.get('hasMissables'),
+            'difficulty_trophy': item.get('hasDifficultyTrophy') is True,
+            'playthroughs': item.get('playthroughs'),
+            'hours': item.get('hours'),
+            'difficulty': item.get('difficulty'),
+        },
+    )
+
+
+def rules_text(p: Preferences) -> str:
+    f = p.filters
+    rules = [
+        text
+        for on, text in [
+            (f.no_missables, 'no missable trophies'),
+            (f.one_playthrough, 'a single playthrough'),
+            (f.no_difficulty_trophy, 'no trophy tied to a difficulty'),
+            (f.no_online, 'no online trophies'),
+        ]
+        if on
+    ]
+    if f.max_hours is not None:
+        rules.append(f'at most {f.max_hours:g} hours to platinum')
+    if f.max_difficulty is not None:
+        rules.append(f'difficulty at most {f.max_difficulty:g}/10')
+    said = [
+        *([f'Likes: {", ".join(p.likes)}'] if p.likes else []),
+        *([f'Avoid: {", ".join(p.avoid)}'] if p.avoid else []),
+        *([f'Not about them (leave out of the profile): {", ".join(p.wrong)}'] if p.wrong else []),
+        *([f'Rules for every pick: {"; ".join(rules)}'] if rules else []),
+    ]
+    return '\n\nThe player said:\n' + '\n'.join(said) if said else ''
 
 
 def build_input(
@@ -207,6 +298,7 @@ def build_input(
     found: Sequence[Candidate],
     dismissed: Sequence[Dismissed],
     facts: dict[str, str] | None = None,
+    preferences: Preferences | None = None,
 ) -> str:
     recent = sorted(library, key=lambda t: t.last_updated, reverse=True)
     platinum_total = sum(1 for t in library if t.earned_by_type.platinum == 1)
@@ -227,6 +319,7 @@ def build_input(
         f'Platinumed ({platinum_total} in all; the {len(platinumed)} most recent):\n'
         f'{"\n".join(platinumed)}\n\nIn progress:\n{"\n".join(in_progress)}\n\n'
         f'Candidates (pick only from these, use the exact name):\n{candidate_list}{never}'
+        f'{rules_text(preferences) if preferences else ""}'
     )
 
 
@@ -243,10 +336,15 @@ def unmarked(text: str) -> str:
     return re.sub(r'\*{1,2}([^*\n]+)\*{1,2}', r'\1', text)
 
 
-def resolve(result: dict[str, Any], found: Sequence[Candidate]) -> RecommendResponse:
-    """Ties each pick back to the candidate it names, under the candidate's own name."""
+def resolve(
+    result: dict[str, Any], found: Sequence[Candidate], filters: Filters | None = None
+) -> RecommendResponse:
+    """Ties each pick back to the candidate it names, under the candidate's own name, and
+    drops a pick whose numbers break one of the player's rules."""
     items: list[dict[str, Any]] = []
     for item in result['items']:
+        if filters and pick_breaks(filters, item):
+            continue
         c = named(str(item['name']), found)
         items.append(
             item
@@ -261,13 +359,26 @@ def resolve(result: dict[str, Any], found: Sequence[Candidate]) -> RecommendResp
 
 
 async def recommend(req: RecommendRequest) -> RecommendResponse:
-    found = await candidates(req.library, req.exclude, CANDIDATES)
-    log.info('building recommendations from %d candidates', len(found))
-    facts = await guide_facts([c.id for c in found])
+    filters = req.preferences.filters
+    # More are drawn than shown, so the games PlatJourney has a guide for can come first.
+    wanted = CANDIDATES * 3
+    drawn = await candidates(req.library, [*req.exclude, *req.seen], wanted)
+    if len(drawn) < wanted and req.seen:
+        # Not enough unseen games: the ones shown longest ago come back first.
+        order = {g: i for i, g in enumerate(req.seen)}
+        again = await candidates(req.library, req.exclude, wanted + len(req.seen))
+        back = sorted((c for c in again if c.id in order), key=lambda c: order[c.id])
+        drawn = [*drawn, *back[: wanted - len(drawn)]]
+    known = await guide_rows([c.id for c in drawn])
+    allowed = [c for c in drawn if not breaks(filters, known.get(c.id))]
+    # Games with a guide first, each group still in taste order.
+    found = sorted(allowed, key=lambda c: c.id not in known)[:CANDIDATES]
+    log.info('building recommendations from %d candidates (%d drawn)', len(found), len(drawn))
+    facts = {i: line for i, r in known.items() if (line := facts_line(r))}
     result = await llm.research_json(
         'recommendations',
         INSTRUCTIONS,
-        build_input(req.library, found, req.dismissed, facts),
+        build_input(req.library, found, req.dismissed, facts, req.preferences),
         SCHEMA,
     )
-    return resolve(result, found)
+    return resolve(result, found, filters)

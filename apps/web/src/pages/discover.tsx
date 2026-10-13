@@ -12,10 +12,11 @@ import {
   type Recs,
   type RecsState,
 } from '../components/recommendations'
-import { type ServerAlert, Servers, ServersSkeleton } from '../components/servers'
+import type { TastePrefs } from '../components/taste-editor'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import { Icon } from '../ui/icon'
+import { Pager } from '../ui/pager'
 import { modelWorkDone } from '../ui/plugin-slot'
 import { EmptyState } from '../ui/states'
 import { toast } from '../ui/toast'
@@ -24,6 +25,9 @@ import './discover.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     title: 'Descobrir',
+    rankingPages: 'Páginas da sua biblioteca',
+    customize: 'Personalizar',
+    customizeTip: 'Ajustar o seu perfil de gosto e as regras',
     lead: 'O que platinar a seguir: da sua biblioteca e fora dela.',
     nextPlatinum: 'Próxima platina · sua biblioteca',
     nothingInProgress: 'Nada em andamento ainda',
@@ -35,9 +39,14 @@ const messages = defineMessages({
     dismissed: '{name} não aparece mais',
     dismissedWhy: '{name} saiu. O Nexo leva isso em conta nas próximas.',
     dismissFailed: 'Não conseguimos remover. Tenta de novo.',
+    prefsFailed: 'Não conseguimos salvar seu perfil. Tenta de novo.',
+    prefsSaved: 'Perfil salvo.',
   },
   [Language.En]: {
     title: 'Discover',
+    rankingPages: 'Pages of your library',
+    customize: 'Customize',
+    customizeTip: 'Adjust your taste profile and rules',
     lead: 'What to platinum next: from your library and beyond.',
     nextPlatinum: 'Next platinum · your library',
     nothingInProgress: 'Nothing in progress yet',
@@ -49,10 +58,23 @@ const messages = defineMessages({
     dismissed: "{name} won't show up again",
     dismissedWhy: '{name} is gone. Nexo takes it into account next time.',
     dismissFailed: 'We could not remove it. Try again.',
+    prefsFailed: 'We could not save your profile. Try again.',
+    prefsSaved: 'Profile saved.',
   },
 })
 
 type Cache = Record<string, unknown>
+
+/** Opens the taste profile under the picks and brings it into view. */
+function openTaste() {
+  const details = document.querySelector<HTMLDetailsElement>('#taste details')
+  if (!details) return
+  details.open = true
+  details.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// Library rows per page: about the height of a batch of recommendations beside it.
+const RANKING_PAGE = 10
 
 // Recommendations are model work, so they live in the app cache: fetched on the first visit and on
 // the refresh button only. The in-flight request is cached too, so coming back mid-load waits for it.
@@ -77,6 +99,7 @@ export function Discover() {
     return cached ? { status: 'ok', recs: cached } : { status: 'loading' }
   })
 
+  const [rankingPage, setRankingPage] = useState(1)
   const load = useCallback(async (pending: Promise<Recs>) => {
     setRecs({ status: 'loading' })
     try {
@@ -103,6 +126,19 @@ export function Discover() {
     }
   }
 
+  // The profile draft, saved when the player asks; with `regenerate`, a new batch follows.
+  const savePrefs = async (prefs: TastePrefs, regenerate: boolean) => {
+    try {
+      const next = await api<Recs>('/api/recommendations/preferences', prefs)
+      cache.recs = next
+      toast(t('prefsSaved'), 'success')
+      if (regenerate) await load(fetchRecs(cache, true))
+      else setRecs({ status: 'ok', recs: next })
+    } catch (e) {
+      if (!(e instanceof ApiError && e.handled)) toast(t('prefsFailed'))
+    }
+  }
+
   return (
     <Page path="/discover">
       <div className="page-head">
@@ -111,14 +147,18 @@ export function Discover() {
           <p>{t('lead')}</p>
         </div>
       </div>
-      <div className="grid cols-2">
+      <div className="grid cols-2 discover-columns">
         <div className="card">
           <h2>{t('nextPlatinum')}</h2>
           <div id="ranking">
             {!data ? (
-              <RankingRowsSkeleton n={6} />
+              <RankingRowsSkeleton n={RANKING_PAGE} />
             ) : data.ranking.length ? (
-              data.ranking.map((r, i) => <RankingRow key={r.game} item={r} index={i} />)
+              data.ranking
+                .slice((rankingPage - 1) * RANKING_PAGE, rankingPage * RANKING_PAGE)
+                .map((r, i) => (
+                  <RankingRow key={r.game} item={r} index={(rankingPage - 1) * RANKING_PAGE + i} />
+                ))
             ) : (
               <EmptyState
                 icon="gamepad"
@@ -133,13 +173,32 @@ export function Discover() {
               </EmptyState>
             )}
           </div>
+          {data && (
+            <Pager
+              page={rankingPage}
+              size={RANKING_PAGE}
+              total={data.ranking.length}
+              onPage={setRankingPage}
+              label={t('rankingPages')}
+            />
+          )}
         </div>
-        <div className="stack">
-          <div className="card">
-            <div className="card-head">
-              <h2>{t('recommendations')}</h2>
-              {/* With no library to learn from there is nothing to search again. */}
-              {!(recs.status === 'ok' && recs.recs.reason === 'no-library') && (
+        <div className="card">
+          <div className="card-head">
+            <h2>{t('recommendations')}</h2>
+            {/* With no library to learn from there is nothing to search again. */}
+            {!(recs.status === 'ok' && recs.recs.reason === 'no-library') && (
+              <span className="card-actions">
+                {recs.status === 'ok' && (
+                  <button
+                    type="button"
+                    className="ghost sm"
+                    data-tip={t('customizeTip')}
+                    onClick={openTaste}
+                  >
+                    <Icon name="edit" /> {t('customize')}
+                  </button>
+                )}
                 <button
                   type="button"
                   className={`icon-button${recs.status === 'loading' ? ' busy' : ''}`}
@@ -151,14 +210,15 @@ export function Discover() {
                 >
                   <Icon name="refresh" />
                 </button>
-              )}
-            </div>
-            <Recommendations state={recs} onDismiss={dismiss} />
-            {me.demo && <DemoNote />}
+              </span>
+            )}
           </div>
-          <div className="card" id="servers">
-            {data ? <Servers list={data.servers as ServerAlert[]} /> : <ServersSkeleton />}
-          </div>
+          <Recommendations
+            state={recs}
+            onDismiss={dismiss}
+            editing={{ editable: !me.demo, onSave: savePrefs }}
+          />
+          {me.demo && <DemoNote />}
         </div>
       </div>
     </Page>

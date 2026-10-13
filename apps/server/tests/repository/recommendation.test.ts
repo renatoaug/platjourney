@@ -6,6 +6,7 @@ import {
   listDismissed,
   listRecommendations,
   replaceRecommendations,
+  seenGames,
 } from '../../src/repository/recommendation.ts'
 
 const user = new db.RecordId('user', 'u1')
@@ -37,7 +38,21 @@ test('replacing recommendations deletes the old ones and creates each new one', 
   expect(q.mock.calls).toEqual([
     ['DELETE recommendation WHERE user = $user', { user }],
     ['CREATE recommendation CONTENT $data', { data: { ...row, user, game } }],
+    ['CREATE recommendation_seen CONTENT $data', { data: { user, game } }],
   ])
+})
+
+test('seen games drop old marks and come back the one shown longest ago first', async () => {
+  const q = spyOn(db, 'q')
+    .mockResolvedValueOnce(undefined)
+    .mockResolvedValueOnce([
+      { game: new db.RecordId('game', 1), at: '2026-09-01T00:00:00Z' },
+      { game, at: '2026-08-01T00:00:00Z' },
+    ])
+    .mockResolvedValueOnce([{ game: new db.RecordId('game', 1), at: '2026-10-01T00:00:00Z' }])
+  expect(await seenGames('user:u1', 365)).toEqual(['game:7', 'game:1'])
+  expect(q.mock.calls[0][0]).toContain('DELETE recommendation_seen')
+  expect(q.mock.calls[0][1]).toEqual({ user, ttl: '365d' })
 })
 
 test('dismissing upserts one dismissal per game, with the reason when given', async () => {

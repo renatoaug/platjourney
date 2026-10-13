@@ -47,7 +47,35 @@ export async function replaceRecommendations(
     await q('CREATE recommendation CONTENT $data', {
       data: { ...r, user: userRef(user), game: gameRef(r.game) },
     })
+    // Remembered as shown, so the next batches bring other games for a while.
+    await q('CREATE recommendation_seen CONTENT $data', {
+      data: { user: userRef(user), game: gameRef(r.game) },
+    })
   }
+}
+
+/** Every game shown to the player as a recommendation, the one shown longest ago first, the current
+ * batch included (it may predate the marks). Marks older than `keepDays` are dropped on the way. */
+export async function seenGames(user: string, keepDays: number): Promise<string[]> {
+  await q(
+    'DELETE recommendation_seen WHERE user = $user AND created_at < time::now() - <duration> $ttl',
+    { user: userRef(user), ttl: `${keepDays}d` },
+  )
+  const seen = (table: string) =>
+    q<{ game: unknown; at: string }[]>(
+      `SELECT game, created_at AS at FROM ${table} WHERE user = $user`,
+      { user: userRef(user) },
+    )
+  const last = new Map<string, string>()
+  for (const r of [
+    ...plain((await seen('recommendation_seen')) ?? []),
+    ...plain((await seen('recommendation')) ?? []),
+  ]) {
+    const id = String(r.game)
+    const at = String(r.at)
+    if (!last.has(id) || at > (last.get(id) ?? '')) last.set(id, at)
+  }
+  return [...last].sort((a, b) => a[1].localeCompare(b[1])).map(([id]) => id)
 }
 
 // Why a player turns a recommendation down; the model steers the next ones away from it.
