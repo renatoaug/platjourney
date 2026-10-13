@@ -232,6 +232,7 @@ erDiagram
         developers array(string)
         website option(string)
         released_at option(datetime)
+        hypes option(int)
         embedding option(array(float))
         created_at datetime
         updated_at datetime
@@ -364,7 +365,7 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `game` | catalog game | `slug`, `igdb_id` | From IGDB; `np_communication_ids` ties it to PSN lists; `embedding` for recommendations. The game page's gallery and "about" card read `screenshot_ids` (IGDB image ids of its scenes, artwork when it has none), `developers`, `website` (the official site) and `released_at` (the first release day, at midnight UTC); `bun run catalog:media` fills them for games already in the catalog. A store edition is the game itself, its name kept in `aliases`; a PS4/PS5 remaster of a game that never came to them is its own record |
+| `game` | catalog game | `slug`, `igdb_id` | From IGDB; `np_communication_ids` ties it to PSN lists; `embedding` for recommendations. The game page's gallery and "about" card read `screenshot_ids` (IGDB image ids of its scenes, artwork when it has none), `developers`, `website` (the official site) and `released_at` (the first release day, at midnight UTC); `bun run catalog:media` fills them for games already in the catalog. `hypes` is how many people follow the game on IGDB before release: the home's calendar lists the most awaited first. A store edition is the game itself, its name kept in `aliases`; a PS4/PS5 remaster of a game that never came to them is its own record |
 | `guide` | game with a researched guide | `game` | The guide itself is an object; also the deep guide's pages and passage count |
 | `guide_chunk` | passage of a deep guide | | Text, heading path, source page and its date, and the vector |
 | `guide_request` | game asked for without a guide | `game` | How many times and the questions, for whoever runs the instance |
@@ -390,6 +391,7 @@ erDiagram
 | `bun run seed [path]` | Drops the database, applies the migrations and loads the demo (`db/demo-seed.json`), or another seed file (paths from the repository root) |
 | `bun run db:reset [path]` | `seed`, then the catalog expansion and the embeddings |
 | `bun run catalog:expand` | Pulls the game catalog from IGDB (safe to re-run) |
+| `bun run catalog:releases` | Adds the PS4 and PS5 games out in the last two weeks or in the next six, for the home's calendar; the server does it once a day |
 | `bun run catalog:media [--all]` | Fills the gallery and "about" facts of catalog games that lack them, `--all` for every game (safe to re-run; holds `updated_at`) |
 | `bun run embed [--all]` | Embeds the catalog; `--all` embeds every game and guide passage again, after changing the embedding model |
 | `bun run build-seed [path] [--psn]` | Rebuilds `db/demo-seed.json` from the database (details below) |

@@ -20,6 +20,8 @@ DEFINE FIELD IF NOT EXISTS screenshot_ids ON game TYPE array<string> DEFAULT [];
 DEFINE FIELD IF NOT EXISTS developers ON game TYPE array<string> DEFAULT [];
 DEFINE FIELD IF NOT EXISTS website ON game TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS released_at ON game TYPE option<datetime>;
+-- How many people follow it on IGDB before release: the calendar lists the most awaited first.
+DEFINE FIELD IF NOT EXISTS hypes ON game TYPE option<int>;
 DEFINE FIELD IF NOT EXISTS rating ON game TYPE option<float>;
 DEFINE FIELD IF NOT EXISTS embedding ON game TYPE option<array<float>>;
 DEFINE FIELD IF NOT EXISTS created_at ON game TYPE datetime DEFAULT time::now() READONLY;

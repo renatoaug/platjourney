@@ -13,6 +13,7 @@ import {
 import { reply } from './nexo.ts'
 import { loadPlugins, Refused } from './plugins.ts'
 import { allow } from './rate-limit.ts'
+import { startReleaseSync } from './releases.ts'
 import { updateUser, userByChat, userByLinkCode } from './repository/user.ts'
 import {
   incomingMessages,
@@ -44,6 +45,7 @@ async function main(): Promise<void> {
   await loadPlugins()
   console.log(`platjourney ${version} up — sweeping users every ${config.pollMinutes} min`)
   startWatcher(config.pollMinutes)
+  startReleaseSync()
   startWeb()
   startAccessCleanup()
   // English is the default menu; Portuguese apps get theirs.

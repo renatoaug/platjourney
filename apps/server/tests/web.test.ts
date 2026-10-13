@@ -720,6 +720,13 @@ test('the guide browser reads its filters from the query', async () => {
   })
 })
 
+test('the calendar asks for the last two weeks and the next six', async () => {
+  const releases = spyOn(games, 'releasesBetween').mockResolvedValue([])
+  expect((await send('GET', '/api/releases')).body).toEqual([])
+  const [from, to] = releases.mock.calls[0] as [Date, Date]
+  expect(Math.round((to.getTime() - from.getTime()) / 86_400_000)).toBe(56)
+})
+
 test('game search passes the query on', async () => {
   const search = spyOn(games, 'searchCatalog').mockResolvedValue([game])
   expect((await send('GET', '/api/games/search?q=days')).body).toHaveLength(1)

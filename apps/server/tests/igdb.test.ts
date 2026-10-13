@@ -98,6 +98,7 @@ test('a catalog entry keeps only aliases a person would type', () => {
     developers: ['Sucker Punch'],
     website: 'https://suckerpunch.example/got',
     released_at: '2020-07-24',
+    hypes: 0,
   })
 })
 
@@ -113,6 +114,7 @@ test('a bare game has empty lists and null details', () => {
     developers: [],
     website: null,
     released_at: null,
+    hypes: 0,
   })
 })
 

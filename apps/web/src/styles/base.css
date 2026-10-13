@@ -170,14 +170,35 @@
     animation: shimmer 1.3s infinite;
   }
 
+  /* A slim scrollbar in the theme: a rounded thumb that lights up in the accent under the pointer. */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
     background: var(--color-border-strong);
-    border-radius: var(--radius-tag);
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-radius: var(--radius-pill);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent-dim);
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 
   @keyframes enter {

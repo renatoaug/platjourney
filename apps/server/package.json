@@ -12,6 +12,7 @@
     "build-seed": "bun --env-file=../../.env scripts/build-seed.ts",
     "catalog:expand": "bun --env-file=../../.env scripts/expand-catalog.ts",
     "catalog:media": "bun --env-file=../../.env scripts/catalog-media.ts",
+    "catalog:releases": "bun --env-file=../../.env scripts/catalog-releases.ts",
     "embed": "cd ../../services/ai && uv run python -m platjourney_ai.jobs.embed_catalog",
     "db:reset": "bun --env-file=../../.env scripts/reset.ts"
   },

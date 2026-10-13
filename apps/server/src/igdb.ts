@@ -31,10 +31,11 @@ export interface IgdbGame {
   total_rating_count?: number
   involved_companies?: { company?: { name: string }; developer?: boolean }[]
   websites?: { url: string; type?: number }[]
+  hypes?: number
 }
 
 const FIELDS =
-  'name,slug,game_type,parent_game,version_parent,platforms,alternative_names.name,cover.image_id,artworks.image_id,screenshots.image_id,genres.name,themes.name,game_modes.name,summary,first_release_date,total_rating,total_rating_count,involved_companies.company.name,involved_companies.developer,websites.url,websites.type'
+  'name,slug,game_type,parent_game,version_parent,platforms,alternative_names.name,cover.image_id,artworks.image_id,screenshots.image_id,genres.name,themes.name,game_modes.name,summary,first_release_date,total_rating,total_rating_count,involved_companies.company.name,involved_companies.developer,websites.url,websites.type,hypes'
 // IGDB's website type for the game's official site.
 const OFFICIAL_SITE = 1
 // Enough scenes for a gallery; IGDB has a dozen at most for most games.
@@ -193,6 +194,8 @@ export interface CatalogEntry {
   website: string | null
   /** First release, as an ISO date. */
   released_at: string | null
+  /** How many people follow the game on IGDB before it comes out: how awaited it is. */
+  hypes: number
 }
 
 /** A catalog image at a given IGDB size (`t_screenshot_big`, `t_screenshot_med`, `t_1080p`…). */
@@ -226,6 +229,7 @@ export function toCatalog(game: IgdbGame, extraAliases: string[] = []): CatalogE
       ? new Date(game.first_release_date * 1000).getUTCFullYear()
       : null,
     rating: game.total_rating != null ? Math.round(game.total_rating) : null,
+    hypes: game.hypes ?? 0,
     ...media(game),
   }
 }
@@ -278,6 +282,16 @@ export async function resolveGame(name: string): Promise<CatalogEntry | null> {
   const main = await canonical(hit)
   const aliases = main.id === hit.id ? [name] : [name, hit.name]
   return toCatalog(main, aliases)
+}
+
+// Main PS4 and PS5 games first released between two days, earliest first: the home's calendar.
+const RELEASE_TYPES = [0, 4, 8, 9]
+export async function releasingGames(from: Date, to: Date): Promise<IgdbGame[]> {
+  const s = (d: Date) => Math.floor(d.getTime() / 1000)
+  return igdb<IgdbGame[]>(
+    'games',
+    `fields ${FIELDS}; where platforms = (48,167) & game_type = (${RELEASE_TYPES.join(',')}) & first_release_date >= ${s(from)} & first_release_date < ${s(to)}; sort first_release_date asc; limit 500;`,
+  )
 }
 
 // Main PlayStation games with enough ratings to be worth recommending, most rated first.

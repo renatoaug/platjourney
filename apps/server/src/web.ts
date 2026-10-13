@@ -49,6 +49,7 @@ import { catalogTrophies, PrivateProfile, profileSummary, secureUrl, titleTrophi
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
 import { allow } from './rate-limit.ts'
 import { dismissRecommendation, readPrefs, recommendations } from './recommend.ts'
+import { RELEASES_AFTER_DAYS, RELEASES_BEFORE_DAYS } from './releases.ts'
 import {
   chatThreads,
   markNotificationsRead,
@@ -64,6 +65,7 @@ import {
   gameByName,
   gameForTitle,
   getGame,
+  releasesBetween,
   searchCatalog,
 } from './repository/game.ts'
 import { requestMissingGame } from './repository/game-request.ts'
@@ -779,6 +781,19 @@ async function api(
         noOnline: p.get('noOnline') === '1',
         genre: p.get('genre') ?? undefined,
       }),
+    )
+  }
+  // Releases around today: the last two weeks and the next six, for the home's calendar.
+  if (path === '/api/releases' && method === 'GET') {
+    const day = 86_400_000
+    const now = Date.now()
+    return json(
+      res,
+      200,
+      await releasesBetween(
+        new Date(now - RELEASES_BEFORE_DAYS * day),
+        new Date(now + RELEASES_AFTER_DAYS * day),
+      ),
     )
   }
   if (path === '/api/games/search' && method === 'GET') {
