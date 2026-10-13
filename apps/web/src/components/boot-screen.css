@@ -1,7 +1,7 @@
 @layer screens {
   /* While it covers the screen, the page under it must not scroll: a scrollbar showing up as the
      app renders below would narrow the screen and shift Nexo and the bar sideways. */
-  html:has(.boot-screen) {
+  html[data-booting] {
     overflow: hidden;
   }
 
