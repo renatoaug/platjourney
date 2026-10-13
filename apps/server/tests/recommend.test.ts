@@ -107,7 +107,7 @@ test('a stale or forced batch is researched, filtered and stored', async () => {
         : name === 'Made Up'
           ? undefined
           : byName) as never)
-  const replace = spyOn(recs, 'replaceRecommendations').mockResolvedValue(undefined)
+  const replace = spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
   const update = spyOn(users, 'updateUser').mockResolvedValue(undefined)
   const profile = { summary: 'Novo', genres: ['Ação'], traits: [], avoid: [] }
   const item = (name: string, game: string | null, over: Record<string, unknown> = {}) => ({
@@ -175,7 +175,7 @@ test('an empty batch is generated even with no previous one', async () => {
   spyOn(recs, 'listDismissed').mockResolvedValue([])
   spyOn(interests, 'listInterests').mockResolvedValue([])
   spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
-  spyOn(recs, 'replaceRecommendations').mockResolvedValue(undefined)
+  spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
   spyOn(users, 'updateUser').mockResolvedValue(undefined)
   spyOn(aiModule, 'ai').mockResolvedValue({ profile: null, items: [] })
   expect(await recommendations(user, [makeTitle()], [], true)).toEqual({
@@ -287,7 +287,7 @@ test('a new batch sends what the player said to the service', async () => {
   spyOn(recs, 'listDismissed').mockResolvedValue([])
   spyOn(interests, 'listInterests').mockResolvedValue([])
   spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
-  spyOn(recs, 'replaceRecommendations').mockResolvedValue(undefined)
+  spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
   spyOn(users, 'updateUser').mockResolvedValue(undefined)
   const ai = spyOn(aiModule, 'ai').mockResolvedValue({ profile: null, items: [] })
   const said = makeUser({
@@ -320,7 +320,7 @@ test('games already shown go to the service apart, oldest first', async () => {
   spyOn(recs, 'seenGames').mockResolvedValue(['game:7', 'game:8'])
   spyOn(interests, 'listInterests').mockResolvedValue([])
   spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
-  spyOn(recs, 'replaceRecommendations').mockResolvedValue(undefined)
+  spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
   spyOn(users, 'updateUser').mockResolvedValue(undefined)
   const ai = spyOn(aiModule, 'ai').mockResolvedValue({ profile: null, items: [] })
   await recommendations(user, [makeTitle()], [], true)

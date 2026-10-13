@@ -29,9 +29,7 @@ test('a new interest goes above the current top', async () => {
   await addInterest('user:u1', 'game:7', 2026)
   expect(q.mock.calls[0][0]).toContain('position = $min - 1')
   // A game Nexo recommended keeps when it last did, and an earlier mark is never overwritten.
-  expect(q.mock.calls[0][0]).toContain(
-    'FROM recommendation_seen WHERE user = $user AND game = $game',
-  )
+  expect(q.mock.calls[0][0]).toContain('FROM recommendation WHERE user = $user AND game = $game')
   expect(q.mock.calls[0][0]).toContain('recommended_at = recommended_at ?? $rec')
   expect(q.mock.calls[0][1]).toEqual({ user, game, year: 2026 })
 })

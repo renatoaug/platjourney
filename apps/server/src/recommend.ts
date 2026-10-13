@@ -13,7 +13,7 @@ import {
   listDismissed,
   listRecommendations,
   type RecommendationRow,
-  replaceRecommendations,
+  saveRecommendations,
   seenGames,
 } from './repository/recommendation.ts'
 import { type User, updateUser } from './repository/user.ts'
@@ -37,7 +37,7 @@ const messages = defineMessages({
 
 const CACHE_DAYS = 7
 // A game shown as a recommendation stays out of new batches while there are unseen candidates; the
-// marks are kept this long.
+// batches are kept this long.
 export const SEEN_KEEP_DAYS = 365
 
 export interface TasteProfile {
@@ -302,7 +302,7 @@ export async function recommendations(
       similar_to: item.similarTo,
     })
   }
-  await replaceRecommendations(user.id, rows)
+  await saveRecommendations(user.id, rows)
   await updateUser(user.id, { taste_profile: result.profile })
   const saved = await listRecommendations(user.id)
   return {

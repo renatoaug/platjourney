@@ -25,9 +25,7 @@ export async function addInterest(user: string, game: string, year: number): Pro
   await q(
     // A game just saved goes to the top of the list. A game Nexo recommended keeps when it last did.
     `LET $min = (SELECT VALUE math::min(position) FROM interest WHERE user = $user GROUP ALL)[0] ?? 0;
-     LET $rec = array::max(array::concat(
-       (SELECT VALUE created_at FROM recommendation WHERE user = $user AND game = $game),
-       (SELECT VALUE created_at FROM recommendation_seen WHERE user = $user AND game = $game)));
+     LET $rec = array::max(SELECT VALUE created_at FROM recommendation WHERE user = $user AND game = $game);
      UPSERT interest SET user = $user, game = $game, year = $year, position = $min - 1,
        recommended_at = recommended_at ?? $rec WHERE user = $user AND game = $game;`,
     { user: userRef(user), game: gameRef(game), year },

@@ -2,7 +2,7 @@
 
 SurrealDB, one table per file in `db/migrations`. Everything stored is snake_case, the keys inside stored objects too.
 
-Every table has `created_at`, set once by the database. Tables whose rows change after they are created also have `updated_at`, set on every write; `tip`, `message`, `guide_chunk`, `auth_session`, `recommendation`, `recommendation_seen` and `llm_call` are written once and keep `created_at` only. Other dates (`earned_at`, `last_updated_at`, `read_at`, `last_seen_at`, `recommended_at`, `next_pick_at`) mean something of their own. Every date field ends in `_at`, the ones stored as a plain day (`YYYY-MM-DD`) too: `guide_chunk.page_updated_at` and `server_status.shutdown_at`. Links between tables are record links (`record<user>`, `record<game>`), not join tables.
+Every table has `created_at`, set once by the database. Tables whose rows change after they are created also have `updated_at`, set on every write; `tip`, `message`, `guide_chunk`, `auth_session`, `recommendation` and `llm_call` are written once and keep `created_at` only. Other dates (`earned_at`, `last_updated_at`, `read_at`, `last_seen_at`, `recommended_at`, `next_pick_at`, `batch_at`) mean something of their own. Every date field ends in `_at`, the ones stored as a plain day (`YYYY-MM-DD`) too: `guide_chunk.page_updated_at` and `server_status.shutdown_at`. Links between tables are record links (`record<user>`, `record<game>`), not join tables.
 
 ## Why SurrealDB
 
@@ -101,7 +101,7 @@ erDiagram
 
 ### Interests and recommendations
 
-What the player wants to platinum next, what Nexo recommended, what it already showed and what was dismissed.
+What the player wants to platinum next, what Nexo recommended and what was dismissed.
 
 ```mermaid
 erDiagram
@@ -109,8 +109,6 @@ erDiagram
     game ||--o{ interest : "wanted"
     user ||--o{ recommendation : "was recommended"
     game ||--o{ recommendation : "recommended"
-    user ||--o{ recommendation_seen : "was shown"
-    game ||--o{ recommendation_seen : "shown"
     user ||--o{ dismissal : "dismissed"
     game ||--o{ dismissal : "dismissed"
     interest {
@@ -136,12 +134,7 @@ erDiagram
         has_difficulty_trophy option(bool)
         why string
         similar_to array(string)
-        created_at datetime
-    }
-    recommendation_seen {
-        id record(recommendation_seen) PK
-        user record(user) FK
-        game record(game) FK
+        batch_at option(datetime)
         created_at datetime
     }
     dismissal {
@@ -354,8 +347,7 @@ erDiagram
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN |
 | `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `next_pick_at`: when "Nexo decide" picked it as the next platinum, on one interest of the player at a time |
-| `recommendation` | game recommended | `user, game` | The latest batch, with why and what it is similar to; replaced by the next batch |
-| `recommendation_seen` | game shown in a batch | | Kept a year, so new batches bring games not shown yet; shown games come back, the oldest first, only when those run out |
+| `recommendation` | game recommended in a batch | | Every batch of the last year, with why and what it is similar to; `batch_at` groups a batch's rows. Discover shows the latest batch; the older ones keep new batches to games not shown yet, and shown games come back, the oldest first, only when those run out. Rows from before batches were kept have no `batch_at` and count as one batch |
 | `dismissal` | game the player dismissed | `user, game` | Never recommended again |
 | `tip` | notice or tip Nexo wrote | | `kind`: `start`, `unlock`, `session`, `chat` (help on one trophy), `server` |
 | `message` | chat message | | `role`: user or assistant |
