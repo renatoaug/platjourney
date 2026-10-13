@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.14.0](https://github.com/renatoaug/platjourney/compare/v0.13.0...v0.14.0) (2026-10-13)
+
+### Features
+
+* **game:** image gallery and an about card on every game page ([#38](https://github.com/renatoaug/platjourney/issues/38)) ([1977905](https://github.com/renatoaug/platjourney/commit/19779055644756ce30311c82ac3b9c4ac179e556))
+
 ## [0.13.0](https://github.com/renatoaug/platjourney/compare/v0.12.0...v0.13.0) (2026-10-13)
 
 ### Features
