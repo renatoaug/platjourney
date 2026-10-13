@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.13.0](https://github.com/renatoaug/platjourney/compare/v0.12.0...v0.13.0) (2026-10-13)
+
+### Features
+
+* **recommendations:** editable taste profile, no repeats and "Nexo decide" ([#37](https://github.com/renatoaug/platjourney/issues/37)) ([70a1318](https://github.com/renatoaug/platjourney/commit/70a1318c7d17660e8206a732e75d6d00dafedf4d))
+
 ## [0.12.0](https://github.com/renatoaug/platjourney/compare/v0.11.1...v0.12.0) (2026-10-12)
 
 ### Features
