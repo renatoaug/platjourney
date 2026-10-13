@@ -1,4 +1,5 @@
 /** The signed-in layout: sidebar, top bar and the screen for the current route. */
+
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
@@ -11,6 +12,7 @@ import {
   useNavigationType,
 } from 'react-router'
 import { AccountMenu } from '../components/account-menu'
+import { CommandPalette } from '../components/command-palette'
 import { DemoBanner } from '../components/demo'
 import { Notifications } from '../components/notifications'
 import { Onboarding } from '../components/onboarding'
@@ -421,6 +423,9 @@ export function Shell() {
             {t('breadcrumb')} <span>/</span> <b id="route-label">{label}</b>
           </div>
           <div className="topbar-right">
+            <CommandPalette
+              screens={NAV.map((n) => ({ to: n.to, label: t(n.label), icon: n.icon }))}
+            />
             <PluginSlot name="top-bar" />
             <Notifications />
             <SyncButton />

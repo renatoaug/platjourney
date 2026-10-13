@@ -232,11 +232,17 @@ export async function searchCatalog(query: string): Promise<Game[]> {
 export type CatalogCard = Pick<
   Game,
   'id' | 'name' | 'cover_url' | 'platforms' | 'release_year' | 'rating'
->
+> & {
+  genres?: string[]
+  /** The first scene of the game (an IGDB image id), for a card's art. */
+  shot?: string | null
+}
 
 // What a list of games shows, for the whole catalog: a few fields per game, no embedding.
 export async function catalogCards(): Promise<CatalogCard[]> {
   return plain(
-    await q<CatalogCard[]>('SELECT id, name, cover_url, platforms, release_year, rating FROM game'),
+    await q<CatalogCard[]>(
+      'SELECT id, name, cover_url, platforms, release_year, rating, genres, screenshot_ids[0] AS shot FROM game',
+    ),
   )
 }

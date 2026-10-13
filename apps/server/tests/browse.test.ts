@@ -32,15 +32,15 @@ let match: ReturnType<typeof spyOn>
 beforeEach(() => {
   forgetBrowseCache()
   cards = spyOn(games, 'catalogCards').mockResolvedValue([
-    card('game:1', 'Bravo', { rating: 90, platforms: ['PS5', 'PS4'] }),
-    card('game:2', 'Alpha', { rating: 70 }),
-    card('game:3', 'Charlie', { rating: 80, platforms: ['PS Vita'] }),
+    card('game:1', 'Bravo', { rating: 90, platforms: ['PS5', 'PS4'], genres: ['RPG'] }),
+    card('game:2', 'Alpha', { rating: 70, genres: ['RPG', 'Puzzle'] }),
+    card('game:3', 'Charlie', { rating: 80, platforms: ['PS Vita'], genres: ['Puzzle'] }),
     card('game:4', 'Alpha Two'),
   ])
   spyOn(guides, 'guideSummaries').mockResolvedValue([
-    summary('game:1', 7, 60),
+    { ...summary('game:1', 7, 60), hasMissables: true, playthroughs: 2 },
     summary('game:2', 2, 30),
-    summary('game:3', 2, 5),
+    { ...summary('game:3', 2, 5), hasOnline: true },
   ])
   match = spyOn(games, 'matchCatalog').mockResolvedValue([])
 })
@@ -57,8 +57,8 @@ test('without a search it lists the games with a guide, best rated first', async
   expect(page.items[0].guide).toEqual({
     difficulty: 7,
     hours: 60,
-    playthroughs: 1,
-    hasMissables: false,
+    playthroughs: 2,
+    hasMissables: true,
     hasOnline: false,
     unobtainable: null,
     deep: true,
@@ -103,8 +103,46 @@ test('pages are clamped to what exists', async () => {
   expect((await browseGuides({ page: -3 })).page).toBe(1)
 })
 
+test('the collage holds the covers of the best rated games with a guide, whatever the filters', async () => {
+  cards.mockResolvedValue([
+    card('game:1', 'Bravo', { rating: 90, cover_url: 'b.jpg' }),
+    card('game:2', 'Alpha', { rating: 70, cover_url: 'a.jpg' }),
+    card('game:3', 'Charlie', { rating: 80 }),
+    card('game:4', 'Alpha Two', { rating: 99, cover_url: 'none.jpg' }),
+  ])
+  forgetBrowseCache()
+  expect((await browseGuides({ difficulty: 'hard' })).collage).toEqual(['b.jpg', 'a.jpg'])
+})
+
 test('catalog and guides are read once for a while', async () => {
   await browseGuides({})
   await browseGuides({ sort: 'name' })
   expect(cards).toHaveBeenCalledTimes(1)
+})
+
+test('the guide filters narrow the list, each band its own range', async () => {
+  expect(await names({ difficulty: 'easy' })).toEqual(['Charlie', 'Alpha'])
+  expect(await names({ difficulty: 'hard' })).toEqual(['Bravo'])
+  expect(await names({ difficulty: 'brutal' })).toEqual([])
+  expect(await names({ hours: '10' })).toEqual(['Charlie'])
+  expect(await names({ noMissables: true })).toEqual(['Charlie', 'Alpha'])
+  expect(await names({ onePlaythrough: true })).toEqual(['Charlie', 'Alpha'])
+  expect(await names({ noOnline: true })).toEqual(['Bravo', 'Alpha'])
+  expect(await names({ genre: 'Puzzle', noOnline: true })).toEqual(['Alpha'])
+  // An unknown band or hour limit is ignored.
+  expect(await names({ difficulty: 'nope', hours: '7' })).toHaveLength(3)
+})
+
+test('each filter counts what it would leave, with the other filters applied', async () => {
+  const { facets, total } = await browseGuides({ noOnline: true })
+  expect(total).toBe(2)
+  expect(facets.difficulty).toEqual({ easy: 1, medium: 0, hard: 1, brutal: 0 })
+  expect(facets.hours).toEqual({ '10': 0, '25': 0, '50': 1, '100': 2 })
+  // Its own count ignores itself: three games, two without online trophies.
+  expect(facets.noOnline).toBe(2)
+  expect(facets.noMissables).toBe(1)
+  expect(facets.genres).toEqual([
+    { name: 'RPG', count: 2 },
+    { name: 'Puzzle', count: 1 },
+  ])
 })

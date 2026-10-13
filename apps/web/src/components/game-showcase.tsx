@@ -47,7 +47,7 @@ const messages = defineMessages({
 })
 
 // IGDB genre names, as players call them here. A genre not listed shows as IGDB names it.
-const GENRES_PT: Record<string, string> = {
+export const GENRES_PT: Record<string, string> = {
   Adventure: 'Aventura',
   Arcade: 'Arcade',
   'Card & Board Game': 'Cartas e tabuleiro',

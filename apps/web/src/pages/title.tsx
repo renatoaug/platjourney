@@ -6,6 +6,7 @@ import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
+import { DifficultyMeter } from '../components/difficulty-meter'
 import { GameColumns } from '../components/game-columns'
 import { GameShowcase, GameShowcaseSkeleton } from '../components/game-showcase'
 import { Guide, GuideSkeleton } from '../components/guide'
@@ -24,7 +25,6 @@ import { nexoHref } from '../components/tip'
 const messages = defineMessages({
   [Language.PtBR]: {
     guidePreparing: 'Guia sendo preparado…',
-    difficulty: 'Dificuldade {value}/10',
     hoursOfGuide: '{played} jogadas de ~{hours}h',
     hours: '~{hours} horas',
     playthroughs: {
@@ -51,7 +51,6 @@ const messages = defineMessages({
   },
   [Language.En]: {
     guidePreparing: 'Preparing the guide…',
-    difficulty: 'Difficulty {value}/10',
     hoursOfGuide: '{played} played of ~{hours}h',
     hours: '~{hours} hours',
     playthroughs: {
@@ -128,7 +127,7 @@ function Meta({ d }: { d: TitleDetail }) {
   return (
     <div className="meta">
       {/* 0 means the sources do not say yet: the fact is left out, never shown as 0. */}
-      {g.difficulty > 0 && <span>{t('difficulty', { value: g.difficulty })}</span>}
+      {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
       {g.hours > 0 && (
         <span>
           <Icon name="clock" />{' '}
@@ -237,7 +236,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
             <span className="live-label">{owned ? t('inLibrary') : t('notInLibrary')}</span>
             <span className="platform">{d.platform}</span>
           </div>
-          <div>
+          <div className="hero-headline">
             <h2 className="hero-title">{d.name}</h2>
             <Meta d={d} />
           </div>

@@ -287,6 +287,6 @@ test('catalog cards read a few fields of every game', async () => {
   const q = spyOn(db, 'q').mockResolvedValue([{ id: 'game:1', name: 'A' }])
   expect(await catalogCards()).toEqual([{ id: 'game:1', name: 'A' } as never])
   expect(q.mock.calls[0][0]).toBe(
-    'SELECT id, name, cover_url, platforms, release_year, rating FROM game',
+    'SELECT id, name, cover_url, platforms, release_year, rating, genres, screenshot_ids[0] AS shot FROM game',
   )
 })

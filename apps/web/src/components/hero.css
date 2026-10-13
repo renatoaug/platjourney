@@ -81,6 +81,22 @@
     text-transform: uppercase;
   }
 
+  /* Name, then the difficulty shield, then the facts, all in the left column, clear of the art. */
+  .hero-headline {
+    display: grid;
+    justify-items: start;
+    gap: 4px;
+  }
+
+  /* The difficulty leads the facts line, like the other facts. */
+  .hero .meta .dm-body {
+    width: 110px;
+  }
+
+  .hero-headline .hero-title {
+    margin-bottom: 8px;
+  }
+
   .hero-caption {
     color: var(--color-fg-soft);
     font-size: var(--text-md);
@@ -95,13 +111,14 @@
     color: var(--color-fg-soft);
   }
 
-  .hero .meta span {
+  /* Only the facts themselves, not the parts inside the difficulty shield. */
+  .hero .meta > span {
     display: inline-flex;
     align-items: center;
     gap: 5px;
   }
 
-  .hero .meta span + span::before {
+  .hero .meta > span + span::before {
     content: "";
     width: 1px;
     height: 12px;

@@ -59,9 +59,11 @@
       calc(100% - 16px) 50%;
   }
 
+  /* A page holds 24 games: the columns are always a divisor of 24 (6, 4, 3 or 2), so the last row
+     of a full page is never short. */
   .guide-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    grid-template-columns: repeat(var(--guide-cols, 6), minmax(0, 1fr));
     gap: 16px;
     margin: 8px 0 20px;
   }
@@ -128,7 +130,12 @@
     color: var(--color-fg-muted);
   }
 
-  .guide-tile-meta span {
+  /* In a card the difficulty takes its own line; hours and the warning icons share the next. */
+  .guide-tile .guide-tile-meta > .dm {
+    flex-basis: 100%;
+  }
+
+  .guide-tile-meta > span {
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -194,5 +201,491 @@
   .guides-missing-error {
     color: var(--color-danger);
     font-size: var(--text-sm);
+  }
+}
+
+@layer screens {
+  /* Top of the page: the art of the first game listed, fading into the page on the left and at
+     the bottom, behind a large title and the search. */
+  .guides-hero {
+    position: relative;
+    overflow: hidden;
+    margin: 0 0 24px;
+    min-height: 260px;
+    border-radius: var(--radius-card);
+    background: var(--color-bg);
+  }
+
+  /* Covers of the best rated games, tilted, on the right; the fade below hides their edges. */
+  .guides-hero-collage {
+    position: absolute;
+    top: -40px;
+    right: -60px;
+    bottom: -40px;
+    width: 68%;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    rotate: -8deg;
+    opacity: 0.7;
+  }
+
+  .guides-hero-collage img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+  }
+
+  .guides-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        var(--color-bg) 30%,
+        color-mix(in srgb, var(--color-bg) 40%, transparent) 60%,
+        transparent
+      ),
+      linear-gradient(to top, var(--color-bg), transparent 45%);
+  }
+
+  .guides-hero-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 10px;
+    max-width: 620px;
+    padding: 40px 4px 28px;
+  }
+
+  .guides-hero .eyebrow {
+    color: var(--color-accent);
+  }
+
+  .guides-hero h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-display);
+    line-height: var(--leading-none);
+  }
+
+  .guides-hero p {
+    margin: 0;
+    color: var(--color-fg-soft);
+  }
+
+  .guides-hero-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 0 14px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+  }
+
+  .guides-hero-search:focus-within {
+    border-color: var(--color-accent-dim);
+  }
+
+  .guides-hero-search .icon {
+    width: 18px;
+    height: 18px;
+    color: var(--color-fg-muted);
+  }
+
+  .guides-hero-search input,
+  .guides-hero-search input:focus-visible {
+    flex: 1;
+    padding: 10px 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: var(--text-body);
+  }
+
+  /* The list, with the filters on its right (the app's menu is already on the left). */
+  .guides-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* Sticky beside the list, never taller than the screen: it scrolls on its own and keeps clear
+     of the page's bottom. */
+  .guides-aside {
+    order: 2;
+    position: sticky;
+    top: 16px;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    padding: 0 4px 24px 0;
+    scrollbar-width: thin;
+  }
+
+  .guides-aside summary {
+    display: none;
+  }
+
+  .guide-filters {
+    display: grid;
+    gap: 22px;
+  }
+
+  .guide-filters fieldset {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .guide-filters legend {
+    margin-bottom: 10px;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--color-fg-subtle);
+  }
+
+  /* Every option is the same row: mark, name, count on the right. */
+  .guide-option {
+    --band: var(--color-accent);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 8px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-fg-soft);
+    font-size: var(--text-base);
+    font-weight: var(--weight-regular);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .guide-option:hover {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  .guide-option[aria-pressed="true"] {
+    color: var(--color-fg);
+  }
+
+  .guide-option-mark {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--color-border-strong);
+    border-radius: var(--radius-tag);
+  }
+
+  .guide-option-mark.round {
+    border-radius: var(--radius-round);
+  }
+
+  .guide-option-mark .icon {
+    width: 11px;
+    height: 11px;
+    color: var(--color-on-accent);
+  }
+
+  .guide-option[aria-pressed="true"] .guide-option-mark {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+  }
+
+  .guide-option[aria-pressed="true"] .guide-option-mark.round {
+    background: transparent;
+    box-shadow:
+      inset 0 0 0 3px var(--color-surface),
+      inset 0 0 0 8px var(--color-accent);
+  }
+
+  /* A difficulty option shows its band's color on its mark. */
+  .guide-option[class*="band-"] .guide-option-mark {
+    border-color: var(--band);
+  }
+
+  .guide-option[class*="band-"][aria-pressed="true"] .guide-option-mark.round {
+    box-shadow:
+      inset 0 0 0 3px var(--color-surface),
+      inset 0 0 0 8px var(--band);
+  }
+
+  .guide-option-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .guide-option-count {
+    color: var(--color-fg-subtle);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .guide-filter-clear {
+    justify-self: start;
+  }
+
+  .guides-main {
+    min-width: 0;
+    container-type: inline-size;
+  }
+
+  @container (max-width: 1080px) {
+    .guide-grid {
+      --guide-cols: 4;
+    }
+  }
+
+  @container (max-width: 720px) {
+    .guide-grid {
+      --guide-cols: 3;
+    }
+  }
+
+  @container (max-width: 480px) {
+    .guide-grid {
+      --guide-cols: 2;
+    }
+  }
+
+  .guides-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .guides-toolbar-end {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .guides-view {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+  }
+
+  .guides-view button {
+    width: 32px;
+    height: 30px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: var(--radius-tag);
+    background: transparent;
+    color: var(--color-fg-muted);
+  }
+
+  .guides-view button[aria-pressed="true"] {
+    background: var(--color-surface-raised);
+    color: var(--color-accent);
+  }
+
+  .guides-view .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* A card's cover zooms a little on hover, under the band of its difficulty. */
+  .guide-tile-art {
+    position: relative;
+    display: block;
+    overflow: hidden;
+  }
+
+  .guide-tile-art .guide-tile-cover {
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .guide-tile:hover .guide-tile-art .guide-tile-cover {
+    transform: scale(1.05);
+  }
+
+  .guide-tile:hover {
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 45%, transparent);
+  }
+
+  /* The difficulty on the bottom of the cover, over a fade to the card. */
+  .guide-tile-score {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 48px 12px 10px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in srgb, var(--color-surface) 75%, transparent) 45%,
+      var(--color-surface)
+    );
+  }
+
+  .guide-tile-score .dm {
+    display: flex;
+    width: 100%;
+  }
+
+  .guide-tile-score .dm .dm-number {
+    font-size: var(--text-5xl);
+  }
+
+  .guide-tile-score .dm .dm-body {
+    min-width: 0;
+  }
+
+  .guide-tile-score .dm .dm-segments i {
+    min-width: 0;
+    height: 5px;
+  }
+
+  .band-medium {
+    --band: var(--color-trophy-gold);
+  }
+
+  .band-hard {
+    --band: var(--color-highlight-warm);
+  }
+
+  .band-brutal {
+    --band: var(--color-danger);
+  }
+
+  /* The list view: one row per game. */
+  .guide-list {
+    display: grid;
+    margin: 8px 0 20px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    overflow: hidden;
+  }
+
+  .guide-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    color: inherit;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+
+  .guide-row + .guide-row {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .guide-row:hover {
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+  }
+
+  .guide-row-cover {
+    flex: none;
+    width: 40px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: var(--radius-tag);
+  }
+
+  .guide-row-name {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+  }
+
+  .guide-row-name b {
+    font-size: var(--text-body);
+    font-weight: var(--weight-semibold);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .guide-row-meta {
+    flex: none;
+    flex-wrap: nowrap;
+  }
+
+  .guide-row-go {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    color: var(--color-fg-subtle);
+  }
+
+  @media (max-width: 900px) {
+    .guides-layout {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .guides-aside {
+      order: 0;
+      position: static;
+      max-height: none;
+      overflow: visible;
+      padding: 12px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-control);
+      background: var(--color-surface);
+    }
+
+    .guides-aside summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: var(--text-base);
+    }
+
+    .guides-aside[open] summary {
+      margin-bottom: 16px;
+    }
+
+    .guides-aside summary .icon {
+      width: 15px;
+      height: 15px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    /* Too small to read on a phone: the title and search alone. */
+    .guides-hero-collage {
+      display: none;
+    }
+
+    .guides-hero {
+      min-height: 0;
+    }
+
+    .guides-hero-inner {
+      padding: 24px 18px;
+    }
+
+    .guide-row-meta .dm,
+    .guide-row-meta [role="img"] {
+      display: none;
+    }
   }
 }

@@ -28,7 +28,7 @@ test('the games with a guide, each linking to its page', async () => {
   renderApp(<Guides />, { path: '/guides', route: '/guides' })
   const first = (await screen.findByText('Game 1')).closest('a') as HTMLElement
   expect(first.getAttribute('href')).toContain('/title/game/game%3A1')
-  expect(within(first).getByText('3/10')).toBeTruthy()
+  expect(within(first).getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(within(first).getByText('~12h')).toBeTruthy()
   expect(within(first).getByRole('img', { name: 'Tem troféus perdíveis' })).toBeTruthy()
   expect(within(first).getByRole('img', { name: 'Tem troféus online' })).toBeTruthy()
@@ -138,4 +138,44 @@ test('asking again for the same game says it was already asked for', async () =>
   fireEvent.click(await screen.findByRole('button', { name: 'Pedir “Jogo Novo”' }))
   expect(await screen.findByText(/Você já pediu “Jogo Novo”/)).toBeTruthy()
   expect(screen.queryByText('Pedido de “Jogo Novo” registrado.')).toBeNull()
+})
+
+test('the filters go to the request, show their counts, and clear together', async () => {
+  const calls = mockApi({
+    '/api/guides': page([item(1)], {
+      facets: {
+        difficulty: { easy: 4, medium: 9, hard: 12, brutal: 20 },
+        hours: { '10': 2, '25': 5, '50': 9, '100': 15 },
+        noMissables: 7,
+        onePlaythrough: 11,
+        noOnline: 13,
+        genres: [{ name: 'Shooter', count: 6 }],
+      },
+    }),
+  })
+  renderApp(<Guides />, { path: '/guides', route: '/guides' })
+  await screen.findByText('Game 1')
+  fireEvent.click(screen.getByRole('button', { name: /Fácil/ }))
+  await waitFor(() => expect(calls.at(-1)?.path).toContain('difficulty=easy'))
+  fireEvent.click(screen.getByRole('button', { name: /Até 25h/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Sem perdíveis/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Tiro/ }))
+  await waitFor(() => {
+    const last = calls.at(-1)?.path ?? ''
+    expect(last).toContain('hours=25')
+    expect(last).toContain('noMissables=1')
+    expect(last).toContain('genre=Shooter')
+  })
+  expect(screen.getByRole('button', { name: /Fácil/ }).textContent).toContain('4')
+  fireEvent.click(screen.getByRole('button', { name: /Limpar filtros/ }))
+  await waitFor(() => expect(calls.at(-1)?.path).toBe('/api/guides?'))
+})
+
+test('the list view shows the same games as rows', async () => {
+  mockApi({ '/api/guides': page([item(1), item(2)]) })
+  const { container } = renderApp(<Guides />, { path: '/guides', route: '/guides' })
+  await screen.findByText('Game 1')
+  fireEvent.click(screen.getByRole('button', { name: 'Lista' }))
+  await waitFor(() => expect(container.querySelectorAll('.guide-row')).toHaveLength(2))
+  expect(container.querySelector('.guide-grid')).toBeNull()
 })

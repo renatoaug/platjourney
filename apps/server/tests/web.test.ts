@@ -669,23 +669,41 @@ test('chat lists messages and answers trimmed text', async () => {
 })
 
 test('the guide browser reads its filters from the query', async () => {
+  const facets = {
+    difficulty: { easy: 0, medium: 0, hard: 0, brutal: 0 },
+    hours: {},
+    noMissables: 0,
+    onePlaythrough: 0,
+    noOnline: 0,
+    genres: [],
+  }
   const browse = spyOn(browser, 'browseGuides').mockResolvedValue({
     page: 2,
     size: 24,
     total: 30,
     items: [],
+    facets,
+    collage: [],
   })
-  expect((await send('GET', '/api/guides?q=souls&platform=PS5&sort=easiest&page=2')).body).toEqual({
-    page: 2,
-    size: 24,
-    total: 30,
-    items: [],
-  })
+  expect(
+    (
+      await send(
+        'GET',
+        '/api/guides?q=souls&platform=PS5&sort=easiest&page=2&difficulty=medium&hours=25&noMissables=1&genre=RPG',
+      )
+    ).body,
+  ).toEqual({ page: 2, size: 24, total: 30, items: [], facets, collage: [] })
   expect(browse).toHaveBeenLastCalledWith({
     query: 'souls',
     platform: 'PS5',
     sort: 'easiest',
     page: 2,
+    difficulty: 'medium',
+    hours: '25',
+    noMissables: true,
+    onePlaythrough: false,
+    noOnline: false,
+    genre: 'RPG',
   })
   await send('GET', '/api/guides?page=x')
   expect(browse).toHaveBeenLastCalledWith({
@@ -693,6 +711,12 @@ test('the guide browser reads its filters from the query', async () => {
     platform: undefined,
     sort: undefined,
     page: 1,
+    difficulty: undefined,
+    hours: undefined,
+    noMissables: false,
+    onePlaythrough: false,
+    noOnline: false,
+    genre: undefined,
   })
 })
 

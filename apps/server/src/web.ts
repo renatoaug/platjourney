@@ -772,6 +772,12 @@ async function api(
         platform: p.get('platform') ?? undefined,
         sort: p.get('sort') ?? undefined,
         page: Number(p.get('page')) || 1,
+        difficulty: p.get('difficulty') ?? undefined,
+        hours: p.get('hours') ?? undefined,
+        noMissables: p.get('noMissables') === '1',
+        onePlaythrough: p.get('onePlaythrough') === '1',
+        noOnline: p.get('noOnline') === '1',
+        genre: p.get('genre') ?? undefined,
       }),
     )
   }

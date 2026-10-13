@@ -1,4 +1,5 @@
 /** Recommendations for the player's taste: rows with save/dismiss, and the taste profile behind them. */
+
 import { type MouseEvent, useState } from 'react'
 import { Link } from 'react-router'
 import { useInterests } from '../app/use-interests'
@@ -10,6 +11,7 @@ import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { useDemo } from './demo'
+import { DifficultyMeter } from './difficulty-meter'
 import {
   effectiveProfile,
   emptyPrefs,
@@ -232,9 +234,7 @@ function RecRow({ rec: r, onDismiss }: { rec: Recommendation; onDismiss: OnDismi
             </span>
           </div>
           <div className="recommendation-meta">
-            <span title={t('difficulty')}>
-              <Icon name="target" /> {r.difficulty}/10
-            </span>
+            {r.difficulty > 0 && <DifficultyMeter value={r.difficulty} look="compact" />}
             <span title={t('hours')}>
               <Icon name="clock" /> ~{r.hours}h
             </span>

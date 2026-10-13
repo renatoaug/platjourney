@@ -1,4 +1,5 @@
 /** The current journey hero: cover, guide numbers, progress and the next step. Also the header of a title page. */
+
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
@@ -8,6 +9,7 @@ import { shownProgress } from '../lib/progress'
 import type { CurrentGame, GuideDetail } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
+import { DifficultyMeter } from './difficulty-meter'
 import './hero.css'
 
 const messages = defineMessages({
@@ -22,7 +24,6 @@ const messages = defineMessages({
     },
     played: '{hours} jogadas',
     guidePreparing: 'Seu guia está sendo preparado',
-    difficulty: 'Dificuldade {difficulty}/10',
     playedOf: '{played} jogadas de ~{hours}h',
     hours: '~{hours} horas',
     playthroughs: {
@@ -53,7 +54,6 @@ const messages = defineMessages({
     },
     played: '{hours} played',
     guidePreparing: 'Your guide is being prepared',
-    difficulty: 'Difficulty {difficulty}/10',
     playedOf: '{played} played of ~{hours}h',
     hours: '~{hours} hours',
     playthroughs: {
@@ -156,7 +156,7 @@ function Meta({ c }: { c: CurrentGame }) {
   return (
     <div className="meta">
       {/* 0 means the sources do not say yet: the fact is left out, never shown as 0. */}
-      {g.difficulty > 0 && <span>{t('difficulty', { difficulty: g.difficulty })}</span>}
+      {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
       {(g.hours > 0 || played != null) && (
         <span>
           <Icon name="clock" />{' '}
@@ -213,7 +213,7 @@ export function Hero({
           <span className="live-label">{t('currentLabel')}</span>
           <span className="platform">{c.platform}</span>
         </div>
-        <div>
+        <div className="hero-headline">
           <h2 className="hero-title">{c.name}</h2>
           <p className="hero-caption">
             {c.progress >= 100 ? t('captionDone') : t('captionOngoing')}
