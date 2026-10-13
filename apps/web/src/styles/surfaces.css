@@ -521,10 +521,11 @@
 
   /* Recommendation covers */
   /* Same box for the image and the placeholder; `.row img` would otherwise win. */
+  /* Store covers stand up (3:4): a portrait box shows them whole. */
   .row .rec-cover,
   .row img.rec-cover {
-    width: 92px;
-    height: 43px;
+    width: 54px;
+    height: 72px;
     border-radius: var(--radius-tag);
     object-fit: cover;
     flex: none;
@@ -534,8 +535,8 @@
   @media (max-width: 480px) {
     .row .rec-cover,
     .row img.rec-cover {
-      width: 64px;
-      height: 30px;
+      width: 42px;
+      height: 56px;
     }
   }
 

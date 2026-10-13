@@ -24,7 +24,7 @@ afterEach(() => mock.restore())
 test('interests take the best copy of their game and base-game progress', async () => {
   spyOn(users, 'getUser').mockResolvedValue(makeUser({ goal_targets: { [String(year)]: 12 } }))
   spyOn(repo, 'listInterests').mockResolvedValue([
-    interest('a', alpha, 1),
+    { ...interest('a', alpha, 1), recommended_at: '2026-10-01T12:00:00Z' },
     interest('b', beta, 2),
     interest('c', gamma, 3),
   ])
@@ -47,9 +47,36 @@ test('interests take the best copy of their game and base-game progress', async 
   expect(groups.mock.calls[0][0].npCommunicationId).toBe('NPA5')
   expect(p.target).toBe(12)
   expect(p.interests).toEqual([
-    { id: 'interest:a', game: alpha, position: 1, progress: 50, hours: 1.5, done: false },
-    { id: 'interest:b', game: beta, position: 2, progress: 100, hours: null, done: true },
-    { id: 'interest:c', game: gamma, position: 3, progress: null, hours: null, done: false },
+    {
+      id: 'interest:a',
+      game: alpha,
+      position: 1,
+      progress: 50,
+      hours: 1.5,
+      recommendedAt: '2026-10-01T12:00:00Z',
+      nextPickAt: null,
+      done: false,
+    },
+    {
+      id: 'interest:b',
+      game: beta,
+      position: 2,
+      progress: 100,
+      hours: null,
+      recommendedAt: null,
+      nextPickAt: null,
+      done: true,
+    },
+    {
+      id: 'interest:c',
+      game: gamma,
+      position: 3,
+      progress: null,
+      hours: null,
+      recommendedAt: null,
+      nextPickAt: null,
+      done: false,
+    },
   ])
   expect(p.platinumed).toEqual([{ game: beta, at: `${year}-03-01`, hours: null }])
   expect(p.done).toBe(1)
@@ -95,9 +122,36 @@ test('the report shows the goal, the interests and the platinums', () => {
       done: 2,
       platinumed: [{ game: beta, at: '2026-03-01', hours: null }],
       interests: [
-        { id: 'i1', game: alpha, position: 1, progress: 40, done: false, hours: null },
-        { id: 'i2', game: beta, position: 2, progress: 100, done: true, hours: null },
-        { id: 'i3', game: gamma, position: 3, progress: null, done: false, hours: null },
+        {
+          id: 'i1',
+          game: alpha,
+          position: 1,
+          progress: 40,
+          done: false,
+          hours: null,
+          recommendedAt: null,
+          nextPickAt: null,
+        },
+        {
+          id: 'i2',
+          game: beta,
+          position: 2,
+          progress: 100,
+          done: true,
+          hours: null,
+          recommendedAt: null,
+          nextPickAt: null,
+        },
+        {
+          id: 'i3',
+          game: gamma,
+          position: 3,
+          progress: null,
+          done: false,
+          hours: null,
+          recommendedAt: null,
+          nextPickAt: null,
+        },
       ],
     }),
   ).toBe(

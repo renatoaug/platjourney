@@ -98,16 +98,20 @@ async def embeddings_for(ids: list[str]) -> dict[str, tuple[str, list[float]]]:
     return {r['id']: (r['name'], r['embedding']) for r in rows if r.get('embedding')}
 
 
-async def similar_games(vector: list[float], k: int, exclude: list[str]) -> list[dict[str, Any]]:
-    """Nearest catalog games to a vector, excluding the given ids. An exact scan: the catalog
-    is a few thousand games, and it works with vectors of any size (any embedding model)."""
+async def similar_games(
+    vector: list[float], k: int, exclude: list[str], only: list[str] | None = None
+) -> list[dict[str, Any]]:
+    """Nearest catalog games to a vector, excluding the given ids and, with `only`, among those
+    ids alone. An exact scan: the catalog is a few thousand games, and it works with vectors of
+    any size (any embedding model)."""
+    among = 'AND id IN $only.map(|$i| type::record($i))' if only is not None else ''
     return await db.rows(
         f"""SELECT id, name, platforms, release_year, genres, embedding,
               vector::similarity::cosine(embedding, $v) AS score FROM game
            WHERE embedding != NONE AND array::len(embedding) = array::len($v)
-             AND id NOT IN $exclude.map(|$i| type::record($i))
+             AND id NOT IN $exclude.map(|$i| type::record($i)) {among}
            ORDER BY score DESC LIMIT {k}""",
-        {'v': vector, 'exclude': exclude},
+        {'v': vector, 'exclude': exclude, 'only': only or []},
     )
 
 
@@ -135,7 +139,11 @@ def annotate(
 
 
 async def candidates(
-    library: Sequence[LibraryTitle], exclude: list[str], k: int, now: datetime | None = None
+    library: Sequence[LibraryTitle],
+    exclude: list[str],
+    k: int,
+    now: datetime | None = None,
+    only: list[str] | None = None,
 ) -> list[Candidate]:
     """Nearest catalog games to the player's taste that are not excluded (owned, dismissed,
     already an interest), each annotated with the owned games it resembles."""
@@ -146,5 +154,5 @@ async def candidates(
         return []
     taste = mean([vectors[s.game][1] for s in usable], [s.weight for s in usable])
     liked = [s for s in usable if s.weight > 0.5]
-    nearest = await similar_games(taste, k, sorted(set(exclude)))
+    nearest = await similar_games(taste, k, sorted(set(exclude)), only)
     return annotate(nearest, liked, vectors)

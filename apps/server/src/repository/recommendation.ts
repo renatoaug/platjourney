@@ -17,18 +17,23 @@ export interface RecommendationRow {
   generated_at: string
 }
 
+/** The latest batch, without the games dismissed since. */
 export async function listRecommendations(user: string): Promise<RecommendationRow[]> {
   return plain(
     await q<RecommendationRow[]>(
-      `SELECT *, created_at AS generated_at, game.* AS game FROM recommendation
-       WHERE user = $user AND game NOT IN (SELECT VALUE game FROM dismissal WHERE user = $user)
+      // Rows from before batches were kept have no batch_at: with no batch since, they are the latest.
+      `LET $last = array::max(SELECT VALUE batch_at FROM recommendation WHERE user = $user AND batch_at != NONE);
+       SELECT *, batch_at ?? created_at AS generated_at, game.* AS game FROM recommendation
+       WHERE user = $user AND batch_at = $last
+         AND game NOT IN (SELECT VALUE game FROM dismissal WHERE user = $user)
        ORDER BY created_at DESC`,
       { user: userRef(user) },
     ),
   )
 }
 
-export async function replaceRecommendations(
+/** Adds a batch; the ones before stay, so the next batches bring other games for a while. */
+export async function saveRecommendations(
   user: string,
   rows: {
     game: string
@@ -42,12 +47,32 @@ export async function replaceRecommendations(
     similar_to: string[]
   }[],
 ): Promise<void> {
-  await q('DELETE recommendation WHERE user = $user', { user: userRef(user) })
+  const batch = new Date()
   for (const r of rows) {
     await q('CREATE recommendation CONTENT $data', {
-      data: { ...r, user: userRef(user), game: gameRef(r.game) },
+      data: { ...r, user: userRef(user), game: gameRef(r.game), batch_at: batch },
     })
   }
+}
+
+/** Every game recommended to the player, the one shown longest ago first, the latest batch
+ * included. Batches older than `keepDays` are dropped on the way. */
+export async function seenGames(user: string, keepDays: number): Promise<string[]> {
+  await q(
+    'DELETE recommendation WHERE user = $user AND created_at < time::now() - <duration> $ttl',
+    { user: userRef(user), ttl: `${keepDays}d` },
+  )
+  const rows = await q<{ game: unknown; at: string }[]>(
+    'SELECT game, created_at AS at FROM recommendation WHERE user = $user',
+    { user: userRef(user) },
+  )
+  const last = new Map<string, string>()
+  for (const r of plain(rows ?? [])) {
+    const id = String(r.game)
+    const at = String(r.at)
+    if (!last.has(id) || at > (last.get(id) ?? '')) last.set(id, at)
+  }
+  return [...last].sort((a, b) => a[1].localeCompare(b[1])).map(([id]) => id)
 }
 
 // Why a player turns a recommendation down; the model steers the next ones away from it.

@@ -8,6 +8,8 @@ export interface Interest {
   game: Game
   year: number
   position: number
+  recommended_at?: string | null
+  next_pick_at?: string | null
 }
 
 export async function listInterests(user: string, year: number): Promise<Interest[]> {
@@ -21,10 +23,21 @@ export async function listInterests(user: string, year: number): Promise<Interes
 
 export async function addInterest(user: string, game: string, year: number): Promise<void> {
   await q(
-    // A game just saved goes to the top of the list.
+    // A game just saved goes to the top of the list. A game Nexo recommended keeps when it last did.
     `LET $min = (SELECT VALUE math::min(position) FROM interest WHERE user = $user GROUP ALL)[0] ?? 0;
-     UPSERT interest SET user = $user, game = $game, year = $year, position = $min - 1 WHERE user = $user AND game = $game;`,
+     LET $rec = array::max(SELECT VALUE created_at FROM recommendation WHERE user = $user AND game = $game);
+     UPSERT interest SET user = $user, game = $game, year = $year, position = $min - 1,
+       recommended_at = recommended_at ?? $rec WHERE user = $user AND game = $game;`,
     { user: userRef(user), game: gameRef(game), year },
+  )
+}
+
+/** Marks the game "Nexo decide" just picked as the player's next platinum, and only that one. */
+export async function markNextPick(user: string, game: string): Promise<void> {
+  await q(
+    `UPDATE interest SET next_pick_at = NONE WHERE user = $user AND next_pick_at != NONE AND game != $game;
+     UPDATE interest SET next_pick_at = time::now() WHERE user = $user AND game = $game;`,
+    { user: userRef(user), game: gameRef(game) },
   )
 }
 

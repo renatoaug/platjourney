@@ -12,6 +12,8 @@ export interface User {
   telegram_link_expires_at?: string | Date | null
   goal_targets: Record<string, number>
   taste_profile: unknown | null
+  // The player's own changes to the taste profile and their recommendation rules.
+  taste_prefs?: unknown | null
   session_plan: unknown | null
   include_dlc_progress?: boolean
   // Nexo's words in automatic notices; off, plain templates (no model).
@@ -30,7 +32,7 @@ export interface User {
 export const userRef = (id: string): RecordId => rid('user', id.replace(/^user:/, ''))
 
 // Objects kept on the user, stored with snake_case keys (AGENTS.md, Database).
-const OBJECTS = ['session_plan', 'taste_profile'] as const
+const OBJECTS = ['session_plan', 'taste_profile', 'taste_prefs'] as const
 function fromRow<T extends User | undefined>(row: T): T {
   if (!row) return row
   const out = { ...row }

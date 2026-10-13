@@ -48,6 +48,8 @@ Everything stored in SurrealDB is snake_case: tables, fields and the keys inside
 
 Every table has `created_at` (`TYPE datetime DEFAULT time::now() READONLY`). A table whose rows change after they are created also has `updated_at` (`TYPE datetime DEFAULT time::now() VALUE time::now()`); tables that are only written once and deleted (`tip`, `message`, `guide_chunk`, `auth_session`, `recommendation`, `llm_call`) do not. The database sets both, so code never writes them. Timestamps that mean something else (`earned_at`, `last_updated_at`, `last_seen_at`) are separate fields. Every date field ends in `_at`, inside stored objects too (`questions[*].asked_at`).
 
+Every change to what is stored (a table, a field, an index, a field's type or meaning, a key inside a stored object) updates `docs/database.md` in the same commit or PR: the field in its area's Mermaid diagram, the table's row in the reference tables (one row per, unique on, what the field means and who writes it) and the general rules at the top when the change touches them. Render the diagram before pushing.
+
 ## Tests
 
 Tests live next to the code they cover, never inside `src/`: `apps/server/tests/` (`bun test`, run with `bun run test:server`) and `services/ai/tests/` (pytest, `bun run ai:test`). `bun run test` runs both.

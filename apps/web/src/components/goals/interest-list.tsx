@@ -9,7 +9,7 @@ import {
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router'
 import { defineMessages, Language, useMessages } from '../../i18n/i18n'
-import { fmtHours, pct } from '../../lib/format'
+import { fmtDate, fmtHours, pct } from '../../lib/format'
 import type { Interest } from '../../lib/types'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
@@ -35,6 +35,8 @@ const messages = defineMessages({
       remove: 'Remover dos interesses',
       pages: 'Páginas de interesses',
       emptyFilter: 'Nada por aqui com esse filtro.',
+      recommended: 'Recomendado pelo Nexo em {date}',
+      nextPick: 'Próxima platina, escolhida pelo Nexo em {date}',
     },
   },
   [Language.En]: {
@@ -52,6 +54,8 @@ const messages = defineMessages({
       remove: 'Remove from interests',
       pages: 'Interest pages',
       emptyFilter: 'Nothing here with this filter.',
+      recommended: 'Recommended by Nexo on {date}',
+      nextPick: 'Next platinum, picked by Nexo on {date}',
     },
   },
 })
@@ -98,6 +102,18 @@ function Row({
       <Cover url={g.game.cover_url} name={g.game.name} className="goal-cover" />
       <Link className="name" to={`/title/game/${encodeURIComponent(g.game.id)}`}>
         {g.game.name}
+        {g.nextPickAt && !g.done ? (
+          <small className="goal-recommended next">
+            <img src="/nexo-avatar.svg" alt="" />
+            {t('list.nextPick', { date: fmtDate(g.nextPickAt) })}
+          </small>
+        ) : null}
+        {g.recommendedAt ? (
+          <small className="goal-recommended">
+            <img src="/nexo-avatar.svg" alt="" />
+            {t('list.recommended', { date: fmtDate(g.recommendedAt) })}
+          </small>
+        ) : null}
         {!g.done && started(g) ? (
           <div className="bar small">
             <i style={{ width: `${pct(g.progress)}%` }} />

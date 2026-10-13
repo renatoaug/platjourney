@@ -10,6 +10,7 @@ import {
 } from './i18n.ts'
 import { handleInterestCommand, yearProgress, yearReport } from './interests.ts'
 import { library, ownedGames } from './library.ts'
+import { nextPick } from './next-pick.ts'
 import { planReport, planSession } from './planner.ts'
 import { shownProgress } from './progress.ts'
 import { rankNextPlatinum } from './ranking.ts'
@@ -31,6 +32,7 @@ const messages = defineMessages({
       goals:
         '/goals — interesses e meta do ano (/goals set 12, /goals add <jogo>, /goals remove <n>, /goals move <n> up|down)',
       recommend: '/recommend — platinas novas pro seu gosto',
+      pick: '/pick — o Nexo escolhe qual dos seus interesses platinar agora',
       servers: '/servers — alertas de servidor online fechando',
       language: '/language <pt|en> — idioma das mensagens',
       ask: 'Ou só me pergunta qualquer coisa.',
@@ -43,6 +45,7 @@ const messages = defineMessages({
       game: 'Muda o jogo da conversa',
       goals: 'Interesses e meta do ano',
       recommend: 'Platinas novas pro seu gosto',
+      pick: 'Qual interesse platinar agora',
       servers: 'Alertas de servidor online',
       language: 'Idioma das mensagens',
       help: 'Comandos',
@@ -58,6 +61,9 @@ const messages = defineMessages({
     planUsage: 'Uso: /plan <minutos entre 15 e 600>',
     planBuilding: 'Montando o plano…',
     nextNone: 'Não achei jogo em andamento com platina.',
+    pickNone:
+      'Salve jogos nos seus interesses (/goals add <jogo>) e eu escolho qual platinar agora.',
+    pickResult: '🎯 Sua próxima platina: {name}\n{why}\n\nPor onde começar: {first}',
     nextTitle: 'Platinas mais perto (menos esforço restante primeiro):',
     nextItem: {
       one: '{n}. {name} — {progress}%, falta {count} troféu',
@@ -84,6 +90,7 @@ const messages = defineMessages({
       goals:
         '/goals — interests and yearly goal (/goals set 12, /goals add <game>, /goals remove <n>, /goals move <n> up|down)',
       recommend: '/recommend — new platinums for your taste',
+      pick: '/pick — Nexo picks which of your interests to platinum now',
       servers: '/servers — online servers shutting down',
       language: '/language <pt|en> — language of my messages',
       ask: 'Or just ask me anything.',
@@ -96,6 +103,7 @@ const messages = defineMessages({
       game: 'Switch the game we talk about',
       goals: 'Interests and yearly goal',
       recommend: 'New platinums for your taste',
+      pick: 'Which interest to platinum now',
       servers: 'Online server alerts',
       language: 'Language of my messages',
       help: 'Commands',
@@ -111,6 +119,9 @@ const messages = defineMessages({
     planUsage: 'Usage: /plan <minutes between 15 and 600>',
     planBuilding: 'Building the plan…',
     nextNone: "I couldn't find a game in progress with a platinum.",
+    pickNone:
+      'Save games to your interests (/goals add <game>) and I will pick which to platinum now.',
+    pickResult: '🎯 Your next platinum: {name}\n{why}\n\nWhere to start: {first}',
     nextTitle: 'Closest platinums (least effort left first):',
     nextItem: {
       one: '{n}. {name} — {progress}%, {count} trophy left',
@@ -137,6 +148,7 @@ export const COMMANDS = [
   'game',
   'goals',
   'recommend',
+  'pick',
   'servers',
   'language',
 ] as const
@@ -246,6 +258,13 @@ export async function handleCommand(user: User, text: string): Promise<string | 
         ),
         locale,
       )
+    }
+    case '/pick': {
+      await say(t('researching'))
+      const pick = await nextPick(user, await titles(), locale)
+      return pick
+        ? t('pickResult', { name: pick.game.name, why: pick.why, first: pick.firstStep })
+        : t('pickNone')
     }
     case '/servers':
       return serverReport(user, await titles())

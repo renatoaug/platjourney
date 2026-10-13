@@ -148,6 +148,24 @@ test('objects kept on the user are stored in snake_case and read in camelCase', 
   } as never)
 })
 
+test('the taste preferences are stored in snake_case and read in camelCase', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await updateUser('user:u1', {
+    taste_prefs: { filters: { noMissables: true, maxHours: 40 } },
+  })
+  expect(q.mock.calls[0][1]).toEqual({
+    id: user,
+    taste_prefs: { filters: { no_missables: true, max_hours: 40 } },
+  })
+  spyOn(db, 'one').mockResolvedValue({
+    id: 'user:u1',
+    taste_prefs: { filters: { no_missables: true, max_hours: 40 } },
+  })
+  expect((await getUser('user:u1'))?.taste_prefs).toEqual({
+    filters: { noMissables: true, maxHours: 40 },
+  })
+})
+
 test('a Telegram link code is stored with its expiry', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   await setLinkCode('user:u1', 'CODE')

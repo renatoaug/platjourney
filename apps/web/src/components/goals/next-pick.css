@@ -1,0 +1,136 @@
+@layer screens {
+  /* Above the list. Before it is asked, one quiet line: Nexo, a question and a link. Once asked, a
+     soft box with the chosen game. */
+  .next-pick {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .next-pick:has(.next-pick-game, .next-pick-wait) {
+    padding: 14px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+  }
+
+  /* One slim bar under the heading, tied to the list: Nexo and the question on the left, the link at
+     the end. */
+  .next-pick-ask {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    margin-top: -6px;
+    padding: 7px 12px;
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .next-pick-ask .next-pick-go {
+    margin-left: auto;
+  }
+
+  .next-pick-go {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  .next-pick-go:hover {
+    background: none;
+    color: var(--color-accent-hover);
+  }
+
+  .next-pick-go .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .next-pick-wait {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .next-pick-wait > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .next-pick-nexo {
+    flex: none;
+    width: 22px;
+    height: 22px;
+  }
+
+  .next-pick-wait .next-pick-nexo {
+    width: 32px;
+    height: 32px;
+    animation: next-pick-think 1.6s ease-in-out infinite;
+  }
+
+  .next-pick-wait span {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .next-pick-game {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-fg);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+  }
+
+  .next-pick-game .icon {
+    width: 14px;
+    height: 14px;
+    color: var(--color-fg-muted);
+  }
+
+  .next-pick-cover {
+    flex: none;
+    width: 64px;
+    height: 36px;
+    border-radius: var(--radius-tag);
+    object-fit: cover;
+  }
+
+  .next-pick > p {
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--color-fg-soft);
+  }
+
+  .next-pick .next-pick-first span {
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  .next-pick > button {
+    justify-self: start;
+  }
+
+  .next-pick-error {
+    flex-basis: 100%;
+    color: var(--color-danger);
+  }
+
+  @keyframes next-pick-think {
+    50% {
+      transform: translateY(-3px) rotate(4deg);
+    }
+  }
+}

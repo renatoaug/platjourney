@@ -5,7 +5,8 @@ import {
   dismiss,
   listDismissed,
   listRecommendations,
-  replaceRecommendations,
+  saveRecommendations,
+  seenGames,
 } from '../../src/repository/recommendation.ts'
 
 const user = new db.RecordId('user', 'u1')
@@ -13,16 +14,18 @@ const game = new db.RecordId('game', 7)
 
 afterEach(() => mock.restore())
 
-test('recommendations leave out dismissed games', async () => {
+test('recommendations are the latest batch, without dismissed games', async () => {
   const q = spyOn(db, 'q').mockResolvedValue([{ game: { id: game }, why: 'x' }])
   expect(await listRecommendations('user:u1')).toEqual([
     { game: { id: 'game:7' }, why: 'x' },
   ] as never)
   expect(q.mock.calls[0][0]).toContain('game NOT IN (SELECT VALUE game FROM dismissal')
+  expect(q.mock.calls[0][0]).toContain('LET $last = array::max(SELECT VALUE batch_at')
+  expect(q.mock.calls[0][0]).toContain('AND batch_at = $last')
   expect(q.mock.calls[0][1]).toEqual({ user })
 })
 
-test('replacing recommendations deletes the old ones and creates each new one', async () => {
+test('a new batch keeps the old ones and stamps each row with the same batch time', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   const row = {
     game: 'game:7',
@@ -33,11 +36,25 @@ test('replacing recommendations deletes the old ones and creates each new one', 
     why: 'porque',
     similar_to: ['A'],
   }
-  await replaceRecommendations('user:u1', [row])
-  expect(q.mock.calls).toEqual([
-    ['DELETE recommendation WHERE user = $user', { user }],
-    ['CREATE recommendation CONTENT $data', { data: { ...row, user, game } }],
-  ])
+  await saveRecommendations('user:u1', [row, { ...row, game: 'game:8' }])
+  expect(q.mock.calls).toHaveLength(2)
+  const [first, second] = q.mock.calls.map((c) => (c[1] as { data: Record<string, unknown> }).data)
+  expect(q.mock.calls[0][0]).toBe('CREATE recommendation CONTENT $data')
+  expect(first).toEqual({ ...row, user, game, batch_at: expect.any(Date) })
+  expect(second.batch_at).toBe(first.batch_at)
+})
+
+test('seen games drop old batches and come back the one shown longest ago first', async () => {
+  const q = spyOn(db, 'q')
+    .mockResolvedValueOnce(undefined)
+    .mockResolvedValueOnce([
+      { game: new db.RecordId('game', 1), at: '2026-09-01T00:00:00Z' },
+      { game, at: '2026-08-01T00:00:00Z' },
+      { game: new db.RecordId('game', 1), at: '2026-10-01T00:00:00Z' },
+    ])
+  expect(await seenGames('user:u1', 365)).toEqual(['game:7', 'game:1'])
+  expect(q.mock.calls[0][0]).toContain('DELETE recommendation WHERE user = $user AND created_at <')
+  expect(q.mock.calls[0][1]).toEqual({ user, ttl: '365d' })
 })
 
 test('dismissing upserts one dismissal per game, with the reason when given', async () => {

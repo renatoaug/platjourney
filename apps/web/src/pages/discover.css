@@ -9,22 +9,11 @@
     }
   }
 
-  /* Actions sit below the copy so hidden controls never narrow the heading. */
-  #recs > .row {
-    position: relative;
-    padding-bottom: 52px;
-  }
-
-  #recs > .row .rec-actions {
-    position: absolute;
-    right: 30px;
-    bottom: 12px;
-  }
-
-  #recs > .row > .row-arrow {
-    position: absolute;
-    right: 0;
-    bottom: 19px;
+  /* The hover tint reaches a little past the content on both sides. */
+  #recs > a.row,
+  #ranking > a.row {
+    margin-inline: -12px;
+    padding-inline: 12px;
   }
 
   /* Why a recommendation is turned down, in place of its row. */
@@ -35,6 +24,23 @@
     padding-inline: 0;
     padding-bottom: 16px;
     border-width: 0 0 1px;
+  }
+
+  /* The library and the recommendations side by side, each its own height: opening the taste profile
+     never stretches the library. */
+  .discover-columns {
+    align-items: start;
+  }
+
+  .discover-columns > .card {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+  }
+
+  .discover-columns > .card > .pager {
+    margin-top: auto;
+    padding-top: 14px;
   }
 
   /* Card title with an action at its end, like the recommendations' refresh. */
@@ -48,5 +54,11 @@
 
   .card-head h2 {
     margin-bottom: 0;
+  }
+
+  .card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 }

@@ -7,7 +7,17 @@ import pytest
 
 from platjourney_ai import db, llm, recommend, taste
 from platjourney_ai.jobs import embed_catalog
-from platjourney_ai.recommend import Dismissed, RecommendRequest, build_input, candidate_line
+from platjourney_ai.recommend import (
+    Dismissed,
+    Filters,
+    Preferences,
+    RecommendRequest,
+    breaks,
+    build_input,
+    candidate_line,
+    facts_line,
+    rules_text,
+)
 from platjourney_ai.taste import Candidate, LibraryTitle, cosine, mean, signals
 
 NOW = datetime(2026, 9, 30, tzinfo=UTC)
@@ -151,13 +161,21 @@ def test_prompt_keeps_only_the_most_recent_platinums() -> None:
     assert text.startswith('Platinumed (90 in all; the 80 most recent):\n')
 
 
+@pytest.fixture(autouse=True)
+def guided(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def every() -> list[str]:
+        return []
+
+    monkeypatch.setattr(recommend, 'guided_games', every)
+
+
 async def test_recommend_resolves_picks_to_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
-    async def fake_candidates(*_: Any) -> list[Candidate]:
+    async def fake_candidates(*_: Any, **__: Any) -> list[Candidate]:
         return [CANDIDATE]
 
     calls: list[tuple[str, str, str]] = []
 
-    async def research_json(name: str, instructions: str, input: str, schema: Any) -> Any:
+    async def answer_json(name: str, instructions: str, input: str, schema: Any) -> Any:
         calls.append((name, instructions, input))
         pick = {
             'platform': 'PS5',
@@ -178,12 +196,12 @@ async def test_recommend_resolves_picks_to_candidates(monkeypatch: pytest.Monkey
             ],
         }
 
-    async def no_guides(ids: Any) -> dict[str, str]:
-        return {}
+    async def no_guides(ids: Any) -> dict[str, Any]:
+        return {i: {} for i in ids}
 
     monkeypatch.setattr(recommend, 'candidates', fake_candidates)
-    monkeypatch.setattr(recommend, 'guide_facts', no_guides)
-    monkeypatch.setattr(llm, 'research_json', research_json)
+    monkeypatch.setattr(recommend, 'guide_rows', no_guides)
+    monkeypatch.setattr(llm, 'answer_json', answer_json)
     req = RecommendRequest.model_validate({'library': [], 'dismissed': []})
     out = (await recommend.recommend(req)).model_dump(by_alias=True)
     assert calls[0][0] == 'recommendations'
@@ -250,3 +268,145 @@ def test_candidates_carry_the_guide_numbers_when_we_have_a_guide() -> None:
         ' — guia: dificuldade 3/10, ~70h, 1 jogada(s)'
     )
     assert ' — guia' not in candidate_line(c)
+
+
+def test_rules_drop_what_a_guide_says_breaks_them_and_keep_the_unknown() -> None:
+    f = Filters(no_missables=True, one_playthrough=True, max_hours=40)
+    assert breaks(f, {'has_missables': True})
+    assert breaks(f, {'playthroughs': 2})
+    assert breaks(f, {'hours': 60})
+    assert not breaks(f, {'has_missables': False, 'playthroughs': 1, 'hours': 30})
+    assert not breaks(f, None)
+    assert breaks(Filters(no_online=True), {'has_online': True})
+    assert breaks(Filters(no_difficulty_trophy=True), {'difficulty_trophy': 'Brutal'})
+    assert breaks(Filters(max_difficulty=5), {'difficulty': 7})
+    assert not breaks(Filters(), {'has_missables': True, 'hours': 300})
+
+
+def test_the_prompt_carries_what_the_player_said() -> None:
+    p = Preferences(
+        likes=['jogos curtos'], avoid=['terror'], wrong=['longas'], filters=Filters(no_online=True)
+    )
+    text = rules_text(p)
+    assert 'Not about them (leave out of the profile): longas' in text
+    assert 'Likes: jogos curtos' in text and 'Avoid: terror' in text
+    assert 'no online trophies' in text
+    assert rules_text(Preferences()) == ''
+    assert 'The player said' in build_input([], [], [], None, p)
+
+
+def test_facts_line_needs_difficulty_and_hours() -> None:
+    assert facts_line({'difficulty': 3, 'hours': 20, 'playthroughs': 1}) == (
+        'dificuldade 3/10, ~20h, 1 jogada(s)'
+    )
+    assert facts_line({'difficulty': None, 'hours': 20}) == ''
+
+
+async def test_rules_thin_the_candidates_and_the_picks(monkeypatch: pytest.MonkeyPatch) -> None:
+    long_one = Candidate(id='game:8', name='Long', platforms=['PS5'])
+    drawn: list[int] = []
+
+    async def fake_candidates(_lib: Any, _ex: Any, n: int, **_: Any) -> list[Candidate]:
+        drawn.append(n)
+        return [long_one, CANDIDATE]
+
+    async def guides(ids: Any) -> dict[str, Any]:
+        return {'game:8': {'difficulty': 5, 'hours': 120, 'playthroughs': 1}, 'game:9': {}}
+
+    seen: list[str] = []
+
+    async def answer_json(name: str, instructions: str, input: str, schema: Any) -> Any:
+        seen.append(input)
+        pick = {
+            'platform': 'PS5',
+            'difficulty': 4,
+            'playthroughs': 1,
+            'hasDifficultyTrophy': False,
+            'why': 'x',
+            'hasMissables': False,
+        }
+        return {
+            'profile': {'summary': 'x', 'genres': [], 'traits': [], 'avoid': []},
+            'items': [pick | {'name': 'Close', 'hours': 20}, pick | {'name': 'Other', 'hours': 90}],
+        }
+
+    monkeypatch.setattr(recommend, 'candidates', fake_candidates)
+    monkeypatch.setattr(recommend, 'guide_rows', guides)
+    monkeypatch.setattr(llm, 'answer_json', answer_json)
+    req = RecommendRequest.model_validate(
+        {'library': [], 'preferences': {'filters': {'maxHours': 40}}}
+    )
+    out = await recommend.recommend(req)
+    assert drawn == [recommend.CANDIDATES * 2]
+    assert '- Long' not in seen[0] and '- Close' in seen[0]
+    assert [i.name for i in out.items] == ['Close']
+
+
+async def test_seen_games_come_back_only_when_the_unseen_run_out(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    old = Candidate(id='game:20', name='Old')
+    older = Candidate(id='game:21', name='Older')
+    calls: list[list[str]] = []
+
+    async def fake_candidates(_lib: Any, exclude: list[str], n: int, **_: Any) -> list[Candidate]:
+        calls.append(list(exclude))
+        return [CANDIDATE] if 'game:20' in exclude else [CANDIDATE, old, older]
+
+    async def no_guides(ids: Any) -> dict[str, Any]:
+        return {i: {} for i in ids}
+
+    seen: list[str] = []
+
+    async def answer_json(name: str, instructions: str, input: str, schema: Any) -> Any:
+        seen.append(input)
+        return {'profile': {'summary': 'x', 'genres': [], 'traits': [], 'avoid': []}, 'items': []}
+
+    monkeypatch.setattr(recommend, 'candidates', fake_candidates)
+    monkeypatch.setattr(recommend, 'guide_rows', no_guides)
+    monkeypatch.setattr(llm, 'answer_json', answer_json)
+    req = RecommendRequest.model_validate(
+        {'library': [], 'exclude': ['game:1'], 'seen': ['game:21', 'game:20']}
+    )
+    await recommend.recommend(req)
+    assert calls[0] == ['game:1', 'game:21', 'game:20']
+    assert calls[1] == ['game:1']
+    text = seen[0]
+    assert text.index('- Older') < text.index('- Old (')
+
+
+async def test_only_games_with_a_guide_are_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
+    bare = Candidate(id='game:30', name='Bare')
+    guided = Candidate(id='game:31', name='Guided')
+
+    async def fake_candidates(_lib: Any, _ex: list[str], n: int, **_: Any) -> list[Candidate]:
+        return [bare, guided]
+
+    async def guides(ids: Any) -> dict[str, Any]:
+        return {'game:31': {'difficulty': 3, 'hours': 20, 'playthroughs': 1}}
+
+    seen: list[str] = []
+
+    async def answer_json(name: str, instructions: str, input: str, schema: Any) -> Any:
+        seen.append(input)
+        return {'profile': {'summary': 'x', 'genres': [], 'traits': [], 'avoid': []}, 'items': []}
+
+    monkeypatch.setattr(recommend, 'candidates', fake_candidates)
+    monkeypatch.setattr(recommend, 'guide_rows', guides)
+    monkeypatch.setattr(llm, 'answer_json', answer_json)
+    await recommend.recommend(RecommendRequest.model_validate({'library': []}))
+    assert '- Guided' in seen[0] and '- Bare' not in seen[0]
+
+
+async def test_candidates_can_be_kept_to_some_games(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, Any] = {}
+
+    async def rows(sql: str, vars: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        seen['sql'], seen['vars'] = sql, vars
+        return []
+
+    monkeypatch.setattr(db, 'rows', rows)
+    await taste.similar_games([1.0], 5, [], ['game:1'])
+    assert 'id IN $only' in seen['sql'] and seen['vars']['only'] == ['game:1']
+    await taste.similar_games([1.0], 5, [])
+    assert 'id IN $only' not in seen['sql']

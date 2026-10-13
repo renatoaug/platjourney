@@ -14,7 +14,7 @@ const loaded = { ...SAMPLE_DATA, ranking: rankingData, servers: serversData }
 const recs = () => document.getElementById('recs') as HTMLElement
 const refresh = () => screen.getByRole('button', { name: 'Gerar novas recomendações' })
 
-test('the library ranking, the recommendations and the server alerts', async () => {
+test('the library ranking and the recommendations, without the server alerts', async () => {
   const done = mock()
   window.addEventListener(MODEL_WORK_DONE, done)
   const cache: Record<string, unknown> = {}
@@ -22,8 +22,7 @@ test('the library ranking, the recommendations and the server alerts', async () 
   renderApp(<Discover />, { value: { data: loaded, cache } })
   const ranking = document.getElementById('ranking') as HTMLElement
   expect(within(ranking).getAllByRole('link')).toHaveLength(3)
-  expect(screen.getByRole('heading', { name: 'Servidores online' })).toBeTruthy()
-  expect(screen.getByText('Destruction AllStars')).toBeTruthy()
+  expect(screen.queryByRole('heading', { name: 'Servidores online' })).toBeNull()
   expect(refresh().hasAttribute('disabled')).toBe(true)
   expect(await within(recs()).findByText(/Horizon Zero Dawn/)).toBeTruthy()
   expect(refresh().hasAttribute('disabled')).toBe(false)
@@ -118,14 +117,33 @@ test('empty: nothing in progress and no recommendations', () => {
     '/guides',
   )
   expect(screen.getByText('Nenhuma recomendação ainda')).toBeTruthy()
-  expect(screen.getByText('Tudo no ar')).toBeTruthy()
 })
 
-test('loading: skeletons for the ranking, the recommendations and the servers', () => {
+test('loading: skeletons for the ranking and the recommendations', () => {
   mockApi({ '/api/recommendations': never })
   const { container } = renderApp(<Discover />, { value: { data: null } })
-  expect(container.querySelectorAll('#ranking .row')).toHaveLength(6)
-  expect(container.querySelector('#servers .sk')).toBeTruthy()
+  expect(container.querySelectorAll('#ranking .row')).toHaveLength(10)
+})
+
+test('the library pages ten at a time', () => {
+  mockApi({})
+  const many = Array.from({ length: 13 }, (_, i) => ({ ...rankingData[0], game: `game:r${i}` }))
+  renderApp(<Discover />, {
+    value: { data: { ...loaded, ranking: many }, cache: { recs: recsData } },
+  })
+  const ranking = document.getElementById('ranking') as HTMLElement
+  expect(within(ranking).getAllByRole('link')).toHaveLength(10)
+  fireEvent.click(screen.getByRole('button', { name: 'Página 2' }))
+  expect(within(ranking).getAllByRole('link')).toHaveLength(3)
+})
+
+test('Customize opens the taste profile', () => {
+  mockApi({})
+  renderApp(<Discover />, { value: { data: loaded, cache: { recs: recsData } } })
+  const details = document.querySelector('#taste details') as HTMLDetailsElement
+  expect(details.open).toBe(false)
+  fireEvent.click(screen.getByRole('button', { name: /Personalizar/ }))
+  expect(details.open).toBe(true)
 })
 
 test('a library with nothing to learn from says so and does not offer a search', async () => {
@@ -133,4 +151,35 @@ test('a library with nothing to learn from says so and does not offer a search',
   renderApp(<Discover />, { value: { data: { ...SAMPLE_DATA, ranking: [], servers: [] } } })
   expect(await screen.findByText('Seu gosto ainda é um mistério')).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Gerar novas recomendações' })).toBeNull()
+})
+
+test('profile changes stay a draft until saved; saving can bring new picks', async () => {
+  const calls = mockApi({
+    'POST /api/recommendations/preferences': { ...recsData, prefs: undefined },
+    '/api/recommendations?refresh=1': recsData,
+  })
+  renderApp(<Discover />, { value: { data: loaded, cache: { recs: recsData } } })
+  fireEvent.click(screen.getByText('Ver perfil completo'))
+  fireEvent.click(screen.getByRole('button', { name: 'Tirar Troféus online' }))
+  expect(screen.queryByRole('button', { name: 'Tirar Troféus online' })).toBeNull()
+  expect(calls.some((c) => c.path === '/api/recommendations/preferences')).toBe(false)
+  fireEvent.click(screen.getByRole('button', { name: 'Descartar' }))
+  expect(screen.getByRole('button', { name: 'Tirar Troféus online' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Tirar Troféus online' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar e gerar novas recomendações' }))
+  await waitFor(() =>
+    expect(calls.some((c) => c.path === '/api/recommendations?refresh=1')).toBe(true),
+  )
+  const sent = calls.find((c) => c.path === '/api/recommendations/preferences')
+  const body = sent?.body as { removed: { avoid: string[] } } | undefined
+  expect(body?.removed.avoid).toEqual(['Troféus online'])
+})
+
+test('a failed save says so', async () => {
+  mockApi({ 'POST /api/recommendations/preferences': reply(500) })
+  renderApp(<Discover />, { value: { data: loaded, cache: { recs: recsData } } })
+  fireEvent.click(screen.getByText('Ver perfil completo'))
+  fireEvent.click(screen.getByRole('button', { name: 'Tirar Troféus online' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+  expect(await screen.findByText('Não conseguimos salvar seu perfil. Tenta de novo.')).toBeTruthy()
 })

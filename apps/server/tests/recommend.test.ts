@@ -2,7 +2,14 @@ import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
 import * as plugins from '../src/plugins.ts'
-import { dismissRecommendation, recommendationReport, recommendations } from '../src/recommend.ts'
+import {
+  dismissRecommendation,
+  effectiveProfile,
+  emptyPrefs,
+  readPrefs,
+  recommendationReport,
+  recommendations,
+} from '../src/recommend.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as interests from '../src/repository/interest.ts'
@@ -34,6 +41,8 @@ const row = (over: Partial<RecommendationRow> = {}): RecommendationRow => ({
 })
 
 beforeEach(() => {
+  // Nothing shown before, unless a test says otherwise.
+  spyOn(recs, 'seenGames').mockResolvedValue([])
   spyOn(plugins, 'aroundModel')
 })
 
@@ -53,7 +62,7 @@ test('a fresh batch is served from the database without the model', async () => 
   const ai = spyOn(aiModule, 'ai')
   const result = await recommendations(user, [], [])
   expect(ai).not.toHaveBeenCalled()
-  expect(result.profile).toEqual(user.taste_profile as never)
+  expect(result.profile).toEqual(effectiveProfile(user.taste_profile as never, emptyPrefs()))
   expect(result.items[0]).toMatchObject({
     game: picked,
     playthroughs: 1,
@@ -100,7 +109,7 @@ test('a stale or forced batch is researched, filtered and stored', async () => {
         : name === 'Made Up'
           ? undefined
           : byName) as never)
-  const replace = spyOn(recs, 'replaceRecommendations').mockResolvedValue(undefined)
+  const replace = spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
   const update = spyOn(users, 'updateUser').mockResolvedValue(undefined)
   const profile = { summary: 'Novo', genres: ['Ação'], traits: [], avoid: [] }
   const item = (name: string, game: string | null, over: Record<string, unknown> = {}) => ({
@@ -141,6 +150,8 @@ test('a stale or forced batch is researched, filtered and stored', async () => {
     ],
     exclude: ['game:1', 'game:2', 'game:5'],
     dismissed: [{ name: 'Dismissed', reason: 'too_long' }],
+    seen: [],
+    preferences: { likes: [], avoid: [], wrong: [], filters: {} },
   })
   const base = {
     platform: 'PS5',
@@ -166,11 +177,13 @@ test('an empty batch is generated even with no previous one', async () => {
   spyOn(recs, 'listDismissed').mockResolvedValue([])
   spyOn(interests, 'listInterests').mockResolvedValue([])
   spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
-  spyOn(recs, 'replaceRecommendations').mockResolvedValue(undefined)
+  spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
   spyOn(users, 'updateUser').mockResolvedValue(undefined)
   spyOn(aiModule, 'ai').mockResolvedValue({ profile: null, items: [] })
   expect(await recommendations(user, [makeTitle()], [], true)).toEqual({
     profile: null as never,
+    baseProfile: null,
+    prefs: emptyPrefs(),
     items: [],
     generatedAt: null,
   })
@@ -197,6 +210,7 @@ test('the report lists each pick with its profile', () => {
   expect(
     recommendationReport({
       profile: { summary: 'Explorador', genres: ['RPG', 'Ação'], traits: [], avoid: [] },
+      prefs: emptyPrefs(),
       items: [item, { ...item, hasMissables: false }],
       generatedAt: null,
     }),
@@ -210,15 +224,15 @@ test('the report lists each pick with its profile', () => {
       '2. Picked (PS5) — 3/10, ~20h\n   Parecido',
     ].join('\n'),
   )
-  expect(recommendationReport({ profile: null, items: [item], generatedAt: null })).toStartWith(
-    'Próximas platinas',
-  )
+  expect(
+    recommendationReport({ profile: null, prefs: emptyPrefs(), items: [item], generatedAt: null }),
+  ).toStartWith('Próximas platinas')
 })
 
 test('an empty report asks to try again', () => {
-  expect(recommendationReport({ profile: null, items: [], generatedAt: null })).toBe(
-    'Ainda não tenho recomendações. Tenta de novo em 1 minuto.',
-  )
+  expect(
+    recommendationReport({ profile: null, prefs: emptyPrefs(), items: [], generatedAt: null }),
+  ).toBe('Ainda não tenho recomendações. Tenta de novo em 1 minuto.')
 })
 
 test('the demo keeps its stored batch, however old, and never asks the model', async () => {
@@ -240,10 +254,80 @@ test('an empty library is not searched', async () => {
   const around = plugins.aroundModel as unknown as ReturnType<typeof spyOn>
   expect(await recommendations(user, [], [], true)).toEqual({
     profile: null,
+    prefs: emptyPrefs(),
     items: [],
     generatedAt: null,
     reason: 'no-library',
   })
   expect(ai).not.toHaveBeenCalled()
   expect(around).not.toHaveBeenCalled()
+})
+
+test("the player's changes reshape the model's profile and survive a new one", () => {
+  const prefs = readPrefs({
+    added: { genres: ['Metroidvania', ' metroidvania '], traits: ['jogos curtos'], avoid: [] },
+    removed: { genres: ['Terror'], traits: [], avoid: [] },
+    filters: { noOnline: true, maxHours: 999, maxDifficulty: 'x', noMissables: 'yes' },
+  })
+  expect(prefs?.added.genres).toEqual(['Metroidvania'])
+  expect(prefs?.filters).toEqual({ noOnline: true, maxHours: 500 })
+  const model = { summary: 'Você...', genres: ['RPG', 'terror'], traits: ['longas'], avoid: [] }
+  expect(effectiveProfile(model, prefs ?? emptyPrefs())).toEqual({
+    summary: 'Você...',
+    genres: ['RPG', 'Metroidvania'],
+    traits: ['longas', 'jogos curtos'],
+    avoid: [],
+  })
+  expect(effectiveProfile(null, emptyPrefs())).toBeNull()
+  expect(readPrefs('nope')).toBeNull()
+  expect(readPrefs({ added: { genres: 'x' } })).toBeNull()
+  expect(readPrefs(undefined)).toEqual(emptyPrefs())
+})
+
+test('a new batch sends what the player said to the service', async () => {
+  spyOn(recs, 'listRecommendations').mockResolvedValue([])
+  spyOn(recs, 'listDismissed').mockResolvedValue([])
+  spyOn(interests, 'listInterests').mockResolvedValue([])
+  spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
+  spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
+  spyOn(users, 'updateUser').mockResolvedValue(undefined)
+  const ai = spyOn(aiModule, 'ai').mockResolvedValue({ profile: null, items: [] })
+  const said = makeUser({
+    taste_prefs: {
+      added: { genres: ['Soulslike'], traits: [], avoid: ['terror'] },
+      removed: { genres: [], traits: ['longas'], avoid: [] },
+      filters: { noMissables: true },
+    },
+  })
+  await recommendations(said, [makeTitle()], [], true)
+  expect((ai.mock.calls[0][1] as { preferences: unknown }).preferences).toEqual({
+    likes: ['Soulslike'],
+    avoid: ['terror'],
+    wrong: ['longas'],
+    filters: { noMissables: true },
+  })
+})
+
+test('a change of preferences answers with the stored batch, never a new one', async () => {
+  spyOn(recs, 'listRecommendations').mockResolvedValue([])
+  const ai = spyOn(aiModule, 'ai')
+  const result = await recommendations(user, [makeTitle()], [], false, true)
+  expect(result.items).toEqual([])
+  expect(ai).not.toHaveBeenCalled()
+})
+
+test('games already shown go to the service apart, oldest first', async () => {
+  spyOn(recs, 'listRecommendations').mockResolvedValue([])
+  spyOn(recs, 'listDismissed').mockResolvedValue([])
+  spyOn(recs, 'seenGames').mockResolvedValue(['game:7', 'game:8'])
+  spyOn(interests, 'listInterests').mockResolvedValue([])
+  spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
+  spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
+  spyOn(users, 'updateUser').mockResolvedValue(undefined)
+  const ai = spyOn(aiModule, 'ai').mockResolvedValue({ profile: null, items: [] })
+  await recommendations(user, [makeTitle()], [], true)
+  const body = ai.mock.calls[0][1] as { exclude: string[]; seen: string[] }
+  expect(body.seen).toEqual(['game:7', 'game:8'])
+  expect(body.exclude).toEqual([])
+  expect(recs.seenGames).toHaveBeenCalledWith(user.id, 365)
 })

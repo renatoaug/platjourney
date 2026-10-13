@@ -105,7 +105,8 @@ test('loading, error and empty', () => {
   const { container, rerender } = renderApp(
     <Recommendations state={{ status: 'loading' }} onDismiss={() => {}} />,
   )
-  expect(container.querySelectorAll('#recs .row')).toHaveLength(4)
+  expect(container.querySelectorAll('#recs .row')).toHaveLength(3)
+  expect(screen.getByText('O Nexo está montando suas recomendações…')).toBeTruthy()
   expect(document.getElementById('taste')?.textContent).toBe('')
   rerender(<Recommendations state={{ status: 'error' }} onDismiss={() => {}} />)
   expect(screen.getByRole('alert').textContent).toContain(

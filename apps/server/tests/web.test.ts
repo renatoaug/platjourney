@@ -15,6 +15,7 @@ import { PAGE_POLICY, SECURITY_HEADERS } from '../src/http.ts'
 import * as interests from '../src/interests.ts'
 import * as lib from '../src/library.ts'
 import * as nexo from '../src/nexo.ts'
+import * as nextPickModule from '../src/next-pick.ts'
 import * as planner from '../src/planner.ts'
 import * as playtime from '../src/playtime.ts'
 import { Refused, registerPlugin, resetPlugins } from '../src/plugins.ts'
@@ -753,6 +754,27 @@ test('recommendations can be dismissed and refreshed', async () => {
   expect(recs).toHaveBeenLastCalledWith(me, [title], [], false)
 })
 
+test('Nexo picks the next saved game on request', async () => {
+  const pick = { game: { id: 'game:2', name: 'Inside' }, why: 'Curto', firstStep: 'Comece' }
+  spyOn(nextPickModule, 'nextPick').mockResolvedValue(pick)
+  const res = await send('POST', '/api/interests/next', {})
+  expect(res).toMatchObject({ status: 200, body: { pick } })
+  expect(nextPickModule.nextPick).toHaveBeenCalledWith(me, [title], 'pt-BR')
+})
+
+test('taste preferences are checked, saved and answered with the stored batch', async () => {
+  const recs = spyOn(recommend, 'recommendations')
+  expect((await send('POST', '/api/recommendations/preferences', { added: 'x' })).status).toBe(400)
+  const prefs = {
+    added: { genres: ['Soulslike'], traits: [], avoid: [] },
+    removed: { genres: [], traits: [], avoid: [] },
+    filters: { noOnline: true },
+  }
+  expect((await send('POST', '/api/recommendations/preferences', prefs)).status).toBe(200)
+  expect(users.updateUser).toHaveBeenLastCalledWith(me.id, { taste_prefs: prefs })
+  expect(recs).toHaveBeenLastCalledWith({ ...me, taste_prefs: prefs }, [title], [], false, true)
+})
+
 test('pages come from the built app, with long cache only for assets', async () => {
   spyOn(fs, 'existsSync').mockReturnValue(true)
   spyOn(fs, 'readFileSync').mockReturnValue('<html>')
@@ -855,6 +877,8 @@ describe('the demo', () => {
     ['POST', '/api/chat', { text: 'oi' }],
     ['POST', '/api/trophy-tip', { np: 'NPWR1', trophyId: 1 }],
     ['POST', '/api/recommendations/dismiss', { game: 'game:2' }],
+    ['POST', '/api/recommendations/preferences', {}],
+    ['POST', '/api/interests/next', {}],
     ['GET', '/api/recommendations?refresh=1'],
     ['POST', '/api/anything'],
   ]

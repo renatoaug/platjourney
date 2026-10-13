@@ -10,6 +10,13 @@ import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { useDemo } from './demo'
+import {
+  effectiveProfile,
+  emptyPrefs,
+  samePrefs,
+  TasteEditor,
+  type TastePrefs,
+} from './taste-editor'
 import { titleHref } from './tip'
 import './recommendations.css'
 
@@ -50,7 +57,8 @@ const messages = defineMessages({
     hideProfile: 'Fechar perfil',
     likes: 'Você curte',
     avoids: 'Evitando',
-    errorTitle: 'Pesquisa fora do ar',
+    thinking: 'O Nexo está montando suas recomendações…',
+    errorTitle: 'Recomendações fora do ar',
     error: 'Não conseguimos montar suas recomendações agora. Tente de novo em instantes.',
     emptyTitle: 'Nenhuma recomendação ainda',
     empty: 'Toque no ↻ ao lado do título para o Nexo montar a lista pelo seu gosto.',
@@ -94,7 +102,8 @@ const messages = defineMessages({
     hideProfile: 'Close profile',
     likes: 'You enjoy',
     avoids: 'Steering away from',
-    errorTitle: 'Search is down',
+    thinking: 'Nexo is putting your picks together…',
+    errorTitle: 'Recommendations are down',
     error: 'We could not build your picks right now. Try again in a moment.',
     emptyTitle: 'No picks yet',
     empty: 'Tap ↻ next to the title and Nexo builds the list for your taste.',
@@ -137,6 +146,10 @@ export interface Recommendation {
 /** GET /api/recommendations (and the dismiss answer). */
 export interface Recs {
   profile: TasteProfile | null
+  /** The model's profile as it wrote it, to preview changes before they are saved. */
+  baseProfile?: TasteProfile | null
+  /** The player's changes to the profile and their rules. */
+  prefs?: TastePrefs
   items: Recommendation[]
   generatedAt?: string
   /** No library to learn a taste from yet: nothing was searched. */
@@ -248,57 +261,102 @@ function RecRow({ rec: r, onDismiss }: { rec: Recommendation; onDismiss: OnDismi
         <div style={{ fontSize: 13, marginTop: 4, color: 'var(--color-fg)' }}>
           {plainText(r.why)}
         </div>
-        {!!r.similarTo?.length && (
-          <div className="similar-to">
-            <Icon name="layers" /> {t('similarTo', { games: r.similarTo.join(t('and')) })}
+        {/* The "similar to" line and the row's actions share one line; long text wraps before them. */}
+        <div className="rec-foot">
+          <div className="rec-foot-text">
+            {!!r.similarTo?.length && (
+              <div className="similar-to">
+                <Icon name="layers" /> {t('similarTo', { games: r.similarTo.join(t('and')) })}
+              </div>
+            )}
           </div>
-        )}
+          {!demo && (
+            <span className="rec-actions">
+              <button
+                type="button"
+                className={`rec-save ${saved ? 'saved' : ''}`}
+                disabled={saving}
+                aria-label={t(saved ? 'removeAria' : 'saveAria', {
+                  name,
+                })}
+                data-tip={t(saved ? 'removeTip' : 'saveTip')}
+                onClick={async (e) => {
+                  stop(e)
+                  setSaving(true)
+                  await toggle(r.game.id, name)
+                  setSaving(false)
+                }}
+              >
+                <Icon name={saved ? 'bookmark-filled' : 'bookmark'} />
+              </button>
+              <button
+                type="button"
+                className="rec-dismiss"
+                aria-label={t('dismissAria', { name })}
+                data-tip={t('dismissTip')}
+                onClick={(e) => {
+                  stop(e)
+                  setAsking(true)
+                }}
+              >
+                <Icon name="close" />
+              </button>
+            </span>
+          )}
+          <span className="row-arrow">
+            <Icon name="arrow" />
+          </span>
+        </div>
       </div>
-      {!demo && (
-        <span className="rec-actions">
-          <button
-            type="button"
-            className={`rec-save ${saved ? 'saved' : ''}`}
-            disabled={saving}
-            aria-label={t(saved ? 'removeAria' : 'saveAria', {
-              name,
-            })}
-            data-tip={t(saved ? 'removeTip' : 'saveTip')}
-            onClick={async (e) => {
-              stop(e)
-              setSaving(true)
-              await toggle(r.game.id, name)
-              setSaving(false)
-            }}
-          >
-            <Icon name={saved ? 'bookmark-filled' : 'bookmark'} />
-          </button>
-          <button
-            type="button"
-            className="rec-dismiss"
-            aria-label={t('dismissAria', { name })}
-            data-tip={t('dismissTip')}
-            onClick={(e) => {
-              stop(e)
-              setAsking(true)
-            }}
-          >
-            <Icon name="close" />
-          </button>
-        </span>
-      )}
-      <span className="row-arrow">
-        <Icon name="arrow" />
-      </span>
     </Link>
   )
 }
 
-/** Why these games: the top genres, and the full profile (what they enjoy and what the picks avoid) when opened. */
-export function Taste({ profile }: { profile: TasteProfile | null }) {
+/** What the editable profile needs from the screen: saving the draft, and asking for new picks with
+ * it. Resolves once saved. */
+export interface TasteEditing {
+  editable: boolean
+  onSave: (next: TastePrefs, regenerate: boolean) => Promise<void>
+}
+
+/** Why these games: the top genres, and the full profile (genres, what they enjoy, what the picks
+ * avoid and the player's rules) when opened, editable by the player. */
+export function Taste({
+  profile,
+  baseProfile,
+  prefs = emptyPrefs(),
+  editing,
+}: {
+  profile: TasteProfile | null
+  baseProfile?: TasteProfile | null
+  prefs?: TastePrefs
+  editing?: TasteEditing
+}) {
   const t = useMessages(messages)
   const [open, setOpen] = useState(false)
-  if (!profile) return null
+  // Changes stay a draft until the player saves them; a new saved set starts the draft over.
+  const [draft, setDraft] = useState(prefs)
+  const [saved, setSaved] = useState(prefs)
+  const [saving, setSaving] = useState(false)
+  if (!samePrefs(saved, prefs)) {
+    setSaved(prefs)
+    setDraft(prefs)
+  }
+  if (!profile && !editing?.editable) return null
+  const empty = { summary: '', genres: [], traits: [], avoid: [] }
+  // Without the model's own profile (an older answer), the saved one is the base.
+  const base = (baseProfile !== undefined ? baseProfile : profile) ?? empty
+  const shown = { ...base, ...effectiveProfile(base, draft) }
+  const dirty = !samePrefs(draft, prefs)
+  const save = async (regenerate: boolean) => {
+    if (!editing) return
+    setSaving(true)
+    try {
+      await editing.onSave(draft, regenerate)
+    } finally {
+      setSaving(false)
+    }
+  }
   const tag = (text: string, cls = '', key = text) => (
     <span key={key} className={`taste-tag ${cls}`}>
       {plainText(text)}
@@ -320,14 +378,27 @@ export function Taste({ profile }: { profile: TasteProfile | null }) {
             {t(open ? 'hideProfile' : 'seeProfile')} <Icon name="chevron-down" />
           </span>
         </span>
-        <span className="taste-genres">
-          {profile.genres.slice(0, 3).map((g) => tag(g, 'genre'))}
-        </span>
+        <span className="taste-genres">{shown.genres.slice(0, 3).map((g) => tag(g, 'genre'))}</span>
       </summary>
       <div className="taste-body">
-        <p>{plainText(profile.summary)}</p>
-        {group(t('likes'), profile.traits, 'trait')}
-        {group(t('avoids'), profile.avoid, 'avoid')}
+        {shown.summary && <p>{plainText(shown.summary)}</p>}
+        {editing ? (
+          <TasteEditor
+            profile={shown}
+            prefs={draft}
+            editable={editing.editable}
+            dirty={dirty}
+            saving={saving}
+            onChange={setDraft}
+            onSave={save}
+            onDiscard={() => setDraft(prefs)}
+          />
+        ) : (
+          <>
+            {group(t('likes'), shown.traits, 'trait')}
+            {group(t('avoids'), shown.avoid, 'avoid')}
+          </>
+        )}
       </div>
     </details>
   )
@@ -349,14 +420,28 @@ export function RecsSkeleton({ n = 4 }: { n?: number }) {
 }
 
 /** `#recs` and `#taste` for a load state. Saving goes through the interests; dismissing is the caller's. */
-export function Recommendations({ state, onDismiss }: { state: RecsState; onDismiss: OnDismiss }) {
+export function Recommendations({
+  state,
+  onDismiss,
+  editing,
+}: {
+  state: RecsState
+  onDismiss: OnDismiss
+  editing?: TasteEditing
+}) {
   const t = useMessages(messages)
   const items = state.status === 'ok' ? (state.recs.items ?? []) : []
   return (
     <>
       <div id="recs">
         {state.status === 'loading' ? (
-          <RecsSkeleton />
+          <>
+            <div className="recs-thinking" role="status">
+              <img src="/nexo-avatar.svg" alt="" />
+              <span>{t('thinking')}</span>
+            </div>
+            <RecsSkeleton n={3} />
+          </>
         ) : state.status === 'error' ? (
           <ErrorState icon="warning" title={t('errorTitle')}>
             {t('error')}
@@ -373,7 +458,16 @@ export function Recommendations({ state, onDismiss }: { state: RecsState; onDism
           </EmptyState>
         )}
       </div>
-      <div id="taste">{state.status === 'ok' && <Taste profile={state.recs.profile} />}</div>
+      <div id="taste">
+        {state.status === 'ok' && state.recs.reason !== 'no-library' && (
+          <Taste
+            profile={state.recs.profile}
+            baseProfile={state.recs.baseProfile}
+            prefs={state.recs.prefs}
+            editing={editing}
+          />
+        )}
+      </div>
     </>
   )
 }
