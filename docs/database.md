@@ -2,7 +2,7 @@
 
 SurrealDB, one table per file in `db/migrations`. Everything stored is snake_case, the keys inside stored objects too.
 
-Every table has `created_at`, set once by the database. Tables whose rows change after they are created also have `updated_at`, set on every write; `tip`, `message`, `guide_chunk`, `auth_session`, `recommendation` and `llm_call` are written once and keep `created_at` only. Other dates (`earned_at`, `last_updated_at`, `read_at`, `last_seen_at`) mean something of their own. Every date field ends in `_at`, the ones stored as a plain day (`YYYY-MM-DD`) too: `guide_chunk.page_updated_at` and `server_status.shutdown_at`. Links between tables are record links (`record<user>`, `record<game>`), not join tables.
+Every table has `created_at`, set once by the database. Tables whose rows change after they are created also have `updated_at`, set on every write; `tip`, `message`, `guide_chunk`, `auth_session`, `recommendation`, `recommendation_seen` and `llm_call` are written once and keep `created_at` only. Other dates (`earned_at`, `last_updated_at`, `read_at`, `last_seen_at`, `recommended_at`, `next_pick_at`) mean something of their own. Every date field ends in `_at`, the ones stored as a plain day (`YYYY-MM-DD`) too: `guide_chunk.page_updated_at` and `server_status.shutdown_at`. Links between tables are record links (`record<user>`, `record<game>`), not join tables.
 
 ## Why SurrealDB
 
@@ -42,6 +42,7 @@ erDiagram
         telegram_link_code option(string)
         goal_targets object
         taste_profile option(object)
+        taste_prefs option(object)
         session_plan option(object)
         include_dlc_progress bool
         ai_notices bool
@@ -100,7 +101,7 @@ erDiagram
 
 ### Interests and recommendations
 
-What the player wants to platinum next, what Nexo recommended and what was dismissed.
+What the player wants to platinum next, what Nexo recommended, what it already showed and what was dismissed.
 
 ```mermaid
 erDiagram
@@ -108,6 +109,8 @@ erDiagram
     game ||--o{ interest : "wanted"
     user ||--o{ recommendation : "was recommended"
     game ||--o{ recommendation : "recommended"
+    user ||--o{ recommendation_seen : "was shown"
+    game ||--o{ recommendation_seen : "shown"
     user ||--o{ dismissal : "dismissed"
     game ||--o{ dismissal : "dismissed"
     interest {
@@ -116,6 +119,8 @@ erDiagram
         game record(game) FK
         year int
         position int
+        recommended_at option(datetime)
+        next_pick_at option(datetime)
         created_at datetime
         updated_at datetime
     }
@@ -131,6 +136,12 @@ erDiagram
         has_difficulty_trophy option(bool)
         why string
         similar_to array(string)
+        created_at datetime
+    }
+    recommendation_seen {
+        id record(recommendation_seen) PK
+        user record(user) FK
+        game record(game) FK
         created_at datetime
     }
     dismissal {
@@ -338,12 +349,13 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `user` | account | `psn_online_id_lower`, `psn_account_id` | The PSN account id is the identity; settings, goals, the current session and plan live here as objects |
+| `user` | account | `psn_online_id_lower`, `psn_account_id` | The PSN account id is the identity; settings, goals, the current session and plan live here as objects. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours) |
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN |
-| `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year` |
-| `recommendation` | game recommended | `user, game` | The latest batch, with why and what it is similar to |
+| `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `next_pick_at`: when "Nexo decide" picked it as the next platinum, on one interest of the player at a time |
+| `recommendation` | game recommended | `user, game` | The latest batch, with why and what it is similar to; replaced by the next batch |
+| `recommendation_seen` | game shown in a batch | | Kept a year, so new batches bring games not shown yet; shown games come back, the oldest first, only when those run out |
 | `dismissal` | game the player dismissed | `user, game` | Never recommended again |
 | `tip` | notice or tip Nexo wrote | | `kind`: `start`, `unlock`, `session`, `chat` (help on one trophy), `server` |
 | `message` | chat message | | `role`: user or assistant |
