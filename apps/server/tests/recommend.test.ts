@@ -41,6 +41,8 @@ const row = (over: Partial<RecommendationRow> = {}): RecommendationRow => ({
 })
 
 beforeEach(() => {
+  // Nothing shown before, unless a test says otherwise.
+  spyOn(recs, 'seenGames').mockResolvedValue([])
   spyOn(plugins, 'aroundModel')
 })
 
