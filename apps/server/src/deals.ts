@@ -1,6 +1,7 @@
 // Deals on the games in the players' interests: once a day the PlayStation Store price of each one
 // is read, kept, and when a game goes on sale (or its sale gets deeper) everyone who saved it hears
 // it, under the bell and on Telegram: one notice a day per player, listing every game that changed.
+import { isDemo } from './demo.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
 import { type StorePrice, storePrice, tierCovers } from './psstore.ts'
 import { logTip } from './repository/activity.ts'
@@ -74,7 +75,8 @@ export async function checkDeals(pause = PAUSE_MS): Promise<number> {
 /** One player's news of the day: a single game reads as a sentence; several, as one list. */
 async function tell(userId: string, items: News[]) {
   const user = await getUser(userId)
-  if (!user) return
+  // The demo is read-only and shared: nothing new reaches its bell.
+  if (!user || isDemo(user)) return
   const t = translator(messages, user)
   const locale = user.locale ?? Language.PtBR
   const until = (p: StorePrice) =>

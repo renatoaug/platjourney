@@ -105,3 +105,16 @@ test('several deals for one player arrive as one notice listing them', async () 
   expect(text).toContain('• **Days Gone**: 70% off')
   expect(text).toContain('• **Inside**: 50% off')
 })
+
+test('the demo player never gets a deal notice', async () => {
+  spyOn(prices, 'interestsWithStore').mockResolvedValue([
+    { game: 'game:1', name: 'Days Gone', store_url: 'u1', users: ['user:demo'] },
+  ])
+  spyOn(prices, 'pricesFor').mockResolvedValue(new Map())
+  spyOn(prices, 'savePrice').mockResolvedValue()
+  spyOn(psstore, 'storePrice').mockResolvedValue(p(7485, 24950, 70))
+  spyOn(users, 'getUser').mockResolvedValue(makeUser({ id: 'user:demo', demo: true }))
+  const tip = spyOn(activity, 'logTip').mockResolvedValue()
+  await checkDeals(0)
+  expect(tip).not.toHaveBeenCalled()
+})
