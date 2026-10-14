@@ -335,9 +335,13 @@ def mark_prompt(mark: Mark) -> str:
 
 
 class Focus(Wire):
-    """The session's focus, picked by the server the same way for every notice."""
+    """The session's focus, picked by the server the same way for every notice. The roadmap's
+    phases are an order to play in, not a place the player is: none comes as where the player is,
+    only whether the focus was left behind and a phase these unlocks just closed."""
 
-    phase: str | None = None
+    # The player already has trophies from a later phase: the focus is something left behind.
+    behind: bool = False
+    completed: str | None = None
     trophy: str | None = None
     detail: str | None = None
     trick: str | None = None
@@ -347,19 +351,24 @@ class Focus(Wire):
 
 
 def focus_prompt(focus: Focus) -> str:
-    """What the trophy notice says about where the player is and what comes next: the server's
-    phase and focus, so it does not guess the phase or pick a target of its own."""
+    """What the trophy notice says about what comes next: the server's focus and the roadmap's
+    counts, so it does not guess a phase or pick a target of its own."""
     parts: list[str] = []
     if focus.missable:
         m = focus.missable
         parts.append(f'Avise primeiro, em uma linha: {m.trophy} é perdível ({m.when}).')
-    if focus.phase:
-        parts.append(f'O jogador está em "{focus.phase}" no roteiro: diga isso, sem hesitar.')
+    if focus.completed:
+        parts.append(f'Com esse troféu, ele fechou a {focus.completed} do roteiro: comemore isso.')
+    parts.append(
+        'Não fale de fases do roteiro (nem diga em que fase o jogador está), salvo a que acabou'
+        ' de fechar.'
+    )
     if focus.trophy and focus.changed:
         trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
+        where = ' É uma pendência que ficou para trás: chame assim.' if focus.behind else ''
         parts.append(
             f'O foco anterior acabou de sair: anuncie o novo foco, {focus.trophy} ({focus.detail}),'
-            f' e como pegar.{trick}'
+            f' e como pegar.{where}{trick}'
         )
     elif focus.trophy:
         parts.append(

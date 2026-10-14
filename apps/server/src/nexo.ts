@@ -1,7 +1,7 @@
 import { AiError, ai } from './ai.ts'
 import { aiContext } from './ai-context.ts'
 import { tagged } from './costs.ts'
-import { focusAfter } from './focus.ts'
+import { focusAfter, tidy } from './focus.ts'
 import type { Guide } from './guide.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
 import { markCheer, progressMark } from './marks.ts'
@@ -112,11 +112,14 @@ export async function unlockReaction(
     context: aiContext(ctx, user),
     unlocked,
     ...(mark ? { mark } : {}),
-    // Without a guide there is no phase or focus to keep: Nexo then reads the context as before.
-    ...(focus.phase || focus.trophy || focus.missable
+    // Without a guide there is no focus to keep: Nexo then reads the context as before. No phase
+    // goes as where the player is (focus.ts): only whether the focus was left behind, and a phase
+    // these unlocks just closed.
+    ...(focus.trophy || focus.missable || focus.completed
       ? {
           focus: {
-            phase: focus.phase,
+            behind: focus.behind ?? false,
+            completed: focus.completed,
             trophy: focus.trophy?.name,
             detail: focus.trophy?.detail,
             trick: focus.trick,
@@ -134,7 +137,7 @@ export async function unlockReaction(
   )
   // At a mark, our own line opens the message under the trophy, and Nexo's words follow it.
   const cheer = mark ? `\n${markCheer(user, mark.kind)}` : ''
-  const titled = `${unlocked.map((t) => `🏆 ${t.name}`).join('\n')}${cheer}\n\n${body}`
+  const titled = `${unlocked.map((t) => `🏆 ${tidy(t.name)}`).join('\n')}${cheer}\n\n${body}`
   await logTip(user.id, 'unlock', titled, ctx.game.id)
   return titled
 }
