@@ -120,8 +120,8 @@
     gap: 8px;
   }
 
-  /* Above the platinums: the yearly rhythm, the most played games and any plugin card, side by side
-     and the same height. */
+  /* Above the platinums: the yearly rhythm, the most played games and the rarest platinum, side by
+     side and the same height. */
   .profile-band {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -142,10 +142,6 @@
     height: 168px;
     margin-top: auto;
     padding-top: 12px;
-  }
-
-  .profile-band-side {
-    grid-template-rows: auto 1fr;
   }
 
   .profile-band-side h2 {

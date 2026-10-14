@@ -146,7 +146,7 @@ export function HeroProgress({ game: c }: { game: HeroGame }) {
   )
 }
 
-function Meta({ c }: { c: CurrentGame }) {
+function HeroMeta({ c }: { c: CurrentGame }) {
   const t = useMessages(messages)
   const g = c.guide
   const played = c.hoursPlayed
@@ -256,7 +256,7 @@ export function Hero({
           <p className="hero-caption">
             {c.progress >= 100 ? t('captionDone') : t('captionOngoing')}
           </p>
-          <Meta c={c} />
+          <HeroMeta c={c} />
         </div>
         <div className="hero-bottom">
           <HeroProgress game={c} />

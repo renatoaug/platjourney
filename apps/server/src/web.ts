@@ -43,7 +43,7 @@ import { reply, trophyHelp } from './nexo.ts'
 import { nextPick } from './next-pick.ts'
 import { currentPlan, discardPlan, planSession } from './planner.ts'
 import { hours, playtimes } from './playtime.ts'
-import { pluginRoute, Refused } from './plugins.ts'
+import { interceptsFor, pluginRoute, Refused } from './plugins.ts'
 import { profilePage } from './profile.ts'
 import { catalogTrophies, PrivateProfile, profileSummary, secureUrl, titleTrophies } from './psn.ts'
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
@@ -908,6 +908,19 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', 'http://localhost')
   const path = url.pathname
   const method = req.method ?? 'GET'
+
+  // Plugins step in first: one that answers ends the request (another sign-in, a file of its own);
+  // the others let it through to the app.
+  const intercepts = interceptsFor(path, method)
+  if (intercepts.length) {
+    if (path.startsWith('/api/') && !READ_METHODS.has(method) && !sameOrigin(req))
+      return json(res, 403, { error: 'cross_origin' })
+    const me = await authenticate(req)
+    for (const handler of intercepts) {
+      await handler({ req, res, url, method, me })
+      if (res.headersSent || res.writableEnded) return
+    }
+  }
 
   if (path.startsWith('/api/')) {
     // A browser always says where a request comes from; a change asked by another site's page

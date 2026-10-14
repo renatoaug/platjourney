@@ -6,7 +6,7 @@ import { Loaded } from '../../src/components/chat/chat.stories'
 import { current } from '../../src/fixtures'
 import type { CurrentGame } from '../../src/lib/types'
 import { Nexo } from '../../src/pages/nexo'
-import { MODEL_WORK_DONE } from '../../src/ui/plugin-slot'
+import { MODEL_WORK_DONE } from '../../src/plugins'
 import { mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())

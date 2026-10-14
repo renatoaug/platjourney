@@ -80,7 +80,7 @@ The AI service also runs on any OpenAI-compatible local server (LM Studio, mlx-l
 
 | Folder | What goes there |
 |---|---|
-| `apps/web/src/ui/` | Generic pieces (buttons, states, skeletons, the plugin slot) |
+| `apps/web/src/ui/` | Generic pieces (buttons, states, skeletons) |
 | `apps/web/src/components/` | Product components (trophy list, guide, chat, plan) |
 | `apps/web/src/pages/` | Screens |
 | `apps/web/src/styles/` | Design tokens and the stylesheet |

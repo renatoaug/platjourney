@@ -1,7 +1,7 @@
 import { afterEach, expect, mock, test } from 'bun:test'
 import { act, render, screen } from '@testing-library/react'
 import { ApiError, api, del } from '../../src/lib/api'
-import { pluginModule } from '../../src/ui/plugin-slot'
+import { plugins } from '../../src/plugins'
 import { ToastHost } from '../../src/ui/toast'
 import { mockApi, reply } from '../support/web'
 
@@ -96,8 +96,10 @@ test('a 402 without a message says the action is not available', async () => {
 
 test("a plugin's refusal shows its message with the action the plugin offers", async () => {
   render(<ToastHost />)
-  pluginModule.refusalAction = ({ code }) =>
-    code === 'hello_blocked' ? { href: '#/hello', label: 'Saiba mais' } : undefined
+  plugins.push({
+    refusalAction: ({ code }) =>
+      code === 'hello_blocked' ? { href: '#/hello', label: 'Saiba mais' } : undefined,
+  })
   mockApi({
     '/api/chat': reply(402, {
       error: 'hello_blocked',
@@ -113,6 +115,6 @@ test("a plugin's refusal shows its message with the action the plugin offers", a
     )
     expect(screen.getByRole('link', { name: /Saiba mais/ }).getAttribute('href')).toBe('#/hello')
   } finally {
-    delete pluginModule.refusalAction
+    plugins.pop()
   }
 })

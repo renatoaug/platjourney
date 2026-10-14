@@ -1,14 +1,16 @@
 /** Plugins: optional modules an instance loads at start (`PLUGINS=./a.ts,./b.ts`). A plugin adds
- * routes under /api/ext/, runs around model work and listens to account events, through a small
+ * routes under /api/ext/, steps in before any request the app answers (its own routes, sign-in,
+ * pages), signs players in, runs around model work and listens to account events, through a small
  * versioned context; without plugins every hook is a no-op. */
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { openSession, sessionCookie } from './auth.ts'
 import { q } from './db.ts'
 import { json, readBody } from './http.ts'
 import type { User } from './repository/user.ts'
 
-export const PLUGIN_API = 1
+export const PLUGIN_API = 2
 
 /** Model work about to run or that failed: the player and the action (chat, tip, plan…). */
 export interface ModelWork {
@@ -56,6 +58,13 @@ export interface PluginContext {
   /** Answers `/api/ext/<path>` for one method (GET unless `method` says otherwise); `public`
    * routes skip sign-in. A route that changes anything must not be GET: a link opens a GET. */
   route(path: string, handler: Handler, options?: { public?: boolean; method?: RouteMethod }): void
+  /** Runs before the app answers any request to `path` (exact, or a prefix ending in `*`, e.g.
+   * '/api/auth/*' or '/ads.txt'), with the player when signed in. A handler that answers ends the
+   * request there (replacing the app's answer); one that does not lets it through. */
+  intercept(path: string, handler: Handler, options?: { method?: RouteMethod }): void
+  /** Signs `user` in on this response, as the app's own sign-in does: for another way of signing
+   * in, such as single sign-on. */
+  signIn(res: ServerResponse, user: User): Promise<void>
   /** Runs before model work; throw Refused to stop it. */
   beforeModel(hook: Hook): void
   /** Runs when model work failed after beforeModel let it through. */
@@ -69,6 +78,7 @@ export interface Plugin {
 }
 
 const routes = new Map<string, { handler: Handler; public: boolean; method: RouteMethod }>()
+const intercepts: { path: string; method?: RouteMethod; handler: Handler }[] = []
 const before: Hook[] = []
 const failed: Hook[] = []
 type Listener = (payload: never) => Promise<void>
@@ -90,6 +100,13 @@ const context = (name: string): PluginContext => ({
       public: options?.public ?? false,
       method: options?.method ?? 'GET',
     })
+  },
+  intercept(path, handler, options) {
+    intercepts.push({ path, method: options?.method, handler })
+  },
+  async signIn(res, user) {
+    const { token } = await openSession(user)
+    res.setHeader('set-cookie', sessionCookie(token))
   },
   beforeModel: (hook) => before.push(hook),
   modelFailed: (hook) => failed.push(hook),
@@ -141,9 +158,20 @@ export function pluginRoute(pathname: string) {
     : undefined
 }
 
+/** The plugins' handlers that step in before the app answers this request, in the order they came. */
+export function interceptsFor(pathname: string, method: string): Handler[] {
+  return intercepts
+    .filter((i) => !i.method || i.method === method)
+    .filter((i) =>
+      i.path.endsWith('*') ? pathname.startsWith(i.path.slice(0, -1)) : pathname === i.path,
+    )
+    .map((i) => i.handler)
+}
+
 /** For tests: forgets every plugin. */
 export function resetPlugins(): void {
   routes.clear()
+  intercepts.length = 0
   before.length = 0
   failed.length = 0
   listeners.clear()

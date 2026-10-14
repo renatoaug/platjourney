@@ -68,7 +68,7 @@ test("a plugin gets the app's helpers through its context, so it imports nothing
       seen = ctx
     },
   })
-  expect(seen?.api).toBe(1)
+  expect(seen?.api).toBe(2)
   expect(seen?.Refused).toBe(Refused)
   expect(typeof seen?.db.q).toBe('function')
   expect(typeof seen?.json).toBe('function')

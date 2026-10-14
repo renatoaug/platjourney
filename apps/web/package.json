@@ -9,7 +9,8 @@
     "build-storybook": "storybook build",
     "ui:check": "bun --env-file=../../.env scripts/ui-check.ts",
     "check-tokens": "bun scripts/check-tokens.ts",
-    "stories:check": "bun scripts/stories-check.ts"
+    "stories:check": "bun scripts/stories-check.ts",
+    "plugin-targets": "bun scripts/plugin-targets.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

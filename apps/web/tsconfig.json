@@ -4,6 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
+    "jsxImportSource": "@platjourney/web/plugins",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "strict": true,
     "skipLibCheck": true,
@@ -14,5 +15,5 @@
       "@platjourney/web/*": ["./src/*"]
     }
   },
-  "include": ["src", "tests", ".storybook", "vite.config.ts"]
+  "include": ["src", "tests", ".storybook", "vite.config.ts", "plugin-targets.ts"]
 }

@@ -14,7 +14,7 @@ import { connectAccount, useDemo } from '../components/demo'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import type { LibraryGame } from '../lib/types'
-import { modelWorkDone } from '../ui/plugin-slot'
+import { modelWorkDone } from '../plugins'
 import { toast } from '../ui/toast'
 
 const messages = defineMessages({

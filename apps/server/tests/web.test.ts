@@ -45,9 +45,12 @@ class FakeResponse {
   headers: Record<string, string> = {}
   body = ''
   headersSent = false
+  setHeader(name: string, value: string) {
+    this.headers[name] = value
+  }
   writeHead(status: number, headers: Record<string, string> = {}) {
     this.status = status
-    this.headers = headers
+    this.headers = { ...this.headers, ...headers }
     this.headersSent = true
     return this
   }
@@ -1088,6 +1091,51 @@ test('plugin routes: public ones skip sign-in, the others get the player, and a 
     const refused = await send('GET', '/api/ext/refuse')
     expect(refused.status).toBe(402)
     expect(refused.body).toEqual({ error: 'no_plan', message: 'Sem plano' })
+  } finally {
+    resetPlugins()
+  }
+})
+
+test('a plugin steps in before any request: it answers in place of the app, or lets it through', async () => {
+  const seen: string[] = []
+  spyOn(auth, 'openSession').mockResolvedValue({ user: me, token: 'f'.repeat(64) })
+  await registerPlugin({
+    name: 'sso-fixture',
+    register(ctx) {
+      ctx.intercept(
+        '/api/auth/login',
+        async ({ res, me }) => {
+          await ctx.signIn(res, me ?? makeUser())
+          ctx.json(res, 200, { via: 'sso' })
+        },
+        { method: 'POST' },
+      )
+      ctx.intercept('/api/ext/*', async ({ url, me }) => {
+        seen.push(`${url.pathname} ${me?.id}`)
+      })
+      ctx.intercept('/ads.txt', async ({ res }) => {
+        res.writeHead(200, { 'content-type': 'text/plain' }).end('example.com, pub-1')
+      })
+      ctx.route('mine', async ({ res }) => {
+        res.writeHead(204).end()
+      })
+    },
+  })
+  try {
+    const login = await send('POST', '/api/auth/login', { onlineId: 'x', password: 'y' })
+    expect(login.body).toEqual({ via: 'sso' })
+    expect(login.headers['set-cookie']).toStartWith(`platjourney_session=${'f'.repeat(64)};`)
+    expect((await send('GET', '/api/ext/mine')).status).toBe(204)
+    expect(seen).toEqual([`/api/ext/mine ${me.id}`])
+    expect((await send('GET', '/ads.txt')).body).toBe('example.com, pub-1')
+    // Another site's page cannot reach a plugin's change either.
+    const forged = await send(
+      'POST',
+      '/api/auth/login',
+      {},
+      { origin: 'https://evil.test', host: 'localhost' },
+    )
+    expect(forged.status).toBe(403)
   } finally {
     resetPlugins()
   }

@@ -1,6 +1,6 @@
 /** Fetch wrapper for /api. Sends JSON, surfaces known failures as events and toasts. */
 import { defineMessages, getLocale, Language, translator } from '../i18n/i18n'
-import { pluginModule } from '../ui/plugin-slot'
+import { refusalAction } from '../plugins'
 import { toast } from '../ui/toast'
 
 const messages = defineMessages({
@@ -65,7 +65,7 @@ async function answer<T>(r: Response): Promise<T> {
   // Model work refused by a plugin's rule: its message, and the action the plugin offers next to it.
   if (r.status === 402) {
     const refusal = { code: body.error ?? '', message: body.message ?? t('refused') }
-    toast(refusal.message, 'error', pluginModule.refusalAction?.(refusal))
+    toast(refusal.message, 'error', refusalAction(refusal))
     error.handled = true
   }
   throw error

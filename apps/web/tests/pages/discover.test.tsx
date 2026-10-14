@@ -5,7 +5,7 @@ import { rankingData } from '../../src/components/game-cards.stories'
 import { recsData } from '../../src/components/recommendations.stories'
 import { serversData } from '../../src/components/servers.stories'
 import { Discover } from '../../src/pages/discover'
-import { MODEL_WORK_DONE } from '../../src/ui/plugin-slot'
+import { MODEL_WORK_DONE } from '../../src/plugins'
 import { mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
