@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.17.1](https://github.com/renatoaug/platjourney/compare/v0.17.0...v0.17.1) (2026-10-14)
+
+### Bug Fixes
+
+* **notices:** phases describe trophies, never where the player is ([#44](https://github.com/renatoaug/platjourney/issues/44)) ([e3d7e39](https://github.com/renatoaug/platjourney/commit/e3d7e3921a35716fb74508a7101a65398aef793f))
+
 ## [0.17.0](https://github.com/renatoaug/platjourney/compare/v0.16.0...v0.17.0) (2026-10-14)
 
 ### Features
