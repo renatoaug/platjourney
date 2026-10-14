@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.1](https://github.com/renatoaug/platjourney/compare/v0.15.0...v0.15.1) (2026-10-14)
+
+### Bug Fixes
+
+* **deals:** one notice per day, and the demo and tour show the new features ([#41](https://github.com/renatoaug/platjourney/issues/41)) ([66735a1](https://github.com/renatoaug/platjourney/commit/66735a197c830118b02880234fdfd1fbb21cec40))
+
 ## [0.15.0](https://github.com/renatoaug/platjourney/compare/v0.14.0...v0.15.0) (2026-10-14)
 
 ### Features
