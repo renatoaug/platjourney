@@ -402,9 +402,9 @@ def test_nexo_answers_carry_no_addresses() -> None:
 
 def test_an_unlock_notice_follows_the_servers_focus_instead_of_picking_one() -> None:
     unlocked = [Trophy.model_validate(trophy())]
-    kept = nexo.unlock_prompt(unlocked, None, nexo.Focus(phase='Fase 1', trophy='Variedade'))
-    assert 'está em "Fase 1" no roteiro: diga isso, sem hesitar' in kept
-    assert 'O foco da sessão continua Variedade' in kept
+    kept = nexo.unlock_prompt(unlocked, None, nexo.Focus(trophy='Variedade'))
+    assert 'nem diga em que fase o jogador está' in kept
+    assert 'A sugestão de próximo troféu continua Variedade' in kept
     assert 'aponte UM próximo troféu' not in kept
     assert 'Não sugira outro troféu como próximo alvo.' in kept
     moved = nexo.unlock_prompt(
@@ -420,8 +420,33 @@ def test_an_unlock_notice_follows_the_servers_focus_instead_of_picking_one() -> 
             }
         ),
     )
-    assert moved.index('Faca é perdível (antes do capítulo 3)') < moved.index('novo foco, Burnout')
+    assert moved.index('Faca é perdível (antes do capítulo 3)') < moved.index(
+        'sugira o próximo, Burnout'
+    )
     assert 'Macete do guia: Use nitro.' in moved
+
+
+def test_an_unlock_notice_never_places_the_player_in_a_phase() -> None:
+    """Story done, a phase 3 trophy earned, phase 1's side activities still open: the prompt
+    calls the focus something left behind, celebrates a phase just closed and never places the
+    player."""
+    unlocked = [Trophy.model_validate(trophy())]
+    prompt = nexo.unlock_prompt(
+        unlocked,
+        None,
+        nexo.Focus.model_validate(
+            {
+                'behind': True,
+                'completed': 'Fase 2',
+                'trophy': 'Caçador de Saqueadores',
+                'detail': 'Conclua a história',
+                'changed': True,
+            }
+        ),
+    )
+    assert 'ele fechou a Fase 2 do roteiro' in prompt
+    assert 'pelo momento do jogador, vale buscá-lo agora' in prompt
+    assert 'nem diga em que fase o jogador está' in prompt
 
 
 async def test_an_automatic_notice_cites_no_source(

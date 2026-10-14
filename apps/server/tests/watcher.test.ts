@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:
 import { config } from '../src/config.ts'
 import * as deepguide from '../src/deepguide.ts'
 import { DEMO_ACCOUNT_ID } from '../src/demo.ts'
-import { focusAfter } from '../src/focus.ts'
+import { focusAfter, todaysFocus } from '../src/focus.ts'
 import type { Guide } from '../src/guide.ts'
 import * as guide from '../src/guide.ts'
 import * as lib from '../src/library.ts'
@@ -36,6 +36,7 @@ import {
   setChatFromCatalog,
   setCurrent,
   startWatcher,
+  unlockNotice,
   watchNow,
 } from '../src/watcher.ts'
 import { counts, makeGame, makeTitle, makeTrophy, makeUser } from './fixtures.ts'
@@ -151,7 +152,7 @@ describe('session start', () => {
     spyOn(Math, 'random').mockReturnValue(0)
     await checkUser(user)
     const text =
-      '🎮 De volta a Days Gone! Falta 1 troféu do jogo base.\nNo roteiro, você está em **Fase 2**.\n\n**Foco de hoje**: Terceiro\nFaça algo'
+      '🎮 Hora de jogar! Falta 1 troféu para a platina de **Days Gone**.\n\n**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Terceiro**.\nFaça algo\n\nBoa jogatina! 🍀'
     expect(logTip).toHaveBeenCalledWith(user.id, 'session', text, game.id)
     expect(send.mock.calls).toEqual([['42', text]])
     expect(updateUser.mock.calls[0][1].session_notice_at).toBeInstanceOf(Date)
@@ -207,13 +208,14 @@ describe('session start', () => {
         makeTrophy({ id: 7, name: 'Platina', type: 'platinum' }),
       ],
     } as unknown as Parameters<typeof sessionNotice>[2]
-    expect(sessionNotice(user, 'x', ctx, () => 0.99)).toBe(
+    expect(sessionNotice(user, 'x', ctx)).toBe(
       [
-        '🎮 Mais uma sessão de Days Gone. Faltam 3 troféus do jogo base.\nNo roteiro, você está em **Fase 2**.',
-        '**Foco de hoje**: Terceiro\nFaça algo',
+        '🎮 Hora de jogar! Faltam 3 troféus para a platina de **Days Gone**.',
+        '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Terceiro**.\nFaça algo',
         '**Dica**: Use o arco de longe.',
         '⚠️ **Terceiro** é perdível: antes do capítulo 5.',
         '**Quase lá**: Colecionador, 34 de 50.',
+        'Boa jogatina! 🍀',
       ].join('\n\n'),
     )
   })
@@ -234,8 +236,8 @@ describe('session start', () => {
           ...guide,
         },
       } as never)
-        .split('**Foco de hoje**: ')[1]
-        .split('\n')[0]
+        .split('deve ser **')[1]
+        .split('**')[0]
     expect(focusOf({})).toBe('Terceiro')
     expect(focusOf({ tricks: [{ trophy: 'Quinto', trick: 't', source: '' }] })).toBe('Quinto')
     expect(
@@ -276,23 +278,95 @@ describe('session start', () => {
       trophy: { name: 'Quarto' },
       trick: 'Use o arco.',
     })
-    expect(focusNotice(user, other, [other.trophies[0]])).toBe('**Foco continua**: Quarto')
+    expect(focusNotice(user, other, [other.trophies[0]])).toBe(
+      'A sugestão de próximo troféu continua sendo **Quarto**.',
+    )
     // Earning Quarto, the focus, names the next one by the same rule.
     const same = ctxWith([4])
     expect(focusAfter(same, [same.trophies[1]])).toMatchObject({
       changed: true,
       trophy: { name: 'Quinto' },
     })
-    expect(focusNotice(user, same, [same.trophies[1]])).toBe('**Novo foco**: Quinto\nFaça o 5')
-    // Nothing left in the base game: no focus line.
+    expect(focusNotice(user, same, [same.trophies[1]])).toBe(
+      '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Quinto**.\nFaça o 5',
+    )
+    // Nothing left in the base game: no focus line, only the phase that just closed.
     const all = ctxWith([3, 4, 5])
-    expect(focusNotice(user, all, [all.trophies[2]])).toBeUndefined()
+    expect(focusNotice(user, all, [all.trophies[2]])).toBe('🎉 Fechou a F do roteiro!')
   })
 
-  test('without a game in context, only the opening, in English too', () => {
+  test('phases are counted, never a place: story done and back for side activities', () => {
+    // The roadmap puts the story's end and the side activities in phase 1; the player finished the
+    // story, earned a phase 3 trophy and left phase 1's activities open.
+    const guide = {
+      roadmap: [
+        {
+          phase: 'Fase 1 — Campanha',
+          goal: '',
+          trophies: ['Days Done', 'Caçador de  Emboscadas', 'Saqueadores'],
+        },
+        { phase: 'Fase 2 — Hordas', goal: '', trophies: ['Horda'] },
+        { phase: 'Fase 3 — Limpeza', goal: '', trophies: ['Variedade', 'Burnout'] },
+      ],
+    }
+    const names = [
+      'Days Done',
+      'Caçador de  Emboscadas',
+      'Saqueadores',
+      'Horda',
+      'Variedade',
+      'Burnout',
+    ]
+    const ctx = (earned: string[]) =>
+      ({
+        game,
+        title: makeTitle(),
+        guide,
+        trophies: names.map((name, i) =>
+          makeTrophy({ id: i + 1, name, detail: `Faça ${name}`, earned: earned.includes(name) }),
+        ),
+      }) as never as Parameters<typeof focusNotice>[1]
+    const now = ctx(['Days Done', 'Caçador de  Emboscadas', 'Variedade'])
+    const emboscadas = now.trophies[1]
+    const focus = focusAfter(now, [emboscadas])
+    expect(focus).toMatchObject({
+      phases: [
+        { short: 'Fase 1', left: 1 },
+        { short: 'Fase 2', left: 1 },
+        { short: 'Fase 3', left: 1 },
+      ],
+      trophy: { name: 'Saqueadores' },
+      phase: 'Fase 1',
+      behind: true,
+      changed: true,
+    })
+    expect(focusNotice(user, now, [emboscadas])).toBe(
+      '**Sugestão de próximo troféu**\nPelo momento em que você está, vale buscar **Saqueadores**, que ficou para trás.\nFaça Saqueadores',
+    )
+    const session = sessionNotice(user, 'Days Gone', now)
+    expect(session).toContain('🎮 Hora de jogar! Faltam 3 troféus para a platina de **Days Gone**.')
+    expect(session).toEndWith('Boa jogatina! 🍀')
+    expect(session).toContain('vale buscar **Saqueadores**, que ficou para trás.')
+    expect(session).not.toMatch(/Fase|está na|segue na|continua na/)
+    // The trophy's own notice shows its name with one space.
+    expect(unlockNotice(user, now, [emboscadas])).toContain('🏆 Caçador de Emboscadas (')
+    // Someone at the start is not "behind": the focus is the next step, with no phase remark.
+    const start = ctx([])
+    expect(todaysFocus(start)).toMatchObject({
+      phase: 'Fase 1',
+      behind: false,
+      trophy: { name: 'Days Done' },
+    })
+  })
+
+  test('without a game in context, only the game being played, in English too', () => {
     const en = { ...user, locale: 'en' as const }
-    expect(sessionNotice(en, 'Days Gone', undefined, () => 0)).toBe('🎮 Back to Days Gone!')
-    expect(sessionNotice(user, 'Days Gone', undefined, () => 0.5)).toBe('🎮 Partiu Days Gone!')
+    expect(sessionNotice(en, 'Days Gone')).toBe(
+      '🎮 Time to play **Days Gone**. Have a good session! 🍀',
+    )
+    expect(sessionNotice(user, 'Days Gone')).toBe(
+      '🎮 Hora de jogar **Days Gone**. Boa jogatina! 🍀',
+    )
   })
 })
 

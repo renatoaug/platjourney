@@ -2,7 +2,7 @@ import { config } from './config.ts'
 import { tagged } from './costs.ts'
 import { ensureDeepGuide } from './deepguide.ts'
 import { isDemo, trophiesFor } from './demo.ts'
-import { focusAfter, todaysFocus } from './focus.ts'
+import { focusAfter, tidy, todaysFocus } from './focus.ts'
 import { ensureGuide, type Guide } from './guide.ts'
 import {
   defineMessages,
@@ -39,33 +39,35 @@ import { sendMessage } from './telegram.ts'
 const messages = defineMessages({
   [Language.PtBR]: {
     started: 'Você começou {game}. O guia da platina está no PlatJourney.',
-    // Openings for the session-start notice, picked at random so the same game does not get
-    // the same line every day.
-    open: {
-      a: 'De volta a {game}!',
-      b: '{game} de novo? Bora!',
-      c: 'Hora de {game}.',
-      d: 'Partiu {game}!',
-      e: 'Bom te ver em {game} de novo.',
-      f: 'Mais uma sessão de {game}.',
-    },
+    // The session-start notice's first line: the game, then what is left, no greeting.
+    playing: '🎮 Hora de jogar **{game}**.',
+    goodSession: 'Boa jogatina! 🍀',
+    heading: '🎮 Hora de jogar! {left} **{game}**.',
     left: {
-      one: 'Falta 1 troféu do jogo base.',
-      other: 'Faltam {count} troféus do jogo base.',
+      one: 'Falta 1 troféu para a platina de',
+      other: 'Faltam {count} troféus para a platina de',
     },
-    phase: 'No roteiro, você está em **{phase}**.',
-    focus: '**Foco de hoje**: {trophy}',
+    // The focus is a suggestion: the roadmap's next trophy, or one the player left behind.
+    focus:
+      '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **{trophy}**.',
+    // A focus from a phase the player already went past: something left behind, not the next step.
+    focusBehind:
+      '**Sugestão de próximo troféu**\nPelo momento em que você está, vale buscar **{trophy}**, que ficou para trás.',
     tip: '**Dica**: {tip}',
     missable: '⚠️ **{trophy}** é perdível: {when}',
     almost: '**Quase lá**: {trophy}, {value} de {target}.',
-    focusStill: '**Foco continua**: {trophy}',
+    focusStill: 'A sugestão de próximo troféu continua sendo **{trophy}**.',
     mark: {
       first: 'Primeiro troféu de {game}: a jornada começou.',
       half: 'Metade do jogo base: {earned} de {total} troféus.',
       final: 'Reta final: faltam {count} para a platina: {remaining}.',
       platinum: 'Platina de {game}! Parabéns.',
     },
-    focusNew: '**Novo foco**: {trophy}\n{detail}',
+    focusNew:
+      '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **{trophy}**.\n{detail}',
+    focusNewBehind:
+      '**Sugestão de próximo troféu**\nPelo momento em que você está, vale buscar **{trophy}**, que ficou para trás.\n{detail}',
+    phaseDone: '🎉 Fechou a {phase} do roteiro!',
     unlocked: '🏆 {trophy} ({type}) em {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% de quem joga) em {game}',
     types: {
@@ -77,31 +79,32 @@ const messages = defineMessages({
   },
   [Language.En]: {
     started: 'You started {game}. The platinum guide is on PlatJourney.',
-    open: {
-      a: 'Back to {game}!',
-      b: '{game} again? Let’s go!',
-      c: 'Time for {game}.',
-      d: 'Off to {game}!',
-      e: 'Good to see you in {game} again.',
-      f: 'One more {game} session.',
-    },
+    playing: '🎮 Time to play **{game}**.',
+    goodSession: 'Have a good session! 🍀',
+    heading: '🎮 Time to play! {left} **{game}**.',
     left: {
-      one: '1 base-game trophy left.',
-      other: '{count} base-game trophies left.',
+      one: '1 trophy left for the platinum of',
+      other: '{count} trophies left for the platinum of',
     },
-    phase: 'On the roadmap, you are at **{phase}**.',
-    focus: '**Today’s focus**: {trophy}',
+    focus:
+      '**Suggested next trophy**\nFollowing the roadmap, the next one to pop should be **{trophy}**.',
+    focusBehind:
+      '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.',
     tip: '**Tip**: {tip}',
     missable: '⚠️ **{trophy}** is missable: {when}',
     almost: '**Almost there**: {trophy}, {value} of {target}.',
-    focusStill: '**Still the focus**: {trophy}',
+    focusStill: 'The suggested next trophy is still **{trophy}**.',
     mark: {
       first: 'First trophy in {game}: the journey has begun.',
       half: 'Halfway through the base game: {earned} of {total} trophies.',
       final: 'Final stretch: {count} left to the platinum: {remaining}.',
       platinum: 'Platinum in {game}! Congratulations.',
     },
-    focusNew: '**New focus**: {trophy}\n{detail}',
+    focusNew:
+      '**Suggested next trophy**\nFollowing the roadmap, the next one to pop should be **{trophy}**.\n{detail}',
+    focusNewBehind:
+      '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.\n{detail}',
+    phaseDone: '🎉 You closed {phase} of the roadmap!',
     unlocked: '🏆 {trophy} ({type}) in {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% of players) in {game}',
     types: {
@@ -148,7 +151,7 @@ export const unlockNotice = (user: User, ctx: Named, unlocked: GameContext['trop
   return unlocked
     .map((trophy) => {
       const params = {
-        trophy: trophy.name,
+        trophy: tidy(trophy.name),
         type: TYPES.has(trophy.type)
           ? t(`types.${trophy.type}` as MessageKey<typeof messages>)
           : trophy.type,
@@ -179,10 +182,14 @@ function routeFor(user: User, ctx: GameContext, unlocked: string[], started: boo
 export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
   const t = translator(messages, user)
   const focus = focusAfter(ctx, unlocked)
-  if (!focus.trophy) return undefined
-  return focus.changed
-    ? t('focusNew', { trophy: focus.trophy.name, detail: focus.trophy.detail })
-    : t('focusStill', { trophy: focus.trophy.name })
+  const done = focus.completed ? t('phaseDone', { phase: focus.completed }) : undefined
+  if (!focus.trophy) return done
+  const next = !focus.changed
+    ? t('focusStill', { trophy: focus.trophy.name })
+    : focus.behind
+      ? t('focusNewBehind', { trophy: focus.trophy.name, detail: focus.trophy.detail })
+      : t('focusNew', { trophy: focus.trophy.name, detail: focus.trophy.detail })
+  return together(done, next)
 }
 
 // The first trophy, halfway, the final stretch or the platinum, for the plain notice.
@@ -410,32 +417,27 @@ const comparable = (name: string) =>
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]/gu, '')
 
-const OPENINGS = ['a', 'b', 'c', 'd', 'e', 'f'] as const
-
-// The session-start notice: a varied opening, then what to do today, from the guide and the PSN
+// The session-start notice: the game and what is left, then what to do today, from the guide and the PSN
 // list, so it costs no model and gets no count wrong. Lines with nothing to say are left out.
-export function sessionNotice(
-  user: User,
-  game: string,
-  ctx?: GameContext,
-  pick: () => number = Math.random,
-): string {
+export function sessionNotice(user: User, game: string, ctx?: GameContext): string {
   const t = translator(messages, user)
-  const key = `open.${OPENINGS[Math.floor(pick() * OPENINGS.length)]}` as MessageKey<
-    typeof messages
-  >
-  const opening = `🎮 ${t(key, { game: ctx ? gameName(ctx) : game })}`
-  if (!ctx) return opening
+  if (!ctx) return `${t('playing', { game })} ${t('goodSession')}`
+  const opening = t('playing', { game: gameName(ctx) })
   const missing = ctx.trophies.filter(
     (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
   )
-  const { phase, trophy: focus, trick, missable } = todaysFocus(ctx)
+  const { trophy: focus, trick, missable, behind } = todaysFocus(ctx)
 
-  const head = [missing.length ? `${opening} ${t('left', { count: missing.length })}` : opening]
-  if (phase) head.push(t('phase', { phase }))
-  const blocks = [head.join('\n')]
+  const blocks = [
+    missing.length
+      ? t('heading', { game: gameName(ctx), left: t('left', { count: missing.length }) })
+      : opening,
+  ]
   if (focus) {
-    blocks.push(`${t('focus', { trophy: focus.name })}\n${focus.detail}`)
+    const line = behind
+      ? t('focusBehind', { trophy: focus.name })
+      : t('focus', { trophy: focus.name })
+    blocks.push(`${line}\n${focus.detail}`)
     if (trick) blocks.push(t('tip', { tip: trick }))
   }
   if (missable) blocks.push(t('missable', { trophy: missable.trophy, when: missable.when }))
@@ -457,6 +459,7 @@ export function sessionNotice(
         target: almost.progressTarget ?? 0,
       }),
     )
+  blocks.push(t('goodSession'))
   return blocks.join('\n\n')
 }
 
