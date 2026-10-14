@@ -26,7 +26,7 @@ import { tagged } from './costs.ts'
 import { deepGuideStats, ensureDeepGuide } from './deepguide.ts'
 import { DemoReadOnly, isDemo, storedSummary, trophiesFor } from './demo.ts'
 import { ensureGuide, GUIDE_VERSION, type Guide } from './guide.ts'
-import { BadBody, json, PAGE_POLICY, readBody, SECURITY_HEADERS } from './http.ts'
+import { BadBody, json, readBody, SECURITY_HEADERS } from './http.ts'
 import {
   defineMessages,
   fromAcceptLanguage,
@@ -43,7 +43,7 @@ import { reply, trophyHelp } from './nexo.ts'
 import { nextPick } from './next-pick.ts'
 import { currentPlan, discardPlan, planSession } from './planner.ts'
 import { hours, playtimes } from './playtime.ts'
-import { interceptsFor, pluginRoute, Refused } from './plugins.ts'
+import { interceptsFor, pluginPagePolicy, pluginRoute, Refused } from './plugins.ts'
 import { profilePage } from './profile.ts'
 import { catalogTrophies, PrivateProfile, profileSummary, secureUrl, titleTrophies } from './psn.ts'
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
@@ -970,7 +970,9 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
             ? 'public, max-age=31536000, immutable'
             : 'no-cache',
           ...SECURITY_HEADERS,
-          ...(type === STATIC_TYPES['.html'] ? { 'content-security-policy': PAGE_POLICY } : {}),
+          ...(type === STATIC_TYPES['.html']
+            ? { 'content-security-policy': pluginPagePolicy() }
+            : {}),
           ...(config.auth.secureCookie
             ? { 'strict-transport-security': 'max-age=31536000; includeSubDomains' }
             : {}),
