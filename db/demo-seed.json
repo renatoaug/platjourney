@@ -68,7 +68,8 @@
         ],
         "traits": [],
         "avoid": []
-      }
+      },
+      "ps_plus": "extra"
     }
   ],
   "game": [
@@ -466,7 +467,8 @@
         "Action",
         "Horror",
         "Survival"
-      ]
+      ],
+      "store_url": "https://store.playstation.com/en-us/concept/220037"
     },
     {
       "key": "204350",
@@ -573,7 +575,8 @@
         "Action",
         "Drama",
         "Open world"
-      ]
+      ],
+      "store_url": "https://store.playstation.com/en-us/concept/209441"
     },
     {
       "key": "303811",
@@ -605,7 +608,8 @@
       "themes": [
         "Action",
         "Science fiction"
-      ]
+      ],
+      "store_url": "https://store.playstation.com/en-us/concept/10002684"
     },
     {
       "key": "529",
@@ -24627,28 +24631,32 @@
       "game": "25076",
       "year": 2026,
       "position": 1,
-      "created_at": "2026-01-24T12:00:00.000Z"
+      "created_at": "2026-01-24T12:00:00.000Z",
+      "source": "recommendations"
     },
     {
       "user": "demo",
       "game": "303811",
       "year": 2026,
       "position": 2,
-      "created_at": "2026-01-25T12:00:00.000Z"
+      "created_at": "2026-01-25T12:00:00.000Z",
+      "source": "releases"
     },
     {
       "user": "demo",
       "game": "19562",
       "year": 2026,
       "position": 3,
-      "created_at": "2026-01-26T12:00:00.000Z"
+      "created_at": "2026-01-26T12:00:00.000Z",
+      "source": "title"
     },
     {
       "user": "demo",
       "game": "7323",
       "year": 2026,
       "position": 4,
-      "created_at": "2026-01-27T12:00:00.000Z"
+      "created_at": "2026-01-27T12:00:00.000Z",
+      "source": "search"
     }
   ],
   "platinum": [
@@ -25533,6 +25541,18 @@
       "play_count": 5,
       "first_played_at": "2026-08-12T21:00:00.000Z",
       "last_played_at": "2026-08-18T21:00:00.000Z"
+    }
+  ],
+  "store_price": [
+    {
+      "game": "303811",
+      "region": "BR",
+      "base": 33990,
+      "price": 23793,
+      "discount": 30,
+      "ends_at": "2026-10-09T23:00:00.000Z",
+      "plus": false,
+      "currency": "BRL"
     }
   ]
 }

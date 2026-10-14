@@ -25,6 +25,7 @@ interface Seed {
   notification?: Row[]
   recommendation?: Row[]
   playtime?: Row[]
+  store_price?: Row[]
 }
 
 const ROOT = new URL('../../../', import.meta.url).pathname
@@ -154,11 +155,20 @@ const insert = async (table: string, rows: Row[] = [], dates: string[] = []) => 
       seen.add(key)
     }
     const data = link(row)
-    // The instance's own guide wins over the seed's copy.
+    // The instance's own guide and store prices win over the seed's copies.
     if (
       add &&
       table === 'guide' &&
       (await exists('SELECT id FROM guide WHERE game = $game', { game: data.game }))
+    )
+      continue
+    if (
+      add &&
+      table === 'store_price' &&
+      (await exists('SELECT id FROM store_price WHERE game = $game AND region = $region', {
+        game: data.game,
+        region: data.region,
+      }))
     )
       continue
     for (const d of dates) data[d] = dt(data[d])
@@ -182,4 +192,5 @@ await insert('message', seed.message, ['created_at'])
 await insert('notification', seed.notification, ['created_at', 'read_at'])
 await insert('recommendation', seed.recommendation, ['created_at'])
 await insert('playtime', seed.playtime, ['first_played_at', 'last_played_at'])
+await insert('store_price', seed.store_price, ['ends_at'])
 await closeDb()
