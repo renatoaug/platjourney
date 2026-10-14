@@ -2,6 +2,8 @@
 # Runs what CI runs before anything leaves this machine, so a push never turns the pull request red.
 # Skip once with `git push --no-verify`.
 set -e
+# CI runs these checks itself, and its release job pushes the version commit: never block it.
+[ -n "$CI" ] && exit 0
 bun run lint
 bun run typecheck
 bun run test:coverage
