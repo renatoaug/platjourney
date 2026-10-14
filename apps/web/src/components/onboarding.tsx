@@ -800,20 +800,30 @@ function Stage({ phase, me, data }: { phase: Phase; me: Me; data: AppStateData |
   }
   if (phase === 'home') {
     const ranking = data?.ranking?.slice(0, 3) ?? []
-    const rows = ranking.length
-      ? ranking.map((r) => ({ name: r.name, progress: r.progress }))
-      : [
-          { name: t('home.sample1'), progress: 82 },
-          { name: t('home.sample2'), progress: 64 },
-          { name: t('home.sample3'), progress: 41 },
-        ]
+    const rows: { name: string; progress: number; art?: string; platform?: string }[] =
+      ranking.length
+        ? ranking.map((r) => ({
+            name: r.name,
+            progress: r.progress,
+            art: r.icon,
+            platform: r.platform,
+          }))
+        : [
+            { name: t('home.sample1'), progress: 82 },
+            { name: t('home.sample2'), progress: 64 },
+            { name: t('home.sample3'), progress: 41 },
+          ]
     return (
       <div className="onb-radar-list">
-        {/* A library with nothing in progress yet gets sample games, and says so. */}
+        {/* The radar as the home shows it: each game's art with its place, then the progress. A
+            library with nothing in progress yet gets sample games, and says so. */}
         <span className="eyebrow">{t(ranking.length ? 'home.radar' : 'home.example')}</span>
         {rows.map((r, i) => (
           <div key={r.name} className="onb-radar-row" style={{ '--i': i } as CSSProperties}>
-            <span className="onb-pick-rank">0{i + 1}</span>
+            <span className="onb-radar-art">
+              {r.art ? <img src={r.art} alt="" /> : <Icon name="gamepad" />}
+              <span className="onb-radar-place">0{i + 1}</span>
+            </span>
             <div>
               <b>{r.name}</b>
               <span className="onb-bar">

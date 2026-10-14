@@ -1135,6 +1135,45 @@
     animation: onb-slide 0.4s calc(var(--i, 0) * 0.16s + 0.15s) ease both;
   }
 
+  /* A small piece of the game's art, as on the home's radar cards, with its place on top. */
+  .onb-radar-art {
+    position: relative;
+    flex: none;
+    width: 84px;
+    height: 48px;
+    overflow: hidden;
+    border-radius: var(--radius-tag);
+    background: linear-gradient(135deg, var(--color-surface-raised), var(--color-bg-subtle));
+  }
+
+  /* A sample game has no art: the gamepad stands in, centred. */
+  .onb-radar-art > .icon {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 20px;
+    height: 20px;
+    color: var(--color-fg-subtle);
+  }
+
+  .onb-radar-art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .onb-radar-place {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    padding: 1px 5px;
+    border-radius: var(--radius-tag);
+    background: color-mix(in srgb, var(--color-bg) 75%, transparent);
+    color: var(--color-fg);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+  }
+
   .onb-radar-row > div {
     display: grid;
     gap: 6px;
