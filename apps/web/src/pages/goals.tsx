@@ -4,6 +4,7 @@ import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { messages as interestMessages, useInterests } from '../app/use-interests'
 import { DemoNote } from '../components/demo'
+import { DealsSpotlight, onSale } from '../components/goals/deals-spotlight'
 import { GoalAddPanel } from '../components/goals/goal-add-panel'
 import { type Feedback, GoalSeason, GoalSeasonSkeleton } from '../components/goals/goal-season'
 import { InterestList, InterestListSkeleton } from '../components/goals/interest-list'
@@ -37,6 +38,7 @@ const messages = defineMessages({
       saveFailed: 'Não foi possível salvar. Tente novamente.',
       mine: 'Meus interesses',
       add: 'Adicionar jogo',
+      addShort: 'Adicionar',
       empty: 'Salve o primeiro jogo que você quer platinar.',
       yearAchievements: 'Conquistas do ano',
     },
@@ -51,6 +53,7 @@ const messages = defineMessages({
       saveFailed: 'Could not save. Try again.',
       mine: 'My interests',
       add: 'Add game',
+      addShort: 'Add',
       empty: 'Save the first game you want to platinum.',
       yearAchievements: "This year's platinums",
     },
@@ -195,6 +198,8 @@ export function GoalsView({
     }
   }
 
+  // A column each for deals and platinums only when both have enough to fill it.
+  const trio = onSale(p.interests).length >= 4 && p.platinumed.length >= 4
   return (
     <>
       <GoalSeason
@@ -208,7 +213,7 @@ export function GoalsView({
       />
       {/* Two empty cards side by side keep one height; with content each takes its own. */}
       <div
-        className={`grid cols-2 goals-columns${p.interests.length || p.platinumed.length ? '' : ' empty'}`}
+        className={`grid cols-2 goals-columns${p.interests.length || p.platinumed.length ? '' : ' empty'}${trio ? ' trio' : ''}`}
         style={{ marginTop: 20 }}
       >
         <div className="card">
@@ -225,8 +230,10 @@ export function GoalsView({
               aria-controls="goal-add-panel"
               disabled={busy || readOnly}
               onClick={() => openAdd(!addOpen)}
+              aria-label={t('page.add')}
             >
-              <Icon name="plus" /> {t('page.add')}
+              <Icon name="plus" /> <span className="goal-add-long">{t('page.add')}</span>
+              <span className="goal-add-short">{t('page.addShort')}</span>
             </button>
           </div>
           <GoalAddPanel
@@ -273,7 +280,11 @@ export function GoalsView({
           )}
           {readOnly && <DemoNote />}
         </div>
-        <YearPlatinums goals={p} busy={busy} />
+        {/* The right column: the saved games on sale (only when there is one), then the year's platinums; on wide screens, with enough of both, each gets a column of its own. */}
+        <div className="goals-side">
+          <DealsSpotlight interests={p.interests} />
+          <YearPlatinums goals={p} busy={busy} />
+        </div>
       </div>
     </>
   )

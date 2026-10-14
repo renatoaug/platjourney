@@ -2,7 +2,7 @@ import { afterEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { emptyGoals, sampleGoals } from '../../src/components/goals/fixtures'
-import type { Game } from '../../src/lib/types'
+import type { Game, Interest } from '../../src/lib/types'
 import { Goals, GoalsView } from '../../src/pages/goals'
 import { mockApi, never, renderApp, reply } from '../support/web'
 
@@ -133,4 +133,33 @@ test('while saving, the add button is locked', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Remover Astro Bot dos interesses' }))
   expect(feedback()).toBe('Salvando…')
   expect(screen.getByRole('button', { name: 'Adicionar jogo' }).hasAttribute('disabled')).toBe(true)
+})
+
+test('deals and platinums get a column each only when both fill one', () => {
+  const sale: Interest['deal'] = {
+    price: 1000,
+    base: 2000,
+    discount: 50,
+    plus: false,
+    currency: 'BRL',
+    endsAt: null,
+    storeUrl: null,
+  }
+  const open = sampleGoals.interests.filter((g) => !g.done)
+  const withDeals = (n: number) =>
+    sampleGoals.interests.map((g) => (open.indexOf(g) < n && !g.done ? { ...g, deal: sale } : g))
+  const plats = sampleGoals.platinumed.slice(0, 4)
+  const columns = (interests: typeof sampleGoals.interests, platinumed = plats) => {
+    const { container, unmount } = renderApp(
+      <GoalsView goals={{ ...sampleGoals, interests, platinumed }} command={ok()} />,
+    )
+    const trio = container.querySelector('.goals-columns')?.classList.contains('trio')
+    const deals = !!container.querySelector('.deals')
+    unmount()
+    return { trio, deals }
+  }
+  expect(columns(withDeals(0))).toEqual({ trio: false, deals: false })
+  expect(columns(withDeals(3))).toEqual({ trio: false, deals: true })
+  expect(columns(withDeals(4))).toEqual({ trio: true, deals: true })
+  expect(columns(withDeals(6), plats.slice(0, 2))).toEqual({ trio: false, deals: true })
 })

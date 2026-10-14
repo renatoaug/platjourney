@@ -169,6 +169,7 @@ test('register and login sign in, start watching and set the cookie', async () =
       avatarUrl: null,
       telegramLinked: true,
       includeDlcProgress: false,
+      psPlus: 'none',
       aiNotices: true,
       aiNoticesAvailable: config.automatic.notices,
       locale: 'pt-BR',
@@ -1141,4 +1142,11 @@ test('the game switch also offers catalog games outside the library and talks ab
   expect(set.mock.calls[0][1]).toMatchObject({ npCommunicationId: 'NPWR2' })
   fromCatalog.mockResolvedValueOnce(null)
   expect((await send('POST', '/api/current', { game: 'game:9' })).status).toBe(404)
+})
+
+test('the PS Plus tier is a preference, and an unknown one is refused', async () => {
+  const update = spyOn(users, 'updateUser').mockResolvedValue(undefined as never)
+  expect((await send('POST', '/api/account/preferences', { psPlus: 'extra' })).status).toBe(200)
+  expect(update).toHaveBeenLastCalledWith(expect.any(String), { ps_plus: 'extra' })
+  expect((await send('POST', '/api/account/preferences', { psPlus: 'gold' })).status).toBe(400)
 })

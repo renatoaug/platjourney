@@ -25,14 +25,18 @@ const messages = defineMessages({
     played: '{hours} jogadas',
     guidePreparing: 'Seu guia está sendo preparado',
     playedOf: '{played} jogadas de ~{hours}h',
+    playedOfShort: '{played}/~{hours}h',
     hours: '~{hours} horas',
+    hoursShort: '~{hours}h',
     playthroughs: {
       one: '{count} jornada',
       other: '{count} jornadas',
     },
     missables: 'Troféus perdíveis',
+    missablesShort: 'Perdíveis',
     noMissables: 'Sem perdíveis',
     online: 'Troféus online',
+    onlineShort: 'Online',
     emptyLabel: 'SUA JORNADA COMEÇA AQUI',
     emptyTitle: 'O próximo desafio é seu.',
     emptyCaption: 'Inicie um jogo na PSN. Seu progresso aparecerá após a próxima sincronização.',
@@ -55,14 +59,18 @@ const messages = defineMessages({
     played: '{hours} played',
     guidePreparing: 'Your guide is being prepared',
     playedOf: '{played} played of ~{hours}h',
+    playedOfShort: '{played}/~{hours}h',
     hours: '~{hours} hours',
+    hoursShort: '~{hours}h',
     playthroughs: {
       one: '{count} playthrough',
       other: '{count} playthroughs',
     },
     missables: 'Missable trophies',
+    missablesShort: 'Missables',
     noMissables: 'No missables',
     online: 'Online trophies',
+    onlineShort: 'Online',
     emptyLabel: 'YOUR JOURNEY STARTS HERE',
     emptyTitle: 'The next challenge is yours.',
     emptyCaption: 'Start a game on PSN. Your progress will show after the next sync.',
@@ -160,20 +168,50 @@ function Meta({ c }: { c: CurrentGame }) {
       {(g.hours > 0 || played != null) && (
         <span>
           <Icon name="clock" />{' '}
-          {played != null && g.hours > 0
-            ? t('playedOf', { played: fmtHours(played), hours: g.hours })
-            : played != null
-              ? t('played', { hours: fmtHours(played) })
-              : t('hours', { hours: g.hours })}
+          {played != null && g.hours > 0 ? (
+            <Short
+              long={t('playedOf', { played: fmtHours(played), hours: g.hours })}
+              short={t('playedOfShort', { played: fmtHours(played), hours: g.hours })}
+            />
+          ) : played != null ? (
+            t('played', { hours: fmtHours(played) })
+          ) : (
+            <Short
+              long={t('hours', { hours: g.hours })}
+              short={t('hoursShort', { hours: g.hours })}
+            />
+          )}
         </span>
       )}
-      {g.playthroughs > 0 && <span>{t('playthroughs', { count: g.playthroughs })}</span>}
+      {g.playthroughs > 0 && (
+        <span>
+          <Icon name="gamepad" /> {t('playthroughs', { count: g.playthroughs })}
+        </span>
+      )}
       <span className={g.hasMissables ? 'warn' : 'ok'}>
         <Icon name={g.hasMissables ? 'warning' : 'shield'} />{' '}
-        {g.hasMissables ? t('missables') : t('noMissables')}
+        {g.hasMissables ? (
+          <Short long={t('missables')} short={t('missablesShort')} />
+        ) : (
+          t('noMissables')
+        )}
       </span>
-      {g.hasOnline && <span className="warn">{t('online')}</span>}
+      {g.hasOnline && (
+        <span className="warn">
+          <Icon name="trophy" /> <Short long={t('online')} short={t('onlineShort')} />
+        </span>
+      )}
     </div>
+  )
+}
+
+/** A fact's full text, and the shorter one a phone shows so the facts fit one line. */
+export function Short({ long, short }: { long: string; short: string }) {
+  return (
+    <>
+      <span className="meta-long">{long}</span>
+      <span className="meta-short">{short}</span>
+    </>
   )
 }
 

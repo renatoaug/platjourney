@@ -10,7 +10,7 @@ import { DifficultyMeter } from '../components/difficulty-meter'
 import { GameColumns } from '../components/game-columns'
 import { GameShowcase, GameShowcaseSkeleton } from '../components/game-showcase'
 import { Guide, GuideSkeleton } from '../components/guide'
-import { HeroProgress, HeroSkeleton, UnobtainableBanner } from '../components/hero'
+import { HeroProgress, HeroSkeleton, Short, UnobtainableBanner } from '../components/hero'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
@@ -26,14 +26,18 @@ const messages = defineMessages({
   [Language.PtBR]: {
     guidePreparing: 'Guia sendo preparado…',
     hoursOfGuide: '{played} jogadas de ~{hours}h',
+    hoursOfGuideShort: '{played}/~{hours}h',
     hours: '~{hours} horas',
+    hoursShort: '~{hours}h',
     playthroughs: {
       one: '{count} jornada',
       other: '{count} jornadas',
     },
     missables: 'Troféus perdíveis',
+    missablesShort: 'Perdíveis',
     noMissables: 'Sem perdíveis',
     online: 'Troféus online',
+    onlineShort: 'Online',
     saved: 'Nos interesses',
     remove: 'Remover dos interesses',
     save: 'Salvar nos interesses',
@@ -52,14 +56,18 @@ const messages = defineMessages({
   [Language.En]: {
     guidePreparing: 'Preparing the guide…',
     hoursOfGuide: '{played} played of ~{hours}h',
+    hoursOfGuideShort: '{played}/~{hours}h',
     hours: '~{hours} hours',
+    hoursShort: '~{hours}h',
     playthroughs: {
       one: '{count} playthrough',
       other: '{count} playthroughs',
     },
     missables: 'Missable trophies',
+    missablesShort: 'Missables',
     noMissables: 'No missables',
     online: 'Online trophies',
+    onlineShort: 'Online',
     saved: 'In interests',
     remove: 'Remove from interests',
     save: 'Save to interests',
@@ -131,17 +139,37 @@ function Meta({ d }: { d: TitleDetail }) {
       {g.hours > 0 && (
         <span>
           <Icon name="clock" />{' '}
-          {d.hoursPlayed != null
-            ? t('hoursOfGuide', { played: fmtHours(d.hoursPlayed), hours: g.hours })
-            : t('hours', { hours: g.hours })}
+          {d.hoursPlayed != null ? (
+            <Short
+              long={t('hoursOfGuide', { played: fmtHours(d.hoursPlayed), hours: g.hours })}
+              short={t('hoursOfGuideShort', { played: fmtHours(d.hoursPlayed), hours: g.hours })}
+            />
+          ) : (
+            <Short
+              long={t('hours', { hours: g.hours })}
+              short={t('hoursShort', { hours: g.hours })}
+            />
+          )}
         </span>
       )}
-      {g.playthroughs > 0 && <span>{t('playthroughs', { count: g.playthroughs })}</span>}
+      {g.playthroughs > 0 && (
+        <span>
+          <Icon name="gamepad" /> {t('playthroughs', { count: g.playthroughs })}
+        </span>
+      )}
       <span className={g.hasMissables ? 'warn' : 'ok'}>
         <Icon name={g.hasMissables ? 'warning' : 'shield'} />{' '}
-        {g.hasMissables ? t('missables') : t('noMissables')}
+        {g.hasMissables ? (
+          <Short long={t('missables')} short={t('missablesShort')} />
+        ) : (
+          t('noMissables')
+        )}
       </span>
-      {g.hasOnline && <span className="warn">{t('online')}</span>}
+      {g.hasOnline && (
+        <span className="warn">
+          <Icon name="trophy" /> <Short long={t('online')} short={t('onlineShort')} />
+        </span>
+      )}
     </div>
   )
 }

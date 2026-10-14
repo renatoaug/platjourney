@@ -146,6 +146,12 @@
       width: 100%;
     }
 
+    /* On a phone the row is its own: the sort on the left, the view toggle on the right. */
+    .guides-toolbar-end {
+      flex: 1 0 100%;
+      justify-content: space-between;
+    }
+
     .guide-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
@@ -470,10 +476,12 @@
     margin-bottom: 8px;
   }
 
+  /* Sort and view stay on the right, also when they wrap below the platform tabs. */
   .guides-toolbar-end {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-left: auto;
   }
 
   .guides-view {
@@ -667,12 +675,44 @@
       width: 15px;
       height: 15px;
     }
+
+    /* A tap leaves no ring; the keyboard still gets one. */
+    .guides-aside summary:focus:not(:focus-visible) {
+      outline: none;
+      box-shadow: none;
+    }
+
+    /* Down while closed, up once open. */
+    .guides-aside summary .guides-aside-chevron {
+      margin-left: auto;
+      color: var(--color-fg-muted);
+      transition: rotate 0.15s;
+    }
+
+    .guides-aside[open] .guides-aside-chevron {
+      rotate: 180deg;
+    }
   }
 
   @media (max-width: 760px) {
-    /* Too small to read on a phone: the title and search alone. */
+    /* On a phone the covers spread behind the whole hero, dimmer, so the title and search stay
+       readable over them. */
     .guides-hero-collage {
-      display: none;
+      top: -60px;
+      right: -40%;
+      bottom: -60px;
+      width: 150%;
+      grid-template-columns: repeat(6, 1fr);
+      opacity: 0.45;
+    }
+
+    .guides-hero::after {
+      background: linear-gradient(
+        to top,
+        var(--color-bg) 15%,
+        color-mix(in srgb, var(--color-bg) 70%, transparent) 55%,
+        color-mix(in srgb, var(--color-bg) 35%, transparent)
+      );
     }
 
     .guides-hero {

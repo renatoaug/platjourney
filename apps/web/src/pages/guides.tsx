@@ -571,6 +571,7 @@ export function Guides({
           <summary>
             <Icon name="layers" />{' '}
             {activeFilters ? t('filtersOn', { count: activeFilters }) : t('filters')}
+            <Icon name="chevron-down" className="guides-aside-chevron" />
           </summary>
           <GuideFilters facets={data?.facets} values={filters} onChange={change} />
         </details>

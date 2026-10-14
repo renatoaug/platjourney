@@ -23,6 +23,7 @@ export interface Game {
   website?: string | null
   released_at?: string | null
   hypes?: number
+  store_url?: string | null
 }
 
 export const gameRef = (id: string): RecordId => gameId(id.replace(/^game:/, ''))
@@ -125,6 +126,7 @@ export async function upsertFromCatalog(
     developers: entry?.developers.length ? entry.developers : existing?.developers,
     website: entry?.website ?? existing?.website ?? undefined,
     hypes: entry?.hypes || existing?.hypes || undefined,
+    store_url: entry?.store_url ?? existing?.store_url ?? undefined,
     released_at: entry?.released_at
       ? new Date(entry.released_at)
       : existing?.released_at

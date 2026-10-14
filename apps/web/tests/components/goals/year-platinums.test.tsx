@@ -58,4 +58,17 @@ describe('YearPlatinums', () => {
     show(emptyGoals)
     expect(screen.getByText(/Sua primeira platina do ano/)).toBeTruthy()
   })
+
+  test("the year's pace: the average, the quickest and the longest of the timed platinums", () => {
+    show(sampleGoals)
+    const pace = within(screen.getByRole('region', { name: 'Ritmo do ano' }))
+    expect(pace.getByText('em 6 platinas')).toBeTruthy()
+    expect(pace.getByText("Astro's Playroom")).toBeTruthy()
+    expect(pace.getByText('DAYS GONE')).toBeTruthy()
+  })
+
+  test('one timed platinum has nothing to compare', () => {
+    show({ ...sampleGoals, platinumed: sampleGoals.platinumed.slice(0, 1) })
+    expect(screen.queryByRole('region', { name: 'Ritmo do ano' })).toBeNull()
+  })
 })

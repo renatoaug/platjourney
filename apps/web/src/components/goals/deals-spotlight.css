@@ -1,0 +1,168 @@
+@layer screens {
+  /* A gold-tinted band over the interests while something saved is on sale. */
+  .deals {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid color-mix(in srgb, var(--color-trophy-gold) 35%, transparent);
+    border-radius: var(--radius-card);
+    background:
+      radial-gradient(
+        120% 140% at 0% 0%,
+        color-mix(in srgb, var(--color-trophy-gold) 12%, transparent),
+        transparent 60%
+      ),
+      var(--color-surface);
+  }
+
+  .deals-head {
+    display: grid;
+    gap: 6px;
+  }
+
+  .deals-head .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-trophy-gold);
+  }
+
+  .deals-head .eyebrow .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .deals-head h3 {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+  }
+
+  .deals-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+
+  .deal {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+    min-width: 0;
+  }
+
+  .deal-game {
+    position: relative;
+    flex: none;
+  }
+
+  /* The cover runs down to the store button, however many lines the price takes. */
+  .deal-cover {
+    display: block;
+    width: 72px;
+    height: 100%;
+    min-height: 96px;
+    object-fit: cover;
+    border-radius: var(--radius-tag);
+  }
+
+  .deal-off {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    padding: 3px 7px;
+    border-radius: var(--radius-tag);
+    background: var(--color-trophy-gold);
+    color: var(--color-bg);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+  }
+
+  /* A game the player's own PS Plus includes: the accent instead of the sale's gold. */
+  .deal.mine {
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .deal.mine .deal-off {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .deal.mine .deal-price b {
+    color: var(--color-accent);
+  }
+
+  .deal.mine .deal-plus {
+    color: var(--color-fg-muted);
+  }
+
+  .deal-body {
+    display: grid;
+    align-content: space-between;
+    gap: 4px;
+    min-width: 0;
+    min-height: 96px;
+  }
+
+  .deal-name {
+    color: var(--color-fg);
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-body);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .deal-name:hover {
+    color: var(--color-accent);
+  }
+
+  .deal-price b {
+    color: var(--color-trophy-gold);
+    font-size: var(--text-body);
+  }
+
+  .deal-plus {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--text-xs);
+    color: var(--color-trophy-gold);
+    opacity: 0.85;
+  }
+
+  .deal-price s {
+    color: var(--color-fg-subtle);
+    font-size: var(--text-sm);
+  }
+
+  .deal-until {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .deal-until .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Small enough that the four lines stand as tall as the cover beside them. */
+  .deal .deal-store {
+    justify-self: start;
+    min-height: 0;
+    height: 28px;
+    padding: 0 10px;
+    gap: 6px;
+    font-size: var(--text-sm);
+  }
+
+  .deal .deal-store .icon {
+    width: 12px;
+    height: 12px;
+  }
+}

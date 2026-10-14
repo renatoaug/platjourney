@@ -8,7 +8,7 @@ Every setting lives in the root `.env`; `.env.example` lists them with a line on
 2. **Fill `.env`:** `cp .env.example .env`. The PSN NPSSO belongs to the throwaway account and only reads public profiles, so every player's games, trophies and "About me" must be visible to anyone.
 3. **Install:** `bun install` and `(cd services/ai && uv sync)`.
 4. **Database:** `bun run db:up` (SurrealDB in Docker, data in `./data/surrealdb`), then `bun run migrate`.
-5. **Catalog:** `bun run catalog:expand && bun run embed` (once; both are safe to re-run).
+5. **Catalog:** `bun run catalog:expand && bun run embed` (once; both are safe to re-run). `bun run catalog:media` adds galleries and PlayStation Store links, and `bun run catalog:releases` fills the release calendar; the server refreshes the calendar once a day on its own.
 6. **Run:** `bun run dev`, and open http://localhost:3000.
 
 Then:

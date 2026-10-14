@@ -4,6 +4,7 @@ import { handleInterestCommand, yearProgress, yearReport } from '../src/interest
 import * as ranking from '../src/ranking.ts'
 import * as games from '../src/repository/game.ts'
 import * as repo from '../src/repository/interest.ts'
+import * as prices from '../src/repository/store-price.ts'
 import * as users from '../src/repository/user.ts'
 import { counts, makeGame, makeGroups, makeTitle, makeUser } from './fixtures.ts'
 
@@ -17,6 +18,10 @@ const interest = (id: string, game = alpha, position = 1) => ({
   game,
   year,
   position,
+})
+
+beforeEach(() => {
+  spyOn(prices, 'pricesFor').mockResolvedValue(new Map())
 })
 
 afterEach(() => mock.restore())
@@ -55,6 +60,7 @@ test('interests take the best copy of their game and base-game progress', async 
       hours: 1.5,
       recommendedAt: '2026-10-01T12:00:00Z',
       nextPickAt: null,
+      deal: null,
       done: false,
     },
     {
@@ -65,6 +71,7 @@ test('interests take the best copy of their game and base-game progress', async 
       hours: null,
       recommendedAt: null,
       nextPickAt: null,
+      deal: null,
       done: true,
     },
     {
@@ -75,6 +82,7 @@ test('interests take the best copy of their game and base-game progress', async 
       hours: null,
       recommendedAt: null,
       nextPickAt: null,
+      deal: null,
       done: false,
     },
   ])
@@ -131,6 +139,7 @@ test('the report shows the goal, the interests and the platinums', () => {
           hours: null,
           recommendedAt: null,
           nextPickAt: null,
+          deal: null,
         },
         {
           id: 'i2',
@@ -141,6 +150,7 @@ test('the report shows the goal, the interests and the platinums', () => {
           hours: null,
           recommendedAt: null,
           nextPickAt: null,
+          deal: null,
         },
         {
           id: 'i3',
@@ -151,6 +161,7 @@ test('the report shows the goal, the interests and the platinums', () => {
           hours: null,
           recommendedAt: null,
           nextPickAt: null,
+          deal: null,
         },
       ],
     }),

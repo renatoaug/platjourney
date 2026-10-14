@@ -94,6 +94,28 @@
     color: var(--color-fg-muted);
   }
 
+  .goal-deal {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+  }
+
+  .goal-deal.mine {
+    color: var(--color-accent);
+  }
+
+  .goal-deal.sale {
+    color: var(--color-trophy-gold);
+  }
+
+  .goal-deal .icon {
+    width: 13px;
+    height: 13px;
+  }
+
   .goal-recommended.next {
     color: var(--color-accent);
   }
@@ -181,6 +203,13 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-round);
     color: var(--color-fg-subtle);
+  }
+
+  /* A phone keeps the row for the game: the state already reads in the text on the right. */
+  @media (max-width: 760px) {
+    .goal-game-status {
+      display: none;
+    }
   }
 
   .goal-game-status.complete {

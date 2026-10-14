@@ -156,3 +156,19 @@ test('the game Nexo picked as the next platinum says so', () => {
   )
   expect(screen.getAllByText(/Próxima platina, escolhida pelo Nexo em/)).toHaveLength(1)
 })
+
+test('a saved game on sale shows the discount, the price and when it ends', () => {
+  const [first, ...rest] = sampleGoals.interests
+  const open = sampleGoals.interests.find((g) => !g.done) ?? first
+  const deal = {
+    price: 7485,
+    base: 24950,
+    discount: 70,
+    endsAt: '2026-10-20T12:00:00Z',
+    plus: false,
+    currency: 'BRL',
+    storeUrl: null,
+  }
+  render(<Demo interests={[{ ...open, deal }, ...rest.filter((g) => g !== open)]} />)
+  expect(screen.getByText(/70% off · R\$\s?74,85 até 20 de out/)).toBeTruthy()
+})

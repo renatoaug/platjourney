@@ -3,7 +3,7 @@ import type { Game } from './game.ts'
 import { gameRef } from './game.ts'
 import { userRef } from './user.ts'
 
-export type TipKind = 'start' | 'unlock' | 'chat' | 'session' | 'server' | 'route'
+export type TipKind = 'start' | 'unlock' | 'chat' | 'session' | 'server' | 'route' | 'deal'
 export interface Tip {
   id: string
   kind: TipKind

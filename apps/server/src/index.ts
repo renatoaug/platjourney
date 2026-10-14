@@ -2,6 +2,7 @@ import { startAccessCleanup } from './access.ts'
 import { commandMenu, handleCommand, help } from './commands.ts'
 import { config, version } from './config.ts'
 import { migrate } from './db.ts'
+import { startDeals } from './deals.ts'
 import {
   DEFAULT_LOCALE,
   fromLanguage,
@@ -46,6 +47,7 @@ async function main(): Promise<void> {
   console.log(`platjourney ${version} up — sweeping users every ${config.pollMinutes} min`)
   startWatcher(config.pollMinutes)
   startReleaseSync()
+  startDeals()
   startWeb()
   startAccessCleanup()
   // English is the default menu; Portuguese apps get theirs.

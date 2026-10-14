@@ -175,6 +175,7 @@ const publicUser = (u: User) => ({
   avatarUrl: secureUrl(u.avatar_url),
   telegramLinked: !!u.telegram_chat_id,
   includeDlcProgress: u.include_dlc_progress === true,
+  psPlus: u.ps_plus ?? 'none',
   aiNotices: u.ai_notices !== false,
   // Whether this instance lets Nexo write notices at all; the profile's switch only shows then.
   aiNoticesAvailable: config.automatic.notices,
@@ -534,9 +535,15 @@ async function api(
 
   if (path === '/api/account/preferences' && method === 'POST') {
     // Any of the preferences, alone or together: DLC, Nexo's notices and the language.
-    const { includeDlcProgress, aiNotices, locale } = await readBody(req)
+    const { includeDlcProgress, aiNotices, locale, psPlus } = await readBody(req)
     const fields: Partial<User> = {}
     if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
+    if (psPlus !== undefined) {
+      const tiers = ['none', 'essential', 'extra', 'deluxe'] as const
+      const tier = tiers.find((x) => x === psPlus)
+      if (!tier) return json(res, 400, { error: 'invalid' })
+      fields.ps_plus = tier
+    }
     if (typeof aiNotices === 'boolean') fields.ai_notices = aiNotices
     if (locale !== undefined) {
       if (!isLocale(locale))

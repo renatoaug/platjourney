@@ -46,6 +46,7 @@ erDiagram
         session_plan option(object)
         include_dlc_progress bool
         ai_notices bool
+        ps_plus option(string)
         locale option(string)
         demo bool
         onboarded_at option(datetime)
@@ -211,6 +212,7 @@ erDiagram
     game ||--o{ guide_chunk : "has passages"
     game ||--o| guide_request : "is asked for"
     game ||--o| server_status : "online status"
+    game ||--o| store_price : "PS Store price"
     user }o--o{ game_request : "asks for a missing game"
     game {
         id record(game) PK
@@ -233,6 +235,7 @@ erDiagram
         website option(string)
         released_at option(datetime)
         hypes option(int)
+        store_url option(string)
         embedding option(array(float))
         created_at datetime
         updated_at datetime
@@ -275,6 +278,20 @@ erDiagram
         name string
         users array(record(user)) FK
         requests int
+        created_at datetime
+        updated_at datetime
+    }
+    store_price {
+        id record(store_price) PK
+        game record(game) FK "unique"
+        base int
+        price int
+        discount int
+        ends_at option(datetime)
+        plus bool
+        plus_price option(int)
+        plus_tier option(string)
+        currency string
         created_at datetime
         updated_at datetime
     }
@@ -347,14 +364,14 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `user` | account | `psn_online_id_lower`, `psn_account_id` | The PSN account id is the identity; settings, goals, the current session and plan live here as objects. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours) |
+| `user` | account | `psn_online_id_lower`, `psn_account_id` | The PSN account id is the identity; settings, goals, the current session and plan live here as objects. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell |
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN |
 | `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `next_pick_at`: when "Nexo decide" picked it as the next platinum, on one interest of the player at a time |
 | `recommendation` | game recommended in a batch | | Every batch of the last year, with why and what it is similar to; `batch_at` groups a batch's rows. Discover shows the latest batch; the older ones keep new batches to games not shown yet, and shown games come back, the oldest first, only when those run out. Rows from before batches were kept have no `batch_at` and count as one batch |
 | `dismissal` | game the player dismissed | `user, game` | Never recommended again |
-| `tip` | notice or tip Nexo wrote | | `kind`: `start`, `unlock`, `session`, `chat` (help on one trophy), `server` |
+| `tip` | notice or tip Nexo wrote | | `kind`: `start`, `unlock`, `session`, `chat` (help on one trophy), `server`, `deal` (a saved game went on sale) |
 | `message` | chat message | | `role`: user or assistant |
 | `notification` | item in the bell | | Points at the `tip` it shows, when there is one |
 | `auth_session` | signed-in browser | `token_hash` | Only the hash of the cookie is stored |
@@ -365,11 +382,12 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `game` | catalog game | `slug`, `igdb_id` | From IGDB; `np_communication_ids` ties it to PSN lists; `embedding` for recommendations. The game page's gallery and "about" card read `screenshot_ids` (IGDB image ids of its scenes, artwork when it has none), `developers`, `website` (the official site) and `released_at` (the first release day, at midnight UTC); `bun run catalog:media` fills them for games already in the catalog. `hypes` is how many people follow the game on IGDB before release: the home's calendar lists the most awaited first. A store edition is the game itself, its name kept in `aliases`; a PS4/PS5 remaster of a game that never came to them is its own record |
+| `game` | catalog game | `slug`, `igdb_id` | From IGDB; `np_communication_ids` ties it to PSN lists; `embedding` for recommendations. The game page's gallery and "about" card read `screenshot_ids` (IGDB image ids of its scenes, artwork when it has none), `developers`, `website` (the official site) and `released_at` (the first release day, at midnight UTC); `bun run catalog:media` fills them for games already in the catalog. `hypes` is how many people follow the game on IGDB before release: the home's calendar lists the most awaited first. `store_url` is its PlayStation Store page, where its price is read. A store edition is the game itself, its name kept in `aliases`; a PS4/PS5 remaster of a game that never came to them is its own record |
 | `guide` | game with a researched guide | `game` | The guide itself is an object; also the deep guide's pages and passage count |
 | `guide_chunk` | passage of a deep guide | | Text, heading path, source page and its date, and the vector |
 | `guide_request` | game asked for without a guide | `game` | How many times and the questions, for whoever runs the instance |
 | `game_request` | name searched on Guides that neither the catalog nor IGDB had | `key` (the name normalized for search) | Who asked, each account once, and how many; for whoever runs the instance to add by hand |
+| `store_price` | game someone saved in their interests | `game` | Its PlayStation Store price in Brazil, in cents, read once a day and overwritten: price, full price, percent off, when the sale ends, whether PS Plus includes it and what members pay when the store gives them a lower price (`plus_price`), and the lowest tier whose catalog includes it (`plus_tier`). A game the player's own tier includes is a `deal` notice too, once. A new or deeper sale is a `deal` notice to everyone who saved the game |
 | `server_status` | game whose online servers were checked | `game` | `status`: `active`, `announced`, `closed` or `unknown`; shared by everyone, and who was already warned is in `notification` |
 
 ## Costs

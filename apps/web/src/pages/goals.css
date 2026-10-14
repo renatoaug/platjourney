@@ -20,20 +20,80 @@
     align-items: start;
   }
 
+  .goals-side {
+    display: grid;
+    gap: 20px;
+    min-width: 0;
+  }
+
+  /* With enough deals and platinums to fill a column each, wide screens put interests, deals and
+   * the year's platinums side by side. The last two share a row of their own so they stand equally
+   * tall, pagers at the bottom. With fewer, a tall column would stand mostly empty: they stack. */
+  @media (min-width: 1400px) {
+    .goals-columns.trio {
+      --two-column-layout: minmax(0, 1.1fr) minmax(0, 1.6fr);
+    }
+
+    .goals-columns.trio .goals-side {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .trio .goals-side > .deals,
+    .trio .goals-side > .year-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .trio .goals-side > .deals > .pager {
+      margin-top: auto;
+    }
+
+    /* The timeline takes the spare height, so the year's pace and the pager sit at the bottom. */
+    .trio .goals-side > .year-card > .year-timeline {
+      flex: 1;
+    }
+  }
+
   .goals-columns.empty {
     align-items: stretch;
   }
 
+  /* Two empty cards side by side keep one height: the side's only card fills it. */
+  .goals-columns.empty .goals-side {
+    grid-template-rows: 1fr;
+  }
+
+  /* The title and the add button share one line, on a phone too. */
   .goal-list-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 20px;
   }
 
   .goal-list-heading h2 {
     margin: 0;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .goal-list-heading button {
+    flex: none;
+  }
+
+  /* A phone has no room for the whole label beside the title. */
+  .goal-add-short {
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    .goal-add-long {
+      display: none;
+    }
+
+    .goal-add-short {
+      display: inline;
+    }
   }
 }

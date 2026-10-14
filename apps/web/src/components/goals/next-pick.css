@@ -33,6 +33,13 @@
     margin-left: auto;
   }
 
+  /* On a phone the link drops to a line of its own: it starts under the question, past Nexo. */
+  @media (max-width: 760px) {
+    .next-pick-ask .next-pick-go {
+      margin-left: 30px;
+    }
+  }
+
   .next-pick-go {
     display: inline-flex;
     align-items: center;

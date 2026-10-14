@@ -295,6 +295,28 @@
     .goal-stepper input {
       font-size: var(--text-5xl);
     }
+
+    /* The target and its edit button share a line, the button on the right. */
+    #goal-control:has(> #goal-edit) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 12px;
+    }
+
+    #goal-control:has(> #goal-edit) .goal-control-icon {
+      display: none;
+    }
+
+    #goal-control:has(> #goal-edit) .eyebrow {
+      grid-column: 1 / -1;
+      margin-bottom: 8px;
+    }
+
+    #goal-control:has(> #goal-edit) .goal-target-value,
+    #goal-control:has(> #goal-edit) .goal-target-none {
+      margin-block: 0;
+    }
   }
 
   .goal-percent small {

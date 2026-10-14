@@ -2,7 +2,8 @@
 -- session, server warnings), shown under the bell. The full text stays in tip.
 DEFINE TABLE IF NOT EXISTS notification SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS user ON notification TYPE record<user>;
-DEFINE FIELD IF NOT EXISTS kind ON notification TYPE string ASSERT $value IN ['start', 'unlock', 'session', 'server', 'route'];
+-- 'deal': a game in the player's interests went on sale.
+DEFINE FIELD OVERWRITE kind ON notification TYPE string ASSERT $value IN ['start', 'unlock', 'session', 'server', 'route', 'deal'];
 DEFINE FIELD IF NOT EXISTS content ON notification TYPE string;
 DEFINE FIELD IF NOT EXISTS game ON notification TYPE option<record<game>>;
 DEFINE FIELD IF NOT EXISTS tip ON notification TYPE option<record<tip>>;

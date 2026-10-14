@@ -118,6 +118,10 @@
     gap: 5px;
   }
 
+  .hero .meta-short {
+    display: none;
+  }
+
   .hero .meta > span + span::before {
     content: "";
     width: 1px;
@@ -228,6 +232,35 @@
     .hero-bottom {
       flex-direction: row;
       align-items: center;
+    }
+
+    /* The difficulty on a line of its own, then the facts in shorter words on one line. */
+    .hero .meta {
+      column-gap: 8px;
+    }
+
+    .hero .meta > span {
+      gap: 4px;
+    }
+
+    .hero .meta > .dm {
+      flex-basis: 100%;
+    }
+
+    .hero .meta > .dm + span::before {
+      display: none;
+    }
+
+    .hero .meta > span + span::before {
+      margin-right: 4px;
+    }
+
+    .hero .meta-long {
+      display: none;
+    }
+
+    .hero .meta-short {
+      display: inline;
     }
   }
 

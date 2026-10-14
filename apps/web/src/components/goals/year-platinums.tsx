@@ -31,6 +31,12 @@ const messages = defineMessages({
       order: 'Platina {n} do ano',
       emptyMonth: 'Nenhuma platina registrada neste mês.',
       pages: 'Páginas de platinas',
+      pace: 'Ritmo do ano',
+      average: 'Média',
+      perPlatinum: '{hours} por platina',
+      timed: { one: 'em {count} platina', other: 'em {count} platinas' },
+      quickest: 'Mais rápida',
+      longest: 'Mais longa',
       empty:
         'Sua primeira platina do ano começa com o próximo jogo. Cada conquista vai aparecer aqui.',
     },
@@ -68,6 +74,12 @@ const messages = defineMessages({
       order: 'Platinum {n} of the year',
       emptyMonth: 'No platinum recorded this month.',
       pages: 'Platinum pages',
+      pace: 'The year so far',
+      average: 'Average',
+      perPlatinum: '{hours} per platinum',
+      timed: { one: 'over {count} platinum', other: 'over {count} platinums' },
+      quickest: 'Quickest',
+      longest: 'Longest',
       empty:
         'Your first platinum of the year starts with your next game. Every one will show up here.',
     },
@@ -259,6 +271,7 @@ export function YearPlatinums({ goals: p, busy = false }: { goals: YearGoals; bu
               <p className="year-empty">{t('year.emptyMonth')}</p>
             )}
           </div>
+          <YearPace platinums={all} />
           <Pager
             page={page}
             size={PAGE_SIZE}
@@ -274,5 +287,37 @@ export function YearPlatinums({ goals: p, busy = false }: { goals: YearGoals; bu
         <div className="year-empty">{t('year.empty')}</div>
       )}
     </div>
+  )
+}
+
+/** The year's pace from the platinums with play time: the average, the quickest and the longest.
+ * Needs two to compare. */
+function YearPace({ platinums }: { platinums: Platinum[] }) {
+  const t = useMessages(messages)
+  const timed = platinums
+    .filter((g): g is Platinum & { hours: number } => !!g.hours)
+    .sort((a, b) => a.hours - b.hours)
+  if (timed.length < 2) return null
+  const quickest = timed[0]
+  const longest = timed[timed.length - 1]
+  const average = Math.round(timed.reduce((sum, g) => sum + g.hours, 0) / timed.length)
+  return (
+    <section className="year-pace" aria-label={t('year.pace')}>
+      <div>
+        <small>{t('year.average')}</small>
+        <b>{t('year.perPlatinum', { hours: fmtHours(average) })}</b>
+        <span>{t('year.timed', { count: timed.length })}</span>
+      </div>
+      <div>
+        <small>{t('year.quickest')}</small>
+        <b title={quickest.game.name}>{quickest.game.name}</b>
+        <span>{fmtHours(quickest.hours)}</span>
+      </div>
+      <div>
+        <small>{t('year.longest')}</small>
+        <b title={longest.game.name}>{longest.game.name}</b>
+        <span>{fmtHours(longest.hours)}</span>
+      </div>
+    </section>
   )
 }

@@ -1,5 +1,5 @@
 // bun run catalog:media [--all] — fills each catalog game's gallery and "about" facts from IGDB
-// (scenes, studios, official site, release day). Only games without them, unless --all. Writing
+// (scenes, studios, official site, PlayStation Store page, release day). Only games without them, unless --all. Writing
 // them is not a change to the game itself, so updated_at is held while they are written.
 import { closeDb, q } from '../src/db.ts'
 import { mediaByIds } from '../src/igdb.ts'
@@ -18,13 +18,14 @@ try {
     const m = media.get(r.igdb_id)
     if (!m) continue
     await q(
-      'UPDATE $id SET screenshot_ids = $shots, developers = $devs, website = $site, released_at = $day RETURN NONE',
+      'UPDATE $id SET screenshot_ids = $shots, developers = $devs, website = $site, released_at = $day, store_url = $store RETURN NONE',
       {
         id: gameRef(String(r.id)),
         shots: m.screenshot_ids,
         devs: m.developers,
         site: m.website ?? undefined,
         day: m.released_at ? new Date(m.released_at) : undefined,
+        store: m.store_url ?? undefined,
       },
     )
     if (++filled % 500 === 0) console.log(`${filled} filled`)
