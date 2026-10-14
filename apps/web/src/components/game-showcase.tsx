@@ -3,7 +3,7 @@
 import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
 import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { fmtRelease } from '../lib/format'
-import type { Game } from '../lib/types'
+import type { Game, Interest } from '../lib/types'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
@@ -26,6 +26,12 @@ const messages = defineMessages({
     modes: 'Modos',
     rating: 'Nota da crítica',
     ratingValue: '{value}/100',
+    store: 'Ver na PS Store',
+    storeTitle: 'Na PS Store',
+    until: 'até {date}',
+    plus: '{price} no PS Plus',
+    mine: 'No seu PS Plus {tier}: jogue sem pagar',
+    included: 'Incluso no PS Plus {tier}',
   },
   [Language.En]: {
     gallery: 'Images of {name}',
@@ -43,6 +49,12 @@ const messages = defineMessages({
     modes: 'Modes',
     rating: 'Critic score',
     ratingValue: '{value}/100',
+    store: 'See on PS Store',
+    storeTitle: 'On PS Store',
+    until: 'until {date}',
+    plus: '{price} with PS Plus',
+    mine: 'In your PS Plus {tier}: play at no cost',
+    included: 'Included with PS Plus {tier}',
   },
 })
 
@@ -285,7 +297,72 @@ export function GalleryLightbox({
   )
 }
 
-export function GameAbout({ game, name }: { game: Game; name: string }) {
+/** Where to buy a game the player does not have: its PS Store page and, when known, the sale or
+ * the PS Plus tier that includes it. */
+export type GameStore = { url: string | null; deal: Interest['deal'] } | null
+
+const TIER_NAMES = { essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' } as const
+
+function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
+  const t = useMessages(messages)
+  const locale = useLocale()
+  const d = store.deal
+  const money = (cents: number, currency: string) =>
+    (cents / 100).toLocaleString(locale, { style: 'currency', currency })
+  const url = d?.storeUrl ?? store.url
+  const tier = TIER_NAMES[d?.plusTier ?? 'extra']
+  return (
+    <div className={`game-about-store${d?.mine ? ' mine' : d && d.discount > 0 ? ' sale' : ''}`}>
+      {d && (d.mine || d.plus || d.discount > 0) && (
+        <div className="game-about-deal">
+          {d.mine ? (
+            <b>{t('mine', { tier })}</b>
+          ) : d.discount > 0 ? (
+            <>
+              <span className="game-about-off">-{d.discount}%</span>
+              <b>{money(d.price, d.currency)}</b> <s>{money(d.base, d.currency)}</s>
+              {d.endsAt && (
+                <small>
+                  {t('until', {
+                    date: new Date(d.endsAt).toLocaleDateString(locale, {
+                      day: 'numeric',
+                      month: 'short',
+                    }),
+                  })}
+                </small>
+              )}
+              {d.plusPrice ? (
+                <small>{t('plus', { price: money(d.plusPrice, d.currency) })}</small>
+              ) : null}
+            </>
+          ) : (
+            <b>{t('included', { tier })}</b>
+          )}
+        </div>
+      )}
+      {url && (
+        <a
+          className="button sm game-about-buy"
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t('store')} <Icon name="arrow" />
+        </a>
+      )}
+    </div>
+  )
+}
+
+export function GameAbout({
+  game,
+  name,
+  store = null,
+}: {
+  game: Game
+  name: string
+  store?: GameStore
+}) {
   const t = useMessages(messages)
   const locale = useLocale()
   const genres = game.genres ?? []
@@ -294,7 +371,14 @@ export function GameAbout({ game, name }: { game: Game; name: string }) {
   const site = game.website ? safeUrl(game.website) : null
   const pt = locale === Language.PtBR
   const modes = (game.modes ?? []).map((m) => (pt ? (MODES_PT[m] ?? m) : m))
-  if (!genres.length && !developers.length && !game.released_at && !platforms.length && !site)
+  if (
+    !genres.length &&
+    !developers.length &&
+    !game.released_at &&
+    !platforms.length &&
+    !site &&
+    !store
+  )
     return null
   return (
     <section className="card game-about" aria-label={t('about', { name })}>
@@ -361,17 +445,26 @@ export function GameAbout({ game, name }: { game: Game; name: string }) {
           </div>
         )}
       </dl>
+      {store && <StoreOffer store={store} />}
     </section>
   )
 }
 
 /** The gallery and the facts side by side; either one alone takes the whole width. */
-export function GameShowcase({ game, name }: { game: Game; name: string }) {
+export function GameShowcase({
+  game,
+  name,
+  store = null,
+}: {
+  game: Game
+  name: string
+  store?: GameStore
+}) {
   const ids = game.screenshot_ids ?? []
   return (
     <div className={`game-showcase${ids.length ? '' : ' no-gallery'}`}>
       <GameGallery ids={ids} name={name} />
-      <GameAbout game={game} name={name} />
+      <GameAbout game={game} name={name} store={store} />
     </div>
   )
 }

@@ -26,34 +26,6 @@
     min-width: 0;
   }
 
-  /* With enough deals and platinums to fill a column each, wide screens put interests, deals and
-   * the year's platinums side by side. The last two share a row of their own so they stand equally
-   * tall, pagers at the bottom. With fewer, a tall column would stand mostly empty: they stack. */
-  @media (min-width: 1400px) {
-    .goals-columns.trio {
-      --two-column-layout: minmax(0, 1.1fr) minmax(0, 1.6fr);
-    }
-
-    .goals-columns.trio .goals-side {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .trio .goals-side > .deals,
-    .trio .goals-side > .year-card {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .trio .goals-side > .deals > .pager {
-      margin-top: auto;
-    }
-
-    /* The timeline takes the spare height, so the year's pace and the pager sit at the bottom. */
-    .trio .goals-side > .year-card > .year-timeline {
-      flex: 1;
-    }
-  }
-
   .goals-columns.empty {
     align-items: stretch;
   }

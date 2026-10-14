@@ -12,7 +12,9 @@ import { loadGroups } from './ranking.ts'
 import { type Game, gameByName, gamesForTitles, getGame } from './repository/game.ts'
 import {
   addInterest,
+  INTEREST_SOURCES,
   type Interest,
+  type InterestSource,
   listInterests,
   removeInterest,
   setInterestOrder,
@@ -64,6 +66,9 @@ export interface InterestView {
   hours: number | null
   recommendedAt: string | null
   nextPickAt: string | null
+  /** Where the player saved it from, and when. */
+  source: InterestSource | null
+  savedAt: string | null
   /** The game's PS Store price when it is on sale or in PS Plus; null otherwise. */
   deal: Deal | null
 }
@@ -119,6 +124,17 @@ function dealOf(
   }
 }
 
+/** A game's PlayStation Store page and, when its price is known (someone saved it), the sale or
+ * the PS Plus tier that includes it, for the game page's "About" card. */
+export async function storeFor(
+  game: Pick<Game, 'id' | 'store_url'>,
+  user: Pick<User, 'ps_plus'>,
+): Promise<{ url: string | null; deal: Deal | null } | null> {
+  const url = game.store_url ? brazilianPage(game.store_url) : null
+  const deal = dealOf((await pricesFor([game.id])).get(game.id), game.store_url, user.ps_plus)
+  return url || deal ? { url, deal } : null
+}
+
 export async function yearProgress(
   user: User,
   library: TitleProgress[],
@@ -147,6 +163,8 @@ export async function yearProgress(
         hours: hoursOf(i.game.id),
         recommendedAt: i.recommended_at ? String(i.recommended_at) : null,
         nextPickAt: i.next_pick_at ? String(i.next_pick_at) : null,
+        source: i.source ?? null,
+        savedAt: i.created_at ? String(i.created_at) : null,
         // A game the player already owns is no deal for them.
         deal: t ? null : dealOf(prices.get(i.game.id), i.game.store_url, user.ps_plus),
         done: t?.earnedByType.platinum === 1 && t.lastUpdated.startsWith(String(year)),
@@ -190,7 +208,7 @@ export function yearReport(p: YearProgress, locale: Locale = DEFAULT_LOCALE): st
   return lines.join('\n')
 }
 
-// Handles "set 12", "add <name|game:id>", "remove <interest:id|n>", "move <id> up|down", "order <ids>".
+// Handles "set 12", "add <name|game:id> [from:<source>]", "remove <interest:id|n>", "move <id> up|down", "order <ids>".
 export async function handleInterestCommand(
   user: User,
   arg: string,
@@ -215,10 +233,14 @@ export async function handleInterestCommand(
       break
     }
     case 'add': {
-      if (!value) return t('addUsage')
-      const game = value.startsWith('game:') ? await getGame(value) : await gameByName(value)
-      if (!game) return t('notFound', { query: value })
-      await addInterest(user.id, game.id, year)
+      // The web says where the game was saved from at the end: "add game:12 from:releases".
+      const from = value.match(/\s+from:(\S+)$/)
+      const source = INTEREST_SOURCES.find((s) => s === from?.[1])
+      const query = from ? value.slice(0, from.index).trim() : value
+      if (!query) return t('addUsage')
+      const game = query.startsWith('game:') ? await getGame(query) : await gameByName(query)
+      if (!game) return t('notFound', { query })
+      await addInterest(user.id, game.id, year, source)
       break
     }
     case 'remove': {

@@ -25,12 +25,17 @@ export interface Me {
   onboarded?: boolean
 }
 
+/** Where a game was saved to the interests from. */
+export type InterestSource = 'releases' | 'recommendations' | 'title' | 'search'
+
 /** A catalog game (IGDB row). */
 export interface Game {
   id: string
   name: string
   slug?: string
   cover_url?: string
+  /** A wide artwork of the game, for backgrounds. */
+  art_url?: string | null
   summary?: string
   genres?: string[]
   themes?: string[]
@@ -189,6 +194,9 @@ export interface Interest {
   recommendedAt?: string | null
   /** When "Nexo decide" picked it as the next platinum; one interest at a time. */
   nextPickAt?: string | null
+  /** Where the player saved it from, and when. */
+  source?: InterestSource | null
+  savedAt?: string | null
   /** Its PS Store price when on sale or in PS Plus (cents). */
   deal?: {
     price: number

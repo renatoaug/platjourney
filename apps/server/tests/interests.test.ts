@@ -60,6 +60,8 @@ test('interests take the best copy of their game and base-game progress', async 
       hours: 1.5,
       recommendedAt: '2026-10-01T12:00:00Z',
       nextPickAt: null,
+      source: null,
+      savedAt: null,
       deal: null,
       done: false,
     },
@@ -71,6 +73,8 @@ test('interests take the best copy of their game and base-game progress', async 
       hours: null,
       recommendedAt: null,
       nextPickAt: null,
+      source: null,
+      savedAt: null,
       deal: null,
       done: true,
     },
@@ -82,6 +86,8 @@ test('interests take the best copy of their game and base-game progress', async 
       hours: null,
       recommendedAt: null,
       nextPickAt: null,
+      source: null,
+      savedAt: null,
       deal: null,
       done: false,
     },
@@ -139,6 +145,8 @@ test('the report shows the goal, the interests and the platinums', () => {
           hours: null,
           recommendedAt: null,
           nextPickAt: null,
+          source: null,
+          savedAt: null,
           deal: null,
         },
         {
@@ -150,6 +158,8 @@ test('the report shows the goal, the interests and the platinums', () => {
           hours: null,
           recommendedAt: null,
           nextPickAt: null,
+          source: null,
+          savedAt: null,
           deal: null,
         },
         {
@@ -161,6 +171,8 @@ test('the report shows the goal, the interests and the platinums', () => {
           hours: null,
           recommendedAt: null,
           nextPickAt: null,
+          source: null,
+          savedAt: null,
           deal: null,
         },
       ],
@@ -269,4 +281,15 @@ describe('/goals', () => {
     expect(await handleInterestCommand(user, '', [])).toContain('platinas')
     expect(update).not.toHaveBeenCalled()
   })
+})
+
+test('a game saved from the web keeps where it came from; an unknown source is dropped', async () => {
+  const add = spyOn(repo, 'addInterest').mockResolvedValue()
+  spyOn(games, 'getGame').mockResolvedValue(makeGame({ id: 'game:12', name: 'Phantom Blade Zero' }))
+  spyOn(repo, 'listInterests').mockResolvedValue([])
+  const user = makeUser()
+  await handleInterestCommand(user, 'add game:12 from:releases', [])
+  expect(add).toHaveBeenLastCalledWith(user.id, 'game:12', expect.any(Number), 'releases')
+  await handleInterestCommand(user, 'add game:12 from:nowhere', [])
+  expect(add).toHaveBeenLastCalledWith(user.id, 'game:12', expect.any(Number), undefined)
 })

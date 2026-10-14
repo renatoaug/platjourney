@@ -44,7 +44,7 @@ test('nothing on sale shows nothing', () => {
   expect(container.innerHTML).toBe('')
 })
 
-test("a game the player's own PS Plus includes comes first, free, and six fit a page", () => {
+test("a game the player's own PS Plus includes comes first, free, and four fit a page", () => {
   const many = Array.from({ length: 8 }, (_, n) => ({
     ...open[n % open.length],
     id: `interest:${n}`,
@@ -65,7 +65,7 @@ test("a game the player's own PS Plus includes comes first, free, and six fit a 
     </MemoryRouter>,
   )
   const cards = container.querySelectorAll('.deal')
-  expect(cards).toHaveLength(6)
+  expect(cards).toHaveLength(4)
   expect(cards[0].classList.contains('mine')).toBe(true)
   expect(cards[0].textContent).toContain('No seu PS Plus Extra')
   expect(screen.getByRole('navigation', { name: 'Páginas de promoções' })).toBeTruthy()

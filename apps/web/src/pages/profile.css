@@ -279,12 +279,16 @@
     text-decoration: none;
   }
 
+  /* Like every game card: the cover lifts on hover. */
   .collection-tile .plat-cover {
     width: 100%;
     height: auto;
     aspect-ratio: 3 / 4;
     object-fit: cover;
     border-radius: var(--radius-control);
+    transition:
+      transform 0.15s,
+      box-shadow 0.15s;
   }
 
   .collection-tile h3 {
@@ -312,6 +316,11 @@
   .collection-tile time {
     color: var(--color-fg-tint);
     font-size: var(--text-xs);
+  }
+
+  .collection-tile:hover .plat-cover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-popover);
   }
 
   .collection-tile:hover h3 {

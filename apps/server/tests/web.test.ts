@@ -767,6 +767,11 @@ test('goals accept only catalog games to add', async () => {
   spyOn(games, 'getGame').mockResolvedValueOnce(undefined)
   expect((await goals('add game:9')).status).toBe(400)
   expect((await goals('add game:1')).body).toEqual({ year: 2026 })
+  // Where the game was saved from rides after the id and reaches the command as it came.
+  expect((await goals('add game:1 from:releases')).status).toBe(200)
+  expect(interests.handleInterestCommand).toHaveBeenLastCalledWith(me, 'add game:1 from:releases', [
+    title,
+  ])
   expect(await goals('set 12')).toMatchObject({ status: 200 })
   expect(interests.handleInterestCommand).toHaveBeenLastCalledWith(me, 'set 12', [title])
 })

@@ -8,7 +8,7 @@ import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
 import { DifficultyMeter } from '../components/difficulty-meter'
 import { GameColumns } from '../components/game-columns'
-import { GameShowcase, GameShowcaseSkeleton } from '../components/game-showcase'
+import { GameShowcase, GameShowcaseSkeleton, type GameStore } from '../components/game-showcase'
 import { Guide, GuideSkeleton } from '../components/guide'
 import { HeroProgress, HeroSkeleton, Short, UnobtainableBanner } from '../components/hero'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
@@ -102,6 +102,8 @@ export interface TitleDetail {
   trophies: Trophy[] | null
   guide: GuideDetail | null
   deepGuide?: DeepGuideStats | null
+  /** A game the player does not have: where to buy it and its sale when known. */
+  store?: GameStore
   /** The guide is being researched: the page polls until it lands. */
   building: boolean
   /** The player used today's new guides; this one waits until tomorrow. */
@@ -190,7 +192,7 @@ function SaveButton({ d }: { d: TitleDetail }) {
       disabled={busy || demo}
       onClick={async () => {
         setBusy(true)
-        await toggle(d.game.id, d.name)
+        await toggle(d.game.id, d.name, 'title')
         setBusy(false)
       }}
     >
@@ -301,7 +303,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
           )}
         </div>
       </div>
-      <GameShowcase game={d.game} name={d.name} />
+      <GameShowcase game={d.game} name={d.name} store={d.owned ? null : d.store} />
       {/* Every game gets the same two columns as the current game: trophies on the left, the
           guide beside them. A game whose PSN list is not known yet says so where the list goes. */}
       <GameColumns

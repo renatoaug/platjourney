@@ -4,7 +4,7 @@ import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { messages as interestMessages, useInterests } from '../app/use-interests'
 import { DemoNote } from '../components/demo'
-import { DealsSpotlight, onSale } from '../components/goals/deals-spotlight'
+import { DealsSpotlight } from '../components/goals/deals-spotlight'
 import { GoalAddPanel } from '../components/goals/goal-add-panel'
 import { type Feedback, GoalSeason, GoalSeasonSkeleton } from '../components/goals/goal-season'
 import { InterestList, InterestListSkeleton } from '../components/goals/interest-list'
@@ -12,6 +12,7 @@ import { type NextPick, NextPickBox } from '../components/goals/next-pick'
 import type { GoalFilter } from '../components/goals/season'
 import { useKept } from '../components/goals/use-kept'
 import { YearPlatinums } from '../components/goals/year-platinums'
+import { PageHero } from '../components/page-hero'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import type { Game, YearGoals } from '../lib/types'
@@ -29,6 +30,7 @@ const askNext = () => api<{ pick: NextPick | null }>('/api/interests/next', {})
 const messages = defineMessages({
   [Language.PtBR]: {
     page: {
+      eyebrow: 'SUA LISTA DE PLATINAS',
       title: 'Interesses',
       lead: 'Os jogos que você quer platinar, na sua ordem, e a meta do ano.',
       loadFailed:
@@ -45,6 +47,7 @@ const messages = defineMessages({
   },
   [Language.En]: {
     page: {
+      eyebrow: 'YOUR PLATINUM LIST',
       title: 'Interests',
       lead: 'The games you want to platinum, in your order, and the goal for the year.',
       loadFailed: 'Could not load your interests. Use the refresh button to try again.',
@@ -67,12 +70,16 @@ export function Goals() {
   const demo = me.demo === true
   return (
     <Page path="/goals">
-      <div className="page-head">
-        <div>
-          <h1>{t('page.title')}</h1>
-          <p>{t('page.lead')}</p>
-        </div>
-      </div>
+      {/* The player's own saved games on the shelf. */}
+      <PageHero
+        eyebrow={t('page.eyebrow')}
+        title={t('page.title')}
+        lead={t('page.lead')}
+        images={(data?.goals.interests ?? [])
+          .filter((i) => !i.done && i.game.cover_url)
+          .map((i) => i.game.cover_url as string)}
+        look="shelf"
+      />
       <div id="goals">
         {data ? (
           <GoalsView goals={data.goals} readOnly={demo} />
@@ -198,8 +205,6 @@ export function GoalsView({
     }
   }
 
-  // A column each for deals and platinums only when both have enough to fill it.
-  const trio = onSale(p.interests).length >= 4 && p.platinumed.length >= 4
   return (
     <>
       <GoalSeason
@@ -211,9 +216,11 @@ export function GoalsView({
         onFeedback={setFeedback}
         onSet={(target) => save(`set ${target}`)}
       />
+      {/* The saved games on sale, in a band across the page (only when there is one). */}
+      <DealsSpotlight interests={p.interests} />
       {/* Two empty cards side by side keep one height; with content each takes its own. */}
       <div
-        className={`grid cols-2 goals-columns${p.interests.length || p.platinumed.length ? '' : ' empty'}${trio ? ' trio' : ''}`}
+        className={`grid cols-2 goals-columns${p.interests.length || p.platinumed.length ? '' : ' empty'}`}
         style={{ marginTop: 20 }}
       >
         <div className="card">
@@ -245,7 +252,7 @@ export function GoalsView({
             onDraft={setDraft}
             selection={selection}
             onSelection={setSelection}
-            onSave={(game) => save(`add ${game.id}`, game.name)}
+            onSave={(game) => save(`add ${game.id} from:search`, game.name)}
             onClose={() => openAdd(false)}
             inputRef={addInput}
             search={search}
@@ -280,9 +287,7 @@ export function GoalsView({
           )}
           {readOnly && <DemoNote />}
         </div>
-        {/* The right column: the saved games on sale (only when there is one), then the year's platinums; on wide screens, with enough of both, each gets a column of its own. */}
         <div className="goals-side">
-          <DealsSpotlight interests={p.interests} />
           <YearPlatinums goals={p} busy={busy} />
         </div>
       </div>

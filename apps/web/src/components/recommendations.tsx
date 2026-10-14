@@ -283,7 +283,7 @@ function RecRow({ rec: r, onDismiss }: { rec: Recommendation; onDismiss: OnDismi
                 onClick={async (e) => {
                   stop(e)
                   setSaving(true)
-                  await toggle(r.game.id, name)
+                  await toggle(r.game.id, name, 'recommendations')
                   setSaving(false)
                 }}
               >

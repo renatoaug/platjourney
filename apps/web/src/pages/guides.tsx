@@ -5,6 +5,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Page } from '../app/page'
 import { DifficultyMeter } from '../components/difficulty-meter'
 import { GENRES_PT } from '../components/game-showcase'
+import { PageHero } from '../components/page-hero'
 import { titleHref } from '../components/tip'
 import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
@@ -538,30 +539,24 @@ export function Guides({
   if (data?.collage?.length && data.collage !== collage) setCollage(data.collage)
   return (
     <Page path="/guides">
-      <section className="guides-hero">
-        {collage.length > 0 && (
-          <div className="guides-hero-collage" aria-hidden="true">
-            {collage.map((url) => (
-              <img key={url} src={url} alt="" loading="lazy" />
-            ))}
-          </div>
-        )}
-        <div className="guides-hero-inner">
-          <span className="eyebrow">{t('eyebrow')}</span>
-          <h1>{t('title')}</h1>
-          <p>{t('lead')}</p>
-          <label className="guides-hero-search">
-            <Icon name="search" />
-            <input
-              type="search"
-              aria-label={t('search')}
-              placeholder={t('searchPlaceholder')}
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-            />
-          </label>
-        </div>
-      </section>
+      <PageHero
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        lead={t('lead')}
+        images={collage}
+        look="covers"
+      >
+        <label className="guides-hero-search">
+          <Icon name="search" />
+          <input
+            type="search"
+            aria-label={t('search')}
+            placeholder={t('searchPlaceholder')}
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+          />
+        </label>
+      </PageHero>
       <div className="guides-layout">
         <details
           className="guides-aside"

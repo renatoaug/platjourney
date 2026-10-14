@@ -211,77 +211,7 @@
 }
 
 @layer screens {
-  /* Top of the page: the art of the first game listed, fading into the page on the left and at
-     the bottom, behind a large title and the search. */
-  .guides-hero {
-    position: relative;
-    overflow: hidden;
-    margin: 0 0 24px;
-    min-height: 260px;
-    border-radius: var(--radius-card);
-    background: var(--color-bg);
-  }
-
-  /* Covers of the best rated games, tilted, on the right; the fade below hides their edges. */
-  .guides-hero-collage {
-    position: absolute;
-    top: -40px;
-    right: -60px;
-    bottom: -40px;
-    width: 68%;
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
-    rotate: -8deg;
-    opacity: 0.7;
-  }
-
-  .guides-hero-collage img {
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    object-fit: cover;
-    border-radius: var(--radius-control);
-  }
-
-  .guides-hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(
-        90deg,
-        var(--color-bg) 30%,
-        color-mix(in srgb, var(--color-bg) 40%, transparent) 60%,
-        transparent
-      ),
-      linear-gradient(to top, var(--color-bg), transparent 45%);
-  }
-
-  .guides-hero-inner {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    gap: 10px;
-    max-width: 620px;
-    padding: 40px 4px 28px;
-  }
-
-  .guides-hero .eyebrow {
-    color: var(--color-accent);
-  }
-
-  .guides-hero h1 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--text-display);
-    line-height: var(--leading-none);
-  }
-
-  .guides-hero p {
-    margin: 0;
-    color: var(--color-fg-soft);
-  }
-
+  /* The search inside the page's top (components/page-hero). */
   .guides-hero-search {
     display: flex;
     align-items: center;
@@ -695,34 +625,6 @@
   }
 
   @media (max-width: 760px) {
-    /* On a phone the covers spread behind the whole hero, dimmer, so the title and search stay
-       readable over them. */
-    .guides-hero-collage {
-      top: -60px;
-      right: -40%;
-      bottom: -60px;
-      width: 150%;
-      grid-template-columns: repeat(6, 1fr);
-      opacity: 0.45;
-    }
-
-    .guides-hero::after {
-      background: linear-gradient(
-        to top,
-        var(--color-bg) 15%,
-        color-mix(in srgb, var(--color-bg) 70%, transparent) 55%,
-        color-mix(in srgb, var(--color-bg) 35%, transparent)
-      );
-    }
-
-    .guides-hero {
-      min-height: 0;
-    }
-
-    .guides-hero-inner {
-      padding: 24px 18px;
-    }
-
     .guide-row-meta .dm,
     .guide-row-meta [role="img"] {
       display: none;

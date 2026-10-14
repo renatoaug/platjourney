@@ -120,6 +120,7 @@ erDiagram
         position int
         recommended_at option(datetime)
         next_pick_at option(datetime)
+        source option(string)
         created_at datetime
         updated_at datetime
     }
@@ -368,7 +369,7 @@ erDiagram
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN |
-| `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `next_pick_at`: when "Nexo decide" picked it as the next platinum, on one interest of the player at a time |
+| `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `source`: where the player saved it from (`releases`, the home's calendar; `recommendations`; `title`, a game's page; `search`, the add panel), kept from the first save; none for older saves and Telegram. `next_pick_at`: when "Nexo decide" picked it as the next platinum, on one interest of the player at a time |
 | `recommendation` | game recommended in a batch | | Every batch of the last year, with why and what it is similar to; `batch_at` groups a batch's rows. Discover shows the latest batch; the older ones keep new batches to games not shown yet, and shown games come back, the oldest first, only when those run out. Rows from before batches were kept have no `batch_at` and count as one batch |
 | `dismissal` | game the player dismissed | `user, game` | Never recommended again |
 | `tip` | notice or tip Nexo wrote | | `kind`: `start`, `unlock`, `session`, `chat` (help on one trophy), `server`, `deal` (a saved game went on sale) |

@@ -126,3 +126,61 @@ test('a tap on the image opens it full screen; a click on the backdrop closes it
   fireEvent.click(box)
   expect(container.querySelector('.lightbox')).toBeNull()
 })
+
+describe('the store at the foot of About', () => {
+  const url = 'https://store.playstation.com/pt-br/concept/1'
+  test('a sale shows its percent, price, old price and end, with the store link', () => {
+    render(
+      <GameAbout
+        game={game}
+        name="Days Gone"
+        store={{
+          url,
+          deal: {
+            price: 4990,
+            base: 19990,
+            discount: 75,
+            endsAt: '2026-10-22T12:00:00Z',
+            plus: false,
+            currency: 'BRL',
+            storeUrl: url,
+          },
+        }}
+      />,
+    )
+    expect(screen.getByText('-75%')).toBeTruthy()
+    expect(screen.getByText(/49,90/)).toBeTruthy()
+    const link = screen.getByRole('link', { name: /Ver na PS Store/ }) as HTMLAnchorElement
+    expect(link.href).toBe(url)
+  })
+
+  test("the player's own PS Plus says so; without a price, only the link", () => {
+    const { unmount } = render(
+      <GameAbout
+        game={game}
+        name="Days Gone"
+        store={{
+          url,
+          deal: {
+            price: 0,
+            base: 0,
+            discount: 0,
+            endsAt: null,
+            plus: true,
+            plusTier: 'extra',
+            mine: true,
+            currency: 'BRL',
+            storeUrl: url,
+          },
+        }}
+      />,
+    )
+    expect(screen.getByText('No seu PS Plus Extra: jogue sem pagar')).toBeTruthy()
+    unmount()
+    const { container } = render(
+      <GameAbout game={game} name="Days Gone" store={{ url, deal: null }} />,
+    )
+    expect(container.querySelector('.game-about-deal')).toBeNull()
+    expect(screen.getByRole('link', { name: /Ver na PS Store/ })).toBeTruthy()
+  })
+})

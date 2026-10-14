@@ -95,7 +95,7 @@ test('a game the player does not own: the overview and saving it', async () => {
   )
   fireEvent.click(screen.getByRole('button', { name: /Salvar nos interesses/ }))
   expect(await screen.findByRole('button', { name: 'Nos interesses', pressed: true })).toBeTruthy()
-  expect(calls.at(-1)?.body).toEqual({ command: 'add game:19561' })
+  expect(calls.at(-1)?.body).toEqual({ command: 'add game:19561 from:title' })
 })
 
 test('without a trophy list the trophies column says it is on its way', async () => {

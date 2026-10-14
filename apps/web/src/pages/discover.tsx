@@ -5,6 +5,7 @@ import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { DemoNote } from '../components/demo'
 import { RankingRow, RankingRowsSkeleton } from '../components/game-cards'
+import { PageHero } from '../components/page-hero'
 import {
   type DismissReason,
   type Recommendation,
@@ -24,6 +25,7 @@ import './discover.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
+    eyebrow: 'SUA PRÓXIMA PLATINA',
     title: 'Descobrir',
     rankingPages: 'Páginas da sua biblioteca',
     customize: 'Personalizar',
@@ -43,6 +45,7 @@ const messages = defineMessages({
     prefsSaved: 'Perfil salvo.',
   },
   [Language.En]: {
+    eyebrow: 'YOUR NEXT PLATINUM',
     title: 'Discover',
     rankingPages: 'Pages of your library',
     customize: 'Customize',
@@ -141,12 +144,18 @@ export function Discover() {
 
   return (
     <Page path="/discover">
-      <div className="page-head">
-        <div>
-          <h1>{t('title')}</h1>
-          <p>{t('lead')}</p>
-        </div>
-      </div>
+      {/* Wide artworks of the games Nexo recommended. */}
+      <PageHero
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        lead={t('lead')}
+        images={
+          recs.status === 'ok'
+            ? recs.recs.items.flatMap((r) => (r.game.art_url ? [r.game.art_url] : []))
+            : []
+        }
+        look="art"
+      />
       <div className="grid cols-2 discover-columns">
         <div className="card">
           <h2>{t('nextPlatinum')}</h2>

@@ -1,5 +1,5 @@
 /** Beside the interests: the saved games the player can get for less right now. The ones their own
- * PS Plus already includes come first, then the PS Store sales, six at a time. Only shows when there
+ * PS Plus already includes come first, then the PS Store sales, four at a time. Only shows when there
  * is one. */
 import { useState } from 'react'
 import { Link } from 'react-router'
@@ -42,7 +42,7 @@ const messages = defineMessages({
   },
 })
 
-const PAGE = 6
+const PAGE = 4
 const TIER_NAMES = { essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' } as const
 
 /** The saved games that cost less now: the player's own PS Plus ones first, then the deepest sales. */
@@ -68,11 +68,15 @@ export function DealsSpotlight({ interests }: { interests: Interest[] }) {
     (cents / 100).toLocaleString(locale, { style: 'currency', currency })
   return (
     <section className="deals" aria-labelledby="deals-title">
+      {/* One slim line on top: the label and the count, with the pages on the right. */}
       <div className="deals-head">
         <span className="eyebrow">
           <Icon name="tag" /> {t('eyebrow')}
         </span>
         <h3 id="deals-title">{t('title', { count: shown.length })}</h3>
+        {pages > 1 && (
+          <Pager page={at} size={PAGE} total={shown.length} onPage={setPage} label={t('pages')} />
+        )}
       </div>
       <div className="deals-row">
         {shown.slice((at - 1) * PAGE, at * PAGE).map((i) => {
@@ -96,42 +100,39 @@ export function DealsSpotlight({ interests }: { interests: Interest[] }) {
                 ) : (
                   <span className="deal-price">
                     <b>{money(d.price, d.currency)}</b> <s>{money(d.base, d.currency)}</s>
-                    {d.plusPrice ? (
-                      <span className="deal-plus">
-                        {t('plus', { price: money(d.plusPrice, d.currency) })}
-                      </span>
-                    ) : null}
                   </span>
                 )}
-                {!mine && d.endsAt && (
-                  <span className="deal-until">
-                    <Icon name="clock" />{' '}
-                    {t('until', {
-                      date: new Date(d.endsAt).toLocaleDateString(locale, {
-                        day: 'numeric',
-                        month: 'short',
-                      }),
-                    })}
-                  </span>
-                )}
-                {d.storeUrl && (
-                  <a
-                    className="button sm deal-store"
-                    href={d.storeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {t('store')} <Icon name="arrow" />
-                  </a>
-                )}
+                {/* The end of the sale and the store link share a line. */}
+                <div className="deal-meta">
+                  {!mine && (d.endsAt || d.plusPrice) ? (
+                    <span className="deal-until">
+                      {d.endsAt &&
+                        t('until', {
+                          date: new Date(d.endsAt).toLocaleDateString(locale, {
+                            day: 'numeric',
+                            month: 'short',
+                          }),
+                        })}
+                      {d.endsAt && d.plusPrice ? ' · ' : null}
+                      {d.plusPrice ? t('plus', { price: money(d.plusPrice, d.currency) }) : null}
+                    </span>
+                  ) : null}
+                  {d.storeUrl && (
+                    <a
+                      className="text-link deal-store"
+                      href={d.storeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t('store')} <Icon name="arrow" />
+                    </a>
+                  )}
+                </div>
               </div>
             </article>
           )
         })}
       </div>
-      {pages > 1 && (
-        <Pager page={at} size={PAGE} total={shown.length} onPage={setPage} label={t('pages')} />
-      )}
     </section>
   )
 }

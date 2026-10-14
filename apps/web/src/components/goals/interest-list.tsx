@@ -36,6 +36,7 @@ const messages = defineMessages({
       pages: 'Páginas de interesses',
       emptyFilter: 'Nada por aqui com esse filtro.',
       recommended: 'Recomendado pelo Nexo em {date}',
+      fromReleases: 'Salvo dos lançamentos em {date}',
       nextPick: 'Próxima platina, escolhida pelo Nexo em {date}',
       sale: '{discount}% off · {price} na PS Store',
       saleUntil: '{discount}% off · {price} até {date}',
@@ -59,6 +60,7 @@ const messages = defineMessages({
       pages: 'Interest pages',
       emptyFilter: 'Nothing here with this filter.',
       recommended: 'Recommended by Nexo on {date}',
+      fromReleases: 'Saved from new releases on {date}',
       nextPick: 'Next platinum, picked by Nexo on {date}',
       sale: '{discount}% off · {price} on the PS Store',
       saleUntil: '{discount}% off · {price} until {date}',
@@ -160,6 +162,11 @@ function Row({
           <small className="goal-recommended">
             <img src="/nexo-avatar.svg" alt="" />
             {t('list.recommended', { date: fmtDate(g.recommendedAt) })}
+          </small>
+        ) : g.source === 'releases' && g.savedAt ? (
+          <small className="goal-recommended">
+            <Icon name="clock" />
+            {t('list.fromReleases', { date: fmtDate(g.savedAt) })}
           </small>
         ) : null}
         {!g.done && started(g) ? (

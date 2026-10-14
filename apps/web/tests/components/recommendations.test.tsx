@@ -97,7 +97,7 @@ test('saving a game puts it in the interests and fills the bookmark', async () =
   })
   await waitFor(() => expect(saved.hasAttribute('disabled')).toBe(false))
   expect(saved.className).toContain('saved')
-  expect(calls[0].body).toEqual({ command: 'add game:10' })
+  expect(calls[0].body).toEqual({ command: 'add game:10 from:recommendations' })
   expect(screen.getByTestId('location').textContent).toBe('/discover')
 })
 

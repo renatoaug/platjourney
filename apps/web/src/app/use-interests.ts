@@ -2,7 +2,7 @@
 import { useCallback } from 'react'
 import { defineMessages, Language, translator } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
-import type { YearGoals } from '../lib/types'
+import type { InterestSource, YearGoals } from '../lib/types'
 import { toast } from '../ui/toast'
 import { useApp } from './app-state'
 
@@ -44,10 +44,12 @@ export function useInterests() {
 
   /** Saves the game, or removes it when it is already there, with the success toast. */
   const toggle = useCallback(
-    async (gameId: string, name: string) => {
+    async (gameId: string, name: string, source?: InterestSource) => {
       const existing = find(gameId)
       try {
-        await command(existing ? `remove ${existing.id}` : `add ${gameId}`)
+        await command(
+          existing ? `remove ${existing.id}` : `add ${gameId}${source ? ` from:${source}` : ''}`,
+        )
         if (existing) toast(t('interestRemoved', { name }), 'success')
         else
           toast(t('interestSaved', { name }), 'success', {

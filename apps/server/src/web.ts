@@ -37,7 +37,7 @@ import {
   translator,
   userLocale,
 } from './i18n.ts'
-import { handleInterestCommand, yearProgress } from './interests.ts'
+import { handleInterestCommand, storeFor, yearProgress } from './interests.ts'
 import { library, ownedGames } from './library.ts'
 import { reply, trophyHelp } from './nexo.ts'
 import { nextPick } from './next-pick.ts'
@@ -359,6 +359,8 @@ async function titleDetail(url: URL, user: User) {
     platform: found.platforms.find((p) => p === 'PS5') ?? found.platforms[0] ?? platform,
     icon: heroArt(found),
     cover: found.cover_url,
+    // Not in the library yet: where to buy it, and its sale when known.
+    store: await storeFor(found, user),
     guide,
     building: !guide && !queued && !isDemo(user),
     queued,
@@ -824,7 +826,8 @@ async function api(
     const { command } = await readBody(req)
     if (typeof command !== 'string') return json(res, 400, { error: 'command required' })
     if (command.startsWith('add ')) {
-      const id = command.slice(4).trim()
+      // The game's id, without where it was saved from ("add game:12 from:releases").
+      const id = command.slice(4).trim().split(/\s+/)[0]
       if (!id.startsWith('game:') || !(await getGame(id)))
         return json(res, 400, { error: t('pickCatalogGame') })
     }

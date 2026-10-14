@@ -72,7 +72,7 @@ test('adding a game from the catalog', async () => {
   fireEvent.click(await screen.findByRole('option', { name: /Elden Ring/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
   expect(await screen.findByText('Elden Ring salvo nos interesses')).toBeTruthy()
-  expect(command).toHaveBeenCalledWith('add game:elden-ring')
+  expect(command).toHaveBeenCalledWith('add game:elden-ring from:search')
   expect(toggle.getAttribute('aria-expanded')).toBe('false')
   await waitFor(() => expect(document.activeElement).toBe(toggle))
 })
@@ -135,7 +135,7 @@ test('while saving, the add button is locked', () => {
   expect(screen.getByRole('button', { name: 'Adicionar jogo' }).hasAttribute('disabled')).toBe(true)
 })
 
-test('deals and platinums get a column each only when both fill one', () => {
+test('the saved games on sale sit in a band above the two columns, only when there is one', () => {
   const sale: Interest['deal'] = {
     price: 1000,
     base: 2000,
@@ -148,18 +148,15 @@ test('deals and platinums get a column each only when both fill one', () => {
   const open = sampleGoals.interests.filter((g) => !g.done)
   const withDeals = (n: number) =>
     sampleGoals.interests.map((g) => (open.indexOf(g) < n && !g.done ? { ...g, deal: sale } : g))
-  const plats = sampleGoals.platinumed.slice(0, 4)
-  const columns = (interests: typeof sampleGoals.interests, platinumed = plats) => {
-    const { container, unmount } = renderApp(
-      <GoalsView goals={{ ...sampleGoals, interests, platinumed }} command={ok()} />,
-    )
-    const trio = container.querySelector('.goals-columns')?.classList.contains('trio')
-    const deals = !!container.querySelector('.deals')
-    unmount()
-    return { trio, deals }
-  }
-  expect(columns(withDeals(0))).toEqual({ trio: false, deals: false })
-  expect(columns(withDeals(3))).toEqual({ trio: false, deals: true })
-  expect(columns(withDeals(4))).toEqual({ trio: true, deals: true })
-  expect(columns(withDeals(6), plats.slice(0, 2))).toEqual({ trio: false, deals: true })
+  const { container, unmount } = renderApp(
+    <GoalsView goals={{ ...sampleGoals, interests: withDeals(2) }} command={ok()} />,
+  )
+  const deals = container.querySelector('.deals')
+  expect(deals?.nextElementSibling?.classList.contains('goals-columns')).toBe(true)
+  expect(container.querySelector('.goals-side .deals')).toBeNull()
+  unmount()
+  const none = renderApp(
+    <GoalsView goals={{ ...sampleGoals, interests: withDeals(0) }} command={ok()} />,
+  )
+  expect(none.container.querySelector('.deals')).toBeNull()
 })

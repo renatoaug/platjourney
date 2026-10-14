@@ -115,7 +115,7 @@ function ReleaseCard({ r, today }: { r: Release; today: number }) {
         disabled={busy || demo}
         onClick={async () => {
           setBusy(true)
-          await toggle(r.id, r.name)
+          await toggle(r.id, r.name, 'releases')
           setBusy(false)
         }}
       >
