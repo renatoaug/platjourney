@@ -6,8 +6,8 @@ export interface StoredPrice extends StorePrice {
   game: string
 }
 
-/** The last price read for each of these games. */
-export async function pricesFor(games: string[]): Promise<Map<string, StoredPrice>> {
+/** The last price read for each of these games in a region's store (Brazil by default). */
+export async function pricesFor(games: string[], region = 'BR'): Promise<Map<string, StoredPrice>> {
   if (!games.length) return new Map()
   const rows = plain(
     await q<
@@ -23,10 +23,8 @@ export async function pricesFor(games: string[]): Promise<Map<string, StoredPric
         currency: string
       }[]
     >(
-      'SELECT game, base, price, discount, ends_at, plus, plus_price, plus_tier, currency FROM store_price WHERE game IN $games',
-      {
-        games: games.map(gameRef),
-      },
+      'SELECT game, base, price, discount, ends_at, plus, plus_price, plus_tier, currency FROM store_price WHERE game IN $games AND region = $region',
+      { games: games.map(gameRef), region },
     ),
   )
   return new Map(
@@ -47,12 +45,14 @@ export async function pricesFor(games: string[]): Promise<Map<string, StoredPric
   )
 }
 
-export async function savePrice(game: string, p: StorePrice): Promise<void> {
+export async function savePrice(game: string, p: StorePrice, region = 'BR'): Promise<void> {
   await q(
-    `UPSERT store_price SET game = $game, base = $base, price = $price, discount = $discount,
-       ends_at = $ends, plus = $plus, plus_price = $plusPrice, plus_tier = $plusTier, currency = $currency WHERE game = $game`,
+    `UPSERT store_price SET game = $game, region = $region, base = $base, price = $price, discount = $discount,
+       ends_at = $ends, plus = $plus, plus_price = $plusPrice, plus_tier = $plusTier, currency = $currency
+     WHERE game = $game AND region = $region`,
     {
       game: gameRef(game),
+      region,
       base: p.base,
       price: p.price,
       discount: p.discount,

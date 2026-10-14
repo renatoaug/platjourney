@@ -213,7 +213,7 @@ erDiagram
     game ||--o{ guide_chunk : "has passages"
     game ||--o| guide_request : "is asked for"
     game ||--o| server_status : "online status"
-    game ||--o| store_price : "PS Store price"
+    game ||--o{ store_price : "PS Store price per region"
     user }o--o{ game_request : "asks for a missing game"
     game {
         id record(game) PK
@@ -284,7 +284,8 @@ erDiagram
     }
     store_price {
         id record(store_price) PK
-        game record(game) FK "unique"
+        game record(game) FK
+        region string
         base int
         price int
         discount int
@@ -388,7 +389,7 @@ erDiagram
 | `guide_chunk` | passage of a deep guide | | Text, heading path, source page and its date, and the vector |
 | `guide_request` | game asked for without a guide | `game` | How many times and the questions, for whoever runs the instance |
 | `game_request` | name searched on Guides that neither the catalog nor IGDB had | `key` (the name normalized for search) | Who asked, each account once, and how many; for whoever runs the instance to add by hand |
-| `store_price` | game someone saved in their interests | `game` | Its PlayStation Store price in Brazil, in cents, read once a day and overwritten: price, full price, percent off, when the sale ends, whether PS Plus includes it and what members pay when the store gives them a lower price (`plus_price`), and the lowest tier whose catalog includes it (`plus_tier`). A game the player's own tier includes is a `deal` notice too, once. A new or deeper sale is a `deal` notice to everyone who saved the game |
+| `store_price` | game someone saved in their interests, per store region | `game, region` | Its PlayStation Store price in a region (`region`, upper case; only `BR` is read today), in cents, read once a day and overwritten: price, full price, percent off, when the sale ends, whether PS Plus includes it and what members pay when the store gives them a lower price (`plus_price`), and the lowest tier whose catalog includes it (`plus_tier`). A game the player's own tier includes is a `deal` notice too, once. A new or deeper sale is a `deal` notice to everyone who saved the game |
 | `server_status` | game whose online servers were checked | `game` | `status`: `active`, `announced`, `closed` or `unknown`; shared by everyone, and who was already warned is in `notification` |
 
 ## Costs
