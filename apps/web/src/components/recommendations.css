@@ -12,7 +12,6 @@
   }
 
   .recommendation-heading .n {
-    flex: 1 1 150px;
     min-width: 0;
     overflow-wrap: anywhere;
   }
@@ -95,25 +94,19 @@
     height: 12px;
   }
 
-  @media (max-width: 760px) {
-    .recommendation-heading .n {
-      flex: initial;
-    }
-  }
-
+  /* The name, then its facts below it from the left. */
   .recommendation-heading {
     display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 6px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
     margin-bottom: 8px;
   }
 
   .recommendation-meta {
     flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-left: auto;
-    gap: 8px 12px;
+    justify-content: flex-start;
+    gap: 8px 16px;
     color: var(--color-fg-muted);
     font-size: var(--text-sm);
   }

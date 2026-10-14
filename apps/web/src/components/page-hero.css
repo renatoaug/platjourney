@@ -1,0 +1,180 @@
+@layer screens {
+  /* The top of a list page: the art on the right, fading into the page on the left and at the
+     bottom, behind a large title. */
+  .page-hero {
+    position: relative;
+    overflow: hidden;
+    margin: 0 0 24px;
+    min-height: 240px;
+    border-radius: var(--radius-card);
+    background: var(--color-bg);
+  }
+
+  .page-hero-art {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .page-hero-art img {
+    display: block;
+    width: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+  }
+
+  .page-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        var(--color-bg) 30%,
+        color-mix(in srgb, var(--color-bg) 40%, transparent) 60%,
+        transparent
+      ),
+      linear-gradient(to top, var(--color-bg), transparent 45%);
+  }
+
+  /* Guides: covers of the best rated games, tilted. */
+  .page-hero.is-covers .page-hero-art {
+    top: -40px;
+    right: -60px;
+    bottom: -40px;
+    width: 68%;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    rotate: -8deg;
+    opacity: 0.7;
+  }
+
+  .page-hero.is-covers .page-hero-art img {
+    aspect-ratio: 3 / 4;
+  }
+
+  /* Interests: the player's own covers standing upright in a row, like a shelf, leaning back. */
+  .page-hero.is-shelf .page-hero-art {
+    right: 24px;
+    bottom: 28px;
+    width: 60%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 12px;
+    perspective: 900px;
+    opacity: 0.8;
+  }
+
+  .page-hero.is-shelf .page-hero-art img {
+    flex: 0 1 120px;
+    min-width: 0;
+    aspect-ratio: 3 / 4;
+    transform: rotateY(-18deg);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .page-hero.is-shelf .page-hero-art img:nth-child(odd) {
+    margin-bottom: 14px;
+  }
+
+  /* Discover: wide artworks of the recommended games, in staggered rows. */
+  .page-hero.is-art .page-hero-art {
+    top: -30px;
+    right: -80px;
+    bottom: -30px;
+    width: 64%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    rotate: 6deg;
+    opacity: 0.6;
+  }
+
+  .page-hero.is-art .page-hero-art img {
+    aspect-ratio: 16 / 9;
+  }
+
+  .page-hero.is-art .page-hero-art img:nth-child(6n + 4) {
+    margin-left: 40%;
+  }
+
+  .page-hero-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 10px;
+    max-width: 620px;
+    padding: 40px 4px 28px;
+  }
+
+  .page-hero .eyebrow {
+    color: var(--color-accent);
+  }
+
+  .page-hero h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-display);
+    line-height: var(--leading-none);
+  }
+
+  .page-hero p {
+    margin: 0;
+    color: var(--color-fg-soft);
+  }
+
+  @media (max-width: 760px) {
+    /* On a phone the art spreads behind the whole top, dimmer, so the title stays readable. */
+    .page-hero {
+      min-height: 0;
+    }
+
+    .page-hero.is-covers .page-hero-art,
+    .page-hero.is-art .page-hero-art {
+      right: -40%;
+      width: 150%;
+    }
+
+    .page-hero.is-covers .page-hero-art {
+      top: -60px;
+      bottom: -60px;
+      grid-template-columns: repeat(6, 1fr);
+      opacity: 0.45;
+    }
+
+    .page-hero.is-art .page-hero-art {
+      opacity: 0.4;
+    }
+
+    .page-hero.is-shelf .page-hero-art {
+      top: 10px;
+      right: -30px;
+      bottom: auto;
+      width: 100%;
+      opacity: 0.55;
+    }
+
+    .page-hero.is-shelf .page-hero-art img {
+      flex-basis: 76px;
+    }
+
+    /* The shelf stands above the title instead of behind it. */
+    .page-hero.is-shelf .page-hero-inner {
+      padding-top: 100px;
+    }
+
+    .page-hero::after {
+      background: linear-gradient(
+        to top,
+        var(--color-bg) 15%,
+        color-mix(in srgb, var(--color-bg) 70%, transparent) 55%,
+        color-mix(in srgb, var(--color-bg) 35%, transparent)
+      );
+    }
+
+    .page-hero-inner {
+      padding: 24px 18px;
+    }
+  }
+}

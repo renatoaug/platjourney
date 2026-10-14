@@ -97,7 +97,9 @@ test('a catalog entry keeps only aliases a person would type', () => {
     screenshot_ids: ['shot'],
     developers: ['Sucker Punch'],
     website: 'https://suckerpunch.example/got',
+    store_url: null,
     released_at: '2020-07-24',
+    hypes: 0,
   })
 })
 
@@ -112,7 +114,9 @@ test('a bare game has empty lists and null details', () => {
     screenshot_ids: [],
     developers: [],
     website: null,
+    store_url: null,
     released_at: null,
+    hypes: 0,
   })
 })
 

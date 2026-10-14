@@ -39,6 +39,11 @@ const messages = defineMessages({
       saveFailed: 'Não conseguimos salvar a preferência. Tente de novo.',
       withDlc: 'O progresso agora conta as DLCs.',
       baseOnly: 'O progresso agora mostra só o jogo base.',
+      plus: 'Seu PS Plus',
+      plusHint:
+        'A PSN não informa. Com ele, os interesses mostram os jogos que o seu plano já inclui.',
+      plusSaved: 'PS Plus salvo.',
+      plusTier: { none: 'Não tenho', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
       dlc: 'Contar DLCs no progresso',
       dlcHint:
         'A platina só pede o jogo base. Ligue para ver o progresso com as DLCs em todo o app, no Telegram e no Nexo.',
@@ -91,6 +96,11 @@ const messages = defineMessages({
       saveFailed: 'Could not save the preference. Try again.',
       withDlc: 'Progress now counts DLC.',
       baseOnly: 'Progress now shows the base game only.',
+      plus: 'Your PS Plus',
+      plusHint:
+        'PSN does not tell. With it, your interests show the games your plan already includes.',
+      plusSaved: 'PS Plus saved.',
+      plusTier: { none: 'None', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
       dlc: 'Count DLC in progress',
       dlcHint:
         'The platinum only needs the base game. Turn on to see progress with DLC across the app, on Telegram and in Nexo.',
@@ -247,6 +257,47 @@ function NoticesSetting({ user }: { user: Me }) {
   )
 }
 
+const PLUS_TIERS = ['none', 'essential', 'extra', 'deluxe'] as const
+
+/** The player's PS Plus tier: PSN does not say, so they do. */
+function PlusSetting({ user }: { user: Me }) {
+  const t = useMessages(messages)
+  const { setMe } = useApp()
+  const [saving, setSaving] = useState(false)
+  const change = async (tier: (typeof PLUS_TIERS)[number]) => {
+    setSaving(true)
+    try {
+      const saved = await api<{ user: Me }>('/api/account/preferences', { psPlus: tier })
+      setMe(saved.user)
+      toast(t('preferences.plusSaved'), 'success')
+      document.dispatchEvent(new Event('preferences:changed'))
+    } catch (e) {
+      if (!handled(e)) toast(t('preferences.saveFailed'))
+    }
+    setSaving(false)
+  }
+  return (
+    <label className="setting-row">
+      <span className="setting-text">
+        <b>{t('preferences.plus')}</b>
+        <small>{t('preferences.plusHint')}</small>
+      </span>
+      <select
+        id="pref-plus"
+        value={user.psPlus ?? 'none'}
+        disabled={saving || user.demo}
+        onChange={(e) => change(e.target.value as (typeof PLUS_TIERS)[number])}
+      >
+        {PLUS_TIERS.map((tier) => (
+          <option key={tier} value={tier}>
+            {t(`preferences.plusTier.${tier}`)}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 function PreferencesCard({ user }: { user: Me }) {
   const t = useMessages(messages)
   const { setMe } = useApp()
@@ -292,6 +343,7 @@ function PreferencesCard({ user }: { user: Me }) {
           onChange={(e) => change(e.target.checked)}
         />
       </label>
+      <PlusSetting user={user} />
       {user.aiNoticesAvailable && <NoticesSetting user={user} />}
       {user.demo && <DemoNote />}
       <LanguageSetting />

@@ -15,7 +15,7 @@ test('each row: platform, difficulty, time, runs and the reason', () => {
   renderApp(<Recommendations state={ok} onDismiss={() => {}} />)
   const h = row('Horizon Zero Dawn')
   expect(h.getAttribute('href')).toBe('/title/game/game%3A10')
-  expect(h.textContent).toContain('3/10')
+  expect(within(h).getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(h.textContent).toContain('~50h')
   expect(h.textContent).toContain('1 jogada')
   expect(h.textContent).toContain('Sem troféu de dificuldade')
@@ -97,7 +97,7 @@ test('saving a game puts it in the interests and fills the bookmark', async () =
   })
   await waitFor(() => expect(saved.hasAttribute('disabled')).toBe(false))
   expect(saved.className).toContain('saved')
-  expect(calls[0].body).toEqual({ command: 'add game:10' })
+  expect(calls[0].body).toEqual({ command: 'add game:10 from:recommendations' })
   expect(screen.getByTestId('location').textContent).toBe('/discover')
 })
 

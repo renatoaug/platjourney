@@ -16,6 +16,7 @@ export interface User {
   taste_prefs?: unknown | null
   session_plan: unknown | null
   include_dlc_progress?: boolean
+  ps_plus?: 'none' | 'essential' | 'extra' | 'deluxe' | null
   // Nexo's words in automatic notices; off, plain templates (no model).
   ai_notices?: boolean
   locale?: Locale | null

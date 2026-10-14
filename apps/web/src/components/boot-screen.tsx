@@ -42,6 +42,16 @@ export function BootScreen({ leaving = false }: { leaving?: boolean }) {
     const id = setInterval(() => setLine((n) => (n + 1) % LINES.length), TURN_MS)
     return () => clearInterval(id)
   }, [])
+  // The page under it stays still while it shows (boot-screen.css); scrolling comes back as soon
+  // as it starts to fade, and whatever happens to it, once it is gone.
+  useEffect(() => {
+    if (leaving) return
+    const html = document.documentElement
+    html.dataset.booting = ''
+    return () => {
+      delete html.dataset.booting
+    }
+  }, [leaving])
   return (
     <div
       className={`boot-screen${leaving ? ' leaving' : ''}`}

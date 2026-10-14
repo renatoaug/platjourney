@@ -24,6 +24,7 @@ export const messages = defineMessages({
       session: 'sessão',
       route: 'rota',
       server: 'servidor',
+      deal: 'promoção',
       chat: 'chat',
     },
     library: 'Sua biblioteca',
@@ -35,13 +36,14 @@ export const messages = defineMessages({
       session: 'session',
       route: 'route',
       server: 'server',
+      deal: 'deal',
       chat: 'chat',
     },
     library: 'Your library',
   },
 })
 
-const KINDS = ['start', 'unlock', 'session', 'route', 'server', 'chat']
+const KINDS = ['start', 'unlock', 'session', 'route', 'server', 'deal', 'chat']
 
 /** The tag of an activity item ("troféu", "sessão"); an unknown kind shows as it came. */
 export const kindLabel = (t: Translator<typeof messages>, kind: string) =>
@@ -53,6 +55,7 @@ export const KIND_ICON: Record<string, string> = {
   session: 'clock',
   route: 'compass',
   server: 'globe',
+  deal: 'tag',
   chat: 'nexo',
 }
 

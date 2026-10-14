@@ -18,12 +18,14 @@
     margin-top: 6px;
   }
 
+  /* Every game card answers the pointer the same way: it lifts a little and its art zooms in. */
   a.game-card {
     display: flex;
     color: inherit;
     transition:
       background 0.15s,
-      border-color 0.15s;
+      border-color 0.15s,
+      transform 0.15s;
   }
 
   a.game-card:hover h3 {
@@ -48,7 +50,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.35s ease;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .game-card:hover .game-art img {
@@ -149,5 +151,6 @@
 
   a.game-card:hover {
     border-color: var(--color-accent-muted);
+    transform: translateY(-2px);
   }
 }

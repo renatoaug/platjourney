@@ -8,7 +8,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router'
-import { defineMessages, Language, useMessages } from '../../i18n/i18n'
+import { defineMessages, Language, useLocale, useMessages } from '../../i18n/i18n'
 import { fmtDate, fmtHours, pct } from '../../lib/format'
 import type { Interest } from '../../lib/types'
 import { Cover } from '../../ui/cover'
@@ -36,7 +36,12 @@ const messages = defineMessages({
       pages: 'Páginas de interesses',
       emptyFilter: 'Nada por aqui com esse filtro.',
       recommended: 'Recomendado pelo Nexo em {date}',
+      fromReleases: 'Salvo dos lançamentos em {date}',
       nextPick: 'Próxima platina, escolhida pelo Nexo em {date}',
+      sale: '{discount}% off · {price} na PS Store',
+      saleUntil: '{discount}% off · {price} até {date}',
+      plus: 'Incluso no PS Plus {tier}',
+      mine: 'No seu PS Plus {tier}: jogue sem pagar',
     },
   },
   [Language.En]: {
@@ -55,7 +60,12 @@ const messages = defineMessages({
       pages: 'Interest pages',
       emptyFilter: 'Nothing here with this filter.',
       recommended: 'Recommended by Nexo on {date}',
+      fromReleases: 'Saved from new releases on {date}',
       nextPick: 'Next platinum, picked by Nexo on {date}',
+      sale: '{discount}% off · {price} on the PS Store',
+      saleUntil: '{discount}% off · {price} until {date}',
+      plus: 'Included with PS Plus {tier}',
+      mine: 'In your PS Plus {tier}: play at no cost',
     },
   },
 })
@@ -71,6 +81,45 @@ interface Ghost {
   width: number
   lifted: boolean
   settling: boolean
+}
+
+const TIER_NAMES = { essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' } as const
+
+/** The game's price on the PS Store when it is on sale or in PS Plus. */
+function DealTag({ deal }: { deal: NonNullable<Interest['deal']> }) {
+  const t = useMessages(messages)
+  const locale = useLocale()
+  const price = (deal.price / 100).toLocaleString(locale, {
+    style: 'currency',
+    currency: deal.currency,
+  })
+  const tier = TIER_NAMES[deal.plusTier ?? 'extra']
+  if (deal.mine)
+    return (
+      <small className="goal-deal mine">
+        <Icon name="tag" />
+        {t('list.mine', { tier })}
+      </small>
+    )
+  const text =
+    deal.discount > 0
+      ? deal.endsAt
+        ? t('list.saleUntil', {
+            discount: deal.discount,
+            price,
+            date: new Date(deal.endsAt).toLocaleDateString(locale, {
+              day: 'numeric',
+              month: 'short',
+            }),
+          })
+        : t('list.sale', { discount: deal.discount, price })
+      : t('list.plus', { tier })
+  return (
+    <small className={`goal-deal${deal.discount > 0 ? ' sale' : ''}`}>
+      <Icon name="tag" />
+      {text}
+    </small>
+  )
 }
 
 function Row({
@@ -108,10 +157,16 @@ function Row({
             {t('list.nextPick', { date: fmtDate(g.nextPickAt) })}
           </small>
         ) : null}
+        {g.deal && !g.done ? <DealTag deal={g.deal} /> : null}
         {g.recommendedAt ? (
           <small className="goal-recommended">
             <img src="/nexo-avatar.svg" alt="" />
             {t('list.recommended', { date: fmtDate(g.recommendedAt) })}
+          </small>
+        ) : g.source === 'releases' && g.savedAt ? (
+          <small className="goal-recommended">
+            <Icon name="clock" />
+            {t('list.fromReleases', { date: fmtDate(g.savedAt) })}
           </small>
         ) : null}
         {!g.done && started(g) ? (

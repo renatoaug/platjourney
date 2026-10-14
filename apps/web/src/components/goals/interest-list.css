@@ -89,16 +89,39 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    margin-top: 3px;
-    font-size: var(--text-xs);
+    margin-top: 4px;
+    font-size: var(--text-md);
     color: var(--color-fg-muted);
+  }
+
+  .goal-deal {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+    font-size: var(--text-md);
+    color: var(--color-fg-muted);
+  }
+
+  .goal-deal.mine {
+    color: var(--color-accent);
+  }
+
+  .goal-deal.sale {
+    color: var(--color-trophy-gold);
+  }
+
+  .goal-deal .icon {
+    width: 13px;
+    height: 13px;
   }
 
   .goal-recommended.next {
     color: var(--color-accent);
   }
 
-  .goal-recommended img {
+  .goal-recommended img,
+  .goal-recommended .icon {
     width: 14px;
     height: 14px;
   }
@@ -154,17 +177,30 @@
     gap: 12px;
     padding: 12px 0;
     border-bottom: 1px solid var(--color-border);
-    font-size: var(--text-md);
+    font-size: var(--text-lg);
   }
 
   .goal-list .st {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     color: var(--color-fg-muted);
   }
 
+  /* A phone keeps the row smaller, so the name and its tag do not break into many lines. */
   @media (max-width: 480px) {
     .goal-list li {
       gap: 8px;
+      font-size: var(--text-body);
+    }
+
+    .goal-list .goal-cover,
+    .goal-list img.goal-cover {
+      width: 40px;
+      height: 54px;
+    }
+
+    .goal-recommended,
+    .goal-deal {
+      font-size: var(--text-sm);
     }
 
     .goal-list .st {
@@ -181,6 +217,13 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-round);
     color: var(--color-fg-subtle);
+  }
+
+  /* A phone keeps the row for the game: the state already reads in the text on the right. */
+  @media (max-width: 760px) {
+    .goal-game-status {
+      display: none;
+    }
   }
 
   .goal-game-status.complete {
@@ -293,8 +336,8 @@
   .goal-list .goal-cover,
   .goal-list img.goal-cover,
   .drag-ghost .goal-cover {
-    width: 34px;
-    height: 46px;
+    width: 48px;
+    height: 64px;
     border-radius: var(--radius-tag);
     object-fit: cover;
     flex: none;

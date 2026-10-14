@@ -16,7 +16,19 @@ const { setLocale } = await import('../src/i18n/locale')
 // calls setLocale('en', { persist: false }) itself.
 beforeEach(() => setLocale('pt-BR', { persist: false }))
 
+// Tests never reach the network. A request no test faked (mockApi, or its own spy on fetch) is
+// refused and fails the test that made it, instead of quietly hitting a server that is running here
+// and missing in CI.
+const unfaked: string[] = []
+globalThis.fetch = (async (input: RequestInfo | URL) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+  unfaked.push(url)
+  throw new TypeError(`fetch not faked in this test: ${url}`)
+}) as unknown as typeof fetch
+
 afterEach(() => {
   cleanup()
   localStorage.clear()
+  const urls = unfaked.splice(0)
+  if (urls.length) throw new Error(`fetch not faked in this test: ${[...new Set(urls)].join(', ')}`)
 })

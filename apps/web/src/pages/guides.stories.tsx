@@ -19,6 +19,8 @@ export const guidesData: GuideCardItem[] = [
     cover_url: cover('co670h'),
     platforms: ['PS5'],
     release_year: 2023,
+    genres: ['Role-playing (RPG)', 'Adventure'],
+    shot: 'sc81fj',
     guide: { difficulty: 6, hours: 140, hasMissables: true, hasOnline: false, unobtainable: null },
   },
   {
@@ -52,9 +54,39 @@ export const guidesData: GuideCardItem[] = [
     guide: null,
   },
 ]
+const facets: NonNullable<GuidesPage['facets']> = {
+  difficulty: { easy: 112, medium: 240, hard: 410, brutal: 655 },
+  hours: { '10': 64, '25': 180, '50': 390, '100': 560 },
+  noMissables: 302,
+  onePlaythrough: 488,
+  noOnline: 590,
+  genres: [
+    { name: 'Adventure', count: 410 },
+    { name: 'Role-playing (RPG)', count: 233 },
+    { name: 'Shooter', count: 190 },
+    { name: 'Indie', count: 150 },
+    { name: 'Platform', count: 88 },
+  ],
+}
+const collage = [
+  cover('co9pul'),
+  cover('cwcj7fd5sulqavyme3vc'),
+  cover('cob9mq'),
+  cover('co77x7'),
+  cover('co1rbm'),
+  cover('co6lli'),
+  cover('co48x2'),
+  cover('co5s15'),
+  cover('co8jkn'),
+  cover('co1x78'),
+  cover('co27bk'),
+  cover('cobf3a'),
+  cover('co8roc'),
+  cover('co6219'),
+]
 const answer =
   (items: GuideCardItem[], total = items.length) =>
-  async (): Promise<GuidesPage> => ({ page: 1, size: 24, total, items })
+  async (): Promise<GuidesPage> => ({ page: 1, size: 24, total, items, facets, collage })
 
 export const Loaded: Story = {
   render: () => (

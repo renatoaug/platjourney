@@ -1,4 +1,5 @@
 /** Home: greeting, the current journey, Nexo's latest word, stats, the radar, the annual goal and recent activity. */
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
@@ -6,6 +7,7 @@ import { AnnualGoal, AnnualGoalSkeleton } from '../components/annual-goal'
 import { GameCardsSkeleton, RadarCard } from '../components/game-cards'
 import { Hero, HeroSkeleton } from '../components/hero'
 import { NexoBrief, NexoBriefSkeleton } from '../components/nexo-brief'
+import { Releases } from '../components/releases'
 import { StatTiles, StatTilesSkeleton } from '../components/stat-tiles'
 import { TipItem, TipSkeleton } from '../components/tip'
 import { defineMessages, getLocale, Language, type Translator, useMessages } from '../i18n/i18n'
@@ -75,7 +77,8 @@ const greeting = (t: Translator<typeof messages>, onlineId: string) => {
   })
 }
 
-export function Home() {
+/** `releases` replaces the calendar's own request (stories pass it in a fixed state). */
+export function Home({ releases = <Releases /> }: { releases?: ReactNode } = {}) {
   const t = useMessages(messages)
   const { data } = useApp()
   // The profile is missing while PSN has not answered for this player.
@@ -146,6 +149,7 @@ export function Home() {
           {data ? <AnnualGoal goals={data.goals} /> : <AnnualGoalSkeleton />}
         </div>
       </div>
+      {releases}
       <section className="activity-section">
         <div className="section-head">
           <div>

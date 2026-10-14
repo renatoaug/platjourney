@@ -6,10 +6,11 @@ import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
+import { DifficultyMeter } from '../components/difficulty-meter'
 import { GameColumns } from '../components/game-columns'
-import { GameShowcase, GameShowcaseSkeleton } from '../components/game-showcase'
+import { GameShowcase, GameShowcaseSkeleton, type GameStore } from '../components/game-showcase'
 import { Guide, GuideSkeleton } from '../components/guide'
-import { HeroProgress, HeroSkeleton, UnobtainableBanner } from '../components/hero'
+import { HeroProgress, HeroSkeleton, Short, UnobtainableBanner } from '../components/hero'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
@@ -24,16 +25,19 @@ import { nexoHref } from '../components/tip'
 const messages = defineMessages({
   [Language.PtBR]: {
     guidePreparing: 'Guia sendo preparado…',
-    difficulty: 'Dificuldade {value}/10',
     hoursOfGuide: '{played} jogadas de ~{hours}h',
+    hoursOfGuideShort: '{played}/~{hours}h',
     hours: '~{hours} horas',
+    hoursShort: '~{hours}h',
     playthroughs: {
       one: '{count} jornada',
       other: '{count} jornadas',
     },
     missables: 'Troféus perdíveis',
+    missablesShort: 'Perdíveis',
     noMissables: 'Sem perdíveis',
     online: 'Troféus online',
+    onlineShort: 'Online',
     saved: 'Nos interesses',
     remove: 'Remover dos interesses',
     save: 'Salvar nos interesses',
@@ -51,16 +55,19 @@ const messages = defineMessages({
   },
   [Language.En]: {
     guidePreparing: 'Preparing the guide…',
-    difficulty: 'Difficulty {value}/10',
     hoursOfGuide: '{played} played of ~{hours}h',
+    hoursOfGuideShort: '{played}/~{hours}h',
     hours: '~{hours} hours',
+    hoursShort: '~{hours}h',
     playthroughs: {
       one: '{count} playthrough',
       other: '{count} playthroughs',
     },
     missables: 'Missable trophies',
+    missablesShort: 'Missables',
     noMissables: 'No missables',
     online: 'Online trophies',
+    onlineShort: 'Online',
     saved: 'In interests',
     remove: 'Remove from interests',
     save: 'Save to interests',
@@ -95,6 +102,8 @@ export interface TitleDetail {
   trophies: Trophy[] | null
   guide: GuideDetail | null
   deepGuide?: DeepGuideStats | null
+  /** A game the player does not have: where to buy it and its sale when known. */
+  store?: GameStore
   /** The guide is being researched: the page polls until it lands. */
   building: boolean
   /** The player used today's new guides; this one waits until tomorrow. */
@@ -128,21 +137,41 @@ function Meta({ d }: { d: TitleDetail }) {
   return (
     <div className="meta">
       {/* 0 means the sources do not say yet: the fact is left out, never shown as 0. */}
-      {g.difficulty > 0 && <span>{t('difficulty', { value: g.difficulty })}</span>}
+      {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
       {g.hours > 0 && (
         <span>
           <Icon name="clock" />{' '}
-          {d.hoursPlayed != null
-            ? t('hoursOfGuide', { played: fmtHours(d.hoursPlayed), hours: g.hours })
-            : t('hours', { hours: g.hours })}
+          {d.hoursPlayed != null ? (
+            <Short
+              long={t('hoursOfGuide', { played: fmtHours(d.hoursPlayed), hours: g.hours })}
+              short={t('hoursOfGuideShort', { played: fmtHours(d.hoursPlayed), hours: g.hours })}
+            />
+          ) : (
+            <Short
+              long={t('hours', { hours: g.hours })}
+              short={t('hoursShort', { hours: g.hours })}
+            />
+          )}
         </span>
       )}
-      {g.playthroughs > 0 && <span>{t('playthroughs', { count: g.playthroughs })}</span>}
+      {g.playthroughs > 0 && (
+        <span>
+          <Icon name="gamepad" /> {t('playthroughs', { count: g.playthroughs })}
+        </span>
+      )}
       <span className={g.hasMissables ? 'warn' : 'ok'}>
         <Icon name={g.hasMissables ? 'warning' : 'shield'} />{' '}
-        {g.hasMissables ? t('missables') : t('noMissables')}
+        {g.hasMissables ? (
+          <Short long={t('missables')} short={t('missablesShort')} />
+        ) : (
+          t('noMissables')
+        )}
       </span>
-      {g.hasOnline && <span className="warn">{t('online')}</span>}
+      {g.hasOnline && (
+        <span className="warn">
+          <Icon name="trophy" /> <Short long={t('online')} short={t('onlineShort')} />
+        </span>
+      )}
     </div>
   )
 }
@@ -163,7 +192,7 @@ function SaveButton({ d }: { d: TitleDetail }) {
       disabled={busy || demo}
       onClick={async () => {
         setBusy(true)
-        await toggle(d.game.id, d.name)
+        await toggle(d.game.id, d.name, 'title')
         setBusy(false)
       }}
     >
@@ -237,7 +266,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
             <span className="live-label">{owned ? t('inLibrary') : t('notInLibrary')}</span>
             <span className="platform">{d.platform}</span>
           </div>
-          <div>
+          <div className="hero-headline">
             <h2 className="hero-title">{d.name}</h2>
             <Meta d={d} />
           </div>
@@ -274,7 +303,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
           )}
         </div>
       </div>
-      <GameShowcase game={d.game} name={d.name} />
+      <GameShowcase game={d.game} name={d.name} store={d.owned ? null : d.store} />
       {/* Every game gets the same two columns as the current game: trophies on the left, the
           guide beside them. A game whose PSN list is not known yet says so where the list goes. */}
       <GameColumns

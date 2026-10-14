@@ -22,6 +22,8 @@ export interface Game {
   developers?: string[]
   website?: string | null
   released_at?: string | null
+  hypes?: number
+  store_url?: string | null
 }
 
 export const gameRef = (id: string): RecordId => gameId(id.replace(/^game:/, ''))
@@ -123,6 +125,8 @@ export async function upsertFromCatalog(
     screenshot_ids: entry?.screenshot_ids.length ? entry.screenshot_ids : existing?.screenshot_ids,
     developers: entry?.developers.length ? entry.developers : existing?.developers,
     website: entry?.website ?? existing?.website ?? undefined,
+    hypes: entry?.hypes || existing?.hypes || undefined,
+    store_url: entry?.store_url ?? existing?.store_url ?? undefined,
     released_at: entry?.released_at
       ? new Date(entry.released_at)
       : existing?.released_at
@@ -232,11 +236,74 @@ export async function searchCatalog(query: string): Promise<Game[]> {
 export type CatalogCard = Pick<
   Game,
   'id' | 'name' | 'cover_url' | 'platforms' | 'release_year' | 'rating'
->
+> & {
+  genres?: string[]
+  /** The first scene of the game (an IGDB image id), for a card's art. */
+  shot?: string | null
+}
 
 // What a list of games shows, for the whole catalog: a few fields per game, no embedding.
+export interface Release {
+  id: string
+  name: string
+  cover_url: string | null
+  platforms: string[]
+  released_at: string
+  /** The game has a trophy list, so it can be followed. */
+  listed: boolean
+  /** The guide's difficulty and hours, when it has one. */
+  guide: { difficulty: number; hours: number } | null
+}
+
+/** PS4 and PS5 games released between `from` and `to`, with what PlatJourney has for them: the
+ * `limit` most awaited before `now` and after it, each by date and, on the same day, most awaited
+ * first. */
+export async function releasesBetween(
+  from: Date,
+  to: Date,
+  now = new Date(),
+  limit = 24,
+): Promise<Release[]> {
+  const all = plain(
+    await q<(Omit<Release, 'listed' | 'guide'> & { np: number; hypes: number | null })[]>(
+      `SELECT id, name, cover_url, platforms, released_at, hypes, array::len(np_communication_ids ?? []) AS np
+       FROM game WHERE released_at >= $from AND released_at < $to AND platforms CONTAINSANY ['PS4', 'PS5']`,
+      { from, to },
+    ),
+  )
+  const awaited = (a: { hypes: number | null }, b: { hypes: number | null }) =>
+    (b.hypes ?? 0) - (a.hypes ?? 0)
+  const top = (list: typeof all) => [...list].sort(awaited).slice(0, limit)
+  const day = (iso: string) => iso.slice(0, 10)
+  // Release days are midnight UTC: today's games are still coming up.
+  const today = new Date(now.toISOString().slice(0, 10))
+  const games = [
+    ...top(all.filter((g) => new Date(g.released_at) < today)),
+    ...top(all.filter((g) => new Date(g.released_at) >= today)),
+  ]
+    .sort((a, b) => day(a.released_at).localeCompare(day(b.released_at)) || awaited(a, b))
+    .map(({ hypes: _hypes, ...g }) => g)
+  const guides = plain(
+    await q<{ game: string; difficulty: number | null; hours: number | null }[]>(
+      'SELECT game, guide.difficulty AS difficulty, guide.hours AS hours FROM guide WHERE game IN $ids AND guide != NONE',
+      { ids: games.map((g) => gameRef(String(g.id))) },
+    ),
+  )
+  const byGame = new Map(guides.map((g) => [String(g.game), g]))
+  return games.map(({ np, ...g }) => {
+    const guide = byGame.get(String(g.id))
+    return {
+      ...g,
+      listed: np > 0,
+      guide: guide ? { difficulty: guide.difficulty ?? 0, hours: guide.hours ?? 0 } : null,
+    }
+  })
+}
+
 export async function catalogCards(): Promise<CatalogCard[]> {
   return plain(
-    await q<CatalogCard[]>('SELECT id, name, cover_url, platforms, release_year, rating FROM game'),
+    await q<CatalogCard[]>(
+      'SELECT id, name, cover_url, platforms, release_year, rating, genres, screenshot_ids[0] AS shot FROM game',
+    ),
   )
 }

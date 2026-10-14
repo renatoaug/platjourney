@@ -1,14 +1,20 @@
-import { afterEach, expect, setSystemTime, test } from 'bun:test'
+import { afterEach, beforeEach, expect, mock, setSystemTime, test } from 'bun:test'
 import { screen, within } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { rankingData } from '../../src/components/game-cards.stories'
 import { currentData, tipsData } from '../../src/components/nexo-brief.stories'
 import type { ProfileSummary } from '../../src/lib/types'
 import { Home } from '../../src/pages/home'
-import { renderApp } from '../support/web'
+import { mockApi, renderApp } from '../support/web'
+
+// The home's release calendar asks for its own list; these tests are about the rest of the page.
+beforeEach(() => {
+  mockApi({ '/api/releases': [] })
+})
 
 afterEach(() => {
   setSystemTime()
+  mock.restore()
 })
 
 const loaded = { ...SAMPLE_DATA, current: currentData, tips: tipsData, ranking: rankingData }

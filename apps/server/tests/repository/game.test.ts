@@ -12,6 +12,7 @@ import {
   gameRef,
   gamesForTitles,
   getGame,
+  releasesBetween,
   searchCatalog,
   upsertFromCatalog,
 } from '../../src/repository/game.ts'
@@ -287,6 +288,41 @@ test('catalog cards read a few fields of every game', async () => {
   const q = spyOn(db, 'q').mockResolvedValue([{ id: 'game:1', name: 'A' }])
   expect(await catalogCards()).toEqual([{ id: 'game:1', name: 'A' } as never])
   expect(q.mock.calls[0][0]).toBe(
-    'SELECT id, name, cover_url, platforms, release_year, rating FROM game',
+    'SELECT id, name, cover_url, platforms, release_year, rating, genres, screenshot_ids[0] AS shot FROM game',
   )
+})
+
+test('releases carry whether the game has a trophy list and its guide numbers', async () => {
+  const at = (day: number) => `2026-10-${String(day).padStart(2, '0')}T00:00:00Z`
+  const row = (id: number, day: number, hypes: number, np = 0) => ({
+    id: `game:${id}`,
+    name: `G${id}`,
+    cover_url: null,
+    platforms: ['PS5'],
+    released_at: at(day),
+    hypes,
+    np,
+  })
+  const q = spyOn(db, 'q')
+    .mockResolvedValueOnce([
+      row(1, 20, 5, 1),
+      row(2, 20, 50),
+      row(3, 25, 1),
+      row(4, 10, 9),
+      row(5, 13, 3),
+      row(6, 11, 0),
+    ])
+    .mockResolvedValueOnce([{ game: 'game:1', difficulty: 4, hours: null }])
+  const from = new Date('2026-10-01T00:00:00Z')
+  const to = new Date('2026-11-01T00:00:00Z')
+  const out = await releasesBetween(from, to, new Date('2026-10-13T15:00:00Z'), 2)
+  // The two most awaited on each side of today, by day and then most awaited; today counts as coming up.
+  expect(out.map((r) => r.id)).toEqual(['game:4', 'game:6', 'game:2', 'game:1'])
+  expect(out.find((r) => r.id === 'game:1')).toMatchObject({
+    listed: true,
+    guide: { difficulty: 4, hours: 0 },
+  })
+  expect(out.find((r) => r.id === 'game:2')).toMatchObject({ listed: false, guide: null })
+  expect(q.mock.calls[0][0]).toContain("platforms CONTAINSANY ['PS4', 'PS5']")
+  expect(q.mock.calls[0][1]).toEqual({ from, to })
 })

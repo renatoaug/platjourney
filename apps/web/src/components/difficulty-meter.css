@@ -1,0 +1,132 @@
+@layer screens {
+  .dm {
+    --dm-color: var(--color-accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .dm-medium {
+    --dm-color: var(--color-trophy-gold);
+  }
+
+  .dm-hard {
+    --dm-color: var(--color-highlight-warm);
+  }
+
+  .dm-brutal {
+    --dm-color: var(--color-danger);
+  }
+
+  .dm .dm-number {
+    color: var(--dm-color);
+    font-family: var(--font-display);
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+  }
+
+  .dm .dm-body {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .dm .dm-band {
+    display: flex;
+    white-space: nowrap;
+    align-items: baseline;
+    gap: 6px;
+    color: var(--color-fg);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+  }
+
+  .dm-band em {
+    font-style: normal;
+    font-weight: normal;
+    color: var(--color-fg-muted);
+  }
+
+  .dm .dm-of {
+    margin-left: auto;
+    color: var(--color-fg-subtle);
+    font-size: var(--text-sm);
+    font-weight: normal;
+  }
+
+  .dm .dm-segments {
+    display: flex;
+    gap: 3px;
+  }
+
+  .dm-segments i {
+    height: 6px;
+    flex: 1;
+    min-width: 8px;
+    border-radius: var(--radius-tag);
+    background: var(--color-border-strong);
+  }
+
+  .dm-segments i.on {
+    background: var(--dm-color);
+  }
+
+  /* A: big number beside the band and the bar. */
+  .dm-score .dm-number {
+    font-size: var(--text-6xl);
+  }
+
+  .dm-score .dm-body {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  /* B: one line, for cards and lists. */
+  .dm-compact {
+    gap: 8px;
+  }
+
+  .dm-compact .dm-number {
+    font-size: var(--text-xl);
+  }
+
+  .dm-compact .dm-body {
+    gap: 4px;
+    width: 96px;
+  }
+
+  .dm-compact .dm-number small {
+    font-size: var(--text-sm);
+    color: var(--color-fg-subtle);
+  }
+
+  .dm-compact .dm-band {
+    font-size: var(--text-sm);
+  }
+
+  .dm-compact .dm-segments i {
+    height: 4px;
+    min-width: 0;
+  }
+
+  /* C: the number in a shield, the bar below the band. */
+  .dm .dm-shield {
+    display: grid;
+    place-items: center;
+    line-height: 1;
+    padding-top: 2px;
+    width: 52px;
+    height: 58px;
+    clip-path: polygon(50% 0, 100% 18%, 100% 70%, 50% 100%, 0 70%, 0 18%);
+    background: var(--dm-color);
+    color: var(--color-bg);
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-semibold);
+  }
+
+  .dm-badge .dm-body {
+    min-width: 120px;
+  }
+}

@@ -20,20 +20,52 @@
     align-items: start;
   }
 
+  .goals-side {
+    display: grid;
+    gap: 20px;
+    min-width: 0;
+  }
+
   .goals-columns.empty {
     align-items: stretch;
   }
 
+  /* Two empty cards side by side keep one height: the side's only card fills it. */
+  .goals-columns.empty .goals-side {
+    grid-template-rows: 1fr;
+  }
+
+  /* The title and the add button share one line, on a phone too. */
   .goal-list-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 20px;
   }
 
   .goal-list-heading h2 {
     margin: 0;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .goal-list-heading button {
+    flex: none;
+  }
+
+  /* A phone has no room for the whole label beside the title. */
+  .goal-add-short {
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    .goal-add-long {
+      display: none;
+    }
+
+    .goal-add-short {
+      display: inline;
+    }
   }
 }

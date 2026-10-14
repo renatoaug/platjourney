@@ -2,7 +2,7 @@ import { afterEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { emptyGoals, sampleGoals } from '../../src/components/goals/fixtures'
-import type { Game } from '../../src/lib/types'
+import type { Game, Interest } from '../../src/lib/types'
 import { Goals, GoalsView } from '../../src/pages/goals'
 import { mockApi, never, renderApp, reply } from '../support/web'
 
@@ -72,7 +72,7 @@ test('adding a game from the catalog', async () => {
   fireEvent.click(await screen.findByRole('option', { name: /Elden Ring/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
   expect(await screen.findByText('Elden Ring salvo nos interesses')).toBeTruthy()
-  expect(command).toHaveBeenCalledWith('add game:elden-ring')
+  expect(command).toHaveBeenCalledWith('add game:elden-ring from:search')
   expect(toggle.getAttribute('aria-expanded')).toBe('false')
   await waitFor(() => expect(document.activeElement).toBe(toggle))
 })
@@ -133,4 +133,30 @@ test('while saving, the add button is locked', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Remover Astro Bot dos interesses' }))
   expect(feedback()).toBe('Salvando…')
   expect(screen.getByRole('button', { name: 'Adicionar jogo' }).hasAttribute('disabled')).toBe(true)
+})
+
+test('the saved games on sale sit in a band above the two columns, only when there is one', () => {
+  const sale: Interest['deal'] = {
+    price: 1000,
+    base: 2000,
+    discount: 50,
+    plus: false,
+    currency: 'BRL',
+    endsAt: null,
+    storeUrl: null,
+  }
+  const open = sampleGoals.interests.filter((g) => !g.done)
+  const withDeals = (n: number) =>
+    sampleGoals.interests.map((g) => (open.indexOf(g) < n && !g.done ? { ...g, deal: sale } : g))
+  const { container, unmount } = renderApp(
+    <GoalsView goals={{ ...sampleGoals, interests: withDeals(2) }} command={ok()} />,
+  )
+  const deals = container.querySelector('.deals')
+  expect(deals?.nextElementSibling?.classList.contains('goals-columns')).toBe(true)
+  expect(container.querySelector('.goals-side .deals')).toBeNull()
+  unmount()
+  const none = renderApp(
+    <GoalsView goals={{ ...sampleGoals, interests: withDeals(0) }} command={ok()} />,
+  )
+  expect(none.container.querySelector('.deals')).toBeNull()
 })

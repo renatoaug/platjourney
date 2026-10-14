@@ -10,7 +10,13 @@ export interface Interest {
   position: number
   recommended_at?: string | null
   next_pick_at?: string | null
+  source?: InterestSource | null
+  created_at?: string
 }
+
+/** Where a game was saved from, kept for the list's tag and to see later what brings games in. */
+export const INTEREST_SOURCES = ['releases', 'recommendations', 'title', 'search'] as const
+export type InterestSource = (typeof INTEREST_SOURCES)[number]
 
 export async function listInterests(user: string, year: number): Promise<Interest[]> {
   return plain(
@@ -21,14 +27,21 @@ export async function listInterests(user: string, year: number): Promise<Interes
   )
 }
 
-export async function addInterest(user: string, game: string, year: number): Promise<void> {
+export async function addInterest(
+  user: string,
+  game: string,
+  year: number,
+  source?: InterestSource,
+): Promise<void> {
   await q(
-    // A game just saved goes to the top of the list. A game Nexo recommended keeps when it last did.
+    // A game just saved goes to the top of the list. A game Nexo recommended keeps when it last did;
+    // a game saved again keeps where it first came from.
     `LET $min = (SELECT VALUE math::min(position) FROM interest WHERE user = $user GROUP ALL)[0] ?? 0;
      LET $rec = array::max(SELECT VALUE created_at FROM recommendation WHERE user = $user AND game = $game);
      UPSERT interest SET user = $user, game = $game, year = $year, position = $min - 1,
-       recommended_at = recommended_at ?? $rec WHERE user = $user AND game = $game;`,
-    { user: userRef(user), game: gameRef(game), year },
+       recommended_at = recommended_at ?? $rec, source = source ?? $source
+       WHERE user = $user AND game = $game;`,
+    { user: userRef(user), game: gameRef(game), year, source },
   )
 }
 

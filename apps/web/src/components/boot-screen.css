@@ -1,4 +1,10 @@
 @layer screens {
+  /* While it covers the screen, the page under it must not scroll: a scrollbar showing up as the
+     app renders below would narrow the screen and shift Nexo and the bar sideways. */
+  html[data-booting] {
+    overflow: hidden;
+  }
+
   /* Full screen over everything while the app starts; fades out when the first data arrives. */
   /* The copy in index.html carries [hidden] so it stays out of sight until this stylesheet arrives. */
   .boot-screen,

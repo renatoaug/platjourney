@@ -4,6 +4,7 @@ import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { messages as interestMessages, useInterests } from '../app/use-interests'
 import { DemoNote } from '../components/demo'
+import { DealsSpotlight } from '../components/goals/deals-spotlight'
 import { GoalAddPanel } from '../components/goals/goal-add-panel'
 import { type Feedback, GoalSeason, GoalSeasonSkeleton } from '../components/goals/goal-season'
 import { InterestList, InterestListSkeleton } from '../components/goals/interest-list'
@@ -11,6 +12,7 @@ import { type NextPick, NextPickBox } from '../components/goals/next-pick'
 import type { GoalFilter } from '../components/goals/season'
 import { useKept } from '../components/goals/use-kept'
 import { YearPlatinums } from '../components/goals/year-platinums'
+import { PageHero } from '../components/page-hero'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import type { Game, YearGoals } from '../lib/types'
@@ -28,6 +30,7 @@ const askNext = () => api<{ pick: NextPick | null }>('/api/interests/next', {})
 const messages = defineMessages({
   [Language.PtBR]: {
     page: {
+      eyebrow: 'SUA LISTA DE PLATINAS',
       title: 'Interesses',
       lead: 'Os jogos que você quer platinar, na sua ordem, e a meta do ano.',
       loadFailed:
@@ -37,12 +40,14 @@ const messages = defineMessages({
       saveFailed: 'Não foi possível salvar. Tente novamente.',
       mine: 'Meus interesses',
       add: 'Adicionar jogo',
+      addShort: 'Adicionar',
       empty: 'Salve o primeiro jogo que você quer platinar.',
       yearAchievements: 'Conquistas do ano',
     },
   },
   [Language.En]: {
     page: {
+      eyebrow: 'YOUR PLATINUM LIST',
       title: 'Interests',
       lead: 'The games you want to platinum, in your order, and the goal for the year.',
       loadFailed: 'Could not load your interests. Use the refresh button to try again.',
@@ -51,6 +56,7 @@ const messages = defineMessages({
       saveFailed: 'Could not save. Try again.',
       mine: 'My interests',
       add: 'Add game',
+      addShort: 'Add',
       empty: 'Save the first game you want to platinum.',
       yearAchievements: "This year's platinums",
     },
@@ -64,12 +70,16 @@ export function Goals() {
   const demo = me.demo === true
   return (
     <Page path="/goals">
-      <div className="page-head">
-        <div>
-          <h1>{t('page.title')}</h1>
-          <p>{t('page.lead')}</p>
-        </div>
-      </div>
+      {/* The player's own saved games on the shelf. */}
+      <PageHero
+        eyebrow={t('page.eyebrow')}
+        title={t('page.title')}
+        lead={t('page.lead')}
+        images={(data?.goals.interests ?? [])
+          .filter((i) => !i.done && i.game.cover_url)
+          .map((i) => i.game.cover_url as string)}
+        look="shelf"
+      />
       <div id="goals">
         {data ? (
           <GoalsView goals={data.goals} readOnly={demo} />
@@ -206,6 +216,8 @@ export function GoalsView({
         onFeedback={setFeedback}
         onSet={(target) => save(`set ${target}`)}
       />
+      {/* The saved games on sale, in a band across the page (only when there is one). */}
+      <DealsSpotlight interests={p.interests} />
       {/* Two empty cards side by side keep one height; with content each takes its own. */}
       <div
         className={`grid cols-2 goals-columns${p.interests.length || p.platinumed.length ? '' : ' empty'}`}
@@ -225,8 +237,10 @@ export function GoalsView({
               aria-controls="goal-add-panel"
               disabled={busy || readOnly}
               onClick={() => openAdd(!addOpen)}
+              aria-label={t('page.add')}
             >
-              <Icon name="plus" /> {t('page.add')}
+              <Icon name="plus" /> <span className="goal-add-long">{t('page.add')}</span>
+              <span className="goal-add-short">{t('page.addShort')}</span>
             </button>
           </div>
           <GoalAddPanel
@@ -238,7 +252,7 @@ export function GoalsView({
             onDraft={setDraft}
             selection={selection}
             onSelection={setSelection}
-            onSave={(game) => save(`add ${game.id}`, game.name)}
+            onSave={(game) => save(`add ${game.id} from:search`, game.name)}
             onClose={() => openAdd(false)}
             inputRef={addInput}
             search={search}
@@ -273,7 +287,9 @@ export function GoalsView({
           )}
           {readOnly && <DemoNote />}
         </div>
-        <YearPlatinums goals={p} busy={busy} />
+        <div className="goals-side">
+          <YearPlatinums goals={p} busy={busy} />
+        </div>
       </div>
     </>
   )

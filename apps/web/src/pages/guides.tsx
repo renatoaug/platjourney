@@ -1,9 +1,13 @@
 /** Guides: every game with a platinum guide, or any catalog game by name, filtered by platform, sorted and paged. */
+
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Page } from '../app/page'
+import { DifficultyMeter } from '../components/difficulty-meter'
+import { GENRES_PT } from '../components/game-showcase'
+import { PageHero } from '../components/page-hero'
 import { titleHref } from '../components/tip'
-import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
@@ -16,8 +20,23 @@ import './guides.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
+    eyebrow: 'GUIAS DE PLATINA',
     title: 'Guias',
     lead: 'Todos os jogos com guia de platina. Busque qualquer jogo pelo nome.',
+    filters: 'Filtros',
+    filtersOn: { one: 'Filtros · {count}', other: 'Filtros · {count}' },
+    clear: 'Limpar filtros',
+    bandLabel: 'Dificuldade',
+    band: { easy: 'Fácil', medium: 'Média', hard: 'Difícil', brutal: 'Muito difícil' },
+    hoursLabel: 'Tempo até a platina',
+    hoursUpTo: 'Até {hours}h',
+    rulesLabel: 'Como é a platina',
+    noMissables: 'Sem perdíveis',
+    onePlaythrough: 'Uma jogada só',
+    noOnline: 'Sem troféus online',
+    genreLabel: 'Gênero',
+    viewLabel: 'Ver como',
+    view: { grid: 'Grade', list: 'Lista' },
     search: 'Buscar jogo',
     searchPlaceholder: 'Nome do jogo…',
     platformLabel: 'Plataforma',
@@ -54,8 +73,23 @@ const messages = defineMessages({
     failed: 'Não conseguimos carregar os guias. Recarregue a página.',
   },
   [Language.En]: {
+    eyebrow: 'PLATINUM GUIDES',
     title: 'Guides',
     lead: 'Every game with a platinum guide. Search any game by name.',
+    filters: 'Filters',
+    filtersOn: { one: 'Filters · {count}', other: 'Filters · {count}' },
+    clear: 'Clear filters',
+    bandLabel: 'Difficulty',
+    band: { easy: 'Easy', medium: 'Medium', hard: 'Hard', brutal: 'Very hard' },
+    hoursLabel: 'Time to the platinum',
+    hoursUpTo: 'Up to {hours}h',
+    rulesLabel: 'What the platinum asks',
+    noMissables: 'No missables',
+    onePlaythrough: 'One playthrough',
+    noOnline: 'No online trophies',
+    genreLabel: 'Genre',
+    viewLabel: 'View as',
+    view: { grid: 'Grid', list: 'List' },
     search: 'Search games',
     searchPlaceholder: 'Game name…',
     platformLabel: 'Platform',
@@ -96,34 +130,92 @@ const messages = defineMessages({
 const PLATFORMS = ['PS5', 'PS4', 'PS3', 'PS Vita'] as const
 const SORTS = ['rating', 'name', 'easiest', 'shortest'] as const
 
+const BANDS = ['easy', 'medium', 'hard', 'brutal'] as const
+const HOURS = ['10', '25', '50', '100'] as const
+const RULES = ['noMissables', 'onePlaythrough', 'noOnline'] as const
+const FILTER_KEYS = ['difficulty', 'hours', 'genre', ...RULES] as const
+
 export interface GuideCardItem {
   id: string
   name: string
   cover_url: string | null
   platforms: string[]
   release_year: number | null
+  genres?: string[]
+  shot?: string | null
   guide: {
     difficulty: number
     hours: number
+    playthroughs?: number
     hasMissables: boolean
     hasOnline: boolean
     unobtainable: string | null
   } | null
+}
+export interface GuideFacets {
+  difficulty: Record<(typeof BANDS)[number], number>
+  hours: Record<string, number>
+  noMissables: number
+  onePlaythrough: number
+  noOnline: number
+  genres: { name: string; count: number }[]
 }
 export interface GuidesPage {
   page: number
   size: number
   total: number
   items: GuideCardItem[]
+  facets?: GuideFacets
+  /** Covers of the best rated games with a guide, for the page's top. */
+  collage?: string[]
 }
 type Load = { status: 'loading' } | { status: 'error' } | { status: 'ok'; data: GuidesPage }
+
+/** The guide's facts in one line: difficulty bar (unless the card shows it on its art), hours and
+ * the warning icons. */
+function Facts({ g, meter = true }: { g: NonNullable<GuideCardItem['guide']>; meter?: boolean }) {
+  const t = useMessages(messages)
+  return (
+    <>
+      {/* 0 means the sources do not say yet. */}
+      {meter &&
+        (g.difficulty ? (
+          <DifficultyMeter value={g.difficulty} look="compact" />
+        ) : (
+          <span title={t('difficulty')}>
+            <Icon name="target" /> —
+          </span>
+        ))}
+      <span title={t('hours')}>
+        <Icon name="clock" /> {g.hours ? `~${g.hours}h` : '—'}
+      </span>
+      {g.hasMissables && (
+        <span role="img" title={t('missables')} aria-label={t('missables')}>
+          <Icon name="warning" />
+        </span>
+      )}
+      {g.hasOnline && (
+        <span role="img" title={t('online')} aria-label={t('online')}>
+          <Icon name="globe" />
+        </span>
+      )}
+    </>
+  )
+}
 
 export function GuideCard({ item }: { item: GuideCardItem }) {
   const t = useMessages(messages)
   const g = item.guide
   return (
     <Link className="guide-tile" to={titleHref(item.id)}>
-      <Cover url={item.cover_url} name={item.name} className="guide-tile-cover" />
+      <span className="guide-tile-art">
+        <Cover url={item.cover_url} name={item.name} className="guide-tile-cover" />
+        {g && g.difficulty > 0 && (
+          <span className="guide-tile-score">
+            <DifficultyMeter value={g.difficulty} />
+          </span>
+        )}
+      </span>
       <div className="guide-tile-body">
         <h3>{item.name}</h3>
         <span className="guide-tile-sub">
@@ -131,23 +223,7 @@ export function GuideCard({ item }: { item: GuideCardItem }) {
         </span>
         {g ? (
           <span className="guide-tile-meta">
-            {/* 0 means the sources do not say yet. */}
-            <span title={t('difficulty')}>
-              <Icon name="target" /> {g.difficulty ? `${g.difficulty}/10` : '—'}
-            </span>
-            <span title={t('hours')}>
-              <Icon name="clock" /> {g.hours ? `~${g.hours}h` : '—'}
-            </span>
-            {g.hasMissables && (
-              <span role="img" title={t('missables')} aria-label={t('missables')}>
-                <Icon name="warning" />
-              </span>
-            )}
-            {g.hasOnline && (
-              <span role="img" title={t('online')} aria-label={t('online')}>
-                <Icon name="globe" />
-              </span>
-            )}
+            <Facts g={g} meter={false} />
           </span>
         ) : (
           <span className="guide-tile-meta muted">{t('noGuide')}</span>
@@ -155,6 +231,148 @@ export function GuideCard({ item }: { item: GuideCardItem }) {
         {g?.unobtainable && <span className="pill danger">{t('unobtainable')}</span>}
       </div>
     </Link>
+  )
+}
+
+/** The same game as a row: for the list view. */
+export function GuideRow({ item }: { item: GuideCardItem }) {
+  const t = useMessages(messages)
+  const g = item.guide
+  return (
+    <Link className="guide-row" to={titleHref(item.id)}>
+      <Cover url={item.cover_url} name={item.name} className="guide-row-cover" />
+      <span className="guide-row-name">
+        <b>{item.name}</b>
+        <span className="guide-tile-sub">
+          {[item.platforms.join(' · '), item.release_year].filter(Boolean).join(' · ')}
+        </span>
+      </span>
+      {g ? (
+        <span className="guide-tile-meta guide-row-meta">
+          <Facts g={g} />
+        </span>
+      ) : (
+        <span className="guide-tile-meta muted">{t('noGuide')}</span>
+      )}
+      <Icon name="arrow-right" className="guide-row-go" />
+    </Link>
+  )
+}
+
+/** One filter option, the same row everywhere: a mark, the name, and how many games it leaves.
+ * A round mark picks one of a group; a square one turns a rule on or off. */
+function Option({
+  label,
+  count,
+  on,
+  round = false,
+  band,
+  onToggle,
+}: {
+  label: string
+  count?: number
+  on: boolean
+  round?: boolean
+  band?: string
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className={`guide-option${band ? ` band-${band}` : ''}`}
+      aria-pressed={on}
+      onClick={onToggle}
+    >
+      <span className={`guide-option-mark${round ? ' round' : ''}`} aria-hidden="true">
+        {on && !round && <Icon name="check" />}
+      </span>
+      <span className="guide-option-label">{label}</span>
+      {count != null && <span className="guide-option-count">{count}</span>}
+    </button>
+  )
+}
+
+/** The filters beside the list: each option shows how many games it would leave. */
+function GuideFilters({
+  facets,
+  values,
+  onChange,
+}: {
+  facets?: GuideFacets
+  values: Record<string, string>
+  onChange: (next: Record<string, string>) => void
+}) {
+  const t = useMessages(messages)
+  const locale = useLocale()
+  const active = FILTER_KEYS.filter((k) => values[k]).length
+  const pick = (key: string, value: string) =>
+    onChange({ [key]: values[key] === value ? '' : value })
+  return (
+    <div className="guide-filters">
+      <fieldset>
+        <legend>{t('bandLabel')}</legend>
+        {BANDS.map((b) => (
+          <Option
+            key={b}
+            round
+            band={b}
+            label={t(`band.${b}`)}
+            count={facets?.difficulty[b]}
+            on={values.difficulty === b}
+            onToggle={() => pick('difficulty', b)}
+          />
+        ))}
+      </fieldset>
+      <fieldset>
+        <legend>{t('hoursLabel')}</legend>
+        {HOURS.map((h) => (
+          <Option
+            key={h}
+            round
+            label={t('hoursUpTo', { hours: h })}
+            count={facets?.hours[h]}
+            on={values.hours === h}
+            onToggle={() => pick('hours', h)}
+          />
+        ))}
+      </fieldset>
+      <fieldset>
+        <legend>{t('rulesLabel')}</legend>
+        {RULES.map((r) => (
+          <Option
+            key={r}
+            label={t(r)}
+            count={facets?.[r]}
+            on={values[r] === '1'}
+            onToggle={() => onChange({ [r]: values[r] === '1' ? '' : '1' })}
+          />
+        ))}
+      </fieldset>
+      {facets && facets.genres.length > 0 && (
+        <fieldset>
+          <legend>{t('genreLabel')}</legend>
+          {facets.genres.map((g) => (
+            <Option
+              key={g.name}
+              round
+              label={locale === Language.PtBR ? (GENRES_PT[g.name] ?? g.name) : g.name}
+              count={g.count}
+              on={values.genre === g.name}
+              onToggle={() => pick('genre', g.name)}
+            />
+          ))}
+        </fieldset>
+      )}
+      {active > 0 && (
+        <button
+          type="button"
+          className="button ghost sm guide-filter-clear"
+          onClick={() => onChange(Object.fromEntries(FILTER_KEYS.map((k) => [k, ''])))}
+        >
+          <Icon name="close" /> {t('clear')}
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -256,6 +474,14 @@ export function Guides({
   const platform = params.get('platform') ?? ''
   const sort = params.get('sort') ?? ''
   const page = Number(params.get('page')) || 1
+  const view = params.get('view') === 'list' ? 'list' : 'grid'
+  const filters = Object.fromEntries(FILTER_KEYS.map((k) => [k, params.get(k) ?? '']))
+  const filterKey = FILTER_KEYS.map((k) => filters[k]).join('|')
+  const activeFilters = FILTER_KEYS.filter((k) => filters[k]).length
+  // The filters stand beside the list on a wide screen and fold away on a phone.
+  const [filtersOpen, setFiltersOpen] = useState(
+    () => typeof window === 'undefined' || !window.matchMedia?.('(max-width: 760px)').matches,
+  )
   const [typed, setTyped] = useState(q)
   // The address changed from outside the field (the Guides link in the menu, back, a link):
   // the field follows it, or the pending search below would put the old text back.
@@ -288,6 +514,7 @@ export function Guides({
     return () => clearTimeout(timer)
   })
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: filterKey stands for every filter
   useEffect(() => {
     let live = true
     const query = new URLSearchParams()
@@ -295,6 +522,7 @@ export function Guides({
     if (platform) query.set('platform', platform)
     if (sort) query.set('sort', sort)
     if (page > 1) query.set('page', String(page))
+    for (const k of FILTER_KEYS) if (filters[k]) query.set(k, filters[k])
     setLoad((l) => (l.status === 'ok' ? l : { status: 'loading' }))
     loadPage(String(query))
       .then((data) => live && setLoad({ status: 'ok', data }))
@@ -302,19 +530,23 @@ export function Guides({
     return () => {
       live = false
     }
-  }, [q, platform, sort, page, loadPage])
+  }, [q, platform, sort, page, filterKey, loadPage])
 
   const searching = q.length >= 2
+  const data = load.status === 'ok' ? load.data : null
+  // The top's collage stays as it was while a new page loads.
+  const [collage, setCollage] = useState<string[]>([])
+  if (data?.collage?.length && data.collage !== collage) setCollage(data.collage)
   return (
     <Page path="/guides">
-      <div className="page-head">
-        <div>
-          <h1>{t('title')}</h1>
-          <p>{t('lead')}</p>
-        </div>
-      </div>
-      <div className="trophy-controls guides-controls">
-        <label className="trophy-search">
+      <PageHero
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        lead={t('lead')}
+        images={collage}
+        look="covers"
+      >
+        <label className="guides-hero-search">
           <Icon name="search" />
           <input
             type="search"
@@ -324,66 +556,107 @@ export function Guides({
             onChange={(e) => setTyped(e.target.value)}
           />
         </label>
-        <div className="trophy-toolbar">
-          {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
-          <div className="trophy-status" role="group" aria-label={t('platformLabel')}>
-            {['', ...PLATFORMS].map((value) => (
-              <button
-                key={value || 'all'}
-                type="button"
-                aria-pressed={platform === value}
-                onClick={() => change({ platform: value })}
-              >
-                {value || t('platform.all')}
-              </button>
-            ))}
-          </div>
-          <label className="guides-sort">
-            <select
-              aria-label={t('sortLabel')}
-              value={sort}
-              onChange={(e) => change({ sort: e.target.value })}
-            >
-              <option value="">{t(searching ? 'sort.relevance' : 'sort.rating')}</option>
-              {SORTS.filter((s) => searching || s !== 'rating').map((s) => (
-                <option key={s} value={s}>
-                  {t(`sort.${s}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </div>
-      {load.status === 'loading' && <GuideGridSkeleton />}
-      {load.status === 'error' && <ErrorState>{t('failed')}</ErrorState>}
-      {load.status === 'ok' && (
-        <>
-          <div className="trophy-results" role="status">
-            {t('results', { count: load.data.total })}
-          </div>
-          {load.data.items.length ? (
-            <div className="guide-grid">
-              {load.data.items.map((item) => (
-                <GuideCard key={item.id} item={item} />
+      </PageHero>
+      <div className="guides-layout">
+        <details
+          className="guides-aside"
+          open={filtersOpen}
+          onToggle={(e) => setFiltersOpen(e.currentTarget.open)}
+        >
+          <summary>
+            <Icon name="layers" />{' '}
+            {activeFilters ? t('filtersOn', { count: activeFilters }) : t('filters')}
+            <Icon name="chevron-down" className="guides-aside-chevron" />
+          </summary>
+          <GuideFilters facets={data?.facets} values={filters} onChange={change} />
+        </details>
+        <div className="guides-main">
+          <div className="guides-toolbar">
+            {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
+            <div className="trophy-status" role="group" aria-label={t('platformLabel')}>
+              {['', ...PLATFORMS].map((value) => (
+                <button
+                  key={value || 'all'}
+                  type="button"
+                  aria-pressed={platform === value}
+                  onClick={() => change({ platform: value })}
+                >
+                  {value || t('platform.all')}
+                </button>
               ))}
             </div>
-          ) : (
-            <EmptyState>
-              <b>{t('empty')}</b> {t('emptyHint')}
-              {searching && <MissingGame key={q} name={q} ask={ask} />}
-            </EmptyState>
+            <div className="guides-toolbar-end">
+              <label className="guides-sort">
+                <select
+                  aria-label={t('sortLabel')}
+                  value={sort}
+                  onChange={(e) => change({ sort: e.target.value })}
+                >
+                  <option value="">{t(searching ? 'sort.relevance' : 'sort.rating')}</option>
+                  {SORTS.filter((s) => searching || s !== 'rating').map((s) => (
+                    <option key={s} value={s}>
+                      {t(`sort.${s}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {/* biome-ignore lint/a11y/useSemanticElements: a pair of toggle buttons; the group role names it */}
+              <div className="guides-view" role="group" aria-label={t('viewLabel')}>
+                {(['grid', 'list'] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={view === v}
+                    aria-label={t(`view.${v}`)}
+                    data-tip={t(`view.${v}`)}
+                    onClick={() => change({ view: v === 'grid' ? '' : v, page: String(page) })}
+                  >
+                    <Icon name={v} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          {load.status === 'loading' && <GuideGridSkeleton />}
+          {load.status === 'error' && <ErrorState>{t('failed')}</ErrorState>}
+          {data && (
+            <>
+              <div className="trophy-results" role="status">
+                {t('results', { count: data.total })}
+              </div>
+              {data.items.length ? (
+                view === 'list' ? (
+                  <div className="guide-list">
+                    {data.items.map((item) => (
+                      <GuideRow key={item.id} item={item} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="guide-grid">
+                    {data.items.map((item) => (
+                      <GuideCard key={item.id} item={item} />
+                    ))}
+                  </div>
+                )
+              ) : (
+                <EmptyState>
+                  <b>{t('empty')}</b> {t('emptyHint')}
+                  {searching && <MissingGame key={q} name={q} ask={ask} />}
+                </EmptyState>
+              )}
+              <Pager
+                page={data.page}
+                size={data.size}
+                total={data.total}
+                onPage={(to) => {
+                  change({ page: to > 1 ? String(to) : '' })
+                  window.scrollTo({ top: 0 })
+                }}
+              />
+            </>
           )}
-          <Pager
-            page={load.data.page}
-            size={load.data.size}
-            total={load.data.total}
-            onPage={(to) => {
-              change({ page: to > 1 ? String(to) : '' })
-              window.scrollTo({ top: 0 })
-            }}
-          />
-        </>
-      )}
+        </div>
+      </div>
     </Page>
   )
 }

@@ -156,3 +156,45 @@ test('the game Nexo picked as the next platinum says so', () => {
   )
   expect(screen.getAllByText(/Próxima platina, escolhida pelo Nexo em/)).toHaveLength(1)
 })
+
+test('a saved game on sale shows the discount, the price and when it ends', () => {
+  const [first, ...rest] = sampleGoals.interests
+  const open = sampleGoals.interests.find((g) => !g.done) ?? first
+  const deal = {
+    price: 7485,
+    base: 24950,
+    discount: 70,
+    endsAt: '2026-10-20T12:00:00Z',
+    plus: false,
+    currency: 'BRL',
+    storeUrl: null,
+  }
+  render(<Demo interests={[{ ...open, deal }, ...rest.filter((g) => g !== open)]} />)
+  expect(screen.getByText(/70% off · R\$\s?74,85 até 20 de out/)).toBeTruthy()
+})
+
+test('a game saved from the release calendar says so, with the day it was saved', () => {
+  const interests = [
+    {
+      ...sampleGoals.interests.filter((g) => !g.done)[0],
+      source: 'releases' as const,
+      savedAt: '2026-10-14T12:00:00Z',
+      recommendedAt: null,
+    },
+  ]
+  render(
+    <MemoryRouter>
+      <InterestList
+        interests={interests}
+        filter="all"
+        page={1}
+        onFilter={() => {}}
+        onPage={() => {}}
+        busy={false}
+        onRemove={() => {}}
+        onReorder={async () => {}}
+      />
+    </MemoryRouter>,
+  )
+  expect(screen.getByText(/Salvo dos lançamentos em/)).toBeTruthy()
+})

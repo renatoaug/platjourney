@@ -1,0 +1,206 @@
+@layer screens {
+  /* A band across the Interests page, between the year's card and the two columns. */
+  .deals {
+    margin-top: 20px;
+    display: grid;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 1px solid color-mix(in srgb, var(--color-trophy-gold) 22%, transparent);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  .deals-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+  }
+
+  .deals-head .pager {
+    margin: 0 0 0 auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .deals-head .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-trophy-gold);
+  }
+
+  .deals-head .eyebrow .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .deals-head h3 {
+    margin: 0;
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    color: var(--color-fg-soft);
+  }
+
+  /* One row of four across the page; two on a tablet, one on a phone. */
+  .deals-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @media (max-width: 1200px) {
+    .deals-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .deals-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .deal {
+    display: flex;
+    gap: 10px;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+    min-width: 0;
+    transition:
+      border-color 0.15s,
+      transform 0.15s;
+  }
+
+  /* Like every game card: it lifts and its cover zooms a little. */
+  .deal:hover {
+    border-color: var(--color-border-strong);
+    transform: translateY(-2px);
+  }
+
+  .deal .deal-cover {
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .deal:hover .deal-cover {
+    transform: scale(1.04);
+  }
+
+  .deal-game {
+    position: relative;
+    flex: none;
+  }
+
+  /* The cover runs down to the store button, however many lines the price takes. */
+  .deal-cover {
+    display: block;
+    width: 54px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: var(--radius-tag);
+  }
+
+  .deal-off {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    padding: 1px 4px;
+    border-radius: var(--radius-tag);
+    background: var(--color-trophy-gold);
+    color: var(--color-bg);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+  }
+
+  /* A game the player's own PS Plus includes: the accent instead of the sale's gold. */
+  .deal.mine {
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .deal.mine .deal-off {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .deal.mine .deal-price b {
+    color: var(--color-accent);
+  }
+
+  .deal.mine .deal-plus {
+    color: var(--color-fg-muted);
+  }
+
+  .deal-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 12px;
+  }
+
+  .deal-body {
+    display: grid;
+    align-content: center;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .deal-name {
+    color: var(--color-fg);
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-body);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .deal-name:hover {
+    color: var(--color-accent);
+  }
+
+  .deal-price b {
+    color: var(--color-trophy-gold);
+    font-size: var(--text-body);
+  }
+
+  .deal-plus {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--text-xs);
+    color: var(--color-trophy-gold);
+    opacity: 0.85;
+  }
+
+  .deal-price s {
+    color: var(--color-fg-subtle);
+    font-size: var(--text-sm);
+  }
+
+  .deal-until {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .deal-until .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* The store link reads as a link: the deal itself leads. */
+  .deal .deal-store {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-xs);
+  }
+
+  .deal .deal-store .icon {
+    width: 11px;
+    height: 11px;
+  }
+}

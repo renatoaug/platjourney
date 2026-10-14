@@ -10,6 +10,8 @@ export interface Me {
   avatarUrl?: string
   telegramLinked: boolean
   includeDlcProgress: boolean
+  /** The PS Plus tier the player says they have. */
+  psPlus?: 'none' | 'essential' | 'extra' | 'deluxe'
   /** Nexo writes this player's automatic notices; off, they are plain and free. */
   aiNotices?: boolean
   /** Whether this instance lets Nexo write notices at all. */
@@ -23,12 +25,17 @@ export interface Me {
   onboarded?: boolean
 }
 
+/** Where a game was saved to the interests from. */
+export type InterestSource = 'releases' | 'recommendations' | 'title' | 'search'
+
 /** A catalog game (IGDB row). */
 export interface Game {
   id: string
   name: string
   slug?: string
   cover_url?: string
+  /** A wide artwork of the game, for backgrounds. */
+  art_url?: string | null
   summary?: string
   genres?: string[]
   themes?: string[]
@@ -187,6 +194,24 @@ export interface Interest {
   recommendedAt?: string | null
   /** When "Nexo decide" picked it as the next platinum; one interest at a time. */
   nextPickAt?: string | null
+  /** Where the player saved it from, and when. */
+  source?: InterestSource | null
+  savedAt?: string | null
+  /** Its PS Store price when on sale or in PS Plus (cents). */
+  deal?: {
+    price: number
+    base: number
+    discount: number
+    endsAt: string | null
+    plus: boolean
+    plusPrice?: number | null
+    /** The PS Plus tier whose catalog includes the game. */
+    plusTier?: 'essential' | 'extra' | 'deluxe' | null
+    /** The player's own tier includes it: they play it without paying. */
+    mine?: boolean
+    currency: string
+    storeUrl: string | null
+  } | null
 }
 
 export interface YearGoals {

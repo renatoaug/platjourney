@@ -35,6 +35,7 @@ bun run migrate              # one idempotent .surql per table in db/migrations
 bun run seed                 # the read-only demo player and its games
 bun run catalog:expand       # the game catalog from IGDB (once, safe to re-run)
 bun run catalog:media        # each game's gallery, studio, site and release day (safe to re-run)
+bun run catalog:releases     # the games out around today, for the home's calendar (the server repeats it daily)
 bun run embed                # catalog vectors (once, safe to re-run)
 
 bun run dev                  # server, AI service and web, reloading on save
@@ -71,6 +72,8 @@ bun run ai:eval              # retrieval, scope and answers against the real mod
 bun run ai:eval seed         # load the example eval questions (once, before the viewer)
 bun run ai:eval:view         # run suites, compare runs and edit questions on 127.0.0.1:8200
 ```
+
+`bun install` turns on a pre-push hook that runs lint, typecheck and `test:coverage`, the same as CI (skip once with `git push --no-verify`). Server tests never reach a database and web tests never reach the network: an unmocked call fails locally the same way it would in CI.
 
 CI runs lint, typecheck and the tests with coverage on every pull request.
 

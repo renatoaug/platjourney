@@ -99,6 +99,7 @@ beforeEach(() => {
   spyOn(guide, 'ensureGuide').mockResolvedValue(freshGuide)
   spyOn(interests, 'yearProgress').mockResolvedValue({ year: 2026 } as never)
   spyOn(interests, 'handleInterestCommand').mockResolvedValue('ok')
+  spyOn(interests, 'storeFor').mockResolvedValue(null)
   spyOn(lib, 'library').mockResolvedValue([title])
   spyOn(lib, 'ownedGames').mockResolvedValue([])
   spyOn(playtime, 'playtimes').mockResolvedValue(new Map())
@@ -169,6 +170,7 @@ test('register and login sign in, start watching and set the cookie', async () =
       avatarUrl: null,
       telegramLinked: true,
       includeDlcProgress: false,
+      psPlus: 'none',
       aiNotices: true,
       aiNoticesAvailable: config.automatic.notices,
       locale: 'pt-BR',
@@ -669,23 +671,41 @@ test('chat lists messages and answers trimmed text', async () => {
 })
 
 test('the guide browser reads its filters from the query', async () => {
+  const facets = {
+    difficulty: { easy: 0, medium: 0, hard: 0, brutal: 0 },
+    hours: {},
+    noMissables: 0,
+    onePlaythrough: 0,
+    noOnline: 0,
+    genres: [],
+  }
   const browse = spyOn(browser, 'browseGuides').mockResolvedValue({
     page: 2,
     size: 24,
     total: 30,
     items: [],
+    facets,
+    collage: [],
   })
-  expect((await send('GET', '/api/guides?q=souls&platform=PS5&sort=easiest&page=2')).body).toEqual({
-    page: 2,
-    size: 24,
-    total: 30,
-    items: [],
-  })
+  expect(
+    (
+      await send(
+        'GET',
+        '/api/guides?q=souls&platform=PS5&sort=easiest&page=2&difficulty=medium&hours=25&noMissables=1&genre=RPG',
+      )
+    ).body,
+  ).toEqual({ page: 2, size: 24, total: 30, items: [], facets, collage: [] })
   expect(browse).toHaveBeenLastCalledWith({
     query: 'souls',
     platform: 'PS5',
     sort: 'easiest',
     page: 2,
+    difficulty: 'medium',
+    hours: '25',
+    noMissables: true,
+    onePlaythrough: false,
+    noOnline: false,
+    genre: 'RPG',
   })
   await send('GET', '/api/guides?page=x')
   expect(browse).toHaveBeenLastCalledWith({
@@ -693,7 +713,20 @@ test('the guide browser reads its filters from the query', async () => {
     platform: undefined,
     sort: undefined,
     page: 1,
+    difficulty: undefined,
+    hours: undefined,
+    noMissables: false,
+    onePlaythrough: false,
+    noOnline: false,
+    genre: undefined,
   })
+})
+
+test('the calendar asks for the last two weeks and the next six', async () => {
+  const releases = spyOn(games, 'releasesBetween').mockResolvedValue([])
+  expect((await send('GET', '/api/releases')).body).toEqual([])
+  const [from, to] = releases.mock.calls[0] as [Date, Date]
+  expect(Math.round((to.getTime() - from.getTime()) / 86_400_000)).toBe(56)
 })
 
 test('game search passes the query on', async () => {
@@ -735,6 +768,11 @@ test('goals accept only catalog games to add', async () => {
   spyOn(games, 'getGame').mockResolvedValueOnce(undefined)
   expect((await goals('add game:9')).status).toBe(400)
   expect((await goals('add game:1')).body).toEqual({ year: 2026 })
+  // Where the game was saved from rides after the id and reaches the command as it came.
+  expect((await goals('add game:1 from:releases')).status).toBe(200)
+  expect(interests.handleInterestCommand).toHaveBeenLastCalledWith(me, 'add game:1 from:releases', [
+    title,
+  ])
   expect(await goals('set 12')).toMatchObject({ status: 200 })
   expect(interests.handleInterestCommand).toHaveBeenLastCalledWith(me, 'set 12', [title])
 })
@@ -1110,4 +1148,11 @@ test('the game switch also offers catalog games outside the library and talks ab
   expect(set.mock.calls[0][1]).toMatchObject({ npCommunicationId: 'NPWR2' })
   fromCatalog.mockResolvedValueOnce(null)
   expect((await send('POST', '/api/current', { game: 'game:9' })).status).toBe(404)
+})
+
+test('the PS Plus tier is a preference, and an unknown one is refused', async () => {
+  const update = spyOn(users, 'updateUser').mockResolvedValue(undefined as never)
+  expect((await send('POST', '/api/account/preferences', { psPlus: 'extra' })).status).toBe(200)
+  expect(update).toHaveBeenLastCalledWith(expect.any(String), { ps_plus: 'extra' })
+  expect((await send('POST', '/api/account/preferences', { psPlus: 'gold' })).status).toBe(400)
 })

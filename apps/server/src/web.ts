@@ -37,7 +37,7 @@ import {
   translator,
   userLocale,
 } from './i18n.ts'
-import { handleInterestCommand, yearProgress } from './interests.ts'
+import { handleInterestCommand, storeFor, yearProgress } from './interests.ts'
 import { library, ownedGames } from './library.ts'
 import { reply, trophyHelp } from './nexo.ts'
 import { nextPick } from './next-pick.ts'
@@ -49,6 +49,7 @@ import { catalogTrophies, PrivateProfile, profileSummary, secureUrl, titleTrophi
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
 import { allow } from './rate-limit.ts'
 import { dismissRecommendation, readPrefs, recommendations } from './recommend.ts'
+import { RELEASES_AFTER_DAYS, RELEASES_BEFORE_DAYS } from './releases.ts'
 import {
   chatThreads,
   markNotificationsRead,
@@ -64,6 +65,7 @@ import {
   gameByName,
   gameForTitle,
   getGame,
+  releasesBetween,
   searchCatalog,
 } from './repository/game.ts'
 import { requestMissingGame } from './repository/game-request.ts'
@@ -173,6 +175,7 @@ const publicUser = (u: User) => ({
   avatarUrl: secureUrl(u.avatar_url),
   telegramLinked: !!u.telegram_chat_id,
   includeDlcProgress: u.include_dlc_progress === true,
+  psPlus: u.ps_plus ?? 'none',
   aiNotices: u.ai_notices !== false,
   // Whether this instance lets Nexo write notices at all; the profile's switch only shows then.
   aiNoticesAvailable: config.automatic.notices,
@@ -356,6 +359,8 @@ async function titleDetail(url: URL, user: User) {
     platform: found.platforms.find((p) => p === 'PS5') ?? found.platforms[0] ?? platform,
     icon: heroArt(found),
     cover: found.cover_url,
+    // Not in the library yet: where to buy it, and its sale when known.
+    store: await storeFor(found, user),
     guide,
     building: !guide && !queued && !isDemo(user),
     queued,
@@ -532,9 +537,15 @@ async function api(
 
   if (path === '/api/account/preferences' && method === 'POST') {
     // Any of the preferences, alone or together: DLC, Nexo's notices and the language.
-    const { includeDlcProgress, aiNotices, locale } = await readBody(req)
+    const { includeDlcProgress, aiNotices, locale, psPlus } = await readBody(req)
     const fields: Partial<User> = {}
     if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
+    if (psPlus !== undefined) {
+      const tiers = ['none', 'essential', 'extra', 'deluxe'] as const
+      const tier = tiers.find((x) => x === psPlus)
+      if (!tier) return json(res, 400, { error: 'invalid' })
+      fields.ps_plus = tier
+    }
     if (typeof aiNotices === 'boolean') fields.ai_notices = aiNotices
     if (locale !== undefined) {
       if (!isLocale(locale))
@@ -772,7 +783,26 @@ async function api(
         platform: p.get('platform') ?? undefined,
         sort: p.get('sort') ?? undefined,
         page: Number(p.get('page')) || 1,
+        difficulty: p.get('difficulty') ?? undefined,
+        hours: p.get('hours') ?? undefined,
+        noMissables: p.get('noMissables') === '1',
+        onePlaythrough: p.get('onePlaythrough') === '1',
+        noOnline: p.get('noOnline') === '1',
+        genre: p.get('genre') ?? undefined,
       }),
+    )
+  }
+  // Releases around today: the last two weeks and the next six, for the home's calendar.
+  if (path === '/api/releases' && method === 'GET') {
+    const day = 86_400_000
+    const now = Date.now()
+    return json(
+      res,
+      200,
+      await releasesBetween(
+        new Date(now - RELEASES_BEFORE_DAYS * day),
+        new Date(now + RELEASES_AFTER_DAYS * day),
+      ),
     )
   }
   if (path === '/api/games/search' && method === 'GET') {
@@ -796,7 +826,8 @@ async function api(
     const { command } = await readBody(req)
     if (typeof command !== 'string') return json(res, 400, { error: 'command required' })
     if (command.startsWith('add ')) {
-      const id = command.slice(4).trim()
+      // The game's id, without where it was saved from ("add game:12 from:releases").
+      const id = command.slice(4).trim().split(/\s+/)[0]
       if (!id.startsWith('game:') || !(await getGame(id)))
         return json(res, 400, { error: t('pickCatalogGame') })
     }

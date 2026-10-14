@@ -28,7 +28,7 @@ test('a game from the library: progress, the guide numbers and the trophies', as
   expect(await screen.findByText('NA SUA BIBLIOTECA')).toBeTruthy()
   expect(calls[0].path).toBe('/api/title?game=game%3A19561')
   expect(screen.getByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
-  expect(meta()).toContain('Dificuldade 3/10')
+  expect(screen.getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(meta()).toContain('18h jogadas de ~70h')
   expect(meta()).toContain('1 jornada')
   expect(meta()).toContain('Sem perdíveis')
@@ -95,7 +95,7 @@ test('a game the player does not own: the overview and saving it', async () => {
   )
   fireEvent.click(screen.getByRole('button', { name: /Salvar nos interesses/ }))
   expect(await screen.findByRole('button', { name: 'Nos interesses', pressed: true })).toBeTruthy()
-  expect(calls.at(-1)?.body).toEqual({ command: 'add game:19561' })
+  expect(calls.at(-1)?.body).toEqual({ command: 'add game:19561 from:title' })
 })
 
 test('without a trophy list the trophies column says it is on its way', async () => {
@@ -143,7 +143,7 @@ test('a guide being researched: polls until it lands', async () => {
     jest.advanceTimersByTime(6000)
   })
   expect(calls).toHaveLength(2)
-  expect(meta()).toContain('Dificuldade 3/10')
+  expect(screen.getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   await act(async () => {
     jest.advanceTimersByTime(12_000)
   })

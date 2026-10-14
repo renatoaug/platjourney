@@ -59,6 +59,50 @@ export const FewFacts: Story = {
   ),
 }
 
+export const OnSale: Story = {
+  render: () => (
+    <GameShowcase
+      game={daysGone}
+      name="Days Gone"
+      store={{
+        url: 'https://store.playstation.com/pt-br/concept/229018',
+        deal: {
+          price: 4990,
+          base: 19990,
+          discount: 75,
+          endsAt: '2026-10-22T12:00:00Z',
+          plus: false,
+          currency: 'BRL',
+          storeUrl: 'https://store.playstation.com/pt-br/concept/229018',
+        },
+      }}
+    />
+  ),
+}
+
+export const InYourPlus: Story = {
+  render: () => (
+    <GameShowcase
+      game={daysGone}
+      name="Days Gone"
+      store={{
+        url: 'https://store.playstation.com/pt-br/concept/229018',
+        deal: {
+          price: 19990,
+          base: 19990,
+          discount: 0,
+          endsAt: null,
+          plus: true,
+          plusTier: 'extra',
+          mine: true,
+          currency: 'BRL',
+          storeUrl: 'https://store.playstation.com/pt-br/concept/229018',
+        },
+      }}
+    />
+  ),
+}
+
 export const Loading: Story = { render: () => <GameShowcaseSkeleton /> }
 
 /** Full screen, opened from the expand button or a tap on the image. */

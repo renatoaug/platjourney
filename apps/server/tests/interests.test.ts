@@ -4,6 +4,7 @@ import { handleInterestCommand, yearProgress, yearReport } from '../src/interest
 import * as ranking from '../src/ranking.ts'
 import * as games from '../src/repository/game.ts'
 import * as repo from '../src/repository/interest.ts'
+import * as prices from '../src/repository/store-price.ts'
 import * as users from '../src/repository/user.ts'
 import { counts, makeGame, makeGroups, makeTitle, makeUser } from './fixtures.ts'
 
@@ -17,6 +18,10 @@ const interest = (id: string, game = alpha, position = 1) => ({
   game,
   year,
   position,
+})
+
+beforeEach(() => {
+  spyOn(prices, 'pricesFor').mockResolvedValue(new Map())
 })
 
 afterEach(() => mock.restore())
@@ -55,6 +60,9 @@ test('interests take the best copy of their game and base-game progress', async 
       hours: 1.5,
       recommendedAt: '2026-10-01T12:00:00Z',
       nextPickAt: null,
+      source: null,
+      savedAt: null,
+      deal: null,
       done: false,
     },
     {
@@ -65,6 +73,9 @@ test('interests take the best copy of their game and base-game progress', async 
       hours: null,
       recommendedAt: null,
       nextPickAt: null,
+      source: null,
+      savedAt: null,
+      deal: null,
       done: true,
     },
     {
@@ -75,6 +86,9 @@ test('interests take the best copy of their game and base-game progress', async 
       hours: null,
       recommendedAt: null,
       nextPickAt: null,
+      source: null,
+      savedAt: null,
+      deal: null,
       done: false,
     },
   ])
@@ -131,6 +145,9 @@ test('the report shows the goal, the interests and the platinums', () => {
           hours: null,
           recommendedAt: null,
           nextPickAt: null,
+          source: null,
+          savedAt: null,
+          deal: null,
         },
         {
           id: 'i2',
@@ -141,6 +158,9 @@ test('the report shows the goal, the interests and the platinums', () => {
           hours: null,
           recommendedAt: null,
           nextPickAt: null,
+          source: null,
+          savedAt: null,
+          deal: null,
         },
         {
           id: 'i3',
@@ -151,6 +171,9 @@ test('the report shows the goal, the interests and the platinums', () => {
           hours: null,
           recommendedAt: null,
           nextPickAt: null,
+          source: null,
+          savedAt: null,
+          deal: null,
         },
       ],
     }),
@@ -258,4 +281,17 @@ describe('/goals', () => {
     expect(await handleInterestCommand(user, '', [])).toContain('platinas')
     expect(update).not.toHaveBeenCalled()
   })
+})
+
+test('a game saved from the web keeps where it came from; an unknown source is dropped', async () => {
+  const add = spyOn(repo, 'addInterest').mockResolvedValue()
+  spyOn(games, 'getGame').mockResolvedValue(makeGame({ id: 'game:12', name: 'Phantom Blade Zero' }))
+  spyOn(repo, 'listInterests').mockResolvedValue([])
+  spyOn(users, 'getUser').mockResolvedValue(makeUser())
+  spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
+  const user = makeUser()
+  await handleInterestCommand(user, 'add game:12 from:releases', [])
+  expect(add).toHaveBeenLastCalledWith(user.id, 'game:12', expect.any(Number), 'releases')
+  await handleInterestCommand(user, 'add game:12 from:nowhere', [])
+  expect(add).toHaveBeenLastCalledWith(user.id, 'game:12', expect.any(Number), undefined)
 })
