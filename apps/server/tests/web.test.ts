@@ -99,6 +99,7 @@ beforeEach(() => {
   spyOn(guide, 'ensureGuide').mockResolvedValue(freshGuide)
   spyOn(interests, 'yearProgress').mockResolvedValue({ year: 2026 } as never)
   spyOn(interests, 'handleInterestCommand').mockResolvedValue('ok')
+  spyOn(interests, 'storeFor').mockResolvedValue(null)
   spyOn(lib, 'library').mockResolvedValue([title])
   spyOn(lib, 'ownedGames').mockResolvedValue([])
   spyOn(playtime, 'playtimes').mockResolvedValue(new Map())

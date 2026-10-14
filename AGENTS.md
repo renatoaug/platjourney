@@ -31,7 +31,7 @@ A component that fetches keeps the request in a thin container and renders a pre
 
 1. `bun run lint` passes.
 2. `bun run typecheck` passes.
-3. `bun run test:coverage` passes: it is what CI runs (server, web and service tests with coverage floors), and it is slower than `bun run test`, so timing bugs in tests show up there first.
+3. `bun run test:coverage` passes: it is what CI runs (server, web and service tests with coverage floors), and it is slower than `bun run test`, so timing bugs in tests show up there first. A pre-push hook (`.githooks/pre-push`, turned on by `bun install`) runs lint, typecheck and `test:coverage` before every push. Server tests never reach a database: `tests/env.ts` points SurrealDB at a closed port, so a call that is not mocked fails here exactly as it would in CI.
 4. `bun run build`, then `bun run ui:check` passes: it screenshots every screen at 1280 and 375 into `apps/web/.ui-check/` and fails on serious axe violations, horizontal scroll and JS errors. Needs the app and the database running.
 5. For a component: its story covers its states, and `bun run stories:check` passes (every story renders without errors). For a screen: its four states exist and the anatomy matches its skill.
 6. Open the 1280 and 375 screenshots and compare them with the skill's example. Say what matched and what did not, not only what you saw. Lint and build pass on a broken layout.

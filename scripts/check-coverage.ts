@@ -24,6 +24,8 @@ const SUITES: Suite[] = [
   {
     name: 'server',
     tests: 'apps/server/tests',
+    // Every server test file runs with tests/env.ts first, so none can reach a real database.
+    preload: './apps/server/tests/env.ts',
     sources: 'apps/server/src',
     skip: /\/index\.ts$/,
   },

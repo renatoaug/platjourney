@@ -287,6 +287,8 @@ test('a game saved from the web keeps where it came from; an unknown source is d
   const add = spyOn(repo, 'addInterest').mockResolvedValue()
   spyOn(games, 'getGame').mockResolvedValue(makeGame({ id: 'game:12', name: 'Phantom Blade Zero' }))
   spyOn(repo, 'listInterests').mockResolvedValue([])
+  spyOn(users, 'getUser').mockResolvedValue(makeUser())
+  spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
   const user = makeUser()
   await handleInterestCommand(user, 'add game:12 from:releases', [])
   expect(add).toHaveBeenLastCalledWith(user.id, 'game:12', expect.any(Number), 'releases')

@@ -1,0 +1,7 @@
+#!/bin/sh
+# Runs what CI runs before anything leaves this machine, so a push never turns the pull request red.
+# Skip once with `git push --no-verify`.
+set -e
+bun run lint
+bun run typecheck
+bun run test:coverage

@@ -9,6 +9,7 @@
     "apps/*"
   ],
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
     "dev": "bun run --parallel dev:server dev:web dev:ai",
     "dev:server": "bun run --cwd apps/server dev",
     "start": "bun run --cwd apps/server start",
@@ -40,7 +41,7 @@
     "ai:typecheck": "cd services/ai && uv run pyright",
     "ai:test": "cd services/ai && uv run pytest",
     "test": "bun run test:server && bun run test:web && bun run ai:test",
-    "test:server": "bun test apps/server/tests",
+    "test:server": "bun test apps/server/tests --preload ./apps/server/tests/env.ts",
     "test:web": "bun test apps/web/tests --preload ./apps/web/tests/setup.ts",
     "test:coverage": "bun scripts/check-coverage.ts",
     "ai:eval": "cd services/ai && uv run python -m evals",
