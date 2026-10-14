@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.16.0](https://github.com/renatoaug/platjourney/compare/v0.15.1...v0.16.0) (2026-10-14)
+
+### Features
+
+* **plugins:** reach any component and any request without slots ([#42](https://github.com/renatoaug/platjourney/issues/42)) ([8c890c6](https://github.com/renatoaug/platjourney/commit/8c890c60f73415d7fcf2fed1e96ff2d78ebf04cd))
+
 ## [0.15.1](https://github.com/renatoaug/platjourney/compare/v0.15.0...v0.15.1) (2026-10-14)
 
 ### Bug Fixes
