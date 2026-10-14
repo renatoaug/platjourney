@@ -208,14 +208,14 @@ test('a stop lights the parts of its page it talks about, then lets them go', as
   expect(container.querySelector('#telegram-card')?.hasAttribute('data-tour-spot')).toBe(false)
 })
 
-test('a first visit without a game skips the stops about it, and the radar says it is an example', () => {
+test('a first visit without a game skips the stops about it, and the home stop still sums up the Overview', () => {
   mockApi({})
   renderApp(<Onboarding />, {
     value: { me: player, data: { ...SAMPLE_DATA, current: null, ranking: [] } },
   })
   expect(screen.getByText('FASE 1/9')).toBeTruthy()
   startTour()
-  expect(screen.getByText('Exemplo · no radar')).toBeTruthy()
+  expect(screen.getByText('Os lançamentos que estão chegando')).toBeTruthy()
   next()
   expect(screen.getByText('Jogue algo e ele aparece aqui.')).toBeTruthy()
   next()

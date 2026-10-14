@@ -8,7 +8,7 @@ import { GENRES_PT } from '../components/game-showcase'
 import { PageHero } from '../components/page-hero'
 import { titleHref } from '../components/tip'
 import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
-import { api } from '../lib/api'
+import { ApiError, api } from '../lib/api'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Pager } from '../ui/pager'
@@ -443,7 +443,8 @@ function MissingGame({
                 toast(t('missingToast', { name }), 'success')
               }
             })
-            .catch(() => setState('failed'))
+            // A refusal already shown to the player (the demo's notice) needs no second error.
+            .catch((e) => setState(e instanceof ApiError && e.handled ? 'idle' : 'failed'))
         }}
       >
         <Icon name="plus" />

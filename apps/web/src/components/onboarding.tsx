@@ -40,12 +40,11 @@ const messages = defineMessages({
     home: {
       eyebrow: 'SEU PAINEL',
       title: 'Comece sempre por aqui.',
-      body: 'A Visão geral junta o que importa hoje: a sua jornada atual, a última orientação do Nexo e os jogos da sua biblioteca mais perto da platina.',
-      radar: 'No radar',
-      example: 'Exemplo · no radar',
-      sample1: 'Astro Bot',
-      sample2: 'Ghost of Tsushima',
-      sample3: 'Hades',
+      body: 'A Visão geral junta o que importa hoje: a sua jornada atual, a última orientação do Nexo, os jogos mais perto da platina e os lançamentos que estão chegando. Em qualquer tela, a busca no topo acha um jogo (no computador, ⌘K ou Ctrl+K).',
+      journey: 'Sua jornada atual',
+      nexo: 'A última orientação do Nexo',
+      next: 'Suas próximas platinas',
+      releases: 'Os lançamentos que estão chegando',
     },
     radar: {
       eyebrow: 'RADAR LIGADO',
@@ -93,7 +92,7 @@ const messages = defineMessages({
     guides: {
       eyebrow: 'MAPA DA PLATINA',
       title: 'Antes de comprar, consulte.',
-      body: 'Em Guias você busca qualquer jogo e vê a dificuldade, as horas até a platina e se tem perdíveis ou troféus online, antes mesmo de ter o jogo.',
+      body: 'Em Guias você busca qualquer jogo e filtra por dificuldade, horas até a platina, sem perdíveis, uma jogada só, sem online e gênero, antes mesmo de ter o jogo.',
       search: 'Elden Ring',
       meta: '6/10 · ~80h · perdíveis',
     },
@@ -108,15 +107,15 @@ const messages = defineMessages({
     goals: {
       eyebrow: 'METAS',
       title: 'Sua missão do ano.',
-      body: 'Em Interesses, defina quantas platinas quer no ano e salve os próximos jogos na ordem em que pretende jogar. O anel acompanha seu ritmo.',
+      body: 'Em Interesses, defina quantas platinas quer no ano e salve os próximos jogos na ordem em que pretende jogar. O anel acompanha seu ritmo, e a gente avisa quando um jogo salvo entra em promoção ou no seu PS Plus.',
       goal: 'Meta {year}',
     },
     profile: {
       eyebrow: 'SEU QG',
       title: 'Ajuste do seu jeito.',
-      body: 'No seu perfil, conecte o Telegram para receber as dicas do Nexo e conversar com ele pelo celular, e escolha se o progresso conta as DLCs. A platina só pede o jogo base.',
+      body: 'No seu perfil, conecte o Telegram para receber as dicas do Nexo e conversar com ele pelo celular, diga qual é o seu PS Plus e escolha se o progresso conta as DLCs.',
       demoBody:
-        'No seu perfil, conecte o Telegram para receber as dicas do Nexo pelo celular e escolha se o progresso conta as DLCs. Na demonstração, as configurações ficam travadas.',
+        'No seu perfil, conecte o Telegram para receber as dicas do Nexo pelo celular, diga qual é o seu PS Plus e escolha se o progresso conta as DLCs. Na demonstração, as configurações ficam travadas.',
       telegram: 'Telegram',
       connect: 'Conectar',
       dlc: 'Contar DLCs',
@@ -149,12 +148,11 @@ const messages = defineMessages({
     home: {
       eyebrow: 'YOUR DASHBOARD',
       title: 'Always start here.',
-      body: 'The Overview brings together what matters today: your current journey, Nexo’s latest guidance and the games in your library closest to the platinum.',
-      radar: 'On radar',
-      example: 'Example · on radar',
-      sample1: 'Astro Bot',
-      sample2: 'Ghost of Tsushima',
-      sample3: 'Hades',
+      body: 'The Overview brings together what matters today: your current journey, Nexo’s latest guidance, the games closest to the platinum and the releases coming up. On any screen, the search at the top finds a game (on a computer, ⌘K or Ctrl+K).',
+      journey: 'Your current journey',
+      nexo: 'Nexo’s latest guidance',
+      next: 'Your next platinums',
+      releases: 'The releases coming up',
     },
     radar: {
       eyebrow: 'RADAR ON',
@@ -202,7 +200,7 @@ const messages = defineMessages({
     guides: {
       eyebrow: 'PLATINUM MAP',
       title: 'Check before you buy.',
-      body: 'In Guides you search any game and see the difficulty, the hours to the platinum and whether it has missable or online trophies, even before you own it.',
+      body: 'In Guides you search any game and filter by difficulty, hours to the platinum, no missables, one playthrough, no online and genre, even before you own it.',
       search: 'Elden Ring',
       meta: '6/10 · ~80h · missables',
     },
@@ -217,15 +215,15 @@ const messages = defineMessages({
     goals: {
       eyebrow: 'GOALS',
       title: 'Your mission of the year.',
-      body: 'In Interests, set how many platinums you want this year and save your next games in the order you mean to play them. The ring follows your pace.',
+      body: 'In Interests, set how many platinums you want this year and save your next games in the order you mean to play them. The ring follows your pace, and we tell you when a saved game goes on sale or joins your PS Plus.',
       goal: 'Goal {year}',
     },
     profile: {
       eyebrow: 'YOUR BASE',
       title: 'Make it yours.',
-      body: 'On your profile, connect Telegram to get Nexo’s tips and talk to it from your phone, and choose whether progress counts DLC. The platinum only needs the base game.',
+      body: 'On your profile, connect Telegram to get Nexo’s tips and talk to it from your phone, tell us your PS Plus tier and choose whether progress counts DLC.',
       demoBody:
-        'On your profile, connect Telegram to get Nexo’s tips on your phone and choose whether progress counts DLC. In the demo, the settings are locked.',
+        'On your profile, connect Telegram to get Nexo’s tips on your phone, tell us your PS Plus tier and choose whether progress counts DLC. In the demo, the settings are locked.',
       telegram: 'Telegram',
       connect: 'Connect',
       dlc: 'Count DLC',
@@ -799,28 +797,21 @@ function Stage({ phase, me, data }: { phase: Phase; me: Me; data: AppStateData |
     )
   }
   if (phase === 'home') {
-    const ranking = data?.ranking?.slice(0, 3) ?? []
-    const rows = ranking.length
-      ? ranking.map((r) => ({ name: r.name, progress: r.progress }))
-      : [
-          { name: t('home.sample1'), progress: 82 },
-          { name: t('home.sample2'), progress: 64 },
-          { name: t('home.sample3'), progress: 41 },
-        ]
+    // What the Overview gathers, one line each.
+    const parts = [
+      ['gamepad', 'home.journey'],
+      ['nexo', 'home.nexo'],
+      ['trophy', 'home.next'],
+      ['clock', 'home.releases'],
+    ] as const
     return (
-      <div className="onb-radar-list">
-        {/* A library with nothing in progress yet gets sample games, and says so. */}
-        <span className="eyebrow">{t(ranking.length ? 'home.radar' : 'home.example')}</span>
-        {rows.map((r, i) => (
-          <div key={r.name} className="onb-radar-row" style={{ '--i': i } as CSSProperties}>
-            <span className="onb-pick-rank">0{i + 1}</span>
-            <div>
-              <b>{r.name}</b>
-              <span className="onb-bar">
-                <span style={{ '--to': `${r.progress}%` } as CSSProperties} />
-              </span>
-            </div>
-            <b className="onb-radar-pct">{r.progress}%</b>
+      <div className="onb-home">
+        {parts.map(([icon, k], i) => (
+          <div key={k} className="onb-home-part" style={{ '--i': i } as CSSProperties}>
+            <span className="onb-home-icon">
+              <Icon name={icon} />
+            </span>
+            <span>{t(k)}</span>
           </div>
         ))}
       </div>

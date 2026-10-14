@@ -13,7 +13,7 @@ The watcher visits every player one after the other, every `POLL_MINUTES` (15 by
 | `session` | The player opens a game (PSN presence), at most once every 6 hours | A short plain line naming the game and where the player is in it |
 | `route` | A roadmap step reached without new trophies | The guide's note on what comes next |
 | `server` | A game in the library has its online servers shutting down (daily check, only with `AI_RESEARCH` on) | The warning with the date |
-| `deal` | Daily PlayStation Store check: a saved game goes on sale or its sale gets deeper, or enters the PS Plus catalog of the tier the player picked; games already owned are left out | The game, the price, the old one and until when; or that it entered the player's PS Plus, with the month |
+| `deal` | Daily PlayStation Store check: a saved game goes on sale or its sale gets deeper, or enters the PS Plus catalog of the tier the player picked; games already owned are left out | One notice a day per player: a single game as a sentence (the price and until when, or that it entered the player's PS Plus); several as one list, a line per game |
 
 One sweep sends at most one message per player: what happened, then what comes next, in the same text.
 

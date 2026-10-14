@@ -51,6 +51,14 @@ const PLAYING = [
 // This year's interests in the player's order, and the stored recommendations.
 const WANTED = ['25076', '303811', '19562', '7323'] // + Astro Bot, Rise of the Tomb Raider
 const SUGGESTED = ['110248', '7603', '7609', '6801'] // Stray, Hellblade, Until Dawn, Far Cry 4
+// Where each interest was saved from, in WANTED's order.
+const SOURCES = ['recommendations', 'releases', 'title', 'search']
+// The demo's PS Plus tier, and a made-up sale on a saved game it does not own (cents, days from the
+// anchor to its end), so the deals band and the interest's tag show.
+const PS_PLUS = 'extra'
+const DEALS: Record<string, { base: number; price: number; discount: number; days: number }> = {
+  '303811': { base: 33990, price: 23793, discount: 30, days: 8 }, // Astro Bot
+}
 const GOALS = { [YEAR]: 12, [YEAR - 1]: 8 }
 const PLAN_MINUTES = 120
 
@@ -230,6 +238,7 @@ const user = {
   demo: true,
   avatar_url: '/logo.svg',
   include_dlc_progress: false,
+  ps_plus: PS_PLUS,
   goal_targets: Object.fromEntries(Object.entries(GOALS).map(([y, n]) => [y, n])),
   last_seen_at: at(1, 22),
 } as Record<string, unknown>
@@ -421,9 +430,24 @@ for (const [i, id] of WANTED.entries()) {
     game: id,
     year: YEAR,
     position: i + 1,
+    source: SOURCES[i],
     created_at: at(250 - i, 12),
   })
 }
+
+// Store prices: the made-up sales above, on games that have a store page.
+const storePrices: Row[] = Object.entries(DEALS)
+  .filter(([id]) => games.get(id)?.store_url)
+  .map(([id, d]) => ({
+    game: id,
+    region: 'BR',
+    base: d.base,
+    price: d.price,
+    discount: d.discount,
+    ends_at: at(-d.days, 23),
+    plus: false,
+    currency: 'BRL',
+  }))
 
 // Recommendations: each guide's own numbers and first sentence, next to the platinums that share
 // the most genres with it.
@@ -503,6 +527,7 @@ const seed = {
   })),
   recommendation: recommendations,
   playtime: playtimes,
+  store_price: storePrices,
 }
 await Bun.write(out, `${JSON.stringify(seed, null, 2)}\n`)
 console.log(

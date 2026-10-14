@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MockAppState, SAMPLE_DATA, SAMPLE_ME } from '../app/app-state'
 import { current } from '../fixtures'
 import { Language } from '../i18n/i18n'
+import { rankingData } from './game-cards.stories'
 import { Tour, WelcomeDialog } from './onboarding'
 
 const meta: Meta = { title: 'Components/Onboarding', parameters: { layout: 'fullscreen' } }
@@ -11,7 +12,7 @@ type Story = StoryObj
 const player = { ...SAMPLE_ME, onboarded: false }
 const demo = { ...player, onlineId: 'PlatJourneyDemo', demo: true }
 // A player with a game in progress, so every stop of the tour applies.
-const data = { ...SAMPLE_DATA, current }
+const data = { ...SAMPLE_DATA, current, ranking: rankingData }
 
 export const Welcome: Story = {
   render: () => (
