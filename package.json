@@ -9,7 +9,7 @@
     "apps/*"
   ],
   "scripts": {
-    "prepare": "git config core.hooksPath .githooks || true",
+    "prepare": "[ -n \"$CI\" ] || git config core.hooksPath .githooks || true",
     "dev": "bun run --parallel dev:server dev:web dev:ai",
     "dev:server": "bun run --cwd apps/server dev",
     "start": "bun run --cwd apps/server start",
