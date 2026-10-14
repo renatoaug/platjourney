@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.15.0](https://github.com/renatoaug/platjourney/compare/v0.14.0...v0.15.0) (2026-10-14)
+
+### Features
+
+* **web:** discovery revamp with search, guides filters, releases and deals ([#39](https://github.com/renatoaug/platjourney/issues/39)) ([d0e8e3d](https://github.com/renatoaug/platjourney/commit/d0e8e3d6b8359b8ee2b48d00a4fb72efd0920387))
+
+### Bug Fixes
+
+* **ci:** keep the pre-push hook out of ci ([#40](https://github.com/renatoaug/platjourney/issues/40)) ([b208d89](https://github.com/renatoaug/platjourney/commit/b208d89e64a2a804d376e8f1282b233059f01af2))
+
 ## [0.14.0](https://github.com/renatoaug/platjourney/compare/v0.13.0...v0.14.0) (2026-10-13)
 
 ### Features
