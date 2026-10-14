@@ -41,11 +41,10 @@ const messages = defineMessages({
       eyebrow: 'SEU PAINEL',
       title: 'Comece sempre por aqui.',
       body: 'A Visão geral junta o que importa hoje: a sua jornada atual, a última orientação do Nexo, os jogos mais perto da platina e os lançamentos que estão chegando. Em qualquer tela, a busca no topo acha um jogo (no computador, ⌘K ou Ctrl+K).',
-      radar: 'No radar',
-      example: 'Exemplo · no radar',
-      sample1: 'Astro Bot',
-      sample2: 'Ghost of Tsushima',
-      sample3: 'Hades',
+      journey: 'Sua jornada atual',
+      nexo: 'A última orientação do Nexo',
+      next: 'Suas próximas platinas',
+      releases: 'Os lançamentos que estão chegando',
     },
     radar: {
       eyebrow: 'RADAR LIGADO',
@@ -150,11 +149,10 @@ const messages = defineMessages({
       eyebrow: 'YOUR DASHBOARD',
       title: 'Always start here.',
       body: 'The Overview brings together what matters today: your current journey, Nexo’s latest guidance, the games closest to the platinum and the releases coming up. On any screen, the search at the top finds a game (on a computer, ⌘K or Ctrl+K).',
-      radar: 'On radar',
-      example: 'Example · on radar',
-      sample1: 'Astro Bot',
-      sample2: 'Ghost of Tsushima',
-      sample3: 'Hades',
+      journey: 'Your current journey',
+      nexo: 'Nexo’s latest guidance',
+      next: 'Your next platinums',
+      releases: 'The releases coming up',
     },
     radar: {
       eyebrow: 'RADAR ON',
@@ -799,38 +797,21 @@ function Stage({ phase, me, data }: { phase: Phase; me: Me; data: AppStateData |
     )
   }
   if (phase === 'home') {
-    const ranking = data?.ranking?.slice(0, 3) ?? []
-    const rows: { name: string; progress: number; art?: string; platform?: string }[] =
-      ranking.length
-        ? ranking.map((r) => ({
-            name: r.name,
-            progress: r.progress,
-            art: r.icon,
-            platform: r.platform,
-          }))
-        : [
-            { name: t('home.sample1'), progress: 82 },
-            { name: t('home.sample2'), progress: 64 },
-            { name: t('home.sample3'), progress: 41 },
-          ]
+    // What the Overview gathers, one line each.
+    const parts = [
+      ['gamepad', 'home.journey'],
+      ['nexo', 'home.nexo'],
+      ['trophy', 'home.next'],
+      ['clock', 'home.releases'],
+    ] as const
     return (
-      <div className="onb-radar-list">
-        {/* The radar as the home shows it: each game's art with its place, then the progress. A
-            library with nothing in progress yet gets sample games, and says so. */}
-        <span className="eyebrow">{t(ranking.length ? 'home.radar' : 'home.example')}</span>
-        {rows.map((r, i) => (
-          <div key={r.name} className="onb-radar-row" style={{ '--i': i } as CSSProperties}>
-            <span className="onb-radar-art">
-              {r.art ? <img src={r.art} alt="" /> : <Icon name="gamepad" />}
-              <span className="onb-radar-place">0{i + 1}</span>
+      <div className="onb-home">
+        {parts.map(([icon, k], i) => (
+          <div key={k} className="onb-home-part" style={{ '--i': i } as CSSProperties}>
+            <span className="onb-home-icon">
+              <Icon name={icon} />
             </span>
-            <div>
-              <b>{r.name}</b>
-              <span className="onb-bar">
-                <span style={{ '--to': `${r.progress}%` } as CSSProperties} />
-              </span>
-            </div>
-            <b className="onb-radar-pct">{r.progress}%</b>
+            <span>{t(k)}</span>
           </div>
         ))}
       </div>

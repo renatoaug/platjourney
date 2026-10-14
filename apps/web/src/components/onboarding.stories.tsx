@@ -34,21 +34,6 @@ const stop = (step: number, me = player): Story => ({
 })
 
 export const Overview = stop(1)
-// A library with nothing in progress yet: the radar shows sample games and says so.
-export const OverviewEmptyLibrary: Story = {
-  render: () => (
-    <MockAppState>
-      <div style={{ minHeight: '100vh' }} />
-      <Tour
-        step={1}
-        setStep={() => {}}
-        me={player}
-        data={{ ...data, ranking: [] }}
-        onDone={() => {}}
-      />
-    </MockAppState>
-  ),
-}
 export const CurrentGame = stop(2)
 export const Notices = stop(3)
 export const Trophies = stop(4)
