@@ -7,10 +7,10 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { openSession, sessionCookie } from './auth.ts'
 import { q } from './db.ts'
-import { json, readBody } from './http.ts'
+import { json, type PageDirective, pagePolicy, readBody } from './http.ts'
 import type { User } from './repository/user.ts'
 
-export const PLUGIN_API = 2
+export const PLUGIN_API = 3
 
 /** Model work about to run or that failed: the player and the action (chat, tip, plan…). */
 export interface ModelWork {
@@ -65,6 +65,9 @@ export interface PluginContext {
   /** Signs `user` in on this response, as the app's own sign-in does: for another way of signing
    * in, such as single sign-on. */
   signIn(res: ServerResponse, user: User): Promise<void>
+  /** Lets the app's page load from `sources` for one directive (`script-src`, `frame-src`,
+   * `connect-src`, `img-src`, `style-src`, `font-src`), e.g. a provider's script and frames. */
+  allowOnPage(directive: PageDirective, ...sources: string[]): void
   /** Runs before model work; throw Refused to stop it. */
   beforeModel(hook: Hook): void
   /** Runs when model work failed after beforeModel let it through. */
@@ -79,6 +82,7 @@ export interface Plugin {
 
 const routes = new Map<string, { handler: Handler; public: boolean; method: RouteMethod }>()
 const intercepts: { path: string; method?: RouteMethod; handler: Handler }[] = []
+const pageSources: Partial<Record<PageDirective, string[]>> = {}
 const before: Hook[] = []
 const failed: Hook[] = []
 type Listener = (payload: never) => Promise<void>
@@ -107,6 +111,9 @@ const context = (name: string): PluginContext => ({
   async signIn(res, user) {
     const { token } = await openSession(user)
     res.setHeader('set-cookie', sessionCookie(token))
+  },
+  allowOnPage(directive, ...sources) {
+    pageSources[directive] = [...(pageSources[directive] ?? []), ...sources]
   },
   beforeModel: (hook) => before.push(hook),
   modelFailed: (hook) => failed.push(hook),
@@ -168,10 +175,16 @@ export function interceptsFor(pathname: string, method: string): Handler[] {
     .map((i) => i.handler)
 }
 
+/** The content security policy of the app's page, with what plugins allowed on it. */
+export function pluginPagePolicy(): string {
+  return pagePolicy(pageSources)
+}
+
 /** For tests: forgets every plugin. */
 export function resetPlugins(): void {
   routes.clear()
   intercepts.length = 0
+  for (const d of Object.keys(pageSources)) delete pageSources[d as PageDirective]
   before.length = 0
   failed.length = 0
   listeners.clear()

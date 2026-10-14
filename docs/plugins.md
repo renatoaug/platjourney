@@ -173,7 +173,7 @@ Relative paths in both settings start at the repository's root, and absolute pat
 
 ## The contract
 
-`PLUGIN_API` (in `apps/server/src/plugins.ts`) is `2`. What a plugin gets on the server:
+`PLUGIN_API` (in `apps/server/src/plugins.ts`) is `3`. What a plugin gets on the server:
 
 | | |
 |---|---|
@@ -183,6 +183,7 @@ Relative paths in both settings start at the repository's root, and absolute pat
 | `ctx.route(path, handler, { public, method })` | Answers `/api/ext/<path>` for one HTTP method, GET unless `method` says otherwise; any other method gets 405. A route that changes anything declares `POST` (or `PUT`, `PATCH`, `DELETE`): a link opens a GET. The handler gets `req`, `res`, `url`, `method` and, unless public, `me`. The demo account reaches only GET routes. Two plugins cannot take the same path. |
 | `ctx.intercept(path, handler, { method })` | Runs before the app answers any request to `path`: exact (`/api/auth/login`, `/ads.txt`) or a prefix ending in `*` (`/api/auth/*`). The handler gets the same as a route, with `me` when signed in. If it answers, the request ends there; if not, it goes on to the next interceptor and then the app. |
 | `ctx.signIn(res, user)` | Signs `user` in on this response, with the same session the app's own sign-in opens: for single sign-on or any other way in. |
+| `ctx.allowOnPage(directive, ...sources)` | Lets the app's page load from more places in one directive of its content security policy (`script-src`, `frame-src`, `connect-src`, `img-src`, `style-src`, `font-src`), e.g. a provider's script and its frames. The other directives cannot be changed. |
 | `ctx.beforeModel(hook)` | Runs before model work with `{ user, action }`. Throwing `Refused(code, message, status)` stops it; the player gets `message` with `status`. |
 | `ctx.modelFailed(hook)` | Runs when the work failed after every `beforeModel` let it through. |
 | `ctx.on('user:created', listener)` | Runs after a new account signs up. |

@@ -11,7 +11,7 @@ import * as deepguide from '../src/deepguide.ts'
 import { DEMO_ACCOUNT_ID } from '../src/demo.ts'
 import * as guide from '../src/guide.ts'
 import { GUIDE_VERSION, type Guide } from '../src/guide.ts'
-import { PAGE_POLICY, SECURITY_HEADERS } from '../src/http.ts'
+import { pagePolicy, SECURITY_HEADERS } from '../src/http.ts'
 import * as interests from '../src/interests.ts'
 import * as lib from '../src/library.ts'
 import * as nexo from '../src/nexo.ts'
@@ -824,10 +824,10 @@ test('pages come from the built app, with long cache only for assets', async () 
   expect(index.headers).toEqual({
     'content-type': 'text/html; charset=utf-8',
     'cache-control': 'no-cache',
-    'content-security-policy': PAGE_POLICY,
+    'content-security-policy': pagePolicy(),
     ...SECURITY_HEADERS,
   })
-  expect(PAGE_POLICY).toContain("frame-ancestors 'none'")
+  expect(pagePolicy()).toContain("frame-ancestors 'none'")
   const asset = await send('GET', '/assets/app.js')
   expect(asset.headers).toEqual({
     'content-type': 'text/javascript; charset=utf-8',
@@ -1139,6 +1139,27 @@ test('a plugin steps in before any request: it answers in place of the app, or l
   } finally {
     resetPlugins()
   }
+})
+
+test("a plugin adds sources to the page's policy, and only to the directives it may change", async () => {
+  spyOn(fs, 'existsSync').mockReturnValue(true)
+  spyOn(fs, 'readFileSync').mockReturnValue('<html>')
+  await registerPlugin({
+    name: 'ads-fixture',
+    register(ctx) {
+      ctx.allowOnPage('script-src', 'https://ads.example')
+      ctx.allowOnPage('frame-src', 'https://frames.example', 'https://ads.example')
+    },
+  })
+  try {
+    const policy = (await send('GET', '/')).headers['content-security-policy']
+    expect(policy).toContain("script-src 'self' https://ads.example;")
+    expect(policy).toContain("frame-src 'self' https://frames.example https://ads.example;")
+    expect(policy).toContain("frame-ancestors 'none'")
+  } finally {
+    resetPlugins()
+  }
+  expect(pagePolicy()).not.toContain('ads.example')
 })
 
 test('the chat game switch lists the player titles by name and loads the one picked', async () => {

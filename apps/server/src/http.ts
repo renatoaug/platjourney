@@ -42,19 +42,31 @@ export const SECURITY_HEADERS: Record<string, string> = {
   'referrer-policy': 'strict-origin-when-cross-origin',
 }
 
-/** On the app's page: where scripts, styles, fonts and images may come from. */
-export const PAGE_POLICY = [
-  "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' https: data: blob:",
-  "connect-src 'self'",
-  "frame-ancestors 'none'",
-  "base-uri 'none'",
-  "object-src 'none'",
-  "form-action 'self'",
-].join('; ')
+/** On the app's page: where scripts, styles, fonts, images, requests and frames may come from.
+ * Plugins can add sources to these (ctx.allowOnPage); the other directives stay as they are. */
+export const PAGE_SOURCES = {
+  'script-src': ["'self'"],
+  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+  'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
+  'img-src': ["'self'", 'https:', 'data:', 'blob:'],
+  'connect-src': ["'self'"],
+  'frame-src': ["'self'"],
+}
+export type PageDirective = keyof typeof PAGE_SOURCES
+
+/** The page's policy, with any sources plugins added to each directive. */
+export function pagePolicy(added: Partial<Record<PageDirective, string[]>> = {}): string {
+  return [
+    "default-src 'self'",
+    ...Object.entries(PAGE_SOURCES).map(([directive, sources]) =>
+      [directive, ...new Set([...sources, ...(added[directive as PageDirective] ?? [])])].join(' '),
+    ),
+    "frame-ancestors 'none'",
+    "base-uri 'none'",
+    "object-src 'none'",
+    "form-action 'self'",
+  ].join('; ')
+}
 
 export function json(
   res: ServerResponse,
