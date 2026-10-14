@@ -40,27 +40,33 @@ const messages = defineMessages({
   [Language.PtBR]: {
     started: 'Você começou {game}. O guia da platina está no PlatJourney.',
     // The session-start notice's first line: the game, then what is left, no greeting.
-    playing: '🎮 Jogando **{game}**',
-    heading: '🎮 **{game}** · {left}',
+    playing: '🎮 Hora de jogar **{game}**.',
+    goodSession: 'Boa jogatina! 🍀',
+    heading: '🎮 Hora de jogar! {left} **{game}**.',
     left: {
-      one: 'falta 1 troféu para a platina',
-      other: 'faltam {count} troféus para a platina',
+      one: 'Falta 1 troféu para a platina de',
+      other: 'Faltam {count} troféus para a platina de',
     },
-    focus: '**Foco de hoje**: {trophy}',
+    // The focus is a suggestion: the roadmap's next trophy, or one the player left behind.
+    focus:
+      '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **{trophy}**.',
     // A focus from a phase the player already went past: something left behind, not the next step.
-    focusBehind: '**Pendência**: {trophy}',
+    focusBehind:
+      '**Sugestão de próximo troféu**\nPelo momento em que você está, vale buscar **{trophy}**, que ficou para trás.',
     tip: '**Dica**: {tip}',
     missable: '⚠️ **{trophy}** é perdível: {when}',
     almost: '**Quase lá**: {trophy}, {value} de {target}.',
-    focusStill: '**Foco continua**: {trophy}',
+    focusStill: 'A sugestão de próximo troféu continua sendo **{trophy}**.',
     mark: {
       first: 'Primeiro troféu de {game}: a jornada começou.',
       half: 'Metade do jogo base: {earned} de {total} troféus.',
       final: 'Reta final: faltam {count} para a platina: {remaining}.',
       platinum: 'Platina de {game}! Parabéns.',
     },
-    focusNew: '**Novo foco**: {trophy}\n{detail}',
-    focusNewBehind: '**Próxima pendência**: {trophy}\n{detail}',
+    focusNew:
+      '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **{trophy}**.\n{detail}',
+    focusNewBehind:
+      '**Sugestão de próximo troféu**\nPelo momento em que você está, vale buscar **{trophy}**, que ficou para trás.\n{detail}',
     phaseDone: '🎉 Fechou a {phase} do roteiro!',
     unlocked: '🏆 {trophy} ({type}) em {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% de quem joga) em {game}',
@@ -73,26 +79,31 @@ const messages = defineMessages({
   },
   [Language.En]: {
     started: 'You started {game}. The platinum guide is on PlatJourney.',
-    playing: '🎮 Playing **{game}**',
-    heading: '🎮 **{game}** · {left}',
+    playing: '🎮 Time to play **{game}**.',
+    goodSession: 'Have a good session! 🍀',
+    heading: '🎮 Time to play! {left} **{game}**.',
     left: {
-      one: '1 trophy left for the platinum',
-      other: '{count} trophies left for the platinum',
+      one: '1 trophy left for the platinum of',
+      other: '{count} trophies left for the platinum of',
     },
-    focus: '**Today’s focus**: {trophy}',
-    focusBehind: '**Left behind**: {trophy}',
+    focus:
+      '**Suggested next trophy**\nFollowing the roadmap, the next one to pop should be **{trophy}**.',
+    focusBehind:
+      '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.',
     tip: '**Tip**: {tip}',
     missable: '⚠️ **{trophy}** is missable: {when}',
     almost: '**Almost there**: {trophy}, {value} of {target}.',
-    focusStill: '**Still the focus**: {trophy}',
+    focusStill: 'The suggested next trophy is still **{trophy}**.',
     mark: {
       first: 'First trophy in {game}: the journey has begun.',
       half: 'Halfway through the base game: {earned} of {total} trophies.',
       final: 'Final stretch: {count} left to the platinum: {remaining}.',
       platinum: 'Platinum in {game}! Congratulations.',
     },
-    focusNew: '**New focus**: {trophy}\n{detail}',
-    focusNewBehind: '**Next left behind**: {trophy}\n{detail}',
+    focusNew:
+      '**Suggested next trophy**\nFollowing the roadmap, the next one to pop should be **{trophy}**.\n{detail}',
+    focusNewBehind:
+      '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.\n{detail}',
     phaseDone: '🎉 You closed {phase} of the roadmap!',
     unlocked: '🏆 {trophy} ({type}) in {game}',
     unlockedRate: '🏆 {trophy} ({type}, {rate}% of players) in {game}',
@@ -410,7 +421,7 @@ const comparable = (name: string) =>
 // list, so it costs no model and gets no count wrong. Lines with nothing to say are left out.
 export function sessionNotice(user: User, game: string, ctx?: GameContext): string {
   const t = translator(messages, user)
-  if (!ctx) return t('playing', { game })
+  if (!ctx) return `${t('playing', { game })} ${t('goodSession')}`
   const opening = t('playing', { game: gameName(ctx) })
   const missing = ctx.trophies.filter(
     (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
@@ -448,6 +459,7 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext): stri
         target: almost.progressTarget ?? 0,
       }),
     )
+  blocks.push(t('goodSession'))
   return blocks.join('\n\n')
 }
 

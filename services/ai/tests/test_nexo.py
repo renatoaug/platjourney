@@ -404,7 +404,7 @@ def test_an_unlock_notice_follows_the_servers_focus_instead_of_picking_one() -> 
     unlocked = [Trophy.model_validate(trophy())]
     kept = nexo.unlock_prompt(unlocked, None, nexo.Focus(trophy='Variedade'))
     assert 'nem diga em que fase o jogador está' in kept
-    assert 'O foco da sessão continua Variedade' in kept
+    assert 'A sugestão de próximo troféu continua Variedade' in kept
     assert 'aponte UM próximo troféu' not in kept
     assert 'Não sugira outro troféu como próximo alvo.' in kept
     moved = nexo.unlock_prompt(
@@ -420,7 +420,9 @@ def test_an_unlock_notice_follows_the_servers_focus_instead_of_picking_one() -> 
             }
         ),
     )
-    assert moved.index('Faca é perdível (antes do capítulo 3)') < moved.index('novo foco, Burnout')
+    assert moved.index('Faca é perdível (antes do capítulo 3)') < moved.index(
+        'sugira o próximo, Burnout'
+    )
     assert 'Macete do guia: Use nitro.' in moved
 
 
@@ -443,7 +445,7 @@ def test_an_unlock_notice_never_places_the_player_in_a_phase() -> None:
         ),
     )
     assert 'ele fechou a Fase 2 do roteiro' in prompt
-    assert 'É uma pendência que ficou para trás' in prompt
+    assert 'pelo momento do jogador, vale buscá-lo agora' in prompt
     assert 'nem diga em que fase o jogador está' in prompt
 
 

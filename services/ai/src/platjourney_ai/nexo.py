@@ -365,14 +365,19 @@ def focus_prompt(focus: Focus) -> str:
     )
     if focus.trophy and focus.changed:
         trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
-        where = ' É uma pendência que ficou para trás: chame assim.' if focus.behind else ''
+        where = (
+            ' Ele ficou para trás: diga que, pelo momento do jogador, vale buscá-lo agora.'
+            if focus.behind
+            else ''
+        )
         parts.append(
-            f'O foco anterior acabou de sair: anuncie o novo foco, {focus.trophy} ({focus.detail}),'
-            f' e como pegar.{where}{trick}'
+            f'O troféu sugerido antes acabou de sair: sugira o próximo, {focus.trophy}'
+            f' ({focus.detail}), e como pegar.{where}{trick}'
         )
     elif focus.trophy:
         parts.append(
-            f'O foco da sessão continua {focus.trophy}: lembre em uma linha, sem explicar de novo.'
+            f'A sugestão de próximo troféu continua {focus.trophy}: lembre em uma linha,'
+            ' sem explicar de novo.'
         )
     parts.append('Não sugira outro troféu como próximo alvo.')
     return ' '.join(parts)
