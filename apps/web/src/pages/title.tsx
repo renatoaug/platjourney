@@ -125,7 +125,7 @@ function titleQuery(spec: string, search: string) {
   return { query, owned: kind !== 'name' }
 }
 
-function Meta({ d }: { d: TitleDetail }) {
+function TitleMeta({ d }: { d: TitleDetail }) {
   const t = useMessages(messages)
   const g = d.guide
   if (!g)
@@ -268,7 +268,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
           </div>
           <div className="hero-headline">
             <h2 className="hero-title">{d.name}</h2>
-            <Meta d={d} />
+            <TitleMeta d={d} />
           </div>
           {owned ? (
             <div className="hero-bottom">

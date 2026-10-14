@@ -3,7 +3,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { Shell } from '../../src/app/shell'
 import type { ProfileSummary } from '../../src/lib/types'
-import { pluginModule } from '../../src/ui/plugin-slot'
+import { pluginPages } from '../../src/plugins'
 import { mockApi, never, renderApp } from '../support/web'
 
 // Screens that fetch get nothing back unless a test says otherwise.
@@ -150,14 +150,12 @@ test('without layout the pill stays hidden', () => {
 })
 
 test("a plugin's page gets an item in the menu, its route and its title", async () => {
-  pluginModule.pages = [
-    {
-      path: '/hello',
-      label: { 'pt-BR': 'Olá', en: 'Hello' },
-      icon: 'bolt',
-      component: () => <h1>Página do plugin</h1>,
-    },
-  ]
+  pluginPages.push({
+    path: '/hello',
+    label: { 'pt-BR': 'Olá', en: 'Hello' },
+    icon: 'bolt',
+    component: () => <h1>Página do plugin</h1>,
+  })
   try {
     renderApp(<Shell />, { path: '/hello' })
     const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
@@ -165,6 +163,6 @@ test("a plugin's page gets an item in the menu, its route and its title", async 
     expect(screen.getByRole('heading', { name: 'Página do plugin' })).toBeTruthy()
     await waitFor(() => expect(document.title).toBe('Olá'))
   } finally {
-    delete pluginModule.pages
+    pluginPages.length = 0
   }
 })

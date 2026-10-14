@@ -36,8 +36,8 @@ import { Home } from '../pages/home'
 import { Nexo } from '../pages/nexo'
 import { Profile } from '../pages/profile'
 import { Title } from '../pages/title'
+import { pluginPages } from '../plugins'
 import { Icon } from '../ui/icon'
-import { PluginSlot, pluginModule } from '../ui/plugin-slot'
 import { Sk } from '../ui/skeleton'
 import { useApp } from './app-state'
 import './shell.css'
@@ -158,8 +158,7 @@ function useArrival(pathname: string): Arrival {
   const previous = useRef(pathname)
   const arrival = useRef<Arrival>('tab')
   if (previous.current !== pathname) {
-    const isTab = (path: string) =>
-      path in LABELS || pluginModule.pages?.some((p) => p.path === path)
+    const isTab = (path: string) => path in LABELS || pluginPages.some((p) => p.path === path)
     arrival.current =
       type === 'POP' ? 'pop' : isTab(pathname) && isTab(previous.current) ? 'tab' : 'push'
     previous.current = pathname
@@ -214,7 +213,7 @@ function Nav() {
   // On a phone the bar holds the first BAR_ITEMS links and "Mais"; the rest open in a sheet above it.
   const extras = [
     ...NAV.slice(BAR_ITEMS).map((n) => ({ to: n.to, icon: n.icon, label: t(n.label) })),
-    ...(pluginModule.pages ?? []).map((p) => ({
+    ...pluginPages.map((p) => ({
       to: p.path,
       icon: p.icon,
       label: p.label[locale],
@@ -240,7 +239,7 @@ function Nav() {
             {n.ai && <span className="nav-ai">{t('ai')}</span>}
           </NavLink>
         ))}
-        {pluginModule.pages?.map((p) => (
+        {pluginPages.map((p) => (
           <NavLink key={p.path} to={p.path} className="nav-extra">
             <Icon name={p.icon} />
             {p.label[locale]}
@@ -373,7 +372,7 @@ export function Shell() {
   const locale = useLocale()
   const isTitle = pathname.startsWith('/title/')
   const arrival = useArrival(pathname)
-  const page = pluginModule.pages?.find((p) => p.path === pathname)
+  const page = pluginPages.find((p) => p.path === pathname)
   const label = page
     ? page.label[locale]
     : t(isTitle ? 'nav.title' : (LABELS[pathname] ?? 'nav.home'))
@@ -426,7 +425,6 @@ export function Shell() {
             <CommandPalette
               screens={NAV.map((n) => ({ to: n.to, label: t(n.label), icon: n.icon }))}
             />
-            <PluginSlot name="top-bar" />
             <Notifications />
             <SyncButton />
             <AccountMenu />
@@ -446,7 +444,7 @@ export function Shell() {
           <Route path="/history" element={<History />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/title/*" element={<Title />} />
-          {pluginModule.pages?.map((p) => (
+          {pluginPages.map((p) => (
             <Route key={p.path} path={p.path} element={<p.component />} />
           ))}
           <Route path="*" element={<Navigate to="/" replace />} />

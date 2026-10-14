@@ -12,7 +12,6 @@ import type { Game, Me, ProfileSummary } from '../lib/types'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Pager } from '../ui/pager'
-import { PluginSlot } from '../ui/plugin-slot'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState, PendingState } from '../ui/states'
 import '../components/goals/year-platinums.css'
@@ -432,23 +431,7 @@ export function ProfileView({
                 </div>
               )}
               <div className="profile-band-side">
-                {d.rarest && (
-                  <Link className="card profile-rarest" to={titleHref(d.rarest.game.id)}>
-                    <Cover
-                      url={d.rarest.game.cover_url}
-                      name={d.rarest.game.name}
-                      className="plat-cover"
-                    />
-                    <span>
-                      <span className="eyebrow">{t('tiles.rarest')}</span>
-                      <b>{d.rarest.game.name}</b>
-                      <small className="muted">
-                        {t('tiles.rarestSub', { rate: fmtRate(d.rarest.rarity) })}
-                      </small>
-                    </span>
-                  </Link>
-                )}
-                <PluginSlot name="profile" />
+                <RarestPlatinum rarest={d.rarest} />
               </div>
             </div>
             <PlatinumCollection
@@ -460,6 +443,21 @@ export function ProfileView({
         </div>
       )}
     </>
+  )
+}
+
+function RarestPlatinum({ rarest }: { rarest: Platinum | null }) {
+  const t = useMessages(messages)
+  if (!rarest) return null
+  return (
+    <Link className="card profile-rarest" to={titleHref(rarest.game.id)}>
+      <Cover url={rarest.game.cover_url} name={rarest.game.name} className="plat-cover" />
+      <span>
+        <span className="eyebrow">{t('tiles.rarest')}</span>
+        <b>{rarest.game.name}</b>
+        <small className="muted">{t('tiles.rarestSub', { rate: fmtRate(rarest.rarity) })}</small>
+      </span>
+    </Link>
   )
 }
 

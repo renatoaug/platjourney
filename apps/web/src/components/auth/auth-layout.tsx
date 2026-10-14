@@ -8,7 +8,6 @@ import {
   useMessages,
 } from '../../i18n/i18n'
 import { Icon } from '../../ui/icon'
-import { PluginSlot } from '../../ui/plugin-slot'
 import { LanguageSwitcher } from '../language-switcher'
 import './auth-layout.css'
 
@@ -108,12 +107,14 @@ export function AuthLayout({
           <div id="auth-step" ref={stepRef}>
             {children}
           </div>
-          <div className="auth-footnote">
-            <p>{t('footnote')}</p>
-            <PluginSlot name="sign-in" />
-          </div>
+          <AuthFootnote />
         </section>
       </div>
     </div>
   )
+}
+
+function AuthFootnote() {
+  const t = useMessages(messages)
+  return <p className="auth-footnote">{t('footnote')}</p>
 }

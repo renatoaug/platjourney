@@ -61,7 +61,7 @@ const checkPassword = (password: string) => {
   if (password.length < MIN_PASSWORD || password.length > 200) throw new AuthError('weak_password')
 }
 
-async function openSession(user: User): Promise<{ user: User; token: string }> {
+export async function openSession(user: User): Promise<{ user: User; token: string }> {
   const token = randomBytes(32).toString('hex')
   await createSession(user.id, hash(token), config.auth.sessionDays)
   return { user, token }
