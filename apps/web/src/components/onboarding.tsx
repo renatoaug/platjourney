@@ -40,7 +40,7 @@ const messages = defineMessages({
     home: {
       eyebrow: 'SEU PAINEL',
       title: 'Comece sempre por aqui.',
-      body: 'A Visão geral junta o que importa hoje: a sua jornada atual, a última orientação do Nexo, os jogos mais perto da platina e os lançamentos que estão chegando. Em qualquer tela, ⌘K (ou Ctrl+K) busca um jogo.',
+      body: 'A Visão geral junta o que importa hoje: a sua jornada atual, a última orientação do Nexo, os jogos mais perto da platina e os lançamentos que estão chegando. Em qualquer tela, a busca no topo acha um jogo (no computador, ⌘K ou Ctrl+K).',
       radar: 'No radar',
       example: 'Exemplo · no radar',
       sample1: 'Astro Bot',
@@ -149,7 +149,7 @@ const messages = defineMessages({
     home: {
       eyebrow: 'YOUR DASHBOARD',
       title: 'Always start here.',
-      body: 'The Overview brings together what matters today: your current journey, Nexo’s latest guidance, the games closest to the platinum and the releases coming up. On any screen, ⌘K (or Ctrl+K) searches for a game.',
+      body: 'The Overview brings together what matters today: your current journey, Nexo’s latest guidance, the games closest to the platinum and the releases coming up. On any screen, the search at the top finds a game (on a computer, ⌘K or Ctrl+K).',
       radar: 'On radar',
       example: 'Example · on radar',
       sample1: 'Astro Bot',
