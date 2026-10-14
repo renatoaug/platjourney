@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.17.0](https://github.com/renatoaug/platjourney/compare/v0.16.0...v0.17.0) (2026-10-14)
+
+### Features
+
+* **plugins:** let a plugin add sources to the page's security policy ([#43](https://github.com/renatoaug/platjourney/issues/43)) ([1f882da](https://github.com/renatoaug/platjourney/commit/1f882da0a592537bafc6350be5a8fd3515309717))
+
 ## [0.16.0](https://github.com/renatoaug/platjourney/compare/v0.15.1...v0.16.0) (2026-10-14)
 
 ### Features
