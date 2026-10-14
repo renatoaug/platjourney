@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { App } from '../../src/app/app'
 import { SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
 import { mockApi, reply } from '../support/web'
@@ -7,7 +7,12 @@ import { mockApi, reply } from '../support/web'
 beforeEach(() => {
   window.location.hash = ''
 })
-afterEach(() => mock.restore())
+// Unmount before the fakes go: an app still on screen would fetch its screens' data (the home's
+// state and releases) against the real fetch, which the setup refuses. CI is slow enough to hit it.
+afterEach(() => {
+  cleanup()
+  mock.restore()
+})
 
 test('a signed-in player lands on the app', async () => {
   mockApi({ '/api/me': { user: SAMPLE_ME }, '/api/state': SAMPLE_DATA })
