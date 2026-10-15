@@ -4,7 +4,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 // the edges (a web request, a watcher pass, a feature) and sent with every call to
 // the AI service, which records each call's cost, so no function in between needs
 // extra parameters.
-export interface CostTag {
+interface CostTag {
   user?: string
   action?: string
   // Work for the demo player, which must never reach PSN or the AI service.

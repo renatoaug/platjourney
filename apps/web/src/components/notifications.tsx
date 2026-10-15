@@ -107,6 +107,58 @@ function NotifItem({ n, i, onNavigate }: { n: Notice; i: number; onNavigate: () 
   )
 }
 
+function NotifSkeletonRow() {
+  return (
+    <div className="row">
+      <span className="rank">
+        <Sk w="14px" h={16} />
+      </span>
+      <Sk w="68px" h={44} style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }} />
+      <div className="grow">
+        <Sk w="60%" h={12} />
+        <Sk w="40%" h={10} style={{ marginTop: 8 }} />
+        <Sk w="100%" h={3} style={{ marginTop: 10 }} />
+      </div>
+      <Sk w="34px" h={18} />
+    </div>
+  )
+}
+
+function NotifListBody({ loaded, onNavigate }: { loaded: Loaded; onNavigate: () => void }) {
+  const t = useMessages(messages)
+  if (loaded === 'loading') return repeat(3, () => <NotifSkeletonRow />)
+  if (loaded === 'error') return <ErrorState>{t('loadFailed')}</ErrorState>
+  if (!loaded.items.length) return <EmptyState>{t('empty')}</EmptyState>
+  return loaded.items.map((n, i) => <NotifItem key={n.id} n={n} i={i} onNavigate={onNavigate} />)
+}
+
+function NotifPages({
+  pages,
+  page,
+  onPage,
+}: {
+  pages: number
+  page: number
+  onPage: (p: number) => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <nav className="notif-pages" aria-label={t('pages')}>
+      {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
+        <button
+          key={n}
+          type="button"
+          aria-current={n === page ? 'page' : undefined}
+          aria-label={t('page', { page: n })}
+          onClick={() => n !== page && onPage(n)}
+        >
+          {n}
+        </button>
+      ))}
+    </nav>
+  )
+}
+
 export function Notifications() {
   const t = useMessages(messages)
   const { data, setData } = useApp()
@@ -208,49 +260,14 @@ export function Notifications() {
           {typeof loaded === 'object' && <span>{loaded.total}</span>}
         </header>
         <div className="notif-list">
-          {loaded === 'loading' &&
-            repeat(3, () => (
-              <div className="row">
-                <span className="rank">
-                  <Sk w="14px" h={16} />
-                </span>
-                <Sk w="68px" h={44} style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }} />
-                <div className="grow">
-                  <Sk w="60%" h={12} />
-                  <Sk w="40%" h={10} style={{ marginTop: 8 }} />
-                  <Sk w="100%" h={3} style={{ marginTop: 10 }} />
-                </div>
-                <Sk w="34px" h={18} />
-              </div>
-            ))}
-          {loaded === 'error' && <ErrorState>{t('loadFailed')}</ErrorState>}
-          {typeof loaded === 'object' &&
-            (loaded.items.length ? (
-              loaded.items.map((n, i) => <NotifItem key={n.id} n={n} i={i} onNavigate={close} />)
-            ) : (
-              <EmptyState>{t('empty')}</EmptyState>
-            ))}
+          <NotifListBody loaded={loaded} onNavigate={close} />
         </div>
         {typeof loaded === 'object' && (
           <footer className="notif-bottom">
             <Link className="text-link notif-all" to="/history" onClick={close}>
               {t('seeHistory')} <Icon name="arrow" />
             </Link>
-            {pages > 1 && (
-              <nav className="notif-pages" aria-label={t('pages')}>
-                {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    aria-current={n === page ? 'page' : undefined}
-                    aria-label={t('page', { page: n })}
-                    onClick={() => n !== page && load(n)}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </nav>
-            )}
+            {pages > 1 && <NotifPages pages={pages} page={page} onPage={load} />}
           </footer>
         )}
       </section>

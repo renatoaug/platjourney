@@ -42,6 +42,25 @@ function isStale(s: ServerStatus | undefined): boolean {
   return Date.now() - new Date(s.checked_at).getTime() > RECHECK_DAYS * 86_400_000
 }
 
+// Asks the service about these games' servers and keeps what it found, shared by every player.
+async function refreshStatuses(
+  user: User,
+  toCheck: Awaited<ReturnType<typeof rankNextPlatinum>>,
+): Promise<void> {
+  console.log(`checking servers for ${toCheck.length} games`)
+  const result = await tagged({ user: user.id, action: 'server_check' }, () =>
+    ai<{
+      games: { name: string; status: ServerState; date: string | null; note: string | null }[]
+    }>('/servers/check', { names: toCheck.map((r) => r.game.name) }),
+  )
+  const byName = new Map(toCheck.map((r) => [r.game.name, r.game]))
+  for (const g of result.games) {
+    const game = byName.get(g.name)
+    if (game)
+      await saveServerStatus({ game: game.id, status: g.status, date: g.date, note: g.note })
+  }
+}
+
 // Checks online-server status for the games this user is most likely to platinum
 // next. The status itself is shared (looked up once a week per game); what is per
 // user is who has already been warned. Returns the warnings to deliver.
@@ -49,20 +68,7 @@ export async function checkServers(user: User, library: TitleProgress[]): Promis
   const ranked = await rankNextPlatinum(library, user, 15)
   const known = new Map((await listServerStatuses()).map((s) => [s.game.id, s]))
   const toCheck = ranked.filter((r) => isStale(known.get(r.game.id)))
-  if (toCheck.length > 0) {
-    console.log(`checking servers for ${toCheck.length} games`)
-    const result = await tagged({ user: user.id, action: 'server_check' }, () =>
-      ai<{
-        games: { name: string; status: ServerState; date: string | null; note: string | null }[]
-      }>('/servers/check', { names: toCheck.map((r) => r.game.name) }),
-    )
-    const byName = new Map(toCheck.map((r) => [r.game.name, r.game]))
-    for (const g of result.games) {
-      const game = byName.get(g.name)
-      if (game)
-        await saveServerStatus({ game: game.id, status: g.status, date: g.date, note: g.note })
-    }
-  }
+  if (toCheck.length > 0) await refreshStatuses(user, toCheck)
 
   const alerted = await serverWarnedGames(user.id)
   const mine = await listServerStatuses(ranked.map((r) => r.game.id))

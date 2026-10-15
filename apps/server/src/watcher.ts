@@ -196,7 +196,7 @@ export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext[
 }
 
 // The first trophy, halfway, the final stretch or the platinum, for the plain notice.
-export const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
+const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
   const mark = progressMark(ctx.trophies, unlocked)
   if (!mark) return undefined
   const line = translator(messages, user)(`mark.${mark.kind}`, {
@@ -319,6 +319,89 @@ export function checkUser(user: User): Promise<void> {
   return next
 }
 
+// The stored snapshot is behind PSN's summary of the title, or there is none yet.
+function titleChanged(prev: Awaited<ReturnType<typeof getTitle>>, latest: TitleProgress): boolean {
+  return (
+    !prev ||
+    prev.earned !== latest.earned ||
+    new Date(prev.last_updated_at).getTime() !== new Date(latest.lastUpdated).getTime()
+  )
+}
+
+// PSN updates a title's summary before its trophy list: a list read in between has fewer
+// earned trophies than the summary, and once the summary stops changing it would be reused
+// forever, missing those trophies. Such a list is read again until the two agree.
+function listStale(current: GameContext | undefined, latest: TitleProgress): boolean {
+  return !!current && current.trophies.filter((t) => t.earned).length < latest.earned
+}
+
+// What one check found to tell the player.
+interface News {
+  user: User
+  ctx: GameContext
+  latest: TitleProgress
+  justStarted: boolean
+  unlocked: GameContext['trophies']
+  route: ReturnType<typeof routeFor>
+}
+
+// Without Nexo's notices the player still hears about it, from a plain template.
+async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: News): Promise<void> {
+  if (justStarted) {
+    await plainNotice(user, 'start', together(startNotice(user, ctx), route), ctx.game.id)
+    await markTipSent(user.id, latest.npCommunicationId)
+  } else if (unlocked.length > 0)
+    await plainNotice(
+      user,
+      'unlock',
+      together(
+        [unlockNotice(user, ctx, unlocked), markNotice(user, ctx, unlocked)]
+          .filter(Boolean)
+          .join('\n'),
+        focusNotice(user, ctx, unlocked),
+        route,
+      ),
+      ctx.game.id,
+    )
+  else if (route) await plainNotice(user, 'route', route, ctx.game.id)
+}
+
+async function nexoNews({ user, ctx, latest, justStarted, unlocked, route }: News): Promise<void> {
+  if (justStarted) {
+    console.log(`${user.psn_online_id}: new game ${latest.name}`)
+    await notify(user, await proactiveTip(user, ctx, route))
+    await markTipSent(user.id, latest.npCommunicationId)
+  } else if (unlocked.length > 0) {
+    console.log(`${user.psn_online_id}: unlocked ${unlocked.map((t) => t.name).join(', ')}`)
+    await notify(user, await unlockReaction(user, ctx, unlocked, route))
+  } else if (route) await plainNotice(user, 'route', route, ctx.game.id)
+}
+
+async function tellNews(news: News): Promise<void> {
+  if (!nexoNotices(news.user)) return plainNews(news)
+  try {
+    await nexoNews(news)
+  } catch (e) {
+    logFallback(news.user, e)
+    await plainNews(news)
+  }
+}
+
+// Why Nexo's words gave way to the plain notice.
+function logFallback(user: User, e: unknown): void {
+  if (e instanceof Refused) {
+    // A plugin refused Nexo's words (see plugins.ts): the plain notice needs no model.
+    console.log(`${user.psn_online_id}: ${e.code}, plain notice`)
+    return
+  }
+  // The model is down (provider quota, outage): still tell the player,
+  // without Nexo's comment, and let the sweep record what it saw.
+  console.warn(
+    `${user.psn_online_id}: Nexo unavailable, plain notice:`,
+    (e as Error).message.slice(0, 80),
+  )
+}
+
 // Compares the user's PSN title list against the stored snapshot. A title we
 // have never tipped that is still early triggers the intro; newly earned trophies
 // on the current title trigger a reaction.
@@ -332,15 +415,10 @@ async function check(user: User): Promise<void> {
   const current = contexts.get(user.id)
   const switched = current?.title.npCommunicationId !== latest.npCommunicationId
   const prev = await getTitle(user.id, latest.npCommunicationId)
-  const changed =
-    !prev ||
-    prev.earned !== latest.earned ||
-    new Date(prev.last_updated_at).getTime() !== new Date(latest.lastUpdated).getTime()
-  // PSN updates a title's summary before its trophy list: a list read in between has fewer
-  // earned trophies than the summary, and once the summary stops changing it would be reused
-  // forever, missing those trophies. Such a list is read again until the two agree.
-  const stale = !!current && current.trophies.filter((t) => t.earned).length < latest.earned
-  const ctx = switched || changed || stale || !current ? await setCurrent(user, latest) : current
+  const ctx =
+    switched || titleChanged(prev, latest) || listStale(current, latest) || !current
+      ? await setCurrent(user, latest)
+      : current
   // Playing another game brings the chat to it too.
   if (switched && current) chatContexts.delete(user.id)
 
@@ -360,52 +438,7 @@ async function check(user: User): Promise<void> {
     unlocked.map((t) => t.name),
     justStarted,
   )
-  // Without Nexo's notices the player still hears about it, from a plain template.
-  const plain = async () => {
-    if (justStarted) {
-      await plainNotice(user, 'start', together(startNotice(user, ctx), route), ctx.game.id)
-      await markTipSent(user.id, latest.npCommunicationId)
-    } else if (unlocked.length > 0)
-      await plainNotice(
-        user,
-        'unlock',
-        together(
-          [unlockNotice(user, ctx, unlocked), markNotice(user, ctx, unlocked)]
-            .filter(Boolean)
-            .join('\n'),
-          focusNotice(user, ctx, unlocked),
-          route,
-        ),
-        ctx.game.id,
-      )
-    else if (route) await plainNotice(user, 'route', route, ctx.game.id)
-  }
-  if (!nexoNotices(user)) await plain()
-  else
-    try {
-      if (justStarted) {
-        console.log(`${user.psn_online_id}: new game ${latest.name}`)
-        await notify(user, await proactiveTip(user, ctx, route))
-        await markTipSent(user.id, latest.npCommunicationId)
-      } else if (unlocked.length > 0) {
-        console.log(`${user.psn_online_id}: unlocked ${unlocked.map((t) => t.name).join(', ')}`)
-        await notify(user, await unlockReaction(user, ctx, unlocked, route))
-      } else if (route) await plainNotice(user, 'route', route, ctx.game.id)
-    } catch (e) {
-      if (e instanceof Refused) {
-        // A plugin refused Nexo's words (see plugins.ts): the plain notice needs no model.
-        console.log(`${user.psn_online_id}: ${e.code}, plain notice`)
-        await plain()
-      } else {
-        // The model is down (provider quota, outage): still tell the player,
-        // without Nexo's comment, and let the sweep record what it saw.
-        console.warn(
-          `${user.psn_online_id}: Nexo unavailable, plain notice:`,
-          (e as Error).message.slice(0, 80),
-        )
-        await plain()
-      }
-    }
+  await tellNews({ user, ctx, latest, justStarted, unlocked, route })
   await saveEarnedIds(user.id, latest.npCommunicationId, earnedIds)
   await sessionStart(user, ctx, justStarted)
 }

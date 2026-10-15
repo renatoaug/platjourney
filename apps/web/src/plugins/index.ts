@@ -9,7 +9,9 @@ import type { Language } from '../i18n/locale'
 import { type Extension, install } from './extend'
 import type { Target } from './targets'
 
+/** @public part of the plugin API */
 export type { ReplaceProps } from './extend'
+/** @public part of the plugin API */
 export type { Target } from './targets'
 
 export interface PluginPage {

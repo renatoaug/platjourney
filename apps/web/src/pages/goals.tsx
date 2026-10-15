@@ -295,7 +295,7 @@ export function GoalsView({
   )
 }
 
-export function GoalsSkeleton() {
+function GoalsSkeleton() {
   const t = useMessages(messages)
   return (
     <>

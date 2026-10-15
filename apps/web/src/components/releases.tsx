@@ -61,7 +61,7 @@ export interface Release {
   guide: { difficulty: number; hours: number } | null
 }
 
-export type ReleasesLoad =
+type ReleasesLoad =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'ok'; releases: Release[] }
@@ -83,6 +83,23 @@ function useDayLabel() {
       timeZone: 'UTC',
     })
   }
+}
+
+/** Under the name: the guide's hours, a plain guide tag, or whether the store lists it yet. */
+function ReleaseStatus({ r }: { r: Release }) {
+  const t = useMessages(messages)
+  if (r.guide && r.guide.hours > 0)
+    return (
+      <span className="release-hours">
+        <Icon name="clock" /> {t('hours', { hours: r.guide.hours })}
+      </span>
+    )
+  if (r.guide) return <span className="pill ok">{t('guide')}</span>
+  return (
+    <span className={`release-state${r.listed ? ' listed' : ''}`}>
+      {t(r.listed ? 'listed' : 'soon')}
+    </span>
+  )
 }
 
 function ReleaseCard({ r, today }: { r: Release; today: number }) {
@@ -124,17 +141,7 @@ function ReleaseCard({ r, today }: { r: Release; today: number }) {
       <Link className="release-body" to={titleHref(r.id)}>
         <b>{r.name}</b>
         <span className="release-sub">{platforms}</span>
-        {r.guide && r.guide.hours > 0 ? (
-          <span className="release-hours">
-            <Icon name="clock" /> {t('hours', { hours: r.guide.hours })}
-          </span>
-        ) : r.guide ? (
-          <span className="pill ok">{t('guide')}</span>
-        ) : (
-          <span className={`release-state${r.listed ? ' listed' : ''}`}>
-            {t(r.listed ? 'listed' : 'soon')}
-          </span>
-        )}
+        <ReleaseStatus r={r} />
       </Link>
     </article>
   )

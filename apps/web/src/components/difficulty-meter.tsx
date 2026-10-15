@@ -16,7 +16,7 @@ const messages = defineMessages({
   },
 })
 
-export type Band = 'easy' | 'medium' | 'hard' | 'brutal'
+type Band = 'easy' | 'medium' | 'hard' | 'brutal'
 
 export const bandOf = (value: number): Band =>
   value <= 3 ? 'easy' : value <= 5 ? 'medium' : value <= 7 ? 'hard' : 'brutal'

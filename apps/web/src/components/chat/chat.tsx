@@ -10,7 +10,7 @@ import {
   useState,
 } from 'react'
 import { Link } from 'react-router'
-import { defineMessages, getLocale, Language, useMessages } from '../../i18n/i18n'
+import { defineMessages, getLocale, Language, type Translator, useMessages } from '../../i18n/i18n'
 import type { Game, LibraryGame } from '../../lib/types'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
@@ -383,6 +383,242 @@ function ChatLog({ chat, sending }: { chat: ChatLoad; sending: boolean }) {
   )
 }
 
+type CommandMode = 'game' | 'command' | null
+
+function commandMode(text: string): CommandMode {
+  if (text.startsWith('/game ')) return 'game'
+  return /^\/\S*$/.test(text) ? 'command' : null
+}
+
+function gameBadge(g: LibraryGame, t: Translator<typeof messages>) {
+  if (g.current) return t('menu.current')
+  return g.owned === false ? t('menu.notOwned') : undefined
+}
+
+/** The command list's options: "/game" while typing a command, the player's games after it. */
+function menuItems(
+  mode: CommandMode,
+  text: string,
+  games: LibraryGame[] | null,
+  t: Translator<typeof messages>,
+): MenuItem[] {
+  if (mode === 'command')
+    return '/game'.startsWith(text) ? [{ key: 'game', title: '/game', detail: t('menu.game') }] : []
+  if (mode !== 'game') return []
+  return (games ?? []).map((g) => ({
+    key: g.np ?? g.game ?? g.name,
+    title: g.name,
+    detail: g.progress === null ? g.platform : `${g.platform} · ${g.progress}%`,
+    icon: g.icon,
+    badge: gameBadge(g, t),
+  }))
+}
+
+/** The subtitle as a button that starts "/game"; while a picked game loads, it says so. */
+function SubtitleSwitch({
+  subtitle,
+  switching,
+  onClick,
+}: {
+  subtitle: string
+  switching: string | null
+  onClick: () => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <button
+      type="button"
+      id="nexo-sub"
+      className="nexo-sub-switch"
+      aria-label={
+        switching ? t('menu.switching', { name: switching }) : `${subtitle} ${t('menu.switch')}`
+      }
+      aria-busy={Boolean(switching)}
+      data-tip={t('menu.switch')}
+      disabled={Boolean(switching)}
+      onClick={onClick}
+    >
+      {switching ? (
+        <>
+          <span className="chat-switching" aria-hidden="true" />
+          {t('menu.switching', { name: switching })}
+        </>
+      ) : (
+        <>
+          <span className="nexo-sub-text">{subtitle}</span>
+          <Icon name="chevron-down" />
+        </>
+      )}
+    </button>
+  )
+}
+
+/** The line under the title: the game switch when the box takes commands, plain text otherwise. */
+function ChatSubtitle({
+  subtitle,
+  demo,
+  canSwitch,
+  switching,
+  onSwitch,
+}: {
+  subtitle: string
+  demo: boolean
+  canSwitch: boolean
+  switching: string | null
+  onSwitch: () => void
+}) {
+  const t = useMessages(messages)
+  if (canSwitch && !demo)
+    return <SubtitleSwitch subtitle={subtitle} switching={switching} onClick={onSwitch} />
+  return <p id="nexo-sub">{demo ? t('demo.subtitle') : subtitle}</p>
+}
+
+/** Under the log: the demo's invitation to connect, the read-only note, or the message box. */
+function ChatBottom({
+  demo,
+  onConnect,
+  readOnly,
+  children,
+}: {
+  demo: boolean
+  onConnect?: () => void
+  readOnly?: ReactNode
+  children: ReactNode
+}) {
+  const t = useMessages(messages)
+  if (demo)
+    return (
+      <div className="demo-connect" id="chat-demo-connect">
+        <p>{t('demo.connect')}</p>
+        <DemoConnectButton onConnect={onConnect} />
+      </div>
+    )
+  if (readOnly)
+    return (
+      <div className="nexo-readonly" role="note">
+        {readOnly}
+      </div>
+    )
+  return children
+}
+
+/** Ready questions above the log: about the trophy when there is one, general ones otherwise. */
+function ChatChips({
+  trophy,
+  sending,
+  onSend,
+}: {
+  trophy: string | null
+  sending: boolean
+  onSend: (text: string) => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <div className="chips" id="chat-chips">
+      {trophy
+        ? (['how', 'missable', 'when'] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              className="chip"
+              disabled={sending}
+              onClick={() => onSend(t(`trophy.${k}`))}
+            >
+              {t(`trophy.${k}`)}
+            </button>
+          ))
+        : SUGGESTIONS.map((s) => {
+            const q = t(`suggestions.${s}.q`)
+            return (
+              <button
+                key={s}
+                type="button"
+                className="chip"
+                data-q={q}
+                disabled={sending}
+                onClick={() => onSend(q)}
+              >
+                {t(`suggestions.${s}.label`)}
+              </button>
+            )
+          })}
+    </div>
+  )
+}
+
+/** The trophy the question is about, on the message box, with a button to drop it. */
+function ChatTrophy({ trophy, onClear }: { trophy: string; onClear: () => void }) {
+  const t = useMessages(messages)
+  return (
+    <span className="chat-trophy">
+      <Icon name="trophy" />
+      <b title={t('trophy.label')}>{trophy}</b>
+      <button type="button" aria-label={t('trophy.remove', { trophy })} onClick={onClear}>
+        <Icon name="close" />
+      </button>
+    </span>
+  )
+}
+
+// The field grows with its content, up to 160px.
+function useAutoGrow(input: RefObject<HTMLTextAreaElement | null>, text: string) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refit whenever the text changes
+  useLayoutEffect(() => {
+    const el = input.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+  }, [text])
+}
+
+// New messages and the pending bubble always land at the bottom. The demo's examples read
+// from the top.
+function useChatScroll(
+  log: RefObject<HTMLDivElement | null>,
+  demo: boolean,
+  chat: ChatLoad,
+  sending: boolean,
+) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll whenever the log changes
+  useLayoutEffect(() => {
+    if (log.current && !demo) log.current.scrollTop = log.current.scrollHeight
+    // Late layout (fonts, covers, a phone where the page scrolls rather than the log) can leave the
+    // view short of the last message: put it in view once things settle.
+    const raf = requestAnimationFrame(() => {
+      if (!log.current || demo) return
+      log.current.scrollTop = log.current.scrollHeight
+      log.current.lastElementChild?.scrollIntoView?.({ block: 'end' })
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [chat, sending])
+}
+
+/** The player's games matching "/game <query>", a moment after typing stops; null while it is not
+ * asked for (no `searchGames`) or still loading. */
+function useGameSearch(
+  searchGames: ((query: string) => Promise<LibraryGame[]>) | undefined,
+  query: string,
+) {
+  const [games, setGames] = useState<LibraryGame[] | null>(null)
+  useEffect(() => {
+    if (!searchGames) {
+      setGames(null)
+      return
+    }
+    let live = true
+    const timer = setTimeout(() => {
+      searchGames(query)
+        .then((found) => live && setGames(found))
+        .catch(() => live && setGames([]))
+    }, 150)
+    return () => {
+      live = false
+      clearTimeout(timer)
+    }
+  }, [query, searchGames])
+  return games
+}
+
 export function NexoChat({
   chat,
   sending,
@@ -422,35 +658,13 @@ export function NexoChat({
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
-  const [games, setGames] = useState<LibraryGame[] | null>(null)
   const [active, setActive] = useState(0)
   const log = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const form = useRef<HTMLFormElement>(null)
 
-  // The field grows with its content, up to 160px.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: refit whenever the text changes
-  useLayoutEffect(() => {
-    const el = input.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
-  }, [text])
-
-  // New messages and the pending bubble always land at the bottom. The demo's examples read
-  // from the top.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll whenever the log changes
-  useLayoutEffect(() => {
-    if (log.current && !demo) log.current.scrollTop = log.current.scrollHeight
-    // Late layout (fonts, covers, a phone where the page scrolls rather than the log) can leave the
-    // view short of the last message: put it in view once things settle.
-    const raf = requestAnimationFrame(() => {
-      if (!log.current || demo) return
-      log.current.scrollTop = log.current.scrollHeight
-      log.current.lastElementChild?.scrollIntoView?.({ block: 'end' })
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [chat, sending])
+  useAutoGrow(input, text)
+  useChatScroll(log, demo, chat, sending)
 
   // Opening the screen: jump to the latest message; on desktop, ready to type.
   // biome-ignore lint/correctness/useExhaustiveDependencies: only when the screen opens
@@ -471,48 +685,10 @@ export function NexoChat({
 
   // Commands, as in Telegram: "/" lists them, "/game <name>" lists the player's games. A command
   // is never sent to Nexo.
-  const mode = !searchGames
-    ? null
-    : text.startsWith('/game ')
-      ? 'game'
-      : /^\/\S*$/.test(text)
-        ? 'command'
-        : null
+  const mode = searchGames ? commandMode(text) : null
   const query = mode === 'game' ? text.slice(6).trim() : ''
-  useEffect(() => {
-    if (mode !== 'game' || !searchGames) {
-      setGames(null)
-      return
-    }
-    let live = true
-    const timer = setTimeout(() => {
-      searchGames(query)
-        .then((found) => live && setGames(found))
-        .catch(() => live && setGames([]))
-    }, 150)
-    return () => {
-      live = false
-      clearTimeout(timer)
-    }
-  }, [mode, query, searchGames])
-  const items: MenuItem[] =
-    mode === 'command'
-      ? '/game'.startsWith(text)
-        ? [{ key: 'game', title: '/game', detail: t('menu.game') }]
-        : []
-      : mode === 'game'
-        ? (games ?? []).map((g) => ({
-            key: g.np ?? g.game ?? g.name,
-            title: g.name,
-            detail: g.progress === null ? g.platform : `${g.platform} · ${g.progress}%`,
-            icon: g.icon,
-            badge: g.current
-              ? t('menu.current')
-              : g.owned === false
-                ? t('menu.notOwned')
-                : undefined,
-          }))
-        : []
+  const games = useGameSearch(mode === 'game' ? searchGames : undefined, query)
+  const items = menuItems(mode, text, games, t)
   const pick = (index: number) => {
     if (mode === 'command') setText('/game ')
     if (mode === 'game' && games?.[index]) {
@@ -537,28 +713,34 @@ export function NexoChat({
 
   // Enter sends; Shift+Enter breaks the line. With the list open, the arrows move through it, Enter
   // or Tab picks and Esc clears the command.
-  const keyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (mode && items.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+  // Whether the key was one of the open list's own.
+  const menuKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (items.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
       e.preventDefault()
       const step = e.key === 'ArrowDown' ? 1 : -1
       setActive((active + step + items.length) % items.length)
-      return
+      return true
     }
-    if (mode && e.key === 'Tab' && items.length) {
+    if (e.key === 'Tab' && items.length) {
       e.preventDefault()
       pick(active)
-      return
+      return true
     }
-    if (mode && e.key === 'Escape') {
+    if (e.key === 'Escape') {
       e.preventDefault()
       setText('')
-      return
+      return true
     }
+    return false
+  }
+  const keyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mode && menuKey(e)) return
     if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return
     e.preventDefault()
     form.current?.requestSubmit()
   }
 
+  const listed = Boolean(mode && items.length)
   const menu = mode ? (
     <CommandMenu
       id="chat-menu"
@@ -579,74 +761,21 @@ export function NexoChat({
             <div>
               <span className="eyebrow">{t('eyebrow')}</span>
               <h1>Nexo</h1>
-              {searchGames && !demo ? (
-                <button
-                  type="button"
-                  id="nexo-sub"
-                  className="nexo-sub-switch"
-                  aria-label={
-                    switching
-                      ? t('menu.switching', { name: switching })
-                      : `${subtitle} ${t('menu.switch')}`
-                  }
-                  aria-busy={Boolean(switching)}
-                  data-tip={t('menu.switch')}
-                  disabled={Boolean(switching)}
-                  onClick={() => {
-                    setText('/game ')
-                    input.current?.focus()
-                  }}
-                >
-                  {switching ? (
-                    <>
-                      <span className="chat-switching" aria-hidden="true" />
-                      {t('menu.switching', { name: switching })}
-                    </>
-                  ) : (
-                    <>
-                      <span className="nexo-sub-text">{subtitle}</span>
-                      <Icon name="chevron-down" />
-                    </>
-                  )}
-                </button>
-              ) : (
-                <p id="nexo-sub">{demo ? t('demo.subtitle') : subtitle}</p>
-              )}
+              <ChatSubtitle
+                subtitle={subtitle}
+                demo={demo}
+                canSwitch={Boolean(searchGames)}
+                switching={switching}
+                onSwitch={() => {
+                  setText('/game ')
+                  input.current?.focus()
+                }}
+              />
               {note && <p className="nexo-note">{note}</p>}
             </div>
           </div>
         </div>
-        {!demo && (
-          <div className="chips" id="chat-chips">
-            {trophy
-              ? (['how', 'missable', 'when'] as const).map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    className="chip"
-                    disabled={sending}
-                    onClick={() => send(t(`trophy.${k}`))}
-                  >
-                    {t(`trophy.${k}`)}
-                  </button>
-                ))
-              : SUGGESTIONS.map((s) => {
-                  const q = t(`suggestions.${s}.q`)
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      className="chip"
-                      data-q={q}
-                      disabled={sending}
-                      onClick={() => send(q)}
-                    >
-                      {t(`suggestions.${s}.label`)}
-                    </button>
-                  )
-                })}
-          </div>
-        )}
+        {!demo && <ChatChips trophy={trophy} sending={sending} onSend={send} />}
       </div>
       <div
         ref={log}
@@ -659,16 +788,7 @@ export function NexoChat({
       >
         {demo ? <DemoExamples /> : <ChatLog chat={chat} sending={sending} />}
       </div>
-      {demo ? (
-        <div className="demo-connect" id="chat-demo-connect">
-          <p>{t('demo.connect')}</p>
-          <DemoConnectButton onConnect={onConnect} />
-        </div>
-      ) : readOnly ? (
-        <div className="nexo-readonly" role="note">
-          {readOnly}
-        </div>
-      ) : (
+      <ChatBottom demo={demo} onConnect={onConnect} readOnly={readOnly}>
         <ChatForm
           formRef={form}
           inputRef={input}
@@ -679,28 +799,21 @@ export function NexoChat({
           onKeyDown={keyDown}
           menu={menu}
           commands={Boolean(searchGames)}
-          menuOpen={Boolean(menu && items.length)}
-          activeId={mode && items.length ? `chat-menu-${active}` : undefined}
+          menuOpen={listed}
+          activeId={listed ? `chat-menu-${active}` : undefined}
           attachment={
             trophy ? (
-              <span className="chat-trophy">
-                <Icon name="trophy" />
-                <b title={t('trophy.label')}>{trophy}</b>
-                <button
-                  type="button"
-                  aria-label={t('trophy.remove', { trophy })}
-                  onClick={() => {
-                    onClearTrophy?.()
-                    input.current?.focus()
-                  }}
-                >
-                  <Icon name="close" />
-                </button>
-              </span>
+              <ChatTrophy
+                trophy={trophy}
+                onClear={() => {
+                  onClearTrophy?.()
+                  input.current?.focus()
+                }}
+              />
             ) : undefined
           }
         />
-      )}
+      </ChatBottom>
     </div>
   )
 }

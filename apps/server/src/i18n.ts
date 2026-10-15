@@ -8,7 +8,7 @@ export enum Language {
   En = 'en',
 }
 
-export const LOCALES = Object.values(Language)
+const LOCALES = Object.values(Language)
 /** A language as stored on the user: an enum member or its plain value ('pt-BR', 'en'). */
 export type Locale = `${Language}`
 export const DEFAULT_LOCALE: Locale = Language.PtBR
@@ -31,7 +31,7 @@ export const userLocale = (user: { locale?: string | null } | null | undefined):
   isLocale(user?.locale) ? user.locale : DEFAULT_LOCALE
 
 /** A text that changes with a count: `{ one: '{count} run', other: '{count} runs' }`. */
-export interface Plural {
+interface Plural {
   zero?: string
   one?: string
   two?: string
@@ -39,7 +39,7 @@ export interface Plural {
   many?: string
   other: string
 }
-export type Leaf = string | Plural
+type Leaf = string | Plural
 export interface Tree {
   [key: string]: Leaf | Tree
 }
@@ -48,7 +48,7 @@ export interface Tree {
  * The shape every other locale must follow: the same keys as pt-BR, the same plural categories,
  * any text. Extra or missing keys fail the type check.
  */
-export type Shape<T> = {
+type Shape<T> = {
   [K in keyof T]: T[K] extends string
     ? string
     : T[K] extends Plural
@@ -61,7 +61,7 @@ type Keys<T, P extends string = ''> = {
   [K in keyof T & string]: T[K] extends Leaf ? `${P}${K}` : Keys<T[K], `${P}${K}.`>
 }[keyof T & string]
 
-export type Params = Record<string, string | number | null | undefined>
+type Params = Record<string, string | number | null | undefined>
 
 /** One module's texts: pt-BR is the reference, every other locale has exactly its shape. */
 export interface MessageSet<P extends Tree = Tree> {
@@ -73,7 +73,7 @@ export interface MessageSet<P extends Tree = Tree> {
 export type MessageKey<M extends MessageSet> = Keys<M[Language.PtBR]>
 
 /** `t(key, params)` for one message set. */
-export type Translator<M extends MessageSet> = (key: MessageKey<M>, params?: Params) => string
+type Translator<M extends MessageSet> = (key: MessageKey<M>, params?: Params) => string
 
 // Every message set declared so far, so a test can check them all without a list to maintain.
 const registry: MessageSet[] = []

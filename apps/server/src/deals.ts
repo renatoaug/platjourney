@@ -32,7 +32,7 @@ const DAY = 86_400_000
 // Spaced out, so the store sees a person's pace, not a crawler's.
 const PAUSE_MS = 2_000
 
-export const money = (cents: number, currency: string, locale: string) =>
+const money = (cents: number, currency: string, locale: string) =>
   (cents / 100).toLocaleString(locale, { style: 'currency', currency })
 
 /** A sale worth telling: the game was at full price before, or now costs less than it did. */
@@ -42,8 +42,7 @@ export function newSale(before: StorePrice | undefined, now: StorePrice): boolea
 }
 
 /** A game that just joined a PS Plus catalog. */
-export const joinedPlus = (before: StorePrice | undefined, now: StorePrice) =>
-  now.plus && !before?.plus
+const joinedPlus = (before: StorePrice | undefined, now: StorePrice) => now.plus && !before?.plus
 
 const TIER_NAMES = { essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' } as const
 
@@ -57,19 +56,27 @@ export async function checkDeals(pause = PAUSE_MS): Promise<number> {
   // Everything a player should hear today, sent at the end as one notice.
   const news = new Map<string, News[]>()
   for (const g of games) {
-    const now = await storePrice(g.store_url).catch(() => null)
-    if (now) {
-      await savePrice(g.game, now)
-      const sale = newSale(before.get(g.game), now)
-      const plus = joinedPlus(before.get(g.game), now)
-      if (sale) sales++
-      if (sale || plus)
-        for (const id of g.users) news.set(id, [...(news.get(id) ?? []), { g, p: now, sale, plus }])
-    }
+    if (await checkOne(g, before.get(g.game), news)) sales++
     if (pause) await new Promise((r) => setTimeout(r, pause))
   }
   for (const [id, items] of news) await tell(id, items)
   return sales
+}
+
+/** Reads and keeps one game's price, queuing its news for everyone who saved it; true on a new sale. */
+async function checkOne(
+  g: Awaited<ReturnType<typeof interestsWithStore>>[number],
+  before: StorePrice | undefined,
+  news: Map<string, News[]>,
+): Promise<boolean> {
+  const now = await storePrice(g.store_url).catch(() => null)
+  if (!now) return false
+  await savePrice(g.game, now)
+  const sale = newSale(before, now)
+  const plus = joinedPlus(before, now)
+  if (sale || plus)
+    for (const id of g.users) news.set(id, [...(news.get(id) ?? []), { g, p: now, sale, plus }])
+  return sale
 }
 
 /** One player's news of the day: a single game reads as a sentence; several, as one list. */

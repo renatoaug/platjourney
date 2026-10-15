@@ -155,13 +155,7 @@ export async function browseGuides(
   const ids = searching ? await matchCatalog(query) : [...guides.keys()]
   const platform = PLATFORMS.find((p) => p === opts.platform)
   const sort: Sort = SORTS.find((s) => s === opts.sort) ?? (searching ? 'name' : 'rating')
-  let items: BrowseItem[] = []
-  for (const id of ids) {
-    const card = cards.get(id)
-    if (!card || (platform && !card.platforms.includes(platform))) continue
-    const guide = guides.get(id)
-    items.push({ ...card, guide: guide ? withoutGame(guide) : null })
-  }
+  let items = itemsOf(ids, cards, guides, platform)
   const facets = facetsOf(items, opts)
   const all = checks(opts)
   items = items.filter((i) => passes(i, all))
@@ -178,6 +172,23 @@ export async function browseGuides(
     facets,
     collage: collageOf(cards, guides),
   }
+}
+
+// The catalog cards for these ids, on the platform when one was picked, each with its guide.
+function itemsOf(
+  ids: string[],
+  cards: Map<string, CatalogCard>,
+  guides: Map<string, GuideSummary>,
+  platform: (typeof PLATFORMS)[number] | undefined,
+): BrowseItem[] {
+  const items: BrowseItem[] = []
+  for (const id of ids) {
+    const card = cards.get(id)
+    if (!card || (platform && !card.platforms.includes(platform))) continue
+    const guide = guides.get(id)
+    items.push({ ...card, guide: guide ? withoutGame(guide) : null })
+  }
+  return items
 }
 
 function collageOf(cards: Map<string, CatalogCard>, guides: Map<string, GuideSummary>): string[] {

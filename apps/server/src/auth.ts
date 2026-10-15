@@ -84,7 +84,7 @@ function blocked(key: string, max = MAX_ATTEMPTS): boolean {
   return !!entry && Date.now() - entry.since <= ATTEMPT_WINDOW_MS && entry.count >= max
 }
 
-export interface AccountStatus {
+interface AccountStatus {
   onlineId: string
   avatarUrl: string | null
   // 'new': nobody holds it yet, which includes an account loaded from the seed
@@ -170,7 +170,7 @@ export async function demoSession(): Promise<{ user: User; token: string } | nul
   return user ? openSession(user) : null
 }
 
-export interface PendingVerification {
+interface PendingVerification {
   onlineId: string
   avatarUrl: string | null
   code: string

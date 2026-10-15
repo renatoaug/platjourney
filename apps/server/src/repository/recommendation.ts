@@ -76,7 +76,7 @@ export async function seenGames(user: string, keepDays: number): Promise<string[
 }
 
 // Why a player turns a recommendation down; the model steers the next ones away from it.
-export const DISMISS_REASONS = ['too_long', 'too_hard', 'genre', 'online', 'played'] as const
+const DISMISS_REASONS = ['too_long', 'too_hard', 'genre', 'online', 'played'] as const
 export type DismissReason = (typeof DISMISS_REASONS)[number]
 export const isDismissReason = (value: unknown): value is DismissReason =>
   (DISMISS_REASONS as readonly unknown[]).includes(value)
@@ -88,7 +88,7 @@ export async function dismiss(user: string, game: string, reason?: DismissReason
   )
 }
 
-export interface Dismissed {
+interface Dismissed {
   game: Game
   reason?: DismissReason
 }

@@ -303,43 +303,55 @@ export type GameStore = { url: string | null; deal: Interest['deal'] } | null
 
 const TIER_NAMES = { essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' } as const
 
-function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
+/** The deal line: the player's PS Plus tier has it, a sale, or the tier that includes it. */
+function StoreDeal({
+  deal: d,
+  tier,
+}: {
+  deal: NonNullable<NonNullable<GameStore>['deal']>
+  tier: string
+}) {
   const t = useMessages(messages)
   const locale = useLocale()
-  const d = store.deal
   const money = (cents: number, currency: string) =>
     (cents / 100).toLocaleString(locale, { style: 'currency', currency })
+  return (
+    <div className="game-about-deal">
+      {d.mine ? (
+        <b>{t('mine', { tier })}</b>
+      ) : d.discount > 0 ? (
+        <>
+          <span className="game-about-off">-{d.discount}%</span>
+          <b>{money(d.price, d.currency)}</b> <s>{money(d.base, d.currency)}</s>
+          {d.endsAt && (
+            <small>
+              {t('until', {
+                date: new Date(d.endsAt).toLocaleDateString(locale, {
+                  day: 'numeric',
+                  month: 'short',
+                }),
+              })}
+            </small>
+          )}
+          {d.plusPrice ? (
+            <small>{t('plus', { price: money(d.plusPrice, d.currency) })}</small>
+          ) : null}
+        </>
+      ) : (
+        <b>{t('included', { tier })}</b>
+      )}
+    </div>
+  )
+}
+
+function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
+  const t = useMessages(messages)
+  const d = store.deal
   const url = d?.storeUrl ?? store.url
   const tier = TIER_NAMES[d?.plusTier ?? 'extra']
   return (
     <div className={`game-about-store${d?.mine ? ' mine' : d && d.discount > 0 ? ' sale' : ''}`}>
-      {d && (d.mine || d.plus || d.discount > 0) && (
-        <div className="game-about-deal">
-          {d.mine ? (
-            <b>{t('mine', { tier })}</b>
-          ) : d.discount > 0 ? (
-            <>
-              <span className="game-about-off">-{d.discount}%</span>
-              <b>{money(d.price, d.currency)}</b> <s>{money(d.base, d.currency)}</s>
-              {d.endsAt && (
-                <small>
-                  {t('until', {
-                    date: new Date(d.endsAt).toLocaleDateString(locale, {
-                      day: 'numeric',
-                      month: 'short',
-                    }),
-                  })}
-                </small>
-              )}
-              {d.plusPrice ? (
-                <small>{t('plus', { price: money(d.plusPrice, d.currency) })}</small>
-              ) : null}
-            </>
-          ) : (
-            <b>{t('included', { tier })}</b>
-          )}
-        </div>
-      )}
+      {d && (d.mine || d.plus || d.discount > 0) && <StoreDeal deal={d} tier={tier} />}
       {url && (
         <a
           className="button sm game-about-buy"
@@ -351,6 +363,73 @@ function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
         </a>
       )}
     </div>
+  )
+}
+
+/** The facts list: developer, release, modes, rating, platforms and site, each only when known. */
+function GameFacts({
+  game,
+  developers,
+  modes,
+  platforms,
+  site,
+}: {
+  game: Game
+  developers: string[]
+  modes: string[]
+  platforms: string[]
+  site: { href: string; host: string } | null
+}) {
+  const t = useMessages(messages)
+  return (
+    <dl className="game-about-facts">
+      {developers.length > 0 && (
+        <div>
+          <dt>{t('developer', { count: developers.length })}</dt>
+          <dd>{developers.join(', ')}</dd>
+        </div>
+      )}
+      {game.released_at && (
+        <div>
+          <dt>{t('released')}</dt>
+          <dd>{fmtRelease(game.released_at)}</dd>
+        </div>
+      )}
+      {modes.length > 0 && (
+        <div>
+          <dt>{t('modes')}</dt>
+          <dd>{modes.join(', ')}</dd>
+        </div>
+      )}
+      {game.rating != null && game.rating > 0 && (
+        <div>
+          <dt>{t('rating')}</dt>
+          <dd>{t('ratingValue', { value: Math.round(game.rating) })}</dd>
+        </div>
+      )}
+      {platforms.length > 0 && (
+        <div>
+          <dt>{t('platforms')}</dt>
+          <dd className="game-about-platforms">
+            {platforms.map((p) => (
+              <span key={p} className="pill">
+                {p}
+              </span>
+            ))}
+          </dd>
+        </div>
+      )}
+      {site && (
+        <div>
+          <dt>{t('site')}</dt>
+          <dd>
+            <a href={site.href} target="_blank" rel="noopener noreferrer">
+              {site.host} <Icon name="arrow" />
+            </a>
+          </dd>
+        </div>
+      )}
+    </dl>
   )
 }
 
@@ -397,54 +476,13 @@ export function GameAbout({
           )}
         </div>
       </div>
-      <dl className="game-about-facts">
-        {developers.length > 0 && (
-          <div>
-            <dt>{t('developer', { count: developers.length })}</dt>
-            <dd>{developers.join(', ')}</dd>
-          </div>
-        )}
-        {game.released_at && (
-          <div>
-            <dt>{t('released')}</dt>
-            <dd>{fmtRelease(game.released_at)}</dd>
-          </div>
-        )}
-        {modes.length > 0 && (
-          <div>
-            <dt>{t('modes')}</dt>
-            <dd>{modes.join(', ')}</dd>
-          </div>
-        )}
-        {game.rating != null && game.rating > 0 && (
-          <div>
-            <dt>{t('rating')}</dt>
-            <dd>{t('ratingValue', { value: Math.round(game.rating) })}</dd>
-          </div>
-        )}
-        {platforms.length > 0 && (
-          <div>
-            <dt>{t('platforms')}</dt>
-            <dd className="game-about-platforms">
-              {platforms.map((p) => (
-                <span key={p} className="pill">
-                  {p}
-                </span>
-              ))}
-            </dd>
-          </div>
-        )}
-        {site && (
-          <div>
-            <dt>{t('site')}</dt>
-            <dd>
-              <a href={site.href} target="_blank" rel="noopener noreferrer">
-                {site.host} <Icon name="arrow" />
-              </a>
-            </dd>
-          </div>
-        )}
-      </dl>
+      <GameFacts
+        game={game}
+        developers={developers}
+        modes={modes}
+        platforms={platforms}
+        site={site}
+      />
       {store && <StoreOffer store={store} />}
     </section>
   )

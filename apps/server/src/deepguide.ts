@@ -8,14 +8,14 @@ import type { Game } from './repository/game.ts'
 // The AI service finds, reads and indexes the pages in the background; this
 // side asks for it and shows how far it got.
 
-export interface DeepGuideStats {
+interface DeepGuideStats {
   chunks: number
   sources: { source: string; url: string }[]
   indexing: boolean
   indexedAt: string | null
 }
 
-export interface GuidePage {
+interface GuidePage {
   url: string
   site: string
 }

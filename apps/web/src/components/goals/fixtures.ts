@@ -24,7 +24,7 @@ const NAMES = [
   'Sekiro',
 ]
 
-export const sampleInterests: Interest[] = [
+const sampleInterests: Interest[] = [
   ...NAMES.map((name, i) => ({
     id: `interest:${i}`,
     game: game(name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name),

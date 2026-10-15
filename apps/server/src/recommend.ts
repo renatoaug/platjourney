@@ -38,9 +38,9 @@ const messages = defineMessages({
 const CACHE_DAYS = 7
 // A game shown as a recommendation stays out of new batches while there are unseen candidates; the
 // batches are kept this long.
-export const SEEN_KEEP_DAYS = 365
+const SEEN_KEEP_DAYS = 365
 
-export interface TasteProfile {
+interface TasteProfile {
   summary: string
   genres: string[]
   traits: string[]
@@ -48,12 +48,12 @@ export interface TasteProfile {
 }
 
 /** The profile's lists the player can change. */
-export const TASTE_LISTS = ['genres', 'traits', 'avoid'] as const
-export type TasteList = (typeof TASTE_LISTS)[number]
+const TASTE_LISTS = ['genres', 'traits', 'avoid'] as const
+type TasteList = (typeof TASTE_LISTS)[number]
 type Lists = Record<TasteList, string[]>
 
 /** Rules every recommendation follows, checked against the guides we have. */
-export interface RecFilters {
+interface RecFilters {
   noMissables?: boolean
   onePlaythrough?: boolean
   noDifficultyTrophy?: boolean
@@ -64,7 +64,7 @@ export interface RecFilters {
 
 /** The player's changes to the model's profile, kept when it writes the profile again, and their
  * rules. */
-export interface TastePrefs {
+interface TastePrefs {
   added: Lists
   removed: Lists
   filters: RecFilters
@@ -146,7 +146,7 @@ export function effectiveProfile(
   }
 }
 
-export interface Recommendation {
+interface Recommendation {
   game: Game
   platform: string
   difficulty: number
@@ -158,7 +158,7 @@ export interface Recommendation {
   similarTo: string[]
 }
 
-export interface Recommendations {
+interface Recommendations {
   /** The model's profile with the player's changes applied. */
   profile: TasteProfile | null
   /** The model's profile as it wrote it, so the page can preview changes before saving them. */
@@ -206,6 +206,37 @@ const toView = async (r: RecommendationRow): Promise<Recommendation> => {
     why: r.why,
     hasMissables: r.has_missables,
     similarTo: r.similar_to ?? [],
+  }
+}
+
+type ResearchedItem = Researched['items'][number]
+
+// Only catalog games: a name the model made up must not become a new game.
+async function catalogRows(items: ResearchedItem[], owned: Set<string>, dismissedIds: Set<string>) {
+  const rows = []
+  for (const item of items) {
+    const game = (item.game ? await getGame(item.game) : undefined) ?? (await gameByName(item.name))
+    if (!game || owned.has(game.id) || dismissedIds.has(game.id)) continue
+    rows.push(recommendationRow(game.id, item))
+  }
+  return rows
+}
+
+function recommendationRow(game: string, item: ResearchedItem) {
+  return {
+    game,
+    platform: item.platform,
+    difficulty: item.difficulty,
+    hours: item.hours,
+    ...(Number.isInteger(item.playthroughs) && Number(item.playthroughs) > 0
+      ? { playthroughs: Number(item.playthroughs) }
+      : {}),
+    ...(typeof item.hasDifficultyTrophy === 'boolean'
+      ? { has_difficulty_trophy: item.hasDifficultyTrophy }
+      : {}),
+    has_missables: item.hasMissables,
+    why: item.why,
+    similar_to: item.similarTo,
   }
 }
 
@@ -281,27 +312,7 @@ export async function recommendations(
       }),
     ),
   )
-  const rows = []
-  for (const item of result.items) {
-    // Only catalog games: a name the model made up must not become a new game.
-    const game = (item.game ? await getGame(item.game) : undefined) ?? (await gameByName(item.name))
-    if (!game || owned.has(game.id) || dismissedIds.has(game.id)) continue
-    rows.push({
-      game: game.id,
-      platform: item.platform,
-      difficulty: item.difficulty,
-      hours: item.hours,
-      ...(Number.isInteger(item.playthroughs) && Number(item.playthroughs) > 0
-        ? { playthroughs: Number(item.playthroughs) }
-        : {}),
-      ...(typeof item.hasDifficultyTrophy === 'boolean'
-        ? { has_difficulty_trophy: item.hasDifficultyTrophy }
-        : {}),
-      has_missables: item.hasMissables,
-      why: item.why,
-      similar_to: item.similarTo,
-    })
-  }
+  const rows = await catalogRows(result.items, owned, dismissedIds)
   await saveRecommendations(user.id, rows)
   await updateUser(user.id, { taste_profile: result.profile })
   const saved = await listRecommendations(user.id)

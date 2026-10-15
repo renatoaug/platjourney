@@ -45,7 +45,7 @@ const messages = defineMessages({
 
 export const GUIDE_VERSION = 2
 
-export interface KeyTrophy {
+interface KeyTrophy {
   trophy: string
   why: string
 }
@@ -113,16 +113,11 @@ export async function ensureGuide(
   return guide
 }
 
-// Labels in the player's language; what follows them is the guide as researched.
-export function guideSummary(guide: Guide, locale: Locale = DEFAULT_LOCALE): string {
-  const t = translator(messages, locale)
-  const runs = t('runs', { count: guide.playthroughs })
-  const flags = `${t(guide.hasMissables ? 'hasMissables' : 'noMissables')}${guide.hasOnline ? t('hasOnline') : ''}`
-  const lines = [
-    // 0 means the sources do not say yet: say so instead of "0/10".
-    `${guide.difficulty && guide.hours ? t('difficulty', { difficulty: guide.difficulty, hours: guide.hours, runs }) : t('unknownEffort')}${flags}`,
-    guide.overview,
-  ]
+type Labels = ReturnType<typeof translator<typeof messages>>
+
+// The missable and online trophies, each list under its label when the guide has one.
+function trophyLists(guide: Guide, t: Labels): string[] {
+  const lines: string[] = []
   if (guide.missables.length) {
     lines.push('', t('missables'))
     for (const m of guide.missables) lines.push(`• ${m.trophy} — ${m.when}: ${m.how}`)
@@ -132,6 +127,12 @@ export function guideSummary(guide: Guide, locale: Locale = DEFAULT_LOCALE): str
     for (const o of guide.onlineTrophies)
       lines.push(`• ${o.trophy} — ${o.what}${o.boostable ? t('boostable') : ''}`)
   }
+  return lines
+}
+
+// The easiest, hardest and most tedious trophies, and the tricks the sources share.
+function keyTrophies(guide: Guide, t: Labels): string[] {
+  const lines: string[] = []
   if (guide.easiest)
     lines.push('', t('easiest', { trophy: guide.easiest.trophy, why: guide.easiest.why }))
   if (guide.hardest)
@@ -142,6 +143,21 @@ export function guideSummary(guide: Guide, locale: Locale = DEFAULT_LOCALE): str
     lines.push('', t('tricks'))
     for (const tr of guide.tricks) lines.push(`• ${tr.trophy}: ${tr.trick} (${tr.source})`)
   }
+  return lines
+}
+
+// Labels in the player's language; what follows them is the guide as researched.
+export function guideSummary(guide: Guide, locale: Locale = DEFAULT_LOCALE): string {
+  const t = translator(messages, locale)
+  const runs = t('runs', { count: guide.playthroughs })
+  const flags = `${t(guide.hasMissables ? 'hasMissables' : 'noMissables')}${guide.hasOnline ? t('hasOnline') : ''}`
+  const lines = [
+    // 0 means the sources do not say yet: say so instead of "0/10".
+    `${guide.difficulty && guide.hours ? t('difficulty', { difficulty: guide.difficulty, hours: guide.hours, runs }) : t('unknownEffort')}${flags}`,
+    guide.overview,
+    ...trophyLists(guide, t),
+    ...keyTrophies(guide, t),
+  ]
   lines.push('', t('roadmap'))
   for (const r of guide.roadmap) lines.push(`${r.phase}: ${r.goal}`)
   if (guide.sources.length) lines.push('', t('sources', { sources: guide.sources.join(', ') }))

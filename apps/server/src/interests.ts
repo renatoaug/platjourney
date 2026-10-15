@@ -57,7 +57,7 @@ const messages = defineMessages({
   },
 })
 
-export interface InterestView {
+interface InterestView {
   id: string
   game: Game
   position: number
@@ -73,7 +73,7 @@ export interface InterestView {
   deal: Deal | null
 }
 
-export interface Deal {
+interface Deal {
   price: number
   base: number
   discount: number
@@ -88,7 +88,7 @@ export interface Deal {
   storeUrl: string | null
 }
 
-export interface YearProgress {
+interface YearProgress {
   year: number
   target: number | null
   done: number
@@ -153,13 +153,11 @@ export async function yearProgress(
   const interests = await Promise.all(
     rows.map(async (i: Interest) => {
       const t = titleForGame(library, i.game)
-      // PSN's own progress mixes DLC in; the base game alone is what the platinum needs.
-      const base = t && !withDlc && t.earned > 0 ? (await loadGroups(t, user))?.base : null
       return {
         id: i.id,
         game: i.game,
         position: i.position,
-        progress: base ? Math.round((base.earned / base.total) * 100) : (t?.progress ?? null),
+        progress: await progressOf(t, user, withDlc),
         hours: hoursOf(i.game.id),
         recommendedAt: i.recommended_at ? String(i.recommended_at) : null,
         nextPickAt: i.next_pick_at ? String(i.next_pick_at) : null,
@@ -181,6 +179,17 @@ export async function yearProgress(
   })
   platinumed.sort((a, b) => a.at.localeCompare(b.at))
   return { year, target, done: platinumed.length, platinumed, interests }
+}
+
+// PSN's own progress mixes DLC in; the base game alone is what the platinum needs.
+async function progressOf(
+  t: TitleProgress | undefined,
+  user: User,
+  withDlc: boolean,
+): Promise<number | null> {
+  if (!t) return null
+  const base = !withDlc && t.earned > 0 ? (await loadGroups(t, user))?.base : null
+  return base ? Math.round((base.earned / base.total) * 100) : (t.progress ?? null)
 }
 
 export function yearReport(p: YearProgress, locale: Locale = DEFAULT_LOCALE): string {
@@ -208,6 +217,57 @@ export function yearReport(p: YearProgress, locale: Locale = DEFAULT_LOCALE): st
   return lines.join('\n')
 }
 
+// What each interest action gets; an action answers its usage text when the value is wrong.
+interface InterestAction {
+  user: User
+  year: number
+  value: string
+  t: ReturnType<typeof translator<typeof messages>>
+  list: () => ReturnType<typeof listInterests>
+  resolveId: (v: string) => Promise<string | undefined>
+}
+
+const INTEREST_ACTIONS: Record<string, (a: InterestAction) => Promise<string | undefined>> = {
+  set: async ({ user, year, value, t }) => {
+    const target = Number(value)
+    if (!Number.isInteger(target) || target <= 0) return t('setUsage')
+    const targets = (await getUser(user.id))?.goal_targets ?? {}
+    await updateUser(user.id, { goal_targets: { ...targets, [String(year)]: target } })
+  },
+  add: async ({ user, year, value, t }) => {
+    // The web says where the game was saved from at the end: "add game:12 from:releases".
+    const from = value.match(/\s+from:(\S+)$/)
+    const source = INTEREST_SOURCES.find((s) => s === from?.[1])
+    const query = from ? value.slice(0, from.index).trim() : value
+    if (!query) return t('addUsage')
+    const game = query.startsWith('game:') ? await getGame(query) : await gameByName(query)
+    if (!game) return t('notFound', { query })
+    await addInterest(user.id, game.id, year, source)
+  },
+  remove: async ({ user, value, t, resolveId }) => {
+    const id = await resolveId(value)
+    if (!id) return t('removeUsage')
+    await removeInterest(user.id, id)
+  },
+  move: async ({ user, year, value, t, list, resolveId }) => {
+    const [rawId, direction] = value.split(' ')
+    const id = await resolveId(rawId)
+    if (!id || (direction !== 'up' && direction !== 'down')) return t('moveUsage')
+    const ids = (await list()).map((i) => i.id)
+    const at = ids.indexOf(id)
+    const to = direction === 'up' ? at - 1 : at + 1
+    if (at >= 0 && to >= 0 && to < ids.length) {
+      ;[ids[at], ids[to]] = [ids[to], ids[at]]
+      await setInterestOrder(user.id, year, ids)
+    }
+  },
+  order: async ({ user, year, value, t }) => {
+    const ids = value.split(',').map((v) => v.trim())
+    if (!ids.length || ids.some((v) => !v.startsWith('interest:'))) return t('orderUsage')
+    await setInterestOrder(user.id, year, ids)
+  },
+}
+
 // Handles "set 12", "add <name|game:id> [from:<source>]", "remove <interest:id|n>", "move <id> up|down", "order <ids>".
 export async function handleInterestCommand(
   user: User,
@@ -224,52 +284,8 @@ export async function handleInterestCommand(
     const n = Number(v)
     return Number.isInteger(n) ? (await list())[n - 1]?.id : undefined
   }
-  switch (action) {
-    case 'set': {
-      const target = Number(value)
-      if (!Number.isInteger(target) || target <= 0) return t('setUsage')
-      const targets = (await getUser(user.id))?.goal_targets ?? {}
-      await updateUser(user.id, { goal_targets: { ...targets, [String(year)]: target } })
-      break
-    }
-    case 'add': {
-      // The web says where the game was saved from at the end: "add game:12 from:releases".
-      const from = value.match(/\s+from:(\S+)$/)
-      const source = INTEREST_SOURCES.find((s) => s === from?.[1])
-      const query = from ? value.slice(0, from.index).trim() : value
-      if (!query) return t('addUsage')
-      const game = query.startsWith('game:') ? await getGame(query) : await gameByName(query)
-      if (!game) return t('notFound', { query })
-      await addInterest(user.id, game.id, year, source)
-      break
-    }
-    case 'remove': {
-      const id = await resolveId(value)
-      if (!id) return t('removeUsage')
-      await removeInterest(user.id, id)
-      break
-    }
-    case 'move': {
-      const [rawId, direction] = value.split(' ')
-      const id = await resolveId(rawId)
-      if (!id || (direction !== 'up' && direction !== 'down')) return t('moveUsage')
-      const ids = (await list()).map((i) => i.id)
-      const at = ids.indexOf(id)
-      const to = direction === 'up' ? at - 1 : at + 1
-      if (at >= 0 && to >= 0 && to < ids.length) {
-        ;[ids[at], ids[to]] = [ids[to], ids[at]]
-        await setInterestOrder(user.id, year, ids)
-      }
-      break
-    }
-    case 'order': {
-      const ids = value.split(',').map((v) => v.trim())
-      if (!ids.length || ids.some((v) => !v.startsWith('interest:'))) return t('orderUsage')
-      await setInterestOrder(user.id, year, ids)
-      break
-    }
-    default:
-      break
-  }
+  const run = Object.hasOwn(INTEREST_ACTIONS, action) ? INTEREST_ACTIONS[action] : undefined
+  const usage = await run?.({ user, year, value, t, list, resolveId })
+  if (usage) return usage
   return yearReport(await yearProgress(user, library, year), userLocale(user))
 }

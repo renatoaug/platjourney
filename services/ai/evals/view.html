@@ -584,11 +584,14 @@
     </nav>`
   }
 
+  // A run's status as its dot's colour and as its label; a finished run is the default.
+  const RUN_STATE = { failed: 'fail', stopped: 'neutral', running: 'live' }
+  const RUN_LABEL = { running: 'running', failed: 'failed', stopped: 'stopped' }
+
   function runItem(r, animate = true) {
-    const live = r.status === 'running'
-    const state = r.status === 'failed' ? 'fail' : r.status === 'stopped' ? 'neutral' : live ? 'live' : 'pass'
+    const state = RUN_STATE[r.status] ?? 'pass'
     const selected = Boolean(current && plain(current.id) === plain(r.id))
-    const label = live ? t('running') : r.status === 'failed' ? t('failed') : r.status === 'stopped' ? t('stopped') : t('completed')
+    const label = t(RUN_LABEL[r.status] ?? 'completed')
     return `<button type="button" class="run ${animate ? 'fade' : ''}" data-id="${plain(r.id)}" style="view-transition-name: run-${plain(r.id)}" aria-current="${selected}" aria-expanded="${selected}" ${selected ? 'aria-controls="detail"' : ''}>
       <span class="run-name"><strong>${esc(TEXT[lang].suites[r.suite]?.[0] ?? r.suite)}</strong><span class="subtle">v${esc(r.version)} · ${esc(r.commit)}</span></span>
       <time>${esc(when(r.started_at))}</time>
@@ -610,6 +613,40 @@
     return `<div class="empty fade"><span class="empty-mark" aria-hidden="true">—</span><h3>${title}</h3><p class="muted">${body}</p></div>`
   }
 
+  function runHeading(run) {
+    const score = t('passedOf', { passed: run.passed, total: run.total })
+    if (run.status === 'running') return t('runningOf', { done: run.total, planned: run.planned })
+    if (run.status === 'failed') return t('failed')
+    if (run.status !== 'stopped') return score
+    return run.total ? `${t('stopped')} · ${score}` : t('stopped')
+  }
+
+  // The approval rate waits for the run to end; a run with nothing scored shows a dash.
+  function rateHtml(live, rate) {
+    if (live) return `<strong class="pending">${t('ratePending')}</strong><span>${t('ratePendingNote')}</span>`
+    if (rate == null) return `<strong>—</strong><span>${t('noScore')}</span>`
+    return `<strong>${rate}<small>%</small></strong><span>${t('approval')}</span>`
+  }
+
+  function scoreTrack(run) {
+    return `<div class="score-track" role="img" aria-label="${t('passedOf', { passed: run.passed, total: run.total })}">${run.cases.map((c) => `<span class="${c.passed ? 'hit' : 'miss'}"></span>`).join('')}</div>`
+  }
+
+  // A run with no case yet: still waiting for the first, or stopped before it.
+  function noCasesHtml(run, live) {
+    if (live) return `<div class="sk-stack">${bar('60%', 14)}${bar('35%', 10)}</div><p>${t('waitingTitle')}</p>`
+    const cancelled = run.status === 'stopped'
+    return `<h4>${t(cancelled ? 'cancelledTitle' : 'stoppedTitle')}</h4><p>${t(cancelled ? 'cancelledBody' : 'stoppedBody')}</p>`
+  }
+
+  function promptButton(run) {
+    return run.prompt_text ? ` <button type="button" class="link-btn" data-prompt>${t('showPrompt')}</button>` : ''
+  }
+
+  function promptText(run) {
+    return run.prompt_text ? `<pre class="prompt-text" hidden>${esc(run.prompt_text)}</pre>` : ''
+  }
+
   // The run's header: status, progress and facts. Redrawn alone while the run goes on.
   function runHead(animate = false) {
     const live = current.status === 'running'
@@ -617,32 +654,25 @@
     const summary = Object.entries(current.summary || {})
       .map(([k, v]) => `<div><dt>${esc(TEXT[lang].metrics[k] ?? k)}</dt><dd>${esc(v)}</dd></div>`)
       .join('')
-    const heading = live
-      ? t('runningOf', { done: current.total, planned: current.planned })
-      : current.status === 'failed'
-        ? t('failed')
-        : current.status === 'stopped'
-          ? current.total ? `${t('stopped')} · ${t('passedOf', { passed: current.passed, total: current.total })}` : t('stopped')
-          : t('passedOf', { passed: current.passed, total: current.total })
+    const heading = runHeading(current)
     const rate = current.total ? Math.round(current.passed / current.total * 100) : null
     return `<section class="run-report ${animate ? 'fade' : ''}" id="run-head">
       <div class="report-title"><div><span class="tag">${t('selected')}</span><h3 id="report-title" tabindex="-1">${esc(TEXT[lang].suites[current.suite]?.[0] ?? current.suite)}</h3><p class="muted">${heading}</p></div>
         <div class="report-actions"><button type="button" class="btn sm" id="close-results" aria-label="${t('closeResults')}">×</button>${live ? `<button type="button" class="btn sm" data-stop="${plain(current.id)}">${t('stop')}</button>` : ''}</div>
       </div>
-      <div class="report-metrics"><div class="report-rate">${live ? `<strong class="pending">${t('ratePending')}</strong><span>${t('ratePendingNote')}</span>` : `<strong>${rate == null ? '—' : `${rate}<small>%</small>`}</strong><span>${t(rate == null ? 'noScore' : 'approval')}</span>`}</div><div><strong>${current.total}<small>/ ${current.planned}</small></strong><span>${t('inspected')}</span></div><div><strong>${usd(current.cost_usd)}</strong><span>${t('cost')}</span></div></div>
+      <div class="report-metrics"><div class="report-rate">${rateHtml(live, rate)}</div><div><strong>${current.total}<small>/ ${current.planned}</small></strong><span>${t('inspected')}</span></div><div><strong>${usd(current.cost_usd)}</strong><span>${t('cost')}</span></div></div>
       ${live ? `<div class="bar live"><i style="width:${Math.max(pct, 4)}%"></i></div>` : ''}
       ${current.error ? `<p class="error-notice">${esc(current.error)}</p>` : ''}
-      ${current.cases.length ? `<div class="score-track" role="img" aria-label="${t('passedOf', { passed: current.passed, total: current.total })}">${current.cases.map((c) => `<span class="${c.passed ? 'hit' : 'miss'}"></span>`).join('')}</div>` : ''}
-      ${!current.cases.length ? `<div class="report-notice">${live ? `<div class="sk-stack">${bar('60%', 14)}${bar('35%', 10)}</div><p>${t('waitingTitle')}</p>` : `<h4>${t(current.status === 'stopped' ? 'cancelledTitle' : 'stoppedTitle')}</h4><p>${t(current.status === 'stopped' ? 'cancelledBody' : 'stoppedBody')}</p>`}</div>` : ''}
+      ${current.cases.length ? scoreTrack(current) : `<div class="report-notice">${noCasesHtml(current, live)}</div>`}
       <details class="run-meta"><summary>${t('technical')}</summary>
         <dl class="facts">
           <div><dt>${t('started')}</dt><dd>${esc(when(current.started_at))}</dd></div>
           <div><dt>${t('version')}</dt><dd>v${esc(current.version)} · ${esc(current.commit)}</dd></div>
           <div class="fact-models"><dt>${t('models')}</dt><dd>${esc(current.models.join(', ') || '—')}</dd></div>
-          <div class="fact-prompt"><dt>${t('prompt')}</dt><dd>${esc(current.prompt || '—')}${current.prompt_text ? ` <button type="button" class="link-btn" data-prompt>${t('showPrompt')}</button>` : ''}</dd></div>
+          <div class="fact-prompt"><dt>${t('prompt')}</dt><dd>${esc(current.prompt || '—')}${promptButton(current)}</dd></div>
           ${summary}
         </dl>
-        ${current.prompt_text ? `<pre class="prompt-text" hidden>${esc(current.prompt_text)}</pre>` : ''}
+        ${promptText(current)}
       </details>
     </section>`
   }
@@ -796,7 +826,11 @@
     }
     runs = fresh
     drawOverview()
-    if (!current) return
+    if (current) await pollRun()
+  }
+
+  // The open run's report: redrawn whole when its state changed, else only the new cases are added.
+  async function pollRun() {
     const mine = runs.find((r) => plain(r.id) === plain(current.id))
     if (!mine || (mine.status === current.status && mine.total === current.cases.length)) return
     const had = current.cases.length
@@ -849,86 +883,108 @@
     for (const b of document.querySelectorAll('[data-tab]')) b.setAttribute('aria-selected', b.dataset.tab === name)
   }
 
+  async function switchLang(next) {
+    lang = next
+    try {
+      localStorage.setItem('evals:lang', lang)
+    } catch {}
+    translateStatic()
+    drawSuites()
+    drawTabs()
+    return tab === 'runs' ? drawRuns() : drawQuestions()
+  }
+
+  function openTab(name) {
+    selectTab(name)
+    editing = null
+    return tab === 'runs' ? drawRuns() : drawQuestions()
+  }
+
+  async function startRun(suite) {
+    const s = suites.find((x) => x.suite === suite)
+    const title = TEXT[lang].suites[s.suite][0]
+    const ok = await ask(t('confirmTitle', { suite: title }), t('confirmBody', { n: s.questions, cost: usd(s.estimate_usd) }))
+    if (!ok) return
+    await api('/api/runs', { method: 'POST', body: { suite: s.suite } })
+    selectTab('runs')
+    await new Promise((r) => setTimeout(r, 800))
+    runs = await api('/api/runs')
+    const mine = runs.find((r) => r.suite === s.suite && r.status === 'running')
+    if (mine) current = await api(`/api/runs/${plain(mine.id)}`)
+    return refresh()
+  }
+
+  function togglePrompt(el) {
+    const text = el.closest('.run-meta').querySelector('.prompt-text')
+    text.hidden = !text.hidden
+    el.textContent = t(text.hidden ? 'showPrompt' : 'hidePrompt')
+  }
+
+  async function stopRun(id) {
+    if (!(await ask(t('stopTitle'), t('stopBody'), t('stop')))) return
+    await api(`/api/runs/${id}/stop`, { method: 'POST', body: {} })
+    return refresh()
+  }
+
+  async function closeRun() {
+    const previous = plain(current.id)
+    current = null
+    other = null
+    await morph(() => drawRuns(false))
+    document.querySelector(`[data-id="${previous}"]`)?.focus({ preventScroll: true })
+  }
+
+  async function openRun(id) {
+    const opening = !current
+    current = await api(`/api/runs/${id}`)
+    other = null
+    await (opening ? morph(() => drawRuns(false)) : Promise.resolve(drawRuns(false)))
+    document.getElementById('report-title').focus({ preventScroll: true })
+    const target = matchMedia('(max-width: 760px)').matches ? 'detail' : 'runs-layout'
+    document.getElementById(target).scrollIntoView({ block: 'start' })
+  }
+
+  function toggleCase(index) {
+    const d = document.querySelector(`[data-for="${index}"]`)
+    d.hidden = !d.hidden
+    document.querySelector(`[data-case="${index}"]`).setAttribute('aria-expanded', !d.hidden)
+  }
+
+  function openQuestionSuite(name) {
+    qsuite = name
+    editing = null
+    return drawQuestions()
+  }
+
+  // What a button does, by what marks it; the first match wins.
+  const CLICKS = [
+    [(el) => el.id === 'retry', () => refresh().catch(showError)],
+    [(el) => el.dataset.lang, (el) => switchLang(el.dataset.lang)],
+    [(el) => el.dataset.tab, (el) => openTab(el.dataset.tab)],
+    [(el) => el.dataset.run, (el) => startRun(el.dataset.run)],
+    [(el) => 'prompt' in el.dataset, (el) => togglePrompt(el)],
+    [(el) => el.dataset.stop, (el) => stopRun(el.dataset.stop)],
+    [(el) => el.id === 'close-results' || (el.dataset.id && current && el.dataset.id === plain(current.id)), () => closeRun()],
+    [(el) => el.dataset.id, (el) => openRun(el.dataset.id)],
+    [(el) => el.dataset.case !== undefined, (el) => toggleCase(el.dataset.case)],
+    [
+      (el) => el.dataset.page,
+      (el) => {
+        runPage = Number(el.dataset.page)
+        return drawRuns(false)
+      },
+    ],
+    [(el) => el.dataset.qsuite, (el) => openQuestionSuite(el.dataset.qsuite)],
+    [(el) => el.id === 'qadd', () => openQuestion('new')],
+    [(el) => el.dataset.edit, (el) => openQuestion(el.dataset.edit)],
+    [(el) => el.id === 'qcancel' || el.id === 'qclose', () => closeQuestion()],
+  ]
+
   document.addEventListener('click', async (e) => {
     const el = e.target.closest('button')
     if (!el) return
-    if (el.id === 'retry') return refresh().catch(showError)
-    if (el.dataset.lang) {
-      lang = el.dataset.lang
-      try {
-        localStorage.setItem('evals:lang', lang)
-      } catch {}
-      translateStatic()
-      drawSuites()
-      drawTabs()
-      return tab === 'runs' ? drawRuns() : drawQuestions()
-    }
-    if (el.dataset.tab) {
-      selectTab(el.dataset.tab)
-      editing = null
-      return tab === 'runs' ? drawRuns() : drawQuestions()
-    }
-    if (el.dataset.run) {
-      const s = suites.find((x) => x.suite === el.dataset.run)
-      const title = TEXT[lang].suites[s.suite][0]
-      const ok = await ask(t('confirmTitle', { suite: title }), t('confirmBody', { n: s.questions, cost: usd(s.estimate_usd) }))
-      if (!ok) return
-      await api('/api/runs', { method: 'POST', body: { suite: s.suite } })
-      selectTab('runs')
-      await new Promise((r) => setTimeout(r, 800))
-      runs = await api('/api/runs')
-      const mine = runs.find((r) => r.suite === s.suite && r.status === 'running')
-      if (mine) current = await api(`/api/runs/${plain(mine.id)}`)
-      return refresh()
-    }
-    if ('prompt' in el.dataset) {
-      const text = el.closest('.run-meta').querySelector('.prompt-text')
-      text.hidden = !text.hidden
-      el.textContent = t(text.hidden ? 'showPrompt' : 'hidePrompt')
-      return
-    }
-    if (el.dataset.stop) {
-      if (!(await ask(t('stopTitle'), t('stopBody'), t('stop')))) return
-      await api(`/api/runs/${el.dataset.stop}/stop`, { method: 'POST', body: {} })
-      return refresh()
-    }
-    if (el.id === 'close-results' || (el.dataset.id && current && el.dataset.id === plain(current.id))) {
-      const previous = plain(current.id)
-      current = null
-      other = null
-      await morph(() => drawRuns(false))
-      document.querySelector(`[data-id="${previous}"]`)?.focus({ preventScroll: true })
-      return
-    }
-    if (el.dataset.id) {
-      const opening = !current
-      current = await api(`/api/runs/${el.dataset.id}`)
-      other = null
-      await (opening ? morph(() => drawRuns(false)) : Promise.resolve(drawRuns(false)))
-      document.getElementById('report-title').focus({ preventScroll: true })
-      const target = matchMedia('(max-width: 760px)').matches ? 'detail' : 'runs-layout'
-      document.getElementById(target).scrollIntoView({ block: 'start' })
-      return
-    }
-    if (el.dataset.case !== undefined) {
-      const index = el.dataset.case
-      const d = document.querySelector(`[data-for="${index}"]`)
-      d.hidden = !d.hidden
-      document.querySelector(`[data-case="${index}"]`).setAttribute('aria-expanded', !d.hidden)
-      return
-    }
-    if (el.dataset.page) {
-      runPage = Number(el.dataset.page)
-      return drawRuns(false)
-    }
-    if (el.dataset.qsuite) {
-      qsuite = el.dataset.qsuite
-      editing = null
-      return drawQuestions()
-    }
-    if (el.id === 'qadd') return openQuestion('new')
-    if (el.dataset.edit) return openQuestion(el.dataset.edit)
-    if (el.id === 'qcancel' || el.id === 'qclose') return closeQuestion()
+    const action = CLICKS.find(([marks]) => marks(el))
+    return action?.[1](el)
   })
 
   document.addEventListener('submit', async (e) => {
@@ -1052,17 +1108,19 @@
     }, 250)
   })
 
+  // With a game picked, the field only takes deleting the pick; Enter never submits the form.
+  function pickedKey(e, picker) {
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault()
+      clearPick(picker)
+    } else if (e.key === 'Enter') e.preventDefault()
+  }
+
   document.addEventListener('keydown', (e) => {
     const input = e.target.closest?.('.game-search')
     if (!input) return
     const picker = pickerOf(input)
-    if (picker.classList.contains('has-pick')) {
-      if (e.key === 'Backspace' || e.key === 'Delete') {
-        e.preventDefault()
-        clearPick(picker)
-      } else if (e.key === 'Enter') e.preventDefault()
-      return
-    }
+    if (picker.classList.contains('has-pick')) return pickedKey(e, picker)
     const count = picker.querySelectorAll('[role=option]').length
     if (e.key === 'Escape' && !picker.querySelector('.options').hidden) {
       e.preventDefault()

@@ -11,9 +11,9 @@ import {
   threadKey,
 } from '../components/chat/threads'
 import { connectAccount, useDemo } from '../components/demo'
-import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
-import type { LibraryGame } from '../lib/types'
+import type { AppStateData, CurrentGame, LibraryGame } from '../lib/types'
 import { modelWorkDone } from '../plugins'
 import { toast } from '../ui/toast'
 
@@ -66,6 +66,118 @@ function DemoNexo() {
         onConnect={connectAccount}
       />
     </Page>
+  )
+}
+
+type Translate = Translator<typeof messages>
+
+function subtitleOf(t: Translate, loaded: boolean, current: CurrentGame | null | undefined) {
+  if (!loaded) return t('subtitleLoading')
+  if (!current) return t('subtitleNoGame')
+  if (current.owned === false) return t('subtitleNotOwned', { name: current.name })
+  return t('subtitleGame', { name: current.name, progress: current.progress })
+}
+
+function playingElsewhere(data: AppStateData | null) {
+  return data?.chat && data.current ? data.current : null
+}
+
+/** The list's conversation for the game a switch is heading to, when it already has one. */
+function threadFor(target: LibraryGame, threads: ChatThread[] | null) {
+  return threads?.find((x) => (target.np ? x.np === target.np : x.game === target.game)) ?? null
+}
+
+/**
+ * The draft on top of the list: the game a switch is heading to while it has no conversation, or
+ * the chat's game before its first message.
+ */
+function draftThread(
+  target: LibraryGame | null,
+  heading: ChatThread | null | undefined,
+  current: CurrentGame | null | undefined,
+  threads: ChatThread[] | null,
+): ChatThread | null {
+  if (target) {
+    if (heading) return null
+    return {
+      game: target.game ?? `np:${target.np}`,
+      np: target.np ?? null,
+      name: target.name,
+      cover_url: target.icon ?? null,
+      messages: 0,
+      last_at: new Date().toISOString(),
+      last_question: null,
+      draft: true,
+    }
+  }
+  if (current && threads && !threads.some((x) => x.game === current.game.id))
+    return {
+      game: current.game.id,
+      np: current.np,
+      name: current.name,
+      cover_url: current.game.cover_url ?? null,
+      messages: 0,
+      last_at: new Date().toISOString(),
+      last_question: null,
+      draft: true,
+    }
+  return null
+}
+
+function markedKey(
+  target: LibraryGame | null,
+  heading: ChatThread | null | undefined,
+  draft: ChatThread | null,
+  key: string,
+) {
+  if (!target) return key
+  if (heading) return threadKey(heading)
+  return draft ? threadKey(draft) : key
+}
+
+/** Over the box of an old conversation: it is read only, with the way back to the chat. */
+function ReadOnlyBar({
+  current,
+  onBack,
+}: {
+  current: CurrentGame | null | undefined
+  onBack: () => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <>
+      <span>{t('readOnlyGeneral')}</span>
+      <button type="button" className="button ghost sm" onClick={onBack}>
+        {current ? t('backToCurrent', { name: current.name }) : t('backToChat')}
+      </button>
+    </>
+  )
+}
+
+/** The game being played, a line away, while the chat talks about another one. */
+function PlayingNote({
+  playing,
+  onPick,
+}: {
+  playing: CurrentGame
+  onPick: (game: LibraryGame) => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <>
+      {t('playing', { name: playing.name })}{' '}
+      <button
+        type="button"
+        onClick={() =>
+          onPick({
+            ...(playing.np ? { np: playing.np } : { game: playing.game.id }),
+            name: playing.name,
+          } as LibraryGame)
+        }
+      >
+        {t('backTo')}
+      </button>
+    </>
   )
 }
 
@@ -152,13 +264,7 @@ function LiveNexo() {
   }
 
   const current = chatGame
-  const subtitle = !data
-    ? t('subtitleLoading')
-    : current
-      ? current.owned === false
-        ? t('subtitleNotOwned', { name: current.name })
-        : t('subtitleGame', { name: current.name, progress: current.progress })
-      : t('subtitleNoGame')
+  const subtitle = subtitleOf(t, !!data, current)
 
   // The chat's game, as /game in Telegram: the server loads that game's context, then the screen
   // reloads its state so the subtitle and the next answers follow it.
@@ -182,7 +288,7 @@ function LiveNexo() {
   // The trophy the player came to ask about.
   const [trophy, setTrophy] = useState<string | null>(null)
   // The game being played, when the chat talks about another one: a line away, to go back to.
-  const playing = data?.chat && data.current ? data.current : null
+  const playing = playingElsewhere(data)
   const pickGame = async (game: LibraryGame) => {
     setSwitching(game.name)
     setTarget(game)
@@ -242,45 +348,14 @@ function LiveNexo() {
   }
   // The chat's game with no conversation yet sits on top as a draft; it goes away by itself when
   // the player leaves without writing, since nothing is stored until a message is sent.
-  const heading = target
-    ? (threads?.find((x) => (target.np ? x.np === target.np : x.game === target.game)) ?? null)
-    : undefined
-  const draft: ChatThread | null = target
-    ? heading
-      ? null
-      : {
-          game: target.game ?? `np:${target.np}`,
-          np: target.np ?? null,
-          name: target.name,
-          cover_url: target.icon ?? null,
-          messages: 0,
-          last_at: new Date().toISOString(),
-          last_question: null,
-          draft: true,
-        }
-    : current && threads && !threads.some((x) => x.game === current.game.id)
-      ? {
-          game: current.game.id,
-          np: current.np,
-          name: current.name,
-          cover_url: current.game.cover_url ?? null,
-          messages: 0,
-          last_at: new Date().toISOString(),
-          last_question: null,
-          draft: true,
-        }
-      : null
+  const heading = target ? threadFor(target, threads) : undefined
+  const draft = draftThread(target, heading, current, threads)
   const listed = threads && (draft ? [draft, ...threads] : threads)
   // While switching, the conversation heading for the new game is the one marked.
-  const marked = target ? (heading ? threadKey(heading) : draft ? threadKey(draft) : key) : key
+  const marked = markedKey(target, heading, draft, key)
   const reading = viewing !== null && viewing !== currentKey
   const readOnly = reading ? (
-    <>
-      <span>{t('readOnlyGeneral')}</span>
-      <button type="button" className="button ghost sm" onClick={() => setViewing(null)}>
-        {current ? t('backToCurrent', { name: current.name }) : t('backToChat')}
-      </button>
-    </>
+    <ReadOnlyBar current={current} onBack={() => setViewing(null)} />
   ) : undefined
 
   return (
@@ -312,20 +387,7 @@ function LiveNexo() {
           onClearTrophy={() => setTrophy(null)}
           note={
             playing && !switching ? (
-              <>
-                {t('playing', { name: playing.name })}{' '}
-                <button
-                  type="button"
-                  onClick={() =>
-                    chooseGame({
-                      ...(playing.np ? { np: playing.np } : { game: playing.game.id }),
-                      name: playing.name,
-                    } as LibraryGame)
-                  }
-                >
-                  {t('backTo')}
-                </button>
-              </>
+              <PlayingNote playing={playing} onPick={chooseGame} />
             ) : undefined
           }
         />

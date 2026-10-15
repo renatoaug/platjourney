@@ -74,7 +74,7 @@ export async function userByLinkCode(code: string): Promise<User | undefined> {
   )
 }
 
-export const LINK_CODE_MINUTES = 15
+const LINK_CODE_MINUTES = 15
 
 /** A fresh Telegram link code for the user, valid for LINK_CODE_MINUTES. */
 export async function setLinkCode(id: string, code: string): Promise<void> {

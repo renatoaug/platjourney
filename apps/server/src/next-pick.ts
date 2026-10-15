@@ -20,7 +20,7 @@ interface GuideFacts {
   hasOnline?: boolean
 }
 
-export interface NextPick {
+interface NextPick {
   game: { id: string; name: string; cover_url?: string | null }
   why: string
   firstStep: string

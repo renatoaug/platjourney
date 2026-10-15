@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react'
 import './page-hero.css'
 
-export type HeroLook = 'covers' | 'shelf' | 'art'
+type HeroLook = 'covers' | 'shelf' | 'art'
 
 export function PageHero({
   eyebrow,

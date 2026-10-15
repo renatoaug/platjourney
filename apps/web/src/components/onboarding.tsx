@@ -248,7 +248,7 @@ type Phase = (typeof PHASES)[number]
 
 /** The stops this player's screens can show: without a game being played there is no trophy list
  or session route to point at. */
-export function phasesFor(data: AppStateData | null): Phase[] {
+function phasesFor(data: AppStateData | null): Phase[] {
   return PHASES.filter((p) => !(data && !data.current && (p === 'trophies' || p === 'plan')))
 }
 const DEMO_SEEN = 'platjourney:onboarding-demo'
@@ -478,6 +478,31 @@ export function WelcomeDialog({
 // How far the player scrolls, in px, before the card folds on a phone.
 const FOLD_AFTER = 40
 
+/** Where the tour card sits beside the lit parts. Scrolls the first one into view on the way. */
+function placeFor(found: Element[]): { left?: number; bottom?: boolean } {
+  const spot = found[0]
+  const phone = window.innerWidth <= 760
+  const main = document.getElementById('main-content')?.getBoundingClientRect()
+  // The card shows once it knows its place, so it never appears on one side and jumps.
+  if (!spot || !main) return {}
+  // The lit parts together: as wide as the page, they go to the top and the card to the bottom
+  // corner, below their headings; narrower, they are centred with the card on the other side.
+  const span = () => {
+    const boxes = found.map((e) => e.getBoundingClientRect())
+    const left = Math.min(...boxes.map((b) => b.left))
+    const right = Math.max(...boxes.map((b) => b.right))
+    return { left, width: right - left }
+  }
+  const wide = span().width > main.width * 0.6
+  spot.scrollIntoView?.({ behavior: 'instant', block: phone || wide ? 'start' : 'center' })
+  const box = span()
+  // Something in the top bar (the counter, the bell): the card hangs right under it.
+  if (phone || spot.closest('.topbar')) return {}
+  if (wide) return { bottom: true }
+  if (box.left + box.width / 2 > main.left + main.width / 2) return { left: main.left + 28 }
+  return {}
+}
+
 /** Phases 2 to 5: each opens its screen, selects its tab and explains it in a card beside the page. */
 export function Tour({
   step,
@@ -568,32 +593,7 @@ export function Tour({
         page?.setAttribute('data-tour-page', '')
       }
       document.body.classList.add('touring-focus')
-      const found = parts.filter((e): e is Element => !!e)
-      const spot = found[0]
-      const phone = window.innerWidth <= 760
-      const main = document.getElementById('main-content')?.getBoundingClientRect()
-      // The card shows once it knows its place, so it never appears on one side and jumps.
-      if (!spot || !main) {
-        setPlace({})
-        return
-      }
-      // The lit parts together: as wide as the page, they go to the top and the card to the bottom
-      // corner, below their headings; narrower, they are centred with the card on the other side.
-      const span = () => {
-        const boxes = found.map((e) => e.getBoundingClientRect())
-        const left = Math.min(...boxes.map((b) => b.left))
-        const right = Math.max(...boxes.map((b) => b.right))
-        return { left, width: right - left }
-      }
-      const wide = span().width > main.width * 0.6
-      spot.scrollIntoView?.({ behavior: 'instant', block: phone || wide ? 'start' : 'center' })
-      const box = span()
-      // Something in the top bar (the counter, the bell): the card hangs right under it.
-      if (phone || spot.closest('.topbar')) setPlace({})
-      else if (wide) setPlace({ bottom: true })
-      else if (box.left + box.width / 2 > main.left + main.width / 2)
-        setPlace({ left: main.left + 28 })
-      else setPlace({})
+      setPlace(placeFor(parts.filter((e): e is Element => !!e)))
     }
     timer = window.setTimeout(light, 0)
     return () => {
@@ -718,65 +718,71 @@ export function Tour({
   }
 }
 
-function Stage({ phase, me, data }: { phase: Phase; me: Me; data: AppStateData | null }) {
+function WelcomeStage({ me, data }: { me: Me; data: AppStateData | null }) {
   const t = useMessages(messages)
   const profile = data?.profile
-  if (phase === 'welcome') {
-    const e = profile?.earned
-    const trophies = e ? e.platinum + e.gold + e.silver + e.bronze : 0
-    return (
-      <div className="onb-welcome">
-        <div className="onb-avatar">
-          <img src={me.avatarUrl || '/nexo-avatar.svg'} alt="" />
-          {profile && <span className="onb-level">{profile.level}</span>}
-        </div>
-        {profile && (
-          <dl className="onb-stats">
-            <div>
-              <dt>{t('welcome.level')}</dt>
-              <dd>
-                <CountUp to={profile.level} />
-              </dd>
-            </div>
-            <div>
-              <dt>{t('welcome.platinums')}</dt>
-              <dd>
-                <CountUp to={e?.platinum ?? 0} />
-              </dd>
-            </div>
-            <div>
-              <dt>{t('welcome.trophies')}</dt>
-              <dd>
-                <CountUp to={trophies} />
-              </dd>
-            </div>
-          </dl>
-        )}
+  const e = profile?.earned
+  const trophies = e ? e.platinum + e.gold + e.silver + e.bronze : 0
+  return (
+    <div className="onb-welcome">
+      <div className="onb-avatar">
+        <img src={me.avatarUrl || '/nexo-avatar.svg'} alt="" />
+        {profile && <span className="onb-level">{profile.level}</span>}
       </div>
-    )
-  }
-  if (phase === 'radar') {
-    const c = data?.current
-    return (
-      <div className="onb-radar">
-        <span className="onb-sweep" />
-        {c ? (
-          <div className="onb-game">
-            <Cover url={c.game.cover_url} name={c.name} className="onb-cover" />
-            <div>
-              <b>{c.name}</b>
-              <span>{t('radar.progress', { earned: c.earned, total: c.total })}</span>
-              <span className="onb-bar">
-                <span style={{ '--to': `${c.progress}%` } as CSSProperties} />
-              </span>
-            </div>
+      {profile && (
+        <dl className="onb-stats">
+          <div>
+            <dt>{t('welcome.level')}</dt>
+            <dd>
+              <CountUp to={profile.level} />
+            </dd>
           </div>
-        ) : (
-          <p className="onb-empty">{t('radar.noGame')}</p>
-        )}
-      </div>
-    )
-  }
+          <div>
+            <dt>{t('welcome.platinums')}</dt>
+            <dd>
+              <CountUp to={e?.platinum ?? 0} />
+            </dd>
+          </div>
+          <div>
+            <dt>{t('welcome.trophies')}</dt>
+            <dd>
+              <CountUp to={trophies} />
+            </dd>
+          </div>
+        </dl>
+      )}
+    </div>
+  )
+}
+
+function RadarStage({ data }: { data: AppStateData | null }) {
+  const t = useMessages(messages)
+  const c = data?.current
+  return (
+    <div className="onb-radar">
+      <span className="onb-sweep" />
+      {c ? (
+        <div className="onb-game">
+          <Cover url={c.game.cover_url} name={c.name} className="onb-cover" />
+          <div>
+            <b>{c.name}</b>
+            <span>{t('radar.progress', { earned: c.earned, total: c.total })}</span>
+            <span className="onb-bar">
+              <span style={{ '--to': `${c.progress}%` } as CSSProperties} />
+            </span>
+          </div>
+        </div>
+      ) : (
+        <p className="onb-empty">{t('radar.noGame')}</p>
+      )}
+    </div>
+  )
+}
+
+function Stage({ phase, me, data }: { phase: Phase; me: Me; data: AppStateData | null }) {
+  const t = useMessages(messages)
+  if (phase === 'welcome') return <WelcomeStage me={me} data={data} />
+  if (phase === 'radar') return <RadarStage data={data} />
   if (phase === 'plan') {
     return (
       <div className="onb-plan">

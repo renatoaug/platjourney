@@ -1,5 +1,5 @@
 /** Trophy list with search, filters, sorting, pagination and the per-trophy Nexo help. */
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import {
@@ -196,6 +196,86 @@ function savedFilters(): SavedFilters {
   }
 }
 
+function saveFilters({
+  chosenSort,
+  group,
+  status,
+  onlyProgress,
+}: {
+  chosenSort: string | null
+  group: Group
+  status: Status
+  onlyProgress: boolean
+}) {
+  try {
+    // The automatic "Padrão" of a platinumed game is not a preference; keep the saved one.
+    const keep = chosenSort ?? savedFilters().sort
+    localStorage.setItem(
+      'trophyFilters',
+      JSON.stringify({ sort: keep, group, status, onlyProgress }),
+    )
+  } catch {}
+}
+
+// Without a saved status, a saved `hideEarned` still picks one.
+function savedStatus(saved: SavedFilters): Status {
+  if (saved.status === 'all' || saved.status === 'pending' || saved.status === 'earned')
+    return saved.status
+  return saved.hideEarned ? 'pending' : 'all'
+}
+
+function savedGroup(saved: SavedFilters): Group {
+  return saved.group === 'base' || saved.group === 'all' || saved.group === 'dlc'
+    ? saved.group
+    : 'base'
+}
+
+// A platinumed game opens in the game's own order, like the PSN; otherwise the
+// saved preference (pending first by default) is what helps.
+function autoSort(list: Trophy[], saved: SavedFilters) {
+  if (list.some((t) => t.type === 'platinum' && t.earned)) return 'psn'
+  return saved.sort && SORTERS[saved.sort] ? saved.sort : 'pending'
+}
+
+function inGroup(list: Trophy[], group: Group) {
+  return list.filter((t) => group === 'all' || (group === 'base') === (t.groupId === 'default'))
+}
+
+/** The trophies left after the status, progress and search filters, in the chosen order. */
+function filtered(
+  scope: Trophy[],
+  {
+    status,
+    onlyProgress,
+    q,
+    sort,
+  }: { status: Status; onlyProgress: boolean; q: string; sort: string },
+) {
+  const query = q.trim().toLowerCase()
+  return scope
+    .filter((t) => status === 'all' || (status === 'earned') === !!t.earned)
+    .filter((t) => !onlyProgress || t.progressTarget)
+    .filter((t) => !query || `${t.name} ${t.detail} ${t.nameEn}`.toLowerCase().includes(query))
+    .sort(SORTERS[sort] ?? SORTERS.pending)
+}
+
+function groupLabel(t: Translator<typeof messages>, group: Group) {
+  if (group === 'dlc') return t('group.dlcShort')
+  if (group === 'all') return t('group.all')
+  return t('group.base')
+}
+
+/** Which trophies of how many the page shows, and of what content; a game without DLC passes `base`. */
+function resultsLine(t: Translator<typeof messages>, start: number, total: number, group: Group) {
+  if (!total) return t('noResults')
+  return t('results', {
+    from: start + 1,
+    to: Math.min(start + TROPHY_PAGE_SIZE, total),
+    total,
+    group: groupLabel(t, group),
+  })
+}
+
 // `np` is the trophy list's id on PSN; with it, trophies not yet earned get a
 function TrophyCard({
   t,
@@ -342,16 +422,8 @@ export function TrophyList({
   const t = useMessages(messages)
   const { me } = useApp()
   const [saved] = useState(savedFilters)
-  const [status, setStatus] = useState<Status>(() =>
-    saved.status === 'all' || saved.status === 'pending' || saved.status === 'earned'
-      ? saved.status
-      : saved.hideEarned
-        ? 'pending'
-        : 'all',
-  )
-  const [group, setGroup] = useState<Group>(() =>
-    saved.group === 'base' || saved.group === 'all' || saved.group === 'dlc' ? saved.group : 'base',
-  )
+  const [status, setStatus] = useState<Status>(() => savedStatus(saved))
+  const [group, setGroup] = useState<Group>(() => savedGroup(saved))
   const [onlyProgress, setOnlyProgress] = useState(!!saved.onlyProgress)
   // A sort picked by hand sticks, here and on the next games; until then it follows the game.
   const [chosenSort, setChosenSort] = useState<string | null>(null)
@@ -365,22 +437,11 @@ export function TrophyList({
   const askHref = (name: string) => (np && !me.demo ? nexoHref(np, null, name) : null)
 
   const list = trophies ?? []
-  // A platinumed game opens in the game's own order, like the PSN; otherwise the
-  // saved preference (pending first by default) is what helps.
-  const platinumed = list.some((t) => t.type === 'platinum' && t.earned)
-  const savedSort = saved.sort && SORTERS[saved.sort] ? saved.sort : 'pending'
-  const sort = chosenSort ?? (platinumed ? 'psn' : savedSort)
+  const sort = chosenSort ?? autoSort(list, saved)
   const hasDlc = list.some((t) => t.groupId !== 'default')
 
   useEffect(() => {
-    try {
-      // The automatic "Padrão" of a platinumed game is not a preference; keep the saved one.
-      const keep = chosenSort ?? savedFilters().sort
-      localStorage.setItem(
-        'trophyFilters',
-        JSON.stringify({ sort: keep, group, status, onlyProgress }),
-      )
-    } catch {}
+    saveFilters({ chosenSort, group, status, onlyProgress })
   }, [chosenSort, group, status, onlyProgress])
 
   // After a page change, bring the list's top into view and keep focus on the pager.
@@ -396,15 +457,8 @@ export function TrophyList({
 
   if (!trophies) return <TrophyListSkeleton />
 
-  const scope = hasDlc
-    ? list.filter((t) => group === 'all' || (group === 'base') === (t.groupId === 'default'))
-    : list
-  const query = q.trim().toLowerCase()
-  const shown = scope
-    .filter((t) => status === 'all' || (status === 'earned') === !!t.earned)
-    .filter((t) => !onlyProgress || t.progressTarget)
-    .filter((t) => !query || `${t.name} ${t.detail} ${t.nameEn}`.toLowerCase().includes(query))
-    .sort(SORTERS[sort] ?? SORTERS.pending)
+  const scope = hasDlc ? inGroup(list, group) : list
+  const shown = filtered(scope, { status, onlyProgress, q, sort })
   const pages = Math.max(1, Math.ceil(shown.length / TROPHY_PAGE_SIZE))
   const current = Math.max(1, Math.min(pages, page))
   const start = (current - 1) * TROPHY_PAGE_SIZE
@@ -426,10 +480,6 @@ export function TrophyList({
     paged.current = true
     setPage(n)
   }
-
-  const visiblePages = Array.from({ length: pages }, (_, i) => i + 1).filter(
-    (n) => n === 1 || n === pages || Math.abs(n - current) <= 1,
-  )
 
   return (
     <>
@@ -521,19 +571,7 @@ export function TrophyList({
             </div>
           </div>
           <div className="trophy-results" id={`${prefix}-results`} role="status">
-            {shown.length
-              ? t('results', {
-                  from: start + 1,
-                  to: Math.min(start + TROPHY_PAGE_SIZE, shown.length),
-                  total: shown.length,
-                  group:
-                    hasDlc && group === 'dlc'
-                      ? t('group.dlcShort')
-                      : hasDlc && group === 'all'
-                        ? t('group.all')
-                        : t('group.base'),
-                })
-              : t('noResults')}
+            {resultsLine(t, start, shown.length, hasDlc ? group : 'base')}
           </div>
           <div className="trophy-rows" id={`${prefix}-list`}>
             {shown.length ? (
@@ -544,44 +582,73 @@ export function TrophyList({
               <div className="trophy-empty">{t('noResultsHint')}</div>
             )}
           </div>
-          <nav
-            className="trophy-pagination"
-            id={`${prefix}-pagination`}
-            aria-label={t('pages')}
-            hidden={pages <= 1}
-            ref={pagerRef}
-          >
-            <button
-              type="button"
-              aria-label={t('previousPage')}
-              disabled={current === 1}
-              onClick={() => goTo(current - 1)}
-            >
-              <Icon name="chevron-down" />
-            </button>
-            <div className="trophy-page-numbers">
-              {visiblePages.map((n, i) => (
-                <PageNumber
-                  key={n}
-                  n={n}
-                  gap={i > 0 && n - visiblePages[i - 1] > 1}
-                  current={n === current}
-                  onClick={() => goTo(n)}
-                />
-              ))}
-            </div>
-            <button
-              type="button"
-              aria-label={t('nextPage')}
-              disabled={current === pages}
-              onClick={() => goTo(current + 1)}
-            >
-              <Icon name="chevron-down" />
-            </button>
-          </nav>
+          <TrophyPager
+            prefix={prefix}
+            pages={pages}
+            current={current}
+            pagerRef={pagerRef}
+            onPage={goTo}
+          />
         </>
       )}
     </>
+  )
+}
+
+/** Previous, the pages around the current one (with the first and last) and next. */
+function TrophyPager({
+  prefix,
+  pages,
+  current,
+  pagerRef,
+  onPage,
+}: {
+  prefix: string
+  pages: number
+  current: number
+  pagerRef: RefObject<HTMLElement | null>
+  onPage: (n: number) => void
+}) {
+  const t = useMessages(messages)
+  const visiblePages = Array.from({ length: pages }, (_, i) => i + 1).filter(
+    (n) => n === 1 || n === pages || Math.abs(n - current) <= 1,
+  )
+  return (
+    <nav
+      className="trophy-pagination"
+      id={`${prefix}-pagination`}
+      aria-label={t('pages')}
+      hidden={pages <= 1}
+      ref={pagerRef}
+    >
+      <button
+        type="button"
+        aria-label={t('previousPage')}
+        disabled={current === 1}
+        onClick={() => onPage(current - 1)}
+      >
+        <Icon name="chevron-down" />
+      </button>
+      <div className="trophy-page-numbers">
+        {visiblePages.map((n, i) => (
+          <PageNumber
+            key={n}
+            n={n}
+            gap={i > 0 && n - visiblePages[i - 1] > 1}
+            current={n === current}
+            onClick={() => onPage(n)}
+          />
+        ))}
+      </div>
+      <button
+        type="button"
+        aria-label={t('nextPage')}
+        disabled={current === pages}
+        onClick={() => onPage(current + 1)}
+      >
+        <Icon name="chevron-down" />
+      </button>
+    </nav>
   )
 }
 

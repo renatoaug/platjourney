@@ -202,7 +202,7 @@ function SaveButton({ d }: { d: TitleDetail }) {
 }
 
 /** The skeleton of a title page: the two columns when the game is likely owned, the wide guide otherwise. */
-export function TitleSkeleton({ owned = true }: { owned?: boolean }) {
+function TitleSkeleton({ owned = true }: { owned?: boolean }) {
   const t = useMessages(messages)
   return (
     <>
@@ -236,8 +236,47 @@ export function TitleSkeleton({ owned = true }: { owned?: boolean }) {
   )
 }
 
+/** The hero's foot: progress and the chat for a game in the library, saving and asking for one outside it. */
+function HeroBottom({ d }: { d: TitleDetail }) {
+  const t = useMessages(messages)
+  const g = d.guide
+  if (d.owned)
+    return (
+      <div className="hero-bottom">
+        <HeroProgress
+          game={{
+            earned: d.earned ?? 0,
+            total: d.total ?? 0,
+            progress: d.progress ?? 0,
+            groups: d.groups,
+          }}
+        />
+        <div className="cta">
+          <Link className="button" to={nexoHref(d.np, d.name)}>
+            {t('talkToNexo')} <Icon name="arrow" />
+          </Link>
+        </div>
+      </div>
+    )
+  return (
+    <div className="hero-bottom">
+      <p className="hero-caption">
+        {t('notOwned')} {g ? <GuideText text={g.overview} /> : ''}
+      </p>
+      <div className="cta">
+        <SaveButton d={d} />
+        {d.trophies?.length ? (
+          <Link className="button secondary" to={nexoHref(d.game.id, d.name)}>
+            {t('askNexo')} <Icon name="arrow" />
+          </Link>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 /** A loaded title: hero, then trophies and guide. */
-export function TitleView({ d }: { d: TitleDetail }) {
+function TitleView({ d }: { d: TitleDetail }) {
   const t = useMessages(messages)
   const g = d.guide
   const owned = d.owned
@@ -270,37 +309,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
             <h2 className="hero-title">{d.name}</h2>
             <TitleMeta d={d} />
           </div>
-          {owned ? (
-            <div className="hero-bottom">
-              <HeroProgress
-                game={{
-                  earned: d.earned ?? 0,
-                  total: d.total ?? 0,
-                  progress: d.progress ?? 0,
-                  groups: d.groups,
-                }}
-              />
-              <div className="cta">
-                <Link className="button" to={nexoHref(d.np, d.name)}>
-                  {t('talkToNexo')} <Icon name="arrow" />
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="hero-bottom">
-              <p className="hero-caption">
-                {t('notOwned')} {g ? <GuideText text={g.overview} /> : ''}
-              </p>
-              <div className="cta">
-                <SaveButton d={d} />
-                {d.trophies?.length ? (
-                  <Link className="button secondary" to={nexoHref(d.game.id, d.name)}>
-                    {t('askNexo')} <Icon name="arrow" />
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-          )}
+          <HeroBottom d={d} />
         </div>
       </div>
       <GameShowcase game={d.game} name={d.name} store={d.owned ? null : d.store} />
@@ -346,7 +355,7 @@ export function TitleView({ d }: { d: TitleDetail }) {
   )
 }
 
-export type TitleLoad = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; d: TitleDetail }
+type TitleLoad = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; d: TitleDetail }
 
 /** The screen for a given load state. `owned` picks the skeleton (a library link is likely owned). */
 export function TitleScreen({ load, owned }: { load: TitleLoad; owned: boolean }) {

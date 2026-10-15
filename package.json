@@ -17,7 +17,7 @@
     "dev:ai": "cd services/ai && uv run uvicorn platjourney_ai.main:app --port 8100 --reload",
     "build": "bun run --cwd apps/web build",
     "storybook": "bun run --cwd apps/web storybook",
-    "lint": "biome check . && bun scripts/css-spacing.ts && bun run --cwd apps/web check-tokens && bun run --cwd apps/web plugin-targets --check && bun run ai:lint",
+    "lint": "biome check . && knip --no-progress && bun scripts/css-spacing.ts && bun run --cwd apps/web check-tokens && bun run --cwd apps/web plugin-targets --check && bun run ai:lint",
     "format": "biome format --write .",
     "typecheck": "tsc --noEmit && tsc --noEmit -p apps/web && bun run ai:typecheck",
     "migrate": "bun run --cwd apps/server migrate",
@@ -53,8 +53,13 @@
     "@semantic-release/git": "^11.0.1",
     "@types/bun": "^1.4.2",
     "conventional-changelog-conventionalcommits": "^9.3.0",
+    "knip": "^6.41.0",
     "pm2": "^7.0.4",
     "semantic-release": "^25.0.9",
     "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "basic-ftp": "^6.2.3",
+    "js-yaml": "^4.3.2"
   }
 }

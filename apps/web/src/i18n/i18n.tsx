@@ -18,7 +18,6 @@ export {
   setLocale,
   takePickedLocale,
 } from './locale'
-export type { Params } from './translate'
 
 /** One module's texts: pt-BR is the reference, every other locale has exactly its shape. */
 export interface MessageSet<P extends Tree = Tree> {

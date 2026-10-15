@@ -140,7 +140,7 @@ const messages = defineMessages({
 })
 
 // The commands the bot knows, in the order /help lists them and Telegram's menu shows them.
-export const COMMANDS = [
+const COMMANDS = [
   'status',
   'guide',
   'next',
@@ -171,6 +171,124 @@ export function commandMenu(locale: Locale): { command: string; description: str
   }))
 }
 
+// What every command handler gets: the player, the text after the command and their chat state.
+interface Command {
+  user: User
+  arg: string
+  ctx: ReturnType<typeof getChat>
+  locale: Locale
+  t: ReturnType<typeof translator<typeof messages>>
+  say: (s: string) => ReturnType<typeof sendMessage> | undefined
+  titles: () => ReturnType<typeof library>
+}
+
+function statusReply({ user, ctx, t }: Command): string {
+  if (!ctx) return t('notLoaded')
+  const { title, trophies } = ctx
+  const shown = shownProgress(user, title, ctx.groups)
+  const missing = trophies.filter((tr) => !tr.earned)
+  const easiest = [...missing].sort((a, b) => b.earnedRate - a.earnedRate).slice(0, 3)
+  return [
+    `${title.name} — ${shown.progress}% (${shown.earned}/${shown.total}${shown.label})`,
+    t('statusMissing', { count: missing.length }),
+    ...easiest.map(
+      (tr) => `• ${tr.name} — ${tr.detail} (${fmtRate(userLocale(user), tr.earnedRate)}%)`,
+    ),
+  ].join('\n')
+}
+
+async function planReply({ user, arg, ctx, locale, t, say }: Command): Promise<string> {
+  if (!ctx) return t('notLoaded')
+  const minutes = Number(arg) || 120
+  if (minutes < 15 || minutes > 600) return t('planUsage')
+  await say(t('planBuilding'))
+  return planReport(await planSession(user, ctx, minutes), locale)
+}
+
+async function nextReply({ user, ctx, t, titles }: Command): Promise<string> {
+  const skip = ctx ? [ctx.title.npCommunicationId] : []
+  const ranked = await rankNextPlatinum(await titles(), user, 8, skip)
+  if (ranked.length === 0) return t('nextNone')
+  return [
+    t('nextTitle'),
+    ...ranked.map((r, i) =>
+      t('nextItem', {
+        n: i + 1,
+        name: r.game.name,
+        progress: r.baseProgress,
+        count: r.remaining,
+      }),
+    ),
+    '',
+    t('nextHint'),
+  ].join('\n')
+}
+
+async function gameReply({ user, arg, t, say, titles }: Command): Promise<string> {
+  if (!arg) return t('gameUsage')
+  const hit = (await titles()).find((ti) => ti.name.toLowerCase().includes(arg.toLowerCase()))
+  if (!hit) return t('gameNotFound', { query: arg })
+  await say(t('gameLoading', { name: hit.name }))
+  const next = await setChat(user, hit)
+  const switched = t('gameSwitched', {
+    name: next.title.name,
+    progress: shownProgress(user, next.title, next.groups).progress,
+  })
+  return next.guide ? `${switched} ${t('gameGuideReady')}` : switched
+}
+
+async function languageReply({ user, arg, t }: Command): Promise<string> {
+  const choice = arg.toLowerCase()
+  const next: Locale | undefined = choice.startsWith('pt')
+    ? Language.PtBR
+    : choice.startsWith('en')
+      ? Language.En
+      : undefined
+  if (!next) return t('languageUsage')
+  await updateUser(user.id, { locale: next })
+  return translator(messages, next)('languageSet')
+}
+
+const HANDLERS: Record<string, (c: Command) => string | Promise<string>> = {
+  '/start': ({ user, locale, t }) =>
+    `${t('welcome', { name: user.psn_online_id })}\n\n${help(locale)}`,
+  '/help': ({ locale }) => help(locale),
+  '/status': statusReply,
+  '/guide': ({ ctx, locale, t }) => {
+    if (!ctx) return t('notLoaded')
+    if (!ctx.guide) return t('guideNotReady', { name: ctx.title.name })
+    return `${ctx.title.name}\n${guideSummary(ctx.guide, locale)}`
+  },
+  '/plan': planReply,
+  '/next': nextReply,
+  '/game': gameReply,
+  '/goals': async ({ user, arg, locale, titles }) =>
+    arg
+      ? handleInterestCommand(user, arg, await titles())
+      : yearReport(await yearProgress(user, await titles()), locale),
+  '/recommend': async ({ user, arg, locale, t, say, titles }) => {
+    await say(t('researching'))
+    return recommendationReport(
+      await recommendations(
+        user,
+        await titles(),
+        await ownedGames(user.psn_account_id),
+        arg === 'refresh',
+      ),
+      locale,
+    )
+  },
+  '/pick': async ({ user, locale, t, say, titles }) => {
+    await say(t('researching'))
+    const pick = await nextPick(user, await titles(), locale)
+    return pick
+      ? t('pickResult', { name: pick.game.name, why: pick.why, first: pick.firstStep })
+      : t('pickNone')
+  },
+  '/servers': async ({ user, titles }) => serverReport(user, await titles()),
+  '/language': languageReply,
+}
+
 // Returns the reply for a slash command, or undefined when it is not one we know.
 export async function handleCommand(user: User, text: string): Promise<string | undefined> {
   const [cmd, ...rest] = text.split(' ')
@@ -181,105 +299,6 @@ export async function handleCommand(user: User, text: string): Promise<string | 
   const say = (s: string) =>
     user.telegram_chat_id ? sendMessage(user.telegram_chat_id, s) : undefined
   const titles = () => library(user.psn_account_id)
-
-  switch (cmd) {
-    case '/start':
-      return `${t('welcome', { name: user.psn_online_id })}\n\n${help(locale)}`
-    case '/help':
-      return help(locale)
-    case '/status': {
-      if (!ctx) return t('notLoaded')
-      const { title, trophies } = ctx
-      const shown = shownProgress(user, title, ctx.groups)
-      const missing = trophies.filter((tr) => !tr.earned)
-      const easiest = [...missing].sort((a, b) => b.earnedRate - a.earnedRate).slice(0, 3)
-      return [
-        `${title.name} — ${shown.progress}% (${shown.earned}/${shown.total}${shown.label})`,
-        t('statusMissing', { count: missing.length }),
-        ...easiest.map(
-          (tr) => `• ${tr.name} — ${tr.detail} (${fmtRate(userLocale(user), tr.earnedRate)}%)`,
-        ),
-      ].join('\n')
-    }
-    case '/guide': {
-      if (!ctx) return t('notLoaded')
-      if (!ctx.guide) return t('guideNotReady', { name: ctx.title.name })
-      return `${ctx.title.name}\n${guideSummary(ctx.guide, locale)}`
-    }
-    case '/plan': {
-      if (!ctx) return t('notLoaded')
-      const minutes = Number(arg) || 120
-      if (minutes < 15 || minutes > 600) return t('planUsage')
-      await say(t('planBuilding'))
-      return planReport(await planSession(user, ctx, minutes), locale)
-    }
-    case '/next': {
-      const skip = ctx ? [ctx.title.npCommunicationId] : []
-      const ranked = await rankNextPlatinum(await titles(), user, 8, skip)
-      if (ranked.length === 0) return t('nextNone')
-      return [
-        t('nextTitle'),
-        ...ranked.map((r, i) =>
-          t('nextItem', {
-            n: i + 1,
-            name: r.game.name,
-            progress: r.baseProgress,
-            count: r.remaining,
-          }),
-        ),
-        '',
-        t('nextHint'),
-      ].join('\n')
-    }
-    case '/game': {
-      if (!arg) return t('gameUsage')
-      const hit = (await titles()).find((ti) => ti.name.toLowerCase().includes(arg.toLowerCase()))
-      if (!hit) return t('gameNotFound', { query: arg })
-      await say(t('gameLoading', { name: hit.name }))
-      const next = await setChat(user, hit)
-      const switched = t('gameSwitched', {
-        name: next.title.name,
-        progress: shownProgress(user, next.title, next.groups).progress,
-      })
-      return next.guide ? `${switched} ${t('gameGuideReady')}` : switched
-    }
-    case '/goals':
-      return arg
-        ? handleInterestCommand(user, arg, await titles())
-        : yearReport(await yearProgress(user, await titles()), locale)
-    case '/recommend': {
-      await say(t('researching'))
-      return recommendationReport(
-        await recommendations(
-          user,
-          await titles(),
-          await ownedGames(user.psn_account_id),
-          arg === 'refresh',
-        ),
-        locale,
-      )
-    }
-    case '/pick': {
-      await say(t('researching'))
-      const pick = await nextPick(user, await titles(), locale)
-      return pick
-        ? t('pickResult', { name: pick.game.name, why: pick.why, first: pick.firstStep })
-        : t('pickNone')
-    }
-    case '/servers':
-      return serverReport(user, await titles())
-    case '/language': {
-      const choice = arg.toLowerCase()
-      const next: Locale | undefined = choice.startsWith('pt')
-        ? Language.PtBR
-        : choice.startsWith('en')
-          ? Language.En
-          : undefined
-      if (!next) return t('languageUsage')
-      await updateUser(user.id, { locale: next })
-      return translator(messages, next)('languageSet')
-    }
-    default:
-      return undefined
-  }
+  const handler = Object.hasOwn(HANDLERS, cmd ?? '') ? HANDLERS[cmd ?? ''] : undefined
+  return handler?.({ user, arg, ctx, locale, t, say, titles })
 }

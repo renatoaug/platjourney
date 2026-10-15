@@ -1,8 +1,9 @@
 import type { Locale } from '../i18n/locale'
+
 /** Shapes of the /api payloads the screens share. Screen-specific payloads are typed next to their screen. */
 
-export type TrophyType = 'bronze' | 'silver' | 'gold' | 'platinum'
-export type ByType = Record<TrophyType, number>
+type TrophyType = 'bronze' | 'silver' | 'gold' | 'platinum'
+type ByType = Record<TrophyType, number>
 
 export interface Me {
   id: string
@@ -83,7 +84,7 @@ export interface Trophy {
   progressRate?: number | null
 }
 
-export interface ProgressGroup {
+interface ProgressGroup {
   earned: number
   total: number
   remaining?: number
@@ -91,7 +92,7 @@ export interface ProgressGroup {
   earnedByType?: ByType
 }
 
-export interface KeyTrophy {
+interface KeyTrophy {
   trophy: string
   why: string
 }
