@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.17.3](https://github.com/renatoaug/platjourney/compare/v0.17.2...v0.17.3) (2026-10-15)
+
 ## [0.17.2](https://github.com/renatoaug/platjourney/compare/v0.17.1...v0.17.2) (2026-10-15)
 
 ### Bug Fixes
