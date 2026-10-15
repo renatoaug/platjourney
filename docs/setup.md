@@ -2,14 +2,7 @@
 
 How to get PlatJourney running on your machine, in Docker or from the code, and every setting in the root `.env` (`.env.example` lists them with a line on each).
 
-## Requirements
-
-- [Bun](https://bun.sh) 1.4.2, the version in `.bun-version`
-- [uv](https://docs.astral.sh/uv/) 0.11 or newer, which installs Python 3.14 (`services/ai/.python-version`)
-- [Docker](https://docs.docker.com/get-docker/) with Compose, for SurrealDB
-- A Telegram bot ([@BotFather](https://t.me/BotFather)), an [IGDB app](https://api-docs.igdb.com/#account-creation) (Twitch developer console), a throwaway PSN account for its NPSSO, and an OpenAI key or a [local model](#local-models)
-
-The quickest way to try it is [everything in Docker](#everything-in-docker). To work on the code, follow the first run below.
+You need the tools and accounts in the README's [Requirements](../README.md#requirements). The quickest way to try it is [everything in Docker](#everything-in-docker). To work on the code, follow the first run below.
 
 ## First run
 

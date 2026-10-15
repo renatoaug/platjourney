@@ -16,9 +16,16 @@ Web in React, API in Bun, AI in Python, data in SurrealDB.
 
 More details, with every tool and version, in [`docs/architecture.md`](docs/architecture.md#stack).
 
+## Requirements
+
+- [Bun](https://bun.sh) 1.4.2, the version in `.bun-version`
+- [uv](https://docs.astral.sh/uv/) 0.11 or newer, which installs Python 3.14 (`services/ai/.python-version`)
+- [Docker](https://docs.docker.com/get-docker/) with Compose, for SurrealDB
+- A Telegram bot ([@BotFather](https://t.me/BotFather)), an [IGDB app](https://api-docs.igdb.com/#account-creation) (Twitch developer console), a throwaway PSN account for its NPSSO, and an OpenAI key or a local model server
+
 ## Running
 
-[`docs/setup.md`](docs/setup.md) has the requirements, the first run (in Docker or from the code) and every setting in `.env`.
+[`docs/setup.md`](docs/setup.md) has the first run (in Docker or from the code) and every setting in `.env`.
 
 ## Test
 
