@@ -25,7 +25,7 @@ import {
   type TitleProgress,
 } from './psn.ts'
 import { loadGroups } from './ranking.ts'
-import { logTip, type TipKind } from './repository/activity.ts'
+import { lastTip, logTip, type TipKind } from './repository/activity.ts'
 import { pruneExpired } from './repository/auth.ts'
 import { type Game, gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
@@ -42,6 +42,8 @@ const messages = defineMessages({
     // The session-start notice's first line: the game, then what is left, no greeting.
     playing: '🎮 Hora de jogar **{game}**.',
     goodSession: 'Boa jogatina! 🍀',
+    // The game opened again with nothing earned since the last session notice: a short one.
+    again: '🎮 Hora de jogar **{game}** de novo.',
     heading: '🎮 Hora de jogar! {left} **{game}**.',
     left: {
       one: 'Falta 1 troféu para a platina de',
@@ -81,6 +83,7 @@ const messages = defineMessages({
     started: 'You started {game}. The platinum guide is on PlatJourney.',
     playing: '🎮 Time to play **{game}**.',
     goodSession: 'Have a good session! 🍀',
+    again: '🎮 Time to play **{game}** again.',
     heading: '🎮 Time to play! {left} **{game}**.',
     left: {
       one: '1 trophy left for the platinum of',
@@ -419,7 +422,9 @@ const comparable = (name: string) =>
 
 // The session-start notice: the game and what is left, then what to do today, from the guide and the PSN
 // list, so it costs no model and gets no count wrong. Lines with nothing to say are left out.
-export function sessionNotice(user: User, game: string, ctx?: GameContext): string {
+// With `again`, the player already got the full notice for this game and earned nothing since:
+// only the suggestion, in one line.
+export function sessionNotice(user: User, game: string, ctx?: GameContext, again = false): string {
   const t = translator(messages, user)
   if (!ctx) return `${t('playing', { game })} ${t('goodSession')}`
   const opening = t('playing', { game: gameName(ctx) })
@@ -427,6 +432,10 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext): stri
     (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
   )
   const { trophy: focus, trick, missable, behind } = todaysFocus(ctx)
+  if (again) {
+    const still = focus ? t('focusStill', { trophy: focus.name }) : undefined
+    return [t('again', { game: gameName(ctx) }), still, t('goodSession')].filter(Boolean).join(' ')
+  }
 
   const blocks = [
     missing.length
@@ -463,6 +472,18 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext): stri
   return blocks.join('\n\n')
 }
 
+// A full session notice repeats itself when the player opens the same game again the same day
+// without earning anything: the last one was for this game, within a day, and nothing came since.
+export const SESSION_AGAIN_HOURS = 24
+
+async function nothingNew(user: User, ctx: GameContext): Promise<boolean> {
+  const last = await lastTip(user.id, 'session')
+  if (!last || last.game !== ctx.game.id) return false
+  const at = new Date(last.created_at).getTime()
+  if (Date.now() - at > SESSION_AGAIN_HOURS * 3_600_000) return false
+  return !ctx.trophies.some((x) => x.earnedAt && new Date(x.earnedAt).getTime() > at)
+}
+
 // Tells the player once when they open a game, from PSN presence (players who hide their online
 // status never get it). The game they play is the one in context when the names match.
 async function sessionStart(user: User, ctx: GameContext, noticed: boolean): Promise<void> {
@@ -473,7 +494,12 @@ async function sessionStart(user: User, ctx: GameContext, noticed: boolean): Pro
   // The start notice of a new game already went out in this sweep: it counts as this one.
   if (!noticed) {
     const same = comparable(playing) === comparable(ctx.title.name)
-    const text = sessionNotice(user, playing, same ? ctx : undefined)
+    const text = sessionNotice(
+      user,
+      playing,
+      same ? ctx : undefined,
+      same && (await nothingNew(user, ctx)),
+    )
     await plainNotice(user, 'session', text, same ? ctx.game.id : undefined)
   }
   await updateUser(user.id, { session_notice_at: new Date() })

@@ -10,7 +10,7 @@ The watcher visits every player one after the other, every `POLL_MINUTES` (15 by
 |---|---|---|
 | `start` | A game played for the first time, still early (under 10% of its trophies) | A start tip for the game, with the guide's note on what comes first |
 | `unlock` | New trophies earned since the last visit, on the game being played | The trophies as the title, then Nexo's comment, the session's focus, and the guide's note when a roadmap step was reached |
-| `session` | The player opens a game (PSN presence), at most once every 6 hours | A short plain line naming the game and where the player is in it |
+| `session` | The player opens a game (PSN presence), at most once every 6 hours | What is left for the platinum, the suggested next trophy, a tip, a missable still open and a trophy almost done. Opening the same game again within a day with nothing earned since gets one line: the game and the suggestion |
 | `route` | A roadmap step reached without new trophies | The guide's note on what comes next |
 | `server` | A game in the library has its online servers shutting down (daily check, only with `AI_RESEARCH` on) | The warning with the date |
 | `deal` | Daily PlayStation Store check: a saved game goes on sale or its sale gets deeper, or enters the PS Plus catalog of the tier the player picked; games already owned are left out | One notice a day per player: a single game as a sentence (the price and until when, or that it entered the player's PS Plus); several as one list, a line per game |
