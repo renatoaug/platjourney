@@ -1,12 +1,14 @@
 // Deals on the games in the players' interests: once a day the PlayStation Store price of each one
 // is read, kept, and when a game goes on sale (or its sale gets deeper) everyone who saved it hears
 // it, under the bell and on Telegram: one notice a day per player, listing every game that changed.
+
 import { isDemo } from './demo.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
 import { type StorePrice, storePrice, tierCovers } from './psstore.ts'
 import { logTip } from './repository/activity.ts'
 import { interestsWithStore, pricesFor, savePrice } from './repository/store-price.ts'
 import { getUser } from './repository/user.ts'
+import { everyDayAt } from './schedule.ts'
 import { sendMessage } from './telegram.ts'
 
 const messages = defineMessages({
@@ -28,7 +30,6 @@ const messages = defineMessages({
   },
 })
 
-const DAY = 86_400_000
 // Spaced out, so the store sees a person's pace, not a crawler's.
 const PAUSE_MS = 2_000
 
@@ -127,12 +128,9 @@ async function say(
     )
 }
 
-/** Runs it a few minutes after start and every day after. */
+/** Every day at 10:00 in Brazil, a good hour for the notice to reach the player. */
 export function startDeals(): void {
-  const run = () =>
-    checkDeals()
-      .then((n) => console.log(`deals: ${n} new sales`))
-      .catch((e) => console.error('deals check failed:', e.message))
-  setTimeout(run, 5 * 60_000).unref()
-  setInterval(run, DAY).unref()
+  everyDayAt(10, 0, 'deals check', () =>
+    checkDeals().then((n) => console.log(`deals: ${n} new sales`)),
+  )
 }
