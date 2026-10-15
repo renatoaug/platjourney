@@ -78,6 +78,7 @@ test('loading: the two columns for a library game, the wide guide for one by nam
 test('a game the player does not own: the overview and saving it', async () => {
   const calls = mockApi({
     '/api/title': recommendedData,
+    '/api/games/similar': { items: [] },
     'POST /api/goals': {
       ...SAMPLE_DATA.goals,
       interests: [
@@ -139,6 +140,7 @@ test('a guide being researched: polls until it lands', async () => {
   let building = true
   const calls = mockApi({
     '/api/title': () => (building ? { ...ownedData, guide: null, building: true } : ownedData),
+    '/api/games/similar': { items: [] },
   })
   jest.useFakeTimers()
   renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
@@ -176,7 +178,10 @@ test('leaving the page stops the polling', async () => {
 
 test('an answer that lands after leaving is dropped', async () => {
   let answer: (r: Response) => void = () => {}
-  mockApi({ '/api/title': () => new Promise<Response>((r) => (answer = r)) })
+  mockApi({
+    '/api/title': () => new Promise<Response>((r) => (answer = r)),
+    '/api/games/similar': { items: [] },
+  })
   const { unmount } = renderApp(<Title />, { path: '/title/game/x', route: '/title/*' })
   unmount()
   answer(reply(500))
