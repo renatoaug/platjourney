@@ -15,16 +15,16 @@ The catalog keeps these links as a graph in SurrealDB, and the default recommend
 
 ```mermaid
 flowchart LR
-    igdb[["IGDB<br/>similar_games, parent_game, collections"]] -->|"bun run catalog:similar"| graph
-    subgraph graph["SurrealDB"]
+    igdb[["IGDB<br/>similar_games, parent_game, collections"]] -->|"bun run catalog:similar"| db
+    subgraph db["SurrealDB"]
         direction TB
         e1["game -> similar_to -> game<br/>rank = place in IGDB's list"]
         e2["game -> expansion_of -> game"]
         e3["game.series"]
     end
-    graph --> picks["GET /api/recommendations/similar<br/>similar, quick, same series"]
-    graph --> page["GET /api/games/similar<br/>a game's page"]
-    graph -->|"best 60 candidates"| model["GET /api/recommendations?refresh=1<br/>the model's picks"]
+    db --> picks["GET /api/recommendations/similar<br/>similar, quick, same series"]
+    db --> page["GET /api/games/similar<br/>a game's page"]
+    db -->|"best 60 candidates"| model["GET /api/recommendations?refresh=1<br/>the model's picks"]
 ```
 
 - **Edges, not a new search.** `similar_to` and `expansion_of` are relation tables between `game` records; `game.series` holds the IGDB collection ids. `bun run catalog:similar` rewrites a game's edges, only to games in the catalog.
