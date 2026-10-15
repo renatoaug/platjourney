@@ -31,4 +31,4 @@ People without a PSN account, or who do not want to connect one, can open the ap
 
 ## Telegram commands
 
-`/status` · `/guide` · `/plan <minutes>` · `/next` · `/game <name>` · `/goals` (`set`, `add`, `remove`, `move`, `order`) · `/recommend` · `/servers` · `/language` (`pt`, `en`) · `/help`. Anything else is a question for Nexo. The bot answers in the language the player picked on the profile page (or with `/language`).
+`/status` · `/guide` · `/plan <minutes>` · `/next` · `/game <name>` · `/goals` (`set`, `add`, `remove`, `move`, `order`) · `/recommend` · `/pick` (Nexo picks which of your interests to platinum now) · `/servers` · `/language` (`pt`, `en`) · `/help`. Anything else is a question for Nexo. The bot answers in the language the player picked on the profile page (or with `/language`).
