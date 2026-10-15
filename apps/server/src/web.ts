@@ -94,6 +94,8 @@ const messages = defineMessages({
     taken: 'Esse PSN ID já tem conta. Entre com a senha.',
     wrongPassword: 'Senha incorreta.',
     tooManyAttempts: 'Muitas tentativas. Espere 15 minutos ou recupere o acesso.',
+    claimPending:
+      'Já existe uma recuperação em andamento para este PSN ID. Termine no navegador onde ela começou ou espere ela expirar.',
     tooManyRequests: 'Muitos pedidos seguidos. Espere um minuto e tente de novo.',
     confirmationMismatch: 'O PSN ID digitado não confere.',
     trophiesPrivate:
@@ -118,6 +120,8 @@ const messages = defineMessages({
     taken: 'This PSN ID already has an account. Sign in with the password.',
     wrongPassword: 'Wrong password.',
     tooManyAttempts: 'Too many attempts. Wait 15 minutes or recover access.',
+    claimPending:
+      'A recovery is already under way for this PSN ID. Finish it in the browser where it started or wait for it to expire.',
     tooManyRequests: 'Too many requests in a row. Wait a minute and try again.',
     confirmationMismatch: "The PSN ID you typed doesn't match.",
     trophiesPrivate:
@@ -377,6 +381,7 @@ const AUTH_MESSAGES: Record<AuthError['code'], [number, MessageKey<typeof messag
   taken: [409, 'taken'],
   wrong_password: [401, 'wrongPassword'],
   too_many_attempts: [429, 'tooManyAttempts'],
+  claim_pending: [409, 'claimPending'],
   confirmation_mismatch: [400, 'confirmationMismatch'],
   trophies_private: [422, 'trophiesPrivate'],
   no_pending_verification: [409, 'noPendingVerification'],
@@ -859,7 +864,15 @@ const API_ROUTES: Record<string, ApiHandler> = {
     return json(res, 200, { ok: true })
   },
   'GET /api/state': state,
-  'GET /api/title': async ({ res, url, me }) => {
+  'GET /api/title': async ({ req, res, url, me, t }) => {
+    // A name the catalog does not know costs an IGDB lookup and a new catalog row, and may start
+    // a guide: only from this site's own pages, and a few times a minute.
+    if (url.searchParams.get('name') && !url.searchParams.get('game')) {
+      if (req.headers['sec-fetch-site'] === 'cross-site')
+        return json(res, 403, { error: 'cross-site' })
+      if (!allow(`title-name|${me.id}`, 20, 60_000))
+        return json(res, 429, { error: t('tooManyRequests') })
+    }
     const detail = await titleDetail(url, me)
     return detail ? json(res, 200, detail) : json(res, 404, { error: 'title not found' })
   },
@@ -969,7 +982,8 @@ function sameOrigin(req: IncomingMessage): boolean {
 }
 
 // Plugins step in first: one that answers ends the request (another sign-in, a file of its own);
-// the others let it through to the app. True when the request was answered here.
+// the others let it through to the app. One that takes longer than HOOK_TIMEOUT_MS fails the request
+// (500). True when the request was answered here.
 async function intercepted(
   req: IncomingMessage,
   res: ServerResponse,
@@ -984,6 +998,10 @@ async function intercepted(
     return true
   }
   const me = await authenticate(req)
+  // The demo account is shared: as on plugin routes, a plugin's interceptor only sees it read. Sign-in
+  // and sign-out stay open to it, as the app's own auth routes are.
+  if (me && isDemo(me) && method !== 'GET' && !path.startsWith('/api/auth/'))
+    throw new DemoReadOnly()
   for (const handler of intercepts) {
     await handler({ req, res, url, method, me })
     if (res.headersSent || res.writableEnded) return true

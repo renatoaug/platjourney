@@ -17,9 +17,9 @@ const user = new db.RecordId('user', 'u1')
 
 afterEach(() => mock.restore())
 
-test('a verification is upserted by the lowercased online id with its ttl', async () => {
-  const q = spyOn(db, 'q').mockResolvedValue(undefined)
-  await saveVerification({
+test('a verification is upserted by the lowercased online id with its ttl, only over an expired one', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue([{ code: 'ABC' }])
+  const saved = await saveVerification({
     psn_online_id: 'Player',
     psn_account_id: 'acc',
     avatar_url: null,
@@ -27,9 +27,10 @@ test('a verification is upserted by the lowercased online id with its ttl', asyn
     secret_hash: 'h',
     minutes: 30,
   })
+  expect(saved).toBe(true)
   const [sql, vars] = q.mock.calls[0]
   expect(sql).toContain('UPSERT verification')
-  expect(sql).toContain('WHERE psn_online_id_lower = $lower')
+  expect(sql).toContain('WHERE psn_online_id_lower = $lower AND expires_at <= time::now()')
   expect(vars).toEqual({
     lower: 'player',
     id: 'Player',
@@ -39,6 +40,25 @@ test('a verification is upserted by the lowercased online id with its ttl', asyn
     secret: 'h',
     ttl: '30m',
   })
+})
+
+test('a verification is not saved over a pending one', async () => {
+  const v = {
+    psn_online_id: 'Player',
+    psn_account_id: 'acc',
+    avatar_url: null,
+    code: 'ABC',
+    secret_hash: 'h',
+    minutes: 30,
+  }
+  spyOn(db, 'q').mockResolvedValueOnce([])
+  expect(await saveVerification(v)).toBe(false)
+  spyOn(db, 'q').mockRejectedValueOnce(
+    new Error("Database index `verification_online_id` already contains 'player'"),
+  )
+  expect(await saveVerification(v)).toBe(false)
+  spyOn(db, 'q').mockRejectedValueOnce(new Error('boom'))
+  await expect(saveVerification(v)).rejects.toThrow('boom')
 })
 
 test('a pending verification is looked up case-insensitively', async () => {

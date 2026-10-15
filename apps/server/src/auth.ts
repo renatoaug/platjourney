@@ -39,6 +39,7 @@ export class AuthError extends Error {
       | 'taken'
       | 'wrong_password'
       | 'too_many_attempts'
+      | 'claim_pending'
       | 'confirmation_mismatch'
       | 'trophies_private'
       | 'no_pending_verification'
@@ -186,7 +187,10 @@ const holds = (secret: string | undefined, pending: { secret_hash?: string }) =>
   timingSafeEqual(Buffer.from(hash(secret)), Buffer.from(pending.secret_hash))
 
 // Claim, step 1: a code to place in the profile's "About me", and the secret that goes with it.
-// Asking again with the same secret keeps the same code.
+// Asking again with the same secret keeps the same code and the same expiry. While a claim is
+// pending, nobody else can start one for that PSN id: replacing it would leave its holder with a
+// cookie and a code that no longer match. Expiry is what frees it, so a claim nobody finishes
+// (a squatter's too) cannot be kept alive by asking again.
 export async function startClaim(
   onlineId: string,
   heldSecret?: string,
@@ -194,10 +198,19 @@ export async function startClaim(
   const profile = await lookupProfile(onlineId.trim())
   if (!profile) throw new AuthError('psn_not_found')
   const pending = await getVerification(profile.onlineId)
-  const mine = pending && holds(heldSecret, pending)
-  const code = mine ? pending.code : newCode()
-  const secret = mine && heldSecret ? heldSecret : randomBytes(32).toString('hex')
-  await saveVerification({
+  if (pending && heldSecret && holds(heldSecret, pending)) {
+    return {
+      onlineId: pending.psn_online_id,
+      avatarUrl: pending.avatar_url,
+      code: pending.code,
+      minutes: minutesLeft(pending.expires_at),
+      secret: heldSecret,
+    }
+  }
+  if (pending) throw new AuthError('claim_pending')
+  const code = newCode()
+  const secret = randomBytes(32).toString('hex')
+  const saved = await saveVerification({
     psn_online_id: profile.onlineId,
     psn_account_id: profile.accountId,
     avatar_url: profile.avatarUrl,
@@ -205,6 +218,8 @@ export async function startClaim(
     secret_hash: hash(secret),
     minutes: config.auth.verificationMinutes,
   })
+  // Someone else started one between the read and the write.
+  if (!saved) throw new AuthError('claim_pending')
   return {
     onlineId: profile.onlineId,
     avatarUrl: profile.avatarUrl,
@@ -212,6 +227,11 @@ export async function startClaim(
     minutes: config.auth.verificationMinutes,
     secret,
   }
+}
+
+const minutesLeft = (expiresAt: string | Date): number => {
+  const ms = new Date(expiresAt).getTime() - Date.now()
+  return Number.isFinite(ms) ? Math.max(1, Math.ceil(ms / 60_000)) : config.auth.verificationMinutes
 }
 
 // Claim, step 2: the code is on the profile, so this person controls the PSN

@@ -53,7 +53,7 @@ beforeEach(() => {
   spyOn(sessions, 'deleteSessionsOf').mockResolvedValue()
   spyOn(sessions, 'deleteVerification').mockResolvedValue()
   spyOn(sessions, 'getVerification').mockResolvedValue(undefined)
-  spyOn(sessions, 'saveVerification').mockResolvedValue()
+  spyOn(sessions, 'saveVerification').mockResolvedValue(true)
   spyOn(sessions, 'sessionUser').mockResolvedValue(undefined)
   spyOn(calls, 'detachCalls').mockResolvedValue()
   spyOn(accesses, 'deleteAccesses').mockResolvedValue()
@@ -203,6 +203,26 @@ test('a claim gives a fresh code and secret, and the same code to whoever holds 
     secret_hash: sha(fresh.secret),
   })
 
+  save.mockClear()
+  spyOn(sessions, 'getVerification').mockResolvedValue({
+    psn_online_id: 'Kratos',
+    psn_account_id: 'acc-1',
+    avatar_url: null,
+    code: 'TC-ABCDEF',
+    secret_hash: sha('mine'),
+    expires_at: new Date(Date.now() + 10 * 60_000 - 1000).toISOString(),
+  })
+  // Asking again from the same browser: same code, and the time left, not a fresh expiry.
+  expect(await startClaim('Kratos', 'mine')).toMatchObject({
+    code: 'TC-ABCDEF',
+    secret: 'mine',
+    minutes: 10,
+  })
+  expect(save).not.toHaveBeenCalled()
+})
+
+test('nobody else can replace a pending claim, with or without a cookie', async () => {
+  const save = spyOn(sessions, 'saveVerification')
   spyOn(sessions, 'getVerification').mockResolvedValue({
     psn_online_id: 'Kratos',
     psn_account_id: 'acc-1',
@@ -211,11 +231,22 @@ test('a claim gives a fresh code and secret, and the same code to whoever holds 
     secret_hash: sha('mine'),
     expires_at: '',
   })
-  expect(await startClaim('Kratos', 'mine')).toMatchObject({ code: 'TC-ABCDEF', secret: 'mine' })
-  // Someone else asking for the same account gets a new code, not the pending one.
-  const other = await startClaim('Kratos')
-  expect(other.code).not.toBe('TC-ABCDEF')
-  expect(other.secret).not.toBe('mine')
+  for (const secret of [undefined, '', 'someone-else'])
+    expect(code(await startClaim('Kratos', secret).catch((e) => e))).toBe('claim_pending')
+  expect(save).not.toHaveBeenCalled()
+})
+
+test('a claim started by someone else between the read and the write is not replaced', async () => {
+  spyOn(sessions, 'saveVerification').mockResolvedValue(false)
+  expect(code(await startClaim('Kratos').catch((e) => e))).toBe('claim_pending')
+})
+
+test('once a claim expires, anyone can start a new one', async () => {
+  // getVerification only returns live claims: an expired one reads as none.
+  const save = spyOn(sessions, 'saveVerification')
+  const next = await startClaim('Kratos', 'mine')
+  expect(next.secret).not.toBe('mine')
+  expect(save).toHaveBeenCalled()
 })
 
 test('a claim of an unknown PSN id fails', async () => {

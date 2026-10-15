@@ -10,6 +10,10 @@ interface Verification {
   expires_at: string
 }
 
+/**
+ * Starts a claim, unless one is still pending for that PSN id: only a missing or expired row is
+ * replaced, so nobody can swap the code and secret of someone else's claim. False when one is pending.
+ */
 export async function saveVerification(v: {
   psn_online_id: string
   psn_account_id: string
@@ -17,21 +21,28 @@ export async function saveVerification(v: {
   code: string
   secret_hash: string
   minutes: number
-}): Promise<void> {
-  await q(
-    `UPSERT verification SET psn_online_id_lower = $lower, psn_online_id = $id, psn_account_id = $account,
-       avatar_url = $avatar, code = $code, secret_hash = $secret, expires_at = time::now() + <duration> $ttl
-     WHERE psn_online_id_lower = $lower`,
-    {
-      lower: v.psn_online_id.toLowerCase(),
-      id: v.psn_online_id,
-      account: v.psn_account_id,
-      avatar: v.avatar_url ?? undefined,
-      code: v.code,
-      secret: v.secret_hash,
-      ttl: `${v.minutes}m`,
-    },
-  )
+}): Promise<boolean> {
+  try {
+    const rows = await q<unknown[]>(
+      `UPSERT verification SET psn_online_id_lower = $lower, psn_online_id = $id, psn_account_id = $account,
+         avatar_url = $avatar, code = $code, secret_hash = $secret, expires_at = time::now() + <duration> $ttl
+       WHERE psn_online_id_lower = $lower AND expires_at <= time::now()`,
+      {
+        lower: v.psn_online_id.toLowerCase(),
+        id: v.psn_online_id,
+        account: v.psn_account_id,
+        avatar: v.avatar_url ?? undefined,
+        code: v.code,
+        secret: v.secret_hash,
+        ttl: `${v.minutes}m`,
+      },
+    )
+    return Array.isArray(rows) && rows.length > 0
+  } catch (e) {
+    // A pending row the WHERE skipped: creating a second one hits the unique index.
+    if (/already contains/i.test((e as Error).message ?? '')) return false
+    throw e
+  }
 }
 
 export async function getVerification(onlineId: string): Promise<Verification | undefined> {

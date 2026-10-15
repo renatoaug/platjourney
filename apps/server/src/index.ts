@@ -15,7 +15,7 @@ import { reply } from './nexo.ts'
 import { loadPlugins, Refused } from './plugins.ts'
 import { allow } from './rate-limit.ts'
 import { startReleaseSync } from './releases.ts'
-import { updateUser, userByChat, userByLinkCode } from './repository/user.ts'
+import { linkChat, userByChat, userByLinkCode } from './repository/user.ts'
 import {
   incomingMessages,
   sendMessage,
@@ -35,7 +35,7 @@ async function link(chatId: string, code: string, fallback: Locale): Promise<str
       ? translator(telegramMessages, linked)('alreadyLinked', { name: linked.psn_online_id })
       : translator(telegramMessages, fallback)('linkExpired')
   }
-  await updateUser(user.id, { telegram_chat_id: chatId, telegram_link_code: null })
+  await linkChat(user.id, chatId)
   const locale = userLocale(user)
   return `${translator(telegramMessages, locale)('linked', { name: user.psn_online_id })}\n\n${help(locale)}`
 }

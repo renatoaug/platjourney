@@ -4,6 +4,8 @@ A plugin changes an instance without changing PlatJourney's code: a button next 
 
 The decision behind it is [ADR 0008](decisions/0008-plugins.md).
 
+**A plugin is trusted code.** It has full read and write access to the database, can sign in as any player with `ctx.signIn`, sees every sign-in and password request it intercepts, and on the web can replace any component, password fields included. The host keeps a broken plugin from taking the app down (timeouts on its hooks, an error boundary around its components, a checked page policy), not a malicious one: load only code you trust.
+
 ## What a plugin is
 
 ```
@@ -59,6 +61,7 @@ flowchart LR
 - **Finer places come from finer components.** A plugin reaches components, not lines of markup inside them. When a spot sits inside a large component, splitting it into a named component makes it reachable, for every plugin.
 - **Several plugins add up** in the order the web module lists them: their `before` and `after` stack, and each `replace` receives the previous one as `original`.
 - **A replacement that draws its own target** (a replaced button rendering the button) gets the app's component, not itself again.
+- **A plugin's component that throws while rendering takes only itself down.** Each one sits in its own error boundary, which logs the error to the console with its place (`after Price`, `replace AuthFootnote`, `page /hello`) and draws nothing in place of a `before` or `after`, the `original` in place of a `replace`, and an error state inside the app's frame in place of a page.
 
 ## How a request reaches a plugin
 
@@ -75,7 +78,7 @@ flowchart LR
     ext -- no --> app["the app's own route or page"]
 ```
 
-A change sent to `/api/…` from another site's page is refused before any interceptor, as before any app route.
+A change sent to `/api/…` from another site's page is refused before any interceptor, as before any app route. The demo account is refused any method other than GET before interceptors run too (with the same `demo_read_only` answer as plugin routes), except on `/api/auth/…`, which the app itself leaves open to it. An interceptor that takes longer than 10 seconds fails that request with 500.
 
 ## How a plugin sits around model work
 
@@ -89,6 +92,8 @@ flowchart LR
     model -- fails --> undo["modelFailed hooks<br/>(undo what beforeModel did)"] --> err[error]
     model -- answers --> answer[answer]
 ```
+
+The hooks run one after the other. When a `beforeModel` hook refuses, the plugins whose hooks already ran get their `modelFailed` hooks, to give back what they took. A `beforeModel` hook that takes longer than 10 seconds refuses the work (`plugin_timeout`, 503), and if it finishes later after all, its plugin's `modelFailed` hooks run then.
 
 ## Building and running with plugins
 
@@ -177,17 +182,18 @@ Relative paths in both settings start at the repository's root, and absolute pat
 
 | | |
 |---|---|
+| `ctx.api` | The `PLUGIN_API` version the server runs. |
 | `ctx.db.q(sql, vars)` | The app's database. The plugin keeps its own tables (singular, snake_case), defined when it registers. |
 | `ctx.json(res, status, body)`, `ctx.readBody(req)` | Answer JSON and read a JSON body. |
 | `ctx.Refused` | The error to throw to refuse, with a code, a message for the player and a status. |
 | `ctx.route(path, handler, { public, method })` | Answers `/api/ext/<path>` for one HTTP method, GET unless `method` says otherwise; any other method gets 405. A route that changes anything declares `POST` (or `PUT`, `PATCH`, `DELETE`): a link opens a GET. The handler gets `req`, `res`, `url`, `method` and, unless public, `me`. The demo account reaches only GET routes. Two plugins cannot take the same path. |
 | `ctx.intercept(path, handler, { method })` | Runs before the app answers any request to `path`: exact (`/api/auth/login`, `/ads.txt`) or a prefix ending in `*` (`/api/auth/*`). The handler gets the same as a route, with `me` when signed in. If it answers, the request ends there; if not, it goes on to the next interceptor and then the app. |
 | `ctx.signIn(res, user)` | Signs `user` in on this response, with the same session the app's own sign-in opens: for single sign-on or any other way in. |
-| `ctx.allowOnPage(directive, ...sources)` | Lets the app's page load from more places in one directive of its content security policy (`script-src`, `frame-src`, `connect-src`, `img-src`, `style-src`, `font-src`), e.g. a provider's script and its frames. The other directives cannot be changed. |
+| `ctx.allowOnPage(directive, ...sources)` | Lets the app's page load from more places in one directive of its content security policy (`script-src`, `frame-src`, `connect-src`, `img-src`, `style-src`, `font-src`), e.g. a provider's script and its frames. The other directives cannot be changed. Each source is checked when the plugin registers, which fails with the reason otherwise: an https host, optionally with a `*.` subdomain wildcard, a port and a path (`https://cdn.example`, `https://*.example.com/js/`), or `'self'`; `data:` also in `img-src` and `font-src`, `blob:` in `img-src`. Anything else (`'unsafe-inline'`, `'unsafe-eval'`, `*`, a bare scheme such as `https:`, `;`, `,`, spaces or quotes) is refused. |
 | `ctx.beforeModel(hook)` | Runs before model work with `{ user, action }`. Throwing `Refused(code, message, status)` stops it; the player gets `message` with `status`. |
 | `ctx.modelFailed(hook)` | Runs when the work failed after every `beforeModel` let it through. |
 | `ctx.on('user:created', listener)` | Runs after a new account signs up. |
-| `ctx.on('user:deleted', listener)` | Runs before an account is deleted. |
+| `ctx.on('user:deleted', listener)` | Runs before an account is deleted. A listener that throws stops the deletion; one that takes longer than 10 seconds is logged and the next one runs. |
 
 And on the web (`@platjourney/web/plugins`):
 
@@ -206,6 +212,7 @@ A plugin keeps its own data in the same SurrealDB through `ctx.db.q`. Its tables
 
 ## Limits
 
-- A plugin runs with the server's permissions and in the browser with the app's: only load code you trust.
+- A plugin runs with the server's permissions and in the browser with the app's: only load code you trust (see the trust model at the top).
+- Every hook (`beforeModel`, event listeners, interceptors) has 10 seconds (`HOOK_TIMEOUT_MS` in `apps/server/src/plugins.ts`). The app stops waiting then, but cannot stop the hook itself.
 - An interceptor sees every matching request, the app's own included: it can answer in the app's place, so it must let through what it does not handle.
 - A plugin's component receives its target's props, nothing more. What else it needs (the player, the route, the plugin's own data) it reads itself, with the app's hooks or its own routes.

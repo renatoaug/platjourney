@@ -84,6 +84,20 @@ export async function setLinkCode(id: string, code: string): Promise<void> {
   )
 }
 
+/**
+ * Links a Telegram chat to the user and spends the link code. A chat belongs to one account: the
+ * same transaction takes it off any other user first (the unique index would refuse it otherwise).
+ */
+export async function linkChat(id: string, chatId: string): Promise<void> {
+  await q(
+    `BEGIN TRANSACTION;
+     UPDATE user SET telegram_chat_id = NONE WHERE telegram_chat_id = $chat AND id != $id;
+     UPDATE $id SET telegram_chat_id = $chat, telegram_link_code = NONE, telegram_link_expires_at = NONE;
+     COMMIT TRANSACTION;`,
+    { id: userRef(id), chat: chatId },
+  )
+}
+
 export async function createUser(u: {
   psn_online_id: string
   psn_account_id: string

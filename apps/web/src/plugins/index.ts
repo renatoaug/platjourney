@@ -4,9 +4,11 @@
  * none of them. */
 
 import loaded from 'platjourney-plugins'
-import type { ComponentType } from 'react'
-import type { Language } from '../i18n/locale'
+import { type ComponentType, createElement } from 'react'
+import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { ErrorState } from '../ui/states'
 import { type Extension, install } from './extend'
+import { guarded } from './guard'
 import type { Target } from './targets'
 
 /** @public part of the plugin API */
@@ -41,7 +43,29 @@ export interface PluginModule extends Extension<Target> {
 export const plugins: PluginModule[] = [loaded].flat()
 install(plugins)
 
-export const pluginPages: PluginPage[] = plugins.flatMap((p) => p.pages ?? [])
+const messages = defineMessages({
+  [Language.PtBR]: { pageFailed: 'Esta página não abriu. Tente de novo mais tarde.' },
+  [Language.En]: { pageFailed: 'This page did not open. Try again later.' },
+})
+
+function PluginPageFailed() {
+  const t = useMessages(messages)
+  return createElement(
+    ErrorState,
+    // The text goes in as the element's child, the way createElement takes children.
+    { icon: 'warning' } as Parameters<typeof ErrorState>[0],
+    t('pageFailed'),
+  )
+}
+
+// A plugin's page that throws shows an error state inside the app's frame, not a blank app.
+export const guardedPage = (page: PluginPage): PluginPage => ({
+  ...page,
+  component: () =>
+    guarded(page.component, {}, `page ${page.path}`, createElement(PluginPageFailed)),
+})
+
+export const pluginPages: PluginPage[] = plugins.flatMap((p) => p.pages ?? []).map(guardedPage)
 
 /** The first plugin's action for a refusal, if any offers one. */
 export function refusalAction(refusal: PluginRefusal) {

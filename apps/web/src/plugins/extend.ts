@@ -3,6 +3,7 @@
  * so a plugin can put something before or after any component, replace it or hide it, without the
  * screen knowing. No plugin, no rule: each element keeps its own component. */
 import { type ComponentType, createContext, createElement, type ReactNode, useContext } from 'react'
+import { guarded } from './guard'
 
 // biome-ignore lint/suspicious/noExplicitAny: a target's props are whatever its component takes
 type Props = Record<string, any>
@@ -63,14 +64,17 @@ function wrapperFor(type: ComponentType<Props>, name: string, rule: Rule): Compo
     if (drawing.has(name)) return createElement(type, props)
     if (rule.hide) return null
     let node: ReactNode = createElement(type, props)
-    for (const R of rule.replace) node = createElement(R, { ...props, original: node })
+    // Each plugin component sits in its own guard: one that throws shows nothing (before, after)
+    // or what it was replacing, and the rest of the screen stays.
+    for (const R of rule.replace)
+      node = guarded(R, { ...props, original: node }, `replace ${name}`, node)
     const inner = new Set(drawing).add(name)
     return createElement(
       Drawing.Provider,
       { value: inner },
-      ...rule.before.map((B) => createElement(B, props)),
+      ...rule.before.map((B) => guarded(B, props, `before ${name}`)),
       node,
-      ...rule.after.map((A) => createElement(A, props)),
+      ...rule.after.map((A) => guarded(A, props, `after ${name}`)),
     )
   }
   Extended.displayName = `Extended(${name})`
