@@ -229,7 +229,7 @@ describe('what the demo cannot do', () => {
   })
 
   test('a game cannot be saved to the interests from its page', async () => {
-    mockApi({ '/api/title': recommendedData })
+    mockApi({ '/api/title': recommendedData, '/api/games/similar': { items: [] } })
     renderApp(<Title />, {
       path: '/title/game/game%3A1',
       route: '/title/*',

@@ -21,7 +21,8 @@ const titleCalls = (calls: { path: string }[]) =>
   calls.filter((c) => c.path.startsWith('/api/title'))
 
 function open(path: string, detail: TitleDetail | ReturnType<typeof reply>) {
-  const calls = mockApi({ '/api/title': () => detail })
+  // The page also asks for similar games once it has the game; none here unless a test says so.
+  const calls = mockApi({ '/api/title': () => detail, '/api/games/similar': { items: [] } })
   const view = renderApp(<Title />, { path, route: '/title/*' })
   return { calls, ...view }
 }
@@ -158,7 +159,10 @@ test('a guide being researched: polls until it lands', async () => {
 })
 
 test('leaving the page stops the polling', async () => {
-  const calls = mockApi({ '/api/title': { ...ownedData, guide: null, building: true } })
+  const calls = mockApi({
+    '/api/title': { ...ownedData, guide: null, building: true },
+    '/api/games/similar': { items: [] },
+  })
   jest.useFakeTimers()
   const { unmount } = renderApp(<Title />, {
     path: '/title/game/game%3A19561',
