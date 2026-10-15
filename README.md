@@ -83,17 +83,7 @@ Every merge to `main` is a release: [semantic-release](https://semantic-release.
 
 ## Docs
 
-- [`AGENTS.md`](AGENTS.md): code rules, conventions and the checks before calling a change done
-- [`docs/features.md`](docs/features.md): what PlatJourney does, the demo and the Telegram commands
-- [`docs/notifications.md`](docs/notifications.md): what PlatJourney sends on its own (game start, trophies, sessions, progress marks), when, and the rules that keep it from repeating.
-- [`docs/mobile.md`](docs/mobile.md): installing PlatJourney on a phone from the browser, and the native app built with Capacitor from the same code.
-- [`docs/architecture.md`](docs/architecture.md): the parts, how they talk and where the code lives
-- [`docs/configuration.md`](docs/configuration.md): every setting in `.env`, local models and per-feature models
-- [`docs/evals.md`](docs/evals.md): measuring Nexo against fixed questions, the evals database and the viewer
-- [`docs/database.md`](docs/database.md): why SurrealDB, every table and how they link (with diagrams), migrations, seeds and the catalog
-- [`docs/rag.md`](docs/rag.md): how the deep guide is indexed and how Nexo retrieves passages for an answer
-- [`docs/sources.md`](docs/sources.md): PSN, the web sources behind guides and how they are used
-- [`docs/decisions/`](docs/decisions/): decision records
+Everything about how PlatJourney works, runs and was decided is indexed in [`docs/`](docs/README.md). Code rules and the checks before calling a change done are in [`AGENTS.md`](AGENTS.md).
 
 We follow [Conventional Commits](https://www.conventionalcommits.org).
 
