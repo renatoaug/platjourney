@@ -824,9 +824,16 @@ test('recommendations can be dismissed and refreshed', async () => {
   const bad = await send('POST', '/api/recommendations/dismiss', { game: 'game:4', reason: 'meh' })
   expect(bad.status).toBe(400)
   await send('GET', '/api/recommendations?refresh=1')
-  expect(recs).toHaveBeenLastCalledWith(me, [title], [], true)
+  expect(recs).toHaveBeenLastCalledWith(me, [title], [], true, false)
   await send('GET', '/api/recommendations')
-  expect(recs).toHaveBeenLastCalledWith(me, [title], [], false)
+  expect(recs).toHaveBeenLastCalledWith(me, [title], [], false, false)
+})
+
+test('stored=1 answers only the saved batch, never a new one', async () => {
+  const recs = spyOn(recommend, 'recommendations')
+  const res = await send('GET', '/api/recommendations?stored=1')
+  expect(res.status).toBe(200)
+  expect(recs).toHaveBeenLastCalledWith(me, [title], [], false, true)
 })
 
 test('recommendations by similar games answer from the graph, without the model', async () => {

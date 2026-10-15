@@ -16,6 +16,7 @@ import {
   type Recs,
   type RecsState,
 } from '../components/recommendations'
+import { SaveToInterests } from '../components/save-to-interests'
 import {
   NAMES_SLOT,
   NamesLine,
@@ -117,9 +118,27 @@ function fetchSimilar(cache: Cache): Promise<SimilarRecs> {
   return load
 }
 
+// The batch Nexo already made, with no model work: shown on every visit; nothing saved yet leaves
+// the invitation to ask.
+function fetchStoredRecs(cache: Cache): Promise<Recs | null> {
+  const load = api<Recs>('/api/recommendations?stored=1')
+    .then((recs) => {
+      cache.recsChecked = true
+      if (!recs.items.length) return null
+      cache.recs = recs
+      return recs
+    })
+    .finally(() => {
+      if (cache.storedLoad === load) delete cache.storedLoad
+    })
+  cache.storedLoad = load
+  return load
+}
+
 function initialRecs(cache: Cache): RecsState {
   if (cache.recs) return { status: 'ok', recs: cache.recs as Recs }
-  return cache.recsLoad ? { status: 'loading' } : { status: 'idle' }
+  if (cache.recsLoad) return { status: 'loading' }
+  return cache.recsChecked ? { status: 'idle' } : { status: 'checking' }
 }
 
 const without = (picks: SimilarPick[], id: string) => picks.filter((p) => p.game.id !== id)
@@ -135,7 +154,13 @@ function DiscoverBands({ similar }: { similar: SimilarState }) {
         id="quick-title"
         eyebrow={t('quickEyebrow')}
         title={t('quick')}
-        cards={quick.map((p) => <GameCard key={p.game.id} item={pickItem(p)} />)}
+        cards={quick.map((p) => (
+          <GameCard
+            key={p.game.id}
+            item={pickItem(p)}
+            actions={<SaveToInterests game={p.game} source="similar" />}
+          />
+        ))}
       />
       <GameShelf
         id="series-title"
@@ -144,6 +169,7 @@ function DiscoverBands({ similar }: { similar: SimilarState }) {
         cards={series.map((p) => (
           <GameCard
             key={p.game.id}
+            actions={<SaveToInterests game={p.game} source="similar" />}
             item={{
               ...pickItem(p),
               reason: p.because[0] ? (
@@ -223,9 +249,18 @@ export function Discover() {
     loadSimilar((cache.similarLoad as Promise<SimilarRecs> | undefined) ?? fetchSimilar(cache))
   }, [cache, loadSimilar])
 
-  // Coming back while Nexo was still working: wait for that request, never start another.
+  // Coming back while Nexo was still working: wait for that request, never start another. Otherwise
+  // the batch he already made shows at once, and only a player who never asked sees the invitation.
   useEffect(() => {
-    if (!cache.recs && cache.recsLoad) load(cache.recsLoad as Promise<Recs>)
+    if (cache.recs) return
+    if (cache.recsLoad) {
+      load(cache.recsLoad as Promise<Recs>)
+      return
+    }
+    if (cache.recsChecked) return
+    ;((cache.storedLoad as Promise<Recs | null> | undefined) ?? fetchStoredRecs(cache))
+      .then((stored) => setRecs(stored ? { status: 'ok', recs: stored } : { status: 'idle' }))
+      .catch(() => setRecs({ status: 'idle' }))
   }, [cache, load])
 
   const dismiss = async (r: Recommendation, reason?: DismissReason) => {

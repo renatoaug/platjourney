@@ -26,10 +26,14 @@ const asked = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 })
 const reason = (link: HTMLElement) => link.querySelector('.band-reason')?.textContent
+// What the page asks on load for Nexo's saved batch, never a model call.
+const STORED = '/api/recommendations?stored=1'
+const noBatch = { profile: null, items: [] }
+const askNexo = () => within(recs()).findByRole('button', { name: /Pedir ao Nexo/ })
 
 test('by default: games like the player’s, with the games that led to each one', async () => {
   const cache: Record<string, unknown> = {}
-  const calls = mockApi({ '/api/recommendations/similar': similarData })
+  const calls = mockApi({ '/api/recommendations/similar': similarData, [STORED]: noBatch })
   renderApp(<Discover />, { value: { data: loaded, cache } })
   const ranking = document.getElementById('ranking') as HTMLElement
   expect(within(ranking).getAllByRole('link')).toHaveLength(3)
@@ -37,8 +41,8 @@ test('by default: games like the player’s, with the games that led to each one
   // Nexo's section comes first and waits to be asked; then the similar games, then the library.
   const sections = [...document.querySelectorAll('section.game-band')]
   expect(sections.map((x) => x.id)).toEqual(['recs', 'similar', 'ranking'])
-  expect(within(recs()).getByRole('button', { name: /Pedir ao Nexo/ })).toBeTruthy()
   expect(similar().querySelector('.sk')).toBeTruthy()
+  expect(await askNexo()).toBeTruthy()
   const horizon = await within(similar()).findByRole('link', { name: /Horizon Zero Dawn/ })
   expect(horizon.getAttribute('href')).toBe('/title/game/game%3A10')
   const because = horizon.querySelector('.band-reason') as HTMLElement
@@ -54,8 +58,8 @@ test('by default: games like the player’s, with the games that led to each one
   expect(reason(row('Spider-Man'))).toBe(
     'Parecido com Days Gone, Ghost of Tsushima e inFAMOUS Second Son',
   )
-  // Nexo is not asked for anything until the player wants it.
-  expect(calls.map((c) => c.path)).toEqual(['/api/recommendations/similar'])
+  // Nexo is not asked for anything until the player wants it: only its saved batch is looked up.
+  expect(calls.map((c) => c.path).sort()).toEqual(['/api/recommendations/similar', STORED])
   expect(cache.similar).toEqual(similarData)
   expect(cache.similarLoad).toBeUndefined()
 })
@@ -153,19 +157,47 @@ test('Pedir ao Nexo shows the stored batch, without forcing a new one', async ()
   const done = mock()
   window.addEventListener(MODEL_WORK_DONE, done)
   const cache: Record<string, unknown> = { similar: similarData }
-  const calls = mockApi({ '/api/recommendations': recsData })
+  const calls = mockApi({ [STORED]: noBatch, '/api/recommendations': recsData })
   renderApp(<Discover />, { value: { data: loaded, cache } })
   expect(within(recs()).getByText('ANÁLISE DO NEXO')).toBeTruthy()
-  expect(screen.queryByRole('button', { name: /Gerar de novo/ })).toBeNull()
-  expect(calls).toHaveLength(0)
-  fireEvent.click(screen.getByRole('button', { name: /Pedir ao Nexo/ }))
+  fireEvent.click(await askNexo())
   expect(await within(recs()).findByText(/Horizon Zero Dawn/)).toBeTruthy()
   expect(refresh()).toBeTruthy()
-  expect(calls.map((c) => c.path)).toEqual(['/api/recommendations'])
+  // The plain request, which may build a batch: neither stored nor refresh.
+  expect(calls.map((c) => c.path)).toEqual([STORED, '/api/recommendations'])
   expect(done).toHaveBeenCalledTimes(1)
   window.removeEventListener(MODEL_WORK_DONE, done)
   expect(cache.recs).toEqual(recsData)
   expect(cache.recsLoad).toBeUndefined()
+})
+
+test('a saved batch shows on load, with nothing pressed and no model call', async () => {
+  const done = mock()
+  window.addEventListener(MODEL_WORK_DONE, done)
+  const cache: Record<string, unknown> = { similar: similarData }
+  const calls = mockApi({ [STORED]: recsData })
+  renderApp(<Discover />, { value: { data: loaded, cache } })
+  expect(recs().querySelector('.sk')).toBeTruthy()
+  expect(await within(recs()).findByRole('link', { name: /Sekiro/ })).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /Pedir ao Nexo/ })).toBeNull()
+  expect(calls.map((c) => c.path)).toEqual([STORED])
+  expect(done).not.toHaveBeenCalled()
+  window.removeEventListener(MODEL_WORK_DONE, done)
+  expect(cache.recs).toEqual(recsData)
+  expect(cache.recsChecked).toBe(true)
+})
+
+test('no saved batch leaves the invitation, and the next visit does not look again', async () => {
+  const cache: Record<string, unknown> = { similar: similarData }
+  const calls = mockApi({ [STORED]: noBatch })
+  const { unmount } = renderApp(<Discover />, { value: { data: loaded, cache } })
+  expect(await askNexo()).toBeTruthy()
+  expect(cache.recs).toBeUndefined()
+  expect(cache.recsChecked).toBe(true)
+  unmount()
+  renderApp(<Discover />, { value: { data: loaded, cache } })
+  expect(within(recs()).getByRole('button', { name: /Pedir ao Nexo/ })).toBeTruthy()
+  expect(calls).toHaveLength(1)
 })
 
 test('Gerar de novo asks Nexo for fresh ones', async () => {
@@ -206,9 +238,9 @@ test('coming back mid-load waits for the request already running', async () => {
 })
 
 test('a failed Nexo search says so', async () => {
-  mockApi({ '/api/recommendations': reply(500) })
+  mockApi({ [STORED]: noBatch, '/api/recommendations': reply(500) })
   renderApp(<Discover />, { value: { data: loaded, cache: { similar: similarData } } })
-  fireEvent.click(screen.getByRole('button', { name: /Pedir ao Nexo/ }))
+  fireEvent.click(await askNexo())
   expect(await within(recs()).findByRole('alert')).toBeTruthy()
   expect(recs().textContent).toContain('Não conseguimos montar suas recomendações agora.')
 })
@@ -216,14 +248,16 @@ test('a failed Nexo search says so', async () => {
 test('dismissing a similar game drops it without loading Nexo’s picks', async () => {
   const cache: Record<string, unknown> = { similar: similarData }
   const calls = mockApi({
+    [STORED]: noBatch,
     'POST /api/recommendations/dismiss': { ...recsData, items: [recsData.items[1]] },
   })
   renderApp(<Discover />, { value: { data: loaded, cache } })
+  await askNexo()
   fireEvent.click(screen.getByRole('button', { name: 'Não recomendar Horizon Zero Dawn' }))
   fireEvent.click(screen.getByRole('button', { name: 'Só remover' }))
   expect(await screen.findByText('Horizon Zero Dawn não aparece mais')).toBeTruthy()
   expect(within(similar()).queryByText(/Horizon Zero Dawn/)).toBeNull()
-  expect(calls[0].body).toEqual({ game: 'game:10' })
+  expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ game: 'game:10' })
   expect((cache.similar as SimilarRecs).items).toHaveLength(2)
   expect(cache.recs).toBeUndefined()
 })

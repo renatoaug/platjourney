@@ -143,6 +143,25 @@ test('a game Nexo recommended says so, with the date', () => {
   expect(screen.getAllByText(/Recomendado pelo Nexo em/)).toHaveLength(1)
 })
 
+test('every saved game says where it came from, with the date', () => {
+  const sources = ['releases', 'recommendations', 'similar', 'title', 'search'] as const
+  const games = sampleGoals.interests.slice(0, 5).map((g, i) => ({
+    ...g,
+    recommendedAt: null,
+    source: sources[i],
+    savedAt: '2026-10-15T14:00:00Z',
+  }))
+  render(<Demo interests={games} />)
+  for (const line of [
+    /Salvo dos lançamentos em/,
+    /Salvo das escolhas do Nexo em/,
+    /Salvo das sugestões em/,
+    /Salvo da página do jogo em/,
+    /Adicionado em/,
+  ])
+    expect(screen.getAllByText(line)).toHaveLength(1)
+})
+
 test('the game Nexo picked as the next platinum says so', () => {
   const [first, ...rest] = sampleGoals.interests
   const open = sampleGoals.interests.find((g) => !g.done) ?? first

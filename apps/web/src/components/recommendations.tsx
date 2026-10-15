@@ -2,14 +2,14 @@
  * with a button, and the taste profile behind them. */
 
 import { type MouseEvent, type ReactNode, useState } from 'react'
-import { useInterests } from '../app/use-interests'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { nameText, plainText } from '../lib/text'
-import type { Game } from '../lib/types'
+import type { Game, InterestSource } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { EmptyState, ErrorState } from '../ui/states'
 import { useDemo } from './demo'
 import { type CardItem, GameCard, GameShelf, ShelfSkeleton } from './game-band'
+import { SaveToInterests } from './save-to-interests'
 import {
   effectiveProfile,
   emptyPrefs,
@@ -21,10 +21,6 @@ import './recommendations.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    saveAria: 'Salvar {name} nos interesses',
-    removeAria: 'Remover {name} dos interesses',
-    saveTip: 'Salvar nos interesses',
-    removeTip: 'Remover dos interesses',
     dismissAria: 'Não recomendar {name}',
     dismissTip: 'Não me interessa',
     dismissAsk: 'Por que {name} não te interessa?',
@@ -59,10 +55,6 @@ const messages = defineMessages({
     searchAgainTip: 'Pedir ao Nexo um novo lote de escolhas',
   },
   [Language.En]: {
-    saveAria: 'Save {name} to interests',
-    removeAria: 'Remove {name} from interests',
-    saveTip: 'Save to interests',
-    removeTip: 'Remove from interests',
     dismissAria: "Don't recommend {name}",
     dismissTip: 'Not interested',
     dismissAsk: 'Why not {name}?',
@@ -142,9 +134,11 @@ export interface Recs {
   reason?: 'no-library'
 }
 
-/** `idle`: the player has not asked Nexo yet. */
+/** `idle`: the player has not asked Nexo yet. `checking`: looking for the batch he already made,
+ * no model work. */
 export type RecsState =
   | { status: 'idle' }
+  | { status: 'checking' }
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'ok'; recs: Recs }
@@ -192,34 +186,24 @@ function DismissAsk({
   )
 }
 
-/** Save and dismiss, over the card's cover. */
-function RecActions({ game, onAsk }: { game: Game; onAsk: () => void }) {
+/** The bookmark and dismiss, over the card's cover. */
+function RecActions({
+  game,
+  onAsk,
+  source,
+}: {
+  game: Game
+  onAsk: () => void
+  source: InterestSource
+}) {
   const t = useMessages(messages)
-  const { find, toggle } = useInterests()
-  const [saving, setSaving] = useState(false)
-  const saved = !!find(game.id)
-  const name = game.name
   return (
     <>
-      <button
-        type="button"
-        className={`rec-save ${saved ? 'saved' : ''}`}
-        disabled={saving}
-        aria-label={t(saved ? 'removeAria' : 'saveAria', { name })}
-        data-tip={t(saved ? 'removeTip' : 'saveTip')}
-        onClick={async (e) => {
-          stop(e)
-          setSaving(true)
-          await toggle(game.id, name, 'recommendations')
-          setSaving(false)
-        }}
-      >
-        <Icon name={saved ? 'bookmark-filled' : 'bookmark'} />
-      </button>
+      <SaveToInterests game={game} source={source} />
       <button
         type="button"
         className="rec-dismiss"
-        aria-label={t('dismissAria', { name })}
+        aria-label={t('dismissAria', { name: game.name })}
         data-tip={t('dismissTip')}
         onClick={(e) => {
           stop(e)
@@ -240,9 +224,12 @@ export function RecCard({
   reason,
   reasonTitle,
   reasonLines,
+  source = 'recommendations',
 }: {
   rec: Recommendation
   onDismiss: OnDismiss
+  /** Where a save from this card comes from: Nexo's picks, or the similar games. */
+  source?: InterestSource
   reason?: ReactNode
   reasonTitle?: string
   reasonLines?: CardItem['reasonLines']
@@ -264,7 +251,11 @@ export function RecCard({
         reasonTitle,
         reasonLines,
       }}
-      actions={demo ? undefined : <RecActions game={r.game} onAsk={() => setAsking(true)} />}
+      actions={
+        demo ? undefined : (
+          <RecActions game={r.game} onAsk={() => setAsking(true)} source={source} />
+        )
+      }
     />
   )
 }
@@ -395,6 +386,7 @@ function RecsFallback({
 }) {
   const t = useMessages(messages)
   if (state.status === 'idle') return <NexoInvite onAsk={onAsk} disabled={askDisabled} />
+  if (state.status === 'checking') return <ShelfSkeleton />
   if (state.status === 'loading')
     return (
       <>
@@ -435,7 +427,7 @@ function RecsActions({
   refreshDisabled?: boolean
 }) {
   const t = useMessages(messages)
-  if (state.status === 'idle' || !onRefresh) return null
+  if (state.status === 'idle' || state.status === 'checking' || !onRefresh) return null
   if (state.status === 'ok' && state.recs.reason === 'no-library') return null
   const loading = state.status === 'loading'
   return (

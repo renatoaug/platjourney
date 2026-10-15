@@ -115,6 +115,7 @@ function PickCard({ pick, onDismiss }: { pick: SimilarPick; onDismiss: OnDismiss
     <RecCard
       rec={asRecommendation(pick)}
       onDismiss={onDismiss}
+      source="similar"
       reason={
         names.length ? (
           <NamesLine

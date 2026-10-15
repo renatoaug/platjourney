@@ -37,6 +37,10 @@ const messages = defineMessages({
       emptyFilter: 'Nada por aqui com esse filtro.',
       recommended: 'Recomendado pelo Nexo em {date}',
       fromReleases: 'Salvo dos lançamentos em {date}',
+      fromSimilar: 'Salvo das sugestões em {date}',
+      fromTitle: 'Salvo da página do jogo em {date}',
+      fromSearch: 'Adicionado em {date}',
+      fromRecommendations: 'Salvo das escolhas do Nexo em {date}',
       nextPick: 'Próxima platina, escolhida pelo Nexo em {date}',
       sale: '{discount}% off · {price} na PS Store',
       saleUntil: '{discount}% off · {price} até {date}',
@@ -61,6 +65,10 @@ const messages = defineMessages({
       emptyFilter: 'Nothing here with this filter.',
       recommended: 'Recommended by Nexo on {date}',
       fromReleases: 'Saved from new releases on {date}',
+      fromSimilar: 'Saved from suggestions on {date}',
+      fromTitle: 'Saved from the game page on {date}',
+      fromSearch: 'Added on {date}',
+      fromRecommendations: "Saved from Nexo's picks on {date}",
       nextPick: 'Next platinum, picked by Nexo on {date}',
       sale: '{discount}% off · {price} on the PS Store',
       saleUntil: '{discount}% off · {price} until {date}',
@@ -130,6 +138,15 @@ function rowStatus(g: Interest, t: Translator<typeof messages>) {
 }
 
 /** Where the game came from: a Nexo recommendation or the releases list. */
+// Where a saved game came from, for the line under its name; Nexo's own pick reads as his.
+const FROM = {
+  releases: 'list.fromReleases',
+  recommendations: 'list.fromRecommendations',
+  similar: 'list.fromSimilar',
+  title: 'list.fromTitle',
+  search: 'list.fromSearch',
+} as const
+
 function SavedFrom({ g }: { g: Interest }) {
   const t = useMessages(messages)
   if (g.recommendedAt)
@@ -139,14 +156,14 @@ function SavedFrom({ g }: { g: Interest }) {
         {t('list.recommended', { date: fmtDate(g.recommendedAt) })}
       </small>
     )
-  if (g.source === 'releases' && g.savedAt)
-    return (
-      <small className="goal-recommended">
-        <Icon name="clock" />
-        {t('list.fromReleases', { date: fmtDate(g.savedAt) })}
-      </small>
-    )
-  return null
+  const from = g.source && g.savedAt ? FROM[g.source] : undefined
+  if (!from || !g.savedAt) return null
+  return (
+    <small className="goal-recommended">
+      <Icon name="clock" />
+      {t(from, { date: fmtDate(g.savedAt) })}
+    </small>
+  )
 }
 
 function Row({

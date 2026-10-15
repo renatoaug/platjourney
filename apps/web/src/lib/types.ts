@@ -27,7 +27,7 @@ export interface Me {
 }
 
 /** Where a game was saved to the interests from. */
-export type InterestSource = 'releases' | 'recommendations' | 'title' | 'search'
+export type InterestSource = 'releases' | 'recommendations' | 'similar' | 'title' | 'search'
 
 /** A catalog game (IGDB row). */
 export interface Game {

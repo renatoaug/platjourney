@@ -10,6 +10,7 @@ import type { RankingItem } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { GameCard } from './game-band'
+import { SaveToInterests } from './save-to-interests'
 import { titleHref } from './tip'
 import './hero.css'
 import './game-cards.css'
@@ -109,6 +110,7 @@ export function LibraryCard({ item: r, index: i }: { item: RankingItem; index: n
   const played = r.hours != null ? fmtHours(r.hours) : null
   return (
     <GameCard
+      actions={<SaveToInterests game={{ id: r.game, name: r.name }} source="similar" />}
       item={{
         game: { id: r.game, name: r.name, cover_url: r.cover ?? r.icon },
         difficulty: r.difficulty ?? 0,

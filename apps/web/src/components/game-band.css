@@ -114,10 +114,30 @@
     transform: translateY(-2px);
   }
 
+  /* On the card's colour, so the edge between cover and body never shows a hairline while the
+     cover grows on hover. */
   .band-art {
     position: relative;
     display: block;
     overflow: hidden;
+    background: var(--color-surface);
+    /* A hard clip the browser keeps while the cover's zoom is composited: overflow alone let the
+       picture leak a row below its box for a moment after the hover. */
+    clip-path: inset(0);
+    contain: paint;
+  }
+
+  /* The cover's last rows, in the card's colour: while the zoom eases back the image's bottom edge
+     would flash as a light hairline under the difficulty. */
+  .band-art::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--color-surface);
+    pointer-events: none;
   }
 
   .band-cover-link {
@@ -130,14 +150,16 @@
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: -1px;
     padding: 36px 10px 8px;
     pointer-events: none;
+    /* Solid from the bar down: the zoom slides the picture under it, and a see-through bottom let a
+       light strip of the game show below the difficulty. */
     background: linear-gradient(
       to bottom,
       transparent,
-      color-mix(in srgb, var(--color-surface) 75%, transparent) 45%,
-      var(--color-surface)
+      color-mix(in srgb, var(--color-surface) 75%, transparent) 40%,
+      var(--color-surface) 72%
     );
   }
 
@@ -213,14 +235,19 @@
   }
 
   /* The name, then the facts right under it; any spare height goes to the bottom. */
+  /* Solid, and 2px over the cover's bottom: when the card lifts on hover the browser rounds the
+     cover down a pixel, and a row of the picture showed as a hairline under the difficulty. */
   .band-body {
+    position: relative;
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
-    padding: 9px 10px 11px;
+    margin-top: -2px;
+    padding: 11px 10px 11px;
     min-width: 0;
+    background: var(--color-surface);
     color: inherit;
     text-decoration: none;
   }
@@ -321,7 +348,7 @@
 
   .game-band.compact .band-body {
     gap: 6px;
-    padding: 8px 9px 10px;
+    padding: 10px 9px 10px;
   }
 
   .game-band.compact .band-name {
@@ -352,6 +379,6 @@
   }
 
   .game-band.compact .band-score .dm-of {
-    display: none;
+    font-size: var(--text-xs);
   }
 }
