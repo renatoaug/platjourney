@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.19.0](https://github.com/renatoaug/platjourney/compare/v0.18.0...v0.19.0) (2026-10-15)
+
+### Features
+
+* **recommendations:** similar games from a graph, Nexo's picks on demand ([#49](https://github.com/renatoaug/platjourney/issues/49)) ([0b582aa](https://github.com/renatoaug/platjourney/commit/0b582aaf6e5911ded57ea269933a12dab5fefe8f))
+
 ## [0.18.0](https://github.com/renatoaug/platjourney/compare/v0.17.4...v0.18.0) (2026-10-15)
 
 ### Features
