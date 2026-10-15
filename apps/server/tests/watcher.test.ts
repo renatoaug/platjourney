@@ -30,6 +30,7 @@ import {
   forgetUser,
   getChat,
   getCurrent,
+  SESSION_AGAIN_HOURS,
   SESSION_NOTICE_HOURS,
   sessionNotice,
   setChat,
@@ -77,6 +78,7 @@ let recent: ReturnType<typeof spyOn<typeof psn, 'recentTitles'>>
 let getTitle: ReturnType<typeof spyOn<typeof titles, 'getTitle'>>
 let send: ReturnType<typeof spyOn<typeof telegram, 'sendMessage'>>
 let logTip: ReturnType<typeof spyOn<typeof activity, 'logTip'>>
+let lastTip: ReturnType<typeof spyOn<typeof activity, 'lastTip'>>
 let markTip: ReturnType<typeof spyOn<typeof titles, 'markTipSent'>>
 let saveEarned: ReturnType<typeof spyOn<typeof titles, 'saveEarnedIds'>>
 let getGuide: ReturnType<typeof spyOn<typeof guides, 'getGuide'>>
@@ -112,6 +114,7 @@ beforeEach(() => {
   saveEarned = spyOn(titles, 'saveEarnedIds').mockResolvedValue(undefined)
   markTip = spyOn(titles, 'markTipSent').mockResolvedValue(undefined)
   logTip = spyOn(activity, 'logTip').mockResolvedValue(undefined)
+  lastTip = spyOn(activity, 'lastTip').mockResolvedValue(undefined)
   send = spyOn(telegram, 'sendMessage').mockResolvedValue(undefined)
   playing = spyOn(psn, 'nowPlaying').mockResolvedValue(null)
   updateUser = spyOn(users, 'updateUser').mockResolvedValue(undefined)
@@ -156,6 +159,57 @@ describe('session start', () => {
     expect(logTip).toHaveBeenCalledWith(user.id, 'session', text, game.id)
     expect(send.mock.calls).toEqual([['42', text]])
     expect(updateUser.mock.calls[0][1].session_notice_at).toBeInstanceOf(Date)
+  })
+
+  describe('opened again', () => {
+    const short =
+      '🎮 Hora de jogar **Days Gone** de novo. A sugestão de próximo troféu continua sendo **Terceiro**. Boa jogatina! 🍀'
+    const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString()
+    const open = async (last: Awaited<ReturnType<typeof activity.lastTip>>) => {
+      unchanged()
+      getGuide.mockResolvedValue(roadmapGuide)
+      playing.mockResolvedValue('DAYS GONE')
+      lastTip.mockResolvedValue(last)
+      await checkUser(user)
+      return logTip.mock.calls.find((c) => c[1] === 'session')?.[2]
+    }
+
+    test('the same game the same day with nothing earned gets one short line', async () => {
+      expect(await open({ game: game.id, created_at: hoursAgo(7) })).toBe(short)
+    })
+
+    test('a trophy earned since the last notice brings the full one back', async () => {
+      spyOn(psn, 'titleTrophies').mockResolvedValue([
+        ...trophies.slice(0, 2),
+        makeTrophy({ id: 4, name: 'Novo', earned: true, earnedAt: hoursAgo(1) }),
+        trophies[2],
+      ])
+      expect(await open({ game: game.id, created_at: hoursAgo(7) })).toStartWith(
+        '🎮 Hora de jogar! ',
+      )
+    })
+
+    test(`after ${SESSION_AGAIN_HOURS} hours, or after another game, the notice is full again`, async () => {
+      expect(
+        await open({ game: game.id, created_at: hoursAgo(SESSION_AGAIN_HOURS + 1) }),
+      ).toStartWith('🎮 Hora de jogar! ')
+      logTip.mockClear()
+      expect(await open({ game: 'game:other', created_at: hoursAgo(7) })).toStartWith(
+        '🎮 Hora de jogar! ',
+      )
+    })
+
+    test('without a suggestion the short line is the game alone, in the player’s language', () => {
+      const ctx = { game, title: makeTitle(), trophies: [] } as unknown as Parameters<
+        typeof sessionNotice
+      >[2]
+      expect(sessionNotice(user, 'x', ctx, true)).toBe(
+        '🎮 Hora de jogar **Days Gone** de novo. Boa jogatina! 🍀',
+      )
+      expect(sessionNotice({ ...user, locale: 'en' as const }, 'x', ctx, true)).toBe(
+        '🎮 Time to play **Days Gone** again. Have a good session! 🍀',
+      )
+    })
   })
 
   test('another game gets the notice with its name only', async () => {

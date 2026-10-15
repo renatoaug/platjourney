@@ -37,6 +37,20 @@ export async function recentTips(user: string, limit = 30): Promise<Tip[]> {
   )
 }
 
+/** The newest tip of one kind, for a notice that should not repeat the one before it. */
+export async function lastTip(
+  user: string,
+  kind: TipKind,
+): Promise<{ game: string | null; created_at: string } | undefined> {
+  const [tip] = plain(
+    await q<{ game: string | null; created_at: string }[]>(
+      'SELECT game, created_at FROM tip WHERE user = $user AND kind = $kind ORDER BY created_at DESC LIMIT 1',
+      { user: userRef(user), kind },
+    ),
+  )
+  return tip
+}
+
 /** The next `limit` tips older than `before`, newest first: the history page's endless list. */
 export async function tipsBefore(user: string, before: Date, limit = 30): Promise<Tip[]> {
   return plain(
