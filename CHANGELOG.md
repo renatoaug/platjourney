@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.19.1](https://github.com/renatoaug/platjourney/compare/v0.19.0...v0.19.1) (2026-10-15)
+
+### Bug Fixes
+
+* **discover:** Nexo's saved picks on every visit, a save button on every card, no hairline on hover ([#50](https://github.com/renatoaug/platjourney/issues/50)) ([ae8596a](https://github.com/renatoaug/platjourney/commit/ae8596aee7846a53f07f0833dcde9a1116c2ee0a))
+
 ## [0.19.0](https://github.com/renatoaug/platjourney/compare/v0.18.0...v0.19.0) (2026-10-15)
 
 ### Features
