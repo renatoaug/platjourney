@@ -12,7 +12,9 @@ Your PlayStation platinum journey, guided by Nexo: PlatJourney watches your PSN 
 
 ## Stack
 
-Web in React, API in Bun, AI in Python, data in SurrealDB: every tool and version is in [architecture](docs/architecture.md#stack).
+Web in React, API in Bun, AI in Python, data in SurrealDB.
+
+More details, with every tool and version, in [`docs/architecture.md`](docs/architecture.md#stack).
 
 ## Running
 
