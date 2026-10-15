@@ -1,6 +1,6 @@
 /** @jsxImportSource @platjourney/web/plugins */
 // Bun compiles tests with the root tsconfig, which has no JSX settings: this file uses the app's runtime.
-import { afterEach, expect, test } from 'bun:test'
+import { afterEach, expect, spyOn, test } from 'bun:test'
 import { render, screen } from '@testing-library/react'
 import { extended, install, type ReplaceProps } from '../../src/plugins/extend'
 
@@ -76,4 +76,37 @@ test('a component is wrapped once, so React keeps its state', () => {
   install([{ after: { Price: () => null } }])
   expect(extended(Price)).toBe(extended(Price))
   expect(extended(Card)).toBe(Card)
+})
+
+test('a plugin component that throws is left out, and the rest of the screen stays', () => {
+  const logged = spyOn(console, 'error').mockImplementation(() => {})
+  const Broken = (): never => {
+    throw new Error('plugin bug')
+  }
+  install([
+    { before: { Price: Broken }, after: { Price: () => <b>depois</b> } },
+    { after: { Price: Broken } },
+  ])
+  render(<Card />)
+  expect(screen.getByTestId('card').textContent).toBe('preço R$ 10depois')
+  expect(logged.mock.calls.some(([m]) => String(m).includes('before Price'))).toBe(true)
+  expect(logged.mock.calls.some(([m]) => String(m).includes('after Price'))).toBe(true)
+  logged.mockRestore()
+})
+
+test('a replacement that throws gives the original back', () => {
+  const logged = spyOn(console, 'error').mockImplementation(() => {})
+  install([
+    {
+      replace: {
+        Price: (): never => {
+          throw new Error('plugin bug')
+        },
+      },
+    },
+  ])
+  render(<Card />)
+  expect(screen.getByTestId('card').textContent).toBe('preço R$ 10')
+  expect(logged.mock.calls.some(([m]) => String(m).includes('replace Price'))).toBe(true)
+  logged.mockRestore()
 })

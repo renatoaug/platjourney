@@ -7,11 +7,48 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { openSession, sessionCookie } from './auth.ts'
 import { q } from './db.ts'
-import { json, type PageDirective, pagePolicy, readBody } from './http.ts'
+import { json, type PageDirective, pagePolicy, pageSourceProblem, readBody } from './http.ts'
+import { defineMessages, Language, translator } from './i18n.ts'
 import type { User } from './repository/user.ts'
 
 /** @public part of the plugin API */
 export const PLUGIN_API = 3
+
+/** How long a plugin's hook (beforeModel, an event listener, an interceptor) may take before the
+ * app stops waiting for it: a hung plugin fails that one request instead of holding it forever. */
+const HOOK_TIMEOUT_MS = 10_000
+let hookTimeout = HOOK_TIMEOUT_MS
+
+const messages = defineMessages({
+  [Language.PtBR]: { busy: 'Não deu para começar agora. Tente de novo em instantes.' },
+  [Language.En]: { busy: 'This could not start right now. Try again in a moment.' },
+})
+
+/** A plugin's hook that took longer than HOOK_TIMEOUT_MS. */
+class PluginTimeout extends Error {
+  constructor(label: string, ms: number) {
+    super(`plugin ${label} took longer than ${ms} ms`)
+  }
+}
+
+// `pending`, or PluginTimeout once the hook took too long. A hook cannot be cancelled: when one that
+// timed out finishes after all, `late` runs (to give back what it took for a request already gone).
+function withTimeout<T>(pending: Promise<T>, label: string, late?: () => void): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let timedOut = false
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      timedOut = true
+      reject(new PluginTimeout(label, hookTimeout))
+    }, hookTimeout)
+  })
+  const hook = Promise.resolve(pending)
+  hook.then(
+    () => timedOut && late?.(),
+    () => {},
+  )
+  return Promise.race([hook, expired]).finally(() => clearTimeout(timer))
+}
 
 /** Model work about to run or that failed: the player and the action (chat, tip, plan…). */
 /** @public part of the plugin API */
@@ -87,10 +124,12 @@ export interface Plugin {
 const routes = new Map<string, { handler: Handler; public: boolean; method: RouteMethod }>()
 const intercepts: { path: string; method?: RouteMethod; handler: Handler }[] = []
 const pageSources: Partial<Record<PageDirective, string[]>> = {}
-const before: Hook[] = []
-const failed: Hook[] = []
+// Model hooks keep the plugin they came from, so a refusal gives back only what the plugins that
+// already ran took.
+const before: { plugin: string; hook: Hook }[] = []
+const failed: { plugin: string; hook: Hook }[] = []
 type Listener = (payload: never) => Promise<void>
-const listeners = new Map<keyof Events, Listener[]>()
+const listeners = new Map<keyof Events, { plugin: string; listener: Listener }[]>()
 
 // Everything a plugin uses comes through here, so it imports nothing from the app at runtime and
 // can live in any folder.
@@ -110,19 +149,29 @@ const context = (name: string): PluginContext => ({
     })
   },
   intercept(path, handler, options) {
-    intercepts.push({ path, method: options?.method, handler })
+    const label = `${name}: intercept ${path}`
+    intercepts.push({
+      path,
+      method: options?.method,
+      handler: (r) => withTimeout(handler(r), label),
+    })
   },
   async signIn(res, user) {
     const { token } = await openSession(user)
     res.setHeader('set-cookie', sessionCookie(token))
   },
   allowOnPage(directive, ...sources) {
+    for (const source of sources) {
+      const problem = pageSourceProblem(directive, source)
+      if (problem) throw new Error(`plugin ${name}: allowOnPage: ${problem}`)
+    }
     pageSources[directive] = [...(pageSources[directive] ?? []), ...sources]
   },
-  beforeModel: (hook) => before.push(hook),
-  modelFailed: (hook) => failed.push(hook),
+  beforeModel: (hook) => before.push({ plugin: name, hook }),
+  modelFailed: (hook) => failed.push({ plugin: name, hook }),
   on(event, listener) {
-    listeners.set(event, [...(listeners.get(event) ?? []), listener as Listener])
+    const list = listeners.get(event) ?? []
+    listeners.set(event, [...list, { plugin: name, listener: listener as Listener }])
   },
 })
 
@@ -145,21 +194,53 @@ export async function loadPlugins(list = process.env.PLUGINS ?? ''): Promise<voi
   }
 }
 
-/** Runs `work` between the plugins' beforeModel and, when it throws, modelFailed hooks. */
+// The modelFailed hooks of `plugins` (all of them when absent), each one's failure only logged.
+async function giveBack(work: ModelWork, plugins?: ReadonlySet<string>): Promise<void> {
+  for (const { plugin, hook } of failed)
+    if (!plugins || plugins.has(plugin))
+      await hook(work).catch((err) => console.error('plugin hook failed:', err))
+}
+
+/** Runs `work` between the plugins' beforeModel and, when it throws, modelFailed hooks. A
+ * beforeModel hook that refuses (or takes longer than HOOK_TIMEOUT_MS) stops the work, and the
+ * plugins whose hooks already ran get modelFailed to give back what they took. */
 export async function aroundModel<T>(work: ModelWork, run: () => Promise<T>): Promise<T> {
-  for (const hook of before) await hook(work)
+  const ran = new Set<string>()
+  for (const { plugin, hook } of before) {
+    try {
+      await withTimeout(hook(work), `${plugin}: beforeModel`, () => {
+        giveBack(work, new Set([plugin]))
+      })
+    } catch (e) {
+      await giveBack(work, ran)
+      if (!(e instanceof PluginTimeout)) throw e
+      console.error(e.message)
+      throw new Refused('plugin_timeout', translator(messages, work.user)('busy'), 503)
+    }
+    ran.add(plugin)
+  }
   try {
     return await run()
   } catch (e) {
-    for (const hook of failed)
-      await hook(work).catch((err) => console.error('plugin hook failed:', err))
+    await giveBack(work)
     throw e
   }
 }
 
+/** Tells the plugins' listeners about an account event, one after the other. A listener that throws
+ * stops it (the caller decides); one that takes longer than HOOK_TIMEOUT_MS is logged and skipped. */
 export async function emit<E extends keyof Events>(event: E, payload: Events[E]): Promise<void> {
-  for (const listener of listeners.get(event) ?? [])
-    await (listener as (p: Events[E]) => Promise<void>)(payload)
+  for (const { plugin, listener } of listeners.get(event) ?? []) {
+    try {
+      await withTimeout(
+        (listener as (p: Events[E]) => Promise<void>)(payload),
+        `${plugin}: ${event}`,
+      )
+    } catch (e) {
+      if (!(e instanceof PluginTimeout)) throw e
+      console.error(e.message)
+    }
+  }
 }
 
 /** The plugin route for /api/ext/<path>, if any. */
@@ -184,8 +265,14 @@ export function pluginPagePolicy(): string {
   return pagePolicy(pageSources)
 }
 
+/** For tests: how long a hook may take; resetPlugins puts HOOK_TIMEOUT_MS back. */
+export function setHookTimeout(ms: number): void {
+  hookTimeout = ms
+}
+
 /** For tests: forgets every plugin. */
 export function resetPlugins(): void {
+  hookTimeout = HOOK_TIMEOUT_MS
   routes.clear()
   intercepts.length = 0
   for (const d of Object.keys(pageSources)) delete pageSources[d as PageDirective]

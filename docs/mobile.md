@@ -47,7 +47,7 @@ Building for a store needs Xcode (iOS) or Android Studio (Android), a developer 
 
 | What | How |
 |---|---|
-| Launch screen | `@capacitor/splash-screen` shows the logo for half a second, then fades into the boot screen |
+| Launch screen | `@capacitor/splash-screen` shows Nexo on the dark background (`launchShowDuration` 6000 ms at most) until the page's boot screen is drawn, then `hideLaunchScreen` in `apps/web/src/lib/native.ts` fades it out in 200 ms |
 | Back swipe | A swipe from the left edge goes back a screen, with the iPhone's own animation (`MainViewController.swift`) |
 | Haptics | `@capacitor/haptics` gives a light tick on the menu, tab bars, switches and pull-to-refresh (`lib/native.ts`); in a browser it does nothing |
 

@@ -141,6 +141,10 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | `MOBILE_URL` | empty | The instance the native app opens, read by `cap sync` ([mobile](mobile.md)); empty ships the web build inside the app |
 | `WEB_DEV_URL` | empty | Development only: the Vite server the page is proxied from (`bun run dev` sets it) |
 | `AI_HOST`, `AI_PORT` | 127.0.0.1, 8100 | Where the AI service listens |
+| `SURREAL_PORT` | 8000 | The host port Docker Compose publishes SurrealDB on (`127.0.0.1` only) |
+| `UI_URL` | http://localhost:3000 | Development only: the app `apps/web/scripts/ui-check.ts` checks |
+| `UI_USER` | the first user | Development only: the PSN online id `ui-check.ts` signs in as |
+| `UI_VERBOSE` | empty | Development only: any value makes `ui-check.ts` list the elements behind each accessibility violation |
 | `CHAT_MAX_OUTPUT_TOKENS` | 1500 | Caps each Nexo answer |
 | `EMBEDDING_MODEL` | text-embedding-3-small | OpenAI embedding model (with `EMBEDDING_PROVIDER=openai`) |
 | `EVAL_SURREAL_URL`, `EVAL_SURREAL_USER`, `EVAL_SURREAL_PASS`, `EVAL_SURREAL_NS`, `EVAL_SURREAL_DB` | the `SURREAL_*` values, database `evals` | Where the evals keep their questions and runs ([evals](evals.md)) |

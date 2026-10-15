@@ -52,7 +52,7 @@ Every change to what is stored (a table, a field, an index, a field's type or me
 
 ## Tests
 
-Tests live next to the code they cover, never inside `src/`: `apps/server/tests/` (`bun test`, run with `bun run test:server`) and `services/ai/tests/` (pytest, `bun run ai:test`). `bun run test` runs both.
+Tests live next to the code they cover, never inside `src/`: `apps/server/tests/` (`bun test`, run with `bun run test:server`), `apps/web/tests/` (`bun test`, run with `bun run test:web`) and `services/ai/tests/` (pytest, `bun run ai:test`). `bun run test` runs all three.
 
 ## AI service
 

@@ -5,6 +5,7 @@ import {
   createUser,
   deleteUser,
   getUser,
+  linkChat,
   listUsers,
   setLinkCode,
   touchUser,
@@ -172,6 +173,23 @@ test('a Telegram link code is stored with its expiry', async () => {
   const [sql, vars] = q.mock.calls[0]
   expect(sql).toContain('telegram_link_expires_at = time::now() + <duration> $ttl')
   expect(vars).toMatchObject({ code: 'CODE', ttl: '15m' })
+})
+
+test('linking a chat takes it off any other user in the same transaction', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await linkChat('user:u1', '42')
+  const [sql, vars] = q.mock.calls[0]
+  expect(q).toHaveBeenCalledTimes(1)
+  const clear = (sql as string).indexOf(
+    'UPDATE user SET telegram_chat_id = NONE WHERE telegram_chat_id = $chat AND id != $id',
+  )
+  const set = (sql as string).indexOf('UPDATE $id SET telegram_chat_id = $chat')
+  expect(sql).toStartWith('BEGIN TRANSACTION;')
+  expect(sql).toContain('telegram_link_code = NONE, telegram_link_expires_at = NONE')
+  expect(sql).toContain('COMMIT TRANSACTION;')
+  expect(clear).toBeGreaterThan(-1)
+  expect(set).toBeGreaterThan(clear)
+  expect(vars).toEqual({ id: user, chat: '42' })
 })
 
 test('a rename moves the lowercase id with it', async () => {

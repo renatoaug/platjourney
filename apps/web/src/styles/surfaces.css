@@ -290,7 +290,7 @@
 
   .rank {
     font-family: var(--font-display);
-    color: var(--color-fg-subtle);
+    color: var(--color-fg-muted);
     font-size: var(--text-lg);
     width: 20px;
     flex-shrink: 0;

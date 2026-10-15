@@ -36,3 +36,5 @@ DEFINE FIELD IF NOT EXISTS updated_at ON user TYPE datetime DEFAULT time::now() 
 DEFINE FIELD IF NOT EXISTS last_seen_at ON user TYPE datetime DEFAULT time::now();
 DEFINE INDEX IF NOT EXISTS user_online_id ON user FIELDS psn_online_id_lower UNIQUE;
 DEFINE INDEX IF NOT EXISTS user_account ON user FIELDS psn_account_id UNIQUE;
+-- A Telegram chat belongs to one account: linking it takes it off any other. NONE (not linked) repeats freely.
+DEFINE INDEX IF NOT EXISTS user_telegram_chat ON user FIELDS telegram_chat_id UNIQUE;

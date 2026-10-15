@@ -38,8 +38,9 @@ erDiagram
         psn_account_id string "unique"
         password_hash option(string)
         avatar_url option(string)
-        telegram_chat_id option(string)
+        telegram_chat_id option(string) "unique"
         telegram_link_code option(string)
+        telegram_link_expires_at option(datetime)
         goal_targets object
         taste_profile option(object)
         taste_prefs option(object)
@@ -50,6 +51,7 @@ erDiagram
         locale option(string)
         demo bool
         onboarded_at option(datetime)
+        session_notice_at option(datetime)
         created_at datetime
         updated_at datetime
         last_seen_at datetime
@@ -332,6 +334,7 @@ erDiagram
         psn_account_id string
         avatar_url option(string)
         code string
+        secret_hash option(string)
         created_at datetime
         updated_at datetime
         expires_at datetime
@@ -366,18 +369,18 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `user` | account | `psn_online_id_lower`, `psn_account_id` | The PSN account id is the identity; settings, goals, the current session and plan live here as objects. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell |
+| `user` | account | `psn_online_id_lower`, `psn_account_id`, `telegram_chat_id` (when set) | The PSN account id is the identity; `telegram_chat_id` is the linked Telegram chat, on one account at most (linking it takes it off any other), set from a `telegram_link_code` that works until `telegram_link_expires_at`. `session_notice_at` is when the last session-start notice went out. settings, goals, the current session and plan live here as objects. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell |
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN |
 | `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `source`: where the player saved it from (`releases`, the home's calendar; `recommendations`; `title`, a game's page; `search`, the add panel), kept from the first save; none for older saves and Telegram. `next_pick_at`: when "Nexo decide" picked it as the next platinum, on one interest of the player at a time |
 | `recommendation` | game recommended in a batch | | Every batch of the last year, with why and what it is similar to; `batch_at` groups a batch's rows. Discover shows the latest batch; the older ones keep new batches to games not shown yet, and shown games come back, the oldest first, only when those run out. Rows from before batches were kept have no `batch_at` and count as one batch |
 | `dismissal` | game the player dismissed | `user, game` | Never recommended again |
-| `tip` | notice or tip Nexo wrote | | `kind`: `start`, `unlock`, `session`, `chat` (help on one trophy), `server`, `deal` (a saved game went on sale) |
+| `tip` | notice or tip Nexo wrote | | `kind`: `start`, `unlock`, `session`, `route` (a tip on the game's route), `chat` (help on one trophy), `server`, `deal` (a saved game went on sale) |
 | `message` | chat message | | `role`: user or assistant |
-| `notification` | item in the bell | | Points at the `tip` it shows, when there is one |
+| `notification` | item in the bell | | `kind`: `start`, `unlock`, `session`, `route`, `server`, `deal`. Points at the `tip` it shows, when there is one |
 | `auth_session` | signed-in browser | `token_hash` | Only the hash of the cookie is stored |
-| `verification` | pending "About me" code | `psn_online_id_lower` | Expires; no account yet |
+| `verification` | pending "About me" code | `psn_online_id_lower` | Expires; no account yet. `secret_hash` is the hash of the claim cookie: only its holder can finish the claim or get the same code again, and nobody else can replace the row until `expires_at` |
 | `access` | address an account is used from | `user, ip_hash` | An HMAC of the IP, only with `ACCESS_HASH_SECRET` |
 
 ## Catalog and guides

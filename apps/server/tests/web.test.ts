@@ -516,6 +516,23 @@ test('an unknown title is not found', async () => {
   expect(games.catalogGameForName).toHaveBeenCalledWith('Zelda', 'PS4')
 })
 
+test('a title by name is looked up only from this site, a few times a minute', async () => {
+  spyOn(lib, 'library').mockResolvedValue([])
+  const lookup = spyOn(games, 'catalogGameForName').mockResolvedValue(undefined)
+  const away = await send('GET', '/api/title?name=Zelda', undefined, {
+    'sec-fetch-site': 'cross-site',
+  })
+  expect(away.status).toBe(403)
+  expect(lookup).not.toHaveBeenCalled()
+  resetRateLimits()
+  const answers = []
+  for (let i = 0; i < 21; i++) answers.push((await send('GET', '/api/title?name=Zelda')).status)
+  expect(answers.slice(0, 20).every((s) => s === 404)).toBe(true)
+  expect(answers[20]).toBe(429)
+  expect(lookup).toHaveBeenCalledTimes(20)
+  resetRateLimits()
+})
+
 test('a title the player does not own uses the catalog trophy list', async () => {
   spyOn(lib, 'library').mockResolvedValue([])
   spyOn(games, 'catalogGameForName').mockResolvedValue(game)
