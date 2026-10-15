@@ -25,6 +25,8 @@ const messages = defineMessages({
     plusBadge: 'PS Plus',
     store: 'Ver na PS Store',
     pages: 'Páginas de promoções',
+    owned: 'Já tenho',
+    ownedHint: 'Já tenho {name}: tirar das promoções',
   },
   [Language.En]: {
     eyebrow: 'CHEAPER NOW',
@@ -39,6 +41,8 @@ const messages = defineMessages({
     plusBadge: 'PS Plus',
     store: 'See on PS Store',
     pages: 'Deal pages',
+    owned: 'I own it',
+    ownedHint: 'I already own {name}: hide it from deals',
   },
 })
 
@@ -57,7 +61,13 @@ function onSale(interests: Interest[]) {
 }
 
 /** One saved game on sale: its cover with the discount, the price and the store link. */
-function DealCard({ interest: i }: { interest: Interest }) {
+function DealCard({
+  interest: i,
+  onOwned,
+}: {
+  interest: Interest
+  onOwned?: (i: Interest) => void
+}) {
   const t = useMessages(messages)
   const locale = useLocale()
   const money = (cents: number, currency: string) =>
@@ -109,13 +119,30 @@ function DealCard({ interest: i }: { interest: Interest }) {
               {t('store')} <Icon name="arrow" />
             </a>
           )}
+          {/* Bought or claimed but never started: PSN does not list it, so the player says so. */}
+          {onOwned && (
+            <button
+              type="button"
+              className="text-link deal-owned"
+              aria-label={t('ownedHint', { name: i.game.name })}
+              onClick={() => onOwned(i)}
+            >
+              {t('owned')}
+            </button>
+          )}
         </div>
       </div>
     </article>
   )
 }
 
-export function DealsSpotlight({ interests }: { interests: Interest[] }) {
+export function DealsSpotlight({
+  interests,
+  onOwned,
+}: {
+  interests: Interest[]
+  onOwned?: (i: Interest) => void
+}) {
   const t = useMessages(messages)
   const [page, setPage] = useState(1)
   const shown = onSale(interests)
@@ -136,7 +163,7 @@ export function DealsSpotlight({ interests }: { interests: Interest[] }) {
       </div>
       <div className="deals-row">
         {shown.slice((at - 1) * PAGE, at * PAGE).map((i) => (
-          <DealCard key={i.id} interest={i} />
+          <DealCard key={i.id} interest={i} onOwned={onOwned} />
         ))}
       </div>
     </section>

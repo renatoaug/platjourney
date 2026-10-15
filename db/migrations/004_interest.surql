@@ -11,6 +11,9 @@ DEFINE FIELD IF NOT EXISTS recommended_at ON interest TYPE option<datetime>;
 DEFINE FIELD IF NOT EXISTS source ON interest TYPE option<string> ASSERT $value = NONE OR $value IN ['releases', 'recommendations', 'title', 'search'];
 -- When "Nexo decide" last picked it as the next platinum; one interest of the player at a time.
 DEFINE FIELD IF NOT EXISTS next_pick_at ON interest TYPE option<datetime>;
+-- When the player said they already have it ("Já tenho"): bought or claimed but never started, so it
+-- is not in their PSN trophy list yet. It stops showing as a deal and in deal notices.
+DEFINE FIELD IF NOT EXISTS owned_at ON interest TYPE option<datetime>;
 DEFINE FIELD IF NOT EXISTS created_at ON interest TYPE datetime DEFAULT time::now() READONLY;
 DEFINE FIELD IF NOT EXISTS updated_at ON interest TYPE datetime DEFAULT time::now() VALUE time::now();
 DEFINE INDEX IF NOT EXISTS interest_user_game ON interest FIELDS user, game UNIQUE;

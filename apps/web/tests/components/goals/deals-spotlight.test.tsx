@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { DealsSpotlight } from '../../../src/components/goals/deals-spotlight'
 import { sampleGoals } from '../../../src/components/goals/fixtures'
@@ -69,4 +69,22 @@ test("a game the player's own PS Plus includes comes first, free, and four fit a
   expect(cards[0].classList.contains('mine')).toBe(true)
   expect(cards[0].textContent).toContain('No seu PS Plus Extra')
   expect(screen.getByRole('navigation', { name: 'Páginas de promoções' })).toBeTruthy()
+})
+
+test('"Já tenho" hands the game to the page, and only when the page allows it', () => {
+  const interests = [{ ...open[0], deal: deal(1425, 2850, 50) }] as Interest[]
+  const owned: string[] = []
+  const { rerender } = render(
+    <MemoryRouter>
+      <DealsSpotlight interests={interests} onOwned={(i) => owned.push(i.id)} />
+    </MemoryRouter>,
+  )
+  fireEvent.click(screen.getByRole('button', { name: /Já tenho/ }))
+  expect(owned).toEqual([interests[0].id])
+  rerender(
+    <MemoryRouter>
+      <DealsSpotlight interests={interests} />
+    </MemoryRouter>,
+  )
+  expect(screen.queryByRole('button', { name: /Já tenho/ })).toBeNull()
 })

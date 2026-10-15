@@ -63,6 +63,12 @@ const messages = defineMessages({
   },
 })
 const interestT = translator(interestMessages)
+// The toast after a change to one saved game, by the command that made it.
+const DONE_TOASTS: Record<string, 'interestSaved' | 'interestRemoved' | 'interestOwned'> = {
+  add: 'interestSaved',
+  remove: 'interestRemoved',
+  owned: 'interestOwned',
+}
 
 export function Goals() {
   const t = useMessages(messages)
@@ -192,9 +198,8 @@ export function GoalsView({
         pendingFocus.current = 'toggle'
       }
       setFeedback({ text: t('page.saved') })
-      if (name && text.startsWith('add ')) toast(interestT('interestSaved', { name }), 'success')
-      if (name && text.startsWith('remove '))
-        toast(interestT('interestRemoved', { name }), 'success')
+      const done = name && DONE_TOASTS[text.split(' ')[0]]
+      if (done) toast(interestT(done, { name }), 'success')
       return true
     } catch {
       setFeedback({ text: t('page.saveFailed'), error: true })
@@ -217,7 +222,10 @@ export function GoalsView({
         onSet={(target) => save(`set ${target}`)}
       />
       {/* The saved games on sale, in a band across the page (only when there is one). */}
-      <DealsSpotlight interests={p.interests} />
+      <DealsSpotlight
+        interests={p.interests}
+        onOwned={readOnly ? undefined : (i) => save(`owned ${i.id}`, i.game.name)}
+      />
       {/* Two empty cards side by side keep one height; with content each takes its own. */}
       <div
         className={`grid cols-2 goals-columns${p.interests.length || p.platinumed.length ? '' : ' empty'}`}

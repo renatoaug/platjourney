@@ -73,7 +73,7 @@ export async function interestsWithStore(): Promise<
   const saved = plain(
     await q<{ game: string; name: string; store_url: string; users: string[] }[]>(
       `SELECT game, game.name AS name, game.store_url AS store_url, array::group(user) AS users
-       FROM interest WHERE game.store_url != NONE GROUP BY game, name, store_url`,
+       FROM interest WHERE game.store_url != NONE AND owned_at = NONE GROUP BY game, name, store_url`,
     ),
   )
   const owned = plain(

@@ -16,6 +16,7 @@ import {
   type Interest,
   type InterestSource,
   listInterests,
+  markOwned,
   removeInterest,
   setInterestOrder,
 } from './repository/interest.ts'
@@ -36,6 +37,7 @@ const messages = defineMessages({
     addUsage: 'Uso: /goals add <nome do jogo>',
     notFound: 'Não achei "{query}".',
     removeUsage: 'Uso: /goals remove <número da lista>',
+    ownedUsage: 'Uso: /goals owned <número da lista>',
     moveUsage: 'Uso: /goals move <número> up|down',
     orderUsage: 'Uso: /goals order <ids separados por vírgula>',
   },
@@ -52,6 +54,7 @@ const messages = defineMessages({
     addUsage: 'Usage: /goals add <game name>',
     notFound: 'I couldn\'t find "{query}".',
     removeUsage: 'Usage: /goals remove <list number>',
+    ownedUsage: 'Usage: /goals owned <list number>',
     moveUsage: 'Usage: /goals move <number> up|down',
     orderUsage: 'Usage: /goals order <comma separated ids>',
   },
@@ -163,8 +166,9 @@ export async function yearProgress(
         nextPickAt: i.next_pick_at ? String(i.next_pick_at) : null,
         source: i.source ?? null,
         savedAt: i.created_at ? String(i.created_at) : null,
-        // A game the player already owns is no deal for them.
-        deal: t ? null : dealOf(prices.get(i.game.id), i.game.store_url, user.ps_plus),
+        // A game the player already owns is no deal for them, nor one they said they have.
+        deal:
+          t || i.owned_at ? null : dealOf(prices.get(i.game.id), i.game.store_url, user.ps_plus),
         done: t?.earnedByType.platinum === 1 && t.lastUpdated.startsWith(String(year)),
       }
     }),
@@ -248,6 +252,12 @@ const INTEREST_ACTIONS: Record<string, (a: InterestAction) => Promise<string | u
     const id = await resolveId(value)
     if (!id) return t('removeUsage')
     await removeInterest(user.id, id)
+  },
+  // Already have it, though PSN does not show it yet: no longer a deal.
+  owned: async ({ user, value, t, resolveId }) => {
+    const id = await resolveId(value)
+    if (!id) return t('ownedUsage')
+    await markOwned(user.id, id)
   },
   move: async ({ user, year, value, t, list, resolveId }) => {
     const [rawId, direction] = value.split(' ')

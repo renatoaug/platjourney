@@ -10,6 +10,7 @@ export interface Interest {
   position: number
   recommended_at?: string | null
   next_pick_at?: string | null
+  owned_at?: string | null
   source?: InterestSource | null
   created_at?: string
 }
@@ -56,6 +57,14 @@ export async function markNextPick(user: string, game: string): Promise<void> {
 
 export async function removeInterest(user: string, id: string): Promise<void> {
   await q('DELETE interest WHERE id = $id AND user = $user', {
+    id: rid('interest', id.split(':')[1]),
+    user: userRef(user),
+  })
+}
+
+/** The player already has the game, though PSN does not list it yet (bought, never started). */
+export async function markOwned(user: string, id: string): Promise<void> {
+  await q('UPDATE interest SET owned_at = time::now() WHERE id = $id AND user = $user', {
     id: rid('interest', id.split(':')[1]),
     user: userRef(user),
   })
