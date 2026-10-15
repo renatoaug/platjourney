@@ -6,7 +6,7 @@ Your PlayStation platinum journey, guided by Nexo: PlatJourney watches your PSN 
   <a href="#running">📚 Get started</a> ·
   <a href="docs/features.md">✨ Features</a> ·
   <a href="docs/architecture.md">🏗️ Architecture</a> ·
-  <a href="docs/configuration.md">⚙️ Configuration</a> ·
+  <a href="docs/setup.md">⚙️ Setup</a> ·
   <a href="docs/decisions/">🧭 Decisions</a>
 </p>
 
@@ -14,50 +14,9 @@ Your PlayStation platinum journey, guided by Nexo: PlatJourney watches your PSN 
 
 Web in React, API in Bun, AI in Python, data in SurrealDB: every tool and version is in [architecture](docs/architecture.md#stack).
 
-## Requirements
-
-- [Bun](https://bun.sh) 1.4.2, the version in `.bun-version`
-- [uv](https://docs.astral.sh/uv/) 0.11 or newer, which installs Python 3.14 (`services/ai/.python-version`)
-- [Docker](https://docs.docker.com/get-docker/) with Compose, for SurrealDB
-- A Telegram bot ([@BotFather](https://t.me/BotFather)), an [IGDB app](https://api-docs.igdb.com/#account-creation) (Twitch developer console), a throwaway PSN account for its NPSSO, and an OpenAI key or a local model server
-
 ## Running
 
-The quickest way to try it is Docker: fill `.env` and run `bun run docker:up` ([details](docs/configuration.md#everything-in-docker)). To work on the code:
-
-```bash
-cp .env.example .env         # fill it in: docs/configuration.md explains every setting
-bun install
-(cd services/ai && uv sync)
-
-bun run db:up                # SurrealDB in Docker on :8000, data in ./data/surrealdb
-bun run migrate              # one idempotent .surql per table in db/migrations
-bun run seed                 # the read-only demo player and its games
-bun run catalog:expand       # the game catalog from IGDB (once, safe to re-run)
-bun run catalog:media        # each game's gallery, studio, site and release day (safe to re-run)
-bun run catalog:releases     # the games out around today, for the home's calendar (the server repeats it daily)
-bun run embed                # catalog vectors (once, safe to re-run)
-
-bun run dev                  # server, AI service and web, reloading on save
-```
-
-Open http://localhost:3000, type your PSN ID and create a password, or open the demo. Each part also starts alone: `bun run dev:server`, `bun run dev:web`, `bun run dev:ai`.
-
-Built and served as in production:
-
-```bash
-bun run build                # the web app into apps/web/dist
-bun run start                # the server, serving the built app
-(cd services/ai && uv run platjourney-ai)
-```
-
-`ecosystem.config.cjs` runs the server and the AI service under pm2.
-
-Component catalog on http://localhost:6006:
-
-```bash
-bun run storybook
-```
+[`docs/setup.md`](docs/setup.md) has the requirements, the first run (in Docker or from the code) and every setting in `.env`.
 
 ## Test
 

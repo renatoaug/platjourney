@@ -15,7 +15,7 @@ How PlatJourney works, how to run it and why it is built the way it is. Code rul
 | Doc | What is in it |
 |---|---|
 | [architecture.md](architecture.md) | The parts, how they talk and where the code lives |
-| [configuration.md](configuration.md) | Every setting in `.env`, local models and per-feature models |
+| [setup.md](setup.md) | Requirements, the first run in Docker or from the code, every setting in `.env`, local models and per-feature models |
 | [plugins.md](plugins.md) | Adding to an instance without changing the app: components, requests, the page's security policy |
 | [database.md](database.md) | Why SurrealDB, every table and how they link (with diagrams), migrations, seeds and the catalog |
 

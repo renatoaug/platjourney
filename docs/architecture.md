@@ -9,7 +9,7 @@
 | **AI** | `services/ai` | The Python service: every prompt and model call (Nexo, guides, session plans, recommendations), embeddings, the deep guide search and the evals |
 | **Database** | `db/migrations` | The SurrealDB schema, one `.surql` per table ([database](database.md)) |
 
-Commands run from the repository root (`bun run dev`, `bun run lint`, …) and read the root `.env` ([configuration](configuration.md)).
+Commands run from the repository root (`bun run dev`, `bun run lint`, …) and read the root `.env` ([setup](setup.md)).
 
 ## How they talk
 
@@ -74,7 +74,7 @@ flowchart LR
 [![bun test](https://img.shields.io/badge/-bun%20test-333333?style=flat&logo=bun)](https://bun.sh/docs/cli/test)
 [![GitHub Actions](https://img.shields.io/badge/-GitHub%20Actions-333333?style=flat&logo=githubactions)](https://github.com/features/actions)
 
-The AI service also runs on any OpenAI-compatible local server (LM Studio, mlx-lm, llama.cpp, Ollama): see [local models](configuration.md#local-models).
+The AI service also runs on any OpenAI-compatible local server (LM Studio, mlx-lm, llama.cpp, Ollama): see [local models](setup.md#local-models).
 
 ## Web app layout
 

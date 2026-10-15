@@ -14,7 +14,7 @@ Work on an issue someone else is already on only after asking in it.
 
 ## Running it
 
-[Running](README.md#running) in the README sets up the app, the AI service and the database on your machine. Every setting is in [`docs/configuration.md`](docs/configuration.md), and [`docs/README.md`](docs/README.md) indexes the rest.
+[`docs/setup.md`](docs/setup.md) sets up the app, the AI service and the database on your machine and describes every setting. [`docs/README.md`](docs/README.md) indexes the rest.
 
 ## Rules and checks
 

@@ -1,17 +1,37 @@
-# Configuration
+# Setup
 
-Every setting lives in the root `.env`; `.env.example` lists them with a line on each.
+How to get PlatJourney running on your machine, in Docker or from the code, and every setting in the root `.env` (`.env.example` lists them with a line on each).
+
+## Requirements
+
+- [Bun](https://bun.sh) 1.4.2, the version in `.bun-version`
+- [uv](https://docs.astral.sh/uv/) 0.11 or newer, which installs Python 3.14 (`services/ai/.python-version`)
+- [Docker](https://docs.docker.com/get-docker/) with Compose, for SurrealDB
+- A Telegram bot ([@BotFather](https://t.me/BotFather)), an [IGDB app](https://api-docs.igdb.com/#account-creation) (Twitch developer console), a throwaway PSN account for its NPSSO, and an OpenAI key or a [local model](#local-models)
+
+The quickest way to try it is [everything in Docker](#everything-in-docker). To work on the code, follow the first run below.
 
 ## First run
 
-1. **Accounts you need:** a Telegram bot ([@BotFather](https://t.me/BotFather)), an [IGDB app](https://api-docs.igdb.com/#account-creation), an OpenAI key (or a [local model](#local-models)) and a throwaway PSN account.
-2. **Fill `.env`:** `cp .env.example .env`. The PSN NPSSO belongs to the throwaway account and only reads public profiles, so every player's games, trophies and "About me" must be visible to anyone.
-3. **Install:** `bun install` and `(cd services/ai && uv sync)`.
-4. **Database:** `bun run db:up` (SurrealDB in Docker, data in `./data/surrealdb`), then `bun run migrate`.
-5. **Catalog:** `bun run catalog:expand && bun run embed` (once; both are safe to re-run). `bun run catalog:media` adds galleries and PlayStation Store links, and `bun run catalog:releases` fills the release calendar; the server refreshes the calendar once a day on its own.
-6. **Run:** `bun run dev`, and open http://localhost:3000.
+```bash
+cp .env.example .env         # fill it in: every setting is described below
+bun install
+(cd services/ai && uv sync)
 
-Then:
+bun run db:up                # SurrealDB in Docker on :8000, data in ./data/surrealdb
+bun run migrate              # one idempotent .surql per table in db/migrations
+bun run seed                 # the read-only demo player and its games
+bun run catalog:expand       # the game catalog from IGDB (once, safe to re-run)
+bun run catalog:media        # each game's gallery, studio, site, release day and PlayStation Store link (safe to re-run)
+bun run catalog:releases     # the games out around today, for the home's calendar (the server repeats it daily)
+bun run embed                # catalog vectors (once, safe to re-run)
+
+bun run dev                  # server, AI service and web, reloading on save
+```
+
+The PSN NPSSO belongs to the throwaway account and only reads public profiles, so every player's games, trophies and "About me" must be visible to anyone.
+
+Then open http://localhost:3000:
 
 - Type your PSN ID and create a password, or open the demo.
 - Connect Telegram from the profile page: it opens the bot with a one-time link.
@@ -25,6 +45,7 @@ Then:
 | `bun run dev:server`, `dev:web`, `dev:ai` | One part alone |
 | `bun run build` then `bun run start` | The built web app, served by the server |
 | `(cd services/ai && uv run platjourney-ai)` | The AI service, next to `start` |
+| `bun run storybook` | The component catalog on http://localhost:6006 |
 
 `ecosystem.config.cjs` runs the server and the AI service under pm2.
 
