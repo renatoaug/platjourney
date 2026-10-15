@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.17.2](https://github.com/renatoaug/platjourney/compare/v0.17.1...v0.17.2) (2026-10-15)
+
+### Bug Fixes
+
+* **notices:** one short line when the same game is opened again with nothing new ([#45](https://github.com/renatoaug/platjourney/issues/45)) ([a8fd629](https://github.com/renatoaug/platjourney/commit/a8fd6298480cc63f0830bcd2f69e04a9dde43f76))
+
 ## [0.17.1](https://github.com/renatoaug/platjourney/compare/v0.17.0...v0.17.1) (2026-10-14)
 
 ### Bug Fixes
