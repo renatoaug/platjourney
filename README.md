@@ -90,7 +90,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org).
 ## Community
 
 - 🐛 [GitHub Issues](https://github.com/renatoaug/platjourney/issues): report a bug or propose a feature
-- 🔧 Pull requests are welcome: read [`AGENTS.md`](AGENTS.md) first for the rules and the checks
+- 🔧 Pull requests are welcome: read [`CONTRIBUTING.md`](CONTRIBUTING.md) first for how to start and the checks
 - 🐙 [@renatoaug on GitHub](https://github.com/renatoaug): the maintainer
 - 🌐 [rames.io](https://rames.io): more from the maintainer
 

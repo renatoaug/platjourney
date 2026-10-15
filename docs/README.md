@@ -1,6 +1,6 @@
 # Docs
 
-How PlatJourney works, how to run it and why it is built the way it is. Code rules and the checks before calling a change done are in [`AGENTS.md`](../AGENTS.md).
+How PlatJourney works, how to run it and why it is built the way it is. Code rules and the checks before calling a change done are in [`AGENTS.md`](../AGENTS.md); how to contribute is in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 ## Product
 
