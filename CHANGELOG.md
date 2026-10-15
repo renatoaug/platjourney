@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.17.4](https://github.com/renatoaug/platjourney/compare/v0.17.3...v0.17.4) (2026-10-15)
+
+### Bug Fixes
+
+* account recovery, Telegram links, title lookups and plugin isolation ([#47](https://github.com/renatoaug/platjourney/issues/47)) ([1499158](https://github.com/renatoaug/platjourney/commit/14991586d6c23290bb077a7c09003706da6733a6))
+
 ## [0.17.3](https://github.com/renatoaug/platjourney/compare/v0.17.2...v0.17.3) (2026-10-15)
 
 ## [0.17.2](https://github.com/renatoaug/platjourney/compare/v0.17.1...v0.17.2) (2026-10-15)
