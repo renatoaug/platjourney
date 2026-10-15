@@ -66,7 +66,7 @@ export async function trophiesVisible(accountId: string): Promise<boolean> {
   }
 }
 
-export interface PsnProfile {
+interface PsnProfile {
   accountId: string
   onlineId: string
   avatarUrl: string | null
@@ -308,7 +308,7 @@ async function fetchTitleTrophies(
 const listCache = new Map<string, { at: number; list: CatalogTrophies | null }>()
 const LIST_TTL = 24 * 60 * 60_000
 
-export interface CatalogTrophies {
+interface CatalogTrophies {
   np: string
   platform: 'PS5' | 'PS4'
   trophies: TrophyStatus[]
@@ -394,7 +394,7 @@ export async function profileSummary(
   }
 }
 
-export interface GroupCounts {
+interface GroupCounts {
   earned: number
   total: number
   // Trophies still missing, not counting the platinum itself.
@@ -459,7 +459,7 @@ export async function titleGroups(title: TitleProgress, accountId: string): Prom
   }
 }
 
-export interface PlayedGame {
+interface PlayedGame {
   titleId: string
   name: string
   platform: string

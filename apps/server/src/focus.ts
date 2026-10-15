@@ -9,14 +9,14 @@
 import type { GameContext } from './nexo.ts'
 import type { TrophyStatus } from './psn.ts'
 
-export interface PhaseLeft {
+interface PhaseLeft {
   // The phase as the roadmap names it, and its short name ("Fase 1" from "Fase 1 — Campanha").
   phase: string
   short: string
   left: number
 }
 
-export interface Focus {
+interface Focus {
   // Base-game trophies still open in each roadmap phase, in the roadmap's order, open ones only.
   phases: PhaseLeft[]
   // The first phase with a trophy open: a missable there first, then a trophy the guide has a

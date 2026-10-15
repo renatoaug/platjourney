@@ -38,9 +38,9 @@ const messages = defineMessages({
 const CACHE_DAYS = 7
 // A game shown as a recommendation stays out of new batches while there are unseen candidates; the
 // batches are kept this long.
-export const SEEN_KEEP_DAYS = 365
+const SEEN_KEEP_DAYS = 365
 
-export interface TasteProfile {
+interface TasteProfile {
   summary: string
   genres: string[]
   traits: string[]
@@ -48,12 +48,12 @@ export interface TasteProfile {
 }
 
 /** The profile's lists the player can change. */
-export const TASTE_LISTS = ['genres', 'traits', 'avoid'] as const
-export type TasteList = (typeof TASTE_LISTS)[number]
+const TASTE_LISTS = ['genres', 'traits', 'avoid'] as const
+type TasteList = (typeof TASTE_LISTS)[number]
 type Lists = Record<TasteList, string[]>
 
 /** Rules every recommendation follows, checked against the guides we have. */
-export interface RecFilters {
+interface RecFilters {
   noMissables?: boolean
   onePlaythrough?: boolean
   noDifficultyTrophy?: boolean
@@ -64,7 +64,7 @@ export interface RecFilters {
 
 /** The player's changes to the model's profile, kept when it writes the profile again, and their
  * rules. */
-export interface TastePrefs {
+interface TastePrefs {
   added: Lists
   removed: Lists
   filters: RecFilters
@@ -146,7 +146,7 @@ export function effectiveProfile(
   }
 }
 
-export interface Recommendation {
+interface Recommendation {
   game: Game
   platform: string
   difficulty: number
@@ -158,7 +158,7 @@ export interface Recommendation {
   similarTo: string[]
 }
 
-export interface Recommendations {
+interface Recommendations {
   /** The model's profile with the player's changes applied. */
   profile: TasteProfile | null
   /** The model's profile as it wrote it, so the page can preview changes before saving them. */

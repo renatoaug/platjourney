@@ -81,8 +81,8 @@ const messages = defineMessages({
   },
 })
 
-export const TASTE_LISTS = ['genres', 'traits', 'avoid'] as const
-export type TasteList = (typeof TASTE_LISTS)[number]
+const TASTE_LISTS = ['genres', 'traits', 'avoid'] as const
+type TasteList = (typeof TASTE_LISTS)[number]
 type Lists = Record<TasteList, string[]>
 
 export interface RecFilters {
@@ -101,7 +101,7 @@ export interface TastePrefs {
   filters: RecFilters
 }
 
-export interface TasteLists {
+interface TasteLists {
   genres: string[]
   traits: string[]
   avoid: string[]

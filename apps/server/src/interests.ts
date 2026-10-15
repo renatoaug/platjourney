@@ -57,7 +57,7 @@ const messages = defineMessages({
   },
 })
 
-export interface InterestView {
+interface InterestView {
   id: string
   game: Game
   position: number
@@ -73,7 +73,7 @@ export interface InterestView {
   deal: Deal | null
 }
 
-export interface Deal {
+interface Deal {
   price: number
   base: number
   discount: number
@@ -88,7 +88,7 @@ export interface Deal {
   storeUrl: string | null
 }
 
-export interface YearProgress {
+interface YearProgress {
   year: number
   target: number | null
   done: number

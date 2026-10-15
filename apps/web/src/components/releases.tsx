@@ -61,7 +61,7 @@ export interface Release {
   guide: { difficulty: number; hours: number } | null
 }
 
-export type ReleasesLoad =
+type ReleasesLoad =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'ok'; releases: Release[] }

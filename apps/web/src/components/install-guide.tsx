@@ -61,7 +61,7 @@ if (typeof window !== 'undefined')
     installPrompt = e as InstallPrompt
   })
 
-export type InstallPlatform = 'ios' | 'android' | null
+type InstallPlatform = 'ios' | 'android' | null
 
 /** The phone the page runs on, for the steps to show; null on a computer. */
 export function installPlatform(

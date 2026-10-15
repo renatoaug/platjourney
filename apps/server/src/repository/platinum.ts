@@ -3,7 +3,7 @@ import type { Game } from './game.ts'
 import { gameRef } from './game.ts'
 import { userRef } from './user.ts'
 
-export interface PlatinumRow {
+interface PlatinumRow {
   id: string
   game: Game
   np_communication_id: string

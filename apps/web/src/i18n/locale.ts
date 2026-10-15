@@ -9,12 +9,10 @@ export enum Language {
 export const LOCALES = Object.values(Language)
 /** A language as stored and sent around: an enum member or its plain value ('pt-BR', 'en'). */
 export type Locale = `${Language}`
-export const DEFAULT_LOCALE: Locale = Language.PtBR
 
 const STORAGE_KEY = 'locale'
 
-export const isLocale = (v: unknown): v is Locale =>
-  (LOCALES as readonly string[]).includes(v as string)
+const isLocale = (v: unknown): v is Locale => (LOCALES as readonly string[]).includes(v as string)
 
 /** Any language tag to one we have: Portuguese of any region is pt-BR, everything else English. */
 export const fromLanguage = (tag: string | null | undefined): Locale =>

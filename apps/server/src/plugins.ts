@@ -10,9 +10,11 @@ import { q } from './db.ts'
 import { json, type PageDirective, pagePolicy, readBody } from './http.ts'
 import type { User } from './repository/user.ts'
 
+/** @public part of the plugin API */
 export const PLUGIN_API = 3
 
 /** Model work about to run or that failed: the player and the action (chat, tip, plan…). */
+/** @public part of the plugin API */
 export interface ModelWork {
   user: User
   action: string
@@ -29,6 +31,7 @@ export class Refused extends Error {
   }
 }
 
+/** @public part of the plugin API */
 export interface PluginRequest {
   req: IncomingMessage
   res: ServerResponse
@@ -40,6 +43,7 @@ export interface PluginRequest {
 
 type Handler = (r: PluginRequest) => Promise<void>
 /** What a route answers to; anything else gets 405. Reads are GET, changes POST and up. */
+/** @public part of the plugin API */
 export type RouteMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 type Hook = (work: ModelWork) => Promise<void>
 // Account events: created after sign-up, deleted before the account and its data go.

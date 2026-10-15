@@ -152,7 +152,7 @@ export interface GuideCardItem {
     unobtainable: string | null
   } | null
 }
-export interface GuideFacets {
+interface GuideFacets {
   difficulty: Record<(typeof BANDS)[number], number>
   hours: Record<string, number>
   noMissables: number
@@ -203,7 +203,7 @@ function Facts({ g, meter = true }: { g: NonNullable<GuideCardItem['guide']>; me
   )
 }
 
-export function GuideCard({ item }: { item: GuideCardItem }) {
+function GuideCard({ item }: { item: GuideCardItem }) {
   const t = useMessages(messages)
   const g = item.guide
   return (
@@ -235,7 +235,7 @@ export function GuideCard({ item }: { item: GuideCardItem }) {
 }
 
 /** The same game as a row: for the list view. */
-export function GuideRow({ item }: { item: GuideCardItem }) {
+function GuideRow({ item }: { item: GuideCardItem }) {
   const t = useMessages(messages)
   const g = item.guide
   return (
@@ -396,7 +396,7 @@ function GuideGridSkeleton() {
 const fetchGuides = (query: string) => api<GuidesPage>(`/api/guides?${query}`)
 
 /** What the server answers when asked for a game the catalog lacks. */
-export interface GameRequestAnswer {
+interface GameRequestAnswer {
   game?: string
   requested?: boolean
   /** This account had asked for the name before. */

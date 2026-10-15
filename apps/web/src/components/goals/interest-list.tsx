@@ -70,7 +70,7 @@ const messages = defineMessages({
   },
 })
 
-export const GOAL_PAGE_SIZE = 10
+const GOAL_PAGE_SIZE = 10
 
 const FILTERS: GoalFilter[] = ['all', 'playing', 'pending', 'done']
 

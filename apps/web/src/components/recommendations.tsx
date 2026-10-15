@@ -116,7 +116,7 @@ const messages = defineMessages({
 })
 
 /** Why a recommendation was turned down; the next batch steers away from it. */
-export const DISMISS_REASONS = ['too_long', 'too_hard', 'genre', 'online', 'played'] as const
+const DISMISS_REASONS = ['too_long', 'too_hard', 'genre', 'online', 'played'] as const
 export type DismissReason = (typeof DISMISS_REASONS)[number]
 const REASON_LABEL = {
   too_long: 'reasonTooLong',
@@ -126,7 +126,7 @@ const REASON_LABEL = {
   played: 'reasonPlayed',
 } as const
 
-export interface TasteProfile {
+interface TasteProfile {
   summary: string
   genres: string[]
   traits: string[]
@@ -314,14 +314,14 @@ function RecRow({ rec: r, onDismiss }: { rec: Recommendation; onDismiss: OnDismi
 
 /** What the editable profile needs from the screen: saving the draft, and asking for new picks with
  * it. Resolves once saved. */
-export interface TasteEditing {
+interface TasteEditing {
   editable: boolean
   onSave: (next: TastePrefs, regenerate: boolean) => Promise<void>
 }
 
 /** Why these games: the top genres, and the full profile (genres, what they enjoy, what the picks
  * avoid and the player's rules) when opened, editable by the player. */
-export function Taste({
+function Taste({
   profile,
   baseProfile,
   prefs = emptyPrefs(),
@@ -404,7 +404,7 @@ export function Taste({
   )
 }
 
-export function RecsSkeleton({ n = 4 }: { n?: number }) {
+function RecsSkeleton({ n = 4 }: { n?: number }) {
   return repeat(n, () => (
     <div className="row">
       <Sk w="92px" h={43} style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }} />

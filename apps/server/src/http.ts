@@ -8,7 +8,7 @@ export class BadBody extends Error {
   }
 }
 
-export const MAX_BODY = 100_000
+const MAX_BODY = 100_000
 
 export function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
@@ -44,7 +44,7 @@ export const SECURITY_HEADERS: Record<string, string> = {
 
 /** On the app's page: where scripts, styles, fonts, images, requests and frames may come from.
  * Plugins can add sources to these (ctx.allowOnPage); the other directives stay as they are. */
-export const PAGE_SOURCES = {
+const PAGE_SOURCES = {
   'script-src': ["'self'"],
   'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
   'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],

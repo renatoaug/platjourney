@@ -32,7 +32,7 @@ const DAY = 86_400_000
 // Spaced out, so the store sees a person's pace, not a crawler's.
 const PAUSE_MS = 2_000
 
-export const money = (cents: number, currency: string, locale: string) =>
+const money = (cents: number, currency: string, locale: string) =>
   (cents / 100).toLocaleString(locale, { style: 'currency', currency })
 
 /** A sale worth telling: the game was at full price before, or now costs less than it did. */
@@ -42,8 +42,7 @@ export function newSale(before: StorePrice | undefined, now: StorePrice): boolea
 }
 
 /** A game that just joined a PS Plus catalog. */
-export const joinedPlus = (before: StorePrice | undefined, now: StorePrice) =>
-  now.plus && !before?.plus
+const joinedPlus = (before: StorePrice | undefined, now: StorePrice) => now.plus && !before?.plus
 
 const TIER_NAMES = { essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' } as const
 

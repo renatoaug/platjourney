@@ -1,7 +1,7 @@
 import { one, plain, q } from '../db.ts'
 import { userRef } from './user.ts'
 
-export interface Verification {
+interface Verification {
   psn_online_id: string
   psn_account_id: string
   avatar_url: string | null

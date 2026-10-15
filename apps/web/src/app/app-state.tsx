@@ -23,7 +23,7 @@ const messages = defineMessages({
 })
 const t = translator(messages)
 
-export type SyncStatus = 'connecting' | 'connected' | 'failed' | 'private'
+type SyncStatus = 'connecting' | 'connected' | 'failed' | 'private'
 
 interface AppState {
   me: Me

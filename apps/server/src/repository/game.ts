@@ -243,7 +243,7 @@ export type CatalogCard = Pick<
 }
 
 // What a list of games shows, for the whole catalog: a few fields per game, no embedding.
-export interface Release {
+interface Release {
   id: string
   name: string
   cover_url: string | null

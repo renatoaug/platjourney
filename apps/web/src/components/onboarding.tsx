@@ -248,7 +248,7 @@ type Phase = (typeof PHASES)[number]
 
 /** The stops this player's screens can show: without a game being played there is no trophy list
  or session route to point at. */
-export function phasesFor(data: AppStateData | null): Phase[] {
+function phasesFor(data: AppStateData | null): Phase[] {
   return PHASES.filter((p) => !(data && !data.current && (p === 'trophies' || p === 'plan')))
 }
 const DEMO_SEEN = 'platjourney:onboarding-demo'

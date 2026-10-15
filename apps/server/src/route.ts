@@ -14,7 +14,7 @@ const messages = defineMessages({
 
 // The guide's real-time route: after a story trophy, what matters right there
 // (a missable about to close, an item worth grabbing, a trophy that is easy now).
-export interface RouteTip {
+interface RouteTip {
   kind: 'missable' | 'item' | 'advantage' | 'trophy' | 'warning'
   text: string
   trophy: string | null

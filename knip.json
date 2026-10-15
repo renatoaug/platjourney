@@ -1,0 +1,30 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreBinaries": ["uv"],
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.ts"],
+      "ignoreDependencies": ["pm2", "conventional-changelog-conventionalcommits"]
+    },
+    "apps/server": {
+      "entry": ["scripts/*.ts", "tests/**/*.test.ts", "tests/fixtures/plugin.ts"],
+      "project": ["src/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
+    },
+    "apps/web": {
+      "entry": [
+        "src/plugins/jsx-runtime.ts",
+        "src/plugins/jsx-dev-runtime.ts",
+        "scripts/*.ts",
+        "tests/**/*.test.{ts,tsx}",
+        "src/**/*.stories.tsx",
+        ".storybook/*.{ts,tsx}"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "tests/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["tailwindcss"]
+    },
+    "apps/mobile": {
+      "ignoreDependencies": ["@capacitor/haptics", "@capacitor/splash-screen"]
+    }
+  },
+  "ignoreUnresolved": ["./apps/server/tests/env.ts", "./apps/web/tests/setup.ts"]
+}

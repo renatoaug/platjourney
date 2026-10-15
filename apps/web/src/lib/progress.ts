@@ -1,6 +1,6 @@
 /** Trophy progress as the player chose to see it: the base game only (the default, what the platinum needs) or with DLC counted in. */
 
-export interface Count {
+interface Count {
   earned: number
   total: number
 }

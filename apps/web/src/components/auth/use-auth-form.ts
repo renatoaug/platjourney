@@ -1,7 +1,7 @@
 /** Validation and busy state shared by the sign-in steps and the account forms. */
 import { type ChangeEvent, type FormEvent, useState } from 'react'
 
-export const PSN_ID = /^[A-Za-z0-9_-]{3,16}$/
+const PSN_ID = /^[A-Za-z0-9_-]{3,16}$/
 
 export const MIN_PASSWORD = 8
 

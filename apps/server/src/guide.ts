@@ -45,7 +45,7 @@ const messages = defineMessages({
 
 export const GUIDE_VERSION = 2
 
-export interface KeyTrophy {
+interface KeyTrophy {
   trophy: string
   why: string
 }

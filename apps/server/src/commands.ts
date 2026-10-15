@@ -140,7 +140,7 @@ const messages = defineMessages({
 })
 
 // The commands the bot knows, in the order /help lists them and Telegram's menu shows them.
-export const COMMANDS = [
+const COMMANDS = [
   'status',
   'guide',
   'next',

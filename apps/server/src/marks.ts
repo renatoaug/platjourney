@@ -63,7 +63,7 @@ export function markCheer(user: User, kind: ProgressMark['kind'], pick = Math.ra
 
 /** A point in the player's progress an unlock can reach: the first trophy, half of the base game,
  * the final stretch, the platinum. The notice for that unlock marks it. */
-export interface ProgressMark {
+interface ProgressMark {
   kind: 'first' | 'half' | 'final' | 'platinum'
   earned: number
   total: number

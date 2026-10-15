@@ -37,7 +37,7 @@ export interface NextPick {
   firstStep: string
 }
 
-export type PickState =
+type PickState =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'error' }

@@ -107,7 +107,7 @@ const tr = translator(messages)
 
 // A roadmap for one sitting: trophies that fit in the time available, in the
 // order to play them. It lives above the trophy list while the session lasts.
-export interface PlanStep {
+interface PlanStep {
   trophy: string
   minutes: number
   how: string
@@ -252,7 +252,7 @@ function Step({ s, i, plan }: { s: PlanStep; i: number; plan: SessionPlan }) {
 }
 
 /** Placeholder route: four steps, used while the plan loads and while Nexo builds it. */
-export function PlanSkeleton() {
+function PlanSkeleton() {
   return (
     <ol className="road">
       {repeat(4, (i) => (

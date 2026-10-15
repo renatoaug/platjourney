@@ -7,7 +7,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { MockAppState } from '../../src/app/app-state'
 import { ToastHost } from '../../src/ui/toast'
 
-export interface Call {
+interface Call {
   path: string
   method: string
   body: unknown
@@ -49,7 +49,7 @@ export function mockApi(routes: Record<string, Answer>) {
 }
 
 /** Where the router is now, for asserting navigation. */
-export function LocationProbe() {
+function LocationProbe() {
   const { pathname, search } = useLocation()
   return <output data-testid="location">{pathname + search}</output>
 }

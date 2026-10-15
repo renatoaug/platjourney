@@ -46,7 +46,7 @@ const PAGE = 4
 const TIER_NAMES = { essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' } as const
 
 /** The saved games that cost less now: the player's own PS Plus ones first, then the deepest sales. */
-export function onSale(interests: Interest[]) {
+function onSale(interests: Interest[]) {
   return interests
     .filter((i) => !i.done && i.deal && (i.deal.mine || i.deal.discount > 0))
     .sort(

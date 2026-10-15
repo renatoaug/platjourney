@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 import { Icon } from './icon'
 import './toast.css'
 
-export type ToastKind = 'error' | 'success' | 'info'
-export interface ToastAction {
+type ToastKind = 'error' | 'success' | 'info'
+interface ToastAction {
   href: string
   label: string
 }

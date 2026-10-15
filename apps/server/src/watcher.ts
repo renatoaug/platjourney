@@ -196,7 +196,7 @@ export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext[
 }
 
 // The first trophy, halfway, the final stretch or the platinum, for the plain notice.
-export const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
+const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
   const mark = progressMark(ctx.trophies, unlocked)
   if (!mark) return undefined
   const line = translator(messages, user)(`mark.${mark.kind}`, {
