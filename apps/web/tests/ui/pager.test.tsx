@@ -49,3 +49,15 @@ test('a busy pager locks every button', () => {
   render(<Pager page={2} size={8} total={25} onPage={() => {}} disabled />)
   for (const b of screen.getAllByRole('button')) expect(b.hasAttribute('disabled')).toBe(true)
 })
+
+test('the arrows look: previous, the page count and next, no numbers', () => {
+  const onPage = mock()
+  render(<Pager page={1} size={6} total={14} onPage={onPage} look="arrows" />)
+  expect(screen.getByText('1/3').getAttribute('title')).toBe('Página 1 de 3')
+  expect(screen.queryByRole('button', { name: 'Página 2' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Página anterior' }).hasAttribute('disabled')).toBe(
+    true,
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }))
+  expect(onPage).toHaveBeenCalledWith(2)
+})

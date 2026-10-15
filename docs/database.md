@@ -2,7 +2,7 @@
 
 SurrealDB, one table per file in `db/migrations`. Everything stored is snake_case, the keys inside stored objects too.
 
-Every table has `created_at`, set once by the database. Tables whose rows change after they are created also have `updated_at`, set on every write; `tip`, `message`, `guide_chunk`, `auth_session`, `recommendation` and `llm_call` are written once and keep `created_at` only. Other dates (`earned_at`, `last_updated_at`, `read_at`, `last_seen_at`, `recommended_at`, `next_pick_at`, `batch_at`, `released_at`) mean something of their own. Every date field ends in `_at`, the ones stored as a plain day (`YYYY-MM-DD`) too: `guide_chunk.page_updated_at` and `server_status.shutdown_at`. Links between tables are record links (`record<user>`, `record<game>`), not join tables.
+Every table has `created_at`, set once by the database. Tables whose rows change after they are created also have `updated_at`, set on every write; `tip`, `message`, `guide_chunk`, `auth_session`, `recommendation` and `llm_call` are written once and keep `created_at` only. Other dates (`earned_at`, `last_updated_at`, `read_at`, `last_seen_at`, `recommended_at`, `next_pick_at`, `batch_at`, `released_at`) mean something of their own. Every date field ends in `_at`, the ones stored as a plain day (`YYYY-MM-DD`) too: `guide_chunk.page_updated_at` and `server_status.shutdown_at`. Links between tables are record links (`record<user>`, `record<game>`), not join tables; the only edges are the graph between catalog games, `similar_to` and `expansion_of` (relation tables, `game -> edge -> game`), which are written once and deleted, so they keep `created_at` only.
 
 ## Why SurrealDB
 
@@ -217,6 +217,10 @@ erDiagram
     game ||--o| guide_request : "is asked for"
     game ||--o| server_status : "online status"
     game ||--o{ store_price : "PS Store price per region"
+    game ||--o{ similar_to : "is similar to (in)"
+    similar_to }o--|| game : "out"
+    game ||--o| expansion_of : "expands (in)"
+    expansion_of }o--|| game : "base game (out)"
     user }o--o{ game_request : "asks for a missing game"
     game {
         id record(game) PK
@@ -234,6 +238,7 @@ erDiagram
         summary option(string)
         release_year option(int)
         rating option(float)
+        series option(array(int))
         screenshot_ids array(string)
         developers array(string)
         website option(string)
@@ -299,6 +304,19 @@ erDiagram
         currency string
         created_at datetime
         updated_at datetime
+    }
+    similar_to {
+        id record(similar_to) PK
+        in record(game) FK "unique with out"
+        out record(game) FK
+        rank int
+        created_at datetime
+    }
+    expansion_of {
+        id record(expansion_of) PK
+        in record(game) FK "unique with out"
+        out record(game) FK
+        created_at datetime
     }
     server_status {
         id record(server_status) PK
@@ -388,12 +406,14 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `game` | catalog game | `slug`, `igdb_id` | From IGDB; `np_communication_ids` ties it to PSN lists; `embedding` for recommendations. The game page's gallery and "about" card read `screenshot_ids` (IGDB image ids of its scenes, artwork when it has none), `developers`, `website` (the official site) and `released_at` (the first release day, at midnight UTC); `bun run catalog:media` fills them for games already in the catalog. `hypes` is how many people follow the game on IGDB before release: the home's calendar lists the most awaited first. `store_url` is its PlayStation Store page, where its price is read. A store edition is the game itself, its name kept in `aliases`; a PS4/PS5 remaster of a game that never came to them is its own record |
+| `game` | catalog game | `slug`, `igdb_id` | From IGDB; `np_communication_ids` ties it to PSN lists; `embedding` for recommendations. The game page's gallery and "about" card read `screenshot_ids` (IGDB image ids of its scenes, artwork when it has none), `developers`, `website` (the official site) and `released_at` (the first release day, at midnight UTC); `bun run catalog:media` fills them for games already in the catalog. `hypes` is how many people follow the game on IGDB before release: the home's calendar lists the most awaited first. `store_url` is its PlayStation Store page, where its price is read. A store edition is the game itself, its name kept in `aliases`; a PS4/PS5 remaster of a game that never came to them is its own record. `series` holds the ids of the IGDB collections the game belongs to (games sharing one are the same series), written by `bun run catalog:similar` |
 | `guide` | game with a researched guide | `game` | The guide itself is an object; also the deep guide's pages and passage count |
 | `guide_chunk` | passage of a deep guide | | Text, heading path, source page and its date, and the vector |
 | `guide_request` | game asked for without a guide | `game` | How many times and the questions, for whoever runs the instance |
 | `game_request` | name searched on Guides that neither the catalog nor IGDB had | `key` (the name normalized for search) | Who asked, each account once, and how many; for whoever runs the instance to add by hand |
 | `store_price` | game someone saved in their interests, per store region | `game, region` | Its PlayStation Store price in a region (`region`, upper case; only `BR` is read today), in cents, read once a day and overwritten: price, full price, percent off, when the sale ends, whether PS Plus includes it and what members pay when the store gives them a lower price (`plus_price`), and the lowest tier whose catalog includes it (`plus_tier`). A game the player's own tier includes is a `deal` notice too, once. A new or deeper sale is a `deal` notice to everyone who saved the game |
+| `similar_to` | IGDB "similar game" link between two catalog games (`in -> similar_to -> out`) | `in, out` | A relation table. `rank` is the position of `out` in IGDB's list of `in` (0 the most similar). `bun run catalog:similar` deletes a game's outgoing edges and writes them again, only to games in the catalog. The recommendations by similarity walk the player's games through these edges |
+| `expansion_of` | standalone expansion or episode in the catalog (`expansion -> expansion_of -> base game`) | `in, out` | A relation table, from IGDB's `parent_game` of games that add to another one (a remaster or a port is not an expansion). Written by `bun run catalog:similar`; read in both directions for the "same series" picks and a game's page |
 | `server_status` | game whose online servers were checked | `game` | `status`: `active`, `announced`, `closed` or `unknown`; shared by everyone, and who was already warned is in `notification` |
 
 ## Costs

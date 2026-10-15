@@ -1,8 +1,8 @@
 import { afterEach, expect, jest, mock, test } from 'bun:test'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { MockAppState, SAMPLE_DATA } from '../../src/app/app-state'
-
+import { similarGamesData } from '../../src/components/similar-games.stories'
 import type { GuideDetail } from '../../src/lib/types'
 import { Title, type TitleDetail } from '../../src/pages/title'
 import { ownedData, recommendedData } from '../../src/pages/title.stories'
@@ -16,6 +16,9 @@ afterEach(() => {
 const guide = ownedData.guide as GuideDetail
 const hero = () => document.querySelector('.card.hero') as HTMLElement
 const meta = () => hero().querySelector('.meta')?.textContent
+// Only the title's own requests; the similar games ask once the title is in.
+const titleCalls = (calls: { path: string }[]) =>
+  calls.filter((c) => c.path.startsWith('/api/title'))
 
 function open(path: string, detail: TitleDetail | ReturnType<typeof reply>) {
   const calls = mockApi({ '/api/title': () => detail })
@@ -95,7 +98,9 @@ test('a game the player does not own: the overview and saving it', async () => {
   )
   fireEvent.click(screen.getByRole('button', { name: /Salvar nos interesses/ }))
   expect(await screen.findByRole('button', { name: 'Nos interesses', pressed: true })).toBeTruthy()
-  expect(calls.at(-1)?.body).toEqual({ command: 'add game:19561 from:title' })
+  expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
+    command: 'add game:19561 from:title',
+  })
 })
 
 test('without a trophy list the trophies column says it is on its way', async () => {
@@ -142,12 +147,14 @@ test('a guide being researched: polls until it lands', async () => {
   await act(async () => {
     jest.advanceTimersByTime(6000)
   })
-  expect(calls).toHaveLength(2)
+  expect(titleCalls(calls)).toHaveLength(2)
   expect(screen.getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   await act(async () => {
     jest.advanceTimersByTime(12_000)
   })
-  expect(calls).toHaveLength(2)
+  expect(titleCalls(calls)).toHaveLength(2)
+  // Polling the title never asks for its similar games again.
+  expect(calls.filter((c) => c.path.startsWith('/api/games/similar'))).toHaveLength(1)
 })
 
 test('leaving the page stops the polling', async () => {
@@ -160,7 +167,7 @@ test('leaving the page stops the polling', async () => {
   await act(async () => {})
   unmount()
   jest.advanceTimersByTime(12_000)
-  expect(calls).toHaveLength(1)
+  expect(titleCalls(calls)).toHaveLength(1)
 })
 
 test('an answer that lands after leaving is dropped', async () => {
@@ -191,4 +198,57 @@ test('Back returns to the screen the game was opened from', async () => {
   )
   fireEvent.click(screen.getByRole('link', { name: /Voltar/ }))
   expect(await screen.findByText('guides list')).toBeTruthy()
+})
+
+test('similar games under the showcase: the expansion and the series first, with their tag', async () => {
+  const calls = mockApi({
+    '/api/title': ownedData,
+    '/api/games/similar': { items: similarGamesData },
+  })
+  renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
+  // The band's skeleton first, then the games.
+  const cards = await waitFor(() =>
+    within(screen.getByRole('region', { name: 'Parecidos com este' })).getAllByRole('link'),
+  )
+  expect(cards.map((c) => c.querySelector('.band-name')?.textContent)).toEqual([
+    'Days Gone: Broken Road',
+    'Days Gone Remastered',
+    'Ghost of Tsushima',
+    'The Last of Us Part II',
+    'Horizon Zero Dawn',
+  ])
+  const tag = (i: number) => cards[i].closest('.band-card')?.querySelector('.band-tag')
+  expect(tag(0)?.textContent).toBe('Expansão')
+  expect(tag(1)?.textContent).toBe('Mesma série')
+  expect(tag(2)).toBeNull()
+  expect(cards[0].getAttribute('href')).toBe('/title/game/game%3A41')
+  expect(calls.at(-1)?.path).toBe('/api/games/similar?game=game%3A19561')
+})
+
+test('no similar game, or a failed request, leaves the section out', async () => {
+  mockApi({ '/api/title': ownedData, '/api/games/similar': { items: [] } })
+  const { unmount } = renderApp(<Title />, {
+    path: '/title/game/game%3A19561',
+    route: '/title/*',
+  })
+  await screen.findByText('NA SUA BIBLIOTECA')
+  await waitFor(() => expect(document.querySelector('.game-band')).toBeNull())
+  unmount()
+  mock.restore()
+  mockApi({ '/api/title': ownedData, '/api/games/similar': reply(500) })
+  renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
+  await screen.findByText('NA SUA BIBLIOTECA')
+  await waitFor(() => expect(document.querySelector('.game-band')).toBeNull())
+})
+
+test('the tab shows the game’s name while the page is open', async () => {
+  document.title = 'Jogo'
+  // The catalog's name, not the trophy list's capitals.
+  const { unmount } = open('/title/game/game%3A19561', {
+    ...ownedData,
+    game: { ...ownedData.game, name: 'Days Gone' },
+  })
+  await waitFor(() => expect(document.title).toBe('Days Gone · PlatJourney'))
+  unmount()
+  expect(document.title).toBe('Jogo')
 })

@@ -410,3 +410,102 @@ async def test_candidates_can_be_kept_to_some_games(monkeypatch: pytest.MonkeyPa
     assert 'id IN $only' in seen['sql'] and seen['vars']['only'] == ['game:1']
     await taste.similar_games([1.0], 5, [])
     assert 'id IN $only' not in seen['sql']
+
+
+def graph_game(i: int) -> dict[str, Any]:
+    return {'id': f'game:{i}', 'name': f'Graph {i}', 'platforms': ['PS5'], 'genres': ['RPG']}
+
+
+async def run_with_graph(
+    monkeypatch: pytest.MonkeyPatch,
+    body: dict[str, Any],
+    guided: list[str],
+    vector: list[Candidate] | None = None,
+) -> tuple[str, list[tuple[list[str], int]]]:
+    """Runs a recommendation with graph candidates; returns the prompt and each vector search
+    (its exclusions and size)."""
+    searches: list[tuple[list[str], int]] = []
+
+    async def every() -> list[str]:
+        return guided
+
+    async def rows(sql: str, vars: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+        assert vars is not None
+        if 'release_year' in sql:
+            # The catalog answers in its own order, not the graph's.
+            return [graph_game(int(i.split(':')[1])) for i in sorted(vars['ids'])]
+        return []
+
+    async def fake_candidates(_lib: Any, exclude: list[str], n: int, **_: Any) -> list[Candidate]:
+        searches.append((list(exclude), n))
+        return [c for c in vector or [] if c.id not in exclude][:n]
+
+    async def no_guides(ids: Any) -> dict[str, Any]:
+        return {i: {} for i in ids}
+
+    prompts: list[str] = []
+
+    async def answer_json(name: str, instructions: str, input: str, schema: Any) -> Any:
+        prompts.append(input)
+        return {'profile': {'summary': 'x', 'genres': [], 'traits': [], 'avoid': []}, 'items': []}
+
+    monkeypatch.setattr(recommend, 'guided_games', every)
+    monkeypatch.setattr(db, 'rows', rows)
+    monkeypatch.setattr(recommend, 'candidates', fake_candidates)
+    monkeypatch.setattr(recommend, 'guide_rows', no_guides)
+    monkeypatch.setattr(llm, 'answer_json', answer_json)
+    await recommend.recommend(RecommendRequest.model_validate({'library': []} | body))
+    return prompts[0], searches
+
+
+def listed(prompt: str) -> list[str]:
+    return [line[2:].split(' (')[0] for line in prompt.splitlines() if line.startswith('- ')]
+
+
+async def test_graph_candidates_are_drawn_in_their_order(monkeypatch: pytest.MonkeyPatch) -> None:
+    ids = [f'game:{i}' for i in range(100, 100 + recommend.CANDIDATES * 2)][::-1]
+    prompt, searches = await run_with_graph(monkeypatch, {'candidates': ids}, ids)
+    assert listed(prompt) == [f'Graph {i.split(":")[1]}' for i in ids[: recommend.CANDIDATES]]
+    assert searches == []
+
+
+async def test_graph_candidates_drop_excluded_seen_and_unguided(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ids = ['game:5', 'game:1', 'game:2', 'game:3', 'game:4', 'game:1']
+    body = {'candidates': ids, 'exclude': ['game:2'], 'seen': ['game:3']}
+    prompt, _ = await run_with_graph(monkeypatch, body, ['game:1', 'game:2', 'game:3', 'game:5'])
+    assert listed(prompt)[:2] == ['Graph 5', 'Graph 1']
+    assert len(listed(prompt)) == 2
+
+
+async def test_vector_search_fills_what_the_graph_leaves_short(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    vector = [Candidate(id='game:5', name='Graph 5 again'), Candidate(id='game:9', name='Near')]
+    body = {'candidates': ['game:5', 'game:6'], 'exclude': ['game:1'], 'seen': ['game:2']}
+    prompt, searches = await run_with_graph(
+        monkeypatch, body, ['game:5', 'game:6', 'game:9'], vector
+    )
+    assert listed(prompt) == ['Graph 5', 'Graph 6', 'Near']
+    assert searches[0] == (['game:1', 'game:2', 'game:5', 'game:6'], recommend.CANDIDATES * 2 - 2)
+
+
+async def test_no_graph_candidates_keep_the_vector_search(monkeypatch: pytest.MonkeyPatch) -> None:
+    vector = [Candidate(id='game:9', name='Near')]
+    prompt, searches = await run_with_graph(
+        monkeypatch, {'exclude': ['game:1'], 'seen': ['game:2']}, ['game:9'], vector
+    )
+    assert listed(prompt) == ['Near']
+    wanted = recommend.CANDIDATES * 2
+    assert searches == [(['game:1', 'game:2'], wanted), (['game:1'], wanted + 1)]
+
+
+def test_graph_candidates_must_be_game_ids() -> None:
+    assert RecommendRequest.model_validate({'library': []}).candidates == []
+    with pytest.raises(ValueError):
+        RecommendRequest.model_validate({'library': [], 'candidates': ['user:1']})
+    with pytest.raises(ValueError):
+        RecommendRequest.model_validate(
+            {'library': [], 'candidates': [f'game:{i}' for i in range(101)]}
+        )

@@ -158,7 +158,14 @@ export function DealsSpotlight({
         </span>
         <h3 id="deals-title">{t('title', { count: shown.length })}</h3>
         {pages > 1 && (
-          <Pager page={at} size={PAGE} total={shown.length} onPage={setPage} label={t('pages')} />
+          <Pager
+            page={at}
+            size={PAGE}
+            total={shown.length}
+            onPage={setPage}
+            label={t('pages')}
+            look="arrows"
+          />
         )}
       </div>
       <div className="deals-row">

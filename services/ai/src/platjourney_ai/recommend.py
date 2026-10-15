@@ -5,11 +5,11 @@ import re
 from collections.abc import Sequence
 from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from . import db, llm
 from .schemas import Wire
-from .taste import Candidate, LibraryTitle, candidates
+from .taste import Candidate, LibraryTitle, candidates, games_as_candidates
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +18,8 @@ log = logging.getLogger(__name__)
 MAX_PLATINUMS_IN_PROMPT = 80
 MAX_IN_PROGRESS_IN_PROMPT = 30
 CANDIDATES = 24
+# The most catalog games the server may send as graph candidates.
+MAX_GRAPH_CANDIDATES = 100
 
 INSTRUCTIONS = (
     'You recommend PlayStation platinums to a trophy hunter. First build a taste profile from '
@@ -171,6 +173,16 @@ class RecommendRequest(Wire):
     # Shown before, the longest ago first: candidates only when the unseen ones run out.
     seen: list[str] = Field(default_factory=list[str])
     preferences: Preferences = Field(default_factory=Preferences)
+    # Catalog games ("game:123") a similarity graph chose, best first: drawn before the vector
+    # search, which only fills what they leave short.
+    candidates: list[str] = Field(default_factory=list[str], max_length=MAX_GRAPH_CANDIDATES)
+
+    @field_validator('candidates')
+    @classmethod
+    def _game_ids(cls, ids: list[str]) -> list[str]:
+        if any(not i.startswith('game:') for i in ids):
+            raise ValueError('candidates must be catalog game ids ("game:123")')
+        return ids
 
 
 class TasteProfile(Wire):
@@ -361,19 +373,43 @@ def resolve(
     return RecommendResponse.model_validate({'profile': result['profile'], 'items': items})
 
 
+async def vector_draw(
+    req: RecommendRequest, guided: list[str], drawn: Sequence[Candidate], wanted: int
+) -> list[Candidate]:
+    """Up to `wanted` more guided games nearest the player's taste, past those already drawn:
+    unseen first, then the ones shown longest ago."""
+    taken = [c.id for c in drawn]
+    found = await candidates(req.library, [*req.exclude, *req.seen, *taken], wanted, only=guided)
+    if len(found) < wanted and req.seen:
+        # Not enough unseen games: the ones shown longest ago come back first.
+        order = {g: i for i, g in enumerate(req.seen)}
+        again = await candidates(
+            req.library, [*req.exclude, *taken], wanted + len(req.seen), only=guided
+        )
+        back = sorted((c for c in again if c.id in order), key=lambda c: order[c.id])
+        found = [*found, *back[: wanted - len(found)]]
+    return found
+
+
+async def graph_draw(req: RecommendRequest, guided: list[str]) -> list[Candidate]:
+    """The graph's candidates the player can still be shown, in its order: guided games only,
+    never an excluded or already seen one."""
+    allowed = set(guided)
+    skip = {*req.exclude, *req.seen}
+    ids = [g for g in dict.fromkeys(req.candidates) if g in allowed and g not in skip]
+    return await games_as_candidates(req.library, ids)
+
+
 async def recommend(req: RecommendRequest) -> RecommendResponse:
     filters = req.preferences.filters
     # Only games PlatJourney has a guide for: their numbers are ours, so nothing is looked up.
     # More are drawn than shown, so the player's rules can still leave enough.
     guided = await guided_games()
     wanted = CANDIDATES * 2
-    drawn = await candidates(req.library, [*req.exclude, *req.seen], wanted, only=guided)
-    if len(drawn) < wanted and req.seen:
-        # Not enough unseen games: the ones shown longest ago come back first.
-        order = {g: i for i, g in enumerate(req.seen)}
-        again = await candidates(req.library, req.exclude, wanted + len(req.seen), only=guided)
-        back = sorted((c for c in again if c.id in order), key=lambda c: order[c.id])
-        drawn = [*drawn, *back[: wanted - len(drawn)]]
+    # The similarity graph's games come first; the vector search fills what they leave short.
+    drawn = await graph_draw(req, guided) if req.candidates else []
+    if len(drawn) < wanted:
+        drawn = [*drawn, *await vector_draw(req, guided, drawn, wanted - len(drawn))]
     known = await guide_rows([c.id for c in drawn])
     found = [c for c in drawn if c.id in known and not breaks(filters, known[c.id])][:CANDIDATES]
     log.info('building recommendations from %d candidates (%d drawn)', len(found), len(drawn))

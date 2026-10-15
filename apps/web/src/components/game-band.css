@@ -1,0 +1,357 @@
+@layer screens {
+  /* One section per list, straight on the page: the head line, then the cards in a grid that wraps
+     (six a row at desktop width, fewer on smaller screens; a page always holds six). The cards carry
+     the surface. */
+  .game-band {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    margin-top: 28px;
+  }
+
+  /* Without a panel behind them, the sections are told apart by room and a hairline running from
+     the title to the pager; the game page's small band keeps its own spacing. */
+  .game-band:not(.compact) {
+    margin-top: 56px;
+  }
+
+  .game-band:not(.compact) .band-head::after {
+    content: "";
+    order: 1;
+    flex: 1 1 40px;
+    height: 1px;
+    background: var(--color-border);
+  }
+
+  /* The section's buttons and the pager come after the line. */
+  .game-band:not(.compact) .band-head > :not(.eyebrow, h2) {
+    order: 2;
+    margin-left: 0;
+  }
+
+  .band-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+  }
+
+  .band-head .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-accent);
+  }
+
+  .band-head h2 {
+    margin: 0;
+  }
+
+  .game-band:not(.compact) .band-head h2 {
+    font-size: var(--text-2xl);
+  }
+
+  .band-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .band-head .pager {
+    margin: 0 0 0 auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .band-head-actions + .pager {
+    margin-left: 0;
+  }
+
+  .band-head .band-head-actions {
+    margin-left: auto;
+  }
+
+  /* One page of six fills the row edge to edge, so the pager sits over the last card; narrower
+     screens take three or two a row. */
+  .band-row {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  @media (max-width: 1000px) {
+    .band-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    .band-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .band-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    overflow: hidden;
+    transition:
+      border-color 0.15s,
+      transform 0.15s;
+  }
+
+  .band-card:hover,
+  .band-card:focus-within {
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .band-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .band-art {
+    position: relative;
+    display: block;
+    overflow: hidden;
+  }
+
+  .band-cover-link {
+    display: block;
+  }
+
+  /* The difficulty over the bottom of the cover, on a fade to the card, as on the Guides tiles. The
+     pointer goes through it to the cover's link. */
+  .band-score {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 36px 10px 8px;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in srgb, var(--color-surface) 75%, transparent) 45%,
+      var(--color-surface)
+    );
+  }
+
+  .band-score .dm {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .band-score .dm .dm-number {
+    font-size: var(--text-3xl);
+  }
+
+  .band-score .dm .dm-body {
+    flex: 1;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .band-score .dm .dm-band {
+    font-size: var(--text-sm);
+  }
+
+  .band-score .dm .dm-segments i {
+    min-width: 0;
+    height: 4px;
+  }
+
+  .band-cover {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    background: var(--color-bg-subtle);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .band-card:hover .band-cover {
+    transform: scale(1.04);
+  }
+
+  .band-cover.cover-placeholder {
+    display: grid;
+    place-items: center;
+    font-size: var(--text-3xl);
+  }
+
+  .band-cover.sk {
+    height: auto;
+    border-radius: 0;
+  }
+
+  .band-tag {
+    pointer-events: none;
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    padding: 3px 8px;
+    border-radius: var(--radius-tag);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* Save and dismiss over the cover's corner. */
+  .band-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+  }
+
+  /* The name, then the facts right under it; any spare height goes to the bottom. */
+  .band-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 9px 10px 11px;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .band-name {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-snug);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+  }
+
+  .band-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .band-meta > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .band-meta .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .band-fact .icon {
+    color: var(--color-fg-subtle);
+  }
+
+  /* The last thing in the card, pinned to its bottom: the free height goes above it. */
+  .band-foot {
+    display: grid;
+    margin-top: auto;
+    padding-top: 2px;
+  }
+
+  .band-reason {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: var(--text-xs);
+    line-height: var(--leading-snug);
+    color: var(--color-fg-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .band-reason.lines-3 {
+    -webkit-line-clamp: 3;
+  }
+
+  .band-reason strong {
+    color: var(--color-fg-soft);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* The game page: smaller cards, more to a row, a lower section. */
+  .game-band.compact {
+    margin-top: 20px;
+  }
+
+  /* The game page keeps small cards: the band is as wide as its six, so the pager stays beside
+     them instead of at the far edge. */
+  .game-band.compact {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .game-band.compact .band-row {
+    gap: 10px;
+    grid-template-columns: repeat(6, minmax(0, 118px));
+  }
+
+  @media (max-width: 760px) {
+    .game-band.compact {
+      width: auto;
+    }
+
+    .game-band.compact .band-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .game-band.compact .band-cover {
+    aspect-ratio: 4 / 5;
+  }
+
+  .game-band.compact .band-body {
+    gap: 6px;
+    padding: 8px 9px 10px;
+  }
+
+  .game-band.compact .band-name {
+    font-size: var(--text-md);
+  }
+
+  .game-band.compact .band-meta {
+    font-size: var(--text-xs);
+    gap: 4px 8px;
+  }
+
+  .game-band.compact .band-tag {
+    left: 6px;
+    top: 6px;
+    padding: 2px 6px;
+  }
+
+  .game-band.compact .band-score {
+    padding: 26px 7px 6px;
+  }
+
+  .game-band.compact .band-score .dm .dm-number {
+    font-size: var(--text-xl);
+  }
+
+  .game-band.compact .band-score .dm .dm-band {
+    font-size: var(--text-xs);
+  }
+
+  .game-band.compact .band-score .dm-of {
+    display: none;
+  }
+}

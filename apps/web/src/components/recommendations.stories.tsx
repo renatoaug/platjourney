@@ -49,12 +49,7 @@ function Card({ state }: { state: RecsState }) {
         ? { status: 'ok', recs: { ...s.recs, items: s.recs.items.filter((x) => x !== r) } }
         : s,
     )
-  return (
-    <div className="card" style={{ maxWidth: 560 }}>
-      <h2>Recomendações pro seu gosto</h2>
-      <Recommendations state={current} onDismiss={dismiss} />
-    </div>
-  )
+  return <Recommendations state={current} onDismiss={dismiss} onRefresh={() => {}} />
 }
 
 export const Loaded: Story = { render: () => <Card state={{ status: 'ok', recs: recsData }} /> }
@@ -64,6 +59,15 @@ export const Empty: Story = {
 }
 
 export const Loading: Story = { render: () => <Card state={{ status: 'loading' }} /> }
+
+// Before the player asks Nexo: what the picks are and the button.
+export const NotAskedYet: Story = { render: () => <Card state={{ status: 'idle' }} /> }
+
+export const NoLibrary: Story = {
+  render: () => (
+    <Card state={{ status: 'ok', recs: { profile: null, items: [], reason: 'no-library' } }} />
+  ),
+}
 
 export const LoadError: Story = { render: () => <Card state={{ status: 'error' }} /> }
 

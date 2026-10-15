@@ -15,6 +15,7 @@ import * as guides from '../src/repository/guide.ts'
 import * as interests from '../src/repository/interest.ts'
 import type { RecommendationRow } from '../src/repository/recommendation.ts'
 import * as recs from '../src/repository/recommendation.ts'
+import * as graph from '../src/repository/similar.ts'
 import * as users from '../src/repository/user.ts'
 import { makeGame, makeTitle, makeUser } from './fixtures.ts'
 
@@ -137,7 +138,15 @@ test('a stale or forced batch is researched, filtered and stored', async () => {
       item('Made Up', null),
     ],
   })
+  // The graph's candidates go along, best first, without what is excluded.
+  spyOn(graph, 'similarEdges').mockResolvedValue([
+    { seed: 'game:1', game: 'game:7', rank: 3 },
+    { seed: 'game:1', game: 'game:8', rank: 0 },
+    { seed: 'game:1', game: 'game:2', rank: 1 },
+  ])
+  const peers = spyOn(graph, 'peerPlatinums').mockResolvedValue([])
   const result = await recommendations(user, [title], [owned])
+  expect(peers).toHaveBeenCalledWith(user.id, ['game:1'], ['game:7', 'game:8', 'game:2'])
   expect(ai).toHaveBeenCalledWith('/recommend', {
     library: [
       {
@@ -149,6 +158,7 @@ test('a stale or forced batch is researched, filtered and stored', async () => {
       },
     ],
     exclude: ['game:1', 'game:2', 'game:5'],
+    candidates: ['game:8', 'game:7'],
     dismissed: [{ name: 'Dismissed', reason: 'too_long' }],
     seen: [],
     preferences: { likes: [], avoid: [], wrong: [], filters: {} },
@@ -179,7 +189,9 @@ test('an empty batch is generated even with no previous one', async () => {
   spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
   spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
   spyOn(users, 'updateUser').mockResolvedValue(undefined)
-  spyOn(aiModule, 'ai').mockResolvedValue({ profile: null, items: [] })
+  const ai = spyOn(aiModule, 'ai').mockResolvedValue({ profile: null, items: [] })
+  // The graph cannot be read (its edges are not written yet): the service searches by taste alone.
+  spyOn(graph, 'similarEdges').mockRejectedValue(new Error('no table'))
   expect(await recommendations(user, [makeTitle()], [], true)).toEqual({
     profile: null as never,
     baseProfile: null,
@@ -187,6 +199,7 @@ test('an empty batch is generated even with no previous one', async () => {
     items: [],
     generatedAt: null,
   })
+  expect(ai.mock.calls[0][1]).toMatchObject({ candidates: [] })
 })
 
 test('dismissing a recommendation stores the dismissal and its reason', async () => {

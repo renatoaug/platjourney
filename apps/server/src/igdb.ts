@@ -275,6 +275,46 @@ export async function mediaByIds(ids: number[]): Promise<Map<number, ReturnType<
   return out
 }
 
+// game_type of a game that adds to another one: dlc, expansion, standalone expansion, episode, season
+// and pack. Its parent_game is the base game; a remaster's or a port's is the original, not a base.
+const EXPANSION_TYPES = new Set([1, 2, 4, 6, 7, 13])
+
+export interface Relations {
+  /** IGDB's similar games, most similar first. */
+  similar: number[]
+  /** The base game, when this one is an expansion of it. */
+  parent: number | null
+  /** The IGDB collections (series) the game belongs to. */
+  series: number[]
+}
+
+type IgdbLinks = Pick<IgdbGame, 'id' | 'game_type' | 'parent_game'> & {
+  similar_games?: number[]
+  collections?: number[]
+}
+
+/** IGDB's links of a game: its similar games, the base game it expands and its series. */
+export function relations(game: IgdbLinks): Relations {
+  return {
+    similar: game.similar_games ?? [],
+    parent: EXPANSION_TYPES.has(game.game_type) ? (game.parent_game ?? null) : null,
+    series: game.collections ?? [],
+  }
+}
+
+/** The links of many catalog games at once, by IGDB id (500 per call). */
+export async function relationsByIds(ids: number[]): Promise<Map<number, Relations>> {
+  const out = new Map<number, Relations>()
+  for (let i = 0; i < ids.length; i += 500) {
+    const page = await igdb<IgdbLinks[]>(
+      'games',
+      `fields similar_games,parent_game,collections,game_type; where id = (${ids.slice(i, i + 500).join(',')}); limit 500;`,
+    )
+    for (const g of page) out.set(g.id, relations(g))
+  }
+  return out
+}
+
 // Resolves a PSN title (or any name) to its canonical catalog entry, keeping the
 // searched name as an alias so later lookups hit without another search.
 export async function resolveGame(name: string): Promise<CatalogEntry | null> {

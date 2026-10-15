@@ -384,9 +384,11 @@ export function Shell() {
     : t(isTitle ? 'nav.title' : (LABELS[pathname] ?? 'nav.home'))
 
   useEffect(() => {
-    document.title = label
+    // A game page names the tab after the game once it knows it; a generic "Jogo" first would only
+    // flash before the name.
+    if (!isTitle) document.title = label
     window.scrollTo({ top: 0 })
-  }, [label])
+  }, [label, isTitle])
 
   useEffect(() => {
     const show = () => setPrivateProfile(true)

@@ -9,6 +9,8 @@ import {
   media,
   normalizeName,
   popularGames,
+  relations,
+  relationsByIds,
   resolveGame,
   toCatalog,
   withoutEdition,
@@ -279,4 +281,30 @@ test('the wide picture prefers a screenshot, then artwork', () => {
   )
   expect(artUrl({ artworks: [{ image_id: 'art' }] })).toBe(url('art'))
   expect(artUrl({})).toBeNull()
+})
+
+test('links: similar games, the base game of an expansion only, and series', () => {
+  expect(
+    relations({ id: 1, game_type: 4, parent_game: 9, similar_games: [3, 2], collections: [7] }),
+  ).toEqual({ similar: [3, 2], parent: 9, series: [7] })
+  // A remaster's parent is the original game, not a base game.
+  expect(relations({ id: 1, game_type: 9, parent_game: 9 })).toEqual({
+    similar: [],
+    parent: null,
+    series: [],
+  })
+})
+
+test('links of many games are read 500 at a time', async () => {
+  const fetch = igdbApi((body) => {
+    const ids = /where id = \(([^)]*)\)/.exec(body)?.[1].split(',').map(Number) ?? []
+    return ids.map((id) => ({ id, game_type: 0, similar_games: [id + 1] }))
+  })
+  const ids = Array.from({ length: 501 }, (_, i) => i + 1)
+  const out = await relationsByIds(ids)
+  expect(out.size).toBe(501)
+  expect(out.get(501)).toEqual({ similar: [502], parent: null, series: [] })
+  const bodies = fetch.mock.calls.map((c) => String(c[1]?.body)).filter((b) => b.includes('fields'))
+  expect(bodies).toHaveLength(2)
+  expect(bodies[0]).toContain('fields similar_games,parent_game,collections,game_type;')
 })

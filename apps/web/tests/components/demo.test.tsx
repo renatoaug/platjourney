@@ -10,6 +10,7 @@ import { sampleGoals } from '../../src/components/goals/fixtures'
 import { Plan } from '../../src/components/plan'
 import { samplePlan } from '../../src/components/plan.stories'
 import { recsData } from '../../src/components/recommendations.stories'
+import { similarData } from '../../src/components/similar-picks.stories'
 import { TrophyList } from '../../src/components/trophy-list'
 import { current } from '../../src/fixtures'
 import { setLocale } from '../../src/i18n/locale'
@@ -214,12 +215,14 @@ describe('what the demo cannot do', () => {
   })
 
   test('recommendations cannot be refreshed, saved or dismissed', async () => {
-    mockApi({ '/api/recommendations': recsData })
+    mockApi({ '/api/recommendations/similar': similarData, '/api/recommendations': recsData })
     renderApp(<Discover />, { value: { me: demo, data: SAMPLE_DATA, cache: {} } })
-    expect(await screen.findByText(/Horizon Zero Dawn/)).toBeTruthy()
-    const refresh = screen.getByRole('button', {
-      name: 'Gerar novas recomendações',
-    }) as HTMLButtonElement
+    expect(await screen.findByRole('link', { name: /Sekiro/ })).toBeTruthy()
+    expect(document.querySelector('.rec-actions')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Pedir ao Nexo/ }))
+    const recs = document.getElementById('recs') as HTMLElement
+    expect(await within(recs).findByText(/Sekiro/)).toBeTruthy()
+    const refresh = screen.getByRole('button', { name: /Gerar de novo/ }) as HTMLButtonElement
     expect(refresh.disabled).toBe(true)
     expect(document.querySelector('.rec-actions')).toBeNull()
     expect(screen.getByText(unavailable)).toBeTruthy()

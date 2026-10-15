@@ -73,7 +73,9 @@ import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
 import { isDismissReason } from './repository/recommendation.ts'
 import { listServerStatuses } from './repository/server-status.ts'
+import { type GuideFacts, guideFacts } from './repository/similar.ts'
 import { setLinkCode, type User, updateUser } from './repository/user.ts'
+import { similarPicks, similarToGame } from './similar.ts'
 import { botInfo, botUsername } from './telegram.ts'
 import {
   chatOrCheck,
@@ -602,7 +604,13 @@ async function telegramLink({ res, me }: Api) {
 
 type Ranked = Awaited<ReturnType<typeof rankNextPlatinum>>[number]
 
-function rankingRow(r: Ranked, played: Awaited<ReturnType<typeof playtimes>>) {
+function rankingRow(
+  r: Ranked,
+  played: Awaited<ReturnType<typeof playtimes>>,
+  facts: Map<string, GuideFacts>,
+) {
+  const f = facts.get(r.game.id)
+  const known = (v: unknown) => (typeof v === 'number' && v > 0 ? v : null)
   return {
     game: r.game.id,
     name: r.game.name,
@@ -615,6 +623,9 @@ function rankingRow(r: Ranked, played: Awaited<ReturnType<typeof playtimes>>) {
     total: r.groups?.base.total ?? r.title.total,
     earned: r.groups?.base.earned ?? r.title.earned,
     dlc: r.groups?.dlc ? { earned: r.groups.dlc.earned, total: r.groups.dlc.total } : null,
+    // The guide's estimate and difficulty, when the game has a guide that says them.
+    guideHours: known(f?.hours),
+    difficulty: known(f?.difficulty),
   }
 }
 
@@ -625,6 +636,9 @@ async function state({ res, me, titles }: Api) {
   const ctx = getCurrent(me) ?? (isDemo(me) ? await demoContext(me) : undefined)
   if (!ctx) watchNow(me)
   const ranked = await rankNextPlatinum(list, me, 20, ctx ? [ctx.title.npCommunicationId] : [])
+  const facts = new Map(
+    (await guideFacts(ranked.map((r) => r.game.id))).map((f) => [String(f.game), f]),
+  )
   return json(res, 200, {
     profile: await profile(me),
     // null, not missing: the web app reads a missing game as still loading.
@@ -634,7 +648,7 @@ async function state({ res, me, titles }: Api) {
       getChat(me) && getChat(me) !== ctx ? ((await currentView(me, getChat(me))) ?? null) : null,
     tips: await recentTips(me.id, 50),
     unread: await unreadNotifications(me.id),
-    ranking: ranked.map((r) => rankingRow(r, played)),
+    ranking: ranked.map((r) => rankingRow(r, played, facts)),
     goals: await yearProgress(me, list, undefined, played),
     servers: (await listServerStatuses(ranked.map((r) => r.game.id))).filter(
       (s) => s.status !== 'unknown',
@@ -931,6 +945,14 @@ const API_ROUTES: Record<string, ApiHandler> = {
     json(res, 200, { pick: await nextPick(me, await titles(), requestLocale(req, me)) }),
   'POST /api/recommendations/dismiss': dismissPick,
   'POST /api/recommendations/preferences': tastePreferences,
+  // Recommendations by similar games: graph reads only, no model, so the demo has them too.
+  'GET /api/recommendations/similar': async ({ res, me, titles }) =>
+    json(res, 200, await similarPicks(me, await titles(), await ownedGames(me.psn_account_id))),
+  'GET /api/games/similar': async ({ res, url }) => {
+    const game = url.searchParams.get('game') ?? ''
+    if (!/^game:[\w-]+$/.test(game)) return json(res, 400, { error: 'game required' })
+    return json(res, 200, { items: await similarToGame(game) })
+  },
   'GET /api/recommendations': async ({ res, url, me, titles }) => {
     const force = url.searchParams.get('refresh') === '1'
     return json(

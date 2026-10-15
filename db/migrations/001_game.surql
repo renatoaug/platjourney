@@ -25,6 +25,8 @@ DEFINE FIELD IF NOT EXISTS hypes ON game TYPE option<int>;
 -- The game's PlayStation Store page, where its price is read.
 DEFINE FIELD IF NOT EXISTS store_url ON game TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS rating ON game TYPE option<float>;
+-- The IGDB collections (series) the game belongs to, by IGDB id: games sharing one are the same series.
+DEFINE FIELD IF NOT EXISTS series ON game TYPE option<array<int>>;
 DEFINE FIELD IF NOT EXISTS embedding ON game TYPE option<array<float>>;
 DEFINE FIELD IF NOT EXISTS created_at ON game TYPE datetime DEFAULT time::now() READONLY;
 DEFINE FIELD IF NOT EXISTS updated_at ON game TYPE datetime DEFAULT time::now() VALUE time::now();

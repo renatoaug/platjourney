@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { DealsSpotlight } from '../../../src/components/goals/deals-spotlight'
 import { sampleGoals } from '../../../src/components/goals/fixtures'
@@ -68,7 +68,11 @@ test("a game the player's own PS Plus includes comes first, free, and four fit a
   expect(cards).toHaveLength(4)
   expect(cards[0].classList.contains('mine')).toBe(true)
   expect(cards[0].textContent).toContain('No seu PS Plus Extra')
-  expect(screen.getByRole('navigation', { name: 'Páginas de promoções' })).toBeTruthy()
+  const pages = screen.getByRole('navigation', { name: 'Páginas de promoções' })
+  // The band's pager: only the arrows and the page count.
+  expect(within(pages).getByText(/^1\/\d+$/)).toBeTruthy()
+  expect(within(pages).getByRole('button', { name: 'Próxima página' })).toBeTruthy()
+  expect(within(pages).queryByRole('button', { name: 'Página 2' })).toBeNull()
 })
 
 test('"Já tenho" hands the game to the page, and only when the page allows it', () => {

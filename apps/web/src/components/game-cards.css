@@ -153,4 +153,28 @@
     border-color: var(--color-accent-muted);
     transform: translateY(-2px);
   }
+
+  /* A library card's progress, right above its difficulty. */
+  .library-progress {
+    display: grid;
+    gap: 5px;
+  }
+
+  .library-progress .barlabel {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--color-fg-muted);
+  }
+
+  .library-progress .barlabel b {
+    color: var(--color-accent);
+  }
+
+  .library-progress .bar {
+    margin: 0;
+  }
+
+  .band-dlc {
+    color: var(--color-fg-subtle);
+  }
 }

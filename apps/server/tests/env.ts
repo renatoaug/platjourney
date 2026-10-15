@@ -13,3 +13,7 @@ for (const name of [
 // a mock quietly reads the local SurrealDB and passes here, then fails in CI where there is none.
 // A closed port makes it fail the same way everywhere.
 process.env.SURREAL_URL = 'http://127.0.0.1:9/rpc'
+
+// Nor the AI service: a call no test mocked must fail fast here too, not wait on a local service
+// that happens to be running.
+process.env.AI_URL = 'http://127.0.0.1:9'

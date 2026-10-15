@@ -181,6 +181,10 @@ export interface RankingItem {
   total: number
   earned: number
   dlc: { earned: number; total: number } | null
+  /** The guide's estimate to the platinum, when the server sends it. */
+  guideHours?: number | null
+  /** The guide's difficulty (1 to 10), when the server sends it. */
+  difficulty?: number | null
 }
 
 export interface Interest {
@@ -257,4 +261,41 @@ export interface LibraryGame {
   current: boolean
   /** False for a catalog game the player does not have. */
   owned?: boolean
+}
+
+/** A game picked from the catalog graph for being close to games the player has. */
+export interface SimilarPick {
+  game: Game
+  platform: string
+  difficulty: number
+  hours: number
+  playthroughs: number | null
+  hasMissables: boolean
+  hasDifficultyTrophy: boolean | null
+  /** Sent only when the catalog knows it. */
+  hasOnline?: boolean
+  /** One to three names of the player's games that led to it. */
+  because: string[]
+  /** The names in `because` the player platinumed (missing in older stored data). */
+  platinumed?: string[]
+}
+
+/** GET /api/recommendations/similar: games like the player's, short platinums and the same series. */
+export interface SimilarRecs {
+  items: SimilarPick[]
+  quick: SimilarPick[]
+  series: SimilarPick[]
+  /** No library to compare with yet: nothing was searched. */
+  reason?: 'no-library'
+}
+
+/** How a game relates to the one on screen; expansions, base games and the series come first. */
+export type SimilarRelation = 'expansion' | 'base' | 'series' | 'similar'
+
+/** GET /api/games/similar?game=… items. */
+export interface SimilarGame {
+  game: Game
+  difficulty: number
+  hours: number
+  relation: SimilarRelation
 }
