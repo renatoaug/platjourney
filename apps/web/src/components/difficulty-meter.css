@@ -98,7 +98,7 @@
 
   .dm-compact .dm-number small {
     font-size: var(--text-sm);
-    color: var(--color-fg-subtle);
+    color: var(--color-fg-muted);
   }
 
   .dm-compact .dm-band {
