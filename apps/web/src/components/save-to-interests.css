@@ -1,0 +1,60 @@
+@layer screens {
+  /* A small square button on a dark wash over the cover's corner. */
+  .card-save {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-border-strong);
+    background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+    color: var(--color-fg);
+    opacity: 0;
+    transition:
+      opacity 0.15s,
+      color 0.15s;
+  }
+
+  .card-save .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .card-save:hover {
+    color: var(--color-accent);
+  }
+
+  /* A saved game keeps its filled bookmark in sight. */
+  .card-save.saved {
+    color: var(--color-accent);
+    opacity: 1;
+  }
+
+  .card-save.saved:hover {
+    color: var(--color-danger);
+  }
+
+  /* It shows on hover or keyboard focus; on a touch screen, always. */
+  .band-card:hover .card-save,
+  .band-card:focus-within .card-save {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    .card-save {
+      opacity: 1;
+    }
+  }
+
+  /* The game page's smaller cards. */
+  .game-band.compact .card-save {
+    width: 24px;
+    height: 24px;
+  }
+
+  .game-band.compact .card-save .icon {
+    width: 12px;
+    height: 12px;
+  }
+}

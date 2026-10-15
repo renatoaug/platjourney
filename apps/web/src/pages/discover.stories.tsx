@@ -11,13 +11,13 @@ const meta: Meta = { title: 'Pages/Discover', parameters: { layout: 'fullscreen'
 export default meta
 type Story = StoryObj
 
-// The similar games come from the cache, so the story makes no request; Nexo waits to be asked.
+// The similar games come from the cache and Nexo has no saved batch, so the story makes no request.
 export const Loaded: Story = {
   render: () => (
     <MockAppState
       value={{
         data: { ...SAMPLE_DATA, ranking: rankingData, servers: serversData },
-        cache: { similar: similarData },
+        cache: { similar: similarData, recsChecked: true },
       }}
     >
       <Discover />
@@ -41,16 +41,23 @@ export const NexoPicks: Story = {
 
 export const Empty: Story = {
   render: () => (
-    <MockAppState value={{ cache: { similar: { items: [], quick: [], series: [] } } }}>
+    <MockAppState
+      value={{ cache: { similar: { items: [], quick: [], series: [] }, recsChecked: true } }}
+    >
       <Discover />
     </MockAppState>
   ),
 }
 
-// The similar games request never settles, so they stay loading too.
+// Neither the similar games nor the look for a saved batch settles, so both stay loading.
 export const Loading: Story = {
   render: () => (
-    <MockAppState value={{ data: null, cache: { similarLoad: new Promise(() => {}) } }}>
+    <MockAppState
+      value={{
+        data: null,
+        cache: { similarLoad: new Promise(() => {}), storedLoad: new Promise(() => {}) },
+      }}
+    >
       <Discover />
     </MockAppState>
   ),

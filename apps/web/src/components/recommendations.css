@@ -171,8 +171,7 @@
     color: var(--color-fg-soft);
   }
 
-  /* Save and dismiss over the cover: small round buttons on a dark wash. */
-  .rec-save,
+  /* Dismiss over the cover, beside the bookmark and in its look. */
   .rec-dismiss {
     display: grid;
     place-items: center;
@@ -189,36 +188,21 @@
       color 0.15s;
   }
 
-  .rec-save .icon,
   .rec-dismiss .icon {
     width: 14px;
     height: 14px;
   }
 
-  .rec-save.saved {
-    color: var(--color-accent);
-    opacity: 1;
-  }
-
-  .rec-save:hover {
-    color: var(--color-accent);
-  }
-
-  .rec-save.saved:hover,
   .rec-dismiss:hover {
     color: var(--color-danger);
   }
 
-  /* They show on hover or keyboard focus; on a touch screen, always. */
-  .band-card:hover .rec-save,
   .band-card:hover .rec-dismiss,
-  .band-card:focus-within .rec-save,
   .band-card:focus-within .rec-dismiss {
     opacity: 1;
   }
 
   @media (hover: none) {
-    .rec-save,
     .rec-dismiss {
       opacity: 1;
     }

@@ -6,6 +6,7 @@ import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import type { SimilarGame, SimilarRelation } from '../lib/types'
 import { GameCard, GameShelf } from './game-band'
+import { SaveToInterests } from './save-to-interests'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -39,6 +40,7 @@ export function SimilarGames({ state }: { state: SimilarGamesState }) {
     .map((s) => (
       <GameCard
         key={s.game.id}
+        actions={<SaveToInterests game={s.game} source="title" />}
         item={{
           game: s.game,
           difficulty: s.difficulty,

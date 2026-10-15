@@ -179,6 +179,7 @@ export type Target =
   | 'Rich'
   | 'Row'
   | 'SaveButton'
+  | 'SaveToInterests'
   | 'SavedFrom'
   | 'Servers'
   | 'ServersSkeleton'

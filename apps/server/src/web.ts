@@ -955,10 +955,19 @@ const API_ROUTES: Record<string, ApiHandler> = {
   },
   'GET /api/recommendations': async ({ res, url, me, titles }) => {
     const force = url.searchParams.get('refresh') === '1'
+    // stored=1 answers the batch already saved, never a new one: the page shows it on every visit
+    // without asking the model.
+    const storedOnly = url.searchParams.get('stored') === '1'
     return json(
       res,
       200,
-      await recommendations(me, await titles(), await ownedGames(me.psn_account_id), force),
+      await recommendations(
+        me,
+        await titles(),
+        await ownedGames(me.psn_account_id),
+        force,
+        storedOnly,
+      ),
     )
   },
 }
