@@ -1,17 +1,15 @@
-/** Recommendations for the player's taste: rows with save/dismiss, and the taste profile behind them. */
+/** Nexo's picks for the player's taste: game cards with save/dismiss in their own section, asked for
+ * with a button, and the taste profile behind them. */
 
-import { type MouseEvent, useState } from 'react'
-import { Link } from 'react-router'
+import { type MouseEvent, type ReactNode, useState } from 'react'
 import { useInterests } from '../app/use-interests'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { plainText } from '../lib/text'
+import { nameText, plainText } from '../lib/text'
 import type { Game } from '../lib/types'
-import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
-import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { useDemo } from './demo'
-import { DifficultyMeter } from './difficulty-meter'
+import { type CardItem, GameCard, GameShelf, ShelfSkeleton } from './game-band'
 import {
   effectiveProfile,
   emptyPrefs,
@@ -19,26 +17,10 @@ import {
   TasteEditor,
   type TastePrefs,
 } from './taste-editor'
-import { titleHref } from './tip'
 import './recommendations.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    difficulty: 'Dificuldade da platina',
-    hours: 'Tempo estimado para a platina',
-    runsTitle: 'Número mínimo de jogadas',
-    runs: {
-      one: '{count} jogada',
-      other: '{count} jogadas',
-    },
-    difficultyTrophyYes: 'Há troféu que exige jogar em uma dificuldade específica',
-    difficultyTrophyNo: 'Nenhum troféu exige uma dificuldade específica',
-    difficultyTrophy: 'Troféu de dificuldade',
-    noDifficultyTrophy: 'Sem troféu de dificuldade',
-    missablesTitle: 'Há troféus perdíveis',
-    missables: 'Perdíveis',
-    similarTo: 'parecido com {games}',
-    and: ' e ',
     saveAria: 'Salvar {name} nos interesses',
     removeAria: 'Remover {name} dos interesses',
     saveTip: 'Salvar nos interesses',
@@ -63,27 +45,20 @@ const messages = defineMessages({
     errorTitle: 'Recomendações fora do ar',
     error: 'Não conseguimos montar suas recomendações agora. Tente de novo em instantes.',
     emptyTitle: 'Nenhuma recomendação ainda',
-    empty: 'Toque no ↻ ao lado do título para o Nexo montar a lista pelo seu gosto.',
+    empty: 'Toque em "Gerar de novo" para o Nexo montar a lista pelo seu gosto.',
     noLibraryTitle: 'Seu gosto ainda é um mistério',
     noLibrary:
       'Jogue e conquiste alguns troféus: o Nexo usa a sua biblioteca para recomendar a próxima platina.',
+    eyebrow: 'ANÁLISE DO NEXO',
+    title: 'Escolhas do Nexo',
+    ask: 'O Nexo lê o seu gosto e os guias para escolher a dedo as próximas platinas.',
+    askButton: 'Pedir ao Nexo',
+    customize: 'Personalizar',
+    customizeTip: 'Ajustar o seu perfil de gosto e as regras',
+    searchAgain: 'Gerar de novo',
+    searchAgainTip: 'Pedir ao Nexo um novo lote de escolhas',
   },
   [Language.En]: {
-    difficulty: 'Platinum difficulty',
-    hours: 'Estimated time to platinum',
-    runsTitle: 'Minimum number of playthroughs',
-    runs: {
-      one: '{count} playthrough',
-      other: '{count} playthroughs',
-    },
-    difficultyTrophyYes: 'A trophy requires playing on a specific difficulty',
-    difficultyTrophyNo: 'No trophy requires a specific difficulty',
-    difficultyTrophy: 'Difficulty trophy',
-    noDifficultyTrophy: 'No difficulty trophy',
-    missablesTitle: 'Has missable trophies',
-    missables: 'Missables',
-    similarTo: 'similar to {games}',
-    and: ' and ',
     saveAria: 'Save {name} to interests',
     removeAria: 'Remove {name} from interests',
     saveTip: 'Save to interests',
@@ -108,10 +83,18 @@ const messages = defineMessages({
     errorTitle: 'Recommendations are down',
     error: 'We could not build your picks right now. Try again in a moment.',
     emptyTitle: 'No picks yet',
-    empty: 'Tap ↻ next to the title and Nexo builds the list for your taste.',
+    empty: 'Tap "Get new ones" and Nexo builds the list for your taste.',
     noLibraryTitle: 'Your taste is still a mystery',
     noLibrary:
       'Play and earn a few trophies: Nexo uses your library to recommend the next platinum.',
+    eyebrow: "NEXO'S ANALYSIS",
+    title: "Nexo's picks",
+    ask: 'Nexo reads your taste and the guides to hand-pick your next platinums.',
+    askButton: 'Ask Nexo',
+    customize: 'Customize',
+    customizeTip: 'Adjust your taste profile and rules',
+    searchAgain: 'Get new ones',
+    searchAgainTip: 'Ask Nexo for a new batch of picks',
   },
 })
 
@@ -142,6 +125,7 @@ export interface Recommendation {
   hasDifficultyTrophy?: boolean | null
   why: string
   hasMissables?: boolean
+  hasOnline?: boolean
   similarTo?: string[]
 }
 
@@ -158,18 +142,22 @@ export interface Recs {
   reason?: 'no-library'
 }
 
-export type RecsState = { status: 'loading' } | { status: 'error' } | { status: 'ok'; recs: Recs }
+/** `idle`: the player has not asked Nexo yet. */
+export type RecsState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ok'; recs: Recs }
 
-// Keep generated text free of decorative emoji, like uiText() does for HTML (React escapes for us).
-// The buttons sit inside the row's link; keep the click from navigating.
+// The buttons sit over the card, outside its links; keep a click from reaching them anyway.
 const stop = (e: MouseEvent) => {
   e.preventDefault()
   e.stopPropagation()
 }
 
-type OnDismiss = (r: Recommendation, reason?: DismissReason) => void
+export type OnDismiss = (r: Recommendation, reason?: DismissReason) => void
 
-/** In place of the row: why the player is turning it down, or no reason at all. */
+/** In place of the card: why the player is turning it down, or no reason at all. */
 function DismissAsk({
   rec: r,
   onDismiss,
@@ -182,134 +170,111 @@ function DismissAsk({
   const t = useMessages(messages)
   const name = r.game.name
   return (
-    <fieldset className="row rec-ask" aria-label={t('dismissAsk', { name })}>
-      <Cover url={r.game.cover_url} name={name} className="rec-cover" />
-      <div className="grow">
-        <div className="n">{t('dismissAsk', { name })}</div>
-        <small className="muted">{t('dismissHint')}</small>
-        <div className="chips rec-reasons">
-          {DISMISS_REASONS.map((reason) => (
-            <button
-              key={reason}
-              type="button"
-              className="chip"
-              onClick={() => onDismiss(r, reason)}
-            >
-              {t(REASON_LABEL[reason])}
-            </button>
-          ))}
-        </div>
-        <div className="rec-ask-actions">
-          <button type="button" className="button ghost sm" onClick={() => onDismiss(r)}>
-            {t('dismissSkip')}
+    <fieldset className="band-card rec-ask" aria-label={t('dismissAsk', { name })}>
+      <b className="band-name">{t('dismissAsk', { name })}</b>
+      <small className="muted">{t('dismissHint')}</small>
+      <div className="chips rec-reasons">
+        {DISMISS_REASONS.map((reason) => (
+          <button key={reason} type="button" className="chip" onClick={() => onDismiss(r, reason)}>
+            {t(REASON_LABEL[reason])}
           </button>
-          <button type="button" className="button ghost sm" onClick={onCancel}>
-            {t('dismissCancel')}
-          </button>
-        </div>
+        ))}
+      </div>
+      <div className="rec-ask-actions">
+        <button type="button" className="button ghost sm" onClick={() => onDismiss(r)}>
+          {t('dismissSkip')}
+        </button>
+        <button type="button" className="button ghost sm" onClick={onCancel}>
+          {t('dismissCancel')}
+        </button>
       </div>
     </fieldset>
   )
 }
 
-function RecRow({ rec: r, onDismiss }: { rec: Recommendation; onDismiss: OnDismiss }) {
+/** Save and dismiss, over the card's cover. */
+function RecActions({ game, onAsk }: { game: Game; onAsk: () => void }) {
   const t = useMessages(messages)
   const { find, toggle } = useInterests()
-  const demo = useDemo()
   const [saving, setSaving] = useState(false)
+  const saved = !!find(game.id)
+  const name = game.name
+  return (
+    <>
+      <button
+        type="button"
+        className={`rec-save ${saved ? 'saved' : ''}`}
+        disabled={saving}
+        aria-label={t(saved ? 'removeAria' : 'saveAria', { name })}
+        data-tip={t(saved ? 'removeTip' : 'saveTip')}
+        onClick={async (e) => {
+          stop(e)
+          setSaving(true)
+          await toggle(game.id, name, 'recommendations')
+          setSaving(false)
+        }}
+      >
+        <Icon name={saved ? 'bookmark-filled' : 'bookmark'} />
+      </button>
+      <button
+        type="button"
+        className="rec-dismiss"
+        aria-label={t('dismissAria', { name })}
+        data-tip={t('dismissTip')}
+        onClick={(e) => {
+          stop(e)
+          onAsk()
+        }}
+      >
+        <Icon name="close" />
+      </button>
+    </>
+  )
+}
+
+/** One recommendation as a game card, with save and dismiss (none in the demo). `reason` is the
+ * card's short line; Nexo's cards pass its paragraph, clamped, with the full text in the tooltip. */
+export function RecCard({
+  rec: r,
+  onDismiss,
+  reason,
+  reasonTitle,
+  reasonLines,
+}: {
+  rec: Recommendation
+  onDismiss: OnDismiss
+  reason?: ReactNode
+  reasonTitle?: string
+  reasonLines?: CardItem['reasonLines']
+}) {
+  const demo = useDemo()
   const [asking, setAsking] = useState(false)
-  const saved = !!find(r.game.id)
-  const name = r.game.name
-  const runs = r.playthroughs
   if (asking) return <DismissAsk rec={r} onDismiss={onDismiss} onCancel={() => setAsking(false)} />
   return (
-    <Link className="row" to={titleHref(r.game.id)}>
-      <Cover url={r.game.cover_url} name={name} className="rec-cover" />
-      <div className="grow">
-        <div className="recommendation-heading">
-          <div className="n">
-            {name}{' '}
-            <span className="pill" style={{ fontSize: 10, padding: '1px 7px' }}>
-              {r.platform}
-            </span>
-          </div>
-          <div className="recommendation-meta">
-            {r.difficulty > 0 && <DifficultyMeter value={r.difficulty} look="compact" />}
-            <span title={t('hours')}>
-              <Icon name="clock" /> ~{r.hours}h
-            </span>
-            {Number.isInteger(runs) && runs && runs > 0 ? (
-              <span title={t('runsTitle')}>
-                <Icon name="refresh" /> {t('runs', { count: runs })}
-              </span>
-            ) : null}
-            {typeof r.hasDifficultyTrophy === 'boolean' && (
-              <span
-                title={r.hasDifficultyTrophy ? t('difficultyTrophyYes') : t('difficultyTrophyNo')}
-              >
-                <Icon name="trophy" />{' '}
-                {r.hasDifficultyTrophy ? t('difficultyTrophy') : t('noDifficultyTrophy')}
-              </span>
-            )}
-            {r.hasMissables && (
-              <span title={t('missablesTitle')}>
-                <Icon name="warning" /> {t('missables')}
-              </span>
-            )}
-          </div>
-        </div>
-        <div style={{ fontSize: 13, marginTop: 4, color: 'var(--color-fg)' }}>
-          {plainText(r.why)}
-        </div>
-        {/* The "similar to" line and the row's actions share one line; long text wraps before them. */}
-        <div className="rec-foot">
-          <div className="rec-foot-text">
-            {!!r.similarTo?.length && (
-              <div className="similar-to">
-                <Icon name="layers" /> {t('similarTo', { games: r.similarTo.join(t('and')) })}
-              </div>
-            )}
-          </div>
-          {!demo && (
-            <span className="rec-actions">
-              <button
-                type="button"
-                className={`rec-save ${saved ? 'saved' : ''}`}
-                disabled={saving}
-                aria-label={t(saved ? 'removeAria' : 'saveAria', {
-                  name,
-                })}
-                data-tip={t(saved ? 'removeTip' : 'saveTip')}
-                onClick={async (e) => {
-                  stop(e)
-                  setSaving(true)
-                  await toggle(r.game.id, name, 'recommendations')
-                  setSaving(false)
-                }}
-              >
-                <Icon name={saved ? 'bookmark-filled' : 'bookmark'} />
-              </button>
-              <button
-                type="button"
-                className="rec-dismiss"
-                aria-label={t('dismissAria', { name })}
-                data-tip={t('dismissTip')}
-                onClick={(e) => {
-                  stop(e)
-                  setAsking(true)
-                }}
-              >
-                <Icon name="close" />
-              </button>
-            </span>
-          )}
-          <span className="row-arrow">
-            <Icon name="arrow" />
-          </span>
-        </div>
-      </div>
-    </Link>
+    <GameCard
+      item={{
+        game: r.game,
+        difficulty: r.difficulty,
+        hours: r.hours,
+        playthroughs: r.playthroughs,
+        hasMissables: r.hasMissables,
+        hasOnline: r.hasOnline,
+        hasDifficultyTrophy: r.hasDifficultyTrophy,
+        reason,
+        reasonTitle,
+        reasonLines,
+      }}
+      actions={demo ? undefined : <RecActions game={r.game} onAsk={() => setAsking(true)} />}
+    />
   )
+}
+
+/** Opens the taste profile under Nexo's picks and brings it into view. */
+export function openTaste() {
+  const details = document.querySelector<HTMLDetailsElement>('#taste details')
+  if (!details) return
+  details.open = true
+  details.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 /** What the editable profile needs from the screen: saving the draft, and asking for new picks with
@@ -404,70 +369,154 @@ function Taste({
   )
 }
 
-function RecsSkeleton({ n = 4 }: { n?: number }) {
-  return repeat(n, () => (
-    <div className="row">
-      <Sk w="92px" h={43} style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }} />
-      <div className="grow">
-        <Sk w="45%" h={12} />
-        <Sk w="30%" h={10} style={{ marginTop: 8 }} />
-        <Sk w="100%" h={11} style={{ marginTop: 10 }} />
-        <Sk w="85%" h={11} style={{ marginTop: 6 }} />
-        <Sk w="40%" h={10} style={{ marginTop: 10 }} />
-      </div>
+/** Before the player asks: one line and the button, with Nexo beside them. */
+function NexoInvite({ onAsk, disabled }: { onAsk?: () => void; disabled?: boolean }) {
+  const t = useMessages(messages)
+  return (
+    <div className="nexo-invite">
+      <img src="/nexo-avatar.svg" alt="" />
+      <p>{t('ask')}</p>
+      <button type="button" className="button sm" disabled={disabled} onClick={onAsk}>
+        <Icon name="nexo" /> {t('askButton')}
+      </button>
     </div>
-  ))
+  )
 }
 
-/** `#recs` and `#taste` for a load state. Saving goes through the interests; dismissing is the caller's. */
+/** In place of the cards for a state with none: the invitation, Nexo at work, the error or empty. */
+function RecsFallback({
+  state,
+  onAsk,
+  askDisabled,
+}: {
+  state: RecsState
+  onAsk?: () => void
+  askDisabled?: boolean
+}) {
+  const t = useMessages(messages)
+  if (state.status === 'idle') return <NexoInvite onAsk={onAsk} disabled={askDisabled} />
+  if (state.status === 'loading')
+    return (
+      <>
+        <div className="recs-thinking" role="status">
+          <img src="/nexo-avatar.svg" alt="" />
+          <span>{t('thinking')}</span>
+        </div>
+        <ShelfSkeleton />
+      </>
+    )
+  if (state.status === 'error')
+    return (
+      <ErrorState icon="warning" title={t('errorTitle')}>
+        {t('error')}
+      </ErrorState>
+    )
+  if (state.recs.reason === 'no-library')
+    return (
+      <EmptyState icon="compass" title={t('noLibraryTitle')}>
+        {t('noLibrary')}
+      </EmptyState>
+    )
+  return (
+    <EmptyState icon="compass" title={t('emptyTitle')}>
+      {t('empty')}
+    </EmptyState>
+  )
+}
+
+/** "Gerar de novo" and, with picks, "Personalizar"; nothing before the player asks. */
+function RecsActions({
+  state,
+  onRefresh,
+  refreshDisabled,
+}: {
+  state: RecsState
+  onRefresh?: () => void
+  refreshDisabled?: boolean
+}) {
+  const t = useMessages(messages)
+  if (state.status === 'idle' || !onRefresh) return null
+  if (state.status === 'ok' && state.recs.reason === 'no-library') return null
+  const loading = state.status === 'loading'
+  return (
+    <>
+      {state.status === 'ok' && (
+        <button type="button" className="ghost sm" data-tip={t('customizeTip')} onClick={openTaste}>
+          <Icon name="edit" /> {t('customize')}
+        </button>
+      )}
+      <button
+        type="button"
+        className={`ghost sm${loading ? ' busy' : ''}`}
+        id="recs-refresh"
+        data-tip={t('searchAgainTip')}
+        disabled={loading || refreshDisabled}
+        onClick={onRefresh}
+      >
+        <Icon name="refresh" /> {t('searchAgain')}
+      </button>
+    </>
+  )
+}
+
+/** The section `#recs` (with `#taste` under the cards) for a load state: Nexo's picks, asked for
+ * with `onAsk` while idle, new ones with `onRefresh`. Saving goes through the interests; dismissing
+ * is the caller's. */
 export function Recommendations({
   state,
   onDismiss,
   editing,
+  onAsk,
+  askDisabled,
+  onRefresh,
+  refreshDisabled,
 }: {
   state: RecsState
   onDismiss: OnDismiss
   editing?: TasteEditing
+  onAsk?: () => void
+  askDisabled?: boolean
+  onRefresh?: () => void
+  refreshDisabled?: boolean
 }) {
   const t = useMessages(messages)
   const items = state.status === 'ok' ? (state.recs.items ?? []) : []
   return (
-    <>
-      <div id="recs">
-        {state.status === 'loading' ? (
-          <>
-            <div className="recs-thinking" role="status">
-              <img src="/nexo-avatar.svg" alt="" />
-              <span>{t('thinking')}</span>
-            </div>
-            <RecsSkeleton n={3} />
-          </>
-        ) : state.status === 'error' ? (
-          <ErrorState icon="warning" title={t('errorTitle')}>
-            {t('error')}
-          </ErrorState>
-        ) : items.length ? (
-          items.map((r) => <RecRow key={r.game.id} rec={r} onDismiss={onDismiss} />)
-        ) : state.status === 'ok' && state.recs.reason === 'no-library' ? (
-          <EmptyState icon="compass" title={t('noLibraryTitle')}>
-            {t('noLibrary')}
-          </EmptyState>
-        ) : (
-          <EmptyState icon="compass" title={t('emptyTitle')}>
-            {t('empty')}
-          </EmptyState>
-        )}
-      </div>
-      <div id="taste">
-        {state.status === 'ok' && state.recs.reason !== 'no-library' && (
-          <Taste
-            profile={state.recs.profile}
-            baseProfile={state.recs.baseProfile}
-            prefs={state.recs.prefs}
-            editing={editing}
+    <GameShelf
+      id="recs-title"
+      bodyId="recs"
+      className="recs-shelf"
+      eyebrow={t('eyebrow')}
+      title={t('title')}
+      actions={
+        <RecsActions state={state} onRefresh={onRefresh} refreshDisabled={refreshDisabled} />
+      }
+      cards={items.map((r) => {
+        const why = nameText(r.why)
+        return (
+          <RecCard
+            key={r.game.id}
+            rec={r}
+            onDismiss={onDismiss}
+            reason={why || undefined}
+            reasonTitle={why || undefined}
+            reasonLines={3}
           />
-        )}
-      </div>
-    </>
+        )
+      })}
+      fallback={<RecsFallback state={state} onAsk={onAsk} askDisabled={askDisabled} />}
+      footer={
+        <div id="taste">
+          {state.status === 'ok' && state.recs.reason !== 'no-library' && (
+            <Taste
+              profile={state.recs.profile}
+              baseProfile={state.recs.baseProfile}
+              prefs={state.recs.prefs}
+              editing={editing}
+            />
+          )}
+        </div>
+      }
+    />
   )
 }

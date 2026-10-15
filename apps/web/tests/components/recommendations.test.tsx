@@ -10,23 +10,30 @@ afterEach(() => mock.restore())
 const [horizon, sekiro] = recsData.items
 const ok = { status: 'ok' as const, recs: recsData }
 const row = (name: string) => screen.getByRole('link', { name: new RegExp(name) })
+const card = (x: HTMLElement) => x.closest('article') as HTMLElement
 
-test('each row: platform, difficulty, time, runs and the reason', () => {
+test('each card: difficulty, time, the facts as icons and Nexo’s reason', () => {
   renderApp(<Recommendations state={ok} onDismiss={() => {}} />)
   const h = row('Horizon Zero Dawn')
   expect(h.getAttribute('href')).toBe('/title/game/game%3A10')
-  expect(within(h).getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
+  // The difficulty sits on the cover.
+  expect(within(card(h)).getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(h.textContent).toContain('~50h')
-  expect(h.textContent).toContain('1 jogada')
-  expect(h.textContent).toContain('Sem troféu de dificuldade')
-  expect(h.textContent).toContain('parecido com Days Gone e Ghost of Tsushima')
-  expect(h.textContent).not.toContain('Perdíveis')
+  expect(within(h).getByRole('img', { name: '1 jogada' })).toBeTruthy()
+  // Only what is true shows: no missables, no difficulty trophy.
+  expect(within(h).queryByRole('img', { name: 'Há troféus perdíveis' })).toBeNull()
+  expect(within(h).queryByRole('img', { name: /dificuldade específica/ })).toBeNull()
+  const reason = h.querySelector('.band-reason') as HTMLElement
+  expect(reason.textContent).toBe(
+    'Mundo aberto como Days Gone, com colecionáveis rastreáveis e nada perdível.',
+  )
+  expect(reason.className).toContain('lines-3')
+  expect(reason.getAttribute('title')).toBe(reason.textContent)
 
   const s = row('Sekiro')
-  expect(s.textContent).toContain('3 jogadas')
-  expect(s.textContent).toContain('Perdíveis')
-  expect(s.textContent).not.toContain('troféu de dificuldade')
-  expect(s.querySelector('.cover-placeholder')?.textContent).toBe('S')
+  expect(within(s).getByRole('img', { name: '3 jogadas' })).toBeTruthy()
+  expect(within(s).getByRole('img', { name: 'Há troféus perdíveis' })).toBeTruthy()
+  expect(document.querySelector('.band-card .cover-placeholder')).toBeTruthy()
 })
 
 test('a difficulty trophy and no run count', () => {
@@ -37,8 +44,40 @@ test('a difficulty trophy and no run count', () => {
       onDismiss={() => {}}
     />,
   )
-  expect(row('Horizon').textContent).toContain('Troféu de dificuldade')
-  expect(row('Horizon').textContent).not.toContain('jogada')
+  expect(
+    within(row('Horizon')).getByRole('img', {
+      name: 'Há troféu que exige jogar em uma dificuldade específica',
+    }),
+  ).toBeTruthy()
+  expect(within(row('Horizon')).queryByRole('img', { name: /jogada/ })).toBeNull()
+})
+
+test('the section: ANÁLISE DO NEXO, and six cards a page', () => {
+  const many = Array.from({ length: 8 }, (_, i) => ({
+    ...horizon,
+    game: { id: `game:m${i}`, name: `Jogo ${i}` },
+  }))
+  renderApp(
+    <Recommendations
+      state={{ status: 'ok', recs: { profile: null, items: many } }}
+      onDismiss={() => {}}
+    />,
+  )
+  const section = screen.getByRole('region', { name: 'Escolhas do Nexo' })
+  expect(within(section).getByText('ANÁLISE DO NEXO')).toBeTruthy()
+  expect(section.querySelectorAll('.band-card')).toHaveLength(6)
+  expect(within(section).getByText('1/2')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }))
+  expect(section.querySelectorAll('.band-card')).toHaveLength(2)
+})
+
+test('before the player asks: one line and the button', () => {
+  const onAsk = mock()
+  renderApp(<Recommendations state={{ status: 'idle' }} onDismiss={() => {}} onAsk={onAsk} />)
+  expect(screen.getByText(/O Nexo lê o seu gosto/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /Gerar de novo/ })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: /Pedir ao Nexo/ }))
+  expect(onAsk).toHaveBeenCalled()
 })
 
 test('the taste profile opens with the genres, traits and what to avoid', () => {
@@ -105,7 +144,7 @@ test('loading, error and empty', () => {
   const { container, rerender } = renderApp(
     <Recommendations state={{ status: 'loading' }} onDismiss={() => {}} />,
   )
-  expect(container.querySelectorAll('#recs .row')).toHaveLength(3)
+  expect(container.querySelectorAll('#recs .band-card')).toHaveLength(6)
   expect(screen.getByText('O Nexo está montando suas recomendações…')).toBeTruthy()
   expect(document.getElementById('taste')?.textContent).toBe('')
   rerender(<Recommendations state={{ status: 'error' }} onDismiss={() => {}} />)

@@ -17,6 +17,7 @@ import {
   seenGames,
 } from './repository/recommendation.ts'
 import { type User, updateUser } from './repository/user.ts'
+import { graphCandidates } from './similar.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -53,7 +54,7 @@ type TasteList = (typeof TASTE_LISTS)[number]
 type Lists = Record<TasteList, string[]>
 
 /** Rules every recommendation follows, checked against the guides we have. */
-interface RecFilters {
+export interface RecFilters {
   noMissables?: boolean
   onePlaythrough?: boolean
   noDifficultyTrophy?: boolean
@@ -280,6 +281,10 @@ export async function recommendations(
     seenGames(user.id, SEEN_KEEP_DAYS),
   ])
   const dismissedIds = new Set(dismissed.map((d) => d.game.id))
+  const exclude = new Set([...owned, ...dismissedIds, ...interests.map((i) => i.game.id)])
+  // The similar-games graph's best candidates come first in what the model looks at; without the
+  // graph (edges not written yet) the service searches by taste alone.
+  const candidates = await graphCandidates(user, library, games, exclude).catch(() => [])
 
   // The service retrieves the catalog games closest to the player's taste (owned,
   // dismissed and already-saved interests are off the table) and has the model
@@ -295,7 +300,8 @@ export async function recommendations(
           earnedByType: t.earnedByType,
           game: games.get(t.npCommunicationId)?.id ?? null,
         })),
-        exclude: [...new Set([...owned, ...dismissedIds, ...interests.map((i) => i.game.id)])],
+        exclude: [...exclude],
+        candidates,
         // Already shown, the longest ago first: they come back only when the unseen run out.
         seen,
         // A game turned down before the player bought it says nothing about their taste now.

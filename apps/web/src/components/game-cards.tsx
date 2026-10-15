@@ -1,4 +1,6 @@
-/** Games close to the platinum: the radar cards on the home screen and the ranking rows on Discover. */
+/** Games close to the platinum: the radar cards on the home screen, and the library cards on
+ * Discover (the same game card as the recommendations, with the rank, the progress and the hours
+ * played). */
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
@@ -7,6 +9,7 @@ import { shownProgress } from '../lib/progress'
 import type { RankingItem } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
+import { GameCard } from './game-band'
 import { titleHref } from './tip'
 import './hero.css'
 import './game-cards.css'
@@ -26,6 +29,13 @@ const messages = defineMessages({
     },
     hoursPlayed: ' · {hours} jogadas',
     dlcApart: 'DLC à parte: {earned}/{total}',
+    progressLine: '{earned}/{total} · faltam {count}',
+    progressLabel: 'Progresso da platina: {progress}%',
+    playedOf: '{played} de ~{hours}h',
+    played: '{played} jogadas',
+    playedTitle: 'Horas jogadas',
+    dlc: 'DLC {earned}/{total}',
+    dlcTitle: 'Troféus de DLC, fora da platina',
   },
   [Language.En]: {
     radarPosition: '0{n} ON RADAR',
@@ -41,6 +51,13 @@ const messages = defineMessages({
     },
     hoursPlayed: ' · {hours} played',
     dlcApart: 'DLC apart: {earned}/{total}',
+    progressLine: '{earned}/{total} · {count} left',
+    progressLabel: 'Platinum progress: {progress}%',
+    playedOf: '{played} of ~{hours}h',
+    played: '{played} played',
+    playedTitle: 'Hours played',
+    dlc: 'DLC {earned}/{total}',
+    dlcTitle: 'DLC trophies, outside the platinum',
   },
 })
 
@@ -84,30 +101,60 @@ export function RadarCard({ item: r, index: i }: { item: RankingItem; index: num
   )
 }
 
-export function RankingRow({ item: r, index: i }: { item: RankingItem; index: number }) {
+/** One game of the library on Discover: the rank over the cover, the hours played (of the guide's
+ * estimate when known), the DLC, and the progress above the difficulty. */
+export function LibraryCard({ item: r, index: i }: { item: RankingItem; index: number }) {
   const t = useMessages(messages)
   const { earned, total, progress, withDlc } = useShown(r)
+  const played = r.hours != null ? fmtHours(r.hours) : null
   return (
-    <Link className="row" to={titleHref(r.game)}>
-      <span className="rank">{i + 1}</span>
-      <img src={r.icon ?? ''} alt="" loading="lazy" />
-      <div className="grow">
-        <div className="n">{r.name}</div>
-        <small>
-          {earned}/{total}
-          {withDlc ? t('withDlc') : ''}
-          {t('remainingShort', { count: r.remaining })}
-          {r.dlc && !withDlc ? ` · DLC ${r.dlc.earned}/${r.dlc.total}` : ''}
-          {r.hours != null ? t('hoursPlayed', { hours: fmtHours(r.hours) }) : ''}
-        </small>
-        <div className="bar small">
-          <i style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-      <b className="display" style={{ color: 'var(--color-accent)' }}>
-        {progress}%
-      </b>
-    </Link>
+    <GameCard
+      item={{
+        game: { id: r.game, name: r.name, cover_url: r.cover ?? r.icon },
+        difficulty: r.difficulty ?? 0,
+        hours: r.guideHours ?? 0,
+        tag: String(i + 1),
+      }}
+      meta={
+        <span className="band-meta">
+          {played && (
+            <span title={t('playedTitle')}>
+              <Icon name="clock" />{' '}
+              {/* "de ~Xh" only while the estimate is still ahead of the time played. */}
+              {r.guideHours && (r.hours ?? 0) < r.guideHours
+                ? t('playedOf', { played, hours: r.guideHours })
+                : t('played', { played })}
+            </span>
+          )}
+          {r.dlc && !withDlc && (
+            <span className="band-dlc" title={t('dlcTitle')}>
+              <Icon name="layers" /> {t('dlc', { earned: r.dlc.earned, total: r.dlc.total })}
+            </span>
+          )}
+        </span>
+      }
+      progress={
+        <span className="library-progress">
+          <span className="barlabel">
+            <span>
+              {t('progressLine', { earned, total, count: r.remaining })}
+              {withDlc ? t('withDlc') : ''}
+            </span>
+            <b>{progress}%</b>
+          </span>
+          <span
+            className="bar small"
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={t('progressLabel', { progress })}
+          >
+            <i style={{ width: `${pct(progress)}%` }} />
+          </span>
+        </span>
+      }
+    />
   )
 }
 
@@ -128,22 +175,5 @@ export function GameCardsSkeleton({ n = 3 }: { n?: number }) {
         <Sk w="60%" h={9} style={{ marginTop: 12 }} />
       </div>
     </article>
-  ))
-}
-
-export function RankingRowsSkeleton({ n = 5 }: { n?: number }) {
-  return repeat(n, () => (
-    <div className="row">
-      <span className="rank">
-        <Sk w="14px" h={16} />
-      </span>
-      <Sk w="68px" h={44} style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }} />
-      <div className="grow">
-        <Sk w="60%" h={12} />
-        <Sk w="40%" h={10} style={{ marginTop: 8 }} />
-        <Sk w="100%" h={3} style={{ marginTop: 10 }} />
-      </div>
-      <Sk w="34px" h={18} />
-    </div>
   ))
 }

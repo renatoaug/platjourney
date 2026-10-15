@@ -12,5 +12,6 @@ One file per decision that shapes the code: what was decided, why, and what it c
 | [0006](0006-snake-case-storage.md) | snake_case in the database, camelCase in TypeScript | Accepted |
 | [0007](0007-model-per-feature.md) | A provider and model per feature | Accepted |
 | [0008](0008-plugins.md) | Plugins add to an instance without changing the app | Accepted |
+| [0009](0009-similar-games-graph.md) | Recommendations by similar games from a graph, the model's picks on demand | Accepted |
 
 New records copy [`template.md`](template.md).

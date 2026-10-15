@@ -1,4 +1,4 @@
-/** Pager for a paged list: "1–24 de 399" on the left; previous, page numbers and next on the right. The first and last pages are always among the numbers, so there are no separate jump buttons. Renders nothing when everything fits on one page. */
+/** Pager for a paged list: "1–24 de 399" on the left; previous, page numbers and next on the right. The first and last pages are always among the numbers, so there are no separate jump buttons. `look="arrows"` is the small one for a band of cards: previous, "1/3", next. Renders nothing when everything fits on one page. */
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { Icon } from './icon'
 import './pager.css'
@@ -11,6 +11,7 @@ const messages = defineMessages({
       previous: 'Página anterior',
       next: 'Próxima página',
       page: 'Página {page}',
+      count: 'Página {page} de {pages}',
     },
   },
   [Language.En]: {
@@ -20,6 +21,7 @@ const messages = defineMessages({
       previous: 'Previous page',
       next: 'Next page',
       page: 'Page {page}',
+      count: 'Page {page} of {pages}',
     },
   },
 })
@@ -45,6 +47,7 @@ export function Pager({
   onPage,
   label,
   disabled = false,
+  look = 'numbers',
 }: {
   page: number
   size: number
@@ -53,6 +56,8 @@ export function Pager({
   label?: string
   /** While a change is being saved, like the rest of the list. */
   disabled?: boolean
+  /** `arrows`: only previous and next with "1/3" between them, for a band's head line. */
+  look?: 'numbers' | 'arrows'
 }) {
   const t = useMessages(messages)
   const pages = Math.max(1, Math.ceil(total / size))
@@ -69,6 +74,16 @@ export function Pager({
       <Icon name={icon} />
     </button>
   )
+  if (look === 'arrows')
+    return (
+      <nav className="pager pager-arrows" aria-label={label ?? t('pager.label')}>
+        {arrow(page - 1, t('pager.previous'), 'chevron-left', page === 1)}
+        <span className="pager-count" title={t('pager.count', { page, pages })}>
+          {page}/{pages}
+        </span>
+        {arrow(page + 1, t('pager.next'), 'chevron-right', page === pages)}
+      </nav>
+    )
   return (
     <nav className="pager" aria-label={label ?? t('pager.label')}>
       <span>

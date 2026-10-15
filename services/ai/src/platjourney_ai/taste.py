@@ -156,3 +156,22 @@ async def candidates(
     liked = [s for s in usable if s.weight > 0.5]
     nearest = await similar_games(taste, k, sorted(set(exclude)), only)
     return annotate(nearest, liked, vectors)
+
+
+async def games_as_candidates(
+    library: Sequence[LibraryTitle], ids: list[str], now: datetime | None = None
+) -> list[Candidate]:
+    """The given catalog games as candidates, in the given order, each annotated with the owned
+    games it resembles. A game missing from the catalog is left out."""
+    if not ids:
+        return []
+    sig = signals(library, now or datetime.now(UTC))
+    vectors = await embeddings_for([s.game for s in sig])
+    liked = [s for s in sig if s.game in vectors and s.weight > 0.5]
+    rows = await db.rows(
+        'SELECT id, name, platforms, release_year, genres, embedding FROM game '
+        'WHERE id IN $ids.map(|$i| type::record($i))',
+        {'ids': list(dict.fromkeys(ids))},
+    )
+    by_id = {str(r['id']): r for r in rows}
+    return annotate([by_id[i] for i in dict.fromkeys(ids) if i in by_id], liked, vectors)

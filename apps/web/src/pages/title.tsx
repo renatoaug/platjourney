@@ -1,6 +1,6 @@
 /** Game detail for a title outside the current game (owned or recommended). */
 
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
@@ -11,6 +11,7 @@ import { GameColumns } from '../components/game-columns'
 import { GameShowcase, GameShowcaseSkeleton, type GameStore } from '../components/game-showcase'
 import { Guide, GuideSkeleton } from '../components/guide'
 import { HeroProgress, HeroSkeleton, Short, UnobtainableBanner } from '../components/hero'
+import { SimilarGamesSection } from '../components/similar-games'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
@@ -275,8 +276,8 @@ function HeroBottom({ d }: { d: TitleDetail }) {
   )
 }
 
-/** A loaded title: hero, then trophies and guide. */
-function TitleView({ d }: { d: TitleDetail }) {
+/** A loaded title: hero, the showcase and the similar games, then trophies and guide. */
+function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
   const t = useMessages(messages)
   const g = d.guide
   const owned = d.owned
@@ -313,6 +314,7 @@ function TitleView({ d }: { d: TitleDetail }) {
         </div>
       </div>
       <GameShowcase game={d.game} name={d.name} store={d.owned ? null : d.store} />
+      {similar}
       {/* Every game gets the same two columns as the current game: trophies on the left, the
           guide beside them. A game whose PSN list is not known yet says so where the list goes. */}
       <GameColumns
@@ -357,8 +359,17 @@ function TitleView({ d }: { d: TitleDetail }) {
 
 type TitleLoad = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; d: TitleDetail }
 
-/** The screen for a given load state. `owned` picks the skeleton (a library link is likely owned). */
-export function TitleScreen({ load, owned }: { load: TitleLoad; owned: boolean }) {
+/** The screen for a given load state. `owned` picks the skeleton (a library link is likely owned);
+ * `similar` goes under the showcase ("Parecidos com este"). */
+export function TitleScreen({
+  load,
+  owned,
+  similar,
+}: {
+  load: TitleLoad
+  owned: boolean
+  similar?: ReactNode
+}) {
   const t = useMessages(messages)
   const navigate = useNavigate()
   // Back goes where the player came from (Guides, Discover, the library); a page opened from a
@@ -380,7 +391,7 @@ export function TitleScreen({ load, owned }: { load: TitleLoad; owned: boolean }
       <div id="title-page">
         {load.kind === 'loading' && <TitleSkeleton owned={owned} />}
         {load.kind === 'error' && <ErrorState>{t('notFound')}</ErrorState>}
-        {load.kind === 'ready' && <TitleView d={load.d} />}
+        {load.kind === 'ready' && <TitleView d={load.d} similar={similar} />}
       </div>
     </Page>
   )
@@ -425,5 +436,24 @@ export function Title() {
     }
   }, [query])
 
-  return <TitleScreen load={load} owned={owned} />
+  // The catalog's name ("Days Gone"), not the trophy list's ("DAYS GONE").
+  const name = load.kind === 'ready' ? (load.d.game?.name ?? load.d.name) : null
+  // The tab shows the game's name (the shell leaves game pages to it); until it is known, the tab
+  // keeps the page the player came from.
+  useEffect(() => {
+    if (!name) return
+    const previous = document.title
+    document.title = `${name} · PlatJourney`
+    return () => {
+      document.title = previous
+    }
+  }, [name])
+
+  return (
+    <TitleScreen
+      load={load}
+      owned={owned}
+      similar={load.kind === 'ready' && <SimilarGamesSection gameId={load.d.game.id} />}
+    />
+  )
 }

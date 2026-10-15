@@ -17,6 +17,7 @@ bun run seed                 # the read-only demo player and its games
 bun run catalog:expand       # the game catalog from IGDB (once, safe to re-run)
 bun run catalog:media        # each game's gallery, studio, site, release day and PlayStation Store link (safe to re-run)
 bun run catalog:releases     # the games out around today, for the home's calendar (the server repeats it daily)
+bun run catalog:similar      # similar games, expansions and series from IGDB, for recommendations by similarity (safe to re-run)
 bun run embed                # catalog vectors (once, safe to re-run)
 
 bun run dev                  # server, AI service and web, reloading on save

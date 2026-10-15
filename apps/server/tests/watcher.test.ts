@@ -179,6 +179,8 @@ describe('session start', () => {
     })
 
     test('a trophy earned since the last notice brings the full one back', async () => {
+      // The unlock also gets Nexo's reaction: answered here, never by a running AI service.
+      spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
       spyOn(psn, 'titleTrophies').mockResolvedValue([
         ...trophies.slice(0, 2),
         makeTrophy({ id: 4, name: 'Novo', earned: true, earnedAt: hoursAgo(1) }),

@@ -1,21 +1,4 @@
 @layer screens {
-  .recommendation-meta,
-  .recommendation-meta > span {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .recommendation-meta .icon {
-    width: 13px;
-    height: 13px;
-  }
-
-  .recommendation-heading .n {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
   /* Taste profile explaining the recommendations: one collapsed strip under the list */
   .taste {
     margin-top: 14px;
@@ -57,58 +40,6 @@
 
   .taste-tag.avoid {
     border-style: dashed;
-  }
-
-  .rec-save:focus-visible,
-  .rec-save.saved {
-    opacity: 1;
-  }
-
-  .rec-save:hover,
-  .rec-save.saved {
-    color: var(--color-accent);
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
-  }
-
-  .rec-save.saved:hover {
-    color: var(--color-danger);
-    background: color-mix(in srgb, var(--color-danger) var(--alpha-wash), transparent);
-  }
-
-  .rec-save .icon {
-    width: 14px;
-    height: 14px;
-  }
-
-  .rec-dismiss:focus-visible {
-    opacity: 1;
-  }
-
-  .rec-dismiss .icon {
-    width: 14px;
-    height: 14px;
-  }
-
-  .similar-to .icon {
-    width: 12px;
-    height: 12px;
-  }
-
-  /* The name, then its facts below it from the left. */
-  .recommendation-heading {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .recommendation-meta {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 8px 16px;
-    color: var(--color-fg-muted);
-    font-size: var(--text-sm);
   }
 
   .taste-head {
@@ -182,16 +113,6 @@
     color: var(--color-fg);
   }
 
-  .row-arrow {
-    color: var(--color-fg-muted);
-    flex: none;
-  }
-
-  .rec-ask small {
-    display: block;
-    margin-top: 4px;
-  }
-
   .rec-reasons {
     margin-top: 12px;
   }
@@ -200,31 +121,6 @@
     display: flex;
     gap: 8px;
     margin-top: 12px;
-  }
-
-  /* Dismiss a recommendation */
-  /* Under the reason: the "similar to" line takes the room and wraps; the actions and the arrow keep
-     to its end, on its first line. */
-  .rec-foot {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: 6px;
-  }
-
-  .rec-foot-text {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .rec-foot .similar-to {
-    margin-top: 0;
-  }
-
-  .rec-foot .row-arrow {
-    display: grid;
-    place-items: center;
-    height: 26px;
   }
 
   /* While a batch is built: Nexo thinking, over the rows' skeleton. */
@@ -250,82 +146,100 @@
     }
   }
 
-  .rec-actions {
+  /* Nexo's picks before the player asks: one quiet line and the button. */
+  .nexo-invite {
     display: flex;
-    gap: 2px;
-    flex: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 14px 16px;
+    border: 1px dashed color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    border-radius: var(--radius-control);
   }
 
-  .rec-save {
-    width: 30px;
-    height: 30px;
-    padding: 0;
+  .nexo-invite img {
     flex: none;
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--color-fg-subtle);
-    opacity: 0;
-    transition:
-      opacity 0.15s,
-      color 0.15s;
+    width: 32px;
+    height: 32px;
   }
 
+  .nexo-invite p {
+    flex: 1;
+    min-width: 200px;
+    margin: 0;
+    font-size: var(--text-body);
+    color: var(--color-fg-soft);
+  }
+
+  /* Save and dismiss over the cover: small round buttons on a dark wash. */
+  .rec-save,
   .rec-dismiss {
-    width: 30px;
-    height: 30px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
     padding: 0;
-    flex: none;
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--color-fg-subtle);
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-border-strong);
+    background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+    color: var(--color-fg);
     opacity: 0;
     transition:
       opacity 0.15s,
       color 0.15s;
   }
 
+  .rec-save .icon,
+  .rec-dismiss .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .rec-save.saved {
+    color: var(--color-accent);
+    opacity: 1;
+  }
+
+  .rec-save:hover {
+    color: var(--color-accent);
+  }
+
+  .rec-save.saved:hover,
   .rec-dismiss:hover {
     color: var(--color-danger);
-    background: color-mix(in srgb, var(--color-danger) var(--alpha-wash), transparent);
   }
 
-  /* The row's buttons show on hover or keyboard focus; on a touch screen, always. */
-  a.row:hover .rec-save,
-  a.row:hover .rec-dismiss,
-  a.row:focus-within .rec-save,
-  a.row:focus-within .rec-dismiss {
+  /* They show on hover or keyboard focus; on a touch screen, always. */
+  .band-card:hover .rec-save,
+  .band-card:hover .rec-dismiss,
+  .band-card:focus-within .rec-save,
+  .band-card:focus-within .rec-dismiss {
     opacity: 1;
   }
 
   @media (hover: none) {
-    .rec-dismiss,
-    .rec-save {
+    .rec-save,
+    .rec-dismiss {
       opacity: 1;
     }
   }
 
-  .similar-to {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 6px;
-    font-size: var(--text-xs);
-    color: var(--color-accent);
+  /* Why a pick is turned down, in place of its card. */
+  .band-card.rec-ask {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 12px;
+    min-inline-size: 0;
   }
 
-  .recommendation-meta > span {
-    white-space: nowrap;
+  .rec-ask .rec-reasons {
+    margin-top: 0;
   }
 
-  @media (max-width: 760px) {
-    .recommendation-heading {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .recommendation-meta {
-      margin-left: 0;
-      justify-content: flex-start;
-    }
+  .rec-ask .rec-ask-actions {
+    flex-wrap: wrap;
+    margin-top: auto;
   }
 }

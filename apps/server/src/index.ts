@@ -16,6 +16,7 @@ import { loadPlugins, Refused } from './plugins.ts'
 import { allow } from './rate-limit.ts'
 import { startReleaseSync } from './releases.ts'
 import { linkChat, userByChat, userByLinkCode } from './repository/user.ts'
+import { startSimilarSync } from './similar-sync.ts'
 import {
   incomingMessages,
   sendMessage,
@@ -48,6 +49,7 @@ async function main(): Promise<void> {
   startWatcher(config.pollMinutes)
   startReleaseSync()
   startDeals()
+  startSimilarSync()
   startWeb()
   startAccessCleanup()
   // English is the default menu; Portuguese apps get theirs.

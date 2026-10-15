@@ -1,24 +1,34 @@
-/** Discover: the next platinum from the library, recommendations for the player's taste and server alerts. */
+/** Discover: Nexo's picks (asked for with a button), games like the player's, the next platinum from
+ * the library, short platinums and the same series. */
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { DemoNote } from '../components/demo'
-import { RankingRow, RankingRowsSkeleton } from '../components/game-cards'
+import { GameCard, GameShelf } from '../components/game-band'
+import { LibraryCard } from '../components/game-cards'
 import { PageHero } from '../components/page-hero'
 import {
   type DismissReason,
+  openTaste,
   type Recommendation,
   Recommendations,
   type Recs,
   type RecsState,
 } from '../components/recommendations'
-import type { TastePrefs } from '../components/taste-editor'
+import {
+  NAMES_SLOT,
+  NamesLine,
+  pickItem,
+  SimilarPicks,
+  type SimilarState,
+} from '../components/similar-picks'
+import type { RecFilters, TastePrefs } from '../components/taste-editor'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
+import type { SimilarPick, SimilarRecs } from '../lib/types'
 import { modelWorkDone } from '../plugins'
 import { Icon } from '../ui/icon'
-import { Pager } from '../ui/pager'
 import { EmptyState } from '../ui/states'
 import { toast } from '../ui/toast'
 import './discover.css'
@@ -27,17 +37,19 @@ const messages = defineMessages({
   [Language.PtBR]: {
     eyebrow: 'SUA PRÓXIMA PLATINA',
     title: 'Descobrir',
-    rankingPages: 'Páginas da sua biblioteca',
-    customize: 'Personalizar',
-    customizeTip: 'Ajustar o seu perfil de gosto e as regras',
+    rankingEyebrow: 'SUA BIBLIOTECA',
     lead: 'O que platinar a seguir: da sua biblioteca e fora dela.',
-    nextPlatinum: 'Próxima platina · sua biblioteca',
+    nextPlatinum: 'Próxima platina',
     nothingInProgress: 'Nada em andamento ainda',
     nothingInProgressHint:
       'Quando você começar um jogo que ainda não platinou, ele aparece aqui, do mais perto ao mais longe da platina.',
     findGame: 'Procurar um jogo',
-    recommendations: 'Recomendações pro seu gosto',
-    searchAgain: 'Gerar novas recomendações',
+    quickEyebrow: 'ATÉ 10 HORAS',
+    quick: 'Platina relâmpago',
+    seriesEyebrow: 'CONTINUE A HISTÓRIA',
+    series: 'Na mesma série',
+    youPlatinumed: 'Você platinou {games}',
+    youPlayed: 'Você jogou {games}',
     dismissed: '{name} não aparece mais',
     dismissedWhy: '{name} saiu. O Nexo leva isso em conta nas próximas.',
     dismissFailed: 'Não conseguimos remover. Tenta de novo.',
@@ -47,17 +59,19 @@ const messages = defineMessages({
   [Language.En]: {
     eyebrow: 'YOUR NEXT PLATINUM',
     title: 'Discover',
-    rankingPages: 'Pages of your library',
-    customize: 'Customize',
-    customizeTip: 'Adjust your taste profile and rules',
+    rankingEyebrow: 'YOUR LIBRARY',
     lead: 'What to platinum next: from your library and beyond.',
-    nextPlatinum: 'Next platinum · your library',
+    nextPlatinum: 'Next platinum',
     nothingInProgress: 'Nothing in progress yet',
     nothingInProgressHint:
       'When you start a game you have not platinumed, it shows up here, from closest to farthest from the platinum.',
     findGame: 'Find a game',
-    recommendations: 'Picks for your taste',
-    searchAgain: 'Get new picks',
+    quickEyebrow: 'UP TO 10 HOURS',
+    quick: 'Lightning platinums',
+    seriesEyebrow: 'KEEP THE STORY GOING',
+    series: 'In the same series',
+    youPlatinumed: 'You platinumed {games}',
+    youPlayed: 'You played {games}',
     dismissed: "{name} won't show up again",
     dismissedWhy: '{name} is gone. Nexo takes it into account next time.',
     dismissFailed: 'We could not remove it. Try again.',
@@ -68,19 +82,12 @@ const messages = defineMessages({
 
 type Cache = Record<string, unknown>
 
-/** Opens the taste profile under the picks and brings it into view. */
-function openTaste() {
-  const details = document.querySelector<HTMLDetailsElement>('#taste details')
-  if (!details) return
-  details.open = true
-  details.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
+/** Whether the player's saved rules leave games out. */
+const hasFilters = (f?: RecFilters) =>
+  !!f && Object.values(f).some((v) => v !== null && v !== undefined && v !== false)
 
-// Library rows per page: about the height of a batch of recommendations beside it.
-const RANKING_PAGE = 10
-
-// Recommendations are model work, so they live in the app cache: fetched on the first visit and on
-// the refresh button only. The in-flight request is cached too, so coming back mid-load waits for it.
+// Nexo's picks are model work, so they live in the app cache: fetched when the player asks and on
+// "Gerar de novo" only. The in-flight request is cached too, so coming back mid-load waits for it.
 function fetchRecs(cache: Cache, refresh: boolean): Promise<Recs> {
   const load: Promise<Recs> = api<Recs>(`/api/recommendations${refresh ? '?refresh=1' : ''}`)
     .then((recs) => {
@@ -94,15 +101,105 @@ function fetchRecs(cache: Cache, refresh: boolean): Promise<Recs> {
   return load
 }
 
+// The similar games come from the catalog graph, with no model: loaded with the page, kept for the
+// visit, and asked again when the player's rules change. Like Nexo's, the request in flight is
+// cached, so coming back mid-load waits for it.
+function fetchSimilar(cache: Cache): Promise<SimilarRecs> {
+  const load: Promise<SimilarRecs> = api<SimilarRecs>('/api/recommendations/similar')
+    .then((similar) => {
+      cache.similar = similar
+      return similar
+    })
+    .finally(() => {
+      if (cache.similarLoad === load) delete cache.similarLoad
+    })
+  cache.similarLoad = load
+  return load
+}
+
+function initialRecs(cache: Cache): RecsState {
+  if (cache.recs) return { status: 'ok', recs: cache.recs as Recs }
+  return cache.recsLoad ? { status: 'loading' } : { status: 'idle' }
+}
+
+const without = (picks: SimilarPick[], id: string) => picks.filter((p) => p.game.id !== id)
+
+/** Short platinums and games of the same series, each left out when it has nothing. */
+function DiscoverBands({ similar }: { similar: SimilarState }) {
+  const t = useMessages(messages)
+  if (similar.status !== 'ok') return null
+  const { quick = [], series = [] } = similar.recs
+  return (
+    <>
+      <GameShelf
+        id="quick-title"
+        eyebrow={t('quickEyebrow')}
+        title={t('quick')}
+        cards={quick.map((p) => <GameCard key={p.game.id} item={pickItem(p)} />)}
+      />
+      <GameShelf
+        id="series-title"
+        eyebrow={t('seriesEyebrow')}
+        title={t('series')}
+        cards={series.map((p) => (
+          <GameCard
+            key={p.game.id}
+            item={{
+              ...pickItem(p),
+              reason: p.because[0] ? (
+                <NamesLine
+                  text={t(p.platinumed?.includes(p.because[0]) ? 'youPlatinumed' : 'youPlayed', {
+                    games: NAMES_SLOT,
+                  })}
+                  names={[p.because[0]]}
+                />
+              ) : undefined,
+            }}
+          />
+        ))}
+      />
+    </>
+  )
+}
+
+/** The player's games closest to the platinum, in the ranking's order, six a page. */
+function Ranking() {
+  const t = useMessages(messages)
+  const { data } = useApp()
+  return (
+    <GameShelf
+      id="ranking-title"
+      bodyId="ranking"
+      eyebrow={t('rankingEyebrow')}
+      title={t('nextPlatinum')}
+      loading={!data}
+      cards={(data?.ranking ?? []).map((r, i) => <LibraryCard key={r.game} item={r} index={i} />)}
+      fallback={
+        <EmptyState
+          icon="gamepad"
+          title={t('nothingInProgress')}
+          action={
+            <Link className="button ghost sm" to="/guides">
+              <Icon name="search" /> {t('findGame')}
+            </Link>
+          }
+        >
+          {t('nothingInProgressHint')}
+        </EmptyState>
+      }
+    />
+  )
+}
+
 export function Discover() {
   const t = useMessages(messages)
-  const { data, cache, me } = useApp()
-  const [recs, setRecs] = useState<RecsState>(() => {
-    const cached = cache.recs as Recs | undefined
+  const { cache, me } = useApp()
+  const [recs, setRecs] = useState<RecsState>(() => initialRecs(cache))
+  const [similar, setSimilar] = useState<SimilarState>(() => {
+    const cached = cache.similar as SimilarRecs | undefined
     return cached ? { status: 'ok', recs: cached } : { status: 'loading' }
   })
 
-  const [rankingPage, setRankingPage] = useState(1)
   const load = useCallback(async (pending: Promise<Recs>) => {
     setRecs({ status: 'loading' })
     try {
@@ -113,28 +210,57 @@ export function Discover() {
     }
   }, [])
 
+  const loadSimilar = useCallback(async (pending: Promise<SimilarRecs>) => {
+    try {
+      setSimilar({ status: 'ok', recs: await pending })
+    } catch {
+      setSimilar({ status: 'error' })
+    }
+  }, [])
+
   useEffect(() => {
-    if (cache.recs) return
-    load((cache.recsLoad as Promise<Recs> | undefined) ?? fetchRecs(cache, false))
+    if (cache.similar) return
+    loadSimilar((cache.similarLoad as Promise<SimilarRecs> | undefined) ?? fetchSimilar(cache))
+  }, [cache, loadSimilar])
+
+  // Coming back while Nexo was still working: wait for that request, never start another.
+  useEffect(() => {
+    if (!cache.recs && cache.recsLoad) load(cache.recsLoad as Promise<Recs>)
   }, [cache, load])
 
   const dismiss = async (r: Recommendation, reason?: DismissReason) => {
     try {
       const next = await api<Recs>('/api/recommendations/dismiss', { game: r.game.id, reason })
-      cache.recs = next
-      setRecs({ status: 'ok', recs: next })
+      // Nexo's batch only shows once the player asked for it.
+      if (recs.status === 'ok') {
+        cache.recs = next
+        setRecs({ status: 'ok', recs: next })
+      }
+      if (similar.status === 'ok') {
+        const s = similar.recs
+        const rest: SimilarRecs = {
+          ...s,
+          items: without(s.items, r.game.id),
+          quick: without(s.quick ?? [], r.game.id),
+          series: without(s.series ?? [], r.game.id),
+        }
+        cache.similar = rest
+        setSimilar({ status: 'ok', recs: rest })
+      }
       toast(t(reason ? 'dismissedWhy' : 'dismissed', { name: r.game.name }), 'success')
     } catch (e) {
       if (!(e instanceof ApiError && e.handled)) toast(t('dismissFailed'))
     }
   }
 
-  // The profile draft, saved when the player asks; with `regenerate`, a new batch follows.
+  // The profile draft, saved when the player asks; with `regenerate`, a new batch follows. The
+  // rules apply to the similar games too, so those are asked again.
   const savePrefs = async (prefs: TastePrefs, regenerate: boolean) => {
     try {
       const next = await api<Recs>('/api/recommendations/preferences', prefs)
       cache.recs = next
       toast(t('prefsSaved'), 'success')
+      loadSimilar(fetchSimilar(cache))
       if (regenerate) await load(fetchRecs(cache, true))
       else setRecs({ status: 'ok', recs: next })
     } catch (e) {
@@ -142,94 +268,44 @@ export function Discover() {
     }
   }
 
+  const noLibrary = similar.status === 'ok' && similar.recs.reason === 'no-library'
+  // Wide artworks of the games recommended.
+  const art = [
+    ...(recs.status === 'ok' ? recs.recs.items : []),
+    ...(similar.status === 'ok' ? similar.recs.items : []),
+  ].flatMap((r) => (r.game.art_url ? [r.game.art_url] : []))
+
   return (
     <Page path="/discover">
-      {/* Wide artworks of the games Nexo recommended. */}
       <PageHero
         eyebrow={t('eyebrow')}
         title={t('title')}
         lead={t('lead')}
-        images={
-          recs.status === 'ok'
-            ? recs.recs.items.flatMap((r) => (r.game.art_url ? [r.game.art_url] : []))
-            : []
-        }
+        images={art}
         look="art"
       />
-      <div className="grid cols-2 discover-columns">
-        <div className="card">
-          <h2>{t('nextPlatinum')}</h2>
-          <div id="ranking">
-            {!data ? (
-              <RankingRowsSkeleton n={RANKING_PAGE} />
-            ) : data.ranking.length ? (
-              data.ranking
-                .slice((rankingPage - 1) * RANKING_PAGE, rankingPage * RANKING_PAGE)
-                .map((r, i) => (
-                  <RankingRow key={r.game} item={r} index={(rankingPage - 1) * RANKING_PAGE + i} />
-                ))
-            ) : (
-              <EmptyState
-                icon="gamepad"
-                title={t('nothingInProgress')}
-                action={
-                  <Link className="button ghost sm" to="/guides">
-                    <Icon name="search" /> {t('findGame')}
-                  </Link>
-                }
-              >
-                {t('nothingInProgressHint')}
-              </EmptyState>
-            )}
-          </div>
-          {data && (
-            <Pager
-              page={rankingPage}
-              size={RANKING_PAGE}
-              total={data.ranking.length}
-              onPage={setRankingPage}
-              label={t('rankingPages')}
-            />
-          )}
-        </div>
-        <div className="card">
-          <div className="card-head">
-            <h2>{t('recommendations')}</h2>
-            {/* With no library to learn from there is nothing to search again. */}
-            {!(recs.status === 'ok' && recs.recs.reason === 'no-library') && (
-              <span className="card-actions">
-                {recs.status === 'ok' && (
-                  <button
-                    type="button"
-                    className="ghost sm"
-                    data-tip={t('customizeTip')}
-                    onClick={openTaste}
-                  >
-                    <Icon name="edit" /> {t('customize')}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className={`icon-button${recs.status === 'loading' ? ' busy' : ''}`}
-                  id="recs-refresh"
-                  aria-label={t('searchAgain')}
-                  data-tip={t('searchAgain')}
-                  disabled={recs.status === 'loading' || me.demo}
-                  onClick={() => load(fetchRecs(cache, true))}
-                >
-                  <Icon name="refresh" />
-                </button>
-              </span>
-            )}
-          </div>
-          <Recommendations
-            state={recs}
-            onDismiss={dismiss}
-            editing={{ editable: !me.demo, onSave: savePrefs }}
-          />
-          {me.demo && <DemoNote />}
-        </div>
-      </div>
+      {/* With no library to learn from, Nexo has nothing to look at: only the similar section says so. */}
+      {!noLibrary && (
+        <Recommendations
+          state={recs}
+          onDismiss={dismiss}
+          editing={{ editable: !me.demo, onSave: savePrefs }}
+          onAsk={() =>
+            load((cache.recsLoad as Promise<Recs> | undefined) ?? fetchRecs(cache, false))
+          }
+          onRefresh={() => load(fetchRecs(cache, true))}
+          refreshDisabled={me.demo}
+        />
+      )}
+      <SimilarPicks
+        state={similar}
+        onDismiss={dismiss}
+        filtered={recs.status === 'ok' && hasFilters(recs.recs.prefs?.filters)}
+        onFilters={openTaste}
+      />
+      {me.demo && <DemoNote />}
+      <Ranking />
+      <DiscoverBands similar={similar} />
     </Page>
   )
 }

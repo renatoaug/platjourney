@@ -32,8 +32,10 @@ import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
 import * as statuses from '../src/repository/server-status.ts'
+import * as similarRepo from '../src/repository/similar.ts'
 import * as titles from '../src/repository/title.ts'
 import * as users from '../src/repository/user.ts'
+import * as similar from '../src/similar.ts'
 import * as telegram from '../src/telegram.ts'
 import * as watcher from '../src/watcher.ts'
 import { forgetResearch, handle, heroArt } from '../src/web.ts'
@@ -97,6 +99,7 @@ beforeEach(() => {
   config.automatic.research = true
   spyOn(console, 'error').mockImplementation(() => {})
   spyOn(auth, 'authenticate').mockResolvedValue(me)
+  spyOn(similarRepo, 'guideFacts').mockResolvedValue([])
   spyOn(deepguide, 'deepGuideStats').mockResolvedValue(null)
   spyOn(deepguide, 'ensureDeepGuide').mockResolvedValue(null)
   spyOn(guide, 'ensureGuide').mockResolvedValue(freshGuide)
@@ -435,6 +438,11 @@ test('state without a current game starts watching and ranks the library', async
   ] as never)
   const user = makeUser({ id: 'user:state' })
   spyOn(auth, 'authenticate').mockResolvedValue(user)
+  // The guide's estimate and difficulty ride along; an unknown 0 goes as null.
+  spyOn(similarRepo, 'guideFacts').mockResolvedValue([
+    { game: game.id, hours: 80, difficulty: 4 },
+    { game: 'game:2', hours: 0, difficulty: 0 },
+  ])
   const { body } = await send('GET', '/api/state')
   expect(watcher.watchNow).toHaveBeenCalledWith(user)
   // null, not missing: the web app reads a missing game as still loading.
@@ -452,8 +460,17 @@ test('state without a current game starts watching and ranks the library', async
       total: 10,
       earned: 8,
       dlc: { earned: 1, total: 4 },
+      guideHours: 80,
+      difficulty: 4,
     },
-    expect.objectContaining({ hours: null, total: 10, earned: 5, dlc: null }),
+    expect.objectContaining({
+      hours: null,
+      total: 10,
+      earned: 5,
+      dlc: null,
+      guideHours: null,
+      difficulty: null,
+    }),
   ])
   expect(body.servers).toEqual([{ game: game.id, status: 'closed' }])
   expect(body.profile).toEqual({ onlineId: 'Kratos' })
@@ -812,6 +829,25 @@ test('recommendations can be dismissed and refreshed', async () => {
   expect(recs).toHaveBeenLastCalledWith(me, [title], [], false)
 })
 
+test('recommendations by similar games answer from the graph, without the model', async () => {
+  const body = { items: [], quick: [], series: [], reason: 'no-library' as const }
+  const picks = spyOn(similar, 'similarPicks').mockResolvedValue(body)
+  const res = await send('GET', '/api/recommendations/similar')
+  expect(res).toMatchObject({ status: 200, body })
+  expect(picks).toHaveBeenCalledWith(me, [title], [])
+  expect(recommend.recommendations).not.toHaveBeenCalled()
+})
+
+test('a game page asks for its similar games by id', async () => {
+  const items = [{ game, difficulty: 3, hours: 12, relation: 'expansion' as const }]
+  const related = spyOn(similar, 'similarToGame').mockResolvedValue(items)
+  expect((await send('GET', '/api/games/similar')).status).toBe(400)
+  expect((await send('GET', '/api/games/similar?game=title:1')).status).toBe(400)
+  const res = await send('GET', '/api/games/similar?game=game:1')
+  expect(res).toMatchObject({ status: 200, body: { items } })
+  expect(related).toHaveBeenCalledWith('game:1')
+})
+
 test('Nexo picks the next saved game on request', async () => {
   const pick = { game: { id: 'game:2', name: 'Inside' }, why: 'Curto', firstStep: 'Comece' }
   spyOn(nextPickModule, 'nextPick').mockResolvedValue(pick)
@@ -940,6 +976,21 @@ describe('the demo', () => {
     ['GET', '/api/recommendations?refresh=1'],
     ['POST', '/api/anything'],
   ]
+  test('reads recommendations by similar games and the similar games of a game', async () => {
+    const picks = spyOn(similar, 'similarPicks').mockResolvedValue({
+      items: [],
+      quick: [],
+      series: [],
+    })
+    spyOn(similar, 'similarToGame').mockResolvedValue([])
+    expect(await send('GET', '/api/recommendations/similar')).toMatchObject({ status: 200 })
+    expect(picks).toHaveBeenCalledWith(demo, [title], [])
+    expect(await send('GET', '/api/games/similar?game=game:1')).toMatchObject({
+      status: 200,
+      body: { items: [] },
+    })
+  })
+
   test.each(writes)('refuses %s %s as read-only', async (method, path, body) => {
     const spies = [
       spyOn(interests, 'handleInterestCommand'),

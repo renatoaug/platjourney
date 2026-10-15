@@ -96,15 +96,24 @@ export const States: Story = {
   ),
 }
 
-function PagerDemo() {
+function PagerDemo({ look }: { look?: 'numbers' | 'arrows' }) {
   const [page, setPage] = useState(1)
-  return <Pager page={page} size={8} total={25} onPage={setPage} />
+  return <Pager page={page} size={8} total={25} onPage={setPage} look={look} />
 }
 
 export const Paging: Story = {
   render: () => (
     <div className="card">
       <PagerDemo />
+    </div>
+  ),
+}
+
+// The band's pager: previous, "1/4", next.
+export const PagingArrows: Story = {
+  render: () => (
+    <div className="card">
+      <PagerDemo look="arrows" />
     </div>
   ),
 }

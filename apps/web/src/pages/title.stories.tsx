@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { SimilarGames } from '../components/similar-games'
+import { similarGamesData } from '../components/similar-games.stories'
 import { current } from '../fixtures'
 import { Language } from '../i18n/i18n'
 import type { Game, GuideDetail } from '../lib/types'
@@ -42,6 +44,17 @@ export const recommendedData: TitleDetail = {
 
 export const Owned: Story = {
   render: () => <TitleScreen owned load={{ kind: 'ready', d: ownedData }} />,
+}
+
+// "Parecidos com este" under the showcase, the expansion and the series first.
+export const WithSimilar: Story = {
+  render: () => (
+    <TitleScreen
+      owned
+      load={{ kind: 'ready', d: ownedData }}
+      similar={<SimilarGames state={{ status: 'ok', items: similarGamesData }} />}
+    />
+  ),
 }
 
 export const NotOwned: Story = {

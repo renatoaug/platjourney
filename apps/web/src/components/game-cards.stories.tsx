@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { current } from '../fixtures'
 import type { RankingItem } from '../lib/types'
 import { EmptyState } from '../ui/states'
-import { GameCardsSkeleton, RadarCard, RankingRow, RankingRowsSkeleton } from './game-cards'
+import { GameShelf } from './game-band'
+import { GameCardsSkeleton, LibraryCard, RadarCard } from './game-cards'
 
 export const rankingData: RankingItem[] = [
   {
@@ -64,24 +65,32 @@ export const RadarLoading: Story = {
   ),
 }
 
-export const Ranking: Story = {
+export const Library: Story = {
   render: () => (
-    <div className="card">
-      <h2>Próxima platina · sua biblioteca</h2>
-      {rankingData.map((r, i) => (
-        <RankingRow key={r.game} item={r} index={i} />
-      ))}
-    </div>
+    <GameShelf
+      id="library-title"
+      eyebrow="SUA BIBLIOTECA"
+      title="Próxima platina"
+      cards={rankingData.map((r, i) => <LibraryCard key={r.game} item={r} index={i} />)}
+    />
   ),
 }
 
-export const RankingLoading: Story = {
+// With the guide's estimate and difficulty, when the server sends them.
+export const LibraryWithGuide: Story = {
   render: () => (
-    <div className="card">
-      <h2>Próxima platina · sua biblioteca</h2>
-      <RankingRowsSkeleton n={6} />
-    </div>
+    <GameShelf
+      id="library-title"
+      title="Próxima platina"
+      cards={rankingData.map((r, i) => (
+        <LibraryCard key={r.game} item={{ ...r, guideHours: 70, difficulty: 3 + i }} index={i} />
+      ))}
+    />
   ),
+}
+
+export const LibraryLoading: Story = {
+  render: () => <GameShelf id="library-title" title="Próxima platina" cards={[]} loading />,
 }
 
 export const Empty: Story = {

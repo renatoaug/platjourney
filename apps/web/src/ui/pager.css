@@ -65,12 +65,25 @@
     text-align: center;
   }
 
+  /* A band's pager: the arrows and the page count, on the head line; the same on a phone. */
+  .pager.pager-arrows {
+    justify-content: flex-end;
+    gap: 2px;
+    margin-top: 0;
+  }
+
+  .pager-count {
+    min-width: 30px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
   @media (max-width: 560px) {
-    .pager {
+    .pager:not(.pager-arrows) {
       justify-content: center;
     }
 
-    .pager > span {
+    .pager:not(.pager-arrows) > span {
       display: none;
     }
   }
