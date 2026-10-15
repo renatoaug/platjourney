@@ -17,3 +17,9 @@ test('a saved game reaches only who saved it and does not own it yet', async () 
     { game: 'game:2', name: 'Inside', store_url: 'u2', users: ['user:a'] },
   ])
 })
+
+test('a saved game the player said they already have is left out of the deals', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue([])
+  await interestsWithStore()
+  expect(String(q.mock.calls[0][0])).toContain('owned_at = NONE')
+})

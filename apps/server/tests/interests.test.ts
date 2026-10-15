@@ -109,6 +109,31 @@ test('with DLC counted, PSN progress is used as it is', async () => {
   expect(p.interests[0].progress).toBe(70)
 })
 
+test('a game on sale is a deal until the player says they already have it', async () => {
+  spyOn(users, 'getUser').mockResolvedValue(undefined)
+  spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
+  spyOn(repo, 'listInterests').mockResolvedValue([
+    interest('a'),
+    { ...interest('b', beta, 2), owned_at: '2026-10-15T12:00:00Z' },
+  ])
+  const sale = {
+    price: 4498,
+    base: 29990,
+    discount: 85,
+    endsAt: null,
+    plus: false,
+    currency: 'BRL',
+  }
+  spyOn(prices, 'pricesFor').mockResolvedValue(
+    new Map([
+      ['game:10', sale],
+      ['game:11', sale],
+    ]) as never,
+  )
+  const p = await yearProgress(user, [])
+  expect(p.interests.map((i) => i.deal?.discount ?? null)).toEqual([85, null])
+})
+
 test('platinums of the year are listed by date', async () => {
   spyOn(users, 'getUser').mockResolvedValue(makeUser())
   spyOn(repo, 'listInterests').mockResolvedValue([])
@@ -253,6 +278,19 @@ describe('/goals', () => {
     )
     expect(await handleInterestCommand(user, 'remove x', [])).toBe(
       'Uso: /goals remove <número da lista>',
+    )
+  })
+
+  test('owned takes a list number or an interest id', async () => {
+    const owned = spyOn(repo, 'markOwned').mockResolvedValue(undefined)
+    await handleInterestCommand(user, 'owned 2', [])
+    await handleInterestCommand(user, 'owned interest:c', [])
+    expect(owned.mock.calls).toEqual([
+      ['user:u1', 'interest:b'],
+      ['user:u1', 'interest:c'],
+    ])
+    expect(await handleInterestCommand(user, 'owned', [])).toBe(
+      'Uso: /goals owned <número da lista>',
     )
   })
 

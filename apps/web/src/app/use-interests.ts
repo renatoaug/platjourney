@@ -11,12 +11,14 @@ export const messages = defineMessages({
   [Language.PtBR]: {
     interestRemoved: '{name} removido dos interesses',
     interestSaved: '{name} salvo nos interesses',
+    interestOwned: '{name} saiu das promoções',
     interestSee: 'Ver',
     interestFailed: 'Não conseguimos salvar. Tenta de novo.',
   },
   [Language.En]: {
     interestRemoved: '{name} removed from interests',
     interestSaved: '{name} saved to interests',
+    interestOwned: '{name} hidden from deals',
     interestSee: 'View',
     interestFailed: 'Could not save. Try again.',
   },
