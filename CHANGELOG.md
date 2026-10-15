@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.18.0](https://github.com/renatoaug/platjourney/compare/v0.17.4...v0.18.0) (2026-10-15)
+
+### Features
+
+* **interests:** "Já tenho" hides a saved game from the deals ([#48](https://github.com/renatoaug/platjourney/issues/48)) ([5efa7ae](https://github.com/renatoaug/platjourney/commit/5efa7ae173d5f0c54945fb9d0f52e2e51e4abd82))
+
 ## [0.17.4](https://github.com/renatoaug/platjourney/compare/v0.17.3...v0.17.4) (2026-10-15)
 
 ### Bug Fixes
