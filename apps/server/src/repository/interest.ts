@@ -16,7 +16,13 @@ export interface Interest {
 }
 
 /** Where a game was saved from, kept for the list's tag and to see later what brings games in. */
-export const INTEREST_SOURCES = ['releases', 'recommendations', 'title', 'search'] as const
+export const INTEREST_SOURCES = [
+  'releases',
+  'recommendations',
+  'similar',
+  'title',
+  'search',
+] as const
 export type InterestSource = (typeof INTEREST_SOURCES)[number]
 
 export async function listInterests(user: string, year: number): Promise<Interest[]> {

@@ -6,9 +6,10 @@ DEFINE FIELD IF NOT EXISTS year ON interest TYPE int;
 DEFINE FIELD IF NOT EXISTS position ON interest TYPE int;
 -- When Nexo recommended the game, if it did before the player saved it.
 DEFINE FIELD IF NOT EXISTS recommended_at ON interest TYPE option<datetime>;
--- Where the player saved it from: releases (the home's calendar), recommendations, title (a game's
--- page), search (the add panel on Interests). NONE for older saves and for Telegram's /goals add.
-DEFINE FIELD IF NOT EXISTS source ON interest TYPE option<string> ASSERT $value = NONE OR $value IN ['releases', 'recommendations', 'title', 'search'];
+-- Where the player saved it from: releases (the home's calendar), recommendations (Nexo's picks),
+-- similar (the lists of similar games), title (a game's page), search (the add panel on Interests).
+-- NONE for older saves and for Telegram's /goals add.
+DEFINE FIELD IF NOT EXISTS source ON interest TYPE option<string> ASSERT $value = NONE OR $value IN ['releases', 'recommendations', 'similar', 'title', 'search'];
 -- When "Nexo decide" last picked it as the next platinum; one interest of the player at a time.
 DEFINE FIELD IF NOT EXISTS next_pick_at ON interest TYPE option<datetime>;
 -- When the player said they already have it ("Já tenho"): bought or claimed but never started, so it

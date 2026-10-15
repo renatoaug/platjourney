@@ -158,7 +158,7 @@ function DiscoverBands({ similar }: { similar: SimilarState }) {
           <GameCard
             key={p.game.id}
             item={pickItem(p)}
-            actions={<SaveToInterests game={p.game} source="recommendations" />}
+            actions={<SaveToInterests game={p.game} source="similar" />}
           />
         ))}
       />
@@ -169,7 +169,7 @@ function DiscoverBands({ similar }: { similar: SimilarState }) {
         cards={series.map((p) => (
           <GameCard
             key={p.game.id}
-            actions={<SaveToInterests game={p.game} source="recommendations" />}
+            actions={<SaveToInterests game={p.game} source="similar" />}
             item={{
               ...pickItem(p),
               reason: p.because[0] ? (

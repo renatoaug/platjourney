@@ -4,7 +4,7 @@
 import { type MouseEvent, type ReactNode, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { nameText, plainText } from '../lib/text'
-import type { Game } from '../lib/types'
+import type { Game, InterestSource } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { EmptyState, ErrorState } from '../ui/states'
 import { useDemo } from './demo'
@@ -187,11 +187,19 @@ function DismissAsk({
 }
 
 /** The bookmark and dismiss, over the card's cover. */
-function RecActions({ game, onAsk }: { game: Game; onAsk: () => void }) {
+function RecActions({
+  game,
+  onAsk,
+  source,
+}: {
+  game: Game
+  onAsk: () => void
+  source: InterestSource
+}) {
   const t = useMessages(messages)
   return (
     <>
-      <SaveToInterests game={game} source="recommendations" />
+      <SaveToInterests game={game} source={source} />
       <button
         type="button"
         className="rec-dismiss"
@@ -216,9 +224,12 @@ export function RecCard({
   reason,
   reasonTitle,
   reasonLines,
+  source = 'recommendations',
 }: {
   rec: Recommendation
   onDismiss: OnDismiss
+  /** Where a save from this card comes from: Nexo's picks, or the similar games. */
+  source?: InterestSource
   reason?: ReactNode
   reasonTitle?: string
   reasonLines?: CardItem['reasonLines']
@@ -240,7 +251,11 @@ export function RecCard({
         reasonTitle,
         reasonLines,
       }}
-      actions={demo ? undefined : <RecActions game={r.game} onAsk={() => setAsking(true)} />}
+      actions={
+        demo ? undefined : (
+          <RecActions game={r.game} onAsk={() => setAsking(true)} source={source} />
+        )
+      }
     />
   )
 }

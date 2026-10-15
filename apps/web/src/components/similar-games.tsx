@@ -40,7 +40,7 @@ export function SimilarGames({ state }: { state: SimilarGamesState }) {
     .map((s) => (
       <GameCard
         key={s.game.id}
-        actions={<SaveToInterests game={s.game} source="title" />}
+        actions={<SaveToInterests game={s.game} source="similar" />}
         item={{
           game: s.game,
           difficulty: s.difficulty,

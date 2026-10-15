@@ -64,10 +64,10 @@ test('short platinums and the same series can be saved from Discover', async () 
   ).toBeTruthy()
   // Dismiss stays with Nexo's and the similar games' cards.
   expect(within(quick).queryByRole('button', { name: /Não recomendar/ })).toBeNull()
-  await saves(astro.game.name, `add ${astro.game.id} from:recommendations`, calls)
+  await saves(astro.game.name, `add ${astro.game.id} from:similar`, calls)
   const series = screen.getByRole('region', { name: 'Na mesma série' })
   expect(within(series).queryByRole('button', { name: /Não recomendar/ })).toBeNull()
-  await saves(forbidden.game.name, `add ${forbidden.game.id} from:recommendations`, calls)
+  await saves(forbidden.game.name, `add ${forbidden.game.id} from:similar`, calls)
 })
 
 test('a library card can be saved', async () => {
@@ -76,14 +76,14 @@ test('a library card can be saved', async () => {
     'POST /api/goals': savedGoals({ id: daysGone.game, name: daysGone.name }),
   })
   renderApp(<LibraryCard item={daysGone} index={0} />)
-  await saves(daysGone.name, `add ${daysGone.game} from:recommendations`, calls)
+  await saves(daysGone.name, `add ${daysGone.game} from:similar`, calls)
 })
 
-test('a similar game on the game page can be saved, from the title', async () => {
+test('a similar game on the game page can be saved, as a suggestion', async () => {
   const [ghost] = similarGamesData
   const calls = mockApi({ 'POST /api/goals': savedGoals(ghost.game) })
   renderApp(<SimilarGames state={{ status: 'ok', items: [ghost] }} />)
-  await saves(ghost.game.name, `add ${ghost.game.id} from:title`, calls)
+  await saves(ghost.game.name, `add ${ghost.game.id} from:similar`, calls)
 })
 
 test('the demo has no bookmark on any card', () => {
