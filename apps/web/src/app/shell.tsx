@@ -166,6 +166,25 @@ function useArrival(pathname: string): Arrival {
   return arrival.current
 }
 
+// On a phone a page from the "Mais" sheet has no visible link: the pill sits on "Mais".
+function activeNavItem(nav: HTMLElement | null) {
+  const link = nav?.querySelector<HTMLElement>('a.active')
+  return link?.offsetWidth ? link : nav?.querySelector<HTMLElement>('.nav-more.active')
+}
+
+/** Puts the pill over `active`; `instant` skips the slide (first placement, resize). */
+function moveIndicator(el: HTMLElement, active: HTMLElement, instant: boolean) {
+  el.style.transition = instant ? 'none' : ''
+  el.style.width = `${active.offsetWidth}px`
+  el.style.height = `${active.offsetHeight}px`
+  el.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`
+  el.style.opacity = '1'
+  if (instant)
+    requestAnimationFrame(() => {
+      el.style.transition = ''
+    })
+}
+
 function Nav() {
   const t = useMessages(messages)
   const locale = useLocale()
@@ -181,28 +200,15 @@ function Nav() {
   useLayoutEffect(() => {
     const place = (animate: boolean) => {
       const el = indicator.current
-      // On a phone a page from the "Mais" sheet has no visible link: the pill sits on "Mais".
-      const link = nav.current?.querySelector<HTMLElement>('a.active')
-      const active = link?.offsetWidth
-        ? link
-        : nav.current?.querySelector<HTMLElement>('.nav-more.active')
+      const active = activeNavItem(nav.current)
       if (!el) return
       if (!active?.offsetWidth) {
         el.style.opacity = '0'
         return
       }
-      const first = !animated.current
-      el.style.transition = first || !animate ? 'none' : ''
-      el.style.width = `${active.offsetWidth}px`
-      el.style.height = `${active.offsetHeight}px`
-      el.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`
-      el.style.opacity = '1'
+      moveIndicator(el, active, !animated.current || !animate)
       animated.current = true
       nav.current?.classList.add('nav-animated')
-      if (first || !animate)
-        requestAnimationFrame(() => {
-          el.style.transition = ''
-        })
     }
     place(true)
     const observer = new ResizeObserver(() => place(false))

@@ -461,6 +461,54 @@ function MissingGame({
   )
 }
 
+/** The list's state as the address holds it, with the defaults for what is missing. */
+function readParams(params: URLSearchParams) {
+  return {
+    q: params.get('q') ?? '',
+    platform: params.get('platform') ?? '',
+    sort: params.get('sort') ?? '',
+    page: Number(params.get('page')) || 1,
+    view: params.get('view') === 'list' ? ('list' as const) : ('grid' as const),
+  }
+}
+
+/** The page's games as rows or cards, or the empty state; a search with no hit offers to ask for the game. */
+function GuideResults({
+  items,
+  view,
+  missing,
+  ask,
+}: {
+  items: GuidesPage['items']
+  view: 'grid' | 'list'
+  missing: string | null
+  ask: (name: string) => Promise<GameRequestAnswer>
+}) {
+  const t = useMessages(messages)
+  if (!items.length)
+    return (
+      <EmptyState>
+        <b>{t('empty')}</b> {t('emptyHint')}
+        {missing !== null && <MissingGame key={missing} name={missing} ask={ask} />}
+      </EmptyState>
+    )
+  if (view === 'list')
+    return (
+      <div className="guide-list">
+        {items.map((item) => (
+          <GuideRow key={item.id} item={item} />
+        ))}
+      </div>
+    )
+  return (
+    <div className="guide-grid">
+      {items.map((item) => (
+        <GuideCard key={item.id} item={item} />
+      ))}
+    </div>
+  )
+}
+
 /** `load` answers a query string with a page of games; stories pass sample data instead of the API. */
 export function Guides({
   load: loadPage = fetchGuides,
@@ -471,11 +519,7 @@ export function Guides({
 }) {
   const t = useMessages(messages)
   const [params, setParams] = useSearchParams()
-  const q = params.get('q') ?? ''
-  const platform = params.get('platform') ?? ''
-  const sort = params.get('sort') ?? ''
-  const page = Number(params.get('page')) || 1
-  const view = params.get('view') === 'list' ? 'list' : 'grid'
+  const { q, platform, sort, page, view } = readParams(params)
   const filters = Object.fromEntries(FILTER_KEYS.map((k) => [k, params.get(k) ?? '']))
   const filterKey = FILTER_KEYS.map((k) => filters[k]).join('|')
   const activeFilters = FILTER_KEYS.filter((k) => filters[k]).length
@@ -625,26 +669,12 @@ export function Guides({
               <div className="trophy-results" role="status">
                 {t('results', { count: data.total })}
               </div>
-              {data.items.length ? (
-                view === 'list' ? (
-                  <div className="guide-list">
-                    {data.items.map((item) => (
-                      <GuideRow key={item.id} item={item} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="guide-grid">
-                    {data.items.map((item) => (
-                      <GuideCard key={item.id} item={item} />
-                    ))}
-                  </div>
-                )
-              ) : (
-                <EmptyState>
-                  <b>{t('empty')}</b> {t('emptyHint')}
-                  {searching && <MissingGame key={q} name={q} ask={ask} />}
-                </EmptyState>
-              )}
+              <GuideResults
+                items={data.items}
+                view={view}
+                missing={searching ? q : null}
+                ask={ask}
+              />
               <Pager
                 page={data.page}
                 size={data.size}

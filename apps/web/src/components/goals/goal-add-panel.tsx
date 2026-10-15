@@ -189,25 +189,16 @@ export function GoalAddPanel({
     focusInput()
   }
 
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (selection && (event.key === 'Backspace' || event.key === 'Delete')) {
-      event.preventDefault()
-      clearSelection()
-      return
-    }
-    // Escape also bubbles to the form, which closes the panel.
-    if (event.key === 'Escape') {
-      ++version.current
-      clearTimeout(timer.current)
-      setSearching(false)
-      dismiss()
-      return
-    }
-    if (searching) {
-      if (event.key === 'Enter') event.preventDefault()
-      return
-    }
-    if (!shown || !options.length || results !== 'options') return
+  // Drops the search on its way and closes the list.
+  const cancelSearch = () => {
+    ++version.current
+    clearTimeout(timer.current)
+    setSearching(false)
+    dismiss()
+  }
+
+  // The arrows move through the open list and Enter picks the active option.
+  const moveInList = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
       const direction = event.key === 'ArrowDown' ? 1 : -1
@@ -216,6 +207,24 @@ export function GoalAddPanel({
       event.preventDefault()
       if (active >= 0) select(active)
     }
+  }
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (selection && (event.key === 'Backspace' || event.key === 'Delete')) {
+      event.preventDefault()
+      clearSelection()
+      return
+    }
+    // Escape also bubbles to the form, which closes the panel.
+    if (event.key === 'Escape') {
+      cancelSearch()
+      return
+    }
+    if (searching) {
+      if (event.key === 'Enter') event.preventDefault()
+      return
+    }
+    if (shown && options.length && results === 'options') moveInList(event)
   }
 
   return (

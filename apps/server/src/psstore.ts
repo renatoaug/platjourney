@@ -99,17 +99,22 @@ export function parseStorePage(html: string): StorePrice | null {
 /** The JSON object that opens at `start`, counting braces outside strings. */
 function objectAt(text: string, start: number): string | null {
   let depth = 0
-  let quoted = false
   for (let i = start; i < text.length; i++) {
     const c = text[i]
-    if (quoted) {
-      if (c === '\\') i++
-      else if (c === '"') quoted = false
-    } else if (c === '"') quoted = true
+    if (c === '"') i = stringEnd(text, i)
     else if (c === '{') depth++
     else if (c === '}' && --depth === 0) return text.slice(start, i + 1)
   }
   return null
+}
+
+/** The index of the quote that closes the string opening at `open`, skipping escapes. */
+function stringEnd(text: string, open: number): number {
+  for (let i = open + 1; i < text.length; i++) {
+    if (text[i] === '\\') i++
+    else if (text[i] === '"') return i
+  }
+  return text.length
 }
 
 export async function storePrice(url: string): Promise<StorePrice | null> {

@@ -70,6 +70,57 @@ function when(iso: string): string {
     : date.toLocaleDateString(getLocale(), { day: '2-digit', month: 'short' })
 }
 
+/** One conversation in the list; `iconOnly` (the list collapsed) names it in a tooltip instead. */
+function ThreadRow({
+  thread,
+  index,
+  current,
+  iconOnly,
+  onPick,
+}: {
+  thread: ChatThread
+  index: number
+  current: boolean
+  iconOnly: boolean
+  onPick: (thread: ChatThread) => void
+}) {
+  const t = useMessages(messages)
+  const name = thread.game ? (thread.name ?? '') : t('general')
+  return (
+    <li style={{ '--i': index } as CSSProperties}>
+      <button
+        type="button"
+        className={thread.draft ? 'is-draft' : undefined}
+        aria-current={current ? 'true' : undefined}
+        aria-label={iconOnly ? name : undefined}
+        data-tip={iconOnly ? name : undefined}
+        onClick={() => onPick(thread)}
+      >
+        {thread.game ? (
+          <Cover url={thread.cover_url} name={thread.name ?? ''} className="nexo-thread-cover" />
+        ) : (
+          <span className="nexo-thread-cover nexo-thread-general" aria-hidden="true">
+            <Icon name="nexo" />
+          </span>
+        )}
+        <span className="nexo-thread-text">
+          <b>{thread.game ? thread.name : t('general')}</b>
+          {thread.draft ? (
+            <small className="nexo-thread-draft">{t('newConversation')}</small>
+          ) : (
+            <>
+              <span>{bare(thread.last_question) || (thread.game ? '' : t('generalHint'))}</span>
+              <small>
+                {when(thread.last_at)} · {t('count', { count: thread.messages })}
+              </small>
+            </>
+          )}
+        </span>
+      </button>
+    </li>
+  )
+}
+
 export function ChatThreads({
   threads,
   active,
@@ -148,60 +199,16 @@ export function ChatThreads({
         </EmptyState>
       )}
       <ul>
-        {(threads ?? []).map((thread, i) => {
-          const key = threadKey(thread)
-          return (
-            <li key={key} style={{ '--i': i } as CSSProperties}>
-              <button
-                type="button"
-                className={thread.draft ? 'is-draft' : undefined}
-                aria-current={key === active ? 'true' : undefined}
-                aria-label={
-                  collapsed && !open
-                    ? thread.game
-                      ? (thread.name ?? '')
-                      : t('general')
-                    : undefined
-                }
-                data-tip={
-                  collapsed && !open
-                    ? thread.game
-                      ? (thread.name ?? '')
-                      : t('general')
-                    : undefined
-                }
-                onClick={() => onPick(thread)}
-              >
-                {thread.game ? (
-                  <Cover
-                    url={thread.cover_url}
-                    name={thread.name ?? ''}
-                    className="nexo-thread-cover"
-                  />
-                ) : (
-                  <span className="nexo-thread-cover nexo-thread-general" aria-hidden="true">
-                    <Icon name="nexo" />
-                  </span>
-                )}
-                <span className="nexo-thread-text">
-                  <b>{thread.game ? thread.name : t('general')}</b>
-                  {thread.draft ? (
-                    <small className="nexo-thread-draft">{t('newConversation')}</small>
-                  ) : (
-                    <>
-                      <span>
-                        {bare(thread.last_question) || (thread.game ? '' : t('generalHint'))}
-                      </span>
-                      <small>
-                        {when(thread.last_at)} · {t('count', { count: thread.messages })}
-                      </small>
-                    </>
-                  )}
-                </span>
-              </button>
-            </li>
-          )
-        })}
+        {(threads ?? []).map((thread, i) => (
+          <ThreadRow
+            key={threadKey(thread)}
+            thread={thread}
+            index={i}
+            current={threadKey(thread) === active}
+            iconOnly={collapsed && !open}
+            onPick={onPick}
+          />
+        ))}
       </ul>
     </aside>
   )

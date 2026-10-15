@@ -56,16 +56,72 @@ function onSale(interests: Interest[]) {
     )
 }
 
-export function DealsSpotlight({ interests }: { interests: Interest[] }) {
+/** One saved game on sale: its cover with the discount, the price and the store link. */
+function DealCard({ interest: i }: { interest: Interest }) {
   const t = useMessages(messages)
   const locale = useLocale()
+  const money = (cents: number, currency: string) =>
+    (cents / 100).toLocaleString(locale, { style: 'currency', currency })
+  const d = i.deal as NonNullable<Interest['deal']>
+  const mine = !!d.mine
+  return (
+    <article className={`deal${mine ? ' mine' : ''}`}>
+      <Link className="deal-game" to={titleHref(i.game.id)}>
+        <Cover url={i.game.cover_url} name={i.game.name} className="deal-cover" />
+        <span className="deal-off">{mine ? t('plusBadge') : `-${d.discount}%`}</span>
+      </Link>
+      <div className="deal-body">
+        <Link className="deal-name" to={titleHref(i.game.id)}>
+          {i.game.name}
+        </Link>
+        {mine ? (
+          <span className="deal-price">
+            <b>{t('mine', { tier: TIER_NAMES[d.plusTier ?? 'extra'] })}</b>
+            <span className="deal-plus">{t('free')}</span>
+          </span>
+        ) : (
+          <span className="deal-price">
+            <b>{money(d.price, d.currency)}</b> <s>{money(d.base, d.currency)}</s>
+          </span>
+        )}
+        {/* The end of the sale and the store link share a line. */}
+        <div className="deal-meta">
+          {!mine && (d.endsAt || d.plusPrice) ? (
+            <span className="deal-until">
+              {d.endsAt &&
+                t('until', {
+                  date: new Date(d.endsAt).toLocaleDateString(locale, {
+                    day: 'numeric',
+                    month: 'short',
+                  }),
+                })}
+              {d.endsAt && d.plusPrice ? ' · ' : null}
+              {d.plusPrice ? t('plus', { price: money(d.plusPrice, d.currency) }) : null}
+            </span>
+          ) : null}
+          {d.storeUrl && (
+            <a
+              className="text-link deal-store"
+              href={d.storeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('store')} <Icon name="arrow" />
+            </a>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+}
+
+export function DealsSpotlight({ interests }: { interests: Interest[] }) {
+  const t = useMessages(messages)
   const [page, setPage] = useState(1)
   const shown = onSale(interests)
   if (!shown.length) return null
   const pages = Math.ceil(shown.length / PAGE)
   const at = Math.min(page, pages)
-  const money = (cents: number, currency: string) =>
-    (cents / 100).toLocaleString(locale, { style: 'currency', currency })
   return (
     <section className="deals" aria-labelledby="deals-title">
       {/* One slim line on top: the label and the count, with the pages on the right. */}
@@ -79,59 +135,9 @@ export function DealsSpotlight({ interests }: { interests: Interest[] }) {
         )}
       </div>
       <div className="deals-row">
-        {shown.slice((at - 1) * PAGE, at * PAGE).map((i) => {
-          const d = i.deal as NonNullable<Interest['deal']>
-          const mine = !!d.mine
-          return (
-            <article key={i.id} className={`deal${mine ? ' mine' : ''}`}>
-              <Link className="deal-game" to={titleHref(i.game.id)}>
-                <Cover url={i.game.cover_url} name={i.game.name} className="deal-cover" />
-                <span className="deal-off">{mine ? t('plusBadge') : `-${d.discount}%`}</span>
-              </Link>
-              <div className="deal-body">
-                <Link className="deal-name" to={titleHref(i.game.id)}>
-                  {i.game.name}
-                </Link>
-                {mine ? (
-                  <span className="deal-price">
-                    <b>{t('mine', { tier: TIER_NAMES[d.plusTier ?? 'extra'] })}</b>
-                    <span className="deal-plus">{t('free')}</span>
-                  </span>
-                ) : (
-                  <span className="deal-price">
-                    <b>{money(d.price, d.currency)}</b> <s>{money(d.base, d.currency)}</s>
-                  </span>
-                )}
-                {/* The end of the sale and the store link share a line. */}
-                <div className="deal-meta">
-                  {!mine && (d.endsAt || d.plusPrice) ? (
-                    <span className="deal-until">
-                      {d.endsAt &&
-                        t('until', {
-                          date: new Date(d.endsAt).toLocaleDateString(locale, {
-                            day: 'numeric',
-                            month: 'short',
-                          }),
-                        })}
-                      {d.endsAt && d.plusPrice ? ' · ' : null}
-                      {d.plusPrice ? t('plus', { price: money(d.plusPrice, d.currency) }) : null}
-                    </span>
-                  ) : null}
-                  {d.storeUrl && (
-                    <a
-                      className="text-link deal-store"
-                      href={d.storeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {t('store')} <Icon name="arrow" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            </article>
-          )
-        })}
+        {shown.slice((at - 1) * PAGE, at * PAGE).map((i) => (
+          <DealCard key={i.id} interest={i} />
+        ))}
       </div>
     </section>
   )

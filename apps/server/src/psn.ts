@@ -231,6 +231,17 @@ interface TargetFields {
   trophyProgressTargetValue?: string
 }
 
+// A progress-tracked trophy's target and how far the player is; all undefined on the others.
+function progressOf(def: object, earned: object | undefined) {
+  const p = earned as ProgressFields | undefined
+  const progressTarget = Number((def as TargetFields).trophyProgressTargetValue) || undefined
+  return {
+    progressTarget,
+    progressValue: progressTarget && p?.progress != null ? Number(p.progress) : undefined,
+    progressRate: progressTarget && p?.progressRate != null ? Number(p.progressRate) : undefined,
+  }
+}
+
 const rarityLabel = ['Ultra rara', 'Muito rara', 'Rara', 'Comum']
 
 // A screen and the questions on it ask for the same list within seconds; PSN is asked once a minute.
@@ -277,16 +288,11 @@ async function fetchTitleTrophies(
   return defs.trophies.map((t) => {
     const e = earnedById.get(t.trophyId)
     const en = enById.get(t.trophyId)
-    const p = e as (typeof e & ProgressFields) | undefined
-    const progressTarget =
-      Number((t as typeof t & TargetFields).trophyProgressTargetValue) || undefined
     return {
       iconUrl: t.trophyIconUrl,
       hidden: t.trophyHidden,
       groupId: t.trophyGroupId ?? 'default',
-      progressTarget,
-      progressValue: progressTarget && p?.progress != null ? Number(p.progress) : undefined,
-      progressRate: progressTarget && p?.progressRate != null ? Number(p.progressRate) : undefined,
+      ...progressOf(t, e),
       id: t.trophyId,
       name: t.trophyName ?? '',
       detail: t.trophyDetail ?? '',
@@ -477,6 +483,20 @@ function durationSeconds(iso: string): number {
   return Number(d ?? 0) * 86400 + Number(h ?? 0) * 3600 + Number(min ?? 0) * 60 + Number(sec ?? 0)
 }
 
+function playedGame(
+  t: Awaited<ReturnType<typeof getUserPlayedGames>>['titles'][number],
+): PlayedGame {
+  return {
+    titleId: t.titleId,
+    name: t.name,
+    platform: t.category.startsWith('ps5') ? 'PS5' : 'PS4',
+    seconds: durationSeconds(t.playDuration),
+    playCount: t.playCount,
+    firstPlayed: t.firstPlayedDateTime ?? null,
+    lastPlayed: t.lastPlayedDateTime ?? null,
+  }
+}
+
 // Every game the account has launched, with total play time.
 export async function playedGames(accountId: string): Promise<PlayedGame[]> {
   const a = await auth()
@@ -490,18 +510,7 @@ export async function playedGames(accountId: string): Promise<PlayedGame[]> {
       },
     )
     if (!page) return out
-    for (const t of page.titles) {
-      if (!t.category.endsWith('_game')) continue
-      out.push({
-        titleId: t.titleId,
-        name: t.name,
-        platform: t.category.startsWith('ps5') ? 'PS5' : 'PS4',
-        seconds: durationSeconds(t.playDuration),
-        playCount: t.playCount,
-        firstPlayed: t.firstPlayedDateTime ?? null,
-        lastPlayed: t.lastPlayedDateTime ?? null,
-      })
-    }
+    out.push(...page.titles.filter((t) => t.category.endsWith('_game')).map(playedGame))
     if (offset + page.titles.length >= page.totalItemCount || page.titles.length === 0) break
   }
   return out

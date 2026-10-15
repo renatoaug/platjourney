@@ -262,17 +262,13 @@ async function guideOrBuild(
   // The demo shows the guides it has and never asks for one.
   if (isDemo(user)) return { guide: cached ?? null, queued: false }
   if (cached && (cached.version ?? 1) >= GUIDE_VERSION) return { guide: cached, queued: false }
-  // Without automatic research an older guide is still better than none, and a missing one
-  // is listed for whoever runs the instance.
-  if (!config.automatic.research) {
+  // Without automatic research (or over today's share of it) an older guide is still better
+  // than none, and a missing one is listed for whoever runs the instance.
+  if (!config.automatic.research || (!building.has(game.id) && !mayResearch(user))) {
     if (!cached) await requestGuide(game.id)
     return { guide: cached ?? null, queued: !cached }
   }
   if (!building.has(game.id)) {
-    if (!mayResearch(user)) {
-      if (!cached) await requestGuide(game.id)
-      return { guide: cached ?? null, queued: !cached }
-    }
     const job = build().finally(() => building.delete(game.id))
     job.catch((e) => console.error('guide failed:', (e as Error).message))
     building.set(game.id, job)
@@ -280,18 +276,22 @@ async function guideOrBuild(
   return { guide: null, queued: false }
 }
 
+// The game a title page asks for, by catalog id or by name.
+async function askedGame(url: URL, user: User, platform: string): Promise<Game | undefined> {
+  const gameParam = url.searchParams.get('game')
+  const name = url.searchParams.get('name')
+  if (gameParam) return getGame(gameParam)
+  // A name the catalog does not know would be looked up on IGDB and stored; the demo only reads.
+  if (name) return isDemo(user) ? gameByName(name) : catalogGameForName(name, platform)
+  return undefined
+}
+
 // Detail for one catalog game: with PSN progress when the player owns it.
 async function titleDetail(url: URL, user: User) {
-  const gameParam = url.searchParams.get('game')
   const np = url.searchParams.get('id')
-  const name = url.searchParams.get('name')
   const platform = url.searchParams.get('platform') ?? 'PS5'
 
-  let game: Game | undefined
-  if (gameParam) game = await getGame(gameParam)
-  // A name the catalog does not know would be looked up on IGDB and stored; the demo only reads.
-  else if (name)
-    game = isDemo(user) ? await gameByName(name) : await catalogGameForName(name, platform)
+  let game = await askedGame(url, user, platform)
   const titles = await library(user.psn_account_id)
   const owned = titles.filter((t) =>
     np ? t.npCommunicationId === np : game?.np_communication_ids.includes(t.npCommunicationId),
@@ -302,40 +302,44 @@ async function titleDetail(url: URL, user: User) {
   )[0]
   if (!game && title) game = await gameForTitle(title)
   if (!game) return null
-  const found: Game = game
+  return title ? ownedDetail(user, game, title) : catalogDetail(user, game, platform)
+}
 
-  if (title) {
-    const [trophies, groups] = await Promise.all([
-      trophiesFor(title, user),
-      loadGroups(title, user),
-    ])
-    const { guide, queued } = await guideOrBuild(user, found, () =>
-      ensureGuide(found, trophies, { name: title.name, platform: title.platform }),
+async function ownedDetail(
+  user: User,
+  found: Game,
+  title: Awaited<ReturnType<typeof library>>[number],
+) {
+  const [trophies, groups] = await Promise.all([trophiesFor(title, user), loadGroups(title, user)])
+  const { guide, queued } = await guideOrBuild(user, found, () =>
+    ensureGuide(found, trophies, { name: title.name, platform: title.platform }),
+  )
+  if (guide && !isDemo(user))
+    ensureDeepGuide(found, title.total).catch((e) =>
+      console.error('deep guide failed:', (e as Error).message),
     )
-    if (guide && !isDemo(user))
-      ensureDeepGuide(found, title.total).catch((e) =>
-        console.error('deep guide failed:', (e as Error).message),
-      )
-    return {
-      owned: true,
-      np: title.npCommunicationId,
-      deepGuide: await deepGuideOf(user, found),
-      hoursPlayed: hours((await playtimes(user)).get(found.id)),
-      game: found,
-      name: found.name,
-      platform: title.platform,
-      icon: heroArt(found, title),
-      cover: found.cover_url,
-      progress: title.progress,
-      earned: title.earned,
-      total: title.total,
-      groups,
-      trophies,
-      guide,
-      building: !guide && !queued && !isDemo(user),
-      queued,
-    }
+  return {
+    owned: true,
+    np: title.npCommunicationId,
+    deepGuide: await deepGuideOf(user, found),
+    hoursPlayed: hours((await playtimes(user)).get(found.id)),
+    game: found,
+    name: found.name,
+    platform: title.platform,
+    icon: heroArt(found, title),
+    cover: found.cover_url,
+    progress: title.progress,
+    earned: title.earned,
+    total: title.total,
+    groups,
+    trophies,
+    guide,
+    building: !guide && !queued && !isDemo(user),
+    queued,
   }
+}
+
+async function catalogDetail(user: User, found: Game, platform: string) {
   // The demo only has the trophy lists of the games in its library.
   const list =
     found.np_communication_ids.length && !isDemo(user)
@@ -410,24 +414,31 @@ async function authRoutes(
     json(res, 200, { ok: true }, { 'set-cookie': sessionCookie(null) })
     return true
   }
-  if (path === '/api/auth/demo') {
-    const session = await demoSession()
-    if (!session) {
-      json(res, 404, {
-        error: 'demo_unavailable',
-        message: translator(messages, requestLocale(req))('demoUnavailable'),
-      })
-      return true
-    }
-    watchNow(session.user)
-    json(
-      res,
-      200,
-      { user: publicUser(session.user) },
-      { 'set-cookie': sessionCookie(session.token) },
-    )
+  if (demo) return demoSignIn(req, res)
+  return accountRoutes(req, res, path, ip)
+}
+
+async function demoSignIn(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+  const session = await demoSession()
+  if (!session) {
+    json(res, 404, {
+      error: 'demo_unavailable',
+      message: translator(messages, requestLocale(req))('demoUnavailable'),
+    })
     return true
   }
+  watchNow(session.user)
+  json(res, 200, { user: publicUser(session.user) }, { 'set-cookie': sessionCookie(session.token) })
+  return true
+}
+
+// Looking an account up, creating it, signing in and claiming it: all name a PSN id.
+async function accountRoutes(
+  req: IncomingMessage,
+  res: ServerResponse,
+  path: string,
+  ip: string,
+): Promise<boolean> {
   const { onlineId, password, fresh } = await readBody(req)
   if (!validId(onlineId)) {
     json(res, 400, {
@@ -521,279 +532,372 @@ async function demoAnswered(
   throw new DemoReadOnly()
 }
 
-async function api(
-  req: IncomingMessage,
-  res: ServerResponse,
-  url: URL,
-  method: string,
-  me: User,
-): Promise<void> {
-  const path = url.pathname
-  const titles = () => library(me.psn_account_id)
-  const t = translator(messages, requestLocale(req, me))
-  if (isDemo(me) && (await demoAnswered(req, res, url, method, me))) return
+// What every app route gets: the request, the signed-in player and their texts.
+interface Api {
+  req: IncomingMessage
+  res: ServerResponse
+  url: URL
+  me: User
+  t: ReturnType<typeof translator<typeof messages>>
+  titles: () => ReturnType<typeof library>
+}
 
-  if (path === '/api/me' && method === 'GET') return json(res, 200, { user: await accountUser(me) })
+type ApiHandler = (a: Api) => Promise<void> | void
 
-  if (path === '/api/account/preferences' && method === 'POST') {
-    // Any of the preferences, alone or together: DLC, Nexo's notices and the language.
-    const { includeDlcProgress, aiNotices, locale, psPlus } = await readBody(req)
-    const fields: Partial<User> = {}
-    if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
-    if (psPlus !== undefined) {
-      const tiers = ['none', 'essential', 'extra', 'deluxe'] as const
-      const tier = tiers.find((x) => x === psPlus)
-      if (!tier) return json(res, 400, { error: 'invalid' })
-      fields.ps_plus = tier
-    }
-    if (typeof aiNotices === 'boolean') fields.ai_notices = aiNotices
-    if (locale !== undefined) {
-      if (!isLocale(locale))
-        return json(res, 400, { error: 'invalid_locale', message: t('invalidLocale') })
-      fields.locale = locale
-    }
-    if (!Object.keys(fields).length) return json(res, 400, { error: 'invalid' })
-    await updateUser(me.id, fields)
-    return json(res, 200, { user: await accountUser({ ...me, ...fields }) })
+// Any of the preferences, alone or together: DLC, Nexo's notices and the language.
+async function savePreferences({ req, res, me, t }: Api) {
+  const { includeDlcProgress, aiNotices, locale, psPlus } = await readBody(req)
+  const fields: Partial<User> = {}
+  if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
+  if (psPlus !== undefined) {
+    const tiers = ['none', 'essential', 'extra', 'deluxe'] as const
+    const tier = tiers.find((x) => x === psPlus)
+    if (!tier) return json(res, 400, { error: 'invalid' })
+    fields.ps_plus = tier
   }
+  if (typeof aiNotices === 'boolean') fields.ai_notices = aiNotices
+  if (locale !== undefined) {
+    if (!isLocale(locale))
+      return json(res, 400, { error: 'invalid_locale', message: t('invalidLocale') })
+    fields.locale = locale
+  }
+  if (!Object.keys(fields).length) return json(res, 400, { error: 'invalid' })
+  await updateUser(me.id, fields)
+  return json(res, 200, { user: await accountUser({ ...me, ...fields }) })
+}
 
-  if (path === '/api/account/onboarded' && method === 'POST') {
+async function savePassword({ req, res, me, t }: Api) {
+  const { current, next } = await readBody(req)
+  if (typeof current !== 'string' || typeof next !== 'string')
+    return json(res, 400, { error: 'invalid', message: t('fillPasswords') })
+  try {
+    await changePassword(req, me, current, next)
+  } catch (e) {
+    // A wrong current password must not look like an expired session to the page.
+    if (e instanceof AuthError && e.code === 'wrong_password')
+      return json(res, 400, {
+        error: 'wrong_password',
+        message: t('currentPasswordMismatch'),
+      })
+    throw e
+  }
+  return json(res, 200, { ok: true })
+}
+
+async function telegramLink({ res, me }: Api) {
+  // Clicking twice (or in two tabs) must not invalidate a link still valid.
+  const valid =
+    me.telegram_link_code &&
+    me.telegram_link_expires_at &&
+    new Date(me.telegram_link_expires_at).getTime() > Date.now() + 60_000
+  const code = valid ? (me.telegram_link_code as string) : newLinkCode()
+  if (!valid) await setLinkCode(me.id, code)
+  return json(res, 200, { url: `https://t.me/${await botUsername()}?start=${code}` })
+}
+
+type Ranked = Awaited<ReturnType<typeof rankNextPlatinum>>[number]
+
+function rankingRow(r: Ranked, played: Awaited<ReturnType<typeof playtimes>>) {
+  return {
+    game: r.game.id,
+    name: r.game.name,
+    platform: r.title.platform,
+    icon: r.title.iconUrl,
+    cover: r.game.cover_url,
+    progress: r.baseProgress,
+    remaining: r.remaining,
+    hours: hours(played.get(r.game.id)),
+    total: r.groups?.base.total ?? r.title.total,
+    earned: r.groups?.base.earned ?? r.title.earned,
+    dlc: r.groups?.dlc ? { earned: r.groups.dlc.earned, total: r.groups.dlc.total } : null,
+  }
+}
+
+async function state({ res, me, titles }: Api) {
+  const list = await titles()
+  const played = await playtimes(me)
+  // The demo's context comes from the database at once; a real player's waits for PSN.
+  const ctx = getCurrent(me) ?? (isDemo(me) ? await demoContext(me) : undefined)
+  if (!ctx) watchNow(me)
+  const ranked = await rankNextPlatinum(list, me, 20, ctx ? [ctx.title.npCommunicationId] : [])
+  return json(res, 200, {
+    profile: await profile(me),
+    // null, not missing: the web app reads a missing game as still loading.
+    current: (await currentView(me, ctx)) ?? null,
+    // The chat's own game when the player picked another one there; null when it is the game played.
+    chat:
+      getChat(me) && getChat(me) !== ctx ? ((await currentView(me, getChat(me))) ?? null) : null,
+    tips: await recentTips(me.id, 50),
+    unread: await unreadNotifications(me.id),
+    ranking: ranked.map((r) => rankingRow(r, played)),
+    goals: await yearProgress(me, list, undefined, played),
+    servers: (await listServerStatuses(ranked.map((r) => r.game.id))).filter(
+      (s) => s.status !== 'unknown',
+    ),
+  })
+}
+
+async function newPlan({ req, res, me }: Api) {
+  const { minutes } = await readBody(req)
+  const ctx = getCurrent(me)
+  if (!ctx) return json(res, 409, { error: 'no current game yet' })
+  if (typeof minutes !== 'number' || minutes < 15 || minutes > 600)
+    return json(res, 400, { error: 'minutes must be between 15 and 600' })
+  return json(res, 200, { plan: await planSession(me, ctx, minutes) })
+}
+
+async function trophyTip({ req, res, me, titles }: Api) {
+  const { np, trophyId } = await readBody(req)
+  if (typeof np !== 'string' || typeof trophyId !== 'number')
+    return json(res, 400, { error: 'np and trophyId required' })
+  const title = (await titles()).find((t) => t.npCommunicationId === np)
+  if (!title) return json(res, 404, { error: 'title not in your library' })
+  const [trophies, groups, game] = await Promise.all([
+    titleTrophies(title, me.psn_account_id),
+    loadGroups(title, me),
+    gameForTitle(title),
+  ])
+  const trophy = trophies.find((t) => t.id === trophyId)
+  if (!trophy) return json(res, 404, { error: 'trophy not found' })
+  if (trophy.earned) return json(res, 409, { error: 'trophy already earned' })
+  const guide = await getGuide<Guide>(game.id)
+  const ctx = {
+    game,
+    title,
+    trophies,
+    groups,
+    guide,
+    hoursPlayed: hours((await playtimes(me)).get(game.id)),
+  }
+  return json(res, 200, { text: await trophyHelp(me, ctx, trophy) })
+}
+
+// Each game is its own conversation: `?game=game:…` reads that one, `?game=none` the messages
+// without a game, and no parameter the current game's.
+async function chatMessages({ res, url, me }: Api) {
+  const asked = url.searchParams.get('game')
+  const game =
+    asked === 'none' ? null : asked?.startsWith('game:') ? asked : (getChat(me)?.game.id ?? null)
+  return json(res, 200, await recentMessages(me.id, 40, game))
+}
+
+async function chatSend({ req, res, me }: Api) {
+  const { text } = await readBody(req)
+  if (typeof text !== 'string' || !text.trim()) return json(res, 400, { error: 'text required' })
+  const ctx = await chatOrCheck(me)
+  const response = await reply(me, text.trim().slice(0, config.chat.maxChars), ctx)
+  return json(res, 200, {
+    text: response,
+    messages: await recentMessages(me.id, 40, ctx?.game.id ?? null),
+  })
+}
+
+// The chat's game, as /game in Telegram: the player's own titles, searched by name, and the
+// switch, which loads that game's context for the chat and the notices alike.
+async function librarySearch({ res, url, me, titles }: Api) {
+  if (isDemo(me)) return json(res, 200, [])
+  const q = (url.searchParams.get('q') ?? '').trim().toLowerCase()
+  const current = getChat(me)?.title.npCommunicationId
+  const own = await titles()
+  const hits = own.filter((ti) => ti.name.toLowerCase().includes(q)).slice(0, 8)
+  const mine = hits.map((ti) => ({
+    np: ti.npCommunicationId,
+    name: ti.name,
+    platform: ti.platform,
+    icon: ti.iconUrl,
+    progress: ti.progress,
+    current: ti.npCommunicationId === current,
+    owned: true,
+  }))
+  const others = q.length < 2 || mine.length >= 8 ? [] : await notOwned(me, q, own, 8 - mine.length)
+  return json(res, 200, [...mine, ...others])
+}
+
+// Then games outside the library, to talk about one before buying it.
+async function notOwned(
+  me: User,
+  q: string,
+  own: Awaited<ReturnType<typeof library>>,
+  room: number,
+) {
+  const owned = new Set(own.map((ti) => ti.npCommunicationId))
+  const currentGame = getChat(me)?.game.id
+  return (await searchCatalog(q))
+    .filter((g) => g.np_communication_ids?.length)
+    .filter((g) => !g.np_communication_ids.some((np) => owned.has(np)))
+    .slice(0, room)
+    .map((g) => ({
+      game: g.id,
+      name: g.name,
+      platform: g.platforms?.[0] ?? '',
+      icon: g.cover_url ?? null,
+      progress: null,
+      current: g.id === currentGame,
+      owned: false,
+    }))
+}
+
+async function switchCurrent({ req, res, me, titles }: Api) {
+  if (isDemo(me)) return json(res, 403, { error: 'demo' })
+  const { np, game } = await readBody(req)
+  const own = await titles()
+  // A catalog game the player owns after all is switched to through its title, with progress.
+  const found =
+    typeof game === 'string' && game.startsWith('game:') ? await getGame(game) : undefined
+  const hit = own.find(
+    (ti) =>
+      ti.npCommunicationId === np || found?.np_communication_ids?.includes(ti.npCommunicationId),
+  )
+  if (hit)
+    return json(res, 200, { current: (await currentView(me, await setChat(me, hit))) ?? null })
+  if (!found) return json(res, 404, { error: 'title not found' })
+  const ctx = await setChatFromCatalog(me, found)
+  if (!ctx) return json(res, 404, { error: 'no trophy list' })
+  return json(res, 200, { current: (await currentView(me, ctx)) ?? null })
+}
+
+async function guides({ res, url }: Api) {
+  const p = url.searchParams
+  return json(
+    res,
+    200,
+    await browseGuides({
+      query: p.get('q') ?? undefined,
+      platform: p.get('platform') ?? undefined,
+      sort: p.get('sort') ?? undefined,
+      page: Number(p.get('page')) || 1,
+      difficulty: p.get('difficulty') ?? undefined,
+      hours: p.get('hours') ?? undefined,
+      noMissables: p.get('noMissables') === '1',
+      onePlaythrough: p.get('onePlaythrough') === '1',
+      noOnline: p.get('noOnline') === '1',
+      genre: p.get('genre') ?? undefined,
+    }),
+  )
+}
+
+// A game the search did not find: IGDB is asked for it, and a game it knows joins the catalog
+// (its page then lists it for a guide). A name IGDB does not know either is kept for whoever
+// runs the instance.
+async function requestGame({ req, res, me, t }: Api) {
+  const { name } = await readBody(req)
+  if (typeof name !== 'string' || name.trim().length < 2 || name.length > 100)
+    return json(res, 400, { error: 'name required' })
+  if (!allow(`game-request|${me.id}`, 5, 60_000))
+    return json(res, 429, { error: t('tooManyRequests') })
+  const game = await catalogGameForName(name.trim())
+  if (game) return json(res, 200, { game: game.id })
+  const already = await requestMissingGame(name.trim(), me.id)
+  return json(res, 200, { requested: true, already })
+}
+
+async function goals({ req, res, me, t, titles }: Api) {
+  const { command } = await readBody(req)
+  if (typeof command !== 'string') return json(res, 400, { error: 'command required' })
+  if (command.startsWith('add ')) {
+    // The game's id, without where it was saved from ("add game:12 from:releases").
+    const id = command.slice(4).trim().split(/\s+/)[0]
+    if (!id.startsWith('game:') || !(await getGame(id)))
+      return json(res, 400, { error: t('pickCatalogGame') })
+  }
+  await handleInterestCommand(me, command, await titles())
+  return json(res, 200, await yearProgress(me, await titles(), undefined, await playtimes(me)))
+}
+
+async function dismissPick({ req, res, me, titles }: Api) {
+  const { game, reason } = await readBody(req)
+  if (typeof game !== 'string' || !game.startsWith('game:'))
+    return json(res, 400, { error: 'game required' })
+  if (reason !== undefined && !isDismissReason(reason))
+    return json(res, 400, { error: 'invalid reason' })
+  await dismissRecommendation(me, game, reason)
+  return json(
+    res,
+    200,
+    await recommendations(me, await titles(), await ownedGames(me.psn_account_id)),
+  )
+}
+
+// The player's changes to the taste profile and their rules; the stored batch answers, and a new
+// one (model work) waits for the refresh button.
+async function tastePreferences({ req, res, me, titles }: Api) {
+  const prefs = readPrefs(await readBody(req))
+  if (!prefs) return json(res, 400, { error: 'invalid' })
+  await updateUser(me.id, { taste_prefs: prefs })
+  return json(
+    res,
+    200,
+    await recommendations(
+      { ...me, taste_prefs: prefs },
+      await titles(),
+      await ownedGames(me.psn_account_id),
+      false,
+      true,
+    ),
+  )
+}
+
+// The app's own routes, by method and path.
+const API_ROUTES: Record<string, ApiHandler> = {
+  'GET /api/me': async ({ res, me }) => json(res, 200, { user: await accountUser(me) }),
+  'POST /api/account/preferences': savePreferences,
+  'POST /api/account/onboarded': async ({ res, me }) => {
     await updateUser(me.id, { onboarded_at: new Date() })
     return json(res, 200, { ok: true })
-  }
-  if (path === '/api/account/password' && method === 'POST') {
-    const { current, next } = await readBody(req)
-    if (typeof current !== 'string' || typeof next !== 'string')
-      return json(res, 400, { error: 'invalid', message: t('fillPasswords') })
-    try {
-      await changePassword(req, me, current, next)
-    } catch (e) {
-      // A wrong current password must not look like an expired session to the page.
-      if (e instanceof AuthError && e.code === 'wrong_password')
-        return json(res, 400, {
-          error: 'wrong_password',
-          message: t('currentPasswordMismatch'),
-        })
-      throw e
-    }
-    return json(res, 200, { ok: true })
-  }
-  if (path === '/api/account' && method === 'DELETE') {
+  },
+  'POST /api/account/password': savePassword,
+  'DELETE /api/account': async ({ req, res, me }) => {
     const { onlineId } = await readBody(req)
     await deleteAccount(me, typeof onlineId === 'string' ? onlineId : '')
     forgetUser(me.id)
     summaries.delete(me.id)
     return json(res, 200, { ok: true }, { 'set-cookie': sessionCookie(null) })
-  }
-  if (path === '/api/telegram/link' && method === 'POST') {
-    // Clicking twice (or in two tabs) must not invalidate a link still valid.
-    const valid =
-      me.telegram_link_code &&
-      me.telegram_link_expires_at &&
-      new Date(me.telegram_link_expires_at).getTime() > Date.now() + 60_000
-    const code = valid ? (me.telegram_link_code as string) : newLinkCode()
-    if (!valid) await setLinkCode(me.id, code)
-    return json(res, 200, { url: `https://t.me/${await botUsername()}?start=${code}` })
-  }
-  if (path === '/api/telegram/link' && method === 'DELETE') {
+  },
+  'POST /api/telegram/link': telegramLink,
+  'DELETE /api/telegram/link': async ({ res, me }) => {
     await updateUser(me.id, { telegram_chat_id: null, telegram_link_code: null })
     return json(res, 200, { ok: true })
-  }
-
-  if (path === '/api/state' && method === 'GET') {
-    const list = await titles()
-    const played = await playtimes(me)
-    // The demo's context comes from the database at once; a real player's waits for PSN.
-    const ctx = getCurrent(me) ?? (isDemo(me) ? await demoContext(me) : undefined)
-    if (!ctx) watchNow(me)
-    const ranked = await rankNextPlatinum(list, me, 20, ctx ? [ctx.title.npCommunicationId] : [])
-    return json(res, 200, {
-      profile: await profile(me),
-      // null, not missing: the web app reads a missing game as still loading.
-      current: (await currentView(me, ctx)) ?? null,
-      // The chat's own game when the player picked another one there; null when it is the game played.
-      chat:
-        getChat(me) && getChat(me) !== ctx ? ((await currentView(me, getChat(me))) ?? null) : null,
-      tips: await recentTips(me.id, 50),
-      unread: await unreadNotifications(me.id),
-      ranking: ranked.map((r) => ({
-        game: r.game.id,
-        name: r.game.name,
-        platform: r.title.platform,
-        icon: r.title.iconUrl,
-        cover: r.game.cover_url,
-        progress: r.baseProgress,
-        remaining: r.remaining,
-        hours: hours(played.get(r.game.id)),
-        total: r.groups?.base.total ?? r.title.total,
-        earned: r.groups?.base.earned ?? r.title.earned,
-        dlc: r.groups?.dlc ? { earned: r.groups.dlc.earned, total: r.groups.dlc.total } : null,
-      })),
-      goals: await yearProgress(me, list, undefined, played),
-      servers: (await listServerStatuses(ranked.map((r) => r.game.id))).filter(
-        (s) => s.status !== 'unknown',
-      ),
-    })
-  }
-  if (path === '/api/title' && method === 'GET') {
+  },
+  'GET /api/state': state,
+  'GET /api/title': async ({ res, url, me }) => {
     const detail = await titleDetail(url, me)
     return detail ? json(res, 200, detail) : json(res, 404, { error: 'title not found' })
-  }
-  if (path === '/api/profile' && method === 'GET')
-    return json(res, 200, {
+  },
+  'GET /api/profile': async ({ res, me, titles }) =>
+    json(res, 200, {
       ...(await profilePage(await titles(), me)),
       user: await accountUser(me),
-    })
-  if (path === '/api/plan' && method === 'GET')
-    return json(res, 200, { plan: await currentPlan(me, getCurrent(me)) })
-  if (path === '/api/plan' && method === 'DELETE') {
+    }),
+  'GET /api/plan': async ({ res, me }) =>
+    json(res, 200, { plan: await currentPlan(me, getCurrent(me)) }),
+  'DELETE /api/plan': async ({ res, me }) => {
     await discardPlan(me)
     return json(res, 200, { plan: null })
-  }
-  if (path === '/api/plan' && method === 'POST') {
-    const { minutes } = await readBody(req)
-    const ctx = getCurrent(me)
-    if (!ctx) return json(res, 409, { error: 'no current game yet' })
-    if (typeof minutes !== 'number' || minutes < 15 || minutes > 600)
-      return json(res, 400, { error: 'minutes must be between 15 and 600' })
-    return json(res, 200, { plan: await planSession(me, ctx, minutes) })
-  }
-  if (path === '/api/trophy-tip' && method === 'POST') {
-    const { np, trophyId } = await readBody(req)
-    if (typeof np !== 'string' || typeof trophyId !== 'number')
-      return json(res, 400, { error: 'np and trophyId required' })
-    const title = (await titles()).find((t) => t.npCommunicationId === np)
-    if (!title) return json(res, 404, { error: 'title not in your library' })
-    const [trophies, groups, game] = await Promise.all([
-      titleTrophies(title, me.psn_account_id),
-      loadGroups(title, me),
-      gameForTitle(title),
-    ])
-    const trophy = trophies.find((t) => t.id === trophyId)
-    if (!trophy) return json(res, 404, { error: 'trophy not found' })
-    if (trophy.earned) return json(res, 409, { error: 'trophy already earned' })
-    const guide = await getGuide<Guide>(game.id)
-    const ctx = {
-      game,
-      title,
-      trophies,
-      groups,
-      guide,
-      hoursPlayed: hours((await playtimes(me)).get(game.id)),
-    }
-    return json(res, 200, { text: await trophyHelp(me, ctx, trophy) })
-  }
-  if (path === '/api/tips' && method === 'GET') {
+  },
+  'POST /api/plan': newPlan,
+  'POST /api/trophy-tip': trophyTip,
+  'GET /api/tips': async ({ res, url, me }) => {
     const before = new Date(url.searchParams.get('before') ?? '')
     if (Number.isNaN(before.getTime())) return json(res, 400, { error: 'before' })
     return json(res, 200, await tipsBefore(me.id, before, 30))
-  }
-  if (path === '/api/notifications' && method === 'GET') {
+  },
+  'GET /api/notifications': async ({ res, url, me }) => {
     const page = Math.max(1, Number(url.searchParams.get('page')) || 1)
     const size = Math.min(30, Math.max(1, Number(url.searchParams.get('size')) || 8))
     return json(res, 200, { page, size, ...(await notificationsPage(me.id, page, size)) })
-  }
-  if (path === '/api/notifications/read' && method === 'POST') {
+  },
+  'POST /api/notifications/read': async ({ res, me }) => {
     await markNotificationsRead(me.id)
     return json(res, 200, { ok: true })
-  }
-  // Each game is its own conversation: `?game=game:…` reads that one, `?game=none` the messages
-  // without a game, and no parameter the current game's.
-  if (path === '/api/chat' && method === 'GET') {
-    const asked = url.searchParams.get('game')
-    const game =
-      asked === 'none' ? null : asked?.startsWith('game:') ? asked : (getChat(me)?.game.id ?? null)
-    return json(res, 200, await recentMessages(me.id, 40, game))
-  }
-  if (path === '/api/chat/threads' && method === 'GET')
-    return json(res, 200, await chatThreads(me.id))
-  if (path === '/api/chat' && method === 'POST') {
-    const { text } = await readBody(req)
-    if (typeof text !== 'string' || !text.trim()) return json(res, 400, { error: 'text required' })
-    const ctx = await chatOrCheck(me)
-    const response = await reply(me, text.trim().slice(0, config.chat.maxChars), ctx)
-    return json(res, 200, {
-      text: response,
-      messages: await recentMessages(me.id, 40, ctx?.game.id ?? null),
-    })
-  }
-  // The chat's game, as /game in Telegram: the player's own titles, searched by name, and the
-  // switch, which loads that game's context for the chat and the notices alike.
-  if (path === '/api/library' && method === 'GET') {
-    if (isDemo(me)) return json(res, 200, [])
-    const q = (url.searchParams.get('q') ?? '').trim().toLowerCase()
-    const current = getChat(me)?.title.npCommunicationId
-    const own = await titles()
-    const hits = own.filter((ti) => ti.name.toLowerCase().includes(q)).slice(0, 8)
-    const mine = hits.map((ti) => ({
-      np: ti.npCommunicationId,
-      name: ti.name,
-      platform: ti.platform,
-      icon: ti.iconUrl,
-      progress: ti.progress,
-      current: ti.npCommunicationId === current,
-      owned: true,
-    }))
-    // Then games outside the library, to talk about one before buying it.
-    const owned = new Set(own.map((ti) => ti.npCommunicationId))
-    const currentGame = getChat(me)?.game.id
-    const others =
-      q.length < 2 || mine.length >= 8
-        ? []
-        : (await searchCatalog(q))
-            .filter((g) => g.np_communication_ids?.length)
-            .filter((g) => !g.np_communication_ids.some((np) => owned.has(np)))
-            .slice(0, 8 - mine.length)
-            .map((g) => ({
-              game: g.id,
-              name: g.name,
-              platform: g.platforms?.[0] ?? '',
-              icon: g.cover_url ?? null,
-              progress: null,
-              current: g.id === currentGame,
-              owned: false,
-            }))
-    return json(res, 200, [...mine, ...others])
-  }
-  if (path === '/api/current' && method === 'POST') {
-    if (isDemo(me)) return json(res, 403, { error: 'demo' })
-    const { np, game } = await readBody(req)
-    const own = await titles()
-    // A catalog game the player owns after all is switched to through its title, with progress.
-    const found =
-      typeof game === 'string' && game.startsWith('game:') ? await getGame(game) : undefined
-    const hit = own.find(
-      (ti) =>
-        ti.npCommunicationId === np || found?.np_communication_ids?.includes(ti.npCommunicationId),
-    )
-    if (hit)
-      return json(res, 200, { current: (await currentView(me, await setChat(me, hit))) ?? null })
-    if (!found) return json(res, 404, { error: 'title not found' })
-    const ctx = await setChatFromCatalog(me, found)
-    if (!ctx) return json(res, 404, { error: 'no trophy list' })
-    return json(res, 200, { current: (await currentView(me, ctx)) ?? null })
-  }
-  if (path === '/api/guides' && method === 'GET') {
-    const p = url.searchParams
-    return json(
-      res,
-      200,
-      await browseGuides({
-        query: p.get('q') ?? undefined,
-        platform: p.get('platform') ?? undefined,
-        sort: p.get('sort') ?? undefined,
-        page: Number(p.get('page')) || 1,
-        difficulty: p.get('difficulty') ?? undefined,
-        hours: p.get('hours') ?? undefined,
-        noMissables: p.get('noMissables') === '1',
-        onePlaythrough: p.get('onePlaythrough') === '1',
-        noOnline: p.get('noOnline') === '1',
-        genre: p.get('genre') ?? undefined,
-      }),
-    )
-  }
+  },
+  'GET /api/chat': chatMessages,
+  'GET /api/chat/threads': async ({ res, me }) => json(res, 200, await chatThreads(me.id)),
+  'POST /api/chat': chatSend,
+  'GET /api/library': librarySearch,
+  'POST /api/current': switchCurrent,
+  'GET /api/guides': guides,
   // Releases around today: the last two weeks and the next six, for the home's calendar.
-  if (path === '/api/releases' && method === 'GET') {
+  'GET /api/releases': async ({ res }) => {
     const day = 86_400_000
     const now = Date.now()
     return json(
@@ -804,79 +908,39 @@ async function api(
         new Date(now + RELEASES_AFTER_DAYS * day),
       ),
     )
-  }
-  if (path === '/api/games/search' && method === 'GET') {
-    return json(res, 200, await searchCatalog(url.searchParams.get('q') ?? ''))
-  }
-  // A game the search did not find: IGDB is asked for it, and a game it knows joins the catalog
-  // (its page then lists it for a guide). A name IGDB does not know either is kept for whoever
-  // runs the instance.
-  if (path === '/api/games/request' && method === 'POST') {
-    const { name } = await readBody(req)
-    if (typeof name !== 'string' || name.trim().length < 2 || name.length > 100)
-      return json(res, 400, { error: 'name required' })
-    if (!allow(`game-request|${me.id}`, 5, 60_000))
-      return json(res, 429, { error: t('tooManyRequests') })
-    const game = await catalogGameForName(name.trim())
-    if (game) return json(res, 200, { game: game.id })
-    const already = await requestMissingGame(name.trim(), me.id)
-    return json(res, 200, { requested: true, already })
-  }
-  if (path === '/api/goals' && method === 'POST') {
-    const { command } = await readBody(req)
-    if (typeof command !== 'string') return json(res, 400, { error: 'command required' })
-    if (command.startsWith('add ')) {
-      // The game's id, without where it was saved from ("add game:12 from:releases").
-      const id = command.slice(4).trim().split(/\s+/)[0]
-      if (!id.startsWith('game:') || !(await getGame(id)))
-        return json(res, 400, { error: t('pickCatalogGame') })
-    }
-    await handleInterestCommand(me, command, await titles())
-    return json(res, 200, await yearProgress(me, await titles(), undefined, await playtimes(me)))
-  }
-  if (path === '/api/interests/next' && method === 'POST') {
-    // Model work: Nexo picks which saved game to platinum now.
-    return json(res, 200, { pick: await nextPick(me, await titles(), requestLocale(req, me)) })
-  }
-  if (path === '/api/recommendations/dismiss' && method === 'POST') {
-    const { game, reason } = await readBody(req)
-    if (typeof game !== 'string' || !game.startsWith('game:'))
-      return json(res, 400, { error: 'game required' })
-    if (reason !== undefined && !isDismissReason(reason))
-      return json(res, 400, { error: 'invalid reason' })
-    await dismissRecommendation(me, game, reason)
-    return json(
-      res,
-      200,
-      await recommendations(me, await titles(), await ownedGames(me.psn_account_id)),
-    )
-  }
-  if (path === '/api/recommendations/preferences' && method === 'POST') {
-    // The player's changes to the taste profile and their rules; the stored batch answers, and a new
-    // one (model work) waits for the refresh button.
-    const prefs = readPrefs(await readBody(req))
-    if (!prefs) return json(res, 400, { error: 'invalid' })
-    await updateUser(me.id, { taste_prefs: prefs })
-    return json(
-      res,
-      200,
-      await recommendations(
-        { ...me, taste_prefs: prefs },
-        await titles(),
-        await ownedGames(me.psn_account_id),
-        false,
-        true,
-      ),
-    )
-  }
-  if (path === '/api/recommendations' && method === 'GET') {
+  },
+  'GET /api/games/search': async ({ res, url }) =>
+    json(res, 200, await searchCatalog(url.searchParams.get('q') ?? '')),
+  'POST /api/games/request': requestGame,
+  'POST /api/goals': goals,
+  // Model work: Nexo picks which saved game to platinum now.
+  'POST /api/interests/next': async ({ req, res, me, titles }) =>
+    json(res, 200, { pick: await nextPick(me, await titles(), requestLocale(req, me)) }),
+  'POST /api/recommendations/dismiss': dismissPick,
+  'POST /api/recommendations/preferences': tastePreferences,
+  'GET /api/recommendations': async ({ res, url, me, titles }) => {
     const force = url.searchParams.get('refresh') === '1'
     return json(
       res,
       200,
       await recommendations(me, await titles(), await ownedGames(me.psn_account_id), force),
     )
-  }
+  },
+}
+
+async function api(
+  req: IncomingMessage,
+  res: ServerResponse,
+  url: URL,
+  method: string,
+  me: User,
+): Promise<void> {
+  const titles = () => library(me.psn_account_id)
+  const t = translator(messages, requestLocale(req, me))
+  if (isDemo(me) && (await demoAnswered(req, res, url, method, me))) return
+  const key = `${method} ${url.pathname}`
+  const handler = Object.hasOwn(API_ROUTES, key) ? API_ROUTES[key] : undefined
+  if (handler) return handler({ req, res, url, me, t, titles })
   json(res, 404, { error: 'not found' })
 }
 
@@ -904,87 +968,109 @@ function sameOrigin(req: IncomingMessage): boolean {
   }
 }
 
+// Plugins step in first: one that answers ends the request (another sign-in, a file of its own);
+// the others let it through to the app. True when the request was answered here.
+async function intercepted(
+  req: IncomingMessage,
+  res: ServerResponse,
+  url: URL,
+  method: string,
+): Promise<boolean> {
+  const path = url.pathname
+  const intercepts = interceptsFor(path, method)
+  if (!intercepts.length) return false
+  if (path.startsWith('/api/') && !READ_METHODS.has(method) && !sameOrigin(req)) {
+    json(res, 403, { error: 'cross_origin' })
+    return true
+  }
+  const me = await authenticate(req)
+  for (const handler of intercepts) {
+    await handler({ req, res, url, method, me })
+    if (res.headersSent || res.writableEnded) return true
+  }
+  return false
+}
+
+async function apiRoute(
+  req: IncomingMessage,
+  res: ServerResponse,
+  url: URL,
+  method: string,
+): Promise<void> {
+  const path = url.pathname
+  // A browser always says where a request comes from; a change asked by another site's page
+  // is refused. Server-to-server calls (a payment provider's webhook) send no Origin.
+  if (!READ_METHODS.has(method) && !sameOrigin(req))
+    return json(res, 403, { error: 'cross_origin' })
+  // Plugin routes (/api/ext/…) answer only their own method; public ones, like a payment
+  // provider's webhook, skip sign-in.
+  const ext = pluginRoute(path)
+  if (ext && ext.method !== method)
+    return json(res, 405, { error: 'method_not_allowed' }, { allow: ext.method })
+  if (ext?.public) return ext.handler({ req, res, url, method })
+  if (await authRoutes(req, res, path, method)) return
+  const me = await authenticate(req)
+  if (!me) return json(res, 401, { error: 'unauthenticated' })
+  noteAccess(req, me).catch((e) => console.warn('access not noted:', (e as Error).message))
+  const tag = isDemo(me) ? { user: me.id, demo: true } : { user: me.id }
+  if (ext) {
+    // The demo account is shared: like the app's own routes, plugin routes only read for it.
+    if (isDemo(me) && ext.method !== 'GET') throw new DemoReadOnly()
+    return tagged(tag, () => ext.handler({ req, res, url, method, me }))
+  }
+  return tagged(tag, () => api(req, res, url, method, me))
+}
+
+// Development: the page comes from Vite, which rebuilds on save; /api stays here.
+async function devPage(req: IncomingMessage, res: ServerResponse, devWeb: string): Promise<void> {
+  const r = await fetch(new URL(req.url ?? '/', devWeb))
+  const headers = Object.fromEntries(
+    [...r.headers].filter(
+      ([k]) => !['content-encoding', 'content-length', 'transfer-encoding'].includes(k),
+    ),
+  )
+  res.writeHead(r.status, headers).end(Buffer.from(await r.arrayBuffer()))
+}
+
+function staticHeaders(path: string, type: string) {
+  return {
+    'content-type': type,
+    'cache-control': path.startsWith('/assets/')
+      ? 'public, max-age=31536000, immutable'
+      : 'no-cache',
+    ...SECURITY_HEADERS,
+    ...(type === STATIC_TYPES['.html'] ? { 'content-security-policy': pluginPagePolicy() } : {}),
+    ...(config.auth.secureCookie
+      ? { 'strict-transport-security': 'max-age=31536000; includeSubDomains' }
+      : {}),
+  }
+}
+
+// Static files from the built app; anything unknown falls back to the app shell (hash routing).
+// False when not even the shell is there.
+function servedStatic(req: IncomingMessage, res: ServerResponse, path: string): boolean {
+  const file = path === '/' ? 'index.html' : path.slice(1)
+  const safe = !file.includes('..') && STATIC_TYPES[extname(file)]
+  const target = new URL(safe ? file : 'index.html', PUBLIC_DIR)
+  if (!existsSync(target)) return false
+  const type = STATIC_TYPES[extname(target.pathname)] ?? STATIC_TYPES['.html']
+  res
+    .writeHead(200, staticHeaders(path, type))
+    .end(
+      target.pathname.endsWith('/index.html') ? withShareImage(req, target) : readFileSync(target),
+    )
+  return true
+}
+
 async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', 'http://localhost')
   const path = url.pathname
   const method = req.method ?? 'GET'
 
-  // Plugins step in first: one that answers ends the request (another sign-in, a file of its own);
-  // the others let it through to the app.
-  const intercepts = interceptsFor(path, method)
-  if (intercepts.length) {
-    if (path.startsWith('/api/') && !READ_METHODS.has(method) && !sameOrigin(req))
-      return json(res, 403, { error: 'cross_origin' })
-    const me = await authenticate(req)
-    for (const handler of intercepts) {
-      await handler({ req, res, url, method, me })
-      if (res.headersSent || res.writableEnded) return
-    }
-  }
-
-  if (path.startsWith('/api/')) {
-    // A browser always says where a request comes from; a change asked by another site's page
-    // is refused. Server-to-server calls (a payment provider's webhook) send no Origin.
-    if (!READ_METHODS.has(method) && !sameOrigin(req))
-      return json(res, 403, { error: 'cross_origin' })
-    // Plugin routes (/api/ext/…) answer only their own method; public ones, like a payment
-    // provider's webhook, skip sign-in.
-    const ext = pluginRoute(path)
-    if (ext && ext.method !== method)
-      return json(res, 405, { error: 'method_not_allowed' }, { allow: ext.method })
-    if (ext?.public) return ext.handler({ req, res, url, method })
-    if (await authRoutes(req, res, path, method)) return
-    const me = await authenticate(req)
-    if (!me) return json(res, 401, { error: 'unauthenticated' })
-    noteAccess(req, me).catch((e) => console.warn('access not noted:', (e as Error).message))
-    const tag = isDemo(me) ? { user: me.id, demo: true } : { user: me.id }
-    if (ext) {
-      // The demo account is shared: like the app's own routes, plugin routes only read for it.
-      if (isDemo(me) && ext.method !== 'GET') throw new DemoReadOnly()
-      return tagged(tag, () => ext.handler({ req, res, url, method, me }))
-    }
-    return tagged(tag, () => api(req, res, url, method, me))
-  }
-  if (method === 'GET' && DEV_WEB) {
-    // Development: the page comes from Vite, which rebuilds on save; /api stays here.
-    const r = await fetch(new URL(req.url ?? '/', DEV_WEB))
-    const headers = Object.fromEntries(
-      [...r.headers].filter(
-        ([k]) => !['content-encoding', 'content-length', 'transfer-encoding'].includes(k),
-      ),
-    )
-    res.writeHead(r.status, headers).end(Buffer.from(await r.arrayBuffer()))
-    return
-  }
-  if (method === 'GET') {
-    // Static files from the built app; anything unknown falls back to the app shell (hash routing).
-    const file = path === '/' ? 'index.html' : path.slice(1)
-    const safe = !file.includes('..') && STATIC_TYPES[extname(file)]
-    const target = new URL(safe ? file : 'index.html', PUBLIC_DIR)
-    if (existsSync(target)) {
-      const type = STATIC_TYPES[extname(target.pathname)] ?? STATIC_TYPES['.html']
-      res
-        .writeHead(200, {
-          'content-type': type,
-          'cache-control': path.startsWith('/assets/')
-            ? 'public, max-age=31536000, immutable'
-            : 'no-cache',
-          ...SECURITY_HEADERS,
-          ...(type === STATIC_TYPES['.html']
-            ? { 'content-security-policy': pluginPagePolicy() }
-            : {}),
-          ...(config.auth.secureCookie
-            ? { 'strict-transport-security': 'max-age=31536000; includeSubDomains' }
-            : {}),
-        })
-        .end(
-          target.pathname.endsWith('/index.html')
-            ? withShareImage(req, target)
-            : readFileSync(target),
-        )
-      return
-    }
-  }
+  if (await intercepted(req, res, url, method)) return
+  if (path.startsWith('/api/')) return apiRoute(req, res, url, method)
+  if (method === 'GET' && DEV_WEB) return devPage(req, res, DEV_WEB)
+  if (method === 'GET' && servedStatic(req, res, path)) return
   res.writeHead(404).end('not found')
 }
 

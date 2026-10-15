@@ -909,6 +909,33 @@ export function GuideSkeleton() {
   )
 }
 
+/** While the guide is not written yet: queued for later, or being researched now. */
+function GuideQueued({ heading, queued }: { heading: string; queued: boolean }) {
+  const tr = useMessages(messages)
+  return (
+    <>
+      <h2 className="guide-heading">
+        <Icon name="book-open" />
+        <span>{heading}</span>
+      </h2>
+      <div className="guide-queued" role="status">
+        <NexoHero working />
+        <div className="guide-work-copy">
+          <span className="guide-work-label">{tr(queued ? 'queuedStatus' : 'buildingStatus')}</span>
+          <b>{tr(queued ? 'queuedTitle' : 'buildingTitle')}</b>
+          <p>{tr(queued ? 'queued' : 'building')}</p>
+          {!queued && <span className="guide-work-hint">{tr('buildingHint')}</span>}
+        </div>
+      </div>
+      {!queued && (
+        <div className="guide-research-preview" aria-hidden="true">
+          <GuideSkeleton />
+        </div>
+      )}
+    </>
+  )
+}
+
 /**
  * The inside of the guide card. `id` is the card's id, used for the tab ids. Give it `key={game.name}`
  * so another game opens on the first tab; the same game keeps its tab and open sections on refresh.
@@ -984,31 +1011,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   // A list without a platinum (short games, live-service ones) still has a guide: for the 100%.
   const noPlatinum = !!c?.trophies?.length && !c.trophies.some((t) => t.type === 'platinum')
   const heading = tr(noPlatinum ? 'titleNoPlatinum' : 'title')
-  if (!g)
-    return (
-      <>
-        <h2 className="guide-heading">
-          <Icon name="book-open" />
-          <span>{heading}</span>
-        </h2>
-        <div className="guide-queued" role="status">
-          <NexoHero working />
-          <div className="guide-work-copy">
-            <span className="guide-work-label">
-              {tr(c?.queued ? 'queuedStatus' : 'buildingStatus')}
-            </span>
-            <b>{tr(c?.queued ? 'queuedTitle' : 'buildingTitle')}</b>
-            <p>{tr(c?.queued ? 'queued' : 'building')}</p>
-            {!c?.queued && <span className="guide-work-hint">{tr('buildingHint')}</span>}
-          </div>
-        </div>
-        {!c?.queued && (
-          <div className="guide-research-preview" aria-hidden="true">
-            <GuideSkeleton />
-          </div>
-        )}
-      </>
-    )
+  if (!g) return <GuideQueued heading={heading} queued={!!c?.queued} />
   const missables = g.missables ?? []
   const roadmap = g.roadmap ?? []
   const glossary = g.glossary ?? []

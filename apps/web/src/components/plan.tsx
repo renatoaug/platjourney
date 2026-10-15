@@ -1,7 +1,7 @@
 /** Session planner: pick the time you have, get the ordered route of trophies. */
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
-import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
+import { defineMessages, Language, type Translator, translator, useMessages } from '../i18n/i18n'
 import { ApiError, api, del } from '../lib/api'
 import { fmtClock, fmtDate, fmtMinutes } from '../lib/format'
 import { plainText } from '../lib/text'
@@ -195,16 +195,18 @@ function PlanPicker({
   )
 }
 
+/** The tag over a step: done, the one to play now, any time, or after the step before it. */
+function stepLabel(t: Translator<typeof messages>, s: PlanStep, i: number, state: string) {
+  if (s.done) return t('step.done')
+  if (state === 'next') return t('step.now')
+  if (s.flexible) return t('step.anytime')
+  return t('step.after', { step: i })
+}
+
 function Step({ s, i, plan }: { s: PlanStep; i: number; plan: SessionPlan }) {
   const t = useMessages(messages)
   const state = s.done ? 'done' : i === plan.nextIndex ? 'next' : 'later'
-  const label = s.done
-    ? t('step.done')
-    : state === 'next'
-      ? t('step.now')
-      : s.flexible
-        ? t('step.anytime')
-        : t('step.after', { step: i })
+  const label = stepLabel(t, s, i, state)
   const prevDone = i > 0 && plan.steps[i - 1].done
   return (
     <li
@@ -277,6 +279,37 @@ function PlanSkeleton() {
   )
 }
 
+/** Redo or end the route; once it is over, start a new one or put it away. */
+function PlanActions({
+  closed,
+  discarding,
+  onNew,
+  onDiscard,
+}: {
+  closed: boolean
+  discarding?: boolean
+  onNew: () => void
+  onDiscard: () => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <footer className="plan-actions">
+      <button type="button" className="ghost sm" id="plan-new" onClick={onNew}>
+        <Icon name="refresh" /> {closed ? t('newRoute') : t('redo')}
+      </button>
+      <button
+        type="button"
+        className="ghost sm"
+        id="plan-discard"
+        disabled={discarding}
+        onClick={onDiscard}
+      >
+        <Icon name="close" /> {closed ? t('dismiss') : t('endSession')}
+      </button>
+    </footer>
+  )
+}
+
 export interface PlanProps {
   /** undefined while the first GET is on its way. */
   plan: SessionPlan | null | undefined
@@ -294,6 +327,20 @@ export interface PlanProps {
   sectionRef?: RefObject<HTMLElement | null>
   /** The demo: the stored route shows; building, redoing and ending one are not offered. */
   readOnly?: boolean
+}
+
+function planHeading(t: Translator<typeof messages>, plan: SessionPlan) {
+  const total = plan.steps.length
+  if (plan.status === 'done') return t('headingDone')
+  if (plan.status === 'expired') return t('headingExpired', { done: plan.doneCount, total })
+  return t('headingActive', { done: plan.doneCount, total })
+}
+
+/** Under the heading: until when an active route holds, or when a closed one was made. */
+function planSub(t: Translator<typeof messages>, plan: SessionPlan) {
+  if (plan.status === 'active')
+    return t('validUntil', { time: fmtMinutes(plan.minutes), clock: fmtClock(plan.expiresAt) })
+  return `${fmtMinutes(plan.minutes)} · ${fmtDate(plan.createdAt)}, ${fmtClock(plan.createdAt)}`
 }
 
 /** The session plan card, every state of it. The container is `PlanCard`. */
@@ -371,16 +418,8 @@ export function Plan({
   const total = plan.steps.length
   const progress = total ? Math.round((plan.doneCount / total) * 100) : 0
   const closed = plan.status !== 'active'
-  const heading =
-    plan.status === 'done'
-      ? t('headingDone')
-      : plan.status === 'expired'
-        ? t('headingExpired', { done: plan.doneCount, total })
-        : t('headingActive', { done: plan.doneCount, total })
-  const sub =
-    plan.status === 'active'
-      ? t('validUntil', { time: fmtMinutes(plan.minutes), clock: fmtClock(plan.expiresAt) })
-      : `${fmtMinutes(plan.minutes)} · ${fmtDate(plan.createdAt)}, ${fmtClock(plan.createdAt)}`
+  const heading = planHeading(t, plan)
+  const sub = planSub(t, plan)
   return section(
     `plan plan-open ${closed ? 'plan-closed' : ''}`,
     <>
@@ -450,20 +489,7 @@ export function Plan({
         </li>
       </ol>
       {!readOnly && (
-        <footer className="plan-actions">
-          <button type="button" className="ghost sm" id="plan-new" onClick={onNew}>
-            <Icon name="refresh" /> {closed ? t('newRoute') : t('redo')}
-          </button>
-          <button
-            type="button"
-            className="ghost sm"
-            id="plan-discard"
-            disabled={discarding}
-            onClick={onDiscard}
-          >
-            <Icon name="close" /> {closed ? t('dismiss') : t('endSession')}
-          </button>
-        </footer>
+        <PlanActions closed={closed} discarding={discarding} onNew={onNew} onDiscard={onDiscard} />
       )}
     </>,
   )

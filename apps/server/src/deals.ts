@@ -56,19 +56,27 @@ export async function checkDeals(pause = PAUSE_MS): Promise<number> {
   // Everything a player should hear today, sent at the end as one notice.
   const news = new Map<string, News[]>()
   for (const g of games) {
-    const now = await storePrice(g.store_url).catch(() => null)
-    if (now) {
-      await savePrice(g.game, now)
-      const sale = newSale(before.get(g.game), now)
-      const plus = joinedPlus(before.get(g.game), now)
-      if (sale) sales++
-      if (sale || plus)
-        for (const id of g.users) news.set(id, [...(news.get(id) ?? []), { g, p: now, sale, plus }])
-    }
+    if (await checkOne(g, before.get(g.game), news)) sales++
     if (pause) await new Promise((r) => setTimeout(r, pause))
   }
   for (const [id, items] of news) await tell(id, items)
   return sales
+}
+
+/** Reads and keeps one game's price, queuing its news for everyone who saved it; true on a new sale. */
+async function checkOne(
+  g: Awaited<ReturnType<typeof interestsWithStore>>[number],
+  before: StorePrice | undefined,
+  news: Map<string, News[]>,
+): Promise<boolean> {
+  const now = await storePrice(g.store_url).catch(() => null)
+  if (!now) return false
+  await savePrice(g.game, now)
+  const sale = newSale(before, now)
+  const plus = joinedPlus(before, now)
+  if (sale || plus)
+    for (const id of g.users) news.set(id, [...(news.get(id) ?? []), { g, p: now, sale, plus }])
+  return sale
 }
 
 /** One player's news of the day: a single game reads as a sentence; several, as one list. */

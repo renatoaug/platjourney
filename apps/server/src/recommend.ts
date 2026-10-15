@@ -209,6 +209,37 @@ const toView = async (r: RecommendationRow): Promise<Recommendation> => {
   }
 }
 
+type ResearchedItem = Researched['items'][number]
+
+// Only catalog games: a name the model made up must not become a new game.
+async function catalogRows(items: ResearchedItem[], owned: Set<string>, dismissedIds: Set<string>) {
+  const rows = []
+  for (const item of items) {
+    const game = (item.game ? await getGame(item.game) : undefined) ?? (await gameByName(item.name))
+    if (!game || owned.has(game.id) || dismissedIds.has(game.id)) continue
+    rows.push(recommendationRow(game.id, item))
+  }
+  return rows
+}
+
+function recommendationRow(game: string, item: ResearchedItem) {
+  return {
+    game,
+    platform: item.platform,
+    difficulty: item.difficulty,
+    hours: item.hours,
+    ...(Number.isInteger(item.playthroughs) && Number(item.playthroughs) > 0
+      ? { playthroughs: Number(item.playthroughs) }
+      : {}),
+    ...(typeof item.hasDifficultyTrophy === 'boolean'
+      ? { has_difficulty_trophy: item.hasDifficultyTrophy }
+      : {}),
+    has_missables: item.hasMissables,
+    why: item.why,
+    similar_to: item.similarTo,
+  }
+}
+
 // Suggests platinums the player does not own, based on what they finished and are
 // playing. Results are resolved to catalog games, so "already owned" and "dismissed"
 // are id comparisons.
@@ -281,27 +312,7 @@ export async function recommendations(
       }),
     ),
   )
-  const rows = []
-  for (const item of result.items) {
-    // Only catalog games: a name the model made up must not become a new game.
-    const game = (item.game ? await getGame(item.game) : undefined) ?? (await gameByName(item.name))
-    if (!game || owned.has(game.id) || dismissedIds.has(game.id)) continue
-    rows.push({
-      game: game.id,
-      platform: item.platform,
-      difficulty: item.difficulty,
-      hours: item.hours,
-      ...(Number.isInteger(item.playthroughs) && Number(item.playthroughs) > 0
-        ? { playthroughs: Number(item.playthroughs) }
-        : {}),
-      ...(typeof item.hasDifficultyTrophy === 'boolean'
-        ? { has_difficulty_trophy: item.hasDifficultyTrophy }
-        : {}),
-      has_missables: item.hasMissables,
-      why: item.why,
-      similar_to: item.similarTo,
-    })
-  }
+  const rows = await catalogRows(result.items, owned, dismissedIds)
   await saveRecommendations(user.id, rows)
   await updateUser(user.id, { taste_profile: result.profile })
   const saved = await listRecommendations(user.id)

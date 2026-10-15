@@ -236,6 +236,45 @@ function TitleSkeleton({ owned = true }: { owned?: boolean }) {
   )
 }
 
+/** The hero's foot: progress and the chat for a game in the library, saving and asking for one outside it. */
+function HeroBottom({ d }: { d: TitleDetail }) {
+  const t = useMessages(messages)
+  const g = d.guide
+  if (d.owned)
+    return (
+      <div className="hero-bottom">
+        <HeroProgress
+          game={{
+            earned: d.earned ?? 0,
+            total: d.total ?? 0,
+            progress: d.progress ?? 0,
+            groups: d.groups,
+          }}
+        />
+        <div className="cta">
+          <Link className="button" to={nexoHref(d.np, d.name)}>
+            {t('talkToNexo')} <Icon name="arrow" />
+          </Link>
+        </div>
+      </div>
+    )
+  return (
+    <div className="hero-bottom">
+      <p className="hero-caption">
+        {t('notOwned')} {g ? <GuideText text={g.overview} /> : ''}
+      </p>
+      <div className="cta">
+        <SaveButton d={d} />
+        {d.trophies?.length ? (
+          <Link className="button secondary" to={nexoHref(d.game.id, d.name)}>
+            {t('askNexo')} <Icon name="arrow" />
+          </Link>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 /** A loaded title: hero, then trophies and guide. */
 function TitleView({ d }: { d: TitleDetail }) {
   const t = useMessages(messages)
@@ -270,37 +309,7 @@ function TitleView({ d }: { d: TitleDetail }) {
             <h2 className="hero-title">{d.name}</h2>
             <TitleMeta d={d} />
           </div>
-          {owned ? (
-            <div className="hero-bottom">
-              <HeroProgress
-                game={{
-                  earned: d.earned ?? 0,
-                  total: d.total ?? 0,
-                  progress: d.progress ?? 0,
-                  groups: d.groups,
-                }}
-              />
-              <div className="cta">
-                <Link className="button" to={nexoHref(d.np, d.name)}>
-                  {t('talkToNexo')} <Icon name="arrow" />
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="hero-bottom">
-              <p className="hero-caption">
-                {t('notOwned')} {g ? <GuideText text={g.overview} /> : ''}
-              </p>
-              <div className="cta">
-                <SaveButton d={d} />
-                {d.trophies?.length ? (
-                  <Link className="button secondary" to={nexoHref(d.game.id, d.name)}>
-                    {t('askNexo')} <Icon name="arrow" />
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-          )}
+          <HeroBottom d={d} />
         </div>
       </div>
       <GameShowcase game={d.game} name={d.name} store={d.owned ? null : d.store} />

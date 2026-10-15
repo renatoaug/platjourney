@@ -8,7 +8,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router'
-import { defineMessages, Language, useLocale, useMessages } from '../../i18n/i18n'
+import { defineMessages, Language, type Translator, useLocale, useMessages } from '../../i18n/i18n'
 import { fmtDate, fmtHours, pct } from '../../lib/format'
 import type { Interest } from '../../lib/types'
 import { Cover } from '../../ui/cover'
@@ -122,6 +122,33 @@ function DealTag({ deal }: { deal: NonNullable<Interest['deal']> }) {
   )
 }
 
+/** The status column: platinumed, the progress or not started, then the hours played. */
+function rowStatus(g: Interest, t: Translator<typeof messages>) {
+  const played = g.hours != null ? ` · ${fmtHours(g.hours)}` : ''
+  if (g.done) return `${t('list.platinumed')}${played}`
+  return `${started(g) ? `${g.progress}%` : t('list.notStarted')}${played}`
+}
+
+/** Where the game came from: a Nexo recommendation or the releases list. */
+function SavedFrom({ g }: { g: Interest }) {
+  const t = useMessages(messages)
+  if (g.recommendedAt)
+    return (
+      <small className="goal-recommended">
+        <img src="/nexo-avatar.svg" alt="" />
+        {t('list.recommended', { date: fmtDate(g.recommendedAt) })}
+      </small>
+    )
+  if (g.source === 'releases' && g.savedAt)
+    return (
+      <small className="goal-recommended">
+        <Icon name="clock" />
+        {t('list.fromReleases', { date: fmtDate(g.savedAt) })}
+      </small>
+    )
+  return null
+}
+
 function Row({
   g,
   onRemove,
@@ -134,8 +161,7 @@ function Row({
   readOnly?: boolean
 }) {
   const t = useMessages(messages)
-  const played = g.hours != null ? ` · ${fmtHours(g.hours)}` : ''
-  const st = `${g.done ? t('list.platinumed') : started(g) ? `${g.progress}%` : t('list.notStarted')}${played}`
+  const st = rowStatus(g, t)
   return (
     <>
       {g.done || readOnly ? (
@@ -158,17 +184,7 @@ function Row({
           </small>
         ) : null}
         {g.deal && !g.done ? <DealTag deal={g.deal} /> : null}
-        {g.recommendedAt ? (
-          <small className="goal-recommended">
-            <img src="/nexo-avatar.svg" alt="" />
-            {t('list.recommended', { date: fmtDate(g.recommendedAt) })}
-          </small>
-        ) : g.source === 'releases' && g.savedAt ? (
-          <small className="goal-recommended">
-            <Icon name="clock" />
-            {t('list.fromReleases', { date: fmtDate(g.savedAt) })}
-          </small>
-        ) : null}
+        <SavedFrom g={g} />
         {!g.done && started(g) ? (
           <div className="bar small">
             <i style={{ width: `${pct(g.progress)}%` }} />

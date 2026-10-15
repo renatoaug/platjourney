@@ -89,25 +89,20 @@ async function attach(game: Game, name: string, np?: string): Promise<Game> {
   return updated
 }
 
-export async function upsertFromCatalog(
+// Names, ids and pictures: the catalog entry's when it has them, then what was stored.
+function identityFields(
   entry: CatalogEntry | null,
+  existing: Game | undefined,
   name: string,
+  slug: string,
   np?: string,
   platform?: string,
-): Promise<Game> {
-  const key = entry ? String(entry.id) : `psn_${np ?? normalizeName(name).replace(/ /g, '_')}`
-  const existing = plain(await one<Game>('SELECT * OMIT embedding FROM $id', { id: gameId(key) }))
-  const slug = entry?.slug ?? existing?.slug ?? normalizeName(name).replace(/ /g, '-')
-  if (!existing) {
-    // The slug is unique: a game already holding it is this same game.
-    const same = await gameBySlug(slug)
-    if (same) return attach(same, name, np)
-  }
+) {
   const aliases = new Set([...(existing?.aliases ?? []), ...(entry?.aliases ?? [])])
   const canonicalName = entry?.name ?? existing?.name ?? name
   if (name !== canonicalName) aliases.add(name)
   const nps = new Set([...(existing?.np_communication_ids ?? []), ...(np ? [np] : [])])
-  const data = {
+  return {
     name: canonicalName,
     slug,
     aliases: [...aliases],
@@ -116,6 +111,12 @@ export async function upsertFromCatalog(
     np_communication_ids: [...nps],
     cover_url: entry?.cover_url ?? existing?.cover_url ?? undefined,
     art_url: entry?.art_url ?? existing?.art_url ?? undefined,
+  }
+}
+
+// What the game is about, also the catalog entry's first.
+function detailFields(entry: CatalogEntry | null, existing: Game | undefined) {
+  return {
     genres: entry?.genres ?? existing?.genres ?? [],
     themes: entry?.themes ?? existing?.themes ?? [],
     modes: entry?.modes ?? existing?.modes ?? [],
@@ -127,12 +128,22 @@ export async function upsertFromCatalog(
     website: entry?.website ?? existing?.website ?? undefined,
     hypes: entry?.hypes || existing?.hypes || undefined,
     store_url: entry?.store_url ?? existing?.store_url ?? undefined,
-    released_at: entry?.released_at
-      ? new Date(entry.released_at)
-      : existing?.released_at
-        ? new Date(existing.released_at)
-        : undefined,
+    released_at: releasedAt(entry, existing),
   }
+}
+
+function releasedAt(entry: CatalogEntry | null, existing: Game | undefined): Date | undefined {
+  if (entry?.released_at) return new Date(entry.released_at)
+  return existing?.released_at ? new Date(existing.released_at) : undefined
+}
+
+async function saveGame(
+  key: string,
+  slug: string,
+  data: Record<string, unknown>,
+  name: string,
+  np?: string,
+): Promise<Game> {
   const clean = Object.fromEntries(
     Object.entries(data).filter(([, v]) => v !== null && v !== undefined),
   )
@@ -147,6 +158,27 @@ export async function upsertFromCatalog(
     if (same) return attach(same, name, np)
     throw e
   }
+}
+
+export async function upsertFromCatalog(
+  entry: CatalogEntry | null,
+  name: string,
+  np?: string,
+  platform?: string,
+): Promise<Game> {
+  const key = entry ? String(entry.id) : `psn_${np ?? normalizeName(name).replace(/ /g, '_')}`
+  const existing = plain(await one<Game>('SELECT * OMIT embedding FROM $id', { id: gameId(key) }))
+  const slug = entry?.slug ?? existing?.slug ?? normalizeName(name).replace(/ /g, '-')
+  if (!existing) {
+    // The slug is unique: a game already holding it is this same game.
+    const same = await gameBySlug(slug)
+    if (same) return attach(same, name, np)
+  }
+  const data = {
+    ...identityFields(entry, existing, name, slug, np, platform),
+    ...detailFields(entry, existing),
+  }
+  return saveGame(key, slug, data, name, np)
 }
 
 // A PSN title maps to exactly one catalog game; unknown titles are resolved

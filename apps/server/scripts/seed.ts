@@ -143,40 +143,44 @@ const UNIQUE_BY_GAME = new Set([
   'recommendation',
   'playtime',
 ])
+// The instance's own guide and store prices win over the seed's copies.
+const keepsOwn = async (table: string, data: Row) => {
+  if (!add) return false
+  if (table === 'guide')
+    return exists('SELECT id FROM guide WHERE game = $game', { game: data.game })
+  if (table === 'store_price')
+    return exists('SELECT id FROM store_price WHERE game = $game AND region = $region', {
+      game: data.game,
+      region: data.region,
+    })
+  return false
+}
+const prepare = (table: string, data: Row, dates: string[]) => {
+  for (const d of dates) data[d] = dt(data[d])
+  if (table === 'interest' && typeof data.year === 'number') data.year = data.year + years
+  if (Array.isArray(data.trophies))
+    data.trophies = (data.trophies as Row[]).map((t) =>
+      t.earned_at ? { ...t, earned_at: iso(t.earned_at) } : t,
+    )
+}
+// True when the row repeats a (user, game) pair already inserted in a table unique by game.
+const duplicate = (table: string, row: Row, seen: Set<string>) => {
+  if (!UNIQUE_BY_GAME.has(table)) return false
+  const key = `${row.user ?? ''}/${row.game}`
+  if (seen.has(key)) {
+    console.log(`  skip duplicate ${table} for game:${row.game}`)
+    return true
+  }
+  seen.add(key)
+  return false
+}
 const insert = async (table: string, rows: Row[] = [], dates: string[] = []) => {
   const seen = new Set<string>()
   for (const row of rows) {
-    if (UNIQUE_BY_GAME.has(table)) {
-      const key = `${row.user ?? ''}/${row.game}`
-      if (seen.has(key)) {
-        console.log(`  skip duplicate ${table} for game:${row.game}`)
-        continue
-      }
-      seen.add(key)
-    }
+    if (duplicate(table, row, seen)) continue
     const data = link(row)
-    // The instance's own guide and store prices win over the seed's copies.
-    if (
-      add &&
-      table === 'guide' &&
-      (await exists('SELECT id FROM guide WHERE game = $game', { game: data.game }))
-    )
-      continue
-    if (
-      add &&
-      table === 'store_price' &&
-      (await exists('SELECT id FROM store_price WHERE game = $game AND region = $region', {
-        game: data.game,
-        region: data.region,
-      }))
-    )
-      continue
-    for (const d of dates) data[d] = dt(data[d])
-    if (table === 'interest' && typeof data.year === 'number') data.year = data.year + years
-    if (Array.isArray(data.trophies))
-      data.trophies = (data.trophies as Row[]).map((t) =>
-        t.earned_at ? { ...t, earned_at: iso(t.earned_at) } : t,
-      )
+    if (await keepsOwn(table, data)) continue
+    prepare(table, data, dates)
     await q(`CREATE ${table} CONTENT $data`, { data: dropNulls(data) })
   }
   console.log(`${table}: ${rows.length}`)

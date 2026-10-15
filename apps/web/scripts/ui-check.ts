@@ -48,6 +48,30 @@ async function settle(page: Page) {
   await page.waitForTimeout(300)
 }
 
+type Violation = Awaited<ReturnType<AxeBuilder['analyze']>>['violations'][number]
+
+function describeViolation(where: string, v: Violation): string {
+  const nodes = process.env.UI_VERBOSE
+    ? `\n    ${v.nodes.map((n) => `${n.target.join(' ')} ${n.failureSummary?.split('\n')[1] ?? ''}`).join('\n    ')}`
+    : ''
+  return `${where}: ${v.id} (${v.nodes.length}) ${v.help}${nodes}`
+}
+
+async function checkRoute(page: Page, route: string, vpName: string, problems: string[]) {
+  const url = route === 'login' ? `${BASE}/` : `${BASE}/#${route}`
+  await page.goto(url)
+  await settle(page)
+  const name = route === '/' ? 'home' : route.replace(/^\//, '').replace(/[/.]/g, '-')
+  await page.screenshot({ path: `${OUT}/${name}-${vpName}.png`, fullPage: true })
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )
+  if (overflow) problems.push(`${name} @${vpName}: horizontal scroll`)
+  const { violations } = await new AxeBuilder({ page }).analyze()
+  for (const v of violations.filter((v) => v.impact === 'serious' || v.impact === 'critical'))
+    problems.push(describeViolation(`${name} @${vpName}`, v))
+}
+
 async function check(browser: Browser, token: string | null, routes: string[]) {
   const problems: string[] = []
   for (const vp of VIEWPORTS) {
@@ -55,22 +79,7 @@ async function check(browser: Browser, token: string | null, routes: string[]) {
     if (token) await context.addCookies([{ name: 'platjourney_session', value: token, url: BASE }])
     const page = await context.newPage()
     page.on('pageerror', (e) => problems.push(`${vp.name} js error: ${e.message}`))
-    for (const route of token ? routes : ['login']) {
-      const url = route === 'login' ? `${BASE}/` : `${BASE}/#${route}`
-      await page.goto(url)
-      await settle(page)
-      const name = route === '/' ? 'home' : route.replace(/^\//, '').replace(/[/.]/g, '-')
-      await page.screenshot({ path: `${OUT}/${name}-${vp.name}.png`, fullPage: true })
-      const overflow = await page.evaluate(
-        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      )
-      if (overflow) problems.push(`${name} @${vp.name}: horizontal scroll`)
-      const { violations } = await new AxeBuilder({ page }).analyze()
-      for (const v of violations.filter((v) => v.impact === 'serious' || v.impact === 'critical'))
-        problems.push(
-          `${name} @${vp.name}: ${v.id} (${v.nodes.length}) ${v.help}${process.env.UI_VERBOSE ? `\n    ${v.nodes.map((n) => `${n.target.join(' ')} ${n.failureSummary?.split('\n')[1] ?? ''}`).join('\n    ')}` : ''}`,
-        )
-    }
+    for (const route of token ? routes : ['login']) await checkRoute(page, route, vp.name, problems)
     await context.close()
   }
   return problems
