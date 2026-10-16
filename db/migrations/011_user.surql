@@ -23,6 +23,8 @@ DEFINE FIELD IF NOT EXISTS ps_plus ON user TYPE option<string> ASSERT $value = N
 -- Nexo writes this player's automatic notices (when the instance allows it); off, they are plain
 -- templates that need no model.
 DEFINE FIELD IF NOT EXISTS ai_notices ON user TYPE bool DEFAULT true;
+-- Whether notices also go to the linked Telegram chat; off, they reach only the web and push.
+DEFINE FIELD IF NOT EXISTS notify_telegram ON user TYPE bool DEFAULT true;
 -- The language the player picked for the web app, notices and Telegram; NONE until they pick one.
 DEFINE FIELD IF NOT EXISTS locale ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['pt-BR', 'en'];
 -- The demo player (db/demo-seed.json): anyone can open it without a password, and it is read-only.

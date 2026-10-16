@@ -15,6 +15,7 @@ const messages = defineMessages({
     open: 'Abrir o menu da conta',
     line: 'Nível {level} · {platinums} platinas',
     profile: 'Meu perfil',
+    settings: 'Configurações',
     logout: 'Sair',
     leaveDemo: 'Sair da demo',
     leaving: 'Saindo…',
@@ -24,6 +25,7 @@ const messages = defineMessages({
     open: 'Open the account menu',
     line: 'Level {level} · {platinums} platinums',
     profile: 'My profile',
+    settings: 'Settings',
     logout: 'Sign out',
     leaveDemo: 'Leave the demo',
     leaving: 'Signing out…',
@@ -128,6 +130,10 @@ export function AccountMenu({
           <Link to="/profile" role="menuitem" className="account-menu-item" onClick={close}>
             <Icon name="dashboard" />
             {t('profile')}
+          </Link>
+          <Link to="/settings" role="menuitem" className="account-menu-item" onClick={close}>
+            <Icon name="settings" />
+            {t('settings')}
           </Link>
           <button
             type="button"

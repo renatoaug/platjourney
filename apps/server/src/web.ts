@@ -46,6 +46,7 @@ import { hours, playtimes } from './playtime.ts'
 import { interceptsFor, pluginPagePolicy, pluginRoute, Refused } from './plugins.ts'
 import { profilePage } from './profile.ts'
 import { catalogTrophies, PrivateProfile, profileSummary, secureUrl, titleTrophies } from './psn.ts'
+import { pushEnabled, pushTo } from './push.ts'
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
 import { allow } from './rate-limit.ts'
 import { dismissRecommendation, readPrefs, recommendations } from './recommend.ts'
@@ -71,6 +72,7 @@ import {
 import { requestMissingGame } from './repository/game-request.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
+import { deletePushSubscription, savePushSubscription } from './repository/push-subscription.ts'
 import { isDismissReason } from './repository/recommendation.ts'
 import { listServerStatuses } from './repository/server-status.ts'
 import { type GuideFacts, guideFacts } from './repository/similar.ts'
@@ -111,6 +113,7 @@ const messages = defineMessages({
     currentPasswordMismatch: 'A senha atual não confere.',
     pickCatalogGame: 'Selecione um jogo do catálogo.',
     invalidLocale: 'Idioma inválido.',
+    pushTest: 'Tudo certo: os avisos do Nexo vão chegar aqui.',
     demoReadOnly:
       'Isto é uma demonstração: dá para ver tudo, mas nada é salvo. Conecte sua conta da PSN para usar de verdade.',
     demoUnavailable: 'A demonstração não está disponível neste servidor.',
@@ -137,6 +140,7 @@ const messages = defineMessages({
     currentPasswordMismatch: "The current password doesn't match.",
     pickCatalogGame: 'Pick a game from the catalog.',
     invalidLocale: 'Invalid language.',
+    pushTest: "All set: Nexo's notices will arrive here.",
     demoReadOnly:
       'This is a demo: you can look at everything, but nothing is saved. Connect your PSN account to use it for real.',
     demoUnavailable: 'The demo is not available on this server.',
@@ -183,6 +187,9 @@ const publicUser = (u: User) => ({
   includeDlcProgress: u.include_dlc_progress === true,
   psPlus: u.ps_plus ?? 'none',
   aiNotices: u.ai_notices !== false,
+  notifyTelegram: u.notify_telegram !== false,
+  // The key a browser subscribes to push with; null when the instance has push off.
+  pushKey: pushEnabled() ? config.push.publicKey : null,
   // Whether this instance lets Nexo write notices at all; the profile's switch only shows then.
   aiNoticesAvailable: config.automatic.notices,
   locale: u.locale ?? null,
@@ -551,9 +558,9 @@ interface Api {
 
 type ApiHandler = (a: Api) => Promise<void> | void
 
-// Any of the preferences, alone or together: DLC, Nexo's notices and the language.
+// Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices and the language.
 async function savePreferences({ req, res, me, t }: Api) {
-  const { includeDlcProgress, aiNotices, locale, psPlus } = await readBody(req)
+  const { includeDlcProgress, aiNotices, notifyTelegram, locale, psPlus } = await readBody(req)
   const fields: Partial<User> = {}
   if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
   if (psPlus !== undefined) {
@@ -563,6 +570,7 @@ async function savePreferences({ req, res, me, t }: Api) {
     fields.ps_plus = tier
   }
   if (typeof aiNotices === 'boolean') fields.ai_notices = aiNotices
+  if (typeof notifyTelegram === 'boolean') fields.notify_telegram = notifyTelegram
   if (locale !== undefined) {
     if (!isLocale(locale))
       return json(res, 400, { error: 'invalid_locale', message: t('invalidLocale') })
@@ -571,6 +579,35 @@ async function savePreferences({ req, res, me, t }: Api) {
   if (!Object.keys(fields).length) return json(res, 400, { error: 'invalid' })
   await updateUser(me.id, fields)
   return json(res, 200, { user: await accountUser({ ...me, ...fields }) })
+}
+
+// A device turns push on: the browser's subscription, with the keys that encrypt for it.
+async function savePush({ req, res, me }: Api) {
+  if (!pushEnabled()) return json(res, 404, { error: 'push_off' })
+  const { endpoint, keys } = await readBody(req)
+  const { p256dh, auth } = (keys ?? {}) as Record<string, unknown>
+  if (
+    typeof endpoint !== 'string' ||
+    !endpoint.startsWith('https://') ||
+    typeof p256dh !== 'string' ||
+    typeof auth !== 'string'
+  )
+    return json(res, 400, { error: 'invalid' })
+  await savePushSubscription(me.id, { endpoint, p256dh, auth })
+  return json(res, 200, { ok: true })
+}
+
+async function dropPush({ req, res, me }: Api) {
+  const { endpoint } = await readBody(req)
+  if (typeof endpoint !== 'string') return json(res, 400, { error: 'invalid' })
+  await deletePushSubscription(endpoint, me.id)
+  return json(res, 200, { ok: true })
+}
+
+// A test notice to every device of the player, so they see it works.
+async function testPush({ res, me, t }: Api) {
+  const sent = await pushTo(me, { title: 'Nexo', body: t('pushTest'), url: '/#/history' })
+  return json(res, 200, { sent })
 }
 
 async function savePassword({ req, res, me, t }: Api) {
@@ -872,6 +909,9 @@ const API_ROUTES: Record<string, ApiHandler> = {
     summaries.delete(me.id)
     return json(res, 200, { ok: true }, { 'set-cookie': sessionCookie(null) })
   },
+  'POST /api/push/subscription': savePush,
+  'DELETE /api/push/subscription': dropPush,
+  'POST /api/push/test': testPush,
   'POST /api/telegram/link': telegramLink,
   'DELETE /api/telegram/link': async ({ res, me }) => {
     await updateUser(me.id, { telegram_chat_id: null, telegram_link_code: null })

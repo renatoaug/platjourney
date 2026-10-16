@@ -132,6 +132,13 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | `ACCESS_KEEP_DAYS` | 180 | Days an unused address is kept |
 | `TRUST_PROXY` | 0 | `1` reads the address from Cloudflare's `CF-Connecting-IP`, or else the last `X-Forwarded-For` hop. Only behind a proxy that sets them |
 
+## Push notifications
+
+| Setting | Default | What it is |
+|---|---|---|
+| `PUSH_VAPID_PUBLIC_KEY`, `PUSH_VAPID_PRIVATE_KEY` | empty | The instance's key pair for Web Push; `bun run --cwd apps/server push:keys` makes one. Empty turns push off and the profile shows only Telegram. A new pair makes every device turn push on again |
+| `PUSH_CONTACT` | mailto:admin@localhost | A `mailto:` or `https:` address sent to the push services with every message, so they can reach whoever runs the instance |
+
 ## Optional
 
 | Setting | Default | What it is |

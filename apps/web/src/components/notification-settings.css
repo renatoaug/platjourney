@@ -1,0 +1,15 @@
+@layer screens {
+  #notifications-card > p.muted {
+    margin-bottom: 14px;
+  }
+
+  /* The test link sits under the device switch, lined up with its help text. */
+  .push-test {
+    margin: 6px 0 0;
+    font-size: var(--text-sm);
+  }
+
+  .push-test + .setting-row {
+    margin-top: 18px;
+  }
+}

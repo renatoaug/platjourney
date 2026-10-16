@@ -15,7 +15,8 @@
     "catalog:releases": "bun --env-file=../../.env scripts/catalog-releases.ts",
     "catalog:similar": "bun --env-file=../../.env scripts/catalog-similar.ts",
     "embed": "cd ../../services/ai && uv run python -m platjourney_ai.jobs.embed_catalog",
-    "db:reset": "bun --env-file=../../.env scripts/reset.ts"
+    "db:reset": "bun --env-file=../../.env scripts/reset.ts",
+    "push:keys": "bun scripts/push-keys.ts"
   },
   "dependencies": {
     "psn-api": "^2.18.1",

@@ -47,6 +47,7 @@ erDiagram
         session_plan option(object)
         include_dlc_progress bool
         ai_notices bool
+        notify_telegram bool
         ps_plus option(string)
         locale option(string)
         demo bool
@@ -160,7 +161,7 @@ erDiagram
 
 ### Nexo, notices and chat
 
-What Nexo wrote, the chat and the bell.
+What Nexo wrote, the chat, the bell and the devices that get notices as push.
 
 ```mermaid
 erDiagram
@@ -171,6 +172,7 @@ erDiagram
     user ||--o{ notification : "is notified"
     game |o--o{ notification : "about"
     tip |o--o{ notification : "carries"
+    user ||--o{ push_subscription : "is pushed to"
     tip {
         id record(tip) PK
         user record(user) FK
@@ -195,6 +197,15 @@ erDiagram
         game option(record(game)) FK
         tip option(record(tip)) FK
         read_at option(datetime)
+        created_at datetime
+        updated_at datetime
+    }
+    push_subscription {
+        id record(push_subscription) PK
+        user record(user) FK
+        endpoint string "unique"
+        p256dh string
+        auth string
         created_at datetime
         updated_at datetime
     }
@@ -388,7 +399,7 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `user` | account | `psn_online_id_lower`, `psn_account_id`, `telegram_chat_id` (when set) | The PSN account id is the identity; `telegram_chat_id` is the linked Telegram chat, on one account at most (linking it takes it off any other), set from a `telegram_link_code` that works until `telegram_link_expires_at`. `session_notice_at` is when the last session-start notice went out. settings, goals, the current session and plan live here as objects. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell |
+| `user` | account | `psn_online_id_lower`, `psn_account_id`, `telegram_chat_id` (when set) | The PSN account id is the identity; `telegram_chat_id` is the linked Telegram chat, on one account at most (linking it takes it off any other), set from a `telegram_link_code` that works until `telegram_link_expires_at`. `session_notice_at` is when the last session-start notice went out. settings, goals, the current session and plan live here as objects. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell. `notify_telegram` (on by default) sends notices to the linked chat; off, they reach only the web and push |
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN |
@@ -398,6 +409,7 @@ erDiagram
 | `tip` | notice or tip Nexo wrote | | `kind`: `start`, `unlock`, `session`, `route` (a tip on the game's route), `chat` (help on one trophy), `server`, `deal` (a saved game went on sale) |
 | `message` | chat message | | `role`: user or assistant |
 | `notification` | item in the bell | | `kind`: `start`, `unlock`, `session`, `route`, `server`, `deal`. Points at the `tip` it shows, when there is one |
+| `push_subscription` | browser or installed web app that turned push on | `endpoint` | Where its push service takes messages, and the device's keys (`p256dh`, `auth`) that encrypt each one. Saved again on the same endpoint moves the device to the account signed in; deleted when the player turns push off there, when the push service answers 404 or 410, and with the account |
 | `auth_session` | signed-in browser | `token_hash` | Only the hash of the cookie is stored |
 | `verification` | pending "About me" code | `psn_online_id_lower` | Expires; no account yet. `secret_hash` is the hash of the claim cookie: only its holder can finish the claim or get the same code again, and nobody else can replace the row until `expires_at` |
 | `access` | address an account is used from | `user, ip_hash` | An HMAC of the IP, only with `ACCESS_HASH_SECRET` |

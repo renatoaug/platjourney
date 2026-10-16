@@ -43,6 +43,14 @@ export const config = {
     trustProxy: process.env.TRUST_PROXY === '1',
     keepDays: Number(process.env.ACCESS_KEEP_DAYS ?? 180),
   },
+  // Notices as push to the browser and the installed web app (Web Push). Off without both VAPID
+  // keys; `bun run --cwd apps/server push:keys` makes a pair. The contact goes to the push services
+  // with every message, so they can reach whoever runs the instance.
+  push: {
+    publicKey: process.env.PUSH_VAPID_PUBLIC_KEY || null,
+    privateKey: process.env.PUSH_VAPID_PRIVATE_KEY || null,
+    contact: process.env.PUSH_CONTACT || 'mailto:admin@localhost',
+  },
   // The longest chat message passed to the model, on the web and on Telegram (the web app
   // stops typing at the same length).
   chat: { maxChars: 1000 },

@@ -35,6 +35,7 @@ import { History } from '../pages/history'
 import { Home } from '../pages/home'
 import { Nexo } from '../pages/nexo'
 import { Profile } from '../pages/profile'
+import { Settings } from '../pages/settings'
 import { Title } from '../pages/title'
 import { pluginPages } from '../plugins'
 import { Icon } from '../ui/icon'
@@ -53,6 +54,7 @@ const messages = defineMessages({
       guides: 'Guias',
       history: 'Histórico',
       profile: 'Meu perfil',
+      settings: 'Configurações',
       title: 'Jogo',
       more: 'Mais',
     },
@@ -93,6 +95,7 @@ const messages = defineMessages({
       guides: 'Guides',
       history: 'History',
       profile: 'My profile',
+      settings: 'Settings',
       title: 'Game',
       more: 'More',
     },
@@ -147,6 +150,7 @@ const LABELS: Record<string, MessageKey<typeof messages>> = {
   '/guides': 'nav.guides',
   '/history': 'nav.history',
   '/profile': 'nav.profile',
+  '/settings': 'nav.settings',
 }
 
 /** How the screen was reached, for its entrance on a phone (page.css): `tab` between the menu's
@@ -224,6 +228,7 @@ function Nav() {
       icon: p.icon,
       label: p.label[locale],
     })),
+    { to: '/settings', icon: 'settings', label: t('nav.settings') },
     { to: '/profile', icon: 'circle', label: t('nav.profile'), avatar: data?.profile?.avatarUrl },
   ] as { to: string; icon: string; label: string; avatar?: string }[]
   const inExtras = extras.some((e) => pathname === e.to)
@@ -251,6 +256,11 @@ function Nav() {
             {p.label[locale]}
           </NavLink>
         ))}
+        {/* Settings close the list, after the plugins' pages. */}
+        <NavLink to="/settings" className="nav-extra">
+          <Icon name="settings" />
+          {t('nav.settings')}
+        </NavLink>
         <button
           type="button"
           className={`nav-more${more || inExtras ? ' active' : ''}`}
@@ -451,6 +461,7 @@ export function Shell() {
           <Route path="/guides" element={<Guides />} />
           <Route path="/history" element={<History />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/title/*" element={<Title />} />
           {pluginPages.map((p) => (
             <Route key={p.path} path={p.path} element={<p.component />} />

@@ -22,6 +22,7 @@ import { Refused, registerPlugin, resetPlugins } from '../src/plugins.ts'
 import * as profile from '../src/profile.ts'
 import * as psn from '../src/psn.ts'
 import { PrivateProfile } from '../src/psn.ts'
+import * as push from '../src/push.ts'
 import * as ranking from '../src/ranking.ts'
 import { resetRateLimits } from '../src/rate-limit.ts'
 import * as recommend from '../src/recommend.ts'
@@ -31,6 +32,7 @@ import * as missing from '../src/repository/game-request.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
+import * as pushSubs from '../src/repository/push-subscription.ts'
 import * as statuses from '../src/repository/server-status.ts'
 import * as similarRepo from '../src/repository/similar.ts'
 import * as titles from '../src/repository/title.ts'
@@ -179,6 +181,8 @@ test('register and login sign in, start watching and set the cookie', async () =
       psPlus: 'none',
       aiNotices: true,
       aiNoticesAvailable: config.automatic.notices,
+      notifyTelegram: true,
+      pushKey: null,
       locale: 'pt-BR',
       demo: false,
       onboarded: false,
@@ -356,6 +360,53 @@ test('preferences take the notices choice', async () => {
   const res = await send('POST', '/api/account/preferences', { aiNotices: false })
   expect(res.body.user.aiNotices).toBe(false)
   expect(users.updateUser).toHaveBeenCalledWith(me.id, { ai_notices: false })
+})
+
+test('preferences take the Telegram notices choice', async () => {
+  const res = await send('POST', '/api/account/preferences', { notifyTelegram: false })
+  expect(res.body.user.notifyTelegram).toBe(false)
+  expect(users.updateUser).toHaveBeenCalledWith(me.id, { notify_telegram: false })
+})
+
+describe('push', () => {
+  const saved = { ...config.push }
+  const sub = { endpoint: 'https://push.example/a', keys: { p256dh: 'k', auth: 's' } }
+  beforeEach(() => {
+    config.push.publicKey = 'pub'
+    config.push.privateKey = 'priv'
+  })
+  afterEach(() => Object.assign(config.push, saved))
+
+  test('the account says which key to subscribe with, none when push is off', async () => {
+    expect((await send('GET', '/api/me')).body.user.pushKey).toBe('pub')
+    config.push.privateKey = null
+    expect((await send('GET', '/api/me')).body.user.pushKey).toBeNull()
+    expect((await send('POST', '/api/push/subscription', sub)).status).toBe(404)
+  })
+
+  test('a device subscribes with an https endpoint and its keys', async () => {
+    const save = spyOn(pushSubs, 'savePushSubscription').mockResolvedValue()
+    expect((await send('POST', '/api/push/subscription', { endpoint: 'http://x' })).status).toBe(
+      400,
+    )
+    expect((await send('POST', '/api/push/subscription', sub)).body).toEqual({ ok: true })
+    expect(save).toHaveBeenCalledWith(me.id, { endpoint: sub.endpoint, p256dh: 'k', auth: 's' })
+  })
+
+  test('a device unsubscribes only from its own account', async () => {
+    const drop = spyOn(pushSubs, 'deletePushSubscription').mockResolvedValue()
+    expect((await send('DELETE', '/api/push/subscription', {})).status).toBe(400)
+    expect(
+      (await send('DELETE', '/api/push/subscription', { endpoint: sub.endpoint })).status,
+    ).toBe(200)
+    expect(drop).toHaveBeenCalledWith(sub.endpoint, me.id)
+  })
+
+  test('a test notice goes to every device of the player', async () => {
+    const to = spyOn(push, 'pushTo').mockResolvedValue(2)
+    expect((await send('POST', '/api/push/test')).body).toEqual({ sent: 2 })
+    expect(to.mock.calls[0][1]).toMatchObject({ title: 'Nexo', url: '/#/history' })
+  })
 })
 
 test('preferences take a boolean DLC choice', async () => {

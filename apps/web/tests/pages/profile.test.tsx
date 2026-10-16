@@ -40,12 +40,9 @@ test('the profile: identity, tiles, the collection and the yearly rhythm', async
   expect(rows[1].textContent).toContain('27h jogadas')
   expect(rows[0].textContent).not.toContain('jogadas')
   expect(container.querySelectorAll('.years .year')).toHaveLength(5)
-  fireEvent.click(screen.getByRole('tab', { name: 'Configurações' }))
-  expect(screen.getByRole('tab', { name: 'Configurações' }).getAttribute('aria-selected')).toBe(
-    'true',
-  )
-  expect(screen.queryByText('Platinas por ano')).toBeNull()
-  fireEvent.click(screen.getByRole('tab', { name: 'Meu perfil' }))
+  // The settings live on their own page now.
+  expect(screen.queryByRole('tab')).toBeNull()
+  expect(screen.queryByRole('heading', { name: 'Conta' })).toBeNull()
 })
 
 test('pages through the collection with the standard pager', async () => {
@@ -122,7 +119,7 @@ test('a new profile: nothing yet', async () => {
   expect(container.querySelector('.profile-tiles')?.textContent).not.toContain('Platina mais rara')
 })
 
-test('while PSN dates arrive the list refreshes quietly, but never under a form or a search', async () => {
+test('while PSN dates arrive the list refreshes quietly, but never under a search', async () => {
   let pending = 40
   const calls = mockApi({
     '/api/profile': () => ({
@@ -147,16 +144,6 @@ test('while PSN dates arrive the list refreshes quietly, but never under a form 
   expect(count()).toBe(1)
   fireEvent.blur(search())
 
-  // So does an open password form, in the settings tab.
-  fireEvent.click(screen.getByRole('tab', { name: 'Configurações' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Trocar senha' }))
-  await act(async () => {
-    jest.advanceTimersByTime(8000)
-  })
-  expect(count()).toBe(1)
-  fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
-  fireEvent.click(screen.getByRole('tab', { name: 'Meu perfil' }))
-
   pending = 0
   await act(async () => {
     jest.advanceTimersByTime(8000)
@@ -176,13 +163,16 @@ test('a failure says the profile could not load', async () => {
   expect((await screen.findByRole('alert')).textContent).toBe('Não conseguimos carregar o perfil.')
 })
 
-test('private trophies: only the account cards, so the player can still leave', async () => {
+test('private trophies: no profile, and the way to the settings', async () => {
   mockApi({
     '/api/profile': reply(409, { error: 'trophies_private' }),
     '/api/me': { user: SAMPLE_ME },
   })
   renderApp(<Profile />)
-  expect(await screen.findByRole('heading', { name: 'Conta' })).toBeTruthy()
+  expect(await screen.findByText('Seus troféus estão privados')).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Abrir configurações' }).getAttribute('href')).toBe(
+    '/settings',
+  )
   expect(screen.queryByRole('heading', { name: /^Platinas/ })).toBeNull()
 })
 
@@ -190,19 +180,6 @@ test('private trophies and no session either: the error', async () => {
   mockApi({ '/api/profile': reply(409, { error: 'trophies_private' }), '/api/me': reply(500) })
   renderApp(<Profile />)
   expect((await screen.findByRole('alert')).textContent).toBe('Não conseguimos carregar o perfil.')
-})
-
-test('unlinking Telegram reloads the profile', async () => {
-  const user = { ...SAMPLE_ME, telegramLinked: true }
-  const calls = mockApi({
-    '/api/profile': { ...profileData, user },
-    'DELETE /api/telegram/link': {},
-  })
-  renderApp(<Profile />)
-  fireEvent.click(await screen.findByRole('tab', { name: 'Configurações' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Desconectar' }))
-  await waitFor(() => expect(calls.filter((c) => c.path === '/api/profile')).toHaveLength(2))
-  fireEvent.click(screen.getByRole('tab', { name: 'Meu perfil' }))
 })
 
 test('loading stays on the skeleton', () => {

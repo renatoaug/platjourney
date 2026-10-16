@@ -15,6 +15,7 @@ import {
 import { library } from './library.ts'
 import { markCheer, progressMark } from './marks.ts'
 import { type GameContext, proactiveTip, unlockReaction } from './nexo.ts'
+import { deliver } from './notify.ts'
 import { hours, playtimes } from './playtime.ts'
 import { Refused } from './plugins.ts'
 import {
@@ -34,7 +35,6 @@ import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/
 import { listUsers, type User, updateUser } from './repository/user.ts'
 import { reachedMilestone, routeNotice, stillOpen } from './route.ts'
 import { checkServers } from './servers.ts'
-import { sendMessage } from './telegram.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -211,14 +211,11 @@ const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophie
 
 export const together = (...parts: (string | undefined)[]) => parts.filter(Boolean).join('\n\n')
 
-// A send that fails (the player blocked the bot, Telegram is down) must not stop the sweep: the
-// notice is already in the web history, and the trophies still get saved as seen, or the next
-// sweep would write and pay for the same notice again.
+// A send that fails (the player blocked the bot, Telegram is down, a push service errs) must not
+// stop the sweep: the notice is already in the web history, and the trophies still get saved as
+// seen, or the next sweep would write and pay for the same notice again.
 async function notify(user: User, text: string): Promise<void> {
-  if (!user.telegram_chat_id) return
-  await sendMessage(user.telegram_chat_id, text).catch((e) =>
-    console.warn(`${user.psn_online_id}: telegram send failed:`, (e as Error).message.slice(0, 80)),
-  )
+  await deliver(user, text)
 }
 
 // With automatic research off, the stored guide is used as it is and a missing one is only listed.
