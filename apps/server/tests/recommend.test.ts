@@ -233,8 +233,8 @@ test('the report lists each pick with its profile', () => {
       'Gêneros: RPG, Ação',
       '',
       'Próximas platinas pro seu gosto:',
-      '1. Picked (PS5) — 3/10, ~20h, tem missables\n   Parecido',
-      '2. Picked (PS5) — 3/10, ~20h\n   Parecido',
+      '1. Picked (PS5): 3/10, ~20h, tem missables\n   Parecido',
+      '2. Picked (PS5): 3/10, ~20h\n   Parecido',
     ].join('\n'),
   )
   expect(

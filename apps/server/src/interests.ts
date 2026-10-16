@@ -27,8 +27,8 @@ const messages = defineMessages({
   [Language.PtBR]: {
     withTarget: 'Meta {year}: {done}/{target} platinas ({percent}%)',
     withoutTarget: {
-      one: '{year}: {count} platina até agora (sem meta definida — /goals set 12)',
-      other: '{year}: {count} platinas até agora (sem meta definida — /goals set 12)',
+      one: '{year}: {count} platina até agora (sem meta definida: /goals set 12)',
+      other: '{year}: {count} platinas até agora (sem meta definida: /goals set 12)',
     },
     interests: 'Interesses:',
     notStarted: 'não começou',
@@ -44,8 +44,8 @@ const messages = defineMessages({
   [Language.En]: {
     withTarget: '{year} goal: {done}/{target} platinums ({percent}%)',
     withoutTarget: {
-      one: '{year}: {count} platinum so far (no goal set — /goals set 12)',
-      other: '{year}: {count} platinums so far (no goal set — /goals set 12)',
+      one: '{year}: {count} platinum so far (no goal set: /goals set 12)',
+      other: '{year}: {count} platinums so far (no goal set: /goals set 12)',
     },
     interests: 'Interests:',
     notStarted: 'not started',
@@ -211,7 +211,7 @@ export function yearReport(p: YearProgress, locale: Locale = DEFAULT_LOCALE): st
     lines.push('', t('interests'))
     for (const [i, g] of p.interests.entries()) {
       const state = g.done ? '✅' : g.progress != null ? `${g.progress}%` : t('notStarted')
-      lines.push(`${i + 1}. ${g.game.name} — ${state}`)
+      lines.push(`${i + 1}. ${g.game.name}: ${state}`)
     }
   }
   if (p.platinumed.length) {

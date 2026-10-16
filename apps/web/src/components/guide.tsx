@@ -1041,8 +1041,8 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
             label: tr('missableLabel', { count: m.trophies.length }),
             text:
               m.trophies.length === 1
-                ? `**${m.trophies[0]}** — ${m.when}`
-                : `${tr('missableCount', { count: m.trophies.length })} — ${m.when}`,
+                ? `**${m.trophies[0]}**: ${m.when}`
+                : `${tr('missableCount', { count: m.trophies.length })}: ${m.when}`,
             action: (
               <button
                 type="button"

@@ -74,7 +74,7 @@ test('an unlock reaction sends the trophies just earned, and opens with them as 
   const unlocked = [makeTrophy({ earned: true })]
   const text = await unlockReaction(user, ctx, unlocked)
   expect(ai).toHaveBeenCalledWith('/nexo/tip', { kind: 'unlock', context, unlocked })
-  expect(text).toBe(`🏆 ${unlocked[0].name}\n\nResposta`)
+  expect(text).toBe(`🏆 **${unlocked[0].name}**\n\nResposta`)
   expect(logTip).toHaveBeenCalledWith('user:u1', 'unlock', text, 'game:1')
 })
 

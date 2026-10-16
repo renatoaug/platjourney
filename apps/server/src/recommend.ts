@@ -357,7 +357,7 @@ export function recommendationReport(
     t('title'),
     ...items.map(
       (r, i) =>
-        `${i + 1}. ${r.game.name} (${r.platform}) — ${r.difficulty}/10, ~${r.hours}h${r.hasMissables ? t('hasMissables') : ''}\n   ${r.why}`,
+        `${i + 1}. ${r.game.name} (${r.platform}): ${r.difficulty}/10, ~${r.hours}h${r.hasMissables ? t('hasMissables') : ''}\n   ${r.why}`,
     ),
   ].join('\n')
 }

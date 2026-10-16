@@ -405,7 +405,7 @@ describe('session start', () => {
     expect(session).toContain('vale buscar **Saqueadores**, que ficou para trás.')
     expect(session).not.toMatch(/Fase|está na|segue na|continua na/)
     // The trophy's own notice shows its name with one space.
-    expect(unlockNotice(user, now, [emboscadas])).toContain('🏆 Caçador de Emboscadas (')
+    expect(unlockNotice(user, now, [emboscadas])).toContain('🏆 **Caçador de Emboscadas** (')
     // Someone at the start is not "behind": the focus is the next step, with no phase remark.
     const start = ctx([])
     expect(todaysFocus(start)).toMatchObject({
@@ -482,7 +482,7 @@ describe('checkUser', () => {
     await checkUser(user)
     expect(reaction).not.toHaveBeenCalled()
     const text =
-      '🏆 Segundo (ouro, 12,5% de quem joga) em Days Gone\nMetade do caminho! Daqui pra frente a platina só fica mais perto. Metade do jogo base: 2 de 3 troféus.\n\nAgora vale saber:\n• Compre o arco.'
+      '🏆 **Segundo** (ouro, 12,5% de quem joga) em **Days Gone**\n\nMetade do caminho! Daqui pra frente a platina só fica mais perto. Metade do jogo base: 2 de 3 troféus.\n\nAgora vale saber:\n• Compre o arco.'
     expect(logTip).toHaveBeenCalledWith(user.id, 'unlock', text, game.id)
     expect(send.mock.calls).toEqual([['42', text]])
   })
@@ -491,7 +491,7 @@ describe('checkUser', () => {
     const reaction = spyOn(nexo, 'unlockReaction')
     await checkUser({ ...user, ai_notices: false })
     expect(reaction).not.toHaveBeenCalled()
-    expect(send.mock.calls[0][1]).toStartWith('🏆 Segundo')
+    expect(send.mock.calls[0][1]).toStartWith('🏆 **Segundo**')
   })
 
   test('with notices off, a new game gets a plain start notice', async () => {

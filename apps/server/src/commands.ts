@@ -24,17 +24,17 @@ const messages = defineMessages({
   [Language.PtBR]: {
     help: {
       title: 'Comandos:',
-      status: '/status — progresso do jogo atual',
-      guide: '/guide — resumo da platina (dificuldade, horas, missables, roadmap)',
-      next: '/next — seus jogos mais perto da platina',
-      plan: '/plan <minutos> — plano de troféus para a sessão de hoje (ex.: /plan 120)',
-      game: '/game <nome> — muda o jogo da conversa',
+      status: '/status: progresso do jogo atual',
+      guide: '/guide: resumo da platina (dificuldade, horas, missables, roadmap)',
+      next: '/next: seus jogos mais perto da platina',
+      plan: '/plan <minutos>: plano de troféus para a sessão de hoje (ex.: /plan 120)',
+      game: '/game <nome>: muda o jogo da conversa',
       goals:
-        '/goals — interesses e meta do ano (/goals set 12, /goals add <jogo>, /goals remove <n>, /goals move <n> up|down)',
-      recommend: '/recommend — platinas novas pro seu gosto',
-      pick: '/pick — o Nexo escolhe qual dos seus interesses platinar agora',
-      servers: '/servers — alertas de servidor online fechando',
-      language: '/language <pt|en> — idioma das mensagens',
+        '/goals: interesses e meta do ano (/goals set 12, /goals add <jogo>, /goals remove <n>, /goals move <n> up|down)',
+      recommend: '/recommend: platinas novas pro seu gosto',
+      pick: '/pick: o Nexo escolhe qual dos seus interesses platinar agora',
+      servers: '/servers: alertas de servidor online fechando',
+      language: '/language <pt|en>: idioma das mensagens',
       ask: 'Ou só me pergunta qualquer coisa.',
     },
     menu: {
@@ -66,14 +66,14 @@ const messages = defineMessages({
     pickResult: '🎯 Sua próxima platina: {name}\n{why}\n\nPor onde começar: {first}',
     nextTitle: 'Platinas mais perto (menos esforço restante primeiro):',
     nextItem: {
-      one: '{n}. {name} — {progress}%, falta {count} troféu',
-      other: '{n}. {name} — {progress}%, faltam {count} troféus',
+      one: '{n}. {name}: {progress}%, falta {count} troféu',
+      other: '{n}. {name}: {progress}%, faltam {count} troféus',
     },
     nextHint: 'Manda /game <nome> para eu focar em um deles.',
     gameUsage: 'Uso: /game <parte do nome>',
     gameNotFound: 'Não achei "{query}" no seu perfil.',
     gameLoading: 'Carregando {name}…',
-    gameGuideReady: 'Guia pronto — manda /guide.',
+    gameGuideReady: 'Guia pronto: manda /guide.',
     gameSwitched: 'Agora falando de {name} ({progress}%).',
     researching: 'Pesquisando…',
     languageUsage: 'Uso: /language pt ou /language en',
@@ -82,17 +82,17 @@ const messages = defineMessages({
   [Language.En]: {
     help: {
       title: 'Commands:',
-      status: '/status — progress in the current game',
-      guide: '/guide — platinum summary (difficulty, hours, missables, roadmap)',
-      next: '/next — your games closest to the platinum',
-      plan: "/plan <minutes> — trophy plan for today's session (e.g. /plan 120)",
-      game: '/game <name> — switch the game we talk about',
+      status: '/status: progress in the current game',
+      guide: '/guide: platinum summary (difficulty, hours, missables, roadmap)',
+      next: '/next: your games closest to the platinum',
+      plan: "/plan <minutes>: trophy plan for today's session (e.g. /plan 120)",
+      game: '/game <name>: switch the game we talk about',
       goals:
-        '/goals — interests and yearly goal (/goals set 12, /goals add <game>, /goals remove <n>, /goals move <n> up|down)',
-      recommend: '/recommend — new platinums for your taste',
-      pick: '/pick — Nexo picks which of your interests to platinum now',
-      servers: '/servers — online servers shutting down',
-      language: '/language <pt|en> — language of my messages',
+        '/goals: interests and yearly goal (/goals set 12, /goals add <game>, /goals remove <n>, /goals move <n> up|down)',
+      recommend: '/recommend: new platinums for your taste',
+      pick: '/pick: Nexo picks which of your interests to platinum now',
+      servers: '/servers: online servers shutting down',
+      language: '/language <pt|en>: language of my messages',
       ask: 'Or just ask me anything.',
     },
     menu: {
@@ -124,14 +124,14 @@ const messages = defineMessages({
     pickResult: '🎯 Your next platinum: {name}\n{why}\n\nWhere to start: {first}',
     nextTitle: 'Closest platinums (least effort left first):',
     nextItem: {
-      one: '{n}. {name} — {progress}%, {count} trophy left',
-      other: '{n}. {name} — {progress}%, {count} trophies left',
+      one: '{n}. {name}: {progress}%, {count} trophy left',
+      other: '{n}. {name}: {progress}%, {count} trophies left',
     },
     nextHint: 'Send /game <name> and I will focus on one of them.',
     gameUsage: 'Usage: /game <part of the name>',
     gameNotFound: 'I couldn\'t find "{query}" in your profile.',
     gameLoading: 'Loading {name}…',
-    gameGuideReady: 'Guide ready — send /guide.',
+    gameGuideReady: 'Guide ready: send /guide.',
     gameSwitched: 'Now talking about {name} ({progress}%).',
     researching: 'Researching…',
     languageUsage: 'Usage: /language pt or /language en',
@@ -189,10 +189,10 @@ function statusReply({ user, ctx, t }: Command): string {
   const missing = trophies.filter((tr) => !tr.earned)
   const easiest = [...missing].sort((a, b) => b.earnedRate - a.earnedRate).slice(0, 3)
   return [
-    `${title.name} — ${shown.progress}% (${shown.earned}/${shown.total}${shown.label})`,
+    `${title.name}: ${shown.progress}% (${shown.earned}/${shown.total}${shown.label})`,
     t('statusMissing', { count: missing.length }),
     ...easiest.map(
-      (tr) => `• ${tr.name} — ${tr.detail} (${fmtRate(userLocale(user), tr.earnedRate)}%)`,
+      (tr) => `• ${tr.name}: ${tr.detail} (${fmtRate(userLocale(user), tr.earnedRate)}%)`,
     ),
   ].join('\n')
 }

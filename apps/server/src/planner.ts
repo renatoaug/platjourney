@@ -9,12 +9,12 @@ import { getUser, type User, updateUser } from './repository/user.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    title: '**Plano de {duration} — {game}**',
+    title: '**Plano de {duration}: {game}**',
     trick: 'Macete: {trick}',
     ifTimeLeft: 'Se sobrar tempo: {text}',
   },
   [Language.En]: {
-    title: '**{duration} plan — {game}**',
+    title: '**{duration} plan: {game}**',
     trick: 'Trick: {trick}',
     ifTimeLeft: 'If you have time left: {text}',
   },

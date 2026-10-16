@@ -120,12 +120,12 @@ function trophyLists(guide: Guide, t: Labels): string[] {
   const lines: string[] = []
   if (guide.missables.length) {
     lines.push('', t('missables'))
-    for (const m of guide.missables) lines.push(`• ${m.trophy} — ${m.when}: ${m.how}`)
+    for (const m of guide.missables) lines.push(`• ${m.trophy} (${m.when}): ${m.how}`)
   }
   if (guide.onlineTrophies?.length) {
     lines.push('', t('online'))
     for (const o of guide.onlineTrophies)
-      lines.push(`• ${o.trophy} — ${o.what}${o.boostable ? t('boostable') : ''}`)
+      lines.push(`• ${o.trophy}: ${o.what}${o.boostable ? t('boostable') : ''}`)
   }
   return lines
 }
