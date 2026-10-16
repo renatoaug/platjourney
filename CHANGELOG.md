@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.19.2](https://github.com/renatoaug/platjourney/compare/v0.19.1...v0.19.2) (2026-10-16)
+
+### Bug Fixes
+
+* **telegram:** clearer unlock notices and colons instead of dashes ([#51](https://github.com/renatoaug/platjourney/issues/51)) ([2d36a40](https://github.com/renatoaug/platjourney/commit/2d36a40938eb0b62b0e10ba0924a59869424211d))
+
 ## [0.19.1](https://github.com/renatoaug/platjourney/compare/v0.19.0...v0.19.1) (2026-10-15)
 
 ### Bug Fixes
