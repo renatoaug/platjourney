@@ -91,11 +91,13 @@
     overflow-wrap: anywhere;
   }
 
+  /* Under the player's card, with the same gap as between the cards below. */
   .profile-layout {
     display: grid;
     grid-template-columns: 1fr;
     gap: 20px;
     align-items: start;
+    margin-top: 20px;
   }
 
   .profile-layout > * {
@@ -321,71 +323,6 @@
 
   .collection-tile:hover h3 {
     color: var(--color-accent);
-  }
-
-  /* Profile and settings: an underlined tab row under the player's card. */
-  .profile-tabs {
-    display: flex;
-    gap: 2px;
-    margin: 16px 0 20px;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .profile-tabs button {
-    padding: 10px 12px;
-    border: 0;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    background: transparent;
-    color: var(--color-fg-muted);
-    font-size: var(--text-sm);
-    transition:
-      color 0.2s ease,
-      border-color 0.2s ease;
-  }
-
-  .profile-tabs button.active {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-  }
-
-  /* Settings in two columns: Telegram over the account on the left, the preferences on the right. */
-  .profile-settings {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
-    align-items: start;
-  }
-
-  /* Telegram and the account in two columns: what it is on the left, its buttons on the right. */
-  .profile-settings .account-card,
-  .profile-settings #telegram-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 16px;
-    align-items: center;
-  }
-
-  .profile-settings .account-card > :not(.account-id, .account-actions),
-  .profile-settings #telegram-card > :not(p.muted, .account-actions) {
-    grid-column: 1 / -1;
-  }
-
-  .profile-settings .account-actions {
-    margin-top: 0;
-  }
-
-  .profile-settings #telegram-card > p.muted {
-    margin: 0;
-  }
-
-  .profile-settings > :nth-child(2) {
-    grid-row: 1 / span 2;
-    grid-column: 2;
-  }
-
-  .profile-settings .card {
-    margin: 0;
   }
 
   @media (max-width: 760px) {
@@ -617,30 +554,14 @@
     margin: 0;
   }
 
-  /* Phone: one column everywhere, and the settings' buttons under their text. Last in the file so it
-     overrides the desktop rules above. */
+  /* Phone: one column everywhere. Last in the file so it overrides the desktop rules above. */
   @media (max-width: 760px) {
-    .profile-band,
-    .profile-settings {
+    .profile-band {
       grid-template-columns: 1fr;
     }
 
     .profile-band > .card:first-child {
       grid-column: auto;
-    }
-
-    .profile-settings > :nth-child(2) {
-      grid-row: auto;
-      grid-column: auto;
-    }
-
-    .profile-settings .account-card,
-    .profile-settings #telegram-card {
-      grid-template-columns: 1fr;
-    }
-
-    .profile-settings .account-actions {
-      margin-top: 14px;
     }
   }
 }

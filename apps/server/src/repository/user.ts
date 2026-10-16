@@ -19,6 +19,8 @@ export interface User {
   ps_plus?: 'none' | 'essential' | 'extra' | 'deluxe' | null
   // Nexo's words in automatic notices; off, plain templates (no model).
   ai_notices?: boolean
+  // Notices also go to the linked Telegram chat; off, only the web and push.
+  notify_telegram?: boolean
   locale?: Locale | null
   // The shared, read-only demo player.
   demo?: boolean

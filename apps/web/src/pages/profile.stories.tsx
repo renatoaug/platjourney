@@ -2,11 +2,16 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
 import { SAMPLE_ME } from '../app/app-state'
 import { Page } from '../app/page'
-import { AccountCards } from '../components/account'
 import { Language } from '../i18n/i18n'
 import type { Game } from '../lib/types'
 import { ErrorState } from '../ui/states'
-import { type Platinum, type ProfileData, ProfileSkeleton, ProfileView } from './profile'
+import {
+  type Platinum,
+  type ProfileData,
+  ProfilePrivate,
+  ProfileSkeleton,
+  ProfileView,
+} from './profile'
 
 const meta: Meta = { title: 'Pages/Profile', excludeStories: /Data$/ }
 export default meta
@@ -74,7 +79,7 @@ const inPage = (children: ReactNode) => (
 )
 
 export const Loaded: Story = {
-  render: () => inPage(<ProfileView data={profileData} onChanged={() => {}} />),
+  render: () => inPage(<ProfileView data={profileData} />),
 }
 
 export const SyncingPlatinums: Story = {
@@ -82,7 +87,6 @@ export const SyncingPlatinums: Story = {
     inPage(
       <ProfileView
         data={{ ...profileData, platinums: platinums.slice(0, 2), pendingPlatinums: 40 }}
-        onChanged={() => {}}
       />,
     ),
 }
@@ -100,7 +104,6 @@ export const Empty: Story = {
           fastestStreak: null,
           mostPlayed: [],
         }}
-        onChanged={() => {}}
       />,
     ),
 }
@@ -112,17 +115,8 @@ export const Failed: Story = {
   render: () => inPage(<ErrorState>Não conseguimos carregar o perfil.</ErrorState>),
 }
 
-/** Trophies hidden: only the account cards, so the person can still sign out or delete the account. */
-export const TrophiesPrivate: Story = {
-  render: () =>
-    inPage(
-      <div className="grid cols-2">
-        <div className="stack">
-          <AccountCards user={SAMPLE_ME} onChanged={() => {}} />
-        </div>
-      </div>,
-    ),
-}
+/** Trophies hidden: no profile, and a way to the settings, where the account is. */
+export const TrophiesPrivate: Story = { render: () => inPage(<ProfilePrivate />) }
 
 // The same screen in English (the toolbar switches any story).
 export const English: Story = { ...Loaded, globals: { locale: Language.En } }

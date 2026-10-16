@@ -16,6 +16,7 @@ import {
   sessionUser,
 } from './repository/auth.ts'
 import { detachCalls } from './repository/llm-call.ts'
+import { deletePushSubscriptions } from './repository/push-subscription.ts'
 import {
   createUser,
   deleteUser,
@@ -341,6 +342,7 @@ export async function deleteAccount(user: User, confirmOnlineId: string): Promis
   // Plugins clean what they keep for the player before the account goes.
   await emit('user:deleted', user)
   await deleteAccesses(user.id)
+  await deletePushSubscriptions(user.id)
   await detachCalls(user.id)
   await deleteVerification(user.psn_online_id)
   await deleteSessionsOf(user.id)

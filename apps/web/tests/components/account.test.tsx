@@ -119,14 +119,14 @@ describe('Preferences', () => {
   test('turning DLC off says the progress is base game only', async () => {
     spyOn(globalThis, 'fetch').mockResolvedValue(json({ user: SAMPLE_ME }))
     show(linked)
-    fireEvent.click(screen.getByRole('switch'))
+    fireEvent.click(screen.getByRole('switch', { name: /Contar DLCs/ }))
     expect(await screen.findByText('O progresso agora mostra só o jogo base.')).toBeTruthy()
   })
 
   test('a failed save flips the switch back', async () => {
     spyOn(globalThis, 'fetch').mockResolvedValue(json({}, 500))
     show()
-    const toggle = screen.getByRole('switch') as HTMLInputElement
+    const toggle = screen.getByRole('switch', { name: /Contar DLCs/ }) as HTMLInputElement
     fireEvent.click(toggle)
     expect(await screen.findByText(/Não conseguimos salvar a preferência/)).toBeTruthy()
     expect(toggle.checked).toBe(false)

@@ -1,0 +1,67 @@
+@layer screens {
+  /* Two columns: Telegram, notifications and the account on the left, the preferences on the right. */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    align-items: start;
+  }
+
+  .settings-grid > .card {
+    grid-column: 1;
+  }
+
+  /* Telegram and the account in two columns: what it is on the left, its buttons on the right. */
+  .settings-grid .account-card,
+  .settings-grid #telegram-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 16px;
+    align-items: center;
+  }
+
+  .settings-grid .account-card > :not(.account-id, .account-actions),
+  .settings-grid #telegram-card > :not(p.muted, .account-actions) {
+    grid-column: 1 / -1;
+  }
+
+  .settings-grid .account-actions {
+    margin-top: 0;
+  }
+
+  .settings-grid #telegram-card > p.muted {
+    margin: 0;
+  }
+
+  .settings-grid > #preferences-card,
+  .settings-grid > .is-preferences {
+    grid-row: 1 / span 3;
+    grid-column: 2;
+  }
+
+  .settings-grid .card {
+    margin: 0;
+  }
+
+  @media (max-width: 760px) {
+    .settings-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .settings-grid > #preferences-card,
+    .settings-grid > .is-preferences {
+      grid-row: auto;
+      grid-column: 1;
+    }
+
+    /* The settings' buttons under their text. */
+    .settings-grid .account-card,
+    .settings-grid #telegram-card {
+      grid-template-columns: 1fr;
+    }
+
+    .settings-grid .account-actions {
+      margin-top: 14px;
+    }
+  }
+}

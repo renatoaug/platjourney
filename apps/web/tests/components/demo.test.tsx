@@ -181,7 +181,8 @@ describe('what the demo cannot do', () => {
     expect(button('password-open').disabled).toBe(true)
     expect(button('delete-open').disabled).toBe(true)
     expect(button('logout').disabled).toBe(false)
-    expect(screen.getAllByText(unavailable)).toHaveLength(3)
+    expect((document.getElementById('pref-telegram') as HTMLInputElement).disabled).toBe(true)
+    expect(screen.getAllByText(unavailable)).toHaveLength(4)
   })
 
   test('goals show but cannot be edited, added, removed or moved', () => {

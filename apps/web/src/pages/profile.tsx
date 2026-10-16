@@ -1,9 +1,8 @@
-/** Profile page: level, platinums with search and pages, and the account cards. */
+/** Profile page: level, numbers, pace and platinums with search and pages. Settings have their own page. */
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
-import { AccountCards } from '../components/account'
 import { titleHref } from '../components/tip'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
@@ -23,7 +22,10 @@ const messages = defineMessages({
   [Language.PtBR]: {
     loadFailed: 'Não conseguimos carregar o perfil.',
     levelLabel: 'Nível',
-    tabs: { label: 'Seções do perfil', profile: 'Meu perfil', settings: 'Configurações' },
+    privateTitle: 'Seus troféus estão privados',
+    privateBody:
+      'Sem troféus visíveis na PSN não há perfil para mostrar. A sua conta e as preferências continuam nas configurações.',
+    openSettings: 'Abrir configurações',
     levelProgress: '{progress}% para o {next}',
     pace: 'SEU RITMO',
     byYear: 'Platinas por ano',
@@ -72,7 +74,10 @@ const messages = defineMessages({
   [Language.En]: {
     loadFailed: 'Could not load the profile.',
     levelLabel: 'Level',
-    tabs: { label: 'Profile sections', profile: 'My profile', settings: 'Settings' },
+    privateTitle: 'Your trophies are private',
+    privateBody:
+      'Without trophies visible on PSN there is no profile to show. Your account and preferences are still in the settings.',
+    openSettings: 'Open settings',
     levelProgress: '{progress}% to {next}',
     pace: 'YOUR PACE',
     byYear: 'Platinums per year',
@@ -154,8 +159,6 @@ const PAGE_SIZE = 10
 
 // Kept across visits, like the rest of the app's filters.
 let platinumPage = 1
-// The open tab, kept while the app is open, like the page of platinums.
-let profileTab: 'profile' | 'settings' = 'profile'
 let platinumQuery = ''
 
 const lower = (s: string) => s.toLocaleLowerCase(getLocale())
@@ -167,7 +170,6 @@ export function Profile() {
   const [load, setLoad] = useState<Load>(() =>
     cache.profile ? { kind: 'ready', data: cache.profile as ProfileData } : { kind: 'loading' },
   )
-  const editing = useRef(false)
   const searching = useRef(false)
 
   // quiet: refresh in place, without the skeleton (used while platinums arrive).
@@ -193,7 +195,7 @@ export function Profile() {
     fetchProfile(cache.profile !== undefined)
   }, [fetchProfile, cache])
 
-  // Keep the list growing while PSN dates arrive, but never under an open form or a search in progress.
+  // Keep the list growing while PSN dates arrive, but never under a search in progress.
   // Each arrival is a new object, so the wait restarts after every refresh.
   const syncing = load.kind === 'ready' && load.data.pendingPlatinums > 0 ? load.data : null
   useEffect(() => {
@@ -201,7 +203,7 @@ export function Profile() {
     let timer: ReturnType<typeof setTimeout>
     const wait = () => {
       timer = setTimeout(() => {
-        if (editing.current || searching.current) wait()
+        if (searching.current) wait()
         else fetchProfile(true)
       }, 8000)
     }
@@ -209,28 +211,15 @@ export function Profile() {
     return () => clearTimeout(timer)
   }, [syncing, fetchProfile])
 
-  const onEditing = useCallback((open: boolean) => {
-    editing.current = open
-  }, [])
-  const reload = useCallback(() => fetchProfile(), [fetchProfile])
-
   return (
     <Page path="/profile">
       <div id="profile-page">
         {load.kind === 'loading' && <ProfileSkeleton />}
         {load.kind === 'error' && <ErrorState>{t('loadFailed')}</ErrorState>}
-        {load.kind === 'account' && (
-          <div className="grid cols-2">
-            <div className="stack">
-              <AccountCards user={load.user} onChanged={reload} onEditing={onEditing} />
-            </div>
-          </div>
-        )}
+        {load.kind === 'account' && <ProfilePrivate />}
         {load.kind === 'ready' && (
           <ProfileView
             data={load.data}
-            onChanged={reload}
-            onEditing={onEditing}
             onSearching={(on) => {
               searching.current = on
             }}
@@ -241,15 +230,29 @@ export function Profile() {
   )
 }
 
+/** Trophies hidden on PSN: no profile to show, and the way to the settings, where the account is. */
+export function ProfilePrivate() {
+  const t = useMessages(messages)
+  return (
+    <EmptyState
+      icon="eye-off"
+      title={t('privateTitle')}
+      action={
+        <Link className="button sm" to="/settings">
+          {t('openSettings')}
+        </Link>
+      }
+    >
+      {t('privateBody')}
+    </EmptyState>
+  )
+}
+
 export function ProfileView({
   data: d,
-  onChanged,
-  onEditing,
   onSearching,
 }: {
   data: ProfileData
-  onChanged: () => void
-  onEditing?: (editing: boolean) => void
   onSearching?: (focused: boolean) => void
 }) {
   const t = useMessages(messages)
@@ -258,10 +261,6 @@ export function ProfileView({
   const thisYear = new Date().getFullYear()
   const yearCount = d.byYear.find((y) => y.year === thisYear)?.count ?? 0
   const maxYear = Math.max(1, ...d.byYear.map((y) => y.count))
-  const [tab, setTab] = useState<'profile' | 'settings'>(profileTab)
-  useEffect(() => {
-    profileTab = tab
-  }, [tab])
   return (
     <>
       <div className="card profile-hero profile-identity">
@@ -365,83 +364,54 @@ export function ProfileView({
           </div>
         </section>
       </div>
-      <div className="profile-tabs" role="tablist" aria-label={t('tabs.label')}>
-        {(['profile', 'settings'] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            id={`profile-tab-${key}`}
-            aria-controls={`profile-panel-${key}`}
-            aria-selected={tab === key}
-            className={tab === key ? 'active' : ''}
-            onClick={() => setTab(key)}
-          >
-            {t(`tabs.${key}`)}
-          </button>
-        ))}
-      </div>
-      {tab === 'settings' ? (
-        <div
-          className="profile-settings"
-          role="tabpanel"
-          id="profile-panel-settings"
-          aria-labelledby="profile-tab-settings"
-        >
-          <AccountCards user={d.user} onChanged={onChanged} onEditing={onEditing} />
-        </div>
-      ) : (
-        <div role="tabpanel" id="profile-panel-profile" aria-labelledby="profile-tab-profile">
-          <div className="profile-layout">
-            <div className="profile-band">
-              <div className="card">
-                <span className="eyebrow">{t('pace')}</span>
-                <h2>{t('byYear')}</h2>
-                {d.byYear.length ? (
-                  <div className="years">
-                    {d.byYear.map((y) => (
-                      <div key={y.year} className="year">
-                        <b>{y.count}</b>
-                        <i style={{ '--share': y.count / maxYear } as CSSProperties} />
-                        <small>{y.year}</small>
-                      </div>
-                    ))}
+      <div className="profile-layout">
+        <div className="profile-band">
+          <div className="card">
+            <span className="eyebrow">{t('pace')}</span>
+            <h2>{t('byYear')}</h2>
+            {d.byYear.length ? (
+              <div className="years">
+                {d.byYear.map((y) => (
+                  <div key={y.year} className="year">
+                    <b>{y.count}</b>
+                    <i style={{ '--share': y.count / maxYear } as CSSProperties} />
+                    <small>{y.year}</small>
                   </div>
-                ) : (
-                  <EmptyState icon="dashboard" title={t('noDataTitle')}>
-                    {t('noData')}
-                  </EmptyState>
-                )}
+                ))}
               </div>
-              {d.mostPlayed.length > 0 && (
-                <div className="card profile-most">
-                  <span className="eyebrow">{t('most.eyebrow')}</span>
-                  <h2>{t('most.title')}</h2>
-                  <ol>
-                    {d.mostPlayed.slice(0, 3).map((m) => (
-                      <li key={m.game.id}>
-                        <Link to={titleHref(m.game.id)}>
-                          <Cover url={m.game.cover_url} name={m.game.name} className="plat-cover" />
-                          <span>{m.game.name}</span>
-                          <b>{fmtHours(m.hours)}</b>
-                        </Link>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-              <div className="profile-band-side">
-                <RarestPlatinum rarest={d.rarest} />
-              </div>
+            ) : (
+              <EmptyState icon="dashboard" title={t('noDataTitle')}>
+                {t('noData')}
+              </EmptyState>
+            )}
+          </div>
+          {d.mostPlayed.length > 0 && (
+            <div className="card profile-most">
+              <span className="eyebrow">{t('most.eyebrow')}</span>
+              <h2>{t('most.title')}</h2>
+              <ol>
+                {d.mostPlayed.slice(0, 3).map((m) => (
+                  <li key={m.game.id}>
+                    <Link to={titleHref(m.game.id)}>
+                      <Cover url={m.game.cover_url} name={m.game.name} className="plat-cover" />
+                      <span>{m.game.name}</span>
+                      <b>{fmtHours(m.hours)}</b>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
             </div>
-            <PlatinumCollection
-              platinums={d.platinums}
-              pending={d.pendingPlatinums}
-              onSearching={onSearching}
-            />
+          )}
+          <div className="profile-band-side">
+            <RarestPlatinum rarest={d.rarest} />
           </div>
         </div>
-      )}
+        <PlatinumCollection
+          platinums={d.platinums}
+          pending={d.pendingPlatinums}
+          onSearching={onSearching}
+        />
+      </div>
     </>
   )
 }
@@ -610,10 +580,6 @@ export function ProfileSkeleton() {
         <section className="profile-tiles">
           {Array.from({ length: 5 }, (_, i) => tileSkeleton(i))}
         </section>
-      </div>
-      <div className="profile-tabs">
-        <Sk w="80px" h={12} style={{ margin: '12px' }} />
-        <Sk w="90px" h={12} style={{ margin: '12px' }} />
       </div>
       <div className="profile-layout">
         <div className="profile-band">

@@ -1,4 +1,4 @@
-/** Account cards on the profile page: Telegram link, DLC and language preferences, password and deletion. */
+/** Account cards on the profile page: Telegram link, notifications, DLC and language preferences, password and deletion. */
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
@@ -10,6 +10,7 @@ import { toast } from '../ui/toast'
 import { type AuthForm, useAuthForm } from './auth/use-auth-form'
 import { DemoNote } from './demo'
 import { LanguageSetting } from './language-switcher'
+import { NotificationSettings, NotificationSettingsSkeleton } from './notification-settings'
 import { OPEN_ONBOARDING } from './onboarding'
 import { NewPasswordFields, PasswordInput, SubmitButton } from './password-fields'
 import './auth/auth-layout.css'
@@ -575,12 +576,29 @@ export function AccountCards({
   return (
     <>
       <TelegramCard user={user} onChanged={onChanged} />
+      <NotificationSettings user={user} />
       <PreferencesCard user={user} />
       <AccountCard user={user} onEditing={onEditing} />
     </>
   )
 }
 
+// A setting row while loading: its title and help on the left, its control on the right.
+const settingSkeleton = (control: string, key: number) => (
+  <div className="setting-row static" key={key}>
+    <span className="setting-text grow">
+      <Sk w="45%" h={13} />
+      <Sk w="85%" h={10} />
+    </span>
+    <Sk
+      w={control}
+      h={control === '40px' ? 22 : 36}
+      style={{ borderRadius: 'var(--radius-pill)' }}
+    />
+  </div>
+)
+
+/** The settings while the account loads: the same four cards, in the same order and places. */
 export function AccountSkeleton() {
   const t = useMessages(messages)
   return (
@@ -593,6 +611,11 @@ export function AccountSkeleton() {
         <Sk w="92%" h={12} />
         <Sk w="70%" h={12} style={{ marginTop: 8 }} />
         <Sk w="150px" h={36} style={{ marginTop: 18, borderRadius: 'var(--radius-control)' }} />
+      </div>
+      <NotificationSettingsSkeleton />
+      <div className="card is-preferences">
+        <h2>{t('preferences.title')}</h2>
+        {['40px', '40px', '96px', '40px', '160px', '80px'].map((c, i) => settingSkeleton(c, i))}
       </div>
       <div className="card">
         <h2>{t('title')}</h2>

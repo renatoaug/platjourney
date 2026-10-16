@@ -13,5 +13,6 @@ One file per decision that shapes the code: what was decided, why, and what it c
 | [0007](0007-model-per-feature.md) | A provider and model per feature | Accepted |
 | [0008](0008-plugins.md) | Plugins add to an instance without changing the app | Accepted |
 | [0009](0009-similar-games-graph.md) | Recommendations by similar games from a graph, the model's picks on demand | Accepted |
+| [0010](0010-web-push-without-library.md) | Send push notifications with Web Push, without a library | Accepted |
 
 New records copy [`template.md`](template.md).

@@ -26,6 +26,7 @@ test('the sidebar lists every screen and marks the current one', () => {
     'Descobrir',
     'Guias',
     'Histórico',
+    'Configurações',
   ])
   expect(within(nav).getByRole('link', { name: 'Histórico' }).className).toContain('active')
   expect(within(nav).getByRole('link', { name: 'Visão geral' }).className).not.toContain('active')

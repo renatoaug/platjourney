@@ -17,3 +17,8 @@ process.env.SURREAL_URL = 'http://127.0.0.1:9/rpc'
 // Nor the AI service: a call no test mocked must fail fast here too, not wait on a local service
 // that happens to be running.
 process.env.AI_URL = 'http://127.0.0.1:9'
+
+// Nor push: keys in the repository's .env would turn it on and send real requests from the watcher's
+// tests. A test that needs push sets its own keys on config.push.
+process.env.PUSH_VAPID_PUBLIC_KEY = ''
+process.env.PUSH_VAPID_PRIVATE_KEY = ''

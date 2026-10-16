@@ -21,6 +21,7 @@ import * as psn from '../src/psn.ts'
 import * as accesses from '../src/repository/access.ts'
 import * as sessions from '../src/repository/auth.ts'
 import * as calls from '../src/repository/llm-call.ts'
+import * as pushSubs from '../src/repository/push-subscription.ts'
 import * as users from '../src/repository/user.ts'
 import { makeUser } from './api-fixtures.ts'
 
@@ -57,6 +58,7 @@ beforeEach(() => {
   spyOn(sessions, 'sessionUser').mockResolvedValue(undefined)
   spyOn(calls, 'detachCalls').mockResolvedValue()
   spyOn(accesses, 'deleteAccesses').mockResolvedValue()
+  spyOn(pushSubs, 'deletePushSubscriptions').mockResolvedValue()
   createUser = spyOn(users, 'createUser').mockImplementation(async (u) =>
     makeUser({ id: 'user:new', ...u, password_hash: u.password_hash ?? null }),
   )
@@ -398,6 +400,7 @@ test('deleting the account needs the PSN id typed back', async () => {
   await deleteAccount(me, ' kratos ')
   expect(users.wipeUserData).toHaveBeenCalledWith(me.id)
   expect(accesses.deleteAccesses).toHaveBeenCalledWith(me.id)
+  expect(pushSubs.deletePushSubscriptions).toHaveBeenCalledWith(me.id)
   expect(calls.detachCalls).toHaveBeenCalledWith(me.id)
   expect(sessions.deleteVerification).toHaveBeenCalledWith('Kratos')
   expect(sessions.deleteSessionsOf).toHaveBeenCalledWith(me.id)

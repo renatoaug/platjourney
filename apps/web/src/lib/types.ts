@@ -17,6 +17,10 @@ export interface Me {
   aiNotices?: boolean
   /** Whether this instance lets Nexo write notices at all. */
   aiNoticesAvailable?: boolean
+  /** Notices also go to the linked Telegram chat. */
+  notifyTelegram?: boolean
+  /** The key a browser subscribes to push with; null when the instance has push off. */
+  pushKey?: string | null
   /** The language the player chose; null until they pick one. */
   locale?: Locale | null
   telegramBot?: { username: string; name: string } | null

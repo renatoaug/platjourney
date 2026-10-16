@@ -4,12 +4,12 @@
 
 import { isDemo } from './demo.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
+import { deliver } from './notify.ts'
 import { type StorePrice, storePrice, tierCovers } from './psstore.ts'
 import { logTip } from './repository/activity.ts'
 import { interestsWithStore, pricesFor, savePrice } from './repository/store-price.ts'
-import { getUser } from './repository/user.ts'
+import { getUser, type User } from './repository/user.ts'
 import { everyDayAt } from './schedule.ts'
-import { sendMessage } from './telegram.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -116,16 +116,9 @@ async function tell(userId: string, items: News[]) {
   await say(user, undefined, lines.join('\n'))
 }
 
-async function say(
-  user: { id: string; telegram_chat_id?: string | null },
-  game: string | undefined,
-  text: string,
-) {
+async function say(user: User, game: string | undefined, text: string) {
   await logTip(user.id, 'deal', text, game)
-  if (user.telegram_chat_id)
-    await sendMessage(user.telegram_chat_id, text).catch((e) =>
-      console.warn('deal telegram failed:', (e as Error).message.slice(0, 80)),
-    )
+  await deliver(user, text)
 }
 
 /** Every day at 10:00 in Brazil, a good hour for the notice to reach the player. */
