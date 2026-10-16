@@ -121,7 +121,7 @@ test('the report shows durations, done steps, tricks, warnings and spare time', 
   }
   expect(planReport(view)).toBe(
     [
-      '**Plano de 2h05 — Days Gone**',
+      '**Plano de 2h05: Days Gone**',
       'Plano',
       '',
       '1. ✅ **A** (~45min)\n   faça A\n   Macete: pule',

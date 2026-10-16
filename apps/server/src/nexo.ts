@@ -135,9 +135,10 @@ export async function unlockReaction(
     text,
     unlocked.map((t) => t.name),
   )
-  // At a mark, our own line opens the message under the trophy, and Nexo's words follow it.
-  const cheer = mark ? `\n${markCheer(user, mark.kind)}` : ''
-  const titled = `${unlocked.map((t) => `🏆 ${tidy(t.name)}`).join('\n')}${cheer}\n\n${body}`
+  // At a mark, our own line opens the message under the trophy (a paragraph of its own, so it does not
+  // read as part of the title), and Nexo's words follow it.
+  const cheer = mark ? `\n\n${markCheer(user, mark.kind)}` : ''
+  const titled = `${unlocked.map((t) => `🏆 **${tidy(t.name)}**`).join('\n')}${cheer}\n\n${body}`
   await logTip(user.id, 'unlock', titled, ctx.game.id)
   return titled
 }

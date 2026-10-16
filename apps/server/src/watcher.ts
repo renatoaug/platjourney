@@ -70,8 +70,8 @@ const messages = defineMessages({
     focusNewBehind:
       '**Sugestão de próximo troféu**\nPelo momento em que você está, vale buscar **{trophy}**, que ficou para trás.\n{detail}',
     phaseDone: '🎉 Fechou a {phase} do roteiro!',
-    unlocked: '🏆 {trophy} ({type}) em {game}',
-    unlockedRate: '🏆 {trophy} ({type}, {rate}% de quem joga) em {game}',
+    unlocked: '🏆 **{trophy}** ({type}) em **{game}**',
+    unlockedRate: '🏆 **{trophy}** ({type}, {rate}% de quem joga) em **{game}**',
     types: {
       platinum: 'platina',
       gold: 'ouro',
@@ -108,8 +108,8 @@ const messages = defineMessages({
     focusNewBehind:
       '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.\n{detail}',
     phaseDone: '🎉 You closed {phase} of the roadmap!',
-    unlocked: '🏆 {trophy} ({type}) in {game}',
-    unlockedRate: '🏆 {trophy} ({type}, {rate}% of players) in {game}',
+    unlocked: '🏆 **{trophy}** ({type}) in **{game}**',
+    unlockedRate: '🏆 **{trophy}** ({type}, {rate}% of players) in **{game}**',
     types: {
       platinum: 'platinum',
       gold: 'gold',
@@ -355,9 +355,8 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
       user,
       'unlock',
       together(
-        [unlockNotice(user, ctx, unlocked), markNotice(user, ctx, unlocked)]
-          .filter(Boolean)
-          .join('\n'),
+        unlockNotice(user, ctx, unlocked),
+        markNotice(user, ctx, unlocked),
         focusNotice(user, ctx, unlocked),
         route,
       ),

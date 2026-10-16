@@ -107,7 +107,7 @@ export async function serverReport(user: User, library: TitleProgress[]): Promis
         announced: t('announced', { date: s.date ?? '?' }),
         closed: t('shut'),
       }[s.status as 'active' | 'announced' | 'closed']
-      return `• ${s.game.name} — ${label}${s.note ? `: ${s.note}` : ''}`
+      return `• ${s.game.name}: ${label}${s.note ? ` (${s.note})` : ''}`
     })
     .join('\n')
 }

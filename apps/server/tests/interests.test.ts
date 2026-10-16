@@ -207,9 +207,9 @@ test('the report shows the goal, the interests and the platinums', () => {
       'Meta 2026: 2/10 platinas (20%)',
       '',
       'Interesses:',
-      '1. Alpha — 40%',
-      '2. Beta — ✅',
-      '3. Gamma — não começou',
+      '1. Alpha: 40%',
+      '2. Beta: ✅',
+      '3. Gamma: não começou',
       '',
       'Platinadas no ano:',
       '• 2026-03-01 Beta',
@@ -219,7 +219,7 @@ test('the report shows the goal, the interests and the platinums', () => {
 
 test('a report without a goal suggests setting one', () => {
   expect(yearReport({ year: 2026, target: null, done: 0, platinumed: [], interests: [] })).toBe(
-    '2026: 0 platinas até agora (sem meta definida — /goals set 12)',
+    '2026: 0 platinas até agora (sem meta definida: /goals set 12)',
   )
 })
 

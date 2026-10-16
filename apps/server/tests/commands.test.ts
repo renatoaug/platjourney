@@ -56,10 +56,10 @@ test('status lists the most common missing trophies', async () => {
   )
   expect(await handleCommand(user, '/status')).toBe(
     [
-      'Days Gone — 50% (5/10)',
+      'Days Gone: 50% (5/10)',
       'Faltam 2. Mais comuns entre os que faltam:',
-      '• Comum — Leia a carta (80%)',
-      '• Raro — Leia a carta (2%)',
+      '• Comum: Leia a carta (80%)',
+      '• Raro: Leia a carta (2%)',
     ].join('\n'),
   )
 })
@@ -94,7 +94,7 @@ test('next lists the closest platinums, skipping the current game', async () => 
     { game: makeGame({ name: 'Ghost' }), baseProgress: 90, remaining: 3 },
   ] as never)
   const out = await handleCommand(user, '/next')
-  expect(out).toContain('1. Ghost — 90%, faltam 3 troféus')
+  expect(out).toContain('1. Ghost: 90%, faltam 3 troféus')
   expect(rank).toHaveBeenCalledWith(titles, user, 8, ['NPWR1'])
   rank.mockResolvedValue([])
   spyOn(watcher, 'getChat').mockReturnValue(undefined)
@@ -109,7 +109,7 @@ test('game switches the conversation to a title found by part of its name', asyn
   expect(await handleCommand(user, '/game')).toBe('Uso: /game <parte do nome>')
   expect(await handleCommand(user, '/game zelda')).toBe('Não achei "zelda" no seu perfil.')
   expect(await handleCommand(linked, '/game ghost')).toBe(
-    'Agora falando de Ghost of Tsushima (50%). Guia pronto — manda /guide.',
+    'Agora falando de Ghost of Tsushima (50%). Guia pronto: manda /guide.',
   )
   expect(set).toHaveBeenCalledWith(linked, titles[1])
   expect(send).toHaveBeenCalledWith('42', 'Carregando Ghost of Tsushima…')

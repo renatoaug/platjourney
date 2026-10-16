@@ -109,7 +109,7 @@ test('the report lists known statuses of the games in progress', async () => {
     status(makeGame({ name: 'Closed' }), 'closed'),
   ])
   expect(await serverReport(user, [])).toBe(
-    ['• Fresh — online ok', '• Stale — fecha em ?: Fim', '• Closed — fechado'].join('\n'),
+    ['• Fresh: online ok', '• Stale: fecha em ? (Fim)', '• Closed: fechado'].join('\n'),
   )
 })
 
