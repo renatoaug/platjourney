@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.20.0](https://github.com/renatoaug/platjourney/compare/v0.19.2...v0.20.0) (2026-10-16)
+
+### Features
+
+* **notifications:** web push on the device, channel choice and a settings page ([#52](https://github.com/renatoaug/platjourney/issues/52)) ([137854e](https://github.com/renatoaug/platjourney/commit/137854e7975656248646313e8394282982f53315))
+
 ## [0.19.2](https://github.com/renatoaug/platjourney/compare/v0.19.1...v0.19.2) (2026-10-16)
 
 ### Bug Fixes
