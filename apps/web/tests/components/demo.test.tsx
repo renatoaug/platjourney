@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { MockAppState, SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
 import { Shell } from '../../src/app/shell'
@@ -25,7 +25,11 @@ import { recommendedData } from '../../src/pages/title.stories'
 import { ToastHost } from '../../src/ui/toast'
 import { mockApi, renderApp, reply } from '../support/web'
 
-afterEach(() => mock.restore())
+// Unmount before the fakes go: a page still mounted would fire its late requests at the real fetch.
+afterEach(() => {
+  cleanup()
+  mock.restore()
+})
 
 const demo: Me = { ...SAMPLE_ME, onlineId: 'PlatJourneyDemo', demo: true }
 const unavailable = 'Indisponível na demonstração. Conecte sua conta da PSN para usar.'

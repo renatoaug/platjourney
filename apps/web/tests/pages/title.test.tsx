@@ -1,5 +1,5 @@
 import { afterEach, expect, jest, mock, test } from 'bun:test'
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { MockAppState, SAMPLE_DATA } from '../../src/app/app-state'
 import { similarGamesData } from '../../src/components/similar-games.stories'
@@ -10,6 +10,8 @@ import { mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => {
   jest.useRealTimers()
+  // Unmount before the fakes go: a page still mounted would fire its late requests at the real fetch.
+  cleanup()
   mock.restore()
 })
 
