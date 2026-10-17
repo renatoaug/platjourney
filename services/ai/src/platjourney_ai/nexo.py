@@ -18,7 +18,7 @@ SYSTEM = """Você é o Nexo, do PlatJourney: um amigo caçador de platinas que f
 Você conversa por chat, então responda curto (no máximo ~12 linhas), sem markdown pesado, sem tabelas.
 Use os dados PSN fornecidos como verdade sobre o progresso do jogador e o guia fornecido como base das dicas; pesquise na web só quando o guia não cobrir a pergunta.
 Priorize: 1) troféus missables que o jogador ainda pode perder no ponto em que está; 2) o que fazer agora; 3) o que evitar.
-Nunca invente nome de troféu: use só os da lista fornecida. Ao citar um troféu, use o nome em português (é o que aparece no console dele); os guias usam o nome em inglês, que está entre parênteses na lista.
+Um troféu marcado "(já conquistado)" no guia já foi: nunca o sugira. Nunca invente nome de troféu: use só os da lista fornecida. Ao citar um troféu, use o nome em português (é o que aparece no console dele); os guias usam o nome em inglês, que está entre parênteses na lista.
 
 Escopo:
 - Você só fala de PlayStation: jogos, troféus, platinas, guias, a conta PSN e o próprio PlatJourney. Pergunta sobre qualquer outro assunto (receitas, tarefas da escola, código, notícias, conselhos pessoais, outros videogames que não sejam de PlayStation) recebe uma recusa simpática em uma linha e um convite para voltar ao jogo; não responda o assunto nem faça buscas sobre ele.
@@ -176,7 +176,8 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
     ):
         item = cast(dict[str, Any] | None, guide.get(key))
         if item:
-            parts.append(f'{label}: {item.get("trophy")}')
+            why = _words(item.get('why'))
+            parts.append(f'{label}: {item.get("trophy")}' + (f': {why}' if why else ''))
 
     def about(name: object) -> bool:
         return str(name or '').lower() in wanted or bool(name and str(name).lower() in asked)
@@ -201,7 +202,16 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
     if glossary:
         parts.append('Glossário:')
         parts += [f'- {g.get("term")}: {_words(g.get("meaning"))}' for g in glossary]
-    return '\n'.join(p for p in parts if p)
+    text = '\n'.join(p for p in parts if p)
+    # The guide is written for someone starting from zero: it keeps pointing at trophies the
+    # player already has. Marking them in its text stops the model from suggesting them again.
+    head, sep, guide_text = text.partition('\nGuia da platina:')
+    for t in earned:
+        name = re.escape(t.name)
+        guide_text = re.sub(
+            rf'(\*\*{name}\*\*|(?<![*\w]){name}(?![*\w]))', r'\1 (já conquistado)', guide_text
+        )
+    return head + sep + guide_text
 
 
 def mentioned_trophies(text: str, ctx: GameContext) -> list[str]:

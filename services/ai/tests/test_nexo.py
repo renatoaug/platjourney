@@ -243,8 +243,20 @@ def test_lean_context_keeps_what_every_answer_needs() -> None:
     assert '- [gold] Sobrevivente (Survivor): Sobreviva à horda — progresso 3/10' in text
     assert 'Perdíveis:\n- Sobrevivente: Antes do capítulo 3. Fale com X.' in text
     assert '- Fase 1: Zere a história.' in text
-    assert 'Mais difícil: Survivor' in text
+    assert 'Mais difícil: Survivor: difícil' in text
     assert '{' not in text  # plain lines, not the guide's JSON
+
+
+def test_the_guide_marks_trophies_the_player_already_has() -> None:
+    guide = GUIDE | {'overview': 'Comece por **Primeiro Passo**, depois Primeiro Passo de novo.'}
+    text = nexo.lean_context(context(guide=guide))
+    assert (
+        'Comece por **Primeiro Passo** (já conquistado), depois Primeiro Passo (já conquistado)'
+        in text
+    )
+    # The player's own list stays as it is; only the guide's text is marked.
+    assert 'Primeiro Passo (2026-09-01)' in text
+    assert 'Sobrevivente (já conquistado)' not in text
 
 
 def test_lean_context_brings_tricks_and_bugs_only_for_the_trophies_in_focus() -> None:
