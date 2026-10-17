@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.22.1](https://github.com/renatoaug/platjourney/compare/v0.22.0...v0.22.1) (2026-10-17)
+
+### Bug Fixes
+
+* **ai:** the answers eval gets the guide and the trophy list, Nexo stops suggesting earned trophies and starts with the starting tips ([#57](https://github.com/renatoaug/platjourney/issues/57)) ([b7cede2](https://github.com/renatoaug/platjourney/commit/b7cede2460354dcb6ab5d87d7a4f19025ba7237a))
+
 ## [0.22.0](https://github.com/renatoaug/platjourney/compare/v0.21.0...v0.22.0) (2026-10-17)
 
 ### Features
