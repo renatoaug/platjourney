@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.20.1](https://github.com/renatoaug/platjourney/compare/v0.20.0...v0.20.1) (2026-10-17)
+
+### Bug Fixes
+
+* **web:** clearer PS Plus hint and a select that keeps its width on phones ([#53](https://github.com/renatoaug/platjourney/issues/53)) ([e79dbfe](https://github.com/renatoaug/platjourney/commit/e79dbfe7c63e05f9346ce469c93f9ce8432dad16))
+
 ## [0.20.0](https://github.com/renatoaug/platjourney/compare/v0.19.2...v0.20.0) (2026-10-16)
 
 ### Features
