@@ -74,3 +74,20 @@ test('near the top it flips below the element', () => {
   act(() => jest.advanceTimersByTime(150))
   expect(tip.classList.contains('below')).toBe(true)
 })
+
+test('a press hides it even where the click stops, and a tip removed meanwhile never shows', () => {
+  const { getByText, tip } = setup()
+  const button = getByText('ícone').closest('button') as HTMLElement
+  button.addEventListener('click', (e) => e.stopPropagation())
+  fireEvent.mouseOver(button)
+  act(() => jest.advanceTimersByTime(150))
+  fireEvent.pointerDown(button)
+  fireEvent.click(button)
+  expect(tip.classList.contains('show')).toBe(false)
+
+  // Pressed before the beat: the panel opened and the button dropped its tip.
+  fireEvent.mouseOver(button)
+  button.removeAttribute('data-tip')
+  act(() => jest.advanceTimersByTime(150))
+  expect(tip.classList.contains('show')).toBe(false)
+})

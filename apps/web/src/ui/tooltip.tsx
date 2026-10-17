@@ -18,6 +18,8 @@ export function TooltipHost() {
       if (!text) return
       clearTimeout(timer)
       timer = setTimeout(() => {
+        // The element can lose its tip meanwhile (a button whose panel just opened).
+        if (!el.isConnected || !el.dataset.tip) return
         tip.textContent = text
         tip.classList.add('show')
         const r = el.getBoundingClientRect()
@@ -59,6 +61,8 @@ export function TooltipHost() {
     document.addEventListener('focusin', over)
     document.addEventListener('focusout', hide)
     document.addEventListener('click', hide)
+    // Capture, so a press hides the tip even where the click stops propagating (the bell).
+    document.addEventListener('pointerdown', hide, true)
     window.addEventListener('scroll', hide, { passive: true })
     return () => {
       hide()
@@ -69,6 +73,7 @@ export function TooltipHost() {
       document.removeEventListener('focusin', over)
       document.removeEventListener('focusout', hide)
       document.removeEventListener('click', hide)
+      document.removeEventListener('pointerdown', hide, true)
       window.removeEventListener('scroll', hide)
     }
   }, [])
