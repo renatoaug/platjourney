@@ -19,3 +19,5 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .coverage
+# Official trophy lists fetched for the answers eval (bun run ai:eval:trophies)
+services/ai/evals/data/trophies.local.json

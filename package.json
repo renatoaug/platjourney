@@ -46,6 +46,7 @@
     "test:web": "bun test apps/web/tests --preload ./apps/web/tests/setup.ts",
     "test:coverage": "bun scripts/check-coverage.ts",
     "ai:eval": "cd services/ai && uv run python -m evals",
+    "ai:eval:trophies": "bun run --cwd apps/server eval:trophies",
     "ai:eval:view": "cd services/ai && uv run python -m evals.view"
   },
   "devDependencies": {

@@ -48,7 +48,7 @@
     {
       "game": "Horizon Zero Dawn",
       "question": "tem colecionável chato em Horizon Zero Dawn? como acompanho?",
-      "reference": "A platina exige 23 bonecos de Cortador, 12 Vantagens, 30 flores metálicas, 6 estatuetas Banuk, 12 recipientes Antigos, 5 Baterias, 6 Pescoções, 6 acampamentos de bandidos, 4 Caldeirões, 11 áreas corrompidas, 5 Campos de Caça com 15 provas e as 26 máquinas no catálogo. O caderno rastreia o progresso, comerciantes vendem mapas para os colecionáveis e tudo pode ser obtido no mundo aberto após a história."
+      "reference": "A platina exige 23 bonecos de Cortador, 12 Vantagens, 30 flores metálicas, 6 estatuetas Banuk, 12 recipientes Antigos, 5 Baterias, 6 Pescoções, 6 acampamentos de bandidos, 4 Caldeirões, 11 áreas corrompidas, 5 Campos de Caça com 15 provas e as 26 máquinas no catálogo. O caderno rastreia o progresso, comerciantes fora da região dos Nora vendem mapas para Vantagens, flores metálicas, estatuetas Banuk e recipientes Antigos (os outros não têm mapa à venda) e tudo pode ser obtido no mundo aberto após a história."
     },
     {
       "game": "God of War Ragnarök",
@@ -58,7 +58,8 @@
     {
       "game": "Ghost of Tsushima",
       "question": "precisa jogar online pra platinar Ghost of Tsushima?",
-      "reference": "Sim: Transcendência: Conclua os três capítulos de Incursão no Modo Lendas.; Guerreiro Supremo: Alcance ranque 20 em todas as funções do Modo Lendas.; Verdade Suprema: Conclua a onda final de uma missão de Sobrevivência Ouro no Modo Lendas."
+      "reference": "Não: a platina sai toda offline. Os troféus do Modo Lendas (Transcendência, Guerreiro Supremo, Verdade Suprema e os outros) são online, mas ficam num grupo separado da lista e não contam para a platina.",
+      "avoid": ["dizer que a platina exige o Modo Lendas ou jogar online"]
     },
     {
       "game": "Resident Evil 7: Biohazard",
@@ -163,7 +164,7 @@
     {
       "game": "Saints Row",
       "question": "qual o troféu mais difícil de Saints Row?",
-      "reference": "Um carro chamado Simone: Exige quatro mortais para trás em um único salto usando Supercontrole aéreo."
+      "reference": "Pau pra toda obra: exige as 34 vantagens, liberadas ao completar 46 dos 74 desafios; alguns desafios dependem de inimigos, armas e aliados que só ficam práticos na limpeza do pós-jogo."
     },
     {
       "game": "Marvel vs. Capcom: Infinite",

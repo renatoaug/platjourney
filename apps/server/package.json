@@ -14,6 +14,7 @@
     "catalog:media": "bun --env-file=../../.env scripts/catalog-media.ts",
     "catalog:releases": "bun --env-file=../../.env scripts/catalog-releases.ts",
     "catalog:similar": "bun --env-file=../../.env scripts/catalog-similar.ts",
+    "eval:trophies": "bun --env-file=../../.env scripts/eval-trophies.ts",
     "embed": "cd ../../services/ai && uv run python -m platjourney_ai.jobs.embed_catalog",
     "db:reset": "bun --env-file=../../.env scripts/reset.ts",
     "push:keys": "bun scripts/push-keys.ts"

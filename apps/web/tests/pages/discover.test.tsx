@@ -9,7 +9,7 @@ import { setLocale } from '../../src/i18n/locale'
 import type { SimilarRecs } from '../../src/lib/types'
 import { Discover } from '../../src/pages/discover'
 import { MODEL_WORK_DONE } from '../../src/plugins'
-import { mockApi, never, renderApp, reply } from '../support/web'
+import { gone, mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
 
@@ -207,7 +207,7 @@ test('Gerar de novo asks Nexo for fresh ones', async () => {
   renderApp(<Discover />, { value: { data: loaded, cache: asked() } })
   fireEvent.click(refresh())
   expect(refresh().hasAttribute('disabled')).toBe(true)
-  await waitFor(() => expect(within(recs()).queryByText(/Horizon Zero Dawn/)).toBeNull())
+  await gone(() => within(recs()).queryByText(/Horizon Zero Dawn/))
   expect(within(recs()).getByText(/Sekiro/)).toBeTruthy()
   expect(calls[0].path).toBe('/api/recommendations?refresh=1')
 })

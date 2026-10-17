@@ -8,6 +8,7 @@ Calls the real chat model and the judge.
 
 import json
 import re
+from pathlib import Path
 from typing import Any, cast
 
 from pydantic import BaseModel
@@ -18,6 +19,15 @@ from platjourney_ai.schemas import GameContext
 
 from . import questions
 from .runs import Run
+
+# Official trophy lists from PSN for the eval's games (`bun run ai:eval:trophies`), as the chat gets
+# them for a game the player does not own. Absent, a game without a stored list goes without one.
+LISTS = Path(__file__).parent / 'data' / 'trophies.local.json'
+
+
+def official_lists() -> dict[str, dict[str, Any]]:
+    return cast(dict[str, dict[str, Any]], json.loads(LISTS.read_text())) if LISTS.exists() else {}
+
 
 # A case passes from this score up, with nothing from `avoid` in the answer.
 PASS = 4
@@ -84,13 +94,26 @@ async def load_context(case: Case) -> GameContext | None:
     if not games:
         return None
     game = games[0]
-    guides = await db.rows('SELECT guide FROM guide WHERE game = $g LIMIT 1', {'g': game['id']})
+    # Rows come back with their ids as strings: a record field only matches the id made a record.
+    guides = await db.rows(
+        'SELECT guide FROM guide WHERE game = type::record($g) LIMIT 1', {'g': game['id']}
+    )
     titles = await db.rows(
-        'SELECT name, platform, trophies FROM title WHERE game = $g AND trophies != NONE LIMIT 1',
+        'SELECT name, platform, trophies FROM title'
+        ' WHERE game = type::record($g) AND trophies != NONE LIMIT 1',
         {'g': game['id']},
     )
+    official = official_lists().get(case.game)
     title: dict[str, Any] = (
-        titles[0] if titles else {'name': game['name'], 'platform': 'PS5', 'trophies': []}
+        titles[0]
+        if titles
+        else {
+            'name': game['name'],
+            'platform': official['platform'],
+            'trophies': official['trophies'],
+        }
+        if official
+        else {'name': game['name'], 'platform': 'PS5', 'trophies': []}
     )
     earned = set(case.earned)
     stored = cast(list[dict[str, Any]], title['trophies'])

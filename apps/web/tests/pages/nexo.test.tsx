@@ -7,7 +7,7 @@ import { current } from '../../src/fixtures'
 import type { CurrentGame } from '../../src/lib/types'
 import { Nexo } from '../../src/pages/nexo'
 import { MODEL_WORK_DONE } from '../../src/plugins'
-import { mockApi, never, renderApp, reply } from '../support/web'
+import { gone, mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
 
@@ -286,7 +286,7 @@ test('switching the game clears the conversation and shows the skeleton until th
   renderApp(<Nexo />)
   expect(await within(log()).findByText('E depois disso?')).toBeTruthy()
   fireEvent.click(await screen.findByRole('button', { name: /Outro Jogo/ }))
-  await waitFor(() => expect(within(log()).queryByText('E depois disso?')).toBeNull())
+  await gone(() => within(log()).queryByText('E depois disso?'))
 })
 
 test("the chat's game without a conversation shows on top as a new conversation", async () => {
@@ -330,7 +330,7 @@ test('switching away from a draft drops it at once and marks the game being open
   const list = await screen.findByRole('complementary', { name: 'Conversas' })
   expect(within(list).getByText('Nova conversa')).toBeTruthy()
   fireEvent.click(within(list).getByRole('button', { name: /Outro Jogo/ }))
-  await waitFor(() => expect(within(list).queryByText('Nova conversa')).toBeNull())
+  await gone(() => within(list).queryByText('Nova conversa'))
   expect(
     within(list)
       .getByRole('button', { name: /Outro Jogo/ })

@@ -63,7 +63,7 @@ An eval writes nothing to the app's database: its model calls are collected in m
 
 ## The answers suite
 
-Nexo answers with the game's stored guide, deep guide passages and trophy list, as a player who has earned only the trophies in `earned`. The judge model (`AI_MODEL_JUDGE`, the default model when unset) scores the answer from 1 to 5 against `reference` and checks it says nothing from `avoid`, such as advice for a trophy the player already has. A game nobody on the instance owns has no stored trophy list: Nexo then answers from the guide and its passages alone, and the case records `trophy_list: false`.
+Nexo answers with the game's stored guide, deep guide passages and trophy list, as a player who has earned only the trophies in `earned`. The judge model (`AI_MODEL_JUDGE`, the default model when unset) scores the answer from 1 to 5 against `reference` and checks it says nothing from `avoid`, such as advice for a trophy the player already has. A game nobody on the instance owns has no stored trophy list. In the app the chat then gets the official list from PSN; for the eval, `bun run ai:eval:trophies` fetches those lists once into `services/ai/evals/data/trophies.local.json` (not versioned) and the suite uses them. Without the file, Nexo answers from the guide and its passages alone, cannot match Portuguese trophy names to the English guides, and the case records `trophy_list: false`.
 
 ## Which models
 
