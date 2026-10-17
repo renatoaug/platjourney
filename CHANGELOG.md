@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.21.0](https://github.com/renatoaug/platjourney/compare/v0.20.2...v0.21.0) (2026-10-17)
+
+### Features
+
+* **web:** blur behind the open notifications, bell tooltip and a shorter settings select ([#55](https://github.com/renatoaug/platjourney/issues/55)) ([9eb2ec0](https://github.com/renatoaug/platjourney/commit/9eb2ec0292b13782b57ee6844ef958183dea27f4))
+
 ## [0.20.2](https://github.com/renatoaug/platjourney/compare/v0.20.1...v0.20.2) (2026-10-17)
 
 ### Bug Fixes
