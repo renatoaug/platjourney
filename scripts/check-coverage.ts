@@ -18,6 +18,9 @@ interface Suite {
   sources: string
   // Files with nothing to test on their own: entry points that only start the app, and stories.
   skip: RegExp
+  // Test files per Bun process. One process for the whole web suite grows until Bun stalls for
+  // seconds (tests time out) or crashes; smaller runs stay well clear of it.
+  chunk?: number
 }
 
 const SUITES: Suite[] = [
@@ -35,6 +38,7 @@ const SUITES: Suite[] = [
     preload: './apps/web/tests/setup.ts',
     sources: 'apps/web/src',
     skip: /(\.stories\.tsx$|\/stories\/|\/main\.tsx$|\.d\.ts$|\/fixtures\.ts$)/,
+    chunk: 12,
   },
 ]
 
@@ -68,27 +72,48 @@ function run(cmd: string[], cwd = ROOT): boolean {
   return proc.exitCode === 0
 }
 
+// Bun itself sometimes crashes mid-suite (a segfault: killed by a signal or exit code 128+), which
+// says nothing about the tests. A crashed suite runs once more; a test that fails does not.
+function runTests(cmd: string[]): boolean {
+  for (let attempt = 1; ; attempt++) {
+    const proc = Bun.spawnSync(cmd, { cwd: ROOT, stdout: 'inherit', stderr: 'inherit' })
+    if (proc.exitCode === 0) return true
+    const crashed = proc.signalCode != null || (proc.exitCode ?? 0) >= 128
+    if (!crashed || attempt === 2) return false
+    console.warn('\nBun crashed, not a test: running the suite again\n')
+  }
+}
+
 const problems: string[] = []
 const tmp = mkdtempSync(join(tmpdir(), 'platjourney-cov-'))
 try {
   for (const suite of SUITES) {
-    const dir = join(tmp, suite.name)
-    const ok = run([
-      'bun',
-      'test',
-      suite.tests,
-      ...(suite.preload ? ['--preload', suite.preload] : []),
-      '--coverage',
-      '--coverage-reporter=lcov',
-      `--coverage-dir=${dir}`,
-    ])
-    if (!ok) problems.push(`${suite.name}: tests failed`)
+    const files = walk(join(ROOT, suite.tests))
+      .filter((f) => /\.test\.tsx?$/.test(f))
+      .map((f) => relative(ROOT, f))
+      .sort()
+    const size = suite.chunk ?? files.length
+    const reports: string[] = []
+    for (let i = 0; i < files.length; i += size) {
+      const dir = join(tmp, `${suite.name}-${i}`)
+      const ok = runTests([
+        'bun',
+        'test',
+        ...files.slice(i, i + size).map((f) => `./${f}`),
+        ...(suite.preload ? ['--preload', suite.preload] : []),
+        '--coverage',
+        '--coverage-reporter=lcov',
+        `--coverage-dir=${dir}`,
+      ])
+      if (!ok) problems.push(`${suite.name}: tests failed`)
+      const lcov = join(dir, 'lcov.info')
+      if (Bun.file(lcov).size) reports.push(readFileSync(lcov, 'utf8'))
+    }
 
+    // Each run reports the files it loaded; a line counts as covered if any run hit it.
     const hits = new Map<string, Map<number, number>>()
     let file: string | null = null
-    const lcov = join(dir, 'lcov.info')
-    const report = Bun.file(lcov).size ? readFileSync(lcov, 'utf8') : ''
-    for (const raw of report.split('\n')) {
+    for (const raw of reports.join('\n').split('\n')) {
       const line = raw.trim()
       if (line.startsWith('SF:')) {
         file = relative(ROOT, resolve(ROOT, line.slice(3)))
@@ -147,7 +172,7 @@ try {
 
 if (problems.length) {
   console.error('\nCoverage check failed:')
-  for (const p of problems) console.error(`  - ${p}`)
+  for (const p of new Set(problems)) console.error(`  - ${p}`)
   console.error('\nAdd tests for the code you changed.')
   process.exit(1)
 }

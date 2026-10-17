@@ -69,6 +69,17 @@ Nexo answers with the game's stored guide, deep guide passages and trophy list, 
 
 The evals use the AI service's model settings, as the app does: `AI_PROVIDER`, `AI_MODEL_CHAT` for Nexo, `AI_MODEL_JUDGE` for the judge (the default provider when unset) and the embedding settings for the guide search. A local model needs its server up, or a run stops at the first question. The embedding model must be the one the database's passages were indexed with, or the guide search compares vectors that do not match.
 
+### Without API spend
+
+The `codex` provider sends each answer and each grade to the [Codex CLI](https://github.com/openai/codex) signed in on your machine, with the same model, so a run spends your Codex plan instead of the OpenAI API. Codex reports no tokens, so the run's cost shows as zero; only the guide search's embeddings still go to the embedding provider, a fraction of a cent per run.
+
+```bash
+AI_MODEL_CHAT=codex:gpt-5.6-terra AI_MODEL_JUDGE=codex:gpt-5.6-terra bun run ai:eval answers
+AI_MODEL_CHAT=codex:gpt-5.6-terra bun run ai:eval scope
+```
+
+Each call starts a `codex exec`, so a question takes seconds longer than through the API. It is for measuring on a developer machine: the app itself never runs on it.
+
 ## Pointing at a database
 
 The suites read guides through the AI service's settings (`SURREAL_URL`, `SURREAL_USER`, `SURREAL_PASS`, `SURREAL_NS`, `SURREAL_DB`) and keep their questions and runs through `EVAL_SURREAL_*`, which fall back to the same values with the `evals` database. To measure against an instance's real guides, use a user that can only read its `main` database and write its `evals` database:

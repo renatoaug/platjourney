@@ -52,7 +52,7 @@
     "@biomejs/biome": "^2.5.15",
     "@semantic-release/changelog": "^7.0.0",
     "@semantic-release/git": "^11.0.1",
-    "@types/bun": "^1.4.2",
+    "@types/bun": "^1.4.3",
     "conventional-changelog-conventionalcommits": "^9.3.0",
     "knip": "^6.41.0",
     "pm2": "^7.0.4",

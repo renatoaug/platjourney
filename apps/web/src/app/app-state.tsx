@@ -149,6 +149,9 @@ export function MockAppState({
   const setData = useCallback((update: (d: AppStateData) => AppStateData) => {
     setDataState((d) => (d ? update(d) : d))
   }, [])
+  // One cache for the provider's life, as in the app: a new object each render would make every
+  // screen that keys an effect on it fetch again on each render.
+  const cache = useRef<Record<string, unknown>>({}).current
   const noop = async () => {}
   return (
     <Ctx.Provider
@@ -160,7 +163,7 @@ export function MockAppState({
         sync: 'connected',
         syncedAt: new Date(),
         warming: false,
-        cache: {},
+        cache,
         ...value,
         data,
         setData,

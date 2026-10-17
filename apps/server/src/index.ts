@@ -15,6 +15,7 @@ import { reply } from './nexo.ts'
 import { loadPlugins, Refused } from './plugins.ts'
 import { allow } from './rate-limit.ts'
 import { startReleaseSync } from './releases.ts'
+import { markNotificationsRead } from './repository/activity.ts'
 import { linkChat, userByChat, userByLinkCode } from './repository/user.ts'
 import { startSimilarSync } from './similar-sync.ts'
 import {
@@ -95,6 +96,9 @@ async function answerTelegram({
       return
     }
     locale = userLocale(user)
+    // Writing to Nexo means the player saw the chat, notices included: the bell stops counting them.
+    // Telegram's bots never learn when a message is read, so this is the closest sign there is.
+    markNotificationsRead(user.id).catch((e) => console.warn('notices not marked read:', e.message))
     if (text.startsWith('/')) {
       const out = await handleCommand(user, text)
       await sendMessage(

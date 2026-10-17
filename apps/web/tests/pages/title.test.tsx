@@ -236,16 +236,13 @@ test('similar games under the showcase: the expansion and the series first, with
   expect(calls.at(-1)?.path).toBe('/api/games/similar?game=game%3A19561')
 })
 
-test('no similar game, or a failed request, leaves the section out', async () => {
-  mockApi({ '/api/title': ownedData, '/api/games/similar': { items: [] } })
-  const { unmount } = renderApp(<Title />, {
-    path: '/title/game/game%3A19561',
-    route: '/title/*',
-  })
+test('no similar game leaves the section out', async () => {
+  open('/title/game/game%3A19561', ownedData)
   await screen.findByText('NA SUA BIBLIOTECA')
   await waitFor(() => expect(document.querySelector('.game-band')).toBeNull())
-  unmount()
-  mock.restore()
+})
+
+test('a failed similar games request leaves the section out', async () => {
   mockApi({ '/api/title': ownedData, '/api/games/similar': reply(500) })
   renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
   await screen.findByText('NA SUA BIBLIOTECA')
