@@ -4,12 +4,14 @@ What PlatJourney tells a player on its own, without being asked: when it sends, 
 
 ## Where a notice goes
 
-Every notice is written to the web first, under the bell and in the history. Then it goes to each channel the player has, chosen on the profile page under Notificações:
+Every notice is written to the web first, under the bell and in the history. Then it goes to each channel the player has, chosen on the settings page under Notificações:
 
 | Channel | When | What it shows |
 |---|---|---|
 | Telegram | The chat is linked and "No Telegram" is on (`user.notify_telegram`, on by default) | The full notice, markdown turned into Telegram's HTML |
 | Push | The device turned "Neste aparelho" on (`push_subscription`), and the instance has VAPID keys | A notification titled Nexo with the notice as plain text, cut at 900 characters; a tap opens the history |
+
+A notice counts as read once the player opens the bell, on any device, or writes anything to Nexo on Telegram (a bot never learns when a message is read, so writing is the closest sign).
 
 Push is Web Push, sent from `apps/server/src/push.ts` with no library: each message is encrypted for the device and signed with the instance's key. It works in desktop browsers, on Android and, on iPhone, only with PlatJourney added to the home screen (iOS 16.4 or later); in a Safari tab the profile explains how to add it. The native app has no push yet and says so. `apps/web/public/sw.js` shows the notification and opens the app on a tap. A channel that fails never stops the others, nor the sweep.
 

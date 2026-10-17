@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # Where the text and the vectors come from. `local` is any server that speaks the OpenAI
     # API on your machine (LM Studio, mlx-lm, llama.cpp, Ollama): free, no web search, and
     # the answers are only as good as the model you run.
-    ai_provider: Literal['openai', 'local'] = 'openai'
+    ai_provider: Literal['openai', 'local', 'codex'] = 'openai'
     embedding_provider: Literal['openai', 'local'] = 'openai'
     local_base_url: str = 'http://localhost:1234/v1'
     local_model: str = ''

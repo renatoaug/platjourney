@@ -1,13 +1,17 @@
 """Every model call goes through here, so its tokens and web searches are recorded.
 
-Two providers: OpenAI (the Responses API, with web search) and a local server that speaks the
-OpenAI API (chat completions and embeddings). Features call the same functions either way.
+Three providers: OpenAI (the Responses API, with web search), a local server that speaks the
+OpenAI API (chat completions and embeddings) and, for development only, the Codex CLI signed in
+on this machine. Features call the same functions either way.
 """
 
+import asyncio
 import json
 import re
+import tempfile
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal, cast
 
 from openai import AsyncOpenAI
@@ -33,7 +37,7 @@ class Reply:
 
 @dataclass(frozen=True)
 class Route:
-    provider: Literal['openai', 'local']
+    provider: Literal['openai', 'local', 'codex']
     model: str
 
 
@@ -43,11 +47,13 @@ def route() -> Route:
     provider, _, model = chosen.partition(':')
     if (provider or settings.ai_provider) == 'local':
         return Route('local', model or settings.local_model)
+    if (provider or settings.ai_provider) == 'codex':
+        return Route('codex', model or settings.openai_model)
     return Route('openai', model or settings.openai_model)
 
 
 def web_search_on() -> bool:
-    return settings.ai_web_search and route().provider == 'openai'
+    return settings.ai_web_search and route().provider in ('openai', 'codex')
 
 
 async def respond(**params: Any) -> Reply:
@@ -56,6 +62,8 @@ async def respond(**params: Any) -> Reply:
     chosen = route()
     if chosen.provider == 'local':
         return await _respond_locally(params, chosen.model)
+    if chosen.provider == 'codex':
+        return await _respond_with_codex(params, chosen.model)
     params = params | {'model': chosen.model}
     if not web_search_on() and params.get('tools'):
         tools = [t for t in params['tools'] if t.get('type') != 'web_search']
@@ -171,6 +179,66 @@ async def _respond_locally(params: dict[str, Any], model: str) -> Reply:
         int((time.monotonic() - started) * 1000),
     )
     return Reply(completion.choices[0].message.content or '')
+
+
+def codex_prompt(params: dict[str, Any]) -> str:
+    """The Responses API's instructions + input as one prompt for `codex exec`."""
+    parts = [f'{m["role"]}:\n{m["content"]}' for m in chat_messages(params)]
+    return (
+        'Answer as the assistant described below. Reply with the answer only: no files, no '
+        'commands, no notes about the task.\n\n' + '\n\n'.join(parts)
+    )
+
+
+async def _respond_with_codex(params: dict[str, Any], model: str) -> Reply:
+    # Development only (the evals without API spend): `codex exec` answers with the same model,
+    # signed in with the developer's own account. It reports no token usage, so the call is
+    # recorded as free. Web search is Codex's own, when the request asks for it.
+    started = time.monotonic()
+    effort = cast(dict[str, Any], params.get('reasoning') or {}).get('effort', 'medium')
+    tools = cast(list[dict[str, Any]], params.get('tools') or [])
+    search = web_search_on() and any(t.get('type') == 'web_search' for t in tools)
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / 'answer.txt'
+        args = [
+            'codex',
+            *(['--search'] if search else []),
+            'exec',
+            '--skip-git-repo-check',
+            '--ephemeral',
+            '-s',
+            'read-only',
+            '-C',
+            tmp,
+            '-c',
+            'mcp_servers={}',
+            '-c',
+            f'model_reasoning_effort={effort}',
+            '-m',
+            model,
+            '-o',
+            str(out),
+        ]
+        fmt = chat_format(params)
+        if fmt:
+            schema = Path(tmp) / 'schema.json'
+            schema.write_text(json.dumps(fmt['json_schema']['schema']))
+            args += ['--output-schema', str(schema)]
+        proc = await asyncio.create_subprocess_exec(
+            *args,
+            '-',
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _, err = await proc.communicate(codex_prompt(params).encode())
+        if proc.returncode != 0 or not out.exists():
+            raise RuntimeError(f'codex exec failed ({proc.returncode}): {err.decode()[-300:]}')
+        text = out.read_text().strip()
+    await record_call(
+        f'{LOCAL_PREFIX}codex:{model}', Usage(), int((time.monotonic() - started) * 1000)
+    )
+    return Reply(text)
 
 
 def strip_links(text: str) -> str:
