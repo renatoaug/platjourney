@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.20.2](https://github.com/renatoaug/platjourney/compare/v0.20.1...v0.20.2) (2026-10-17)
+
+### Bug Fixes
+
+* **web:** settings show a saved preference right away ([#54](https://github.com/renatoaug/platjourney/issues/54)) ([5fc3b2a](https://github.com/renatoaug/platjourney/commit/5fc3b2a6587b9fd80563d1102d44ad91b072946b))
+
 ## [0.20.1](https://github.com/renatoaug/platjourney/compare/v0.20.0...v0.20.1) (2026-10-17)
 
 ### Bug Fixes
