@@ -89,6 +89,7 @@
     .notif-panel.is-open,
     .notif-panel.is-closing,
     .notif-panel.is-open .notif-item,
+    .notif-scrim,
     .notif-button.ring .icon {
       animation: none;
     }
@@ -117,6 +118,31 @@
       700 10px / 17px Inter,
       sans-serif;
     text-align: center;
+  }
+
+  .notif-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    background: color-mix(in srgb, var(--color-bg) 60%, transparent);
+    backdrop-filter: blur(4px);
+    animation: notif-scrim-in 0.2s ease-out;
+  }
+
+  .notif-scrim.is-closing {
+    animation: notif-scrim-out 0.16s ease-in forwards;
+  }
+
+  @keyframes notif-scrim-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes notif-scrim-out {
+    to {
+      opacity: 0;
+    }
   }
 
   .notif-badge[hidden],

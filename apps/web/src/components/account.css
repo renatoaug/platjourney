@@ -16,6 +16,9 @@
   /* A select keeps the width of its longest option, so the text beside it wraps instead. */
   .setting-row select {
     flex: none;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    line-height: var(--leading-snug);
   }
 
   .setting-row.static {

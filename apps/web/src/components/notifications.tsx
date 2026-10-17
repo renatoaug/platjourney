@@ -225,52 +225,61 @@ export function Notifications() {
   const shown = state !== 'closed'
 
   return (
-    <div className="notif">
-      <button
-        ref={button}
-        key={ring}
-        className={`icon-button notif-button${ring ? ' ring' : ''}`}
-        type="button"
-        id="notif-button"
-        aria-label={unread ? t('titleUnread', { count: unread }) : t('title')}
-        aria-expanded={state === 'open'}
-        aria-controls="notif-panel"
-        // The tooltip would sit on top of the open panel.
-        data-tip={shown ? undefined : t('title')}
-        onClick={(e) => {
-          e.stopPropagation()
-          state === 'open' ? close() : open()
-        }}
-      >
-        <Icon name="bell" />
-        <span className="notif-badge" id="notif-badge" hidden={unread === 0}>
-          {unread > 9 ? '9+' : String(unread)}
-        </span>
-      </button>
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: only stops the outside-click handler from closing the panel */}
-      <section
-        className={`notif-panel${state === 'open' ? ' is-open' : ''}${state === 'closing' ? ' is-closing' : ''}`}
-        id="notif-panel"
-        aria-label={t('title')}
-        hidden={!shown}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="notif-top">
-          <b>{t('title')}</b>
-          {typeof loaded === 'object' && <span>{loaded.total}</span>}
-        </header>
-        <div className="notif-list">
-          <NotifListBody loaded={loaded} onNavigate={close} />
-        </div>
-        {typeof loaded === 'object' && (
-          <footer className="notif-bottom">
-            <Link className="text-link notif-all" to="/history" onClick={close}>
-              {t('seeHistory')} <Icon name="arrow" />
-            </Link>
-            {pages > 1 && <NotifPages pages={pages} page={page} onPage={load} />}
-          </footer>
-        )}
-      </section>
-    </div>
+    <>
+      {/* Dims and blurs the page behind the open panel; a tap on it closes the panel like any outside tap. */}
+      {shown && (
+        <div
+          className={`notif-scrim${state === 'closing' ? ' is-closing' : ''}`}
+          aria-hidden="true"
+        />
+      )}
+      <div className="notif">
+        <button
+          ref={button}
+          key={ring}
+          className={`icon-button notif-button${ring ? ' ring' : ''}`}
+          type="button"
+          id="notif-button"
+          aria-label={unread ? t('titleUnread', { count: unread }) : t('title')}
+          aria-expanded={state === 'open'}
+          aria-controls="notif-panel"
+          // The tooltip would sit on top of the open panel.
+          data-tip={shown ? undefined : t('title')}
+          onClick={(e) => {
+            e.stopPropagation()
+            state === 'open' ? close() : open()
+          }}
+        >
+          <Icon name="bell" />
+          <span className="notif-badge" id="notif-badge" hidden={unread === 0}>
+            {unread > 9 ? '9+' : String(unread)}
+          </span>
+        </button>
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: only stops the outside-click handler from closing the panel */}
+        <section
+          className={`notif-panel${state === 'open' ? ' is-open' : ''}${state === 'closing' ? ' is-closing' : ''}`}
+          id="notif-panel"
+          aria-label={t('title')}
+          hidden={!shown}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <header className="notif-top">
+            <b>{t('title')}</b>
+            {typeof loaded === 'object' && <span>{loaded.total}</span>}
+          </header>
+          <div className="notif-list">
+            <NotifListBody loaded={loaded} onNavigate={close} />
+          </div>
+          {typeof loaded === 'object' && (
+            <footer className="notif-bottom">
+              <Link className="text-link notif-all" to="/history" onClick={close}>
+                {t('seeHistory')} <Icon name="arrow" />
+              </Link>
+              {pages > 1 && <NotifPages pages={pages} page={page} onPage={load} />}
+            </footer>
+          )}
+        </section>
+      </div>
+    </>
   )
 }
