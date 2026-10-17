@@ -1,7 +1,7 @@
 // Shared pieces for the web tests: a fake /api behind fetch, and rendering inside the router and
 // the app state, the way the shell wires a screen.
 import { spyOn } from 'bun:test'
-import { render } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { MockAppState } from '../../src/app/app-state'
@@ -21,6 +21,17 @@ export const reply = (status: number, body: unknown = {}) =>
 
 /** A request that never answers. */
 export const never = () => new Promise<never>(() => {})
+
+/**
+ * Waits until `find` comes back empty. Unlike `waitFor(() => expect(node).toBeNull())`, a node still
+ * there is never printed: bun's expect formats the whole element on each failed try, which takes
+ * seconds and gigabytes and makes the test time out.
+ */
+export function gone(find: () => Element | null): Promise<void> {
+  return waitFor(() => {
+    if (find()) throw new Error('still on the page')
+  })
+}
 
 /**
  * Fakes fetch for the given routes. A key is `METHOD /path?query`, `METHOD /path`, `/path?query`

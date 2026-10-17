@@ -6,7 +6,7 @@ import { similarGamesData } from '../../src/components/similar-games.stories'
 import type { GuideDetail } from '../../src/lib/types'
 import { Title, type TitleDetail } from '../../src/pages/title'
 import { ownedData, recommendedData } from '../../src/pages/title.stories'
-import { mockApi, never, renderApp, reply } from '../support/web'
+import { gone, mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => {
   jest.useRealTimers()
@@ -187,7 +187,7 @@ test('an answer that lands after leaving is dropped', async () => {
   const { unmount } = renderApp(<Title />, { path: '/title/game/x', route: '/title/*' })
   unmount()
   answer(reply(500))
-  await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+  await gone(() => screen.queryByRole('alert'))
 })
 
 test('a game that does not exist', async () => {
@@ -239,14 +239,14 @@ test('similar games under the showcase: the expansion and the series first, with
 test('no similar game leaves the section out', async () => {
   open('/title/game/game%3A19561', ownedData)
   await screen.findByText('NA SUA BIBLIOTECA')
-  await waitFor(() => expect(document.querySelector('.game-band')).toBeNull())
+  await gone(() => document.querySelector('.game-band'))
 })
 
 test('a failed similar games request leaves the section out', async () => {
   mockApi({ '/api/title': ownedData, '/api/games/similar': reply(500) })
   renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
   await screen.findByText('NA SUA BIBLIOTECA')
-  await waitFor(() => expect(document.querySelector('.game-band')).toBeNull())
+  await gone(() => document.querySelector('.game-band'))
 })
 
 test('the tab shows the game’s name while the page is open', async () => {
