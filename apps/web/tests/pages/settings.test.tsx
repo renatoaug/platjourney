@@ -1,7 +1,11 @@
 import { afterEach, expect, mock, test } from 'bun:test'
-import { fireEvent, screen, waitFor } from '@testing-library/react'
-import { SAMPLE_ME } from '../../src/app/app-state'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { useState } from 'react'
+import { MemoryRouter } from 'react-router'
+import { MockAppState, SAMPLE_ME } from '../../src/app/app-state'
+import type { Me } from '../../src/lib/types'
 import { Settings } from '../../src/pages/settings'
+import { ToastHost } from '../../src/ui/toast'
 import { mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
@@ -24,6 +28,32 @@ test('unlinking Telegram reloads the account', async () => {
   renderApp(<Settings />)
   fireEvent.click(await screen.findByRole('button', { name: 'Desconectar' }))
   await waitFor(() => expect(calls.filter((c) => c.path === '/api/me')).toHaveLength(2))
+})
+
+// The app state as the real one keeps it: setMe replaces the account every screen reads.
+function WithAccount() {
+  const [me, setMe] = useState<Me>(SAMPLE_ME)
+  return (
+    <MemoryRouter>
+      <MockAppState value={{ me, setMe }}>
+        <Settings />
+      </MockAppState>
+      <ToastHost />
+    </MemoryRouter>
+  )
+}
+
+test('a saved preference shows at once, without loading the account again', async () => {
+  const calls = mockApi({
+    '/api/me': { user: SAMPLE_ME },
+    'POST /api/account/preferences': { user: { ...SAMPLE_ME, psPlus: 'extra' } },
+  })
+  render(<WithAccount />)
+  const plus = (await screen.findByRole('combobox')) as HTMLSelectElement
+  fireEvent.change(plus, { target: { value: 'extra' } })
+  await screen.findByText('PS Plus salvo.')
+  expect(plus.value).toBe('extra')
+  expect(calls.filter((c) => c.path === '/api/me')).toHaveLength(1)
 })
 
 test('a failure says the settings could not load', async () => {

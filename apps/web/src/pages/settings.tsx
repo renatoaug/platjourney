@@ -26,7 +26,7 @@ type Load = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; user: Me 
 
 export function Settings() {
   const t = useMessages(messages)
-  const { setMe } = useApp()
+  const { me, setMe } = useApp()
   const [load, setLoad] = useState<Load>({ kind: 'loading' })
   const editing = useRef(false)
   // The account screen needs the full account (the Telegram bot's name), which /api/me answers.
@@ -42,6 +42,10 @@ export function Settings() {
   useEffect(() => {
     fetchMe()
   }, [fetchMe])
+  // A saved preference lands in the app state (setMe): the cards show it without asking again.
+  useEffect(() => {
+    setLoad((l) => (l.kind === 'ready' ? { kind: 'ready', user: { ...l.user, ...me } } : l))
+  }, [me])
   const onEditing = useCallback((open: boolean) => {
     editing.current = open
   }, [])
