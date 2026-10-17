@@ -41,8 +41,7 @@ const messages = defineMessages({
       withDlc: 'O progresso agora conta as DLCs.',
       baseOnly: 'O progresso agora mostra só o jogo base.',
       plus: 'Seu PS Plus',
-      plusHint:
-        'A PSN não informa. Com ele, os interesses mostram os jogos que o seu plano já inclui.',
+      plusHint: 'Com essa informação os interesses mostram os jogos que o seu plano já inclui.',
       plusSaved: 'PS Plus salvo.',
       plusTier: { none: 'Não tenho', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
       dlc: 'Contar DLCs no progresso',
@@ -98,8 +97,7 @@ const messages = defineMessages({
       withDlc: 'Progress now counts DLC.',
       baseOnly: 'Progress now shows the base game only.',
       plus: 'Your PS Plus',
-      plusHint:
-        'PSN does not tell. With it, your interests show the games your plan already includes.',
+      plusHint: 'With it, your interests show the games your plan already includes.',
       plusSaved: 'PS Plus saved.',
       plusTier: { none: 'None', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
       dlc: 'Count DLC in progress',

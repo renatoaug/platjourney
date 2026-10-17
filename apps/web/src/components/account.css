@@ -13,6 +13,11 @@
     margin-top: 18px;
   }
 
+  /* A select keeps the width of its longest option, so the text beside it wraps instead. */
+  .setting-row select {
+    flex: none;
+  }
+
   .setting-row.static {
     cursor: default;
     flex-wrap: wrap;
