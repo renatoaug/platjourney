@@ -247,6 +247,16 @@ def test_lean_context_keeps_what_every_answer_needs() -> None:
     assert '{' not in text  # plain lines, not the guide's JSON
 
 
+def test_a_new_player_gets_the_starting_tips_right_after_the_missables() -> None:
+    title = {'name': 'Days Gone', 'platform': 'PS4', 'progress': 5, 'earned': 1, 'total': 3}
+    text = nexo.lean_context(context(guide=GUIDE, title=title))
+    tips = text.index('Dicas para o começo')
+    assert text.index('Perdíveis:') < tips < text.index('Roadmap:')
+    assert '- Saqueie tudo desde cedo.' in text
+    # Past the start, the tips stay out.
+    assert 'Dicas para o começo' not in nexo.lean_context(context(guide=GUIDE))
+
+
 def test_the_guide_marks_trophies_the_player_already_has() -> None:
     guide = GUIDE | {'overview': 'Comece por **Primeiro Passo**, depois Primeiro Passo de novo.'}
     text = nexo.lean_context(context(guide=guide))

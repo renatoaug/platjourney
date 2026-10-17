@@ -158,17 +158,19 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
         f'- {m.get("trophy")}: {_words(m.get("when"))} {_words(m.get("how"))}'.rstrip()
         for m in missables
     ]
+    # Right after the missables: what has to be set or done from the first minute is what a new
+    # player can still get wrong, and it is what "how do I start" is about.
+    if beginner:
+        tips = cast(list[str], guide.get('earlyTips') or [])
+        if tips:
+            parts.append('Dicas para o começo (valem desde o primeiro minuto, antes do roadmap):')
+            parts += [f'- {_words(t)}' for t in tips]
     online = _items(guide, 'onlineTrophies')
     if online:
         parts.append('Online: ' + '; '.join(_words(o.get('trophy')) for o in online))
     parts.append('Roadmap:')
     for step in _items(guide, 'roadmap'):
         parts.append(f'- {step.get("phase")}: {_words(step.get("goal"))}')
-    if beginner:
-        tips = cast(list[str], guide.get('earlyTips') or [])
-        if tips:
-            parts.append('Dicas para o começo:')
-            parts += [f'- {_words(t)}' for t in tips]
     for key, label in (
         ('easiest', 'Mais fácil'),
         ('hardest', 'Mais difícil'),
