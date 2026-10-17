@@ -123,8 +123,16 @@ test('a tap outside, Escape or the bell closes it; a tap inside does not', async
   await within(panel()).findAllByRole('article')
   fireEvent.pointerDown(panel())
   expect(panel().className).toContain('is-open')
-  fireEvent.pointerDown(document.body)
+  // The blurred backdrop behind the panel is outside it: a tap there closes it.
+  const scrim = document.querySelector('.notif-scrim') as HTMLElement
+  fireEvent.pointerDown(scrim)
   expect(panel().className).toContain('is-closing')
+  expect(scrim.className).toContain('is-closing')
+  await closed()
+  expect(document.querySelector('.notif-scrim')).toBeNull()
+
+  fireEvent.click(bell())
+  fireEvent.pointerDown(document.body)
   await closed()
 
   fireEvent.click(bell())
