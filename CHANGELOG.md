@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.22.0](https://github.com/renatoaug/platjourney/compare/v0.21.0...v0.22.0) (2026-10-17)
+
+### Features
+
+* **ai:** run the evals through the Codex CLI, and a Telegram message marks notices read ([#56](https://github.com/renatoaug/platjourney/issues/56)) ([498f331](https://github.com/renatoaug/platjourney/commit/498f3316a7d560c094df6c9682c23fb0895d1a55))
+
 ## [0.21.0](https://github.com/renatoaug/platjourney/compare/v0.20.2...v0.21.0) (2026-10-17)
 
 ### Features
