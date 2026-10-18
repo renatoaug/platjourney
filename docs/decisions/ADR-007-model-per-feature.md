@@ -1,7 +1,7 @@
-# 0007. A provider and model per feature
+# ADR-007: A provider and model per feature
 
-- **Status:** Accepted
-- **Date:** 2026-09-27
+- **Status**: Accepted
+- **Date**: 2026-09-27
 
 ## Context
 

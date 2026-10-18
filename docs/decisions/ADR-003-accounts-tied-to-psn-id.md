@@ -1,7 +1,7 @@
-# 0003. Accounts tied to the PSN ID, proof only to take one over
+# ADR-003: Accounts tied to the PSN ID, proof only to take one over
 
-- **Status:** Accepted
-- **Date:** 2026-09-15
+- **Status**: Accepted
+- **Date**: 2026-09-15
 
 ## Context
 

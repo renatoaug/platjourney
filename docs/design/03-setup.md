@@ -2,7 +2,7 @@
 
 How to get PlatJourney running on your machine, in Docker or from the code, and every setting in the root `.env` (`.env.example` lists them with a line on each).
 
-You need the tools and accounts in the README's [Requirements](../README.md#requirements). The quickest way to try it is [everything in Docker](#everything-in-docker). To work on the code, follow the first run below.
+You need the tools and accounts in the README's [Requirements](../../README.md#requirements). The quickest way to try it is [everything in Docker](#everything-in-docker). To work on the code, follow the first run below.
 
 ## First run
 
@@ -117,7 +117,7 @@ The AI service can run on your own machine, for free, with any server that speak
 | `guide` | Guide research |
 | `guide_index` | Finding deep guide pages |
 | `server_check` | Online server checks |
-| `judge` | The model that grades Nexo's answers in the evals ([evals](evals.md)) |
+| `judge` | The model that grades Nexo's answers in the evals ([evals](08-evals.md)) |
 
 Web search follows each feature's provider. An OpenAI model needs its price in `services/ai/src/platjourney_ai/costs.py`, or its calls are recorded at $0.
 
@@ -145,8 +145,8 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 |---|---|---|
 | `POLL_MINUTES` | 15 | How often each player's PSN profile is checked |
 | `PORT` | 3000 | The server's port |
-| `PLUGINS`, `PLUGINS_WEB` | empty | Plugin modules to load ([plugins](plugins.md)) |
-| `MOBILE_URL` | empty | The instance the native app opens, read by `cap sync` ([mobile](mobile.md)); empty ships the web build inside the app |
+| `PLUGINS`, `PLUGINS_WEB` | empty | Plugin modules to load ([plugins](06-plugins.md)) |
+| `MOBILE_URL` | empty | The instance the native app opens, read by `cap sync` ([mobile](09-mobile.md)); empty ships the web build inside the app |
 | `WEB_DEV_URL` | empty | Development only: the Vite server the page is proxied from (`bun run dev` sets it) |
 | `AI_HOST`, `AI_PORT` | 127.0.0.1, 8100 | Where the AI service listens |
 | `SURREAL_PORT` | 8000 | The host port Docker Compose publishes SurrealDB on (`127.0.0.1` only) |
@@ -155,5 +155,5 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | `UI_VERBOSE` | empty | Development only: any value makes `ui-check.ts` list the elements behind each accessibility violation |
 | `CHAT_MAX_OUTPUT_TOKENS` | 1500 | Caps each Nexo answer |
 | `EMBEDDING_MODEL` | text-embedding-3-small | OpenAI embedding model (with `EMBEDDING_PROVIDER=openai`) |
-| `EVAL_SURREAL_URL`, `EVAL_SURREAL_USER`, `EVAL_SURREAL_PASS`, `EVAL_SURREAL_NS`, `EVAL_SURREAL_DB` | the `SURREAL_*` values, database `evals` | Where the evals keep their questions and runs ([evals](evals.md)) |
+| `EVAL_SURREAL_URL`, `EVAL_SURREAL_USER`, `EVAL_SURREAL_PASS`, `EVAL_SURREAL_NS`, `EVAL_SURREAL_DB` | the `SURREAL_*` values, database `evals` | Where the evals keep their questions and runs ([evals](08-evals.md)) |
 | `EVAL_VIEW_PORT` | 8200 | The eval viewer's port |

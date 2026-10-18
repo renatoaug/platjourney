@@ -87,11 +87,19 @@ function ask(
 }
 
 // `route` is the guide's note on what comes next, written into the same message.
-export async function proactiveTip(user: User, ctx: GameContext, route?: string): Promise<string> {
+/** The notice for a game just started. `recommended`: it was Nexo's recommendation, so the notice
+ * opens glad the player followed it. */
+export async function proactiveTip(
+  user: User,
+  ctx: GameContext,
+  route?: string,
+  recommended?: { daysAgo: number; why: string },
+): Promise<string> {
   const text = await ask(user, 'tip', '/nexo/tip', {
     kind: 'start',
     context: aiContext(ctx, user),
     ...(route ? { route } : {}),
+    ...(recommended ? { recommended } : {}),
   })
   await logTip(user.id, 'start', text, ctx.game.id)
   return text

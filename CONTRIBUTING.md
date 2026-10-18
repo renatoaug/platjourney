@@ -14,7 +14,7 @@ Work on an issue someone else is already on only after asking in it.
 
 ## Running it
 
-[`docs/setup.md`](docs/setup.md) sets up the app, the AI service and the database on your machine and describes every setting. [`docs/README.md`](docs/README.md) indexes the rest.
+[`docs/design/03-setup.md`](docs/design/03-setup.md) sets up the app, the AI service and the database on your machine and describes every setting. [`docs/README.md`](docs/README.md) indexes the rest.
 
 ## Rules and checks
 
@@ -24,8 +24,8 @@ Before a pull request:
 
 1. `bun run lint`, `bun run typecheck` and `bun run test:coverage` pass. The pre-push hook (turned on by `bun install`) runs all three.
 2. A change to a screen also passes `bun run build` and `bun run ui:check`, and its component stories pass `bun run stories:check`.
-3. A change to what is stored updates [`docs/database.md`](docs/database.md) in the same pull request.
-4. A change to a prompt or to retrieval runs `bun run ai:eval` and compares the result ([`docs/evals.md`](docs/evals.md)). Evals call the real model and cost tokens.
+3. A change to what is stored updates [`docs/design/04-database.md`](docs/design/04-database.md) in the same pull request.
+4. A change to a prompt or to retrieval runs `bun run ai:eval` and compares the result ([`docs/design/08-evals.md`](docs/design/08-evals.md)). Evals call the real model and cost tokens.
 
 ## Pull requests
 

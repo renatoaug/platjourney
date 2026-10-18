@@ -43,4 +43,9 @@
     justify-items: center;
     max-width: 40ch;
   }
+
+  /* The platform stays on the right when there is no library label beside it. */
+  .hero-top .platform {
+    margin-left: auto;
+  }
 }

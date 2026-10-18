@@ -14,7 +14,7 @@ import { HeroProgress, HeroSkeleton, Short, UnobtainableBanner } from '../compon
 import { SimilarGamesSection } from '../components/similar-games'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { api } from '../lib/api'
+import { ApiError, api } from '../lib/api'
 import { fmtHours } from '../lib/format'
 import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
@@ -44,10 +44,8 @@ const messages = defineMessages({
     save: 'Salvar nos interesses',
     trophies: 'Troféus',
     inLibrary: 'NA SUA BIBLIOTECA',
-    notInLibrary: 'FORA DA SUA BIBLIOTECA',
     talkToNexo: 'Conversar com o Nexo',
     askNexo: 'Perguntar ao Nexo sobre ele',
-    notOwned: 'Você ainda não tem este jogo.',
     trophiesPendingTitle: 'Buscando a lista de troféus',
     trophiesPending:
       'A lista deste jogo ainda está chegando da PSN. Volte em breve para ver cada troféu.',
@@ -74,10 +72,8 @@ const messages = defineMessages({
     save: 'Save to interests',
     trophies: 'Trophies',
     inLibrary: 'IN YOUR LIBRARY',
-    notInLibrary: 'NOT IN YOUR LIBRARY',
     talkToNexo: 'Talk to Nexo',
     askNexo: 'Ask Nexo about it',
-    notOwned: "You don't own this game yet.",
     trophiesPendingTitle: 'Fetching the trophy list',
     trophiesPending:
       "This game's list is still on its way from PSN. Come back soon to see each trophy.",
@@ -261,9 +257,11 @@ function HeroBottom({ d }: { d: TitleDetail }) {
     )
   return (
     <div className="hero-bottom">
-      <p className="hero-caption">
-        {t('notOwned')} {g ? <GuideText text={g.overview} /> : ''}
-      </p>
+      {g && (
+        <p className="hero-caption">
+          <GuideText text={g.overview} />
+        </p>
+      )}
       <div className="cta">
         <SaveButton d={d} />
         {d.trophies?.length ? (
@@ -303,7 +301,8 @@ function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
         <UnobtainableBanner guide={{ unobtainable: g?.unobtainable }} />
         <div className="inner">
           <div className="hero-top">
-            <span className="live-label">{owned ? t('inLibrary') : t('notInLibrary')}</span>
+            {/* Outside the library there is nothing of the player's to show: no label, no progress. */}
+            {owned && <span className="live-label">{t('inLibrary')}</span>}
             <span className="platform">{d.platform}</span>
           </div>
           <div className="hero-headline">
@@ -315,8 +314,8 @@ function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
       </div>
       <GameShowcase game={d.game} name={d.name} store={d.owned ? null : d.store} />
       {similar}
-      {/* Every game gets the same two columns as the current game: trophies on the left, the
-          guide beside them. A game whose PSN list is not known yet says so where the list goes. */}
+      {/* Every game gets the same two columns as the current game: the guide on the left,
+          the trophies beside it. A game whose PSN list is not known yet says so where the list goes. */}
       <GameColumns
         style={{ marginTop: 20 }}
         trophies={

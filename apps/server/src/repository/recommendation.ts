@@ -17,14 +17,16 @@ export interface RecommendationRow {
   generated_at: string
 }
 
-/** The latest batch, without the games dismissed since. */
+/** The latest batch, without the games dismissed since. The picks asked for one at a time are not
+ * part of any batch. */
 export async function listRecommendations(user: string): Promise<RecommendationRow[]> {
   return plain(
     await q<RecommendationRow[]>(
       // Rows from before batches were kept have no batch_at: with no batch since, they are the latest.
-      `LET $last = array::max(SELECT VALUE batch_at FROM recommendation WHERE user = $user AND batch_at != NONE);
+      `LET $last = array::max(SELECT VALUE batch_at FROM recommendation
+         WHERE user = $user AND batch_at != NONE AND source != 'pick');
        SELECT *, batch_at ?? created_at AS generated_at, game.* AS game FROM recommendation
-       WHERE user = $user AND batch_at = $last
+       WHERE user = $user AND batch_at = $last AND source != 'pick'
          AND game NOT IN (SELECT VALUE game FROM dismissal WHERE user = $user)
        ORDER BY created_at DESC`,
       { user: userRef(user) },
@@ -50,7 +52,13 @@ export async function saveRecommendations(
   const batch = new Date()
   for (const r of rows) {
     await q('CREATE recommendation CONTENT $data', {
-      data: { ...r, user: userRef(user), game: gameRef(r.game), batch_at: batch },
+      data: {
+        ...r,
+        user: userRef(user),
+        game: gameRef(r.game),
+        batch_at: batch,
+        source: 'discover',
+      },
     })
   }
 }
@@ -73,6 +81,89 @@ export async function seenGames(user: string, keepDays: number): Promise<string[
     if (!last.has(id) || at > (last.get(id) ?? '')) last.set(id, at)
   }
   return [...last].sort((a, b) => a[1].localeCompare(b[1])).map(([id]) => id)
+}
+
+/** Where Nexo looks for a pick: the player's interests, or any game. */
+export type PickScope = 'interests' | 'any'
+
+export interface PickRow {
+  id: string
+  game: Game
+  why: string
+  first_step: string
+  mood?: string
+  scope: PickScope
+  owned_only?: boolean
+  fits?: boolean
+  created_at: string
+}
+
+/** Keeps a pick the player asked for, as one more recommendation of theirs. */
+export async function savePick(
+  user: string,
+  pick: {
+    game: string
+    why: string
+    first_step: string
+    mood?: string
+    scope: PickScope
+    owned_only?: boolean
+    fits: boolean
+  },
+): Promise<PickRow> {
+  const [row] = await q<PickRow[]>('CREATE recommendation CONTENT $data RETURN *, game.* AS game', {
+    data: {
+      ...pick,
+      user: userRef(user),
+      game: gameRef(pick.game),
+      source: 'pick',
+      similar_to: [],
+    },
+  })
+  return plain(row)
+}
+
+/** The player's picks, the latest first. */
+export async function listPicks(user: string, limit = 30): Promise<PickRow[]> {
+  return plain(
+    await q<PickRow[]>(
+      `SELECT id, game.* AS game, why, first_step, mood, scope, owned_only, fits, created_at
+       FROM recommendation WHERE user = $user AND source = 'pick'
+       ORDER BY created_at DESC LIMIT $limit`,
+      { user: userRef(user), limit },
+    ),
+  )
+}
+
+/** The games picked in the last `hours` looking in `scope`: asking again leaves them out. */
+export async function recentPickGames(
+  user: string,
+  scope: PickScope,
+  hours: number,
+): Promise<string[]> {
+  const rows = await q<unknown[]>(
+    `SELECT VALUE game FROM recommendation WHERE user = $user AND source = 'pick'
+       AND scope = $scope AND created_at > time::now() - <duration> $since`,
+    { user: userRef(user), scope, since: `${hours}h` },
+  )
+  return [...new Set(plain(rows ?? []).map(String))]
+}
+
+/** The latest time Nexo recommended `game` to the player, in a batch or as a pick, within `days`. */
+export async function lastRecommended(
+  user: string,
+  game: string,
+  days: number,
+): Promise<{ at: string; source: 'discover' | 'pick'; why: string } | null> {
+  const [row] = await q<{ at: string; source?: string; why: string }[]>(
+    `SELECT created_at AS at, source, why FROM recommendation
+     WHERE user = $user AND game = $game AND created_at > time::now() - <duration> $since
+     ORDER BY at DESC LIMIT 1`,
+    { user: userRef(user), game: gameRef(game), since: `${days}d` },
+  )
+  if (!row) return null
+  const r = plain(row)
+  return { at: String(r.at), source: r.source === 'pick' ? 'pick' : 'discover', why: r.why }
 }
 
 // Why a player turns a recommendation down; the model steers the next ones away from it.

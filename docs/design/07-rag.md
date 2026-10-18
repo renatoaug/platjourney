@@ -19,10 +19,10 @@ Here, the store is the deep guide, and the rest of this page is how it is filled
 Nexo answers from three things:
 
 1. **PSN facts:** the player's progress, earned and missing trophies.
-2. **The guide:** one structured guide per game ([features](features.md)).
+2. **The guide:** one structured guide per game ([features](02-features.md)).
 3. **The deep guide:** passages from full written trophy guides, cut into pieces and searched by meaning. This page is about this one.
 
-It all lives in the AI service (`services/ai`) and in SurrealDB ([database](database.md)).
+It all lives in the AI service (`services/ai`) and in SurrealDB ([database](04-database.md)).
 
 ## Indexing
 

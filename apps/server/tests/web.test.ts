@@ -906,12 +906,47 @@ test('a game page asks for its similar games by id', async () => {
   expect(related).toHaveBeenCalledWith('game:1')
 })
 
-test('Nexo picks the next saved game on request', async () => {
-  const pick = { game: { id: 'game:2', name: 'Inside' }, why: 'Curto', firstStep: 'Comece' }
-  spyOn(nextPickModule, 'nextPick').mockResolvedValue(pick)
-  const res = await send('POST', '/api/interests/next', {})
-  expect(res).toMatchObject({ status: 200, body: { pick } })
-  expect(nextPickModule.nextPick).toHaveBeenCalledWith(me, [title], 'pt-BR')
+const nexoPick = {
+  id: 'recommendation:1',
+  game: { id: 'game:2', name: 'Inside' },
+  why: 'Curto',
+  firstStep: 'Comece',
+  mood: null,
+  scope: 'interests' as const,
+  ownedOnly: false,
+  fits: true,
+  at: '2026-10-18T10:00:00Z',
+}
+
+test('Nexo picks a game on request, with the mood and where to look, checked', async () => {
+  spyOn(nextPickModule, 'nextPick').mockResolvedValue(nexoPick)
+  const res = await send('POST', '/api/picks', {})
+  expect(res).toMatchObject({ status: 200, body: { pick: nexoPick } })
+  expect(nextPickModule.nextPick).toHaveBeenCalledWith(me, [title], 'pt-BR', {
+    mood: undefined,
+    scope: undefined,
+    ownedOnly: false,
+  })
+  await send('POST', '/api/picks', {
+    mood: `curto${'x'.repeat(200)}`,
+    scope: 'any',
+    ownedOnly: true,
+  })
+  expect(nextPickModule.nextPick).toHaveBeenLastCalledWith(me, [title], 'pt-BR', {
+    mood: `curto${'x'.repeat(115)}`,
+    scope: 'any',
+    ownedOnly: true,
+  })
+  expect((await send('POST', '/api/picks', { scope: 'all' })).status).toBe(400)
+  expect((await send('POST', '/api/picks', { mood: 7 })).status).toBe(400)
+})
+
+test('the picks asked for before, the latest first', async () => {
+  spyOn(nextPickModule, 'pickHistory').mockResolvedValue([nexoPick])
+  expect(await send('GET', '/api/picks')).toMatchObject({
+    status: 200,
+    body: { picks: [nexoPick] },
+  })
 })
 
 test('taste preferences are checked, saved and answered with the stored batch', async () => {
@@ -1030,7 +1065,7 @@ describe('the demo', () => {
     ['POST', '/api/trophy-tip', { np: 'NPWR1', trophyId: 1 }],
     ['POST', '/api/recommendations/dismiss', { game: 'game:2' }],
     ['POST', '/api/recommendations/preferences', {}],
-    ['POST', '/api/interests/next', {}],
+    ['POST', '/api/picks', {}],
     ['GET', '/api/recommendations?refresh=1'],
     ['POST', '/api/anything'],
   ]

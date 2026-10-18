@@ -1,7 +1,7 @@
-# 0010. Send push notifications with Web Push, without a library
+# ADR-010: Send push notifications with Web Push, without a library
 
-- **Status:** Accepted
-- **Date:** 2026-10-16
+- **Status**: Accepted
+- **Date**: 2026-10-16
 
 ## Context
 

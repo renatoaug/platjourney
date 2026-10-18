@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 from . import db
 from .config import settings
 from .costs import CostTag, current_tag
-from .routers import deep_guide, guides, interests, nexo, plans, recommend, servers
+from .routers import deep_guide, guides, nexo, pick, plans, recommend, servers
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s %(name)s: %(message)s')
 
@@ -32,7 +32,7 @@ app = FastAPI(title='PlatJourney AI', lifespan=lifespan, docs_url=None, redoc_ur
 # The biggest request is a game with its trophy list and a chat history: well under this.
 MAX_BODY = 2_000_000
 
-for feature in (deep_guide, nexo, plans, guides, recommend, servers, interests):
+for feature in (deep_guide, nexo, plans, guides, recommend, servers, pick):
     app.include_router(feature.router)
 
 

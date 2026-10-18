@@ -17,8 +17,8 @@
       flex: 1;
     }
 
-    .game-columns-wrap[data-side="trophies"] .game-columns > :last-child,
-    .game-columns-wrap[data-side="guide"] .game-columns > :first-child {
+    .game-columns-wrap[data-side="guide"] .game-columns > :last-child,
+    .game-columns-wrap[data-side="trophies"] .game-columns > :first-child {
       display: none;
     }
   }

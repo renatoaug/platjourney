@@ -53,4 +53,4 @@ Building for a store needs Xcode (iOS) or Android Studio (Android), a developer 
 
 ### Plugins
 
-Plugins are part of the web build (`PLUGINS_WEB`, see [plugins](plugins.md)), so the native app gets the ones of the instance it opens. With `MOBILE_URL` set, that is the live instance: whatever plugins it was built with show in the app too, and changing them needs no new app. Without `MOBILE_URL`, the app carries the plugins of the web build made before `cap sync`.
+Plugins are part of the web build (`PLUGINS_WEB`, see [plugins](06-plugins.md)), so the native app gets the ones of the instance it opens. With `MOBILE_URL` set, that is the live instance: whatever plugins it was built with show in the app too, and changing them needs no new app. Without `MOBILE_URL`, the app carries the plugins of the web build made before `cap sync`.

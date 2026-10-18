@@ -1,7 +1,7 @@
-# 0004. A read-only demo player
+# ADR-004: A read-only demo player
 
-- **Status:** Accepted
-- **Date:** 2026-10-01
+- **Status**: Accepted
+- **Date**: 2026-10-01
 
 ## Context
 

@@ -55,12 +55,12 @@ test('a PSN list id asks by id', async () => {
 
 test('a game by name asks with its platform, PS5 by default', async () => {
   const { calls, unmount } = open('/title/name/Days%20Gone?platform=PS4', recommendedData)
-  await screen.findByText('FORA DA SUA BIBLIOTECA')
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
   expect(calls[0].path).toBe('/api/title?name=Days%20Gone&platform=PS4')
   unmount()
   mock.restore()
   const second = open('/title/name/Days%20Gone', recommendedData)
-  await screen.findByText('FORA DA SUA BIBLIOTECA')
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
   expect(second.calls[0].path).toBe('/api/title?name=Days%20Gone&platform=PS5')
 })
 
@@ -89,8 +89,10 @@ test('a game the player does not own: the overview and saving it', async () => {
     },
   })
   renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
-  await screen.findByText('FORA DA SUA BIBLIOTECA')
-  expect(hero().textContent).toContain('Você ainda não tem este jogo. A platina de Days Gone')
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
+  // Nothing of the player's to show: no library label, just the guide's overview.
+  expect(hero().querySelector('.live-label')).toBeNull()
+  expect(hero().textContent).toContain('A platina de Days Gone')
   expect(meta()).toContain('~70 horas')
   // The catalog trophies still list, beside the guide.
   expect(document.getElementById('title-trophies')?.textContent).toContain('De raspão')
@@ -109,7 +111,7 @@ test('a game the player does not own: the overview and saving it', async () => {
 
 test('without a trophy list the trophies column says it is on its way', async () => {
   open('/title/name/Days%20Gone', { ...recommendedData, trophies: null })
-  await screen.findByText('FORA DA SUA BIBLIOTECA')
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
   const trophies = document.getElementById('title-trophies')
   expect(trophies?.textContent).toContain('Buscando a lista de troféus')
   expect(trophies?.textContent).toContain('Volte em breve')

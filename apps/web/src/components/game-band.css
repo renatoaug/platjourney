@@ -36,6 +36,12 @@
     gap: 6px 14px;
   }
 
+  .band-lead {
+    margin: -4px 0 0;
+    font-size: var(--text-base);
+    color: var(--color-fg-muted);
+  }
+
   .band-head .eyebrow {
     display: inline-flex;
     align-items: center;

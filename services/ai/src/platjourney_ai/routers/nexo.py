@@ -27,6 +27,8 @@ class TipRequest(Wire):
     focus: nexo.Focus | None = None
     # The point of the journey this unlock reached, the server's pick ("unlock").
     mark: nexo.Mark | None = None
+    # The game started was Nexo's recommendation ("start").
+    recommended: nexo.Recommended | None = None
 
 
 class TrophyHelpRequest(Wire):
@@ -42,7 +44,9 @@ class ReplyRequest(Wire):
 
 @router.post('/tip')
 async def tip(body: TipRequest) -> Answer:
-    text = await nexo.tip(body.kind, body.context, body.unlocked, body.route, body.focus, body.mark)
+    text = await nexo.tip(
+        body.kind, body.context, body.unlocked, body.route, body.focus, body.mark, body.recommended
+    )
     return Answer(text=text)
 
 

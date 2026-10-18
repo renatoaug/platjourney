@@ -1,7 +1,7 @@
-# 0009. Recommendations by similar games from a graph, the model's picks on demand
+# ADR-009: Recommendations by similar games from a graph, the model's picks on demand
 
-- **Status:** Accepted
-- **Date:** 2026-10-15
+- **Status**: Accepted
+- **Date**: 2026-10-15
 
 ## Context
 

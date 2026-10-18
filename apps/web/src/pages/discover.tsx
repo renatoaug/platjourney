@@ -1,12 +1,14 @@
-/** Discover: Nexo's picks (asked for with a button), games like the player's, the next platinum from
- * the library, short platinums and the same series. */
+/** Discover: one game for the moment (the player says what they feel like), Nexo's picks for their
+ * taste (asked for with a button), games like the player's, the next platinum from the library, short
+ * platinums and the same series. */
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { DemoNote } from '../components/demo'
 import { GameCard, GameShelf } from '../components/game-band'
 import { LibraryCard } from '../components/game-cards'
+import { NexoPickBox } from '../components/nexo-pick'
 import { PageHero } from '../components/page-hero'
 import {
   type DismissReason,
@@ -220,6 +222,8 @@ function Ranking() {
 export function Discover() {
   const t = useMessages(messages)
   const { cache, me } = useApp()
+  // From the interests' "Deixa o Nexo escolher": the pick looks among the saved games.
+  const [params] = useSearchParams()
   const [recs, setRecs] = useState<RecsState>(() => initialRecs(cache))
   const [similar, setSimilar] = useState<SimilarState>(() => {
     const cached = cache.similar as SimilarRecs | undefined
@@ -318,6 +322,10 @@ export function Discover() {
         lead={t('lead')}
         images={art}
         look="art"
+      />
+      <NexoPickBox
+        initialScope={params.get('scope') === 'interests' ? 'interests' : 'any'}
+        spotlight={params.has('scope')}
       />
       {/* With no library to learn from, Nexo has nothing to look at: only the similar section says so. */}
       {!noLibrary && (

@@ -299,6 +299,23 @@ class Missable(Wire):
     when: str
 
 
+class Recommended(Wire):
+    """The game the player just started is one Nexo recommended: how long ago and why."""
+
+    days_ago: int = Field(ge=0)
+    why: str = Field(max_length=600)
+
+
+def recommended_prompt(r: Recommended) -> str:
+    when = 'hoje' if r.days_ago == 0 else 'ontem' if r.days_ago == 1 else f'há {r.days_ago} dias'
+    return (
+        f'\n\nEste jogo foi recomendação sua, {when} (o porquê que você deu: {r.why}). Abra a '
+        'mensagem com uma frase curta e natural mostrando que ficou feliz de ver que a pessoa '
+        'seguiu a sua indicação: humano e carismático, sem exagero e sem se gabar. Depois siga '
+        'normalmente.'
+    )
+
+
 class Mark(Wire):
     """A point in the player's progress that this unlock reached, picked by the server: the first
     trophy, half of the base game, the final stretch or the platinum."""
@@ -461,13 +478,17 @@ async def tip(
     route: str | None = None,
     focus: Focus | None = None,
     mark: Mark | None = None,
+    recommended: Recommended | None = None,
 ) -> str:
     """An automatic notice: the player started a game or unlocked trophies.
     With `route`, the guide's note on what comes next goes into the same message; with `mark`, the
-    notice marks that point of the journey (first trophy, halfway, final stretch, platinum)."""
+    notice marks that point of the journey (first trophy, halfway, final stretch, platinum); with
+    `recommended`, the game started was Nexo's recommendation and the notice says it is glad."""
     match kind:
         case 'start':
             prompt = start_prompt(ctx)
+            if recommended:
+                prompt += recommended_prompt(recommended)
         case 'unlock':
             # The platinum closes the journey: no next trophy to point at.
             prompt = unlock_prompt(

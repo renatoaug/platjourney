@@ -31,6 +31,7 @@ import { pruneExpired } from './repository/auth.ts'
 import { type Game, gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
+import { lastRecommended } from './repository/recommendation.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
 import { listUsers, type User, updateUser } from './repository/user.ts'
 import { reachedMilestone, routeNotice, stillOpen } from './route.ts'
@@ -39,6 +40,13 @@ import { checkServers } from './servers.ts'
 const messages = defineMessages({
   [Language.PtBR]: {
     started: 'Você começou {game}. O guia da platina está no PlatJourney.',
+    // The game started was Nexo's recommendation: one of these opens the notice, the same per game.
+    followed: {
+      a: 'Que bom que você seguiu a minha dica! Tô na torcida por essa platina. 🙌',
+      b: 'Fico feliz de ver que você topou a minha sugestão. Bora com tudo! 💪',
+      c: 'Olha só, a minha recomendação virou jogatina. Vamos juntos nessa! 🎯',
+      d: 'Escolha certeira, e não digo isso só porque fui eu que sugeri. 😄',
+    },
     // The session-start notice's first line: the game, then what is left, no greeting.
     playing: '🎮 Hora de jogar **{game}**.',
     goodSession: 'Boa jogatina! 🍀',
@@ -81,6 +89,12 @@ const messages = defineMessages({
   },
   [Language.En]: {
     started: 'You started {game}. The platinum guide is on PlatJourney.',
+    followed: {
+      a: "So glad you took my tip! I'm rooting for this platinum. 🙌",
+      b: "Happy to see you went with my suggestion. Let's do this! 💪",
+      c: "Look at that, my recommendation turned into a game night. Let's go! 🎯",
+      d: "Great pick, and I'm not just saying that because it was my idea. 😄",
+    },
     playing: '🎮 Time to play **{game}**.',
     goodSession: 'Have a good session! 🍀',
     again: '🎮 Time to play **{game}** again.',
@@ -148,6 +162,27 @@ const gameName = (ctx: Named) => ctx.game?.name ?? ctx.title.name
 
 export const startNotice = (user: User, ctx: Named) =>
   translator(messages, user)('started', { game: gameName(ctx) })
+
+// A game Nexo recommended this long ago, in a batch or as a pick, still counts as followed.
+const FOLLOWED_DAYS = 30
+const FOLLOWED = ['a', 'b', 'c', 'd'] as const
+
+/** When the game just started was Nexo's recommendation: how many days ago, and why he gave. */
+export async function followedRecommendation(
+  user: User,
+  game: string,
+): Promise<{ daysAgo: number; why: string } | null> {
+  const found = await lastRecommended(user.id, game, FOLLOWED_DAYS).catch(() => null)
+  if (!found) return null
+  const daysAgo = Math.floor((Date.now() - new Date(found.at).getTime()) / 86_400_000)
+  return { daysAgo: Math.max(0, daysAgo), why: found.why }
+}
+
+/** The plain notice's line for a recommendation followed, always the same for a game. */
+export const followedNotice = (user: User, game: string) => {
+  const sum = [...game].reduce((n, c) => n + c.charCodeAt(0), 0)
+  return translator(messages, user)(`followed.${FOLLOWED[sum % FOLLOWED.length]}`)
+}
 
 export const unlockNotice = (user: User, ctx: Named, unlocked: GameContext['trophies']) => {
   const t = translator(messages, user)
@@ -345,7 +380,17 @@ interface News {
 // Without Nexo's notices the player still hears about it, from a plain template.
 async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: News): Promise<void> {
   if (justStarted) {
-    await plainNotice(user, 'start', together(startNotice(user, ctx), route), ctx.game.id)
+    const followed = await followedRecommendation(user, ctx.game.id)
+    await plainNotice(
+      user,
+      'start',
+      together(
+        followed ? followedNotice(user, ctx.game.id) : undefined,
+        startNotice(user, ctx),
+        route,
+      ),
+      ctx.game.id,
+    )
     await markTipSent(user.id, latest.npCommunicationId)
   } else if (unlocked.length > 0)
     await plainNotice(
@@ -365,7 +410,8 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
 async function nexoNews({ user, ctx, latest, justStarted, unlocked, route }: News): Promise<void> {
   if (justStarted) {
     console.log(`${user.psn_online_id}: new game ${latest.name}`)
-    await notify(user, await proactiveTip(user, ctx, route))
+    const followed = await followedRecommendation(user, ctx.game.id)
+    await notify(user, await proactiveTip(user, ctx, route, followed ?? undefined))
     await markTipSent(user.id, latest.npCommunicationId)
   } else if (unlocked.length > 0) {
     console.log(`${user.psn_online_id}: unlocked ${unlocked.map((t) => t.name).join(', ')}`)

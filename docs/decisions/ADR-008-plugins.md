@@ -1,7 +1,7 @@
-# 0008. Plugins add to an instance without changing the app
+# ADR-008: Plugins add to an instance without changing the app
 
-- **Status:** Accepted
-- **Date:** 2026-10-04 (plugins reach any component and any request: 2026-10-14)
+- **Status**: Accepted
+- **Date**: 2026-10-04 (plugins reach any component and any request: 2026-10-14)
 
 ## Context
 
@@ -9,7 +9,7 @@ Instances differ in what they need around the app. One run for a group of friend
 
 ## Decision
 
-An instance can load **plugins**: a folder with up to two TypeScript modules, one for the server and one for the web app, named in two settings. How to write one, with diagrams and a complete example, is in [docs/plugins.md](../plugins.md).
+An instance can load **plugins**: a folder with up to two TypeScript modules, one for the server and one for the web app, named in two settings. How to write one, with diagrams and a complete example, is in [docs/design/06-plugins.md](../design/06-plugins.md).
 
 ```mermaid
 flowchart LR
