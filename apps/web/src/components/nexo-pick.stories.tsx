@@ -38,7 +38,8 @@ export const picksData: NexoPick[] = [
   },
 ]
 
-const meta: Meta = { title: 'Discover/NexoPick' }
+// The sample picks are shared with the tests, not a story.
+const meta: Meta = { title: 'Discover/NexoPick', excludeStories: ['picksData'] }
 export default meta
 type Story = StoryObj
 

@@ -48,6 +48,13 @@ export const config = {
   api: {
     perMinute: Math.max(0, Number(process.env.API_RATE_LIMIT) || 0),
   },
+  // Assistants connected through MCP (/mcp): how long their tokens last, and the tool calls one
+  // connection may make a minute (0 for no limit).
+  mcp: {
+    accessMinutes: 60,
+    refreshDays: Number(process.env.MCP_REFRESH_DAYS ?? 30),
+    perMinute: Math.max(0, Number(process.env.MCP_RATE_LIMIT ?? 60) || 0),
+  },
   // Notices as push to the browser and the installed web app (Web Push). Off without both VAPID
   // keys; `bun run --cwd apps/server push:keys` makes a pair. The contact goes to the push services
   // with every message, so they can reach whoever runs the instance.

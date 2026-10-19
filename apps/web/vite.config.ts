@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite'
+import { defineConfig, loadEnv, type ProxyOptions, searchForWorkspaceRoot } from 'vite'
 import { pluginTargets } from './plugin-targets'
 
 // The Bun server serves dist/ and /api. In development it forwards pages to Vite, and Vite forwards /api back.
@@ -10,6 +10,16 @@ import { pluginTargets } from './plugin-targets'
 const ROOT = new URL('../../', import.meta.url)
 const { version } = JSON.parse(readFileSync(new URL('package.json', ROOT), 'utf8')) as {
   version: string
+}
+
+// The server refuses a change whose Origin is not its own host (web.ts, sameOrigin). Through this
+// proxy the page's Origin is localhost:5173, so the Host it sees must be that too.
+const toServer: ProxyOptions = {
+  target: `http://localhost:${process.env.PORT ?? 3000}`,
+  configure: (proxy) =>
+    proxy.on('proxyReq', (outgoing, incoming) => {
+      if (incoming.headers.host) outgoing.setHeader('host', incoming.headers.host)
+    }),
 }
 
 export default defineConfig(({ mode }) => {
@@ -46,17 +56,10 @@ export default defineConfig(({ mode }) => {
       fs: {
         allow: [searchForWorkspaceRoot(process.cwd()), new URL('.', `file://${plugin}`).pathname],
       },
-      // The server refuses a change whose Origin is not its own host (web.ts, sameOrigin). Through
-      // this proxy the page's Origin is localhost:5173, so the Host it sees must be that too.
-      proxy: {
-        '/api': {
-          target: `http://localhost:${process.env.PORT ?? 3000}`,
-          configure: (proxy) =>
-            proxy.on('proxyReq', (outgoing, incoming) => {
-              if (incoming.headers.host) outgoing.setHeader('host', incoming.headers.host)
-            }),
-        },
-      },
+      proxy: Object.fromEntries(
+        // The API, and what a connected assistant (MCP) reaches: sign-in documents, OAuth and /mcp.
+        ['/api', '/.well-known/oauth-', '/oauth/', '/mcp'].map((path) => [path, toServer]),
+      ),
     },
     build: { outDir: 'dist', emptyOutDir: true },
   }

@@ -48,12 +48,6 @@
     gap: 12px;
   }
 
-  .telegram-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
   .account-avatar-empty {
     display: grid;
     place-items: center;
@@ -117,10 +111,45 @@
     display: none;
   }
 
+  /* Deleting the account: what it does, the button under it at the right; the confirmation form
+     takes the whole width. */
   .danger-zone {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
     margin-top: 18px;
     padding-top: 14px;
     border-top: 1px solid var(--color-border);
+  }
+
+  .danger-zone > .account-note {
+    flex-basis: 100%;
+  }
+
+  .danger-zone > button {
+    flex: none;
+    margin-left: auto;
+  }
+
+  .danger-zone > form {
+    flex-basis: 100%;
+  }
+
+  /* The account card's plain lines: what the account is, sessions, deleting. */
+  .account-note {
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: var(--leading-snug);
+  }
+
+  /* Space between who the account is and what it is. */
+  .account-card > .account-lead {
+    margin-top: 16px;
+  }
+
+  .account-card > .account-note + .account-note {
+    margin-top: 6px;
   }
 
   button.text-danger,
@@ -134,12 +163,6 @@
 
   button.text-danger:hover {
     text-decoration: underline;
-  }
-
-  .telegram-logo {
-    width: 26px;
-    height: 26px;
-    flex: none;
   }
 
   .account-id img,

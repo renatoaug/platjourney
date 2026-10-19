@@ -17,6 +17,7 @@ import * as sessions from '../src/repository/auth.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
+import * as oauthRepo from '../src/repository/oauth.ts'
 import * as recs from '../src/repository/recommendation.ts'
 import type { TitleRow } from '../src/repository/title.ts'
 import * as titles from '../src/repository/title.ts'
@@ -90,6 +91,7 @@ let updateUser: ReturnType<typeof spyOn<typeof users, 'updateUser'>>
 
 beforeEach(() => {
   spyOn(sessions, 'pruneExpired').mockResolvedValue()
+  spyOn(oauthRepo, 'pruneOauth').mockResolvedValue()
   config.automatic.notices = true
   config.automatic.research = false
   recent = spyOn(psn, 'recentTitles').mockResolvedValue([makeTitle()])
@@ -719,6 +721,7 @@ describe('background runs', () => {
     startWatcher(5)
     expect(intervals.mock.calls.map((c) => c[1])).toEqual([5 * 60_000, 60 * 60_000])
     expect(sessions.pruneExpired).toHaveBeenCalled()
+    expect(oauthRepo.pruneOauth).toHaveBeenCalled()
   })
 })
 

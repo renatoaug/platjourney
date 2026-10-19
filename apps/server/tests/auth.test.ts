@@ -21,6 +21,7 @@ import * as psn from '../src/psn.ts'
 import * as accesses from '../src/repository/access.ts'
 import * as sessions from '../src/repository/auth.ts'
 import * as calls from '../src/repository/llm-call.ts'
+import * as oauth from '../src/repository/oauth.ts'
 import * as pushSubs from '../src/repository/push-subscription.ts'
 import * as users from '../src/repository/user.ts'
 import { makeUser } from './api-fixtures.ts'
@@ -52,6 +53,7 @@ beforeEach(() => {
   spyOn(sessions, 'deleteSession').mockResolvedValue()
   spyOn(sessions, 'deleteSessionsExcept').mockResolvedValue()
   spyOn(sessions, 'deleteSessionsOf').mockResolvedValue()
+  spyOn(oauth, 'deleteConnectionsOf').mockResolvedValue()
   spyOn(sessions, 'deleteVerification').mockResolvedValue()
   spyOn(sessions, 'getVerification').mockResolvedValue(undefined)
   spyOn(sessions, 'saveVerification').mockResolvedValue(true)
@@ -310,6 +312,8 @@ test('a claimed account drops its sessions and Telegram, and its data on a clean
   await finishClaim('Kratos', 'long enough', true, 'claim-secret')
   expect(psn.aboutMe).not.toHaveBeenCalled()
   expect(sessions.deleteSessionsOf).toHaveBeenCalledWith('user:old')
+  // Assistants the old owner connected lose their access too.
+  expect(oauth.deleteConnectionsOf).toHaveBeenCalledWith('user:old')
   expect(users.wipeUserData).toHaveBeenCalledWith('user:old')
   expect(updateUser).toHaveBeenCalledWith('user:old', {
     password_hash: 'hash:long enough',
@@ -404,6 +408,7 @@ test('deleting the account needs the PSN id typed back', async () => {
   expect(calls.detachCalls).toHaveBeenCalledWith(me.id)
   expect(sessions.deleteVerification).toHaveBeenCalledWith('Kratos')
   expect(sessions.deleteSessionsOf).toHaveBeenCalledWith(me.id)
+  expect(oauth.deleteConnectionsOf).toHaveBeenCalledWith(me.id)
   expect(users.deleteUser).toHaveBeenCalledWith(me.id)
 })
 

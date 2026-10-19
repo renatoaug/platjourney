@@ -25,6 +25,14 @@ export const fmtHours = (h?: number | null) =>
 export const fmtDate = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleDateString(getLocale()) : ''
 
+/** A date in two digits each: 19/10/26 (10/19/26 in English). */
+export const fmtShortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(getLocale(), {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+  })
+
 // Timestamps come as ISO with a zone; older rows were stored as UTC without one.
 export const fmtWhen = (iso?: string | null) =>
   iso
@@ -33,6 +41,18 @@ export const fmtWhen = (iso?: string | null) =>
         timeStyle: 'short',
       })
     : ''
+
+/** How long ago, in words: "agora", "há 5 minutos", "ontem", "há 3 dias" (English the same way). */
+export function fmtAgo(iso: string, now = Date.now()): string {
+  const seconds = Math.round((new Date(iso).getTime() - now) / 1000)
+  const rtf = new Intl.RelativeTimeFormat(getLocale(), { numeric: 'auto' })
+  const abs = Math.abs(seconds)
+  if (abs < 60) return rtf.format(0, 'second')
+  if (abs < 3600) return rtf.format(Math.round(seconds / 60), 'minute')
+  if (abs < 86_400) return rtf.format(Math.round(seconds / 3600), 'hour')
+  if (abs < 30 * 86_400) return rtf.format(Math.round(seconds / 86_400), 'day')
+  return rtf.format(Math.round(seconds / (30 * 86_400)), 'month')
+}
 
 export const pct = (value: unknown) => Math.max(0, Math.min(100, Number(value) || 0))
 

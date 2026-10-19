@@ -31,6 +31,7 @@ import { pruneExpired } from './repository/auth.ts'
 import { type Game, gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
+import { pruneOauth } from './repository/oauth.ts'
 import { lastRecommended } from './repository/recommendation.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
 import { listUsers, type User, updateUser } from './repository/user.ts'
@@ -626,7 +627,10 @@ export function startWatcher(minutes: number): void {
   const run = () => sweep(checkUser, 'watcher')
   run()
   setInterval(run, minutes * 60_000)
-  const prune = () => pruneExpired().catch((e) => console.error('prune failed:', e.message))
+  const prune = () =>
+    Promise.all([pruneExpired(), pruneOauth()]).catch((e) =>
+      console.error('prune failed:', e.message),
+    )
   prune()
   setInterval(prune, 60 * 60_000)
 
