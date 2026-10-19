@@ -256,6 +256,31 @@ test('a change asked from another site is refused; the same site and server call
   ).not.toBe(403)
 })
 
+test('every API request from one address shares a budget a minute, when the instance sets one', async () => {
+  const before = { ...config.api }
+  const proxy = config.access.trustProxy
+  try {
+    config.access.trustProxy = true
+    const from = (ip: string) => ({ 'cf-connecting-ip': ip })
+    // Off by default: no budget, no cut.
+    for (let i = 0; i < 50; i++)
+      expect((await send('GET', '/api/me', undefined, from('203.0.113.7'))).status).not.toBe(429)
+    resetRateLimits()
+    config.api.perMinute = 3
+    for (let i = 0; i < 3; i++)
+      expect((await send('GET', '/api/me', undefined, from('203.0.113.7'))).status).not.toBe(429)
+    const cut = await send('GET', '/api/me', undefined, from('203.0.113.7'))
+    expect(cut).toMatchObject({ status: 429, body: { error: 'too_many_requests' } })
+    expect(cut.headers['retry-after']).toBe('60')
+    // Another address has its own budget.
+    expect((await send('GET', '/api/me', undefined, from('198.51.100.4'))).status).not.toBe(429)
+  } finally {
+    Object.assign(config.api, before)
+    config.access.trustProxy = proxy
+    resetRateLimits()
+  }
+})
+
 test('sign-in routes and the demo are limited per address', async () => {
   spyOn(auth, 'accountStatus').mockResolvedValue({} as never)
   for (let i = 0; i < 30; i++) await send('POST', '/api/auth/lookup', { onlineId: 'Kratos' })

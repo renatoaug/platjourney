@@ -43,6 +43,11 @@ export const config = {
     trustProxy: process.env.TRUST_PROXY === '1',
     keepDays: Number(process.env.ACCESS_KEEP_DAYS ?? 180),
   },
+  // Requests per minute one address may send to the API, all routes together, so a script cannot
+  // wear the instance down with requests that cost no credits. Off when unset or 0.
+  api: {
+    perMinute: Math.max(0, Number(process.env.API_RATE_LIMIT) || 0),
+  },
   // Notices as push to the browser and the installed web app (Web Push). Off without both VAPID
   // keys; `bun run --cwd apps/server push:keys` makes a pair. The contact goes to the push services
   // with every message, so they can reach whoever runs the instance.
