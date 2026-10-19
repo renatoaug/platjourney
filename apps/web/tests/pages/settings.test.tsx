@@ -52,7 +52,10 @@ test('a saved preference shows at once, without loading the account again', asyn
   const plus = (await screen.findByRole('combobox')) as HTMLSelectElement
   fireEvent.change(plus, { target: { value: 'extra' } })
   await screen.findByText('PS Plus salvo.')
-  expect(plus.value).toBe('extra')
+  // The saved account renders again: read the select as it is now, once it settles.
+  await waitFor(() =>
+    expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('extra'),
+  )
   expect(calls.filter((c) => c.path === '/api/me')).toHaveLength(1)
 })
 
