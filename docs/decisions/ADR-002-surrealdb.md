@@ -1,7 +1,7 @@
-# 0002. SurrealDB for data and vectors
+# ADR-002: SurrealDB for data and vectors
 
-- **Status:** Accepted
-- **Date:** 2026-09-01
+- **Status**: Accepted
+- **Date**: 2026-09-01
 
 ## Context
 

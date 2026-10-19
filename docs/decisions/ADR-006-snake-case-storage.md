@@ -1,7 +1,7 @@
-# 0006. snake_case in the database, camelCase in TypeScript
+# ADR-006: snake_case in the database, camelCase in TypeScript
 
-- **Status:** Accepted
-- **Date:** 2026-10-02
+- **Status**: Accepted
+- **Date**: 2026-10-02
 
 ## Context
 

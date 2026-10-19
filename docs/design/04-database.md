@@ -6,10 +6,10 @@ Every table has `created_at`, set once by the database. Tables whose rows change
 
 ## Why SurrealDB
 
-The data is a graph with vectors in it: players, games, trophy lists, guides and passages point at each other, and Nexo and the recommendations search by meaning. SurrealDB holds both in one place ([decision 0002](decisions/0002-surrealdb.md)):
+The data is a graph with vectors in it: players, games, trophy lists, guides and passages point at each other, and Nexo and the recommendations search by meaning. SurrealDB holds both in one place ([ADR-002](../decisions/ADR-002-surrealdb.md)):
 
 - **Record links instead of joins.** A field typed `record<game>` holds the game itself; `SELECT game.name FROM title` follows it without a join table, and `type::record($id)` turns an id from the API back into a link.
-- **Vectors next to the data.** `game.embedding` and `guide_chunk.embedding` are plain arrays, compared with `vector::similarity::cosine` in the same query that filters by game or excludes what the player owns (see [retrieval](rag.md)). No separate vector store to keep in sync.
+- **Vectors next to the data.** `game.embedding` and `guide_chunk.embedding` are plain arrays, compared with `vector::similarity::cosine` in the same query that filters by game or excludes what the player owns (see [retrieval](07-rag.md)). No separate vector store to keep in sync.
 - **Schema in files, still flexible where it helps.** Tables are `SCHEMAFULL`, with types and checks (`ASSERT`) per field, defined by idempotent `.surql` files; objects that change shape with the model's output (a guide, a session plan, a trophy list) are `FLEXIBLE`.
 - **One process to run.** Locally it is one Docker container; the server and the AI service talk to it over the same RPC, from TypeScript and Python.
 
@@ -132,15 +132,21 @@ erDiagram
         id record(recommendation) PK
         user record(user) FK
         game record(game) FK
-        platform string
-        difficulty float
-        hours float
+        source option(string)
+        platform option(string)
+        difficulty option(float)
+        hours option(float)
         has_missables bool
         playthroughs option(int)
         has_difficulty_trophy option(bool)
         why string
         similar_to array(string)
         batch_at option(datetime)
+        first_step option(string)
+        mood option(string)
+        scope option(string)
+        owned_only option(bool)
+        fits option(bool)
         created_at datetime
     }
     dismissal {
@@ -403,8 +409,8 @@ erDiagram
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN |
-| `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `source`: where the player saved it from (`releases`, the home's calendar; `recommendations`, Nexo's picks; `similar`, the lists of similar games; `title`, a game's page; `search`, the add panel), shown under the game on Interests, kept from the first save; none for older saves and Telegram. `next_pick_at`: when "Nexo decide" picked it as the next platinum, on one interest of the player at a time. `owned_at`: when the player said they already have it ("Já tenho" on a deal), for a game bought but never started, which PSN does not list yet; it is no longer shown as a deal nor in deal notices |
-| `recommendation` | game recommended in a batch | | Every batch of the last year, with why and what it is similar to; `batch_at` groups a batch's rows. Discover shows the latest batch; the older ones keep new batches to games not shown yet, and shown games come back, the oldest first, only when those run out. Rows from before batches were kept have no `batch_at` and count as one batch |
+| `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `source`: where the player saved it from (`releases`, the home's calendar; `recommendations`, Nexo's picks; `similar`, the lists of similar games; `title`, a game's page; `search`, the add panel), shown under the game on Interests, kept from the first save; none for older saves and Telegram. `next_pick_at`: when Nexo picked it as the next platinum on request (a pick among the interests, kept in `recommendation`), on one interest of the player at a time. `owned_at`: when the player said they already have it ("Já tenho" on a deal), for a game bought but never started, which PSN does not list yet; it is no longer shown as a deal nor in deal notices |
+| `recommendation` | game Nexo recommended: in a Discover batch, or one pick asked for | | `source`: `discover` for a batch's rows (none on rows from before it, read the same), `pick` for a game picked on request (Discover's "O que jogar agora?" and `/pick` on Telegram). **Batches**: every batch of the last year, with why and what it is similar to; `batch_at` groups a batch's rows. Discover shows the latest batch; the older ones keep new batches to games not shown yet, and shown games come back, the oldest first, only when those run out. Rows from before batches were kept have no `batch_at` and count as one batch. **Picks**: one game with `why`, `first_step` (where to start), what the player asked (`mood`, in their words; `scope`, `interests` or `any`; `owned_only`, only games they have) and `fits` (false when nothing matched the mood and Nexo chose the closest); no `batch_at`, and `platform`, `difficulty` and `hours` only when known. Discover shows the latest pick and the earlier ones; asking again leaves out the games picked in the last 24 hours in the same scope. A game started within 30 days of being recommended, either way, opens its start notice glad the player followed it. Rows older than a year are deleted with the batches |
 | `dismissal` | game the player dismissed | `user, game` | Never recommended again |
 | `tip` | notice or tip Nexo wrote | | `kind`: `start`, `unlock`, `session`, `route` (a tip on the game's route), `chat` (help on one trophy), `server`, `deal` (a saved game went on sale) |
 | `message` | chat message | | `role`: user or assistant |

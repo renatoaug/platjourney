@@ -32,7 +32,7 @@ const messages = defineMessages({
       goals:
         '/goals: interesses e meta do ano (/goals set 12, /goals add <jogo>, /goals remove <n>, /goals move <n> up|down)',
       recommend: '/recommend: platinas novas pro seu gosto',
-      pick: '/pick: o Nexo escolhe qual dos seus interesses platinar agora',
+      pick: '/pick [o que você tá a fim]: o Nexo escolhe qual dos seus interesses platinar agora (ex.: /pick algo curto)',
       servers: '/servers: alertas de servidor online fechando',
       language: '/language <pt|en>: idioma das mensagens',
       ask: 'Ou só me pergunta qualquer coisa.',
@@ -64,6 +64,8 @@ const messages = defineMessages({
     pickNone:
       'Salve jogos nos seus interesses (/goals add <jogo>) e eu escolho qual platinar agora.',
     pickResult: '🎯 Sua próxima platina: {name}\n{why}\n\nPor onde começar: {first}',
+    pickNoFit:
+      'Nenhum dos seus interesses combina direito com isso, esse foi o mais perto. No app, em Descobrir, dá para procurar fora da lista.',
     nextTitle: 'Platinas mais perto (menos esforço restante primeiro):',
     nextItem: {
       one: '{n}. {name}: {progress}%, falta {count} troféu',
@@ -90,7 +92,7 @@ const messages = defineMessages({
       goals:
         '/goals: interests and yearly goal (/goals set 12, /goals add <game>, /goals remove <n>, /goals move <n> up|down)',
       recommend: '/recommend: new platinums for your taste',
-      pick: '/pick: Nexo picks which of your interests to platinum now',
+      pick: '/pick [what you feel like]: Nexo picks which of your interests to platinum now (e.g. /pick something short)',
       servers: '/servers: online servers shutting down',
       language: '/language <pt|en>: language of my messages',
       ask: 'Or just ask me anything.',
@@ -122,6 +124,8 @@ const messages = defineMessages({
     pickNone:
       'Save games to your interests (/goals add <game>) and I will pick which to platinum now.',
     pickResult: '🎯 Your next platinum: {name}\n{why}\n\nWhere to start: {first}',
+    pickNoFit:
+      'None of your interests really matches that, this was the closest. In the app, Discover can look beyond your list.',
     nextTitle: 'Closest platinums (least effort left first):',
     nextItem: {
       one: '{n}. {name}: {progress}%, {count} trophy left',
@@ -278,12 +282,13 @@ const HANDLERS: Record<string, (c: Command) => string | Promise<string>> = {
       locale,
     )
   },
-  '/pick': async ({ user, locale, t, say, titles }) => {
+  // What follows the command is the player's mood: "/pick algo curto".
+  '/pick': async ({ user, locale, t, say, titles, arg }) => {
     await say(t('researching'))
-    const pick = await nextPick(user, await titles(), locale)
-    return pick
-      ? t('pickResult', { name: pick.game.name, why: pick.why, first: pick.firstStep })
-      : t('pickNone')
+    const pick = await nextPick(user, await titles(), locale, { mood: arg || undefined })
+    if (!pick) return t('pickNone')
+    const text = t('pickResult', { name: pick.game.name, why: pick.why, first: pick.firstStep })
+    return pick.fits ? text : `${text}\n\n${t('pickNoFit')}`
   },
   '/servers': async ({ user, titles }) => serverReport(user, await titles()),
   '/language': languageReply,

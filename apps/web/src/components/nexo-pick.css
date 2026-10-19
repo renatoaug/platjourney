@@ -1,0 +1,339 @@
+@layer screens {
+  /* Discover's first section: a soft panel with Nexo, the question and the controls, then the
+     latest pick. */
+  .nexo-pick {
+    display: grid;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    transition:
+      border-color 0.4s ease,
+      box-shadow 0.4s ease;
+  }
+
+  /* Arrived from the interests: lit for a moment so the eye lands on it. */
+  .nexo-pick.lit {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+  }
+
+  .nexo-pick-form {
+    display: grid;
+    gap: 6px;
+  }
+
+  /* Nexo, the question and a line on what it is for; the button on the right. */
+  /* Nexo on the left, the copy and the optional direction in the middle, the button centred on
+     the right whatever is open. */
+  .nexo-pick-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nexo-pick-top > .nexo-pick-nexo {
+    align-self: flex-start;
+  }
+
+  .nexo-pick-main {
+    display: grid;
+    flex: 1;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .nexo-pick-nexo {
+    flex: none;
+    width: 48px;
+    height: 48px;
+  }
+
+  .nexo-pick-copy {
+    min-width: 0;
+  }
+
+  .nexo-pick-copy h2 {
+    margin: 0 0 2px;
+    font-size: var(--text-lg);
+  }
+
+  .nexo-pick-copy p {
+    margin: 0;
+    font-size: var(--text-base);
+    color: var(--color-fg-muted);
+  }
+
+  .nexo-pick .nexo-pick-how {
+    font-size: inherit;
+  }
+
+  .nexo-pick-copy .nexo-pick-how-text {
+    margin-top: 6px;
+    padding: 8px 10px;
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+  }
+
+  /* Giving a direction: a quiet toggle under the copy, aligned with it. */
+  .nexo-pick-tune {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+    border: 0;
+    background: none;
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--color-fg-soft);
+    cursor: pointer;
+  }
+
+  .nexo-pick-tune span {
+    font-weight: var(--weight-regular);
+    color: var(--color-fg-muted);
+  }
+
+  .nexo-pick-tune .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .nexo-pick-tune:hover {
+    color: var(--color-fg);
+  }
+
+  .nexo-pick-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    padding-top: 4px;
+  }
+
+  .nexo-pick-filters input[type="text"] {
+    flex-basis: 100%;
+    height: 34px;
+    font-size: var(--text-base);
+  }
+
+  .nexo-pick-filters .chips {
+    gap: 6px;
+  }
+
+  .nexo-pick-filters .chip {
+    padding: 4px 9px;
+    font-size: var(--text-sm);
+  }
+
+  .nexo-pick-filters fieldset {
+    margin: 0;
+    border: 0;
+  }
+
+  .nexo-pick-filters .segmented button {
+    padding: 4px 10px;
+  }
+
+  .nexo-pick-owned {
+    white-space: nowrap;
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  @media (max-width: 760px) {
+    .nexo-pick-top {
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .nexo-pick-top .button {
+      width: 100%;
+    }
+
+    .nexo-pick-main {
+      flex-basis: calc(100% - 60px);
+    }
+  }
+
+  .nexo-pick-result:empty {
+    display: none;
+  }
+
+  .nexo-pick-result {
+    display: grid;
+    gap: 10px;
+  }
+
+  .nexo-pick-latest,
+  .nexo-pick-wait {
+    display: grid;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+  }
+
+  .nexo-pick-wait {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nexo-pick-wait > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nexo-pick-wait .nexo-pick-nexo {
+    width: 28px;
+    height: 28px;
+    animation: nexo-pick-think 1.6s ease-in-out infinite;
+  }
+
+  .nexo-pick-wait span {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .nexo-pick-game {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-fg);
+    font-family: var(--font-display);
+    font-size: var(--text-body);
+  }
+
+  .nexo-pick-game .icon {
+    width: 14px;
+    height: 14px;
+    color: var(--color-fg-muted);
+  }
+
+  .nexo-pick-cover {
+    flex: none;
+    width: 48px;
+    height: 27px;
+    border-radius: var(--radius-tag);
+    object-fit: cover;
+  }
+
+  .nexo-pick-latest p,
+  .nexo-pick-history li p {
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--color-fg-soft);
+  }
+
+  .nexo-pick .nexo-pick-asked {
+    font-style: italic;
+    color: var(--color-fg-muted);
+  }
+
+  .nexo-pick-first span {
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  .nexo-pick-latest > button {
+    justify-self: start;
+  }
+
+  .nexo-pick .nexo-pick-nofit {
+    padding: 8px 10px;
+    border-radius: var(--radius-tag);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    color: var(--color-fg);
+  }
+
+  .nexo-pick-error,
+  .nexo-pick-none {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+
+  .nexo-pick-error {
+    color: var(--color-danger);
+  }
+
+  .nexo-pick-none {
+    color: var(--color-fg-muted);
+  }
+
+  /* The earlier picks: a dialog over a blurred page, the list scrolling inside. */
+  .nexo-pick-history {
+    width: min(560px, calc(100vw - 32px));
+    max-height: min(80vh, 720px);
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    color: var(--color-fg);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .nexo-pick-history::backdrop {
+    background: color-mix(in srgb, var(--color-bg) 60%, transparent);
+    backdrop-filter: blur(4px);
+  }
+
+  .nexo-pick-history header {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .nexo-pick-history h2 {
+    margin: 0;
+    font-size: var(--text-xl);
+  }
+
+  .nexo-pick-history ol {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nexo-pick-history li {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+
+  .nexo-pick-history li + li {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .nexo-pick-meta {
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  @keyframes nexo-pick-think {
+    50% {
+      transform: translateY(-3px) rotate(4deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nexo-pick-wait .nexo-pick-nexo {
+      animation: none;
+    }
+  }
+}

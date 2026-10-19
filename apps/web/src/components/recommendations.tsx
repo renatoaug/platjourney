@@ -47,6 +47,7 @@ const messages = defineMessages({
       'Jogue e conquiste alguns troféus: o Nexo usa a sua biblioteca para recomendar a próxima platina.',
     eyebrow: 'ANÁLISE DO NEXO',
     title: 'Escolhas do Nexo',
+    lead: 'Escolhidas pelo seu perfil gamer: os gêneros que você mais platina, o seu ritmo e o que você costuma evitar.',
     ask: 'O Nexo lê o seu gosto e os guias para escolher a dedo as próximas platinas.',
     askButton: 'Pedir ao Nexo',
     customize: 'Personalizar',
@@ -81,6 +82,7 @@ const messages = defineMessages({
       'Play and earn a few trophies: Nexo uses your library to recommend the next platinum.',
     eyebrow: "NEXO'S ANALYSIS",
     title: "Nexo's picks",
+    lead: 'Picked from your gamer profile: the genres you platinum most, your pace and what you tend to avoid.',
     ask: 'Nexo reads your taste and the guides to hand-pick your next platinums.',
     askButton: 'Ask Nexo',
     customize: 'Customize',
@@ -480,6 +482,7 @@ export function Recommendations({
       className="recs-shelf"
       eyebrow={t('eyebrow')}
       title={t('title')}
+      lead={t('lead')}
       actions={
         <RecsActions state={state} onRefresh={onRefresh} refreshDisabled={refreshDisabled} />
       }

@@ -1,5 +1,5 @@
 /** Interests screen: the season and yearly target, the ordered list of games to platinum with the add panel, and the year's platinums. */
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { messages as interestMessages, useInterests } from '../app/use-interests'
@@ -8,24 +8,19 @@ import { DealsSpotlight } from '../components/goals/deals-spotlight'
 import { GoalAddPanel } from '../components/goals/goal-add-panel'
 import { type Feedback, GoalSeason, GoalSeasonSkeleton } from '../components/goals/goal-season'
 import { InterestList, InterestListSkeleton } from '../components/goals/interest-list'
-import { type NextPick, NextPickBox } from '../components/goals/next-pick'
+import { NextPickLink } from '../components/goals/next-pick'
 import type { GoalFilter } from '../components/goals/season'
 import { useKept } from '../components/goals/use-kept'
 import { YearPlatinums } from '../components/goals/year-platinums'
 import { PageHero } from '../components/page-hero'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
-import { api } from '../lib/api'
 import type { Game, YearGoals } from '../lib/types'
-import { modelWorkDone } from '../plugins'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { toast } from '../ui/toast'
 import '../components/tip.css'
 import './goals.css'
-
-// Nexo picks which saved game to platinum now (model work, on request).
-const askNext = () => api<{ pick: NextPick | null }>('/api/interests/next', {})
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -108,7 +103,6 @@ export function GoalsView({
   search,
   command: fake,
   readOnly = false,
-  nextPick,
 }: {
   goals: YearGoals
   /** The catalog search; stories pass a fake one. */
@@ -117,34 +111,8 @@ export function GoalsView({
   command?: (text: string) => Promise<unknown>
   /** The demo: everything shows, nothing can be edited, added, removed or moved. */
   readOnly?: boolean
-  /** Stories pass the card in a fixed state; the screen asks the server. */
-  nextPick?: ReactNode
 }) {
   const t = useMessages(messages)
-  const { cache, setData } = useApp()
-  /** The pick also marks its row as the next platinum, as the server just did. */
-  const ask = async () => {
-    const res = await askNext()
-    const id = res.pick?.game.id
-    if (id) {
-      const at = new Date().toISOString()
-      setData((d) =>
-        d?.goals
-          ? {
-              ...d,
-              goals: {
-                ...d.goals,
-                interests: d.goals.interests.map((i) => ({
-                  ...i,
-                  nextPickAt: i.game.id === id ? at : null,
-                })),
-              },
-            }
-          : d,
-      )
-    }
-    return res
-  }
   const shared = useInterests().command
   const command = fake ?? shared
   const [filter, setFilter] = useKept<GoalFilter>('goals.filter', 'all')
@@ -265,9 +233,7 @@ export function GoalsView({
             inputRef={addInput}
             search={search}
           />
-          {!readOnly &&
-            p.interests.length > 1 &&
-            (nextPick ?? <NextPickBox ask={ask} cache={cache} onDone={modelWorkDone} />)}
+          {!readOnly && p.interests.length > 1 && <NextPickLink />}
           {p.interests.length ? (
             <InterestList
               interests={p.interests}

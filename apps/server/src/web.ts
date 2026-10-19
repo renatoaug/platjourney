@@ -40,7 +40,7 @@ import {
 import { handleInterestCommand, storeFor, yearProgress } from './interests.ts'
 import { library, ownedGames } from './library.ts'
 import { reply, trophyHelp } from './nexo.ts'
-import { nextPick } from './next-pick.ts'
+import { MAX_MOOD, nextPick, pickHistory } from './next-pick.ts'
 import { currentPlan, discardPlan, planSession } from './planner.ts'
 import { hours, playtimes } from './playtime.ts'
 import { interceptsFor, pluginPagePolicy, pluginRoute, Refused } from './plugins.ts'
@@ -980,9 +980,21 @@ const API_ROUTES: Record<string, ApiHandler> = {
     json(res, 200, await searchCatalog(url.searchParams.get('q') ?? '')),
   'POST /api/games/request': requestGame,
   'POST /api/goals': goals,
-  // Model work: Nexo picks which saved game to platinum now.
-  'POST /api/interests/next': async ({ req, res, me, titles }) =>
-    json(res, 200, { pick: await nextPick(me, await titles(), requestLocale(req, me)) }),
+  // The picks the player asked Nexo for, the latest first: read only, so the demo has them too.
+  'GET /api/picks': async ({ res, me }) => json(res, 200, { picks: await pickHistory(me) }),
+  // Model work: Nexo picks one game to platinum now, with the player's mood and where to look.
+  'POST /api/picks': async ({ req, res, me, titles }) => {
+    const { mood, scope, ownedOnly } = await readBody(req)
+    if (mood !== undefined && typeof mood !== 'string') return json(res, 400, { error: 'invalid' })
+    if (scope !== undefined && scope !== 'interests' && scope !== 'any')
+      return json(res, 400, { error: 'invalid' })
+    const pick = await nextPick(me, await titles(), requestLocale(req, me), {
+      mood: mood?.slice(0, MAX_MOOD),
+      scope,
+      ownedOnly: ownedOnly === true,
+    })
+    json(res, 200, { pick })
+  },
   'POST /api/recommendations/dismiss': dismissPick,
   'POST /api/recommendations/preferences': tastePreferences,
   // Recommendations by similar games: graph reads only, no model, so the demo has them too.

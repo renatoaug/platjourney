@@ -1,7 +1,7 @@
 -- The evals database: questions, runs and their cases (evals/store.py applies it on start).
 DEFINE TABLE IF NOT EXISTS eval_question SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS suite ON eval_question TYPE string;
--- What a case asks and expects; its shape depends on the suite (see docs/evals.md).
+-- What a case asks and expects; its shape depends on the suite (see docs/design/08-evals.md).
 DEFINE FIELD IF NOT EXISTS data ON eval_question TYPE object FLEXIBLE;
 DEFINE FIELD IF NOT EXISTS active ON eval_question TYPE bool DEFAULT true;
 DEFINE FIELD IF NOT EXISTS created_at ON eval_question TYPE datetime DEFAULT time::now() READONLY;

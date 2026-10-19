@@ -184,6 +184,8 @@ interface ShelfProps {
   id: string
   eyebrow?: ReactNode
   title: string
+  /** One quiet line under the title: what the shelf is built from. */
+  lead?: ReactNode
   /** Buttons beside the title, before the pages. */
   actions?: ReactNode
   /** The cards, each with its key. */
@@ -206,6 +208,7 @@ export function GameShelf({
   id,
   eyebrow,
   title,
+  lead,
   actions,
   cards,
   loading = false,
@@ -248,6 +251,7 @@ export function GameShelf({
           />
         )}
       </div>
+      {lead && <p className="band-lead">{lead}</p>}
       <div className="band-content">{body}</div>
       {footer}
     </section>

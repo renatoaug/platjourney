@@ -3,11 +3,16 @@ import { afterEach, expect, mock, spyOn, test } from 'bun:test'
 import * as db from '../../src/db.ts'
 import {
   dismiss,
+  lastRecommended,
   listDismissed,
+  listPicks,
   listRecommendations,
+  recentPickGames,
+  savePick,
   saveRecommendations,
   seenGames,
 } from '../../src/repository/recommendation.ts'
+import * as storePrice from '../../src/repository/store-price.ts'
 
 const user = new db.RecordId('user', 'u1')
 const game = new db.RecordId('game', 7)
@@ -22,6 +27,8 @@ test('recommendations are the latest batch, without dismissed games', async () =
   expect(q.mock.calls[0][0]).toContain('game NOT IN (SELECT VALUE game FROM dismissal')
   expect(q.mock.calls[0][0]).toContain('LET $last = array::max(SELECT VALUE batch_at')
   expect(q.mock.calls[0][0]).toContain('AND batch_at = $last')
+  // The picks asked for one at a time are no batch.
+  expect(q.mock.calls[0][0].match(/source != 'pick'/g)).toHaveLength(2)
   expect(q.mock.calls[0][1]).toEqual({ user })
 })
 
@@ -40,7 +47,7 @@ test('a new batch keeps the old ones and stamps each row with the same batch tim
   expect(q.mock.calls).toHaveLength(2)
   const [first, second] = q.mock.calls.map((c) => (c[1] as { data: Record<string, unknown> }).data)
   expect(q.mock.calls[0][0]).toBe('CREATE recommendation CONTENT $data')
-  expect(first).toEqual({ ...row, user, game, batch_at: expect.any(Date) })
+  expect(first).toEqual({ ...row, user, game, batch_at: expect.any(Date), source: 'discover' })
   expect(second.batch_at).toBe(first.batch_at)
 })
 
@@ -75,4 +82,50 @@ test('dismissed games come back with their reason', async () => {
     'SELECT game.* AS game, reason FROM dismissal WHERE user = $user',
     { user },
   ])
+})
+
+test('a pick is kept as a recommendation of source pick, read back with its game', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue([{ id: 'recommendation:1', game: { id: game } }])
+  const pick = { game: 'game:7', why: 'w', first_step: 'f', scope: 'any' as const, fits: true }
+  expect(await savePick('user:u1', pick)).toEqual({
+    id: 'recommendation:1',
+    game: { id: 'game:7' },
+  } as never)
+  expect(q.mock.calls[0][0]).toBe('CREATE recommendation CONTENT $data RETURN *, game.* AS game')
+  expect(q.mock.calls[0][1]).toEqual({
+    data: { ...pick, user, game, source: 'pick', similar_to: [] },
+  })
+})
+
+test('the picks, the latest first, and the games picked lately in one scope', async () => {
+  const q = spyOn(db, 'q').mockResolvedValueOnce([]).mockResolvedValueOnce([game, game])
+  expect(await listPicks('user:u1')).toEqual([])
+  expect(q.mock.calls[0][0]).toContain("source = 'pick'")
+  expect(q.mock.calls[0][0]).toContain('ORDER BY created_at DESC LIMIT $limit')
+  expect(q.mock.calls[0][1]).toEqual({ user, limit: 30 })
+  expect(await recentPickGames('user:u1', 'interests', 24)).toEqual(['game:7'])
+  expect(q.mock.calls[1][1]).toEqual({ user, scope: 'interests', since: '24h' })
+})
+
+test('the latest time a game was recommended, in a batch or as a pick', async () => {
+  const q = spyOn(db, 'q')
+    .mockResolvedValueOnce([{ at: '2026-10-10T00:00:00Z', why: 'w' }])
+    .mockResolvedValueOnce([{ at: '2026-10-11T00:00:00Z', source: 'pick', why: 'p' }])
+    .mockResolvedValueOnce([])
+  expect(await lastRecommended('user:u1', 'game:7', 30)).toEqual({
+    at: '2026-10-10T00:00:00Z',
+    source: 'discover',
+    why: 'w',
+  })
+  expect(q.mock.calls[0][1]).toEqual({ user, game, since: '30d' })
+  expect((await lastRecommended('user:u1', 'game:7', 30))?.source).toBe('pick')
+  expect(await lastRecommended('user:u1', 'game:7', 30)).toBeNull()
+})
+
+test('the PS Plus catalog is the games the store put in those tiers', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue([game])
+  expect(await storePrice.plusCatalog(['essential', 'extra'])).toEqual(['game:7'])
+  expect(q.mock.calls[0][1]).toEqual({ tiers: ['essential', 'extra'], region: 'BR' })
+  expect(await storePrice.plusCatalog([])).toEqual([])
+  expect(q).toHaveBeenCalledTimes(1)
 })

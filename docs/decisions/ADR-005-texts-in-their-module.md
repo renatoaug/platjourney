@@ -1,7 +1,7 @@
-# 0005. Texts declared in the module that shows them
+# ADR-005: Texts declared in the module that shows them
 
-- **Status:** Accepted
-- **Date:** 2026-09-28
+- **Status**: Accepted
+- **Date**: 2026-09-28
 
 ## Context
 

@@ -4,9 +4,9 @@ Your PlayStation platinum journey, guided by Nexo: PlatJourney watches your PSN 
 
 <p align="center">
   <a href="#running">📚 Get started</a> ·
-  <a href="docs/features.md">✨ Features</a> ·
-  <a href="docs/architecture.md">🏗️ Architecture</a> ·
-  <a href="docs/setup.md">⚙️ Setup</a> ·
+  <a href="docs/design/02-features.md">✨ Features</a> ·
+  <a href="docs/design/01-architecture.md">🏗️ Architecture</a> ·
+  <a href="docs/design/03-setup.md">⚙️ Setup</a> ·
   <a href="docs/decisions/">🧭 Decisions</a>
 </p>
 
@@ -14,7 +14,7 @@ Your PlayStation platinum journey, guided by Nexo: PlatJourney watches your PSN 
 
 Web in React, API in Bun, AI in Python, data in SurrealDB.
 
-More details, with every tool and version, in [`docs/architecture.md`](docs/architecture.md#stack).
+More details, with every tool and version, in [`docs/design/01-architecture.md`](docs/design/01-architecture.md#stack).
 
 ## Requirements
 
@@ -25,7 +25,7 @@ More details, with every tool and version, in [`docs/architecture.md`](docs/arch
 
 ## Running
 
-[`docs/setup.md`](docs/setup.md) has the first run (in Docker or from the code) and every setting in `.env`.
+[`docs/design/03-setup.md`](docs/design/03-setup.md) has the first run (in Docker or from the code) and every setting in `.env`.
 
 ## Test
 

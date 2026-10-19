@@ -21,18 +21,21 @@ const refresh = () => screen.getByRole('button', { name: /Gerar de novo/ })
 const row = (name: string) => within(similar()).getByRole('link', { name: new RegExp(name) })
 // Nexo's picks already asked for.
 const asked = (extra: Record<string, unknown> = {}) => ({
+  picks: [],
   similar: similarData,
   recs: recsData,
   ...extra,
 })
 const reason = (link: HTMLElement) => link.querySelector('.band-reason')?.textContent
+// Every cache comes with the stored picks of "O que jogar agora?", so only the requests these tests
+// look at are made (the panel has its own tests).
 // What the page asks on load for Nexo's saved batch, never a model call.
 const STORED = '/api/recommendations?stored=1'
 const noBatch = { profile: null, items: [] }
 const askNexo = () => within(recs()).findByRole('button', { name: /Pedir ao Nexo/ })
 
 test('by default: games like the player’s, with the games that led to each one', async () => {
-  const cache: Record<string, unknown> = {}
+  const cache: Record<string, unknown> = { picks: [] }
   const calls = mockApi({ '/api/recommendations/similar': similarData, [STORED]: noBatch })
   renderApp(<Discover />, { value: { data: loaded, cache } })
   const ranking = document.getElementById('ranking') as HTMLElement
@@ -67,14 +70,14 @@ test('by default: games like the player’s, with the games that led to each one
 test('the because line in English', async () => {
   setLocale('en', { persist: false })
   mockApi({})
-  renderApp(<Discover />, { value: { data: loaded, cache: { similar: similarData } } })
+  renderApp(<Discover />, { value: { data: loaded, cache: { picks: [], similar: similarData } } })
   expect(reason(row('Horizon'))).toBe('Like Days Gone and Ghost of Tsushima')
   expect(reason(row('Sekiro'))).toBe('Like Bloodborne, which you platinumed')
 })
 
 test('short platinums and the same series in their bands', () => {
   mockApi({})
-  renderApp(<Discover />, { value: { data: loaded, cache: { similar: similarData } } })
+  renderApp(<Discover />, { value: { data: loaded, cache: { picks: [], similar: similarData } } })
   const quick = screen.getByRole('region', { name: 'Platina relâmpago' })
   expect(within(quick).getAllByRole('link')).toHaveLength(2)
   const astro = within(quick).getByRole('link', { name: /Astro/ })
@@ -95,7 +98,7 @@ test('a series game the player only played says so', () => {
   mockApi({})
   const series = [{ ...similarData.series[0], platinumed: [] }]
   renderApp(<Discover />, {
-    value: { data: loaded, cache: { similar: { ...similarData, series } } },
+    value: { data: loaded, cache: { picks: [], similar: { ...similarData, series } } },
   })
   const band = screen.getByRole('region', { name: 'Na mesma série' })
   expect(reason(within(band).getByRole('link'))).toBe('Você jogou Horizon Zero Dawn')
@@ -104,7 +107,10 @@ test('a series game the player only played says so', () => {
 test('the bands are left out when they have nothing', () => {
   mockApi({})
   renderApp(<Discover />, {
-    value: { data: loaded, cache: { similar: { ...similarData, quick: [], series: [] } } },
+    value: {
+      data: loaded,
+      cache: { picks: [], similar: { ...similarData, quick: [], series: [] } },
+    },
   })
   expect(screen.queryByRole('region', { name: 'Platina relâmpago' })).toBeNull()
   expect(screen.queryByRole('region', { name: 'Na mesma série' })).toBeNull()
@@ -128,7 +134,7 @@ test('a failed similarity search says so', async () => {
 
 test('no similar game yet', () => {
   mockApi({})
-  renderApp(<Discover />, { value: { cache: { similar: none } } })
+  renderApp(<Discover />, { value: { cache: { picks: [], similar: none } } })
   expect(screen.getByText('Nenhum jogo parecido ainda')).toBeTruthy()
   expect(screen.getByText('Nada em andamento ainda')).toBeTruthy()
   expect(screen.getByRole('link', { name: /Procurar um jogo/ }).getAttribute('href')).toBe(
@@ -144,7 +150,7 @@ test('rules that leave every similar game out say so and lead to them', async ()
     filters: { noMissables: true },
   }
   renderApp(<Discover />, {
-    value: { data: loaded, cache: { similar: none, recs: { ...recsData, prefs } } },
+    value: { data: loaded, cache: { picks: [], similar: none, recs: { ...recsData, prefs } } },
   })
   expect(screen.getByText('Nenhum parecido passa nos seus filtros')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: /Ajustar filtros/ }))
@@ -156,7 +162,7 @@ test('rules that leave every similar game out say so and lead to them', async ()
 test('Pedir ao Nexo shows the stored batch, without forcing a new one', async () => {
   const done = mock()
   window.addEventListener(MODEL_WORK_DONE, done)
-  const cache: Record<string, unknown> = { similar: similarData }
+  const cache: Record<string, unknown> = { picks: [], similar: similarData }
   const calls = mockApi({ [STORED]: noBatch, '/api/recommendations': recsData })
   renderApp(<Discover />, { value: { data: loaded, cache } })
   expect(within(recs()).getByText('ANÁLISE DO NEXO')).toBeTruthy()
@@ -174,7 +180,7 @@ test('Pedir ao Nexo shows the stored batch, without forcing a new one', async ()
 test('a saved batch shows on load, with nothing pressed and no model call', async () => {
   const done = mock()
   window.addEventListener(MODEL_WORK_DONE, done)
-  const cache: Record<string, unknown> = { similar: similarData }
+  const cache: Record<string, unknown> = { picks: [], similar: similarData }
   const calls = mockApi({ [STORED]: recsData })
   renderApp(<Discover />, { value: { data: loaded, cache } })
   expect(recs().querySelector('.sk')).toBeTruthy()
@@ -188,7 +194,7 @@ test('a saved batch shows on load, with nothing pressed and no model call', asyn
 })
 
 test('no saved batch leaves the invitation, and the next visit does not look again', async () => {
-  const cache: Record<string, unknown> = { similar: similarData }
+  const cache: Record<string, unknown> = { picks: [], similar: similarData }
   const calls = mockApi({ [STORED]: noBatch })
   const { unmount } = renderApp(<Discover />, { value: { data: loaded, cache } })
   expect(await askNexo()).toBeTruthy()
@@ -228,7 +234,7 @@ test('coming back mid-load waits for the request already running', async () => {
   renderApp(<Discover />, {
     value: {
       data: loaded,
-      cache: { similar: similarData, recsLoad: pending },
+      cache: { picks: [], similar: similarData, recsLoad: pending },
     },
   })
   expect(recs().querySelector('.sk')).toBeTruthy()
@@ -239,14 +245,14 @@ test('coming back mid-load waits for the request already running', async () => {
 
 test('a failed Nexo search says so', async () => {
   mockApi({ [STORED]: noBatch, '/api/recommendations': reply(500) })
-  renderApp(<Discover />, { value: { data: loaded, cache: { similar: similarData } } })
+  renderApp(<Discover />, { value: { data: loaded, cache: { picks: [], similar: similarData } } })
   fireEvent.click(await askNexo())
   expect(await within(recs()).findByRole('alert')).toBeTruthy()
   expect(recs().textContent).toContain('Não conseguimos montar suas recomendações agora.')
 })
 
 test('dismissing a similar game drops it without loading Nexo’s picks', async () => {
-  const cache: Record<string, unknown> = { similar: similarData }
+  const cache: Record<string, unknown> = { picks: [], similar: similarData }
   const calls = mockApi({
     [STORED]: noBatch,
     'POST /api/recommendations/dismiss': { ...recsData, items: [recsData.items[1]] },
@@ -324,7 +330,7 @@ test('the library: one card per game in the ranking order, six a page', () => {
     name: `Jogo ${i}`,
   }))
   renderApp(<Discover />, {
-    value: { data: { ...loaded, ranking: many }, cache: { similar: similarData } },
+    value: { data: { ...loaded, ranking: many }, cache: { picks: [], similar: similarData } },
   })
   const ranking = document.getElementById('ranking') as HTMLElement
   expect(within(ranking).getByRole('heading', { name: 'Próxima platina' })).toBeTruthy()

@@ -17,6 +17,7 @@ import * as sessions from '../src/repository/auth.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
+import * as recs from '../src/repository/recommendation.ts'
 import type { TitleRow } from '../src/repository/title.ts'
 import * as titles from '../src/repository/title.ts'
 import * as users from '../src/repository/user.ts'
@@ -27,6 +28,8 @@ import {
   checkUser,
   demoContext,
   focusNotice,
+  followedNotice,
+  followedRecommendation,
   forgetUser,
   getChat,
   getCurrent,
@@ -444,6 +447,39 @@ describe('checkUser', () => {
     expect(send.mock.calls).toEqual([['42', 'Bora!']])
     expect(saveEarned).toHaveBeenCalledWith(user.id, 'NPWR1_00', [1, 2])
     expect(getCurrent(user)?.hoursPlayed).toBe(2)
+  })
+
+  test('a game Nexo recommended opens glad the player followed it, from Nexo or plain', async () => {
+    getTitle.mockResolvedValue(undefined)
+    recent.mockResolvedValue([started()])
+    const fiveDaysAgo = new Date(Date.now() - 5.5 * 86_400_000).toISOString()
+    const last = spyOn(recs, 'lastRecommended').mockResolvedValue({
+      at: fiveDaysAgo,
+      source: 'pick',
+      why: 'Curto depois de um longo',
+    })
+    const tip = spyOn(nexo, 'proactiveTip').mockResolvedValue('Que bom!')
+    await checkUser(user)
+    expect(last).toHaveBeenCalledWith(user.id, game.id, 30)
+    expect(tip.mock.calls[0][3]).toEqual({ daysAgo: 5, why: 'Curto depois de um longo' })
+
+    // Plain: one of the lines, always the same for a game, before the start notice.
+    config.automatic.notices = false
+    await checkUser(user)
+    const text = logTip.mock.calls.find((c) => c[1] === 'start')?.[2] ?? ''
+    expect(text).toEndWith(
+      'Você começou Days Gone. O guia da platina está no PlatJourney.\n\nAntes de começar:\n• Jogue no Difícil.',
+    )
+    expect(text.split('\n\n')[0]).toBe(followedNotice(user, game.id))
+    expect(followedNotice(user, game.id)).toBe(followedNotice(user, game.id))
+    expect(
+      new Set(['game:1', 'game:2', 'game:3', 'game:4'].map((g) => followedNotice(user, g))).size,
+    ).toBe(4)
+  })
+
+  test('a recommendation that cannot be read leaves the start notice as it is', async () => {
+    spyOn(recs, 'lastRecommended').mockRejectedValue(new Error('db down'))
+    expect(await followedRecommendation(user, game.id)).toBeNull()
   })
 
   test('new trophies get one reaction from Nexo, with the route in it', async () => {

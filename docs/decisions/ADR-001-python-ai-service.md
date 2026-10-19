@@ -1,7 +1,7 @@
-# 0001. Every model call lives in a Python service
+# ADR-001: Every model call lives in a Python service
 
-- **Status:** Accepted
-- **Date:** 2026-09-20
+- **Status**: Accepted
+- **Date**: 2026-09-20
 
 ## Context
 

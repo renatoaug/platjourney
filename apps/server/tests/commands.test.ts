@@ -127,15 +127,29 @@ test('goals shows the year, or runs the subcommand', async () => {
 })
 
 test('pick answers with the chosen interest, or how to save one', async () => {
-  spyOn(nextPickModule, 'nextPick').mockResolvedValueOnce({
+  const pick = {
+    id: 'recommendation:1',
     game: { id: 'game:2', name: 'Inside' },
     why: 'Curto',
     firstStep: 'Comece',
-  })
+    mood: null,
+    scope: 'interests' as const,
+    ownedOnly: false,
+    fits: true,
+    at: '2026-10-18T10:00:00Z',
+  }
+  const ask = spyOn(nextPickModule, 'nextPick').mockResolvedValueOnce(pick)
   expect(await handleCommand(linked, '/pick')).toBe(
     '🎯 Sua próxima platina: Inside\nCurto\n\nPor onde começar: Comece',
   )
-  spyOn(nextPickModule, 'nextPick').mockResolvedValueOnce(null)
+  expect(ask.mock.calls[0][3]).toEqual({ mood: undefined })
+  // What follows the command is the mood; nothing on the list fitting it says so.
+  ask.mockResolvedValueOnce({ ...pick, mood: 'algo curto', fits: false })
+  expect(await handleCommand(linked, '/pick algo curto')).toEndWith(
+    'No app, em Descobrir, dá para procurar fora da lista.',
+  )
+  expect(ask.mock.calls[1][3]).toEqual({ mood: 'algo curto' })
+  ask.mockResolvedValueOnce(null)
   expect(await handleCommand(linked, '/pick')).toStartWith('Salve jogos nos seus interesses')
 })
 

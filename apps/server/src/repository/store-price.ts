@@ -92,3 +92,13 @@ export async function interestsWithStore(): Promise<
     }
   })
 }
+
+/** The games the store says these PS Plus tiers include, among those it was read for. */
+export async function plusCatalog(tiers: PlusTier[], region = 'BR'): Promise<string[]> {
+  if (!tiers.length) return []
+  const rows = await q<unknown[]>(
+    'SELECT VALUE game FROM store_price WHERE plus_tier IN $tiers AND region = $region',
+    { tiers, region },
+  )
+  return plain(rows ?? []).map(String)
+}

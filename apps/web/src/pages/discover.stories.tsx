@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MockAppState, SAMPLE_DATA } from '../app/app-state'
 import { rankingData } from '../components/game-cards.stories'
+import { picksData } from '../components/nexo-pick.stories'
 import { recsData } from '../components/recommendations.stories'
 import { serversData } from '../components/servers.stories'
 import { similarData } from '../components/similar-picks.stories'
@@ -17,7 +18,7 @@ export const Loaded: Story = {
     <MockAppState
       value={{
         data: { ...SAMPLE_DATA, ranking: rankingData, servers: serversData },
-        cache: { similar: similarData, recsChecked: true },
+        cache: { similar: similarData, recsChecked: true, picks: [] },
       }}
     >
       <Discover />
@@ -31,7 +32,7 @@ export const NexoPicks: Story = {
     <MockAppState
       value={{
         data: { ...SAMPLE_DATA, ranking: rankingData, servers: serversData },
-        cache: { similar: similarData, recs: recsData },
+        cache: { similar: similarData, recs: recsData, picks: picksData },
       }}
     >
       <Discover />
@@ -42,7 +43,9 @@ export const NexoPicks: Story = {
 export const Empty: Story = {
   render: () => (
     <MockAppState
-      value={{ cache: { similar: { items: [], quick: [], series: [] }, recsChecked: true } }}
+      value={{
+        cache: { similar: { items: [], quick: [], series: [] }, recsChecked: true, picks: [] },
+      }}
     >
       <Discover />
     </MockAppState>
@@ -55,7 +58,11 @@ export const Loading: Story = {
     <MockAppState
       value={{
         data: null,
-        cache: { similarLoad: new Promise(() => {}), storedLoad: new Promise(() => {}) },
+        cache: {
+          similarLoad: new Promise(() => {}),
+          storedLoad: new Promise(() => {}),
+          picksLoad: new Promise(() => {}),
+        },
       }}
     >
       <Discover />

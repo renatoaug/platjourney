@@ -171,6 +171,16 @@ async def test_start_tip_asks_with_the_context_and_no_history(model: Model) -> N
     )
 
 
+async def test_a_game_nexo_recommended_opens_glad_the_player_followed_it(model: Model) -> None:
+    told = nexo.Recommended(days_ago=5, why='Curto depois de um longo')
+    await nexo.tip('start', context(), [], recommended=told)
+    content = model.calls[0]['input'][0]['content']
+    assert content.endswith(nexo.start_prompt(context()) + nexo.recommended_prompt(told))
+    assert 'recomendação sua, há 5 dias (o porquê que você deu: Curto depois' in content
+    assert 'hoje' in nexo.recommended_prompt(nexo.Recommended(days_ago=0, why='x'))
+    assert 'ontem' in nexo.recommended_prompt(nexo.Recommended(days_ago=1, why='x'))
+
+
 async def test_reply_sends_history_and_guide_passages(
     model: Model, monkeypatch: pytest.MonkeyPatch
 ) -> None:

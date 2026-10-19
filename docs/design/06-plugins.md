@@ -2,7 +2,7 @@
 
 A plugin changes an instance without changing PlatJourney's code: a button next to any component, another way of signing in, a whole new page, a check before every model call. It is a folder with up to two TypeScript modules, one for the server and one for the web app, that the instance names in two settings. Without plugins, nothing below runs and the app is exactly the same.
 
-The decision behind it is [ADR 0008](decisions/0008-plugins.md).
+The decision behind it is [ADR-008](../decisions/ADR-008-plugins.md).
 
 **A plugin is trusted code.** It has full read and write access to the database, can sign in as any player with `ctx.signIn`, sees every sign-in and password request it intercepts, and on the web can replace any component, password fields included. The host keeps a broken plugin from taking the app down (timeouts on its hooks, an error boundary around its components, a checked page policy), not a malicious one: load only code you trust.
 

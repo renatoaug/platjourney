@@ -7,9 +7,9 @@
 | **Web** | `apps/web` | The React app players use, built to `dist/` and served by the server; Storybook and the visual and token checks live here too |
 | **API** | `apps/server` | The Bun backend: the web API, the Telegram bot and the PSN watcher (`src/`), plus database scripts (`scripts/`) |
 | **AI** | `services/ai` | The Python service: every prompt and model call (Nexo, guides, session plans, recommendations), embeddings, the deep guide search and the evals |
-| **Database** | `db/migrations` | The SurrealDB schema, one `.surql` per table ([database](database.md)) |
+| **Database** | `db/migrations` | The SurrealDB schema, one `.surql` per table ([database](04-database.md)) |
 
-Commands run from the repository root (`bun run dev`, `bun run lint`, …) and read the root `.env` ([setup](setup.md)).
+Commands run from the repository root (`bun run dev`, `bun run lint`, …) and read the root `.env` ([setup](03-setup.md)).
 
 ## How they talk
 
@@ -28,7 +28,7 @@ flowchart LR
 - **Browser → API.** The browser only talks to the server, with a session cookie. The server also serves the web app: built files in production, Vite in development.
 - **API.** Owns accounts, sessions and everything stored. Reads PSN and IGDB, and polls every player's profile on a schedule (the watcher).
 - **AI.** Only the server calls it. Each call carries its cost tag (player and action), so every model call lands in `llm_call` with its tokens and price.
-- **SurrealDB.** Stores everything, the guide passages and their vectors included ([database](database.md), [retrieval](rag.md)).
+- **SurrealDB.** Stores everything, the guide passages and their vectors included ([database](04-database.md), [retrieval](07-rag.md)).
 - **Telegram.** Long polling; the bot answers in the player's language.
 
 ## Stack
@@ -63,7 +63,7 @@ flowchart LR
 [![Pyright](https://img.shields.io/badge/-Pyright-333333?style=flat&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyBmaWxsPSIjRkZGRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGhlaWdodD0iMWVtIiBzdHlsZT0iZmxleDpub25lO2xpbmUtaGVpZ2h0OjEiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjFlbSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU%2BQXp1cmU8L3RpdGxlPjxwYXRoIGQ9Ik0xMS40OSAySDJ2OS40OTJoOS40OTJWMmgtLjAwMnoiPjwvcGF0aD48cGF0aCBkPSJNMjIgMmgtOS40OTJ2OS40OTJIMjJWMnoiPjwvcGF0aD48cGF0aCBkPSJNMTEuNDkgMTIuNTA4SDJWMjJoOS40OTJ2LTkuNDkyaC0uMDAyeiI%2BPC9wYXRoPjxwYXRoIGQ9Ik0yMiAxMi41MDhoLTkuNDkyVjIySDIydi05LjQ5MnoiPjwvcGF0aD48L3N2Zz4%3D)](https://github.com/microsoft/pyright)
 [![pytest](https://img.shields.io/badge/-pytest-333333?style=flat&logo=pytest)](https://docs.pytest.org)
 
-**Database** · Record links and vector similarity in one place ([why](database.md#why-surrealdb)).
+**Database** · Record links and vector similarity in one place ([why](04-database.md#why-surrealdb)).
 
 [![SurrealDB 3](https://img.shields.io/badge/-SurrealDB%203-333333?style=flat&logo=surrealdb)](https://surrealdb.com)
 [![Docker](https://img.shields.io/badge/-Docker-333333?style=flat&logo=docker)](https://www.docker.com)
@@ -74,7 +74,7 @@ flowchart LR
 [![bun test](https://img.shields.io/badge/-bun%20test-333333?style=flat&logo=bun)](https://bun.sh/docs/cli/test)
 [![GitHub Actions](https://img.shields.io/badge/-GitHub%20Actions-333333?style=flat&logo=githubactions)](https://github.com/features/actions)
 
-The AI service also runs on any OpenAI-compatible local server (LM Studio, mlx-lm, llama.cpp, Ollama): see [local models](setup.md#local-models).
+The AI service also runs on any OpenAI-compatible local server (LM Studio, mlx-lm, llama.cpp, Ollama): see [local models](03-setup.md#local-models).
 
 ## Web app layout
 
@@ -91,4 +91,4 @@ The AI service also runs on any OpenAI-compatible local server (LM Studio, mlx-l
 
 ## Plugins
 
-An instance can add routes, checks around model work and pieces of the interface without changing the app: see [plugins](plugins.md).
+An instance can add routes, checks around model work and pieces of the interface without changing the app: see [plugins](06-plugins.md).
