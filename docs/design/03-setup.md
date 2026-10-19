@@ -131,6 +131,7 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | `ACCESS_HASH_SECRET` | empty | Records where accounts are used from, as an HMAC of the IP (`openssl rand -hex 32`). Empty records nothing |
 | `ACCESS_KEEP_DAYS` | 180 | Days an unused address is kept |
 | `TRUST_PROXY` | 0 | `1` reads the address from Cloudflare's `CF-Connecting-IP`, or else the last `X-Forwarded-For` hop. Only behind a proxy that sets them |
+| `API_RATE_LIMIT` | empty | Requests per minute one address may send to the API, every route together; over it, 429 with `Retry-After`. Set it well above what one player's screens send. Empty or 0 turns it off |
 
 ## Push notifications
 

@@ -1099,6 +1099,18 @@ async function apiRoute(
   method: string,
 ): Promise<void> {
   const path = url.pathname
+  // One address shares one budget across every route (API_RATE_LIMIT a minute), sign-in or not.
+  const limit = config.api.perMinute
+  if (limit && !allow(`api|${clientIp(req) ?? ''}`, limit, 60_000))
+    return json(
+      res,
+      429,
+      {
+        error: 'too_many_requests',
+        message: translator(messages, requestLocale(req))('tooManyRequests'),
+      },
+      { 'retry-after': '60' },
+    )
   // A browser always says where a request comes from; a change asked by another site's page
   // is refused. Server-to-server calls (a payment provider's webhook) send no Origin.
   if (!READ_METHODS.has(method) && !sameOrigin(req))
