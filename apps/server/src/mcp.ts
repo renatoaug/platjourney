@@ -1,277 +1,32 @@
-/** The MCP server at /mcp: assistants the player connected (Claude, ChatGPT and others) read the
- * player's profile, trophies, current game, interests and the guides through these tools, with the
- * bearer token from OAuth (oauth.ts). The assistant writes the answer: a tool returns facts and
- * never calls the model, so a read costs the instance nothing. Streamable HTTP without sessions: each POST is
- * one JSON-RPC message answered in JSON. */
+/** The MCP server at /mcp: assistants the player connected (Claude, ChatGPT and others) use the
+ * player's PlatJourney through the tools in mcp-tools.ts, with the bearer token from OAuth
+ * (oauth.ts), and offer three shortcuts that carry how Nexo thinks (what to play, a session plan, a
+ * trophy tip). The assistant writes the answer: no tool calls the model, so using it costs the
+ * instance nothing. Streamable HTTP without sessions: each POST is one JSON-RPC message answered in
+ * JSON. */
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { ai } from './ai.ts'
-import { browseGuides } from './browse.ts'
 import { config, version } from './config.ts'
 import { tagged } from './costs.ts'
-import { isDemo, storedSummary, trophiesFor } from './demo.ts'
+import { isDemo } from './demo.ts'
 import { BadBody, json, readBody } from './http.ts'
-import { yearProgress } from './interests.ts'
-import { library } from './library.ts'
+import { type Args, TOOLS, ToolError } from './mcp-tools.ts'
 import { bearer, resourceMetadataUrl } from './oauth.ts'
-import { playtimes } from './playtime.ts'
 import { beforeTool, Refused } from './plugins.ts'
-import { catalogTrophies, profileSummary, type TitleProgress, type TrophyStatus } from './psn.ts'
-import { loadGroups } from './ranking.ts'
 import { allow } from './rate-limit.ts'
-import { type Game, gameByName, getGame } from './repository/game.ts'
-import { getGuide } from './repository/guide.ts'
 import type { User } from './repository/user.ts'
-import { demoContext, getCurrent } from './watcher.ts'
 
 const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05']
-const MAX_TROPHIES = 300
-
-/** A tool's failure the assistant should read and pass on (a game it did not find, a limit). */
-class ToolError extends Error {}
-
-type Args = Record<string, unknown>
-interface Tool {
-  name: string
-  description: string
-  inputSchema: Record<string, unknown>
-  run: (user: User, args: Args) => Promise<unknown>
-}
-
-const gameArg = {
-  type: 'string',
-  description: 'The game: its id from search_games ("game:1234") or its name.',
-}
-
-// A game by catalog id or by name; nothing is looked up outside the catalog.
-async function gameFrom(args: Args): Promise<Game> {
-  const v = typeof args.game === 'string' ? args.game.trim() : ''
-  const game = v.startsWith('game:') ? await getGame(v) : v ? await gameByName(v) : undefined
-  if (!game) throw new ToolError(`No game found for "${v}". Try search_games first.`)
-  return game
-}
-
-// The player's copy of a game with the most progress (PS5 over PS4 when equal).
-const ownCopy = (titles: TitleProgress[], game: Game) =>
-  titles
-    .filter((t) => game.np_communication_ids.includes(t.npCommunicationId))
-    .sort((a, b) => b.progress - a.progress || (b.platform.includes('PS5') ? 1 : -1))[0]
-
-const trophyRow = (t: TrophyStatus) => ({
-  name: t.nameEn || t.name,
-  ...(t.name !== t.nameEn ? { localName: t.name } : {}),
-  description: t.detailEn || t.detail,
-  type: t.type,
-  dlc: t.groupId !== 'default',
-  earned: t.earned,
-  ...(t.earnedAt ? { earnedAt: t.earnedAt } : {}),
-  rarity: t.earnedRate,
-  ...(t.progressTarget ? { progress: `${t.progressValue ?? 0}/${t.progressTarget}` } : {}),
-})
-
-const gameRow = (g: Game) => ({
-  id: g.id,
-  name: g.name,
-  platforms: g.platforms,
-  releaseYear: g.release_year ?? null,
-})
-
-async function baseProgress(title: TitleProgress, user: User) {
-  const groups = await loadGroups(title, user).catch(() => null)
-  return groups?.base.total
-    ? { earned: groups.base.earned, total: groups.base.total }
-    : { earned: title.earned, total: title.total }
-}
-
-const TOOLS: Tool[] = [
-  {
-    name: 'get_profile',
-    description:
-      "The player's PlayStation trophy profile: PSN ID, trophy level and trophies earned by type.",
-    inputSchema: { type: 'object', properties: {} },
-    run: async (user) => {
-      const titles = await library(user.psn_account_id)
-      const s = isDemo(user)
-        ? storedSummary(user, titles)
-        : await profileSummary(user.psn_account_id, user.psn_online_id)
-      return {
-        onlineId: s.onlineId,
-        level: s.level,
-        levelProgress: s.levelProgress,
-        earned: s.earned,
-        games: titles.length,
-      }
-    },
-  },
-  {
-    name: 'get_current_game',
-    description:
-      'The game the player is playing now (from PSN): progress toward the platinum, hours played and the base-game trophies still missing.',
-    inputSchema: { type: 'object', properties: {} },
-    run: async (user) => {
-      const ctx = getCurrent(user) ?? (isDemo(user) ? await demoContext(user) : undefined)
-      if (!ctx) return { playing: null }
-      const base = await baseProgress(ctx.title, user)
-      return {
-        playing: {
-          game: gameRow(ctx.game),
-          platform: ctx.title.platform,
-          progress: ctx.title.progress,
-          baseGame: base,
-          hoursPlayed: ctx.hoursPlayed ?? null,
-          hasGuide: !!ctx.guide,
-          missing: ctx.trophies
-            .filter((t) => !t.earned && t.groupId === 'default')
-            .slice(0, MAX_TROPHIES)
-            .map(trophyRow),
-        },
-      }
-    },
-  },
-  {
-    name: 'get_trophies',
-    description:
-      "A game's trophy list. For a game the player owns, each trophy says whether they earned it.",
-    inputSchema: {
-      type: 'object',
-      properties: {
-        game: gameArg,
-        status: {
-          type: 'string',
-          enum: ['all', 'earned', 'missing'],
-          description: 'Which trophies to list (default all).',
-        },
-      },
-      required: ['game'],
-    },
-    run: async (user, args) => {
-      const game = await gameFrom(args)
-      const title = ownCopy(await library(user.psn_account_id), game)
-      const list = title
-        ? await trophiesFor(title, user)
-        : isDemo(user)
-          ? []
-          : ((await catalogTrophies(game.np_communication_ids))?.trophies ?? [])
-      const status = args.status
-      const shown = list.filter((t) =>
-        status === 'earned' ? t.earned : status === 'missing' ? !t.earned : true,
-      )
-      return {
-        game: gameRow(game),
-        owned: !!title,
-        ...(title
-          ? {
-              platform: title.platform,
-              progress: title.progress,
-              baseGame: await baseProgress(title, user),
-            }
-          : {}),
-        trophies: shown.slice(0, MAX_TROPHIES).map(trophyRow),
-      }
-    },
-  },
-  {
-    name: 'search_games',
-    description:
-      'Finds games in the PlatJourney catalog by name, with whether each has a platinum guide and its difficulty and hours.',
-    inputSchema: {
-      type: 'object',
-      properties: { query: { type: 'string', description: 'Part of the game name.' } },
-      required: ['query'],
-    },
-    run: async (_user, args) => {
-      const query = typeof args.query === 'string' ? args.query.trim().slice(0, 100) : ''
-      if (query.length < 2) throw new ToolError('Type at least two letters of the name.')
-      const page = await browseGuides({ query })
-      return {
-        games: page.items.slice(0, 10).map((g) => ({
-          id: g.id,
-          name: g.name,
-          platforms: g.platforms,
-          guide: g.guide
-            ? { difficulty: g.guide.difficulty ?? null, hours: g.guide.hours ?? null }
-            : null,
-        })),
-      }
-    },
-  },
-  {
-    name: 'get_guide',
-    description:
-      "A game's platinum guide researched by PlatJourney: difficulty, hours, playthroughs, roadmap, missable trophies, online trophies, key trophies and known bugs.",
-    inputSchema: { type: 'object', properties: { game: gameArg }, required: ['game'] },
-    run: async (_user, args) => {
-      const game = await gameFrom(args)
-      const guide = await getGuide<Record<string, unknown>>(game.id)
-      return { game: gameRow(game), guide: guide ?? null }
-    },
-  },
-  {
-    name: 'search_deep_guide',
-    description:
-      'Passages from the full guides PlatJourney indexed for a game, the ones that answer a question (where a collectible is, how a trophy unlocks). Each passage names its source page.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        game: gameArg,
-        question: { type: 'string', description: 'The question, in any language.' },
-      },
-      required: ['game', 'question'],
-    },
-    run: async (user, args) => {
-      if (isDemo(user)) throw new ToolError('The deep guide is not part of the demo.')
-      const game = await gameFrom(args)
-      const question = typeof args.question === 'string' ? args.question.trim().slice(0, 500) : ''
-      if (!question) throw new ToolError('Ask a question.')
-      const found = await tagged({ user: user.id, action: 'mcp_deep_guide' }, () =>
-        ai<{ passages: { source: string; url: string; heading: string; content: string }[] }>(
-          '/deep-guide/retrieve',
-          { game, question, terms: [], limit: 6 },
-        ),
-      )
-      return {
-        game: gameRow(game),
-        passages: found.passages.map((p) => ({
-          source: p.source,
-          url: p.url,
-          heading: p.heading,
-          content: p.content,
-        })),
-      }
-    },
-  },
-  {
-    name: 'get_interests',
-    description:
-      "The games the player saved to platinum this year, with progress on each, the year's goal and the platinums already earned this year.",
-    inputSchema: { type: 'object', properties: {} },
-    run: async (user) => {
-      const titles = await library(user.psn_account_id)
-      const p = await yearProgress(user, titles, undefined, await playtimes(user))
-      return {
-        year: p.year,
-        goal: p.target,
-        platinumsThisYear: p.platinumed.map((x) => ({
-          game: x.game.name,
-          at: x.at,
-          hours: x.hours,
-        })),
-        interests: p.interests.map((i) => ({
-          game: { id: i.game.id, name: i.game.name },
-          progress: i.progress,
-          hours: i.hours,
-          done: i.done,
-        })),
-      }
-    },
-  },
-]
-
 const byName = new Map(TOOLS.map((t) => [t.name, t]))
-const listed = TOOLS.map(({ name, description, inputSchema }) => ({
+const listed = TOOLS.map(({ name, description, inputSchema, changes, destructive }) => ({
   name,
   description,
   inputSchema,
-  annotations: { readOnlyHint: true, openWorldHint: false },
+  annotations: {
+    readOnlyHint: !changes,
+    ...(changes ? { destructiveHint: destructive === true } : {}),
+    openWorldHint: false,
+  },
 }))
 
 const text = (value: unknown, isError = false) => ({
@@ -285,6 +40,8 @@ async function callTool(user: User, connection: string, params: Args) {
   const limit = config.mcp.perMinute
   if (limit && !allow(`mcp|${connection}`, limit, 60_000))
     return text('Too many calls in a row. Wait a minute and try again.', true)
+  if (tool.changes && isDemo(user))
+    return text('This is the demo: it can be read, but nothing is saved.', true)
   try {
     await beforeTool({ user, tool: tool.name })
     const args = (params.arguments ?? {}) as Args
@@ -293,12 +50,96 @@ async function callTool(user: User, connection: string, params: Args) {
   } catch (e) {
     if (e instanceof ToolError || e instanceof Refused) return text(e.message, true)
     console.error(`mcp ${tool.name} failed:`, (e as Error).message)
-    return text('This could not be read right now. Try again in a moment.', true)
+    return text('This could not be done right now. Try again in a moment.', true)
   }
 }
 
 const INSTRUCTIONS =
-  "PlatJourney knows this player's PlayStation trophies and has a researched platinum guide for many games. Ground answers about trophies, missables and what to platinum in these tools instead of memory, and say which guide page a passage came from."
+  "PlatJourney knows this player's PlayStation trophies and has a researched platinum guide for many games. Ground answers about trophies, missables, collectibles and what to platinum in these tools instead of memory, and say which guide page a passage came from. Change the player's interests or goal only when they ask."
+
+// How Nexo thinks (services/ai method.py), asked once and kept: it changes only with a new version.
+let method: Promise<{ pick: string; plan: string; tip: string }> | null = null
+const nexoMethod = () => {
+  method ??= ai<{ pick: string; plan: string; tip: string }>('/method', {}).catch((e) => {
+    method = null
+    throw e
+  })
+  return method
+}
+
+/** For tests: forgets the method asked from the AI service. */
+export const forgetMethod = () => {
+  method = null
+}
+
+interface Prompt {
+  name: string
+  title: string
+  description: string
+  arguments: { name: string; description: string; required: boolean }[]
+  text: (m: Awaited<ReturnType<typeof nexoMethod>>, args: Record<string, string>) => string
+}
+
+// The shortcuts an assistant offers (a slash command, a menu): what to ask the tools for, and how
+// Nexo weighs the answer. The assistant's own model does the thinking.
+const PROMPTS: Prompt[] = [
+  {
+    name: 'what_to_play',
+    title: 'What to platinum next',
+    description: 'Nexo picks one game to platinum now, from your games, interests and pace.',
+    arguments: [
+      {
+        name: 'mood',
+        description: 'What you feel like right now (short, easy, a challenge…)',
+        required: false,
+      },
+    ],
+    text: (m, a) =>
+      `Pick exactly one game for me to platinum next. Read get_current_game, get_next_platinums, get_interests and get_platinums (my last ones, for my pace); for games I do not have, get_recommendations. Look up get_guide for the finalists. ${a.mood ? `Right now I feel like: ${a.mood}. ` : ''}${m.pick} Answer with the game, why it fits now in two short sentences, and the first thing to do in it. Talk to me in my language.`,
+  },
+  {
+    name: 'plan_session',
+    title: 'Plan my session',
+    description: 'A route for today: which trophies of the game you are playing fit in your time.',
+    arguments: [{ name: 'minutes', description: 'How long you can play now', required: true }],
+    text: (m, a) =>
+      `Plan my play session of ${a.minutes || 60} minutes in the game I am playing. Read get_current_game for what is missing, get_guide for the roadmap and search_deep_guide for the steps. ${m.plan} Give the steps in order, each with the trophy and about how many minutes, and warn me of anything missable. Talk to me in my language.`,
+  },
+  {
+    name: 'trophy_tip',
+    title: 'Tip for a trophy',
+    description: 'How to get a trophy, or what to do next in the game you are playing.',
+    arguments: [
+      { name: 'trophy', description: 'The trophy, if you have one in mind', required: false },
+    ],
+    text: (m, a) =>
+      `${a.trophy ? `How do I get the trophy "${a.trophy}"?` : 'What should I do next for the platinum in the game I am playing?'} Read get_current_game and get_trophies, then get_guide and search_deep_guide for the exact steps, and say which page they came from. ${m.tip} Talk to me in my language.`,
+  },
+]
+
+const promptList = PROMPTS.map(({ name, title, description, arguments: args }) => ({
+  name,
+  title,
+  description,
+  arguments: args,
+}))
+
+async function getPrompt(params: Args) {
+  const prompt = PROMPTS.find((p) => p.name === params.name)
+  if (!prompt) return undefined
+  const given = (params.arguments ?? {}) as Record<string, unknown>
+  const args = Object.fromEntries(
+    Object.entries(given)
+      .filter((e): e is [string, string] => typeof e[1] === 'string')
+      .map(([k, v]) => [k, v.slice(0, 200)]),
+  )
+  return {
+    description: prompt.description,
+    messages: [
+      { role: 'user', content: { type: 'text', text: prompt.text(await nexoMethod(), args) } },
+    ],
+  }
+}
 
 async function answer(user: User, connection: string, msg: Args) {
   const params = (msg.params ?? {}) as Args
@@ -307,7 +148,7 @@ async function answer(user: User, connection: string, msg: Args) {
       const asked = typeof params.protocolVersion === 'string' ? params.protocolVersion : ''
       return {
         protocolVersion: PROTOCOLS.includes(asked) ? asked : PROTOCOLS[0],
-        capabilities: { tools: { listChanged: false } },
+        capabilities: { tools: { listChanged: false }, prompts: { listChanged: false } },
         serverInfo: { name: 'platjourney', title: 'PlatJourney', version },
         instructions: INSTRUCTIONS,
       }
@@ -318,6 +159,10 @@ async function answer(user: User, connection: string, msg: Args) {
       return { tools: listed }
     case 'tools/call':
       return callTool(user, connection, params)
+    case 'prompts/list':
+      return { prompts: promptList }
+    case 'prompts/get':
+      return getPrompt(params)
     default:
       return undefined
   }
@@ -386,14 +231,18 @@ export async function mcpRoute(
     res.writeHead(202, OPEN).end()
     return true
   }
-  const result = await answer(who.user, who.connection, msg)
-  json(
-    res,
-    200,
-    result === undefined
-      ? { jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: 'Method not found' } }
-      : { jsonrpc: '2.0', id: msg.id, result },
-    OPEN,
-  )
+  let reply: Args
+  try {
+    const result = await answer(who.user, who.connection, msg)
+    reply =
+      result === undefined
+        ? { jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: 'Method not found' } }
+        : { jsonrpc: '2.0', id: msg.id, result }
+  } catch (e) {
+    // A shortcut whose method could not be read: the assistant is told, in the protocol's terms.
+    console.error(`mcp ${String(msg.method)} failed:`, (e as Error).message)
+    reply = { jsonrpc: '2.0', id: msg.id, error: { code: -32603, message: 'Internal error' } }
+  }
+  json(res, 200, reply, OPEN)
   return true
 }

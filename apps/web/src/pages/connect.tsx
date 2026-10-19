@@ -14,16 +14,21 @@ import './connect.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     eyebrow: 'CONECTAR ASSISTENTE',
-    title: '{name} quer ler a sua conta do PlatJourney',
+    title: '{name} quer usar a sua conta do PlatJourney',
     as: 'Você está entrando como {id}.',
     can: 'Poderá ler',
     reads: {
-      profile: 'Seu perfil e seus troféus',
+      profile: 'Seu perfil, seus jogos e seus troféus',
       current: 'O jogo que você está jogando',
-      interests: 'Seus interesses e a meta do ano',
+      interests: 'Seus interesses, a meta do ano e as recomendações',
       guides: 'Os guias de platina',
     },
-    cannot: 'Não poderá mudar nada na sua conta.',
+    canChange: 'Poderá mudar, quando você pedir',
+    changes: {
+      interests: 'Seus interesses e a meta do ano',
+      recommendations: 'As recomendações que você dispensar',
+    },
+    cannot: 'Não vê a sua senha e não muda mais nada na sua conta.',
     revoke: 'Dá para desconectar quando quiser, em Configurações.',
     returns: 'Depois você volta para {host}.',
     allow: 'Permitir',
@@ -33,16 +38,21 @@ const messages = defineMessages({
   },
   [Language.En]: {
     eyebrow: 'CONNECT AN ASSISTANT',
-    title: '{name} wants to read your PlatJourney account',
+    title: '{name} wants to use your PlatJourney account',
     as: 'You are signed in as {id}.',
     can: 'It will be able to read',
     reads: {
-      profile: 'Your profile and your trophies',
+      profile: 'Your profile, your games and your trophies',
       current: 'The game you are playing',
-      interests: 'Your interests and the yearly goal',
+      interests: 'Your interests, the yearly goal and the recommendations',
       guides: 'The platinum guides',
     },
-    cannot: 'It cannot change anything in your account.',
+    canChange: 'It will be able to change, when you ask',
+    changes: {
+      interests: 'Your interests and the yearly goal',
+      recommendations: 'The recommendations you dismiss',
+    },
+    cannot: 'It does not see your password and changes nothing else in your account.',
     revoke: 'You can disconnect it at any time, in Settings.',
     returns: 'You then go back to {host}.',
     allow: 'Allow',
@@ -53,6 +63,7 @@ const messages = defineMessages({
 })
 
 const READS = ['profile', 'current', 'interests', 'guides'] as const
+const CHANGES = ['interests', 'recommendations'] as const
 
 /** True when the address is the consent page's, so the app opens it instead of its own frame. */
 export const isConnectPage = (hash = window.location.hash) => hash.startsWith('#/connect')
@@ -147,6 +158,14 @@ export function ConnectView({
               {READS.map((r) => (
                 <li key={r}>
                   <Icon name="check" /> {t(`reads.${r}`)}
+                </li>
+              ))}
+            </ul>
+            <h2>{t('canChange')}</h2>
+            <ul className="connect-reads">
+              {CHANGES.map((c) => (
+                <li key={c}>
+                  <Icon name="edit" /> {t(`changes.${c}`)}
                 </li>
               ))}
             </ul>

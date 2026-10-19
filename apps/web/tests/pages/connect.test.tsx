@@ -31,11 +31,12 @@ test('the consent page says who asks, what it reads, and sends the code back on 
   })
   render(<Connect me={SAMPLE_ME} go={go} />)
   expect(
-    await screen.findByRole('heading', { name: 'Claude quer ler a sua conta do PlatJourney' }),
+    await screen.findByRole('heading', { name: 'Claude quer usar a sua conta do PlatJourney' }),
   ).toBeTruthy()
   expect(screen.getByText(`Você está entrando como ${SAMPLE_ME.onlineId}.`)).toBeTruthy()
-  expect(screen.getAllByRole('listitem')).toHaveLength(4)
-  expect(screen.getByText('Não poderá mudar nada na sua conta.')).toBeTruthy()
+  // Four reads and two changes, each in its list.
+  expect(screen.getAllByRole('listitem')).toHaveLength(6)
+  expect(screen.getByText('Não vê a sua senha e não muda mais nada na sua conta.')).toBeTruthy()
   expect(screen.getByText('Depois você volta para assistant.example.')).toBeTruthy()
   expect(calls[0].path).toBe(
     `/api/oauth/client?client_id=abc&redirect_uri=${encodeURIComponent('https://assistant.example/cb')}`,
@@ -90,7 +91,7 @@ test('the app opens the consent page alone, and asks to sign in first when neede
   expect(isConnectPage('#/settings')).toBe(false)
   mockApi({ '/api/me': { user: SAMPLE_ME }, '/api/oauth/client': client })
   render(<App />)
-  expect(await screen.findByRole('heading', { name: /Claude quer ler/ })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: /Claude quer usar/ })).toBeTruthy()
   expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).toBeNull()
   // The boot screen leaves without waiting for the app's data, which this page never asks for.
   await gone(() => document.querySelector('.boot-screen'))

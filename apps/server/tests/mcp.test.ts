@@ -86,10 +86,29 @@ test('initialize, ping and the tool list', async () => {
     'get_guide',
     'search_deep_guide',
     'get_interests',
+    'get_library',
+    'get_next_platinums',
+    'get_recommendations',
+    'get_similar_games',
+    'get_releases',
+    'get_platinums',
+    'add_interest',
+    'remove_interest',
+    'mark_owned',
+    'set_yearly_goal',
+    'dismiss_recommendation',
   ])
-  expect(
-    tools.every((t: { annotations: { readOnlyHint: boolean } }) => t.annotations.readOnlyHint),
-  ).toBe(true)
+  // Reads say so; the changes say whether they take something away.
+  const hints = Object.fromEntries(
+    tools.map((t: { name: string; annotations: object }) => [t.name, t.annotations]),
+  )
+  expect(hints.get_library).toEqual({ readOnlyHint: true, openWorldHint: false })
+  expect(hints.add_interest).toEqual({
+    readOnlyHint: false,
+    destructiveHint: false,
+    openWorldHint: false,
+  })
+  expect(hints.remove_interest).toMatchObject({ readOnlyHint: false, destructiveHint: true })
   expect((await rpc('resources/list')).body.error).toEqual({
     code: -32601,
     message: 'Method not found',
@@ -228,7 +247,7 @@ test('the deep guide answers with passages and their pages; the demo has none', 
   expect((await call('search_deep_guide', { game: 'game:1', question: ' ' })).isError).toBe(true)
   fetchSpy.mockResolvedValue(new Response('down', { status: 500 }))
   const failed = await call('search_deep_guide', { game: 'game:1', question: 'x' })
-  expect(failed.content[0].text).toBe('This could not be read right now. Try again in a moment.')
+  expect(failed.content[0].text).toBe('This could not be done right now. Try again in a moment.')
 
   const demoUser = makeUser({ id: 'user:demo', psn_account_id: demo.DEMO_ACCOUNT_ID, demo: true })
   fakeOauthStore([demoUser])
@@ -244,13 +263,22 @@ test("interests come with the year goal and this year's platinums", async () => 
     target: 12,
     done: 1,
     platinumed: [{ game, at: '2026-02-01', hours: 20 }],
-    interests: [{ id: 'interest:1', game, progress: 40, hours: 8, done: false }],
+    interests: [{ id: 'interest:1', game, progress: 40, hours: 8, done: false, deal: null }],
   } as never)
   expect((await call('get_interests')).data).toEqual({
     year: 2026,
     goal: 12,
     platinumsThisYear: [{ game: 'Days Gone', at: '2026-02-01', hours: 20 }],
-    interests: [{ game: { id: 'game:1', name: 'Days Gone' }, progress: 40, hours: 8, done: false }],
+    interests: [
+      {
+        id: 'interest:1',
+        game: { id: 'game:1', name: 'Days Gone' },
+        progress: 40,
+        hours: 8,
+        done: false,
+        deal: null,
+      },
+    ],
   })
 })
 
