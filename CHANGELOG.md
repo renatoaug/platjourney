@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.24.0](https://github.com/renatoaug/platjourney/compare/v0.23.0...v0.24.0) (2026-10-19)
+
+### Features
+
+* **server:** a per-address budget across the API, set by the instance ([#59](https://github.com/renatoaug/platjourney/issues/59)) ([162348c](https://github.com/renatoaug/platjourney/commit/162348c47671bf3f94a8cd40daf87f204164fa3a))
+
 ## [0.23.0](https://github.com/renatoaug/platjourney/compare/v0.22.1...v0.23.0) (2026-10-19)
 
 ### Features
