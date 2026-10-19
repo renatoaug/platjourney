@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.23.0](https://github.com/renatoaug/platjourney/compare/v0.22.1...v0.23.0) (2026-10-19)
+
+### Features
+
+* **discover:** what to play now, with a mood and where to look ([#58](https://github.com/renatoaug/platjourney/issues/58)) ([34d102d](https://github.com/renatoaug/platjourney/commit/34d102d929266eb83cf6cf2c57d5fd241c18c474))
+
 ## [0.22.1](https://github.com/renatoaug/platjourney/compare/v0.22.0...v0.22.1) (2026-10-17)
 
 ### Bug Fixes
