@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.27.1](https://github.com/renatoaug/platjourney/compare/v0.27.0...v0.27.1) (2026-10-20)
+
+### Bug Fixes
+
+* **mcp:** remind the assistant to save, in the results it reads ([#66](https://github.com/renatoaug/platjourney/issues/66)) ([ace1b46](https://github.com/renatoaug/platjourney/commit/ace1b46f9c0b4c7af3c395315c6455cd179c500e))
+
 ## [0.27.0](https://github.com/renatoaug/platjourney/compare/v0.26.0...v0.27.0) (2026-10-20)
 
 ### Features
