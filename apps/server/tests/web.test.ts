@@ -33,7 +33,6 @@ import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
 import * as pushSubs from '../src/repository/push-subscription.ts'
-import * as recRepo from '../src/repository/recommendation.ts'
 import * as statuses from '../src/repository/server-status.ts'
 import * as similarRepo from '../src/repository/similar.ts'
 import * as titles from '../src/repository/title.ts'
@@ -922,36 +921,6 @@ test('recommendations by similar games answer from the graph, without the model'
   expect(recommend.recommendations).not.toHaveBeenCalled()
 })
 
-test("an assistant's suggestions come with the guide's facts, and leave when dismissed", async () => {
-  spyOn(recRepo, 'assistantPicks').mockResolvedValue([
-    { id: 'recommendation:a', game, why: 'Short.', assistant: 'claude', created_at: 'd' },
-  ])
-  spyOn(similarRepo, 'guideFacts').mockResolvedValue([
-    { game: game.id, difficulty: 3, hours: 12, hasMissables: true, difficultyTrophy: null },
-  ])
-  const res = await send('GET', '/api/assistant-picks')
-  expect(res.body.items).toEqual([
-    {
-      game,
-      reason: 'Short.',
-      assistant: 'claude',
-      savedAt: 'd',
-      difficulty: 3,
-      hours: 12,
-      playthroughs: null,
-      hasMissables: true,
-      hasOnline: false,
-      hasDifficultyTrophy: false,
-    },
-  ])
-  const drop = spyOn(recRepo, 'dropAssistantPick').mockResolvedValue()
-  expect((await send('POST', '/api/assistant-picks/dismiss', { game: 'x' })).status).toBe(400)
-  expect(await send('POST', '/api/assistant-picks/dismiss', { game: game.id })).toMatchObject({
-    status: 200,
-  })
-  expect(drop).toHaveBeenCalledWith(me.id, game.id)
-})
-
 test('a game page asks for its similar games by id', async () => {
   const items = [{ game, difficulty: 3, hours: 12, relation: 'expansion' as const }]
   const related = spyOn(similar, 'similarToGame').mockResolvedValue(items)
@@ -971,6 +940,7 @@ const nexoPick = {
   scope: 'interests' as const,
   ownedOnly: false,
   fits: true,
+  recommender: 'nexo' as const,
   at: '2026-10-18T10:00:00Z',
 }
 
@@ -1120,7 +1090,6 @@ describe('the demo', () => {
     ['POST', '/api/chat', { text: 'oi' }],
     ['POST', '/api/trophy-tip', { np: 'NPWR1', trophyId: 1 }],
     ['POST', '/api/recommendations/dismiss', { game: 'game:2' }],
-    ['POST', '/api/assistant-picks/dismiss', { game: 'game:2' }],
     ['POST', '/api/recommendations/preferences', {}],
     ['POST', '/api/picks', {}],
     ['GET', '/api/recommendations?refresh=1'],

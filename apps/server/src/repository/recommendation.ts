@@ -91,13 +91,19 @@ export interface PickRow {
   id: string
   game: Game
   why: string
-  first_step: string
+  /** Where to start; an assistant may leave it out. */
+  first_step?: string | null
   mood?: string
   scope: PickScope
   owned_only?: boolean
   fits?: boolean
+  /** Who picked it: Nexo, or the assistant that suggested it. */
+  recommender?: Recommender
   created_at: string
 }
+
+/** Who recommended a game, as the database stores it (an enum). */
+export type Recommender = 'nexo' | AssistantKey
 
 /** Keeps a pick the player asked for, as one more recommendation of theirs. */
 export async function savePick(
@@ -124,12 +130,13 @@ export async function savePick(
   return plain(row)
 }
 
-/** The picks the player asked Nexo for, the latest first. */
+/** The player's picks, Nexo's and the ones assistants suggested, the latest first. */
 export async function listPicks(user: string, limit = 30): Promise<PickRow[]> {
   return plain(
     await q<PickRow[]>(
-      `SELECT id, game.* AS game, why, first_step, mood, scope, owned_only, fits, created_at
-       FROM recommendation WHERE user = $user AND source = 'pick' AND recommender = 'nexo'
+      `SELECT id, game.* AS game, why, first_step, mood, scope, owned_only, fits, recommender,
+         created_at
+       FROM recommendation WHERE user = $user AND source = 'pick'
        ORDER BY created_at DESC LIMIT $limit`,
       { user: userRef(user), limit },
     ),
@@ -195,55 +202,26 @@ export async function listDismissed(user: string): Promise<Dismissed[]> {
   )
 }
 
-/** How long a game an assistant suggested stays on Discover. */
-const ASSISTANT_PICK_DAYS = 30
-
-export interface AssistantPick {
-  id: string
-  game: Game
-  why: string
-  assistant: AssistantKey
-  created_at: string
-}
-
-/** Keeps a game an assistant suggested, as a pick it made; the same game again replaces it, with
- * the new reason and date. Like Nexo's, it keeps new batches from repeating the game for a while. */
+/** Keeps a game an assistant suggested, as a pick it made, shown with Nexo's picks; the same game
+ * again replaces it, with the new reason and date. Like Nexo's, it keeps new batches from repeating
+ * the game for a while. */
 export async function saveAssistantPick(
   user: string,
-  game: string,
-  why: string,
-  assistant: AssistantKey,
+  pick: { game: string; why: string; firstStep?: string; assistant: AssistantKey },
 ): Promise<void> {
+  const data = {
+    user: userRef(user),
+    game: gameRef(pick.game),
+    source: 'pick',
+    why: pick.why,
+    ...(pick.firstStep ? { first_step: pick.firstStep } : {}),
+    recommender: pick.assistant,
+    similar_to: [],
+  }
   await q(
-    `DELETE recommendation WHERE user = $user AND game = $game AND source = 'pick'
+    `DELETE recommendation WHERE user = $data.user AND game = $data.game AND source = 'pick'
        AND recommender != 'nexo';
-     CREATE recommendation CONTENT { user: $user, game: $game, source: 'pick', why: $why,
-       recommender: $assistant, similar_to: [] };`,
-    { user: userRef(user), game: gameRef(game), why, assistant },
-  )
-}
-
-/** The games assistants suggested in the last ASSISTANT_PICK_DAYS, not saved to this year's
- * interests nor dismissed. Newest first. */
-export async function assistantPicks(user: string, year: number): Promise<AssistantPick[]> {
-  return plain(
-    await q<AssistantPick[]>(
-      `LET $saved = SELECT VALUE game FROM interest WHERE user = $user AND year = $year;
-       LET $dismissed = SELECT VALUE game FROM dismissal WHERE user = $user;
-       SELECT id, game.* AS game, why, recommender AS assistant, created_at FROM recommendation
-       WHERE user = $user AND source = 'pick' AND recommender != 'nexo'
-         AND created_at > time::now() - ${ASSISTANT_PICK_DAYS}d
-         AND game NOTINSIDE $saved AND game NOTINSIDE $dismissed
-       ORDER BY created_at DESC;`,
-      { user: userRef(user), year },
-    ),
-  )
-}
-
-/** Takes a game an assistant suggested off Discover. */
-export async function dropAssistantPick(user: string, game: string): Promise<void> {
-  await q(
-    "DELETE recommendation WHERE user = $user AND game = $game AND source = 'pick' AND recommender != 'nexo'",
-    { user: userRef(user), game: gameRef(game) },
+     CREATE recommendation CONTENT $data;`,
+    { data },
   )
 }

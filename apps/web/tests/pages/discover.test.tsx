@@ -13,10 +13,6 @@ import { gone, mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
 
-// The page's own requests, without the shelf of the assistants' suggestions (tested on its own).
-const own = <C extends { path: string }>(calls: C[]) =>
-  calls.filter((c) => !c.path.startsWith('/api/assistant-picks'))
-
 const loaded = { ...SAMPLE_DATA, ranking: rankingData, servers: serversData }
 const none: SimilarRecs = { items: [], quick: [], series: [] }
 const recs = () => document.getElementById('recs') as HTMLElement
@@ -66,11 +62,7 @@ test('by default: games like the player’s, with the games that led to each one
     'Parecido com Days Gone, Ghost of Tsushima e inFAMOUS Second Son',
   )
   // Nexo is not asked for anything until the player wants it: only its saved batch is looked up.
-  expect(
-    own(calls)
-      .map((c) => c.path)
-      .sort(),
-  ).toEqual(['/api/recommendations/similar', STORED])
+  expect(calls.map((c) => c.path).sort()).toEqual(['/api/recommendations/similar', STORED])
   expect(cache.similar).toEqual(similarData)
   expect(cache.similarLoad).toBeUndefined()
 })
@@ -178,7 +170,7 @@ test('Pedir ao Nexo shows the stored batch, without forcing a new one', async ()
   expect(await within(recs()).findByText(/Horizon Zero Dawn/)).toBeTruthy()
   expect(refresh()).toBeTruthy()
   // The plain request, which may build a batch: neither stored nor refresh.
-  expect(own(calls).map((c) => c.path)).toEqual([STORED, '/api/recommendations'])
+  expect(calls.map((c) => c.path)).toEqual([STORED, '/api/recommendations'])
   expect(done).toHaveBeenCalledTimes(1)
   window.removeEventListener(MODEL_WORK_DONE, done)
   expect(cache.recs).toEqual(recsData)
@@ -194,7 +186,7 @@ test('a saved batch shows on load, with nothing pressed and no model call', asyn
   expect(recs().querySelector('.sk')).toBeTruthy()
   expect(await within(recs()).findByRole('link', { name: /Sekiro/ })).toBeTruthy()
   expect(screen.queryByRole('button', { name: /Pedir ao Nexo/ })).toBeNull()
-  expect(own(calls).map((c) => c.path)).toEqual([STORED])
+  expect(calls.map((c) => c.path)).toEqual([STORED])
   expect(done).not.toHaveBeenCalled()
   window.removeEventListener(MODEL_WORK_DONE, done)
   expect(cache.recs).toEqual(recsData)
@@ -211,7 +203,7 @@ test('no saved batch leaves the invitation, and the next visit does not look aga
   unmount()
   renderApp(<Discover />, { value: { data: loaded, cache } })
   expect(within(recs()).getByRole('button', { name: /Pedir ao Nexo/ })).toBeTruthy()
-  expect(own(calls)).toHaveLength(1)
+  expect(calls).toHaveLength(1)
 })
 
 test('Gerar de novo asks Nexo for fresh ones', async () => {
@@ -223,14 +215,14 @@ test('Gerar de novo asks Nexo for fresh ones', async () => {
   expect(refresh().hasAttribute('disabled')).toBe(true)
   await gone(() => within(recs()).queryByText(/Horizon Zero Dawn/))
   expect(within(recs()).getByText(/Sekiro/)).toBeTruthy()
-  expect(own(calls)[0].path).toBe('/api/recommendations?refresh=1')
+  expect(calls[0].path).toBe('/api/recommendations?refresh=1')
 })
 
 test('Nexo’s picks already asked for cost nothing on the next visit', () => {
   const calls = mockApi({})
   renderApp(<Discover />, { value: { data: loaded, cache: asked() } })
   expect(within(recs()).getByText(/Sekiro/)).toBeTruthy()
-  expect(own(calls)).toHaveLength(0)
+  expect(calls).toHaveLength(0)
 })
 
 test('coming back mid-load waits for the request already running', async () => {
@@ -248,7 +240,7 @@ test('coming back mid-load waits for the request already running', async () => {
   expect(recs().querySelector('.sk')).toBeTruthy()
   finish(recsData)
   expect(await within(recs()).findByText(/Sekiro/)).toBeTruthy()
-  expect(own(calls)).toHaveLength(0)
+  expect(calls).toHaveLength(0)
 })
 
 test('a failed Nexo search says so', async () => {
@@ -271,7 +263,7 @@ test('dismissing a similar game drops it without loading Nexo’s picks', async 
   fireEvent.click(screen.getByRole('button', { name: 'Só remover' }))
   expect(await screen.findByText('Horizon Zero Dawn não aparece mais')).toBeTruthy()
   expect(within(similar()).queryByText(/Horizon Zero Dawn/)).toBeNull()
-  expect(own(calls).find((c) => c.method === 'POST')?.body).toEqual({ game: 'game:10' })
+  expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ game: 'game:10' })
   expect((cache.similar as SimilarRecs).items).toHaveLength(2)
   expect(cache.recs).toBeUndefined()
 })
@@ -286,7 +278,7 @@ test('dismissing one of Nexo’s picks drops it and says it will not come back',
   fireEvent.click(screen.getByRole('button', { name: 'Só remover' }))
   expect(await screen.findByText('Horizon Zero Dawn não aparece mais')).toBeTruthy()
   expect(within(recs()).queryByText(/Horizon Zero Dawn/)).toBeNull()
-  expect(own(calls)[0].body).toEqual({ game: 'game:10' })
+  expect(calls[0].body).toEqual({ game: 'game:10' })
   expect((cache.recs as typeof recsData).items).toHaveLength(1)
 })
 
@@ -300,7 +292,7 @@ test('a reason goes along and the toast says Nexo takes it into account', async 
   expect(
     await screen.findByText('Horizon Zero Dawn saiu. O Nexo leva isso em conta nas próximas.'),
   ).toBeTruthy()
-  expect(own(calls)[0].body).toEqual({ game: 'game:10', reason: 'too_long' })
+  expect(calls[0].body).toEqual({ game: 'game:10', reason: 'too_long' })
 })
 
 test('a failed dismiss keeps the game and warns', async () => {
@@ -317,7 +309,6 @@ test('a failed dismiss keeps the game and warns', async () => {
 })
 
 test('Nexo’s section with an empty batch', () => {
-  mockApi({})
   renderApp(<Discover />, {
     value: { cache: asked({ recs: { profile: null, items: [] } }) },
   })
@@ -382,19 +373,19 @@ test('profile changes stay a draft until saved; saving can bring new picks', asy
   fireEvent.click(screen.getByText('Ver perfil completo'))
   fireEvent.click(screen.getByRole('button', { name: 'Tirar Troféus online' }))
   expect(screen.queryByRole('button', { name: 'Tirar Troféus online' })).toBeNull()
-  expect(own(calls).some((c) => c.path === '/api/recommendations/preferences')).toBe(false)
+  expect(calls.some((c) => c.path === '/api/recommendations/preferences')).toBe(false)
   fireEvent.click(screen.getByRole('button', { name: 'Descartar' }))
   expect(screen.getByRole('button', { name: 'Tirar Troféus online' })).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Tirar Troféus online' }))
   fireEvent.click(screen.getByRole('button', { name: 'Salvar e gerar novas recomendações' }))
   await waitFor(() =>
-    expect(own(calls).some((c) => c.path === '/api/recommendations?refresh=1')).toBe(true),
+    expect(calls.some((c) => c.path === '/api/recommendations?refresh=1')).toBe(true),
   )
   const sent = calls.find((c) => c.path === '/api/recommendations/preferences')
   const body = sent?.body as { removed: { avoid: string[] } } | undefined
   expect(body?.removed.avoid).toEqual(['Troféus online'])
   // The rules apply to the similar games too.
-  expect(own(calls).some((c) => c.path === '/api/recommendations/similar')).toBe(true)
+  expect(calls.some((c) => c.path === '/api/recommendations/similar')).toBe(true)
 })
 
 test('a failed save says so', async () => {

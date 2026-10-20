@@ -323,16 +323,27 @@ test('a plugin can refuse a tool, and each connection has a budget a minute', as
   expect(Refused).toBeDefined()
 })
 
-test("a suggestion is saved under the assistant's name; the demo saves nothing", async () => {
+test("a suggestion is saved as the assistant's pick; the demo saves nothing", async () => {
   const save = spyOn(recs, 'saveAssistantPick').mockResolvedValue()
   const claude = (await connect(me, 'v'.repeat(50), 'Claude')).access_token
   const { data } = await call(
     'save_suggestion',
-    { game: game.name, reason: '  Short and fun.  ' },
+    { game: game.name, reason: '  Short and fun.  ', firstStep: 'Start with the story.' },
     claude,
   )
-  expect(data).toMatchObject({ saved: { id: game.id }, reason: 'Short and fun.' })
-  expect(save).toHaveBeenCalledWith(me.id, game.id, 'Short and fun.', 'claude')
+  expect(data).toMatchObject({
+    saved: { id: game.id },
+    reason: 'Short and fun.',
+    firstStep: 'Start with the story.',
+  })
+  expect(save).toHaveBeenCalledWith(me.id, {
+    game: game.id,
+    why: 'Short and fun.',
+    firstStep: 'Start with the story.',
+    assistant: 'claude',
+  })
+  await call('save_suggestion', { game: game.name, reason: 'x' }, claude)
+  expect(save.mock.calls[1][1]).toMatchObject({ firstStep: undefined })
   expect((await call('save_suggestion', { game: game.name })).isError).toBe(true)
   expect((await call('save_suggestion', { game: 'Nope', reason: 'x' })).isError).toBe(true)
 })

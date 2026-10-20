@@ -9,10 +9,12 @@ import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import { fmtWhen } from '../lib/format'
 import { plainText } from '../lib/text'
+import type { AssistantKey } from '../lib/types'
 import { modelWorkDone } from '../plugins'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
+import { AppLogo, assistantName } from './app-logo'
 import { titleHref } from './tip'
 import './nexo-pick.css'
 
@@ -44,6 +46,8 @@ const messages = defineMessages({
     again: 'Escolher outro',
     thinking: 'O Nexo está pensando…',
     latest: 'ÚLTIMA ESCOLHA · {when}',
+    latestBy: 'ÚLTIMA ESCOLHA · {name} · {when}',
+    unnamed: 'ASSISTENTE',
     asked: 'Você pediu: “{mood}”',
     first: 'Por onde começar',
     noFit: 'Nenhum dos seus interesses combina direito com isso. Esse foi o mais perto.',
@@ -82,6 +86,8 @@ const messages = defineMessages({
     again: 'Pick another',
     thinking: 'Nexo is thinking…',
     latest: 'LATEST PICK · {when}',
+    latestBy: 'LATEST PICK · {name} · {when}',
+    unnamed: 'ASSISTANT',
     asked: 'You asked for: “{mood}”',
     first: 'Where to start',
     noFit: 'None of your interests really matches that. This was the closest.',
@@ -101,13 +107,29 @@ export interface NexoPick {
   id: string
   game: { id: string; name: string; cover_url?: string | null }
   why: string
-  firstStep: string
+  /** Where to start; null when an assistant left it out. */
+  firstStep: string | null
   mood: string | null
-  scope: PickScope
+  scope: PickScope | null
   ownedOnly: boolean
   /** False when nothing matched the mood and Nexo chose the closest. */
   fits: boolean
+  /** Who picked it: Nexo, or an assistant in its chat (save_suggestion). */
+  recommender?: 'nexo' | AssistantKey
   at: string
+}
+
+/** The pick's maker for its tag: the assistant's name, uppercase; none for Nexo's. */
+function useMaker(pick: NexoPick): string | null {
+  const t = useMessages(messages)
+  if (!pick.recommender || pick.recommender === 'nexo') return null
+  return assistantName(pick.recommender)?.toUpperCase() ?? t('unnamed')
+}
+
+/** An assistant's pick says who made it: its logo before the line; none on Nexo's. */
+function MakerMark({ pick }: { pick: NexoPick }) {
+  if (!pick.recommender || pick.recommender === 'nexo') return null
+  return <AppLogo name={pick.recommender} />
 }
 
 export interface PickAsk {
@@ -131,10 +153,25 @@ function PickBody({ pick }: { pick: NexoPick }) {
       </Link>
       {pick.mood && <p className="nexo-pick-asked">{t('asked', { mood: pick.mood })}</p>}
       <p>{plainText(pick.why)}</p>
-      <p className="nexo-pick-first">
-        <span>{t('first')}</span> {plainText(pick.firstStep)}
-      </p>
+      {pick.firstStep && (
+        <p className="nexo-pick-first">
+          <span>{t('first')}</span> {plainText(pick.firstStep)}
+        </p>
+      )}
     </>
+  )
+}
+
+/** When a pick came and who made it: an assistant's name, or where Nexo looked. */
+function PickMeta({ pick: p }: { pick: NexoPick }) {
+  const t = useMessages(messages)
+  const maker = useMaker(p)
+  return (
+    <span className="nexo-pick-meta nexo-pick-by">
+      <MakerMark pick={p} />
+      {fmtWhen(p.at)} · {maker ?? (p.scope ? t(p.scope) : '')}
+      {p.ownedOnly ? ` · ${t('ownedTag')}` : ''}
+    </span>
   )
 }
 
@@ -165,10 +202,7 @@ function PickHistory({ picks, onClose }: { picks: NexoPick[]; onClose: () => voi
       <ol>
         {picks.map((p) => (
           <li key={p.id}>
-            <span className="nexo-pick-meta">
-              {fmtWhen(p.at)} · {t(p.scope)}
-              {p.ownedOnly ? ` · ${t('ownedTag')}` : ''}
-            </span>
+            <PickMeta pick={p} />
             <PickBody pick={p} />
           </li>
         ))}
@@ -285,9 +319,14 @@ function LatestPick({
   onHistory: () => void
 }) {
   const t = useMessages(messages)
+  const maker = useMaker(pick)
+  const when = fmtWhen(pick.at)
   return (
     <div className="nexo-pick-latest">
-      <span className="eyebrow">{t('latest', { when: fmtWhen(pick.at) })}</span>
+      <span className="eyebrow nexo-pick-by">
+        <MakerMark pick={pick} />
+        {maker ? t('latestBy', { name: maker, when }) : t('latest', { when })}
+      </span>
       <PickBody pick={pick} />
       {!pick.fits && pick.scope === 'interests' && (
         <p className="nexo-pick-nofit">

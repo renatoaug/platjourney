@@ -51,6 +51,18 @@
     height: 48px;
   }
 
+  /* A pick an assistant made: its logo before the line that says when, and who. */
+  .nexo-pick-by {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nexo-pick-by .app-logo {
+    width: 16px;
+    height: 16px;
+  }
+
   .nexo-pick-copy {
     min-width: 0;
   }

@@ -38,8 +38,28 @@ export const picksData: NexoPick[] = [
   },
 ]
 
+/** The latest pick made by Claude in its chat, with no first step. */
+export const assistantPicksData: NexoPick[] = [
+  {
+    id: 'recommendation:4',
+    game: { id: 'game:9', name: 'Far Cry 5', cover_url: '/logo.svg' },
+    why: 'Faltam só 6 troféus, dificuldade baixa e sem perdíveis.',
+    firstStep: null,
+    mood: null,
+    scope: null,
+    ownedOnly: false,
+    fits: true,
+    recommender: 'claude',
+    at: '2026-10-20T14:37:00Z',
+  },
+  ...picksData,
+]
+
 // The sample picks are shared with the tests, not a story.
-const meta: Meta = { title: 'Discover/NexoPick', excludeStories: ['picksData'] }
+const meta: Meta = {
+  title: 'Discover/NexoPick',
+  excludeStories: ['picksData', 'assistantPicksData'],
+}
 export default meta
 type Story = StoryObj
 
@@ -49,6 +69,9 @@ export const FirstTime: Story = { render: () => <NexoPickPanel picks={[]} onAsk=
 export const Loading: Story = { render: () => <NexoPickPanel picks={null} onAsk={ask} /> }
 export const Thinking: Story = {
   render: () => <NexoPickPanel picks={picksData} asking onAsk={ask} />,
+}
+export const PickedByAssistant: Story = {
+  render: () => <NexoPickPanel picks={assistantPicksData} onAsk={ask} />,
 }
 export const Picked: Story = { render: () => <NexoPickPanel picks={picksData} onAsk={ask} /> }
 // Nothing on the list matched the mood: Nexo says so and offers to look beyond it.
