@@ -134,6 +134,7 @@ export type Target =
   | 'NexoChat'
   | 'NexoHero'
   | 'NexoInvite'
+  | 'NexoPickAsk'
   | 'NexoPickBox'
   | 'NexoPickPanel'
   | 'NextPickLink'

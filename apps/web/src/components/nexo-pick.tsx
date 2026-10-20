@@ -2,7 +2,7 @@
  * interests or any game) and whether to keep to games they already have; Nexo answers with one game,
  * why it fits and where to start. The latest pick stays in view and the earlier ones open in a
  * dialog. Model work, so it runs only on the button. */
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
@@ -431,6 +431,52 @@ function PickCopy() {
   )
 }
 
+/** The ask: Nexo, the question and the button, one tap being enough; giving a direction is optional
+ * and folded under it. A component of its own, so a plugin can draw another way to ask in its place
+ * and keep the picks under it. */
+function NexoPickAsk({
+  again,
+  busy,
+  open,
+  onOpen,
+  buttonRef,
+  filters,
+}: {
+  /** There is a pick already: the button asks for another. */
+  again: boolean
+  busy: boolean
+  /** The direction is unfolded. */
+  open: boolean
+  onOpen: (open: boolean) => void
+  buttonRef: RefObject<HTMLButtonElement | null>
+  /** The mood, where to look and only what the player has, shown when unfolded. */
+  filters: ReactNode
+}) {
+  const t = useMessages(messages)
+  return (
+    <div className="nexo-pick-top">
+      <img className="nexo-pick-nexo" src="/nexo-avatar.svg" alt="" />
+      <div className="nexo-pick-main">
+        <PickCopy />
+        <button
+          type="button"
+          className="nexo-pick-tune"
+          aria-expanded={open}
+          aria-controls="nexo-pick-options"
+          onClick={() => onOpen(!open)}
+        >
+          {t('tune')} <span>{t('optional')}</span>
+          <Icon name={open ? 'chevron-up' : 'chevron-down'} />
+        </button>
+        {open && filters}
+      </div>
+      <button ref={buttonRef} type="submit" className="button" disabled={busy}>
+        <Icon name="nexo" /> {t(again ? 'again' : 'ask')}
+      </button>
+    </div>
+  )
+}
+
 /** The panel: what the player asks, Nexo at work, and the latest pick. `picks` is null while the
  * stored ones load. */
 export function NexoPickPanel({
@@ -479,37 +525,23 @@ export function NexoPickPanel({
           ask()
         }}
       >
-        {/* Nexo, the question and the button: one tap is enough. Giving a direction is optional and
-            folded under it. */}
-        <div className="nexo-pick-top">
-          <img className="nexo-pick-nexo" src="/nexo-avatar.svg" alt="" />
-          <div className="nexo-pick-main">
-            <PickCopy />
-            <button
-              type="button"
-              className="nexo-pick-tune"
-              aria-expanded={open}
-              aria-controls="nexo-pick-options"
-              onClick={() => setOpen(!open)}
-            >
-              {t('tune')} <span>{t('optional')}</span>
-              <Icon name={open ? 'chevron-up' : 'chevron-down'} />
-            </button>
-            {open && (
-              <PickFilters
-                mood={mood}
-                onMood={setMood}
-                scope={scope}
-                onScope={setScope}
-                ownedOnly={ownedOnly}
-                onOwnedOnly={setOwnedOnly}
-              />
-            )}
-          </div>
-          <button ref={button} type="submit" className="button" disabled={disabled || asking}>
-            <Icon name="nexo" /> {t(latest ? 'again' : 'ask')}
-          </button>
-        </div>
+        <NexoPickAsk
+          again={!!latest}
+          busy={disabled || asking}
+          open={open}
+          onOpen={setOpen}
+          buttonRef={button}
+          filters={
+            <PickFilters
+              mood={mood}
+              onMood={setMood}
+              scope={scope}
+              onScope={setScope}
+              ownedOnly={ownedOnly}
+              onOwnedOnly={setOwnedOnly}
+            />
+          }
+        />
       </form>
       <PickResult
         picks={picks}
