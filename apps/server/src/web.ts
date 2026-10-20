@@ -76,7 +76,7 @@ import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
 import { connectionsOf, deleteConnection } from './repository/oauth.ts'
 import { deletePushSubscription, savePushSubscription } from './repository/push-subscription.ts'
-import { isDismissReason } from './repository/recommendation.ts'
+import { assistantPicks, dropAssistantPick, isDismissReason } from './repository/recommendation.ts'
 import { listServerStatuses } from './repository/server-status.ts'
 import { type GuideFacts, guideFacts } from './repository/similar.ts'
 import { setLinkCode, type User, updateUser } from './repository/user.ts'
@@ -1053,6 +1053,37 @@ const API_ROUTES: Record<string, ApiHandler> = {
     json(res, 200, { pick })
   },
   'POST /api/recommendations/dismiss': dismissPick,
+  // Games a connected assistant suggested (save_suggestion), with the guide's facts for the card.
+  'GET /api/assistant-picks': async ({ res, me }) => {
+    const picks = await assistantPicks(me.id, new Date().getFullYear())
+    const facts = new Map(
+      (await guideFacts(picks.map((p) => p.game.id))).map((f) => [String(f.game), f]),
+    )
+    return json(res, 200, {
+      items: picks.map((p) => {
+        const f = facts.get(p.game.id)
+        return {
+          game: p.game,
+          reason: p.why,
+          assistant: p.assistant,
+          savedAt: p.created_at,
+          difficulty: f?.difficulty ?? 0,
+          hours: f?.hours ?? 0,
+          playthroughs: f?.playthroughs ?? null,
+          hasMissables: f?.hasMissables ?? false,
+          hasOnline: f?.hasOnline ?? false,
+          hasDifficultyTrophy: f?.difficultyTrophy === undefined ? null : !!f.difficultyTrophy,
+        }
+      }),
+    })
+  },
+  'POST /api/assistant-picks/dismiss': async ({ req, res, me }) => {
+    const { game } = await readBody(req)
+    if (typeof game !== 'string' || !/^game:[\w-]+$/.test(game))
+      return json(res, 400, { error: 'game required' })
+    await dropAssistantPick(me.id, game)
+    return json(res, 200, { ok: true })
+  },
   'POST /api/recommendations/preferences': tastePreferences,
   // Recommendations by similar games: graph reads only, no model, so the demo has them too.
   'GET /api/recommendations/similar': async ({ res, me, titles }) =>

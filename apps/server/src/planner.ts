@@ -5,6 +5,7 @@ import { isDemo } from './demo.ts'
 import { DEFAULT_LOCALE, defineMessages, Language, type Locale, translator } from './i18n.ts'
 import type { GameContext } from './nexo.ts'
 import { aroundModel } from './plugins.ts'
+import type { AssistantKey } from './repository/activity.ts'
 import { getUser, type User, updateUser } from './repository/user.ts'
 
 const messages = defineMessages({
@@ -41,6 +42,8 @@ export interface SessionPlan {
   totalMinutes: number
   warnings: string[]
   ifTimeLeft: string | null
+  /** A plan an assistant connected through MCP made (save_session_plan): which one. */
+  assistant?: AssistantKey
 }
 
 export type PlanStatus = 'active' | 'done' | 'expired'

@@ -100,6 +100,17 @@
     height: 13px;
   }
 
+  /* A tip an assistant saved: its logo in the marker, and beside the tag on the home screen. */
+  .entry-icon .app-logo {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tip .k .app-logo {
+    width: 12px;
+    height: 12px;
+  }
+
   .entry.kind-unlock .entry-icon {
     color: var(--color-trophy-gold);
     border-color: color-mix(in srgb, var(--color-trophy-gold) var(--alpha-glow), transparent);

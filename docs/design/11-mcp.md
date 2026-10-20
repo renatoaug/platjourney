@@ -67,6 +67,16 @@ None calls the model: using them costs the instance nothing. The reads say so (`
 | `set_yearly_goal` | Sets the platinums wanted this year (1 to 365) |
 | `dismiss_recommendation` | Stops recommending a game, with an optional reason (`too_long`, `too_hard`, `genre`, `online`, `played`) |
 
+**Saving what the assistant settled**
+
+What the player and the assistant decide in the chat can live in the app too, under the assistant's name. The server tells the assistant by the name its client registered with and stores `claude`, `chatgpt` (ChatGPT and its desktop app, which registers as Codex) or `other`; the app shows the name. The server's instructions ask the assistant to save its final pick when it recommends a game, a session plan when it makes one, and a tip when the player asks or it is worth coming back to.
+
+| Tool | Does | Shows in the app |
+|---|---|---|
+| `save_suggestion` | Saves a recommended game with why, in one sentence (a `recommendation` of source `pick` with the assistant as `recommender`); the same game again replaces it | Discover, "Sugeridos pelo Claude": for 30 days, until the game is saved to the interests or dismissed |
+| `save_session_plan` | Saves a plan for the game being played, each step named by its trophy (steps on no trophy of the game are left out and reported) | The session plan on the current game, the same checklist Nexo's plans use, which ticks steps off as PSN reports the trophies; it replaces the plan before |
+| `save_tip` | Saves a tip, with its game when named (`tip`, kind `assistant`) | History, under the assistant's name; not a notification |
+
 A game is named by its catalog id (`game:1234`, from `search_games`) or its name; a name the catalog does not know is not looked up anywhere else. A guide that is not stored yet is not researched on the spot: the assistant can search the web with its own tools.
 
 ## Shortcuts

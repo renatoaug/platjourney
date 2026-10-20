@@ -1,0 +1,20 @@
+@layer screens {
+  .app-logo {
+    width: 26px;
+    height: 26px;
+    flex: none;
+  }
+
+  .app-logo-plain {
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-round);
+    background: var(--color-bg-subtle);
+    color: var(--color-fg-muted);
+  }
+
+  .app-logo-plain .icon {
+    width: 14px;
+    height: 14px;
+  }
+}

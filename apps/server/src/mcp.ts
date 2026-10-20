@@ -14,6 +14,7 @@ import { type Args, TOOLS, ToolError } from './mcp-tools.ts'
 import { bearer, origin, resourceMetadataUrl } from './oauth.ts'
 import { beforeTool, Refused } from './plugins.ts'
 import { allow } from './rate-limit.ts'
+import type { AssistantKey } from './repository/activity.ts'
 import type { User } from './repository/user.ts'
 
 const PROTOCOLS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05']
@@ -34,7 +35,14 @@ const text = (value: unknown, isError = false) => ({
   ...(isError ? { isError: true } : {}),
 })
 
-async function callTool(user: User, connection: string, params: Args) {
+/** Who is calling: the player, their connection (the rate limit's key) and the assistant's name. */
+interface Caller {
+  user: User
+  connection: string
+  assistant: AssistantKey
+}
+
+async function callTool({ user, connection, assistant }: Caller, params: Args) {
   const tool = typeof params.name === 'string' ? byName.get(params.name) : undefined
   if (!tool) return text(`Unknown tool ${String(params.name)}.`, true)
   const limit = config.mcp.perMinute
@@ -45,7 +53,7 @@ async function callTool(user: User, connection: string, params: Args) {
   try {
     await beforeTool({ user, tool: tool.name })
     const args = (params.arguments ?? {}) as Args
-    const value = await tagged({ user: user.id }, () => tool.run(user, args))
+    const value = await tagged({ user: user.id }, () => tool.run(user, args, { assistant }))
     return { ...text(value), structuredContent: value }
   } catch (e) {
     if (e instanceof ToolError || e instanceof Refused) return text(e.message, true)
@@ -55,7 +63,7 @@ async function callTool(user: User, connection: string, params: Args) {
 }
 
 const INSTRUCTIONS =
-  "PlatJourney knows this player's PlayStation trophies and has a researched platinum guide for many games. Ground answers about trophies, missables, collectibles and what to platinum in these tools instead of memory, and say which guide page a passage came from. Change the player's interests or goal only when they ask."
+  "PlatJourney knows this player's PlayStation trophies and has a researched platinum guide for many games. Ground answers about trophies, missables, collectibles and what to platinum in these tools instead of memory, and say which guide page a passage came from. Change the player's interests or goal only when they ask. What you settle with the player can live in their PlatJourney app too: when you recommend a game, save your final pick with save_suggestion (up to 3 per conversation); when you plan a session, save it with save_session_plan; save a tip with save_tip when the player asks or it is worth coming back to."
 
 // How Nexo thinks (services/ai method.py), asked once and kept: it changes only with a new version.
 let method: Promise<{ pick: string; plan: string; tip: string }> | null = null
@@ -147,7 +155,7 @@ const icons = (base: string) => [
   { src: `${base}/icon-512.png`, mimeType: 'image/png', sizes: ['512x512'] },
 ]
 
-async function answer(user: User, connection: string, msg: Args, base: string) {
+async function answer(caller: Caller, msg: Args, base: string) {
   const params = (msg.params ?? {}) as Args
   switch (msg.method) {
     case 'initialize': {
@@ -170,7 +178,7 @@ async function answer(user: User, connection: string, msg: Args, base: string) {
     case 'tools/list':
       return { tools: listed }
     case 'tools/call':
-      return callTool(user, connection, params)
+      return callTool(caller, params)
     case 'prompts/list':
       return { prompts: promptList }
     case 'prompts/get':
@@ -245,7 +253,7 @@ export async function mcpRoute(
   }
   let reply: Args
   try {
-    const result = await answer(who.user, who.connection, msg, origin(req))
+    const result = await answer(who, msg, origin(req))
     reply =
       result === undefined
         ? { jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: 'Method not found' } }

@@ -88,3 +88,18 @@ test('loading, then a failed sync', () => {
   renderApp(<History />, { value: { data: null, sync: 'failed' } })
   expect(screen.getByRole('alert').textContent).toContain('Não conseguimos carregar o histórico.')
 })
+
+test("a tip an assistant saved carries the assistant's name and its own filter", () => {
+  const tip: Tip = {
+    id: 't9',
+    kind: 'assistant',
+    assistant: 'claude',
+    content: 'Use o arco no chefe.',
+    created_at: hoursAgo(1),
+    game,
+  }
+  renderApp(<History />, { value: { data: { ...SAMPLE_DATA, tips: [...TIPS, tip] } } })
+  fireEvent.click(screen.getByRole('button', { name: 'assistentes' }))
+  expect(screen.getAllByRole('article')).toHaveLength(1)
+  expect(document.querySelector('.entry .k')?.textContent).toBe('Claude')
+})

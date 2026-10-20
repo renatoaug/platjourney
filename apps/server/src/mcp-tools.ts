@@ -8,12 +8,14 @@ import { tagged } from './costs.ts'
 import { isDemo, storedSummary, trophiesFor } from './demo.ts'
 import { handleInterestCommand, yearProgress } from './interests.ts'
 import { library, ownedGames } from './library.ts'
+import type { PlanStep, SessionPlan } from './planner.ts'
 import { playtimes } from './playtime.ts'
 import { profilePage } from './profile.ts'
 import { catalogTrophies, profileSummary, type TitleProgress, type TrophyStatus } from './psn.ts'
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
 import { dismissRecommendation } from './recommend.ts'
 import { RELEASES_AFTER_DAYS, RELEASES_BEFORE_DAYS } from './releases.ts'
+import { type AssistantKey, logAssistantTip } from './repository/activity.ts'
 import {
   type Game,
   gameByName,
@@ -23,9 +25,9 @@ import {
 } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { listInterests } from './repository/interest.ts'
-import { isDismissReason } from './repository/recommendation.ts'
+import { isDismissReason, saveAssistantPick } from './repository/recommendation.ts'
 import { guideFacts } from './repository/similar.ts'
-import type { User } from './repository/user.ts'
+import { type User, updateUser } from './repository/user.ts'
 import { similarPicks, similarToGame } from './similar.ts'
 import { demoContext, getCurrent } from './watcher.ts'
 
@@ -35,11 +37,15 @@ const MAX_TROPHIES = 300
 export class ToolError extends Error {}
 
 export type Args = Record<string, unknown>
+/** Which assistant called: what the app shows next to what it saved. */
+interface From {
+  assistant: AssistantKey
+}
 export interface Tool {
   name: string
   description: string
   inputSchema: Record<string, unknown>
-  run: (user: User, args: Args) => Promise<unknown>
+  run: (user: User, args: Args, from?: From) => Promise<unknown>
   /** Changes the player's data: refused for the demo, which only reads. */
   changes?: boolean
   /** Takes something away (a saved game). */
@@ -110,6 +116,58 @@ async function savedInterest(user: User, game: Game) {
 // The same commands the web and Telegram run; one that answers its usage text was refused.
 async function interestCommand(user: User, command: string) {
   await handleInterestCommand(user, command, await library(user.psn_account_id))
+}
+
+const assistantOf = (from?: From): AssistantKey => from?.assistant ?? 'other'
+
+// A required text argument, trimmed and cut to `max` characters.
+function textArg(args: Args, key: string, max: number): string {
+  const v = typeof args[key] === 'string' ? (args[key] as string).trim() : ''
+  if (!v) throw new ToolError(`"${key}" is required.`)
+  return v.slice(0, max)
+}
+
+const plainName = (s: string) => s.trim().toLowerCase()
+
+// A trimmed text argument cut to `max` characters, or `fallback` when missing or empty.
+const optText = <F>(v: unknown, max: number, fallback: F) =>
+  typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : fallback
+
+// The game's trophies by name, local and English, without the platinum (never a step).
+function trophyIndex(trophies: TrophyStatus[]) {
+  const byName = new Map<string, TrophyStatus>()
+  for (const t of trophies.filter((x) => x.type !== 'platinum'))
+    for (const n of [t.name, t.nameEn].filter(Boolean)) byName.set(plainName(n), t)
+  return byName
+}
+
+function planStep(step: Args, trophy: TrophyStatus): PlanStep {
+  const minutes = Math.round(Number(step.minutes))
+  return {
+    trophy: trophy.name,
+    minutes: minutes > 0 ? Math.min(minutes, 600) : 15,
+    how: optText(step.how, 600, ''),
+    why: optText(step.why, 300, ''),
+    trick: optText(step.trick, 300, null),
+    flexible: step.flexible === true,
+  }
+}
+
+// The assistant's steps on the trophies of the game being played, each named as the trophy list
+// names it (so it ticks itself off when PSN reports it); steps on no trophy of the game are left
+// out and reported.
+function planSteps(raw: unknown, trophies: TrophyStatus[]) {
+  const byName = trophyIndex(trophies)
+  const steps: PlanStep[] = []
+  const unknown: string[] = []
+  for (const s of Array.isArray(raw) ? raw.slice(0, 20) : []) {
+    const step = (s ?? {}) as Args
+    const name = typeof step.trophy === 'string' ? step.trophy : ''
+    const trophy = byName.get(plainName(name))
+    if (trophy) steps.push(planStep(step, trophy))
+    else if (name) unknown.push(name)
+  }
+  return { steps, unknown }
 }
 
 export const TOOLS: Tool[] = [
@@ -534,6 +592,118 @@ export const TOOLS: Tool[] = [
       const reason = isDismissReason(args.reason) ? args.reason : undefined
       await dismissRecommendation(user, game.id, reason)
       return { dismissed: game.name, reason: reason ?? null }
+    },
+  },
+  {
+    name: 'save_suggestion',
+    description:
+      'Saves a game you recommended to the player, with why in one sentence, so it shows in their PlatJourney app under your name. Call it with your final pick when you recommend a game (up to 3 per conversation); the same game again updates the reason.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        game: gameArg,
+        reason: {
+          type: 'string',
+          description: "Why this game, for this player, in one sentence in the player's language.",
+        },
+      },
+      required: ['game', 'reason'],
+    },
+    changes: true,
+    run: async (user, args, from) => {
+      const game = await gameFrom(args)
+      const reason = textArg(args, 'reason', 280)
+      await saveAssistantPick(user.id, game.id, reason, assistantOf(from))
+      return { saved: gameRow(game), reason }
+    },
+  },
+  {
+    name: 'save_session_plan',
+    description:
+      'Saves a plan for the play session you made for the game the player is playing now, so it shows in their PlatJourney app as a checklist that ticks each step off when PSN reports the trophy. Name each step by its trophy as get_current_game lists it. It replaces the session plan saved before.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        minutes: { type: 'number', description: 'How long the session is, in minutes.' },
+        summary: { type: 'string', description: 'The plan in one or two sentences.' },
+        steps: {
+          type: 'array',
+          description: 'The trophies to go for, in order (up to 20).',
+          items: {
+            type: 'object',
+            properties: {
+              trophy: { type: 'string', description: 'The trophy name.' },
+              minutes: { type: 'number', description: 'About how long it takes.' },
+              how: { type: 'string', description: 'What to do, briefly.' },
+              why: { type: 'string', description: 'Why now, briefly.' },
+              trick: { type: 'string', description: 'A trick that saves time, if any.' },
+              flexible: {
+                type: 'boolean',
+                description: 'True when it can be done at any point of the session.',
+              },
+            },
+            required: ['trophy', 'how'],
+          },
+        },
+        warnings: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Missables or other cautions.',
+        },
+        ifTimeLeft: { type: 'string', description: 'What to do if time is left.' },
+      },
+      required: ['minutes', 'summary', 'steps'],
+    },
+    changes: true,
+    run: async (user, args, from) => {
+      const ctx = getCurrent(user)
+      if (!ctx)
+        throw new ToolError('The player is not playing anything right now (see get_current_game).')
+      const minutes = Math.round(Number(args.minutes))
+      if (!Number.isFinite(minutes) || minutes < 10 || minutes > 720)
+        throw new ToolError('"minutes" is the session length, from 10 to 720.')
+      const { steps, unknown } = planSteps(args.steps, ctx.trophies)
+      if (!steps.length)
+        throw new ToolError(
+          `No step names a trophy of ${ctx.game.name}. Use the trophy names from get_current_game.`,
+        )
+      const warnings = Array.isArray(args.warnings)
+        ? args.warnings.filter((w): w is string => typeof w === 'string').slice(0, 5)
+        : []
+      const plan: SessionPlan = {
+        game: ctx.game.id,
+        gameName: ctx.game.name,
+        minutes,
+        createdAt: new Date().toISOString(),
+        summary: textArg(args, 'summary', 400),
+        steps,
+        totalMinutes: steps.reduce((n, s) => n + s.minutes, 0),
+        warnings,
+        ifTimeLeft: optText(args.ifTimeLeft, 300, null),
+        assistant: assistantOf(from),
+      }
+      await updateUser(user.id, { session_plan: plan })
+      return { saved: { game: gameRow(ctx.game), steps: steps.length }, notTrophies: unknown }
+    },
+  },
+  {
+    name: 'save_tip',
+    description:
+      'Saves a tip you gave the player (how to get a trophy, a route, a warning) to their PlatJourney history under your name, to find it later while playing. Call it when the player asks to save it, or for a tip worth coming back to; keep it short.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', description: "The tip, in the player's language (Markdown)." },
+        game: { ...gameArg, description: `${gameArg.description} The game the tip is about.` },
+      },
+      required: ['text'],
+    },
+    changes: true,
+    run: async (user, args, from) => {
+      const text = textArg(args, 'text', 2000)
+      const game = args.game ? await gameFrom(args) : undefined
+      await logAssistantTip(user.id, assistantOf(from), text, game?.id)
+      return { saved: true, ...(game ? { game: gameRow(game) } : {}) }
     },
   },
 ]

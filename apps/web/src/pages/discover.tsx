@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
+import { AssistantPicks } from '../components/assistant-picks'
 import { DemoNote } from '../components/demo'
 import { GameCard, GameShelf } from '../components/game-band'
 import { LibraryCard } from '../components/game-cards'
@@ -327,6 +328,7 @@ export function Discover() {
         initialScope={params.get('scope') === 'interests' ? 'interests' : 'any'}
         spotlight={params.has('scope')}
       />
+      <AssistantPicks />
       {/* With no library to learn from, Nexo has nothing to look at: only the similar section says so. */}
       {!noLibrary && (
         <Recommendations

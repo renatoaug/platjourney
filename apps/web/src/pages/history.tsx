@@ -1,4 +1,5 @@
-/** History page: everything Nexo said, filterable by kind, as a day-by-day timeline. */
+/** History page: everything Nexo said and the tips assistants saved, filterable by kind, as a
+ * day-by-day timeline. */
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
@@ -14,7 +15,7 @@ import './history.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     title: 'Histórico',
-    lead: 'Tudo que o Nexo já te mandou.',
+    lead: 'Tudo que o Nexo já te mandou, e as dicas que seus assistentes salvaram.',
     kinds: {
       all: 'todos',
       start: 'início',
@@ -23,6 +24,7 @@ const messages = defineMessages({
       route: 'rota',
       server: 'servidor',
       chat: 'chat',
+      assistant: 'assistentes',
     },
     emptyTitle: 'Nada no histórico ainda',
     empty: 'Tudo que o Nexo te mandar, dicas e avisos de troféu, fica guardado aqui.',
@@ -34,7 +36,7 @@ const messages = defineMessages({
   },
   [Language.En]: {
     title: 'History',
-    lead: 'Everything Nexo has sent you.',
+    lead: 'Everything Nexo has sent you, and the tips your assistants saved.',
     kinds: {
       all: 'all',
       start: 'start',
@@ -43,6 +45,7 @@ const messages = defineMessages({
       route: 'route',
       server: 'server',
       chat: 'chat',
+      assistant: 'assistants',
     },
     emptyTitle: 'Nothing in the history yet',
     empty: 'Everything Nexo sends you, tips and trophy notices, is kept here.',
@@ -61,6 +64,7 @@ const FILTERS: { kind: string; label: MessageKey<typeof messages> }[] = [
   { kind: 'route', label: 'kinds.route' },
   { kind: 'server', label: 'kinds.server' },
   { kind: 'chat', label: 'kinds.chat' },
+  { kind: 'assistant', label: 'kinds.assistant' },
 ]
 const LABEL = new Map(FILTERS.map((f) => [f.kind, f.label]))
 

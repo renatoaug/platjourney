@@ -9,6 +9,7 @@ import type { Me } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
+import { AppLogo, ASSISTANTS, type Assistant } from './app-logo'
 import { DemoNote } from './demo'
 import './onboarding.css'
 import './install-guide.css'
@@ -276,14 +277,6 @@ export function ConnectedAppsSkeleton() {
 
 const handled = (e: unknown) => e instanceof ApiError && e.handled
 
-// The assistants people connect most: their marks (Simple Icons, CC0), found by the name the
-// assistant registered with, and the page where a connector is added. Any other gets a plain icon.
-const ASSISTANTS = [
-  { key: 'claude', name: 'Claude', match: /claude/i, logo: '/claude.svg' },
-  { key: 'chatgpt', name: 'ChatGPT', match: /chatgpt|openai|codex/i, logo: '/chatgpt.svg' },
-] as const
-type Assistant = (typeof ASSISTANTS)[number]
-
 const STEPS = ['step1', 'step2', 'step3', 'step4'] as const
 
 // How long a copy button says it copied.
@@ -476,17 +469,6 @@ function ConnectGuide({ assistant: a, onClose }: { assistant: Assistant; onClose
         </footer>
       </div>
     </dialog>
-  )
-}
-
-function AppLogo({ name }: { name: string }) {
-  const logo = ASSISTANTS.find((a) => a.match.test(name))?.logo
-  return logo ? (
-    <img className="app-logo" src={logo} alt="" />
-  ) : (
-    <span className="app-logo app-logo-plain">
-      <Icon name="layers" />
-    </span>
   )
 }
 

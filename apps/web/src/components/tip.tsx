@@ -13,6 +13,7 @@ import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Markdown } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
+import { AppLogo, assistantName } from './app-logo'
 import './tip.css'
 
 /** Also read by the notifications panel, which shows the same items. */
@@ -26,6 +27,7 @@ export const messages = defineMessages({
       server: 'servidor',
       deal: 'promoção',
       chat: 'chat',
+      assistant: 'assistente',
     },
     library: 'Sua biblioteca',
   },
@@ -38,12 +40,13 @@ export const messages = defineMessages({
       server: 'server',
       deal: 'deal',
       chat: 'chat',
+      assistant: 'assistant',
     },
     library: 'Your library',
   },
 })
 
-const KINDS = ['start', 'unlock', 'session', 'route', 'server', 'deal', 'chat']
+const KINDS = ['start', 'unlock', 'session', 'route', 'server', 'deal', 'chat', 'assistant']
 
 /** The tag of an activity item ("troféu", "sessão"); an unknown kind shows as it came. */
 export const kindLabel = (t: Translator<typeof messages>, kind: string) =>
@@ -69,16 +72,23 @@ export const nexoHref = (np?: string | null, name?: string | null, trophy?: stri
     ? `/nexo?${new URLSearchParams({ game: np, ...(name ? { name } : {}), ...(trophy ? { trophy } : {}) })}`
     : '/nexo'
 
+/** The item's mark: the assistant's logo for a tip it saved, else the kind's icon. */
+function KindMark({ tip }: { tip: Tip }) {
+  if (tip.kind === 'assistant') return <AppLogo name={tip.assistant ?? ''} />
+  return <Icon name={KIND_ICON[tip.kind] ?? 'nexo'} />
+}
+
 export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?: boolean }) {
   const tr = useMessages(messages)
   const t = tipItem
-  const kind = kindLabel(tr, t.kind)
+  // A tip an assistant saved carries its name instead of the kind.
+  const kind = (t.kind === 'assistant' && assistantName(t.assistant)) || kindLabel(tr, t.kind)
   if (compact)
     return (
       <div className="tip">
         <b>
           <span className={`k kind-${t.kind}`}>
-            <Icon name={KIND_ICON[t.kind] ?? 'nexo'} /> {kind}
+            <KindMark tip={t} /> {kind}
           </span>
           {t.game?.name || tr('library')}
         </b>
@@ -93,7 +103,7 @@ export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?:
       </div>
       <div className="entry-marker">
         <span className="entry-icon">
-          <Icon name={KIND_ICON[t.kind] ?? 'nexo'} />
+          <KindMark tip={t} />
         </span>
       </div>
       <div className="entry-body">

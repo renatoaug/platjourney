@@ -64,6 +64,23 @@ describe('Plan', () => {
     expect(screen.queryByText(/aviso/)).toBeNull()
   })
 
+  test('a plan an assistant made says so under the heading', () => {
+    const { rerender } = show({ plan: { ...samplePlan, status: 'expired', assistant: 'claude' } })
+    expect(document.querySelector('.plan-validity')?.textContent).toContain('feito no Claude')
+    rerender(
+      <Plan
+        plan={{ ...samplePlan, status: 'expired', assistant: 'other' }}
+        minutes={120}
+        onMinutes={noop}
+        onGo={noop}
+        onCancel={noop}
+        onNew={noop}
+        onDiscard={noop}
+      />,
+    )
+    expect(document.querySelector('.plan-validity')?.textContent).toContain('feito num assistente')
+  })
+
   test('a plan without steps is at zero', () => {
     show({ plan: { ...samplePlan, steps: [], doneCount: 0 } })
     expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('0')
