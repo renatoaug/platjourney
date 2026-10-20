@@ -1,8 +1,10 @@
-/** Settings page: Telegram, notifications, preferences and the account, out of the profile. */
-import { useCallback, useEffect, useRef, useState } from 'react'
+/** Settings page: the account, connected apps (Telegram and assistants), notifications and
+ * preferences, out of the profile. */
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { AccountCards, AccountSkeleton } from '../components/account'
+import { ConnectedApps, ConnectedAppsSkeleton } from '../components/connected-apps'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import type { Me } from '../lib/types'
@@ -12,12 +14,12 @@ import './settings.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     title: 'Configurações',
-    lead: 'Telegram, notificações, preferências e a sua conta.',
+    lead: 'A sua conta, os apps conectados, as notificações e as preferências.',
     loadFailed: 'Não conseguimos carregar as configurações.',
   },
   [Language.En]: {
     title: 'Settings',
-    lead: 'Telegram, notifications, preferences and your account.',
+    lead: 'Your account, connected apps, notifications and preferences.',
     loadFailed: "We couldn't load the settings.",
   },
 })
@@ -56,28 +58,31 @@ export function Settings() {
         title={t('title')}
         lead={t('lead')}
         failed={t('loadFailed')}
-        onChanged={fetchMe}
         onEditing={onEditing}
+        apps={(user) => <ConnectedApps user={user} onChanged={fetchMe} />}
       />
     </Page>
   )
 }
 
-/** The page from its load state, so its stories need no network. */
+/**
+ * The page from its load state, so its stories need no network.
+ * @param apps  the connected apps card for the account (it loads its own list)
+ */
 export function SettingsView({
   load,
   title,
   lead,
   failed,
-  onChanged,
   onEditing,
+  apps,
 }: {
   load: Load
   title: string
   lead: string
   failed: string
-  onChanged: () => void
   onEditing?: (editing: boolean) => void
+  apps: (user: Me) => ReactNode
 }) {
   return (
     <div id="settings-page">
@@ -92,9 +97,13 @@ export function SettingsView({
       ) : (
         <div className="settings-grid">
           {load.kind === 'loading' ? (
-            <AccountSkeleton />
+            <AccountSkeleton>
+              <ConnectedAppsSkeleton />
+            </AccountSkeleton>
           ) : (
-            <AccountCards user={load.user} onChanged={onChanged} onEditing={onEditing} />
+            <AccountCards user={load.user} onEditing={onEditing}>
+              {apps(load.user)}
+            </AccountCards>
           )}
         </div>
       )}

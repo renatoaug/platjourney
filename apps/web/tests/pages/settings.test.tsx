@@ -10,18 +10,25 @@ import { mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
 
-test('the settings show Telegram, notifications, preferences and the account', async () => {
-  mockApi({ '/api/me': { user: { ...SAMPLE_ME, telegramLinked: true } } })
+test('the settings show Telegram, notifications, preferences, the account and connected apps', async () => {
+  mockApi({
+    '/api/me': { user: { ...SAMPLE_ME, telegramLinked: true } },
+    '/api/connections': { connections: [] },
+  })
   const { container } = renderApp(<Settings />)
   expect(container.querySelector('#settings-page .sk')).toBeTruthy()
   expect(screen.getByRole('heading', { level: 1, name: 'Configurações' })).toBeTruthy()
   expect(await screen.findByRole('heading', { name: 'Notificações' })).toBeTruthy()
   expect(screen.getByRole('heading', { name: 'Preferências' })).toBeTruthy()
   expect(screen.getByRole('heading', { name: 'Conta' })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Apps conectados' })).toBeTruthy()
+  // Nothing connected: Claude and ChatGPT each show how to connect them.
+  expect(await screen.findAllByRole('button', { name: 'Como conectar' })).toHaveLength(2)
 })
 
 test('unlinking Telegram reloads the account', async () => {
   const calls = mockApi({
+    '/api/connections': { connections: [] },
     '/api/me': { user: { ...SAMPLE_ME, telegramLinked: true } },
     'DELETE /api/telegram/link': {},
   })
@@ -45,6 +52,7 @@ function WithAccount() {
 
 test('a saved preference shows at once, without loading the account again', async () => {
   const calls = mockApi({
+    '/api/connections': { connections: [] },
     '/api/me': { user: SAMPLE_ME },
     'POST /api/account/preferences': { user: { ...SAMPLE_ME, psPlus: 'extra' } },
   })

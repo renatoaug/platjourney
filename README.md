@@ -27,6 +27,10 @@ More details, with every tool and version, in [`docs/design/01-architecture.md`]
 
 [`docs/design/03-setup.md`](docs/design/03-setup.md) has the first run (in Docker or from the code) and every setting in `.env`.
 
+## Use it from your assistant
+
+PlatJourney works as a connector in Claude, ChatGPT and other assistants that speak MCP: they read your trophies, your games, the game you are playing, your interests and the platinum guides, answer from them, and save games to your interests when you ask. Add a connector with your instance's address followed by `/mcp` (for example `https://app.example.com/mcp`), sign in and allow it. Settings → Connected apps lists what you connected and disconnects it. How it works, and every tool: [`docs/design/11-mcp.md`](docs/design/11-mcp.md).
+
 ## Test
 
 ```bash

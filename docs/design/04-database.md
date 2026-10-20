@@ -349,13 +349,17 @@ erDiagram
 
 ### Sign-in, access and costs
 
-Sessions, the pending sign-up code, where accounts are used from, and what each model call cost.
+Sessions, the pending sign-up code, where accounts are used from, the assistants connected through MCP and what each model call cost.
 
 ```mermaid
 erDiagram
     user ||--o{ auth_session : "signs in with"
     user |o--o{ llm_call : "costs"
     user ||--o{ access : "is used from"
+    user ||--o{ oauth_token : "connects"
+    oauth_client ||--o{ oauth_token : "holds"
+    oauth_client ||--o{ oauth_code : "is given"
+    user ||--o{ oauth_code : "allows"
     auth_session {
         id record(auth_session) PK
         user record(user) FK
@@ -382,6 +386,33 @@ erDiagram
         count int
         created_at datetime
         updated_at datetime
+    }
+    oauth_client {
+        id record(oauth_client) PK
+        client_id string "unique"
+        name string
+        redirect_uris array(string)
+        created_at datetime
+    }
+    oauth_code {
+        id record(oauth_code) PK
+        code_hash string "unique"
+        client record(oauth_client) FK
+        user record(user) FK
+        redirect_uri string
+        challenge string
+        expires_at datetime
+    }
+    oauth_token {
+        id record(oauth_token) PK
+        client record(oauth_client) FK
+        user record(user) FK
+        access_hash string "unique"
+        access_expires_at datetime
+        refresh_hash string "unique"
+        refresh_expires_at datetime
+        used_at option(datetime)
+        created_at datetime
     }
     llm_call {
         id record(llm_call) PK

@@ -14,3 +14,4 @@ How PlatJourney is built, in reading order. Each note describes the code as it i
 | [08-evals.md](08-evals.md) | Measuring Nexo against fixed questions, the evals database and the viewer |
 | [09-mobile.md](09-mobile.md) | Installing PlatJourney on a phone from the browser, and the native app built with Capacitor from the same code |
 | [10-sources.md](10-sources.md) | PSN, the web sources behind guides and how they are used |
+| [11-mcp.md](11-mcp.md) | Using PlatJourney from Claude, ChatGPT and other assistants: the MCP server, its sign-in (OAuth) and its tools |

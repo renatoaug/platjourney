@@ -192,6 +192,7 @@ Relative paths in both settings start at the repository's root, and absolute pat
 | `ctx.allowOnPage(directive, ...sources)` | Lets the app's page load from more places in one directive of its content security policy (`script-src`, `frame-src`, `connect-src`, `img-src`, `style-src`, `font-src`), e.g. a provider's script and its frames. The other directives cannot be changed. Each source is checked when the plugin registers, which fails with the reason otherwise: an https host, optionally with a `*.` subdomain wildcard, a port and a path (`https://cdn.example`, `https://*.example.com/js/`), or `'self'`; `data:` also in `img-src` and `font-src`, `blob:` in `img-src`. Anything else (`'unsafe-inline'`, `'unsafe-eval'`, `*`, a bare scheme such as `https:`, `;`, `,`, spaces or quotes) is refused. |
 | `ctx.beforeModel(hook)` | Runs before model work with `{ user, action }`. Throwing `Refused(code, message, status)` stops it; the player gets `message` with `status`. |
 | `ctx.modelFailed(hook)` | Runs when the work failed after every `beforeModel` let it through. |
+| `ctx.beforeTool(hook)` | Runs before a connected assistant's tool call on `/mcp` with `{ user, tool }`. Throwing `Refused(code, message)` stops it; the assistant gets `message` to pass on (a rule of the instance, a limit). |
 | `ctx.on('user:created', listener)` | Runs after a new account signs up. |
 | `ctx.on('user:deleted', listener)` | Runs before an account is deleted. A listener that throws stops the deletion; one that takes longer than 10 seconds is logged and the next one runs. |
 
@@ -213,6 +214,6 @@ A plugin keeps its own data in the same SurrealDB through `ctx.db.q`. Its tables
 ## Limits
 
 - A plugin runs with the server's permissions and in the browser with the app's: only load code you trust (see the trust model at the top).
-- Every hook (`beforeModel`, event listeners, interceptors) has 10 seconds (`HOOK_TIMEOUT_MS` in `apps/server/src/plugins.ts`). The app stops waiting then, but cannot stop the hook itself.
+- Every hook (`beforeModel`, `beforeTool`, event listeners, interceptors) has 10 seconds (`HOOK_TIMEOUT_MS` in `apps/server/src/plugins.ts`). The app stops waiting then, but cannot stop the hook itself.
 - An interceptor sees every matching request, the app's own included: it can answer in the app's place, so it must let through what it does not handle.
 - A plugin's component receives its target's props, nothing more. What else it needs (the player, the route, the plugin's own data) it reads itself, with the app's hooks or its own routes.

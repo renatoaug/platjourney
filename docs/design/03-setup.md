@@ -132,6 +132,8 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 | `ACCESS_KEEP_DAYS` | 180 | Days an unused address is kept |
 | `TRUST_PROXY` | 0 | `1` reads the address from Cloudflare's `CF-Connecting-IP`, or else the last `X-Forwarded-For` hop. Only behind a proxy that sets them |
 | `API_RATE_LIMIT` | empty | Requests per minute one address may send to the API, every route together; over it, 429 with `Retry-After`. Set it well above what one player's screens send. Empty or 0 turns it off |
+| `MCP_RATE_LIMIT` | 60 | Tool calls per minute one connected assistant may make on `/mcp`; over it, the tool answers that it is busy. 0 turns it off |
+| `MCP_REFRESH_DAYS` | 30 | Days a connected assistant stays signed in without being used; each use renews it |
 
 ## Push notifications
 

@@ -1,0 +1,123 @@
+@layer screens {
+  /* A connected app: its mark, name and line on the left, the button on the right, whatever the
+     length of the line; under it on a phone. */
+  .connected-row {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .connected-row > .setting-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .connected-row > button {
+    flex: none;
+  }
+
+  @media (max-width: 480px) {
+    .connected-row {
+      flex-wrap: wrap;
+    }
+  }
+
+  /* Connected apps: the assistants' heading under Telegram's row. */
+  .connected-sub {
+    margin: 18px 0 2px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* The card grows to its pair's height; the assistants sit at its bottom. */
+  #connected-apps {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .connected-list {
+    display: grid;
+    gap: 14px;
+    margin-top: auto;
+  }
+
+  /* The connect guide's note on menu names, under its steps. */
+  .connected-menus {
+    display: block;
+    margin-top: 16px;
+    color: var(--color-fg-muted);
+  }
+
+  /* Connected apps: what the assistants are for, and the line shown when the list fails to load. */
+  .connected-lead,
+  .connected-empty {
+    margin: 0 0 12px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+    line-height: var(--leading-snug);
+  }
+
+  /* A connected app's name with its mark (Telegram, Claude, ChatGPT). */
+  .app-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .app-logo {
+    width: 26px;
+    height: 26px;
+    flex: none;
+  }
+
+  .app-logo-plain {
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-round);
+    background: var(--color-bg-subtle);
+    color: var(--color-fg-muted);
+  }
+
+  .app-logo-plain .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* The connect guide: the introduction's dialog with the text alone, so lines use the width. */
+  .connect-guide .onb-card {
+    width: min(640px, 100%);
+  }
+
+  .connect-guide .onb-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* In a step: what to click stands out, what to type or paste is in the accent. */
+  .connect-guide .install-steps b {
+    font-weight: var(--weight-semibold);
+  }
+
+  .connect-value {
+    color: var(--color-accent);
+    font-weight: var(--weight-medium);
+    overflow-wrap: anywhere;
+  }
+
+  /* A connected assistant's line: a green dot and "Connected", then when it was last used. */
+  .connected-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-accent);
+    font-weight: var(--weight-medium);
+  }
+
+  .connected-status::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: var(--radius-round);
+    background: currentColor;
+  }
+}

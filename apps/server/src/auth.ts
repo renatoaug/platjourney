@@ -16,6 +16,7 @@ import {
   sessionUser,
 } from './repository/auth.ts'
 import { detachCalls } from './repository/llm-call.ts'
+import { deleteConnectionsOf } from './repository/oauth.ts'
 import { deletePushSubscriptions } from './repository/push-subscription.ts'
 import {
   createUser,
@@ -264,6 +265,7 @@ export async function finishClaim(
     await emit('user:created', user)
   } else {
     await deleteSessionsOf(user.id)
+    await deleteConnectionsOf(user.id)
     if (fresh) await wipeUserData(user.id)
     await updateUser(user.id, {
       password_hash,
@@ -346,6 +348,7 @@ export async function deleteAccount(user: User, confirmOnlineId: string): Promis
   await detachCalls(user.id)
   await deleteVerification(user.psn_online_id)
   await deleteSessionsOf(user.id)
+  await deleteConnectionsOf(user.id)
   await deleteUser(user.id)
   console.log(`account deleted: ${user.psn_online_id}`)
 }

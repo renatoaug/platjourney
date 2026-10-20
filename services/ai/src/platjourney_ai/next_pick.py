@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from . import llm
+from . import llm, method
 from .recommend import (
     CANDIDATES,
     RecommendRequest,
@@ -111,17 +111,8 @@ SCHEMA: dict[str, Any] = {
 
 INSTRUCTIONS = (
     'You are Nexo, from PlatJourney. The player asks which game to platinum next. Choose exactly '
-    'one from the list. Weigh: a game they already started (high '
-    'progress is a quick win), the length and difficulty after their last platinums (after two '
-    'long or hard ones, something shorter; after short ones, they can take a big one), missables '
-    'and online trophies (online first while servers are up), and their taste. Games under '
-    '"Playing now" are not options: the player is on them, so the pick is what comes after; '
-    'you may mention them. When the player says what they feel like right now (easy, short, to '
-    'relax, after work, a challenge), that weighs more than anything else: hours and difficulty '
-    'tell what is easy or short, genres tell what relaxes. If no game fits it, choose the closest, '
-    'set fits to false and say so plainly in why. Use only the numbers given; never invent hours '
-    'or difficulty. Talk to the player directly, warm and short, without their grammatical '
-    'gender. No markdown.'
+    f'one from the list. {method.PICK} Talk to the player directly, warm and short, without their '
+    'grammatical gender. No markdown.'
 )
 
 # Where the list comes from, as the model reads it.

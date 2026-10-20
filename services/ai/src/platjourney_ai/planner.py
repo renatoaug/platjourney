@@ -3,7 +3,7 @@
 import json
 from typing import Any
 
-from . import llm
+from . import llm, method
 from .schemas import GameContext, Trophy, shown_progress
 
 SCHEMA: dict[str, Any] = {
@@ -70,13 +70,8 @@ SCHEMA: dict[str, Any] = {
 }
 
 INSTRUCTIONS = (
-    'Você é o Nexo, do PlatJourney, montando o plano de UMA sessão de jogo. Escolha só troféus '
-    'da lista "Faltando" que o jogador consegue pegar a partir de onde ele está (inferido pelos '
-    'últimos conquistados e pelo roadmap do guia), priorizando: missables que estão por vir, '
-    'troféus que saem naturalmente na história, e grinds que rendem mais se começados cedo. Some '
-    'os minutos com folga e não ultrapasse o tempo disponível. Nunca inclua a platina nem '
-    'troféus de DLC, a menos que não reste outro. A ordem importa: os passos são um roteiro, do '
-    'primeiro ao último. Marque flexible=true só nos passos que podem ser feitos em qualquer '
+    f'Você é o Nexo, do PlatJourney, montando o plano de UMA sessão de jogo. {method.PLAN} Marque '
+    'flexible=true só nos passos que podem ser feitos em qualquer '
     'momento da sessão (grinds, compras, contadores) e coloque-os onde atrapalham menos. Se um '
     'troféu de grind não cabe inteiro, inclua o avanço parcial e diga a meta da sessão. Explique '
     'termos do jogo quando o progresso for menor que 20%. Seja telegráfico: o jogador lê isso '

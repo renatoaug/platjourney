@@ -20,21 +20,13 @@ const messages = defineMessages({
   [Language.PtBR]: {
     title: 'Conta',
     psnId: 'ID da PlayStation Network',
+    lead: 'Sua conta é ligada ao seu PSN ID. Os troféus vêm do seu perfil público na PSN: o PlatJourney nunca pede a senha da PlayStation.',
+    sessions: 'Sair encerra só este aparelho. Trocar a senha encerra todos os outros.',
     saveFailed: 'Não conseguimos salvar. Tente de novo.',
     cancel: 'Cancelar',
     logout: 'Sair',
     leaving: 'Saindo…',
     logoutFailed: 'Não conseguimos sair agora. Tente de novo.',
-    telegram: {
-      tapStart: 'Toque em Iniciar no Telegram para concluir.',
-      linkFailed: 'Não conseguimos gerar o link. Tente de novo.',
-      connectedTo: 'Conexão ativa com ',
-      connectedRest:
-        '. As atualizações da sua jornada de platina chegam por lá, e você conversa com o Nexo quando quiser.',
-      unlink: 'Desconectar',
-      lead: 'Receba atualizações da sua jornada de platina e converse com o Nexo direto pelo celular.',
-      link: 'Conectar Telegram',
-    },
     preferences: {
       title: 'Preferências',
       saveFailed: 'Não conseguimos salvar a preferência. Tente de novo.',
@@ -66,6 +58,7 @@ const messages = defineMessages({
     },
     delete: {
       open: 'Excluir minha conta',
+      hint: 'Apaga tudo que é seu aqui. Dá para criar a conta de novo depois, com o mesmo PSN ID, começando do zero.',
       lead: 'Apaga sua conversa com o Nexo, interesses, histórico e a conexão com o Telegram. Não dá para desfazer.',
       typeBefore: 'Digite ',
       typeAfter: ' para confirmar',
@@ -76,21 +69,13 @@ const messages = defineMessages({
   [Language.En]: {
     title: 'Account',
     psnId: 'PlayStation Network ID',
+    lead: 'Your account is tied to your PSN ID. Trophies come from your public PSN profile: PlatJourney never asks for your PlayStation password.',
+    sessions: 'Signing out ends only this device. Changing the password ends every other one.',
     saveFailed: 'Could not save. Try again.',
     cancel: 'Cancel',
     logout: 'Sign out',
     leaving: 'Signing out…',
     logoutFailed: 'Could not sign out right now. Try again.',
-    telegram: {
-      tapStart: 'Tap Start in Telegram to finish.',
-      linkFailed: 'Could not create the link. Try again.',
-      connectedTo: 'Connected to ',
-      connectedRest:
-        '. Updates on your platinum journey arrive there, and you can talk to Nexo whenever you like.',
-      unlink: 'Disconnect',
-      lead: 'Get updates on your platinum journey and talk to Nexo right from your phone.',
-      link: 'Connect Telegram',
-    },
     preferences: {
       title: 'Preferences',
       saveFailed: 'Could not save the preference. Try again.',
@@ -122,6 +107,7 @@ const messages = defineMessages({
     },
     delete: {
       open: 'Delete my account',
+      hint: 'Deletes everything of yours here. You can create the account again later, with the same PSN ID, from scratch.',
       lead: 'Deletes your chat with Nexo, interests, history and the Telegram connection. This cannot be undone.',
       typeBefore: 'Type ',
       typeAfter: ' to confirm',
@@ -141,79 +127,6 @@ const deleteAccount = (onlineId: string) => del('/api/account', { onlineId })
 const restart = () => {
   location.hash = '#/'
   location.reload()
-}
-
-function TelegramCard({ user, onChanged }: { user: Me; onChanged: () => void }) {
-  const t = useMessages(messages)
-  const [linking, setLinking] = useState(false)
-  const bot = user.telegramBot
-  const link = async () => {
-    setLinking(true)
-    try {
-      const { url } = await api<{ url: string }>('/api/telegram/link', {})
-      window.open(url, '_blank', 'noopener')
-      toast(t('telegram.tapStart'), 'info')
-    } catch (e) {
-      if (!handled(e)) toast(t('telegram.linkFailed'))
-    }
-    setLinking(false)
-  }
-  const unlink = async () => {
-    await del('/api/telegram/link').catch(() => {})
-    onChanged()
-  }
-  return (
-    <div className="card" id="telegram-card">
-      {/* Telegram's paper plane mark (Simple Icons, CC0): white plane on its brand blue. */}
-      <h2 className="telegram-title">
-        <img className="telegram-logo" src="/telegram.svg" alt="" />
-        Telegram
-      </h2>
-      {user.telegramLinked ? (
-        <>
-          <p className="muted">
-            {t('telegram.connectedTo')}
-            <b>{bot?.name ?? 'Nexo'}</b>
-            {bot && (
-              <>
-                {' · '}
-                <a
-                  className="text-link"
-                  href={`https://t.me/${bot.username}`}
-                  target="_blank"
-                  rel="noopener"
-                >
-                  @{bot.username}
-                </a>
-              </>
-            )}
-            {t('telegram.connectedRest')}
-          </p>
-          <div className="chips account-actions">
-            <button type="button" className="ghost sm" id="telegram-unlink" onClick={unlink}>
-              {t('telegram.unlink')}
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          <p className="muted">{t('telegram.lead')}</p>
-          <div className="chips account-actions">
-            <button
-              type="button"
-              className="sm"
-              id="telegram-link"
-              disabled={linking || user.demo}
-              onClick={link}
-            >
-              {t('telegram.link')}
-            </button>
-          </div>
-          {user.demo && <DemoNote />}
-        </>
-      )}
-    </div>
-  )
 }
 
 // Whether Nexo writes this player's automatic notices; only shown when the instance allows it.
@@ -492,6 +405,8 @@ function AccountCard({ user, onEditing }: { user: Me; onEditing?: (editing: bool
         </p>
       )}
       {user.demo && <DemoNote />}
+      <p className="muted account-note account-lead">{t('lead')}</p>
+      <p className="muted account-note">{t('sessions')}</p>
       <form
         className="auth-form account-form"
         id="password-form"
@@ -513,6 +428,9 @@ function AccountCard({ user, onEditing }: { user: Me; onEditing?: (editing: bool
         </PanelActions>
       </form>
       <div className="danger-zone">
+        <p className="muted account-note" hidden={delPanel.open}>
+          {t('delete.hint')}
+        </p>
         <button
           type="button"
           className="text-danger"
@@ -559,24 +477,25 @@ function AccountCard({ user, onEditing }: { user: Me; onEditing?: (editing: bool
 }
 
 /**
- * @param onChanged  the account changed on the server (Telegram unlinked); reload the page's data
+ * The account, then `children` (the page puts the connected apps there), then notifications and
+ * preferences; the page's grid places them two by two.
  * @param onEditing  a password or deletion form opened or closed, so background refreshes can wait
  */
 export function AccountCards({
   user,
-  onChanged,
   onEditing,
+  children,
 }: {
   user: Me
-  onChanged: () => void
   onEditing?: (editing: boolean) => void
+  children?: ReactNode
 }) {
   return (
     <>
-      <TelegramCard user={user} onChanged={onChanged} />
+      <AccountCard user={user} onEditing={onEditing} />
+      {children}
       <NotificationSettings user={user} />
       <PreferencesCard user={user} />
-      <AccountCard user={user} onEditing={onEditing} />
     </>
   )
 }
@@ -596,25 +515,11 @@ const settingSkeleton = (control: string, key: number) => (
   </div>
 )
 
-/** The settings while the account loads: the same four cards, in the same order and places. */
-export function AccountSkeleton() {
+/** The settings while the account loads: the same cards, in the same order and places. */
+export function AccountSkeleton({ children }: { children?: ReactNode }) {
   const t = useMessages(messages)
   return (
     <>
-      <div className="card">
-        <h2 className="telegram-title">
-          <Sk w="26px" h={26} style={{ borderRadius: '50%', flex: 'none' }} />
-          Telegram
-        </h2>
-        <Sk w="92%" h={12} />
-        <Sk w="70%" h={12} style={{ marginTop: 8 }} />
-        <Sk w="150px" h={36} style={{ marginTop: 18, borderRadius: 'var(--radius-control)' }} />
-      </div>
-      <NotificationSettingsSkeleton />
-      <div className="card is-preferences">
-        <h2>{t('preferences.title')}</h2>
-        {['40px', '40px', '96px', '40px', '160px', '80px'].map((c, i) => settingSkeleton(c, i))}
-      </div>
       <div className="card">
         <h2>{t('title')}</h2>
         <div className="account-id">
@@ -629,6 +534,12 @@ export function AccountSkeleton() {
           <Sk w="60px" h={36} style={{ borderRadius: 'var(--radius-control)' }} />
         </div>
         <Sk w="120px" h={12} style={{ marginTop: 28 }} />
+      </div>
+      {children}
+      <NotificationSettingsSkeleton />
+      <div className="card is-preferences">
+        <h2>{t('preferences.title')}</h2>
+        {['40px', '40px', '96px', '40px', '160px', '80px'].map((c, i) => settingSkeleton(c, i))}
       </div>
     </>
   )

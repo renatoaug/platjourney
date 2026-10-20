@@ -1,0 +1,99 @@
+@layer screens {
+  /* The consent page: one card on the sign-in background, with the logo, who asks, what it reads
+     and the two answers. */
+  .connect {
+    display: grid;
+    gap: 10px;
+    width: min(480px, 100%);
+    padding: 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  /* The app shell hides .logo on a phone (the sidebar becomes the bottom bar); this page keeps it. */
+  .connect .connect-logo {
+    display: flex;
+    margin-bottom: 18px;
+  }
+
+  .connect h1 {
+    margin: 0;
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+  }
+
+  .connect h2 {
+    margin: 8px 0 0;
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+  }
+
+  .connect p {
+    margin: 0;
+  }
+
+  .connect-return {
+    text-align: center;
+  }
+
+  .connect-as,
+  .connect-note,
+  .connect-return {
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+    line-height: var(--leading-snug);
+  }
+
+  .connect-reads {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .connect-reads li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .connect-reads .icon {
+    width: 16px;
+    height: 16px;
+    color: var(--color-accent);
+  }
+
+  .connect-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .connect-actions button {
+    min-height: 44px;
+    min-width: 120px;
+  }
+
+  .connect-invalid,
+  .connect-failed {
+    color: var(--color-danger);
+  }
+
+  @media (max-width: 480px) {
+    .connect-screen {
+      padding: 16px;
+    }
+
+    .connect {
+      padding: 24px 20px;
+    }
+
+    .connect-actions button {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}

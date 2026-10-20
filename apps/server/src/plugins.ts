@@ -57,6 +57,13 @@ export interface ModelWork {
   action: string
 }
 
+/** A tool an assistant connected through MCP is about to run for the player (get_guide…). */
+/** @public part of the plugin API */
+export interface ToolWork {
+  user: User
+  tool: string
+}
+
 /** Thrown by a beforeModel hook to stop the work; the player gets `message` with `status`. */
 export class Refused extends Error {
   constructor(
@@ -83,6 +90,7 @@ type Handler = (r: PluginRequest) => Promise<void>
 /** @public part of the plugin API */
 export type RouteMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 type Hook = (work: ModelWork) => Promise<void>
+type ToolHook = (work: ToolWork) => Promise<void>
 // Account events: created after sign-up, deleted before the account and its data go.
 type Events = { 'user:created': User; 'user:deleted': User }
 
@@ -113,6 +121,9 @@ export interface PluginContext {
   beforeModel(hook: Hook): void
   /** Runs when model work failed after beforeModel let it through. */
   modelFailed(hook: Hook): void
+  /** Runs before a connected assistant's tool call (MCP); throw Refused to stop it, and the
+   * assistant gets the message to pass on (a rule of the instance, a limit). */
+  beforeTool(hook: ToolHook): void
   on<E extends keyof Events>(event: E, listener: (payload: Events[E]) => Promise<void>): void
 }
 
@@ -128,6 +139,7 @@ const pageSources: Partial<Record<PageDirective, string[]>> = {}
 // already ran took.
 const before: { plugin: string; hook: Hook }[] = []
 const failed: { plugin: string; hook: Hook }[] = []
+const tools: { plugin: string; hook: ToolHook }[] = []
 type Listener = (payload: never) => Promise<void>
 const listeners = new Map<keyof Events, { plugin: string; listener: Listener }[]>()
 
@@ -169,6 +181,7 @@ const context = (name: string): PluginContext => ({
   },
   beforeModel: (hook) => before.push({ plugin: name, hook }),
   modelFailed: (hook) => failed.push({ plugin: name, hook }),
+  beforeTool: (hook) => tools.push({ plugin: name, hook }),
   on(event, listener) {
     const list = listeners.get(event) ?? []
     listeners.set(event, [...list, { plugin: name, listener: listener as Listener }])
@@ -227,6 +240,19 @@ export async function aroundModel<T>(work: ModelWork, run: () => Promise<T>): Pr
   }
 }
 
+/** Runs the plugins' beforeTool hooks; one that refuses stops the call with its Refused. */
+export async function beforeTool(work: ToolWork): Promise<void> {
+  for (const { plugin, hook } of tools) {
+    try {
+      await withTimeout(hook(work), `${plugin}: beforeTool`)
+    } catch (e) {
+      if (!(e instanceof PluginTimeout)) throw e
+      console.error(e.message)
+      throw new Refused('plugin_timeout', translator(messages, work.user)('busy'), 503)
+    }
+  }
+}
+
 /** Tells the plugins' listeners about an account event, one after the other. A listener that throws
  * stops it (the caller decides); one that takes longer than HOOK_TIMEOUT_MS is logged and skipped. */
 export async function emit<E extends keyof Events>(event: E, payload: Events[E]): Promise<void> {
@@ -278,5 +304,6 @@ export function resetPlugins(): void {
   for (const d of Object.keys(pageSources)) delete pageSources[d as PageDirective]
   before.length = 0
   failed.length = 0
+  tools.length = 0
   listeners.clear()
 }

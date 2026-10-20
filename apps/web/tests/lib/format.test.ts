@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import {
   compact,
+  fmtAgo,
   fmtClock,
   fmtDate,
   fmtDay,
@@ -8,6 +9,7 @@ import {
   fmtLong,
   fmtMinutes,
   fmtReset,
+  fmtShortDate,
   fmtTime,
   fmtWhen,
   number,
@@ -111,4 +113,19 @@ describe('fmtDay', () => {
   test('older days with the weekday, capitalized', () => {
     expect(fmtDay(NOON)).toBe('Quinta-feira, 5 de março')
   })
+})
+
+test('how long ago reads in words, from now to months', () => {
+  const now = Date.parse('2026-10-19T12:00:00Z')
+  const ago = (seconds: number) => fmtAgo(new Date(now - seconds * 1000).toISOString(), now)
+  expect(ago(10)).toBe('agora')
+  expect(ago(5 * 60)).toBe('há 5 minutos')
+  expect(ago(3 * 3600)).toBe('há 3 horas')
+  expect(ago(86_400)).toBe('ontem')
+  expect(ago(3 * 86_400)).toBe('há 3 dias')
+  expect(ago(65 * 86_400)).toBe('há 2 meses')
+})
+
+test('a short date has two digits each', () => {
+  expect(fmtShortDate('2026-10-09T12:00:00Z')).toBe('09/10/26')
 })

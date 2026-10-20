@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { SAMPLE_ME } from '../app/app-state'
 import { Page } from '../app/page'
+import { ConnectedAppsCard, TelegramRow } from '../components/connected-apps'
 import { SettingsView } from './settings'
 
 const meta: Meta = { title: 'Pages/Settings', parameters: { layout: 'fullscreen' } }
@@ -12,9 +13,25 @@ const view = (load: Parameters<typeof SettingsView>[0]['load']) => (
     <SettingsView
       load={load}
       title="Configurações"
-      lead="Telegram, notificações, preferências e a sua conta."
+      lead="A sua conta, os apps conectados, as notificações e as preferências."
       failed="Não conseguimos carregar as configurações."
-      onChanged={() => {}}
+      apps={(user) => (
+        <ConnectedAppsCard
+          telegram={<TelegramRow user={user} onChanged={() => {}} />}
+          load={{
+            kind: 'ready',
+            list: [
+              {
+                id: 'oauth_token:1',
+                name: 'Claude',
+                created_at: '2026-10-19T10:00:00Z',
+                used_at: '2026-10-19T12:00:00Z',
+              },
+            ],
+          }}
+          onDisconnect={() => {}}
+        />
+      )}
     />
   </Page>
 )

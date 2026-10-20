@@ -176,17 +176,16 @@ describe('what the demo cannot do', () => {
   test('account settings are disabled with a note', () => {
     render(
       <MockAppState value={{ me: demo }}>
-        <AccountCards user={demo} onChanged={() => {}} />
+        <AccountCards user={demo} />
       </MockAppState>,
     )
     const button = (id: string) => document.getElementById(id) as HTMLButtonElement
-    expect(button('telegram-link').disabled).toBe(true)
     expect((document.getElementById('pref-dlc') as HTMLInputElement).disabled).toBe(true)
     expect(button('password-open').disabled).toBe(true)
     expect(button('delete-open').disabled).toBe(true)
     expect(button('logout').disabled).toBe(false)
     expect((document.getElementById('pref-telegram') as HTMLInputElement).disabled).toBe(true)
-    expect(screen.getAllByText(unavailable)).toHaveLength(4)
+    expect(screen.getAllByText(unavailable)).toHaveLength(3)
   })
 
   test('goals show but cannot be edited, added, removed or moved', () => {

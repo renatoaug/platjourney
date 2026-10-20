@@ -6,26 +6,14 @@ import { OPEN_ONBOARDING } from '../../src/components/onboarding'
 import type { Me } from '../../src/lib/types'
 import { ToastHost } from '../../src/ui/toast'
 
-const linked: Me = {
-  ...SAMPLE_ME,
-  telegramLinked: true,
-  includeDlcProgress: true,
-  telegramBot: { username: 'platjourney_bot', name: 'Nexo' },
-}
+const linked: Me = { ...SAMPLE_ME, includeDlcProgress: true }
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 
-const show = (
-  user: Me = SAMPLE_ME,
-  props: { onChanged?: () => void; onEditing?: () => void } = {},
-) =>
+const show = (user: Me = SAMPLE_ME, props: { onEditing?: () => void } = {}) =>
   render(
     <MockAppState>
-      <AccountCards
-        user={user}
-        onChanged={props.onChanged ?? (() => {})}
-        onEditing={props.onEditing}
-      />
+      <AccountCards user={user} onEditing={props.onEditing} />
       <ToastHost />
     </MockAppState>,
   )
@@ -41,41 +29,6 @@ beforeEach(() => {
   reload = spyOn(location, 'reload').mockImplementation(() => {})
 })
 afterEach(() => mock.restore())
-
-describe('Telegram', () => {
-  test('connecting opens the bot link', async () => {
-    const open = spyOn(window, 'open').mockImplementation(() => null)
-    spyOn(globalThis, 'fetch').mockResolvedValue(json({ url: 'https://t.me/bot?start=x' }))
-    show()
-    fireEvent.click(screen.getByRole('button', { name: 'Conectar Telegram' }))
-    expect(await screen.findByText('Toque em Iniciar no Telegram para concluir.')).toBeTruthy()
-    expect(open).toHaveBeenCalledWith('https://t.me/bot?start=x', '_blank', 'noopener')
-  })
-
-  test('a failed link says so', async () => {
-    spyOn(globalThis, 'fetch').mockResolvedValue(json({}, 500))
-    show()
-    fireEvent.click(screen.getByRole('button', { name: 'Conectar Telegram' }))
-    expect(await screen.findByText('Não conseguimos gerar o link. Tente de novo.')).toBeTruthy()
-  })
-
-  test('a linked account shows the bot and can disconnect', async () => {
-    const fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(json({ ok: true }))
-    const onChanged = mock()
-    show(linked, { onChanged })
-    expect(screen.getByRole('link', { name: '@platjourney_bot' }).getAttribute('href')).toBe(
-      'https://t.me/platjourney_bot',
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Desconectar' }))
-    await waitFor(() => expect(onChanged).toHaveBeenCalled())
-    expect(fetchSpy.mock.calls[0][1]?.method).toBe('DELETE')
-  })
-
-  test('a linked account without a bot name falls back to Nexo', () => {
-    show({ ...linked, telegramBot: undefined })
-    expect(screen.getByText('Nexo')).toBeTruthy()
-  })
-})
 
 describe('Preferences', () => {
   test('Nexo’s notices show only where the instance allows them, and turn off for free', async () => {
@@ -241,7 +194,7 @@ describe('Account', () => {
 
   test('the skeleton keeps the card titles', () => {
     render(<AccountSkeleton />)
-    expect(screen.getByText('Telegram')).toBeTruthy()
+    expect(screen.getByText('Preferências')).toBeTruthy()
     expect(screen.getByText('Conta')).toBeTruthy()
   })
 })

@@ -14,6 +14,7 @@ import {
 } from '../i18n/i18n'
 import { api } from '../lib/api'
 import type { Me } from '../lib/types'
+import { Connect, isConnectPage } from '../pages/connect'
 import { Login } from '../pages/login'
 import { ToastHost } from '../ui/toast'
 import { TooltipHost } from '../ui/tooltip'
@@ -49,11 +50,14 @@ function FirstData({ onReady }: { onReady: () => void }) {
 function useBoot(ready: boolean): 'shown' | 'leaving' | 'gone' {
   const [boot, setBoot] = useState<'shown' | 'leaving' | 'gone'>('shown')
   useEffect(() => {
-    if (!ready || boot !== 'shown') return
-    setBoot('leaving')
+    if (ready && boot === 'shown') setBoot('leaving')
+  }, [ready, boot])
+  // Its own effect: one keyed on `ready` too would clear the timer as soon as `boot` changed.
+  useEffect(() => {
+    if (boot !== 'leaving') return
     const id = setTimeout(() => setBoot('gone'), BOOT_FADE_MS)
     return () => clearTimeout(id)
-  }, [ready, boot])
+  }, [boot])
   return boot
 }
 
@@ -62,7 +66,10 @@ export function App() {
   const [session, setSession] = useState<Session>({ kind: 'loading' })
   const [firstData, setFirstData] = useState(false)
   const markFirstData = useCallback(() => setFirstData(true), [])
-  const boot = useBoot(session.kind !== 'loading' && (session.kind !== 'in' || firstData))
+  // The consent page loads nothing of the app's own data, so it does not wait for it.
+  const boot = useBoot(
+    session.kind !== 'loading' && (session.kind !== 'in' || firstData || isConnectPage()),
+  )
   // The account's saved language wins over the browser's guess, unless the player just picked
   // one on the sign-in screen: then that one is kept and saved to the account.
   const signIn = (me: Me) => {
@@ -112,7 +119,9 @@ export function App() {
       >
         {t('skipToContent')}
       </button>
-      {session.kind === 'in' && (
+      {/* An assistant asking to connect gets the consent page alone, after the sign-in if needed. */}
+      {session.kind === 'in' && isConnectPage() && <Connect me={session.me} />}
+      {session.kind === 'in' && !isConnectPage() && (
         <HashRouter>
           <AppStateProvider me={session.me}>
             <FirstData onReady={markFirstData} />

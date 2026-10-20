@@ -39,8 +39,10 @@ import {
 } from './i18n.ts'
 import { handleInterestCommand, storeFor, yearProgress } from './interests.ts'
 import { library, ownedGames } from './library.ts'
+import { mcpRoute } from './mcp.ts'
 import { reply, trophyHelp } from './nexo.ts'
 import { MAX_MOOD, nextPick, pickHistory } from './next-pick.ts'
+import { consentClient, decide, oauthRoute } from './oauth.ts'
 import { currentPlan, discardPlan, planSession } from './planner.ts'
 import { hours, playtimes } from './playtime.ts'
 import { interceptsFor, pluginPagePolicy, pluginRoute, Refused } from './plugins.ts'
@@ -72,6 +74,7 @@ import {
 import { requestMissingGame } from './repository/game-request.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
+import { connectionsOf, deleteConnection } from './repository/oauth.ts'
 import { deletePushSubscription, savePushSubscription } from './repository/push-subscription.ts'
 import { isDismissReason } from './repository/recommendation.ts'
 import { listServerStatuses } from './repository/server-status.ts'
@@ -529,6 +532,8 @@ async function demoAnswered(
   const path = url.pathname
   const refresh = path === '/api/recommendations' && url.searchParams.get('refresh') === '1'
   if (method === 'GET' && !refresh) return false
+  // Connecting an assistant to the demo is allowed: its tools only read.
+  if (path === '/api/oauth/authorize' && method === 'POST') return false
   if (
     (path === '/api/notifications/read' || path === '/api/account/onboarded') &&
     method === 'POST'
@@ -876,6 +881,52 @@ async function dismissPick({ req, res, me, titles }: Api) {
 
 // The player's changes to the taste profile and their rules; the stored batch answers, and a new
 // one (model work) waits for the refresh button.
+// The consent page: which assistant asks, before the player allows it.
+async function consentInfo({ res, url }: Api) {
+  const client = await consentClient({
+    clientId: url.searchParams.get('client_id') ?? '',
+    redirectUri: url.searchParams.get('redirect_uri') ?? '',
+  })
+  if (!client) return json(res, 404, { error: 'unknown_client' })
+  return json(res, 200, {
+    name: client.name,
+    redirectHost: new URL(url.searchParams.get('redirect_uri') ?? '').host,
+  })
+}
+
+async function consent({ req, res, me }: Api) {
+  const { clientId, redirectUri, challenge, state, allow: allowed } = await readBody(req)
+  const str = (v: unknown) => (typeof v === 'string' ? v : '')
+  const redirect = await decide(
+    me,
+    {
+      clientId: str(clientId),
+      redirectUri: str(redirectUri),
+      challenge: str(challenge),
+      state: typeof state === 'string' ? state : null,
+    },
+    allowed === true,
+  )
+  if (!redirect) return json(res, 400, { error: 'invalid_request' })
+  return json(res, 200, { redirect })
+}
+
+// The assistants the player connected. The demo account is shared, so its list stays empty.
+async function connections({ res, me }: Api) {
+  return json(res, 200, { connections: isDemo(me) ? [] : await connectionsOf(me.id) })
+}
+
+async function disconnect({ req, res, me }: Api) {
+  const { id } = await readBody(req)
+  if (
+    typeof id !== 'string' ||
+    !id.startsWith('oauth_token:') ||
+    !(await deleteConnection(me.id, id))
+  )
+    return json(res, 404, { error: 'not found' })
+  return json(res, 200, { connections: await connectionsOf(me.id) })
+}
+
 async function tastePreferences({ req, res, me, titles }: Api) {
   const prefs = readPrefs(await readBody(req))
   if (!prefs) return json(res, 400, { error: 'invalid' })
@@ -909,6 +960,10 @@ const API_ROUTES: Record<string, ApiHandler> = {
     summaries.delete(me.id)
     return json(res, 200, { ok: true }, { 'set-cookie': sessionCookie(null) })
   },
+  'GET /api/oauth/client': consentInfo,
+  'POST /api/oauth/authorize': consent,
+  'GET /api/connections': connections,
+  'DELETE /api/connections': disconnect,
   'POST /api/push/subscription': savePush,
   'DELETE /api/push/subscription': dropPush,
   'POST /api/push/test': testPush,
@@ -1181,6 +1236,8 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const method = req.method ?? 'GET'
 
   if (await intercepted(req, res, url, method)) return
+  if (await oauthRoute(req, res, url, method)) return
+  if (await mcpRoute(req, res, url, method)) return
   if (path.startsWith('/api/')) return apiRoute(req, res, url, method)
   if (method === 'GET' && DEV_WEB) return devPage(req, res, DEV_WEB)
   if (method === 'GET' && servedStatic(req, res, path)) return
