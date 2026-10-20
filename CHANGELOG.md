@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.28.0](https://github.com/renatoaug/platjourney/compare/v0.27.1...v0.28.0) (2026-10-20)
+
+### Features
+
+* **web:** an assistant's pick in "O que jogar agora?" ([#67](https://github.com/renatoaug/platjourney/issues/67)) ([2299ded](https://github.com/renatoaug/platjourney/commit/2299dedf1aed0af3f8cf8b78cf4387ef3b98556e))
+
 ## [0.27.1](https://github.com/renatoaug/platjourney/compare/v0.27.0...v0.27.1) (2026-10-20)
 
 ### Bug Fixes
