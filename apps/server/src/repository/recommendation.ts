@@ -17,16 +17,16 @@ export interface RecommendationRow {
   generated_at: string
 }
 
-/** The latest batch, without the games dismissed since. The picks asked for one at a time and the
- * games assistants suggested are not part of any batch. */
+/** The latest batch, without the games dismissed since. The picks asked for one at a time are not
+ * part of any batch. */
 export async function listRecommendations(user: string): Promise<RecommendationRow[]> {
   return plain(
     await q<RecommendationRow[]>(
       // Rows from before batches were kept have no batch_at: with no batch since, they are the latest.
       `LET $last = array::max(SELECT VALUE batch_at FROM recommendation
-         WHERE user = $user AND batch_at != NONE AND source NOTINSIDE ['pick', 'assistant']);
+         WHERE user = $user AND batch_at != NONE AND source != 'pick');
        SELECT *, batch_at ?? created_at AS generated_at, game.* AS game FROM recommendation
-       WHERE user = $user AND batch_at = $last AND source NOTINSIDE ['pick', 'assistant']
+       WHERE user = $user AND batch_at = $last AND source != 'pick'
          AND game NOT IN (SELECT VALUE game FROM dismissal WHERE user = $user)
        ORDER BY created_at DESC`,
       { user: userRef(user) },
@@ -123,12 +123,12 @@ export async function savePick(
   return plain(row)
 }
 
-/** The player's picks, the latest first. */
+/** The picks the player asked Nexo for, the latest first. */
 export async function listPicks(user: string, limit = 30): Promise<PickRow[]> {
   return plain(
     await q<PickRow[]>(
       `SELECT id, game.* AS game, why, first_step, mood, scope, owned_only, fits, created_at
-       FROM recommendation WHERE user = $user AND source = 'pick'
+       FROM recommendation WHERE user = $user AND source = 'pick' AND recommender = 'Nexo'
        ORDER BY created_at DESC LIMIT $limit`,
       { user: userRef(user), limit },
     ),
@@ -143,7 +143,7 @@ export async function recentPickGames(
 ): Promise<string[]> {
   const rows = await q<unknown[]>(
     `SELECT VALUE game FROM recommendation WHERE user = $user AND source = 'pick'
-       AND scope = $scope AND created_at > time::now() - <duration> $since`,
+       AND recommender = 'Nexo' AND scope = $scope AND created_at > time::now() - <duration> $since`,
     { user: userRef(user), scope, since: `${hours}h` },
   )
   return [...new Set(plain(rows ?? []).map(String))]
@@ -159,7 +159,7 @@ export async function lastRecommended(
   const [row] = await q<{ at: string; source?: string; why: string }[]>(
     `SELECT created_at AS at, source, why FROM recommendation
      WHERE user = $user AND game = $game AND created_at > time::now() - <duration> $since
-       AND source != 'assistant'
+       AND recommender = 'Nexo'
      ORDER BY at DESC LIMIT 1`,
     { user: userRef(user), game: gameRef(game), since: `${days}d` },
   )
@@ -205,8 +205,8 @@ export interface AssistantPick {
   created_at: string
 }
 
-/** Keeps a game an assistant suggested; the same game again replaces it, with the new reason and
- * date. Like Nexo's, it keeps new batches from repeating the game for a while. */
+/** Keeps a game an assistant suggested, as a pick it made; the same game again replaces it, with
+ * the new reason and date. Like Nexo's, it keeps new batches from repeating the game for a while. */
 export async function saveAssistantPick(
   user: string,
   game: string,
@@ -214,9 +214,10 @@ export async function saveAssistantPick(
   assistant: string,
 ): Promise<void> {
   await q(
-    `DELETE recommendation WHERE user = $user AND game = $game AND source = 'assistant';
-     CREATE recommendation CONTENT { user: $user, game: $game, source: 'assistant', why: $why,
-       assistant: $assistant, similar_to: [] };`,
+    `DELETE recommendation WHERE user = $user AND game = $game AND source = 'pick'
+       AND recommender != 'Nexo';
+     CREATE recommendation CONTENT { user: $user, game: $game, source: 'pick', why: $why,
+       recommender: $assistant, similar_to: [] };`,
     { user: userRef(user), game: gameRef(game), why, assistant },
   )
 }
@@ -228,8 +229,8 @@ export async function assistantPicks(user: string, year: number): Promise<Assist
     await q<AssistantPick[]>(
       `LET $saved = SELECT VALUE game FROM interest WHERE user = $user AND year = $year;
        LET $dismissed = SELECT VALUE game FROM dismissal WHERE user = $user;
-       SELECT id, game.* AS game, why, assistant, created_at FROM recommendation
-       WHERE user = $user AND source = 'assistant'
+       SELECT id, game.* AS game, why, recommender AS assistant, created_at FROM recommendation
+       WHERE user = $user AND source = 'pick' AND recommender != 'Nexo'
          AND created_at > time::now() - ${ASSISTANT_PICK_DAYS}d
          AND game NOTINSIDE $saved AND game NOTINSIDE $dismissed
        ORDER BY created_at DESC;`,
@@ -240,8 +241,8 @@ export async function assistantPicks(user: string, year: number): Promise<Assist
 
 /** Takes a game an assistant suggested off Discover. */
 export async function dropAssistantPick(user: string, game: string): Promise<void> {
-  await q("DELETE recommendation WHERE user = $user AND game = $game AND source = 'assistant'", {
-    user: userRef(user),
-    game: gameRef(game),
-  })
+  await q(
+    "DELETE recommendation WHERE user = $user AND game = $game AND source = 'pick' AND recommender != 'Nexo'",
+    { user: userRef(user), game: gameRef(game) },
+  )
 }
