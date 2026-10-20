@@ -120,4 +120,69 @@
     border-radius: var(--radius-round);
     background: currentColor;
   }
+
+  /* A value to paste carries its own small copy button; copied, it turns to a check for a moment. */
+  .connect-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .connect-copy {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-tag);
+    background: transparent;
+    color: var(--color-fg-muted);
+    cursor: pointer;
+    transition:
+      color 0.2s ease,
+      background 0.2s ease;
+  }
+
+  .connect-copy:hover {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  /* The install guide's steps give their icons a margin and a nudge down (.install-steps .icon);
+     inside this button the icon sits in the middle. */
+  .install-steps .connect-copy .icon,
+  .connect-copy .icon {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    vertical-align: 0;
+  }
+
+  .connect-copy.is-copied,
+  .connect-copy-all.is-copied .icon {
+    color: var(--color-accent);
+    animation: connect-copied 0.35s ease;
+  }
+
+  .connect-copy-all.is-copied {
+    animation: connect-copied 0.35s ease;
+  }
+
+  .connect-copy-all.is-copied .icon {
+    color: inherit;
+  }
+
+  @keyframes connect-copied {
+    40% {
+      transform: scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .connect-copy.is-copied,
+    .connect-copy-all.is-copied {
+      animation: none;
+    }
+  }
 }

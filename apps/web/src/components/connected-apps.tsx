@@ -34,7 +34,8 @@ const messages = defineMessages({
     hide: 'Fechar',
     notYet: 'Ainda não conectado.',
     copy: 'Copiar endereço',
-    copied: 'Endereço copiado.',
+    copied: 'Copiado!',
+    copyValue: 'Copiar {value}',
     menus: 'Os nomes dos menus podem mudar um pouco com o tempo.',
     guideEyebrow: 'CONECTAR ASSISTENTE',
     guideTitle: 'Como conectar o {name}',
@@ -83,7 +84,8 @@ const messages = defineMessages({
     hide: 'Close',
     notYet: 'Not connected yet.',
     copy: 'Copy address',
-    copied: 'Address copied.',
+    copied: 'Copied!',
+    copyValue: 'Copy {value}',
     menus: 'Menu names may change a little over time.',
     guideEyebrow: 'CONNECT AN ASSISTANT',
     guideTitle: 'How to connect {name}',
@@ -251,16 +253,48 @@ type Assistant = (typeof ASSISTANTS)[number]
 
 const STEPS = ['step1', 'step2', 'step3', 'step4'] as const
 
-// A step names what to click in **bold** and what to type or paste in `green`.
+// How long a copy button says it copied.
+const COPIED_MS = 1800
+
+/** Copies `text` and says so for a moment on the button itself, instead of a toast. */
+function useCopy() {
+  const [copied, setCopied] = useState<string | null>(null)
+  useEffect(() => {
+    if (!copied) return
+    const id = setTimeout(() => setCopied(null), COPIED_MS)
+    return () => clearTimeout(id)
+  }, [copied])
+  const copy = async (text: string) => {
+    await navigator.clipboard?.writeText(text).catch(() => {})
+    setCopied(text)
+  }
+  return { copied, copy }
+}
+
+// Something to type or paste, in the accent, with its own copy button.
+function CopyValue({ value }: { value: string }) {
+  const t = useMessages(messages)
+  const { copied, copy } = useCopy()
+  return (
+    <span className="connect-value">
+      {value}
+      <button
+        type="button"
+        className={`connect-copy ${copied ? 'is-copied' : ''}`}
+        aria-label={copied ? t('copied') : t('copyValue', { value })}
+        onClick={() => copy(value)}
+      >
+        <Icon name={copied ? 'check' : 'copy'} />
+      </button>
+    </span>
+  )
+}
+
+// A step names what to click in **bold** and what to type or paste in `green`, with a copy button.
 function marked(text: string): ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/).map((part) => {
     if (part.startsWith('**')) return <b key={part}>{part.slice(2, -2)}</b>
-    if (part.startsWith('`'))
-      return (
-        <span key={part} className="connect-value">
-          {part.slice(1, -1)}
-        </span>
-      )
+    if (part.startsWith('`')) return <CopyValue key={part} value={part.slice(1, -1)} />
     return part
   })
 }
@@ -296,10 +330,7 @@ function ConnectGuide({ assistant: a, onClose }: { assistant: Assistant; onClose
     const dialog = ref.current
     if (dialog && !dialog.open) dialog.showModal?.()
   }, [])
-  const copy = async () => {
-    await navigator.clipboard?.writeText(url).catch(() => {})
-    toast(t('copied'), 'success')
-  }
+  const { copied, copy } = useCopy()
   return (
     <dialog
       ref={ref}
@@ -335,8 +366,12 @@ function ConnectGuide({ assistant: a, onClose }: { assistant: Assistant; onClose
           <button type="button" className="ghost sm" onClick={onClose}>
             {t('hide')}
           </button>
-          <button type="button" className="button" onClick={copy}>
-            <Icon name="copy" /> {t('copy')}
+          <button
+            type="button"
+            className={`button connect-copy-all ${copied ? 'is-copied' : ''}`}
+            onClick={() => copy(url)}
+          >
+            <Icon name={copied ? 'check' : 'copy'} /> {copied ? t('copied') : t('copy')}
           </button>
         </footer>
       </div>
