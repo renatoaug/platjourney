@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.25.0](https://github.com/renatoaug/platjourney/compare/v0.24.0...v0.25.0) (2026-10-20)
+
+### Features
+
+* **server:** use PlatJourney from assistants through an MCP server ([#60](https://github.com/renatoaug/platjourney/issues/60)) ([5808358](https://github.com/renatoaug/platjourney/commit/58083580d40bbcf372712a4a88fc13538bb0c75b))
+
 ## [0.24.0](https://github.com/renatoaug/platjourney/compare/v0.23.0...v0.24.0) (2026-10-19)
 
 ### Features
