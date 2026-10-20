@@ -274,20 +274,6 @@ export interface LibraryGame {
  * know by name. */
 export type AssistantKey = 'claude' | 'chatgpt' | 'other'
 
-/** A game a connected assistant suggested in its chat (save_suggestion), with the guide's facts. */
-export interface AssistantPick {
-  game: Game
-  reason: string
-  assistant: AssistantKey
-  savedAt: string
-  difficulty: number
-  hours: number
-  playthroughs: number | null
-  hasMissables: boolean
-  hasOnline: boolean
-  hasDifficultyTrophy: boolean | null
-}
-
 export interface SimilarPick {
   game: Game
   platform: string

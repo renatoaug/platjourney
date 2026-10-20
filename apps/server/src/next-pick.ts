@@ -20,6 +20,7 @@ import {
   listPicks,
   type PickRow,
   type PickScope,
+  type Recommender,
   recentPickGames,
   savePick,
 } from './repository/recommendation.ts'
@@ -46,12 +47,15 @@ export interface NextPick {
   id: string
   game: { id: string; name: string; cover_url?: string | null }
   why: string
-  firstStep: string
+  /** Where to start; null when an assistant left it out. */
+  firstStep: string | null
   mood: string | null
   scope: PickScope
   ownedOnly: boolean
   /** False when nothing matched the mood and Nexo chose the closest. */
   fits: boolean
+  /** Who picked it: Nexo, or the assistant that suggested it in its chat. */
+  recommender: Recommender
   at: string
 }
 
@@ -74,11 +78,12 @@ const view = (r: PickRow): NextPick => ({
   id: r.id,
   game: { id: r.game.id, name: r.game.name, cover_url: r.game.cover_url ?? null },
   why: r.why,
-  firstStep: r.first_step,
+  firstStep: r.first_step ?? null,
   mood: r.mood ?? null,
   scope: r.scope,
   ownedOnly: r.owned_only === true,
   fits: r.fits !== false,
+  recommender: r.recommender ?? 'nexo',
   at: r.created_at,
 })
 

@@ -90,6 +90,7 @@ test('the service gets each saved game with its guide and progress, and the last
     scope: 'interests',
     ownedOnly: false,
     fits: true,
+    recommender: 'nexo',
     at: AT,
   })
   expect(interests.markNextPick).toHaveBeenCalledWith(user.id, 'game:2')
@@ -357,6 +358,7 @@ test('the history is the stored picks as the app shows them', async () => {
       scope: 'any',
       ownedOnly: true,
       fits: false,
+      recommender: 'nexo',
       at: AT,
     },
     {
@@ -368,6 +370,7 @@ test('the history is the stored picks as the app shows them', async () => {
       scope: 'interests',
       ownedOnly: false,
       fits: true,
+      recommender: 'nexo',
       at: AT,
     },
   ])

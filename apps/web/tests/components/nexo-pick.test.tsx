@@ -3,7 +3,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { NextPickLink } from '../../src/components/goals/next-pick'
 import { type NexoPick, NexoPickBox, NexoPickPanel } from '../../src/components/nexo-pick'
-import { picksData } from '../../src/components/nexo-pick.stories'
+import { assistantPicksData, picksData } from '../../src/components/nexo-pick.stories'
 import { mockApi, never, renderApp } from '../support/web'
 
 afterEach(() => mock.restore())
@@ -30,6 +30,32 @@ test('the stored picks show the latest, with what was asked, and the earlier one
   expect(within(dialog).getByRole('link', { name: /Days Gone/ })).toBeTruthy()
   fireEvent.click(within(dialog).getByRole('button', { name: 'Fechar' }))
   expect(screen.queryByRole('dialog')).toBeNull()
+})
+
+test("an assistant's pick is the latest one under its name and logo, without a first step", () => {
+  renderApp(<NexoPickPanel picks={assistantPicksData} onAsk={() => {}} />)
+  expect(screen.getByText(/ÚLTIMA ESCOLHA · CLAUDE ·/)).toBeTruthy()
+  expect(document.querySelector('.nexo-pick-latest .app-logo')?.getAttribute('src')).toBe(
+    '/claude.svg',
+  )
+  // Asking is still Nexo's.
+  expect(document.querySelector('.nexo-pick-top > img')?.getAttribute('src')).toBe(
+    '/nexo-avatar.svg',
+  )
+  expect(screen.queryByText('Por onde começar')).toBeNull()
+  // Nexo's earlier picks keep where it looked.
+  fireEvent.click(screen.getByRole('button', { name: /Ver as 3 escolhas anteriores/ }))
+  const dialog = screen.getByRole('dialog', { name: 'Escolhas anteriores' })
+  expect(within(dialog).getAllByText(/Meus interesses/)).toHaveLength(2)
+})
+
+test("an assistant the app does not know by name is one; Nexo's pick has no mark", () => {
+  const other = [{ ...assistantPicksData[0], recommender: 'other' as const }]
+  const { unmount } = renderApp(<NexoPickPanel picks={other} onAsk={() => {}} />)
+  expect(screen.getByText(/ÚLTIMA ESCOLHA · ASSISTENTE ·/)).toBeTruthy()
+  unmount()
+  renderApp(<NexoPickPanel picks={picksData} onAsk={() => {}} />)
+  expect(document.querySelector('.nexo-pick-latest .app-logo')).toBeNull()
 })
 
 test('a kept list shows at once; a failed load leaves the form to ask', async () => {

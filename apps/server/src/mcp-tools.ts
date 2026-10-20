@@ -56,7 +56,7 @@ export interface Tool {
 }
 
 const SAVE_PICK =
-  'When you recommend one of these games to the player, save your pick with save_suggestion (the game and why, in one sentence).'
+  'When you recommend one of these games to the player, save your main pick with save_suggestion (the game, why in one sentence and where to start).'
 
 const gameArg = {
   type: 'string',
@@ -608,7 +608,7 @@ export const TOOLS: Tool[] = [
   {
     name: 'save_suggestion',
     description:
-      'Saves a game you recommended to the player, with why in one sentence, so it shows in their PlatJourney app under your name. Call it with your final pick when you recommend a game (up to 3 per conversation); the same game again updates the reason.',
+      'Saves the game you recommended to the player, with why in one sentence and where to start, so it shows in their PlatJourney app as their latest pick, under your name. Call it with your main pick when you recommend what to play; the same game again updates it.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -617,6 +617,10 @@ export const TOOLS: Tool[] = [
           type: 'string',
           description: "Why this game, for this player, in one sentence in the player's language.",
         },
+        firstStep: {
+          type: 'string',
+          description: "Where to start, in one sentence in the player's language.",
+        },
       },
       required: ['game', 'reason'],
     },
@@ -624,8 +628,14 @@ export const TOOLS: Tool[] = [
     run: async (user, args, from) => {
       const game = await gameFrom(args)
       const reason = textArg(args, 'reason', 280)
-      await saveAssistantPick(user.id, game.id, reason, assistantOf(from))
-      return { saved: gameRow(game), reason }
+      const firstStep = optText(args.firstStep, 280, undefined)
+      await saveAssistantPick(user.id, {
+        game: game.id,
+        why: reason,
+        firstStep,
+        assistant: assistantOf(from),
+      })
+      return { saved: gameRow(game), reason, firstStep: firstStep ?? null }
     },
   },
   {

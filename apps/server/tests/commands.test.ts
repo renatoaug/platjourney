@@ -136,6 +136,7 @@ test('pick answers with the chosen interest, or how to save one', async () => {
     scope: 'interests' as const,
     ownedOnly: false,
     fits: true,
+    recommender: 'nexo' as const,
     at: '2026-10-18T10:00:00Z',
   }
   const ask = spyOn(nextPickModule, 'nextPick').mockResolvedValueOnce(pick)
