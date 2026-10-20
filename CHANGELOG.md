@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.25.1](https://github.com/renatoaug/platjourney/compare/v0.25.0...v0.25.1) (2026-10-20)
+
+### Bug Fixes
+
+* **server:** show the app icon in assistants' connector lists ([#61](https://github.com/renatoaug/platjourney/issues/61)) ([ec537d4](https://github.com/renatoaug/platjourney/commit/ec537d4eab2c16b0beac87499a91635673ace294))
+
 ## [0.25.0](https://github.com/renatoaug/platjourney/compare/v0.24.0...v0.25.0) (2026-10-20)
 
 ### Features
