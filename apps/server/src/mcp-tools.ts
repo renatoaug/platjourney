@@ -50,7 +50,13 @@ export interface Tool {
   changes?: boolean
   /** Takes something away (a saved game). */
   destructive?: boolean
+  /** Added to the result as `next`: what to save when the assistant acts on it. An assistant that
+   * loads tools as it needs them reads this, where it may never read the server's instructions. */
+  next?: string
 }
+
+const SAVE_PICK =
+  'When you recommend one of these games to the player, save your pick with save_suggestion (the game and why, in one sentence).'
 
 const gameArg = {
   type: 'string',
@@ -195,6 +201,7 @@ export const TOOLS: Tool[] = [
     description:
       'The game the player is playing now (from PSN): progress toward the platinum, hours played and the base-game trophies still missing.',
     inputSchema: { type: 'object', properties: {} },
+    next: 'If you plan a session for this game, save the plan with save_session_plan.',
     run: async (user) => {
       const ctx = getCurrent(user) ?? (isDemo(user) ? await demoContext(user) : undefined)
       if (!ctx) return { playing: null }
@@ -332,6 +339,7 @@ export const TOOLS: Tool[] = [
     description:
       "The games the player saved to platinum this year, with progress on each, the year's goal and the platinums already earned this year.",
     inputSchema: { type: 'object', properties: {} },
+    next: SAVE_PICK,
     run: async (user) => {
       const titles = await library(user.psn_account_id)
       const p = await yearProgress(user, titles, undefined, await playtimes(user))
@@ -408,6 +416,7 @@ export const TOOLS: Tool[] = [
       type: 'object',
       properties: { limit: { type: 'number', description: 'How many, up to 20 (default 10).' } },
     },
+    next: SAVE_PICK,
     run: async (user, args) => {
       const ranked = await rankNextPlatinum(
         await library(user.psn_account_id),
@@ -443,6 +452,7 @@ export const TOOLS: Tool[] = [
     description:
       "Games PlatJourney recommends from the player's library (its graph of similar games, no model): like the ones they play, quick platinums, and the rest of series they own. Each says which of the player's games led to it.",
     inputSchema: { type: 'object', properties: {} },
+    next: SAVE_PICK,
     run: async (user) => {
       const titles = await library(user.psn_account_id)
       const picks = await similarPicks(user, titles, await ownedGames(user.psn_account_id))
@@ -465,6 +475,7 @@ export const TOOLS: Tool[] = [
     description:
       'Games like one game: its expansions, base game and series first, then similar games, each with its guide difficulty and hours.',
     inputSchema: { type: 'object', properties: { game: gameArg }, required: ['game'] },
+    next: SAVE_PICK,
     run: async (_user, args) => {
       const game = await gameFrom(args)
       return {

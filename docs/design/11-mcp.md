@@ -69,7 +69,7 @@ None calls the model: using them costs the instance nothing. The reads say so (`
 
 **Saving what the assistant settled**
 
-What the player and the assistant decide in the chat can live in the app too, under the assistant's name. The server tells the assistant by the name its client registered with and stores `claude`, `chatgpt` (ChatGPT and its desktop app, which registers as Codex) or `other`; the app shows the name. The server's instructions ask the assistant to save its final pick when it recommends a game, a session plan when it makes one, and a tip when the player asks or it is worth coming back to.
+What the player and the assistant decide in the chat can live in the app too, under the assistant's name. The server tells the assistant by the name its client registered with and stores `claude`, `chatgpt` (ChatGPT and its desktop app, which registers as Codex) or `other`; the app shows the name. The server's instructions ask the assistant to save its final pick when it recommends a game, a session plan when it makes one, and a tip when the player asks or it is worth coming back to. An assistant that loads tools as it needs them (Claude) may never read those instructions nor load the save tools, so the reads that lead to them say it in their result, as `next`: `get_current_game` points to `save_session_plan`, and `get_interests`, `get_next_platinums`, `get_recommendations` and `get_similar_games` to `save_suggestion`.
 
 | Tool | Does | Shows in the app |
 |---|---|---|

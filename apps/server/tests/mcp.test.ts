@@ -165,7 +165,10 @@ test("the profile is the token owner's, never another player's", async () => {
 
 test('the current game lists the base-game trophies still missing', async () => {
   spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
-  expect((await call('get_current_game')).data).toEqual({ playing: null })
+  expect((await call('get_current_game')).data).toEqual({
+    playing: null,
+    next: 'If you plan a session for this game, save the plan with save_session_plan.',
+  })
   const trophies = [
     makeTrophy({ id: 1, name: 'Got it', earned: true }),
     makeTrophy({ id: 2, name: 'Faltando', nameEn: 'Missing', groupId: 'default', earned: false }),
@@ -291,6 +294,8 @@ test("interests come with the year goal and this year's platinums", async () => 
         deal: null,
       },
     ],
+    // Read to pick a game, the result says how to save the pick.
+    next: expect.stringContaining('save_suggestion'),
   })
 })
 
