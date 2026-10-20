@@ -113,7 +113,7 @@ export function fakeOauthStore(people: User[]) {
     const t = tokens.find((x) => x.access_hash === hash && x.access_expires > Date.now())
     if (!t) return undefined
     t.used_at = '2026-10-19T12:00:00Z'
-    return { id: t.id, user: t.user }
+    return { id: t.id, user: t.user, client: clients.find((c) => c.id === t.client)?.name ?? '' }
   })
   spyOn(repo, 'connectionsOf').mockImplementation(async (user) =>
     tokens
@@ -138,9 +138,9 @@ export function fakeOauthStore(people: User[]) {
 const REDIRECT = 'https://assistant.example/callback'
 
 /** The whole dance for one player: register, consent, trade the code. Returns the tokens. */
-export async function connect(user: User, verifier = 'v'.repeat(50)) {
+export async function connect(user: User, verifier = 'v'.repeat(50), clientName = 'Assistant') {
   const reg = await send('POST', '/oauth/register', {
-    client_name: 'Assistant',
+    client_name: clientName,
     redirect_uris: [REDIRECT],
   })
   const { decide } = await import('../src/oauth.ts')

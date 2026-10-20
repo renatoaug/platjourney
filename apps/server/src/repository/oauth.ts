@@ -138,11 +138,12 @@ export async function replaceConnections(user: string, name: string): Promise<vo
 /** The connection a live access token belongs to, marked as used now. */
 export async function tokenOwner(
   accessHash: string,
-): Promise<{ id: string; user: string } | undefined> {
+): Promise<{ id: string; user: string; client: string } | undefined> {
   return plain(
-    await one<{ id: string; user: string }>(
+    await one<{ id: string; user: string; client: string }>(
       `UPDATE oauth_token SET used_at = time::now()
-       WHERE access_hash = $hash AND access_expires_at > time::now() RETURN id, user`,
+       WHERE access_hash = $hash AND access_expires_at > time::now()
+       RETURN id, user, client.name AS client`,
       { hash: accessHash },
     ),
   )

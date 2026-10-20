@@ -41,6 +41,8 @@ export interface SessionPlan {
   totalMinutes: number
   warnings: string[]
   ifTimeLeft: string | null
+  /** A plan an assistant connected through MCP made (save_session_plan): its name. */
+  assistant?: string
 }
 
 export type PlanStatus = 'active' | 'done' | 'expired'

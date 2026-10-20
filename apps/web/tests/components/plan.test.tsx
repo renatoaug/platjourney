@@ -64,6 +64,11 @@ describe('Plan', () => {
     expect(screen.queryByText(/aviso/)).toBeNull()
   })
 
+  test('a plan an assistant made says so under the heading', () => {
+    show({ plan: { ...samplePlan, status: 'expired', assistant: 'Claude' } })
+    expect(document.querySelector('.plan-validity')?.textContent).toContain('feito no Claude')
+  })
+
   test('a plan without steps is at zero', () => {
     show({ plan: { ...samplePlan, steps: [], doneCount: 0 } })
     expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('0')

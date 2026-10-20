@@ -3,12 +3,22 @@ import type { Game } from './game.ts'
 import { gameRef } from './game.ts'
 import { userRef } from './user.ts'
 
-export type TipKind = 'start' | 'unlock' | 'chat' | 'session' | 'server' | 'route' | 'deal'
+export type TipKind =
+  | 'start'
+  | 'unlock'
+  | 'chat'
+  | 'session'
+  | 'server'
+  | 'route'
+  | 'deal'
+  | 'assistant'
 export interface Tip {
   id: string
   kind: TipKind
   content: string
   game: Game | null
+  /** For a tip a connected assistant saved: its name ('Claude', 'ChatGPT'). */
+  assistant?: string | null
   created_at: string
 }
 
@@ -26,6 +36,25 @@ export async function logTip(
      };`,
     { data: { user: userRef(user), kind, content, ...(game ? { game: gameRef(game) } : {}) } },
   )
+}
+
+/** A tip a connected assistant saved, for the history page under its name. Not a notification:
+ * the player was in its chat when it was written. */
+export async function logAssistantTip(
+  user: string,
+  assistant: string,
+  content: string,
+  game?: string,
+): Promise<void> {
+  await q('CREATE tip CONTENT $data', {
+    data: {
+      user: userRef(user),
+      kind: 'assistant',
+      assistant,
+      content,
+      ...(game ? { game: gameRef(game) } : {}),
+    },
+  })
 }
 
 export async function recentTips(user: string, limit = 30): Promise<Tip[]> {
@@ -63,7 +92,7 @@ export async function tipsBefore(user: string, before: Date, limit = 30): Promis
 
 export interface Notification {
   id: string
-  kind: Exclude<TipKind, 'chat'>
+  kind: Exclude<TipKind, 'chat' | 'assistant'>
   content: string
   game: Game | null
   read_at: string | null

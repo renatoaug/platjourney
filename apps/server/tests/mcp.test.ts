@@ -10,8 +10,11 @@ import { Refused, registerPlugin, resetPlugins } from '../src/plugins.ts'
 import * as psn from '../src/psn.ts'
 import * as ranking from '../src/ranking.ts'
 import { resetRateLimits } from '../src/rate-limit.ts'
+import * as activity from '../src/repository/activity.ts'
+import * as picks from '../src/repository/assistant-pick.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
+import * as users from '../src/repository/user.ts'
 import * as watcher from '../src/watcher.ts'
 import { makeContext, makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
 import { connect, fakeOauthStore, send } from './oauth-store.ts'
@@ -103,6 +106,9 @@ test('initialize, ping and the tool list', async () => {
     'mark_owned',
     'set_yearly_goal',
     'dismiss_recommendation',
+    'save_suggestion',
+    'save_session_plan',
+    'save_tip',
   ])
   // Reads say so; the changes say whether they take something away.
   const hints = Object.fromEntries(
@@ -310,4 +316,77 @@ test('a plugin can refuse a tool, and each connection has a budget a minute', as
   expect((await call('get_guide', { game: 'game:1' })).content[0].text).toContain('Too many calls')
   config.mcp.perMinute = saved
   expect(Refused).toBeDefined()
+})
+
+test("a suggestion is saved under the assistant's name; the demo saves nothing", async () => {
+  const save = spyOn(picks, 'savePick').mockResolvedValue()
+  const claude = (await connect(me, 'v'.repeat(50), 'Claude')).access_token
+  const { data } = await call(
+    'save_suggestion',
+    { game: game.name, reason: '  Short and fun.  ' },
+    claude,
+  )
+  expect(data).toMatchObject({ saved: { id: game.id }, reason: 'Short and fun.' })
+  expect(save).toHaveBeenCalledWith(me.id, game.id, 'Short and fun.', 'Claude')
+  expect((await call('save_suggestion', { game: game.name })).isError).toBe(true)
+  expect((await call('save_suggestion', { game: 'Nope', reason: 'x' })).isError).toBe(true)
+})
+
+test('a session plan names the trophies as the list does, for the game being played', async () => {
+  const update = spyOn(users, 'updateUser').mockResolvedValue()
+  spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
+  expect((await call('save_session_plan', { minutes: 60, summary: 's', steps: [] })).isError).toBe(
+    true,
+  )
+  const trophies = [
+    makeTrophy({ id: 1, name: 'Leitor', nameEn: 'Reader' }),
+    makeTrophy({ id: 2, name: 'Platina', nameEn: 'Platinum', type: 'platinum' }),
+  ]
+  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext({ trophies }))
+  const codex = (await connect(me, 'v'.repeat(50), 'Codex')).access_token
+  const ok = await call(
+    'save_session_plan',
+    {
+      minutes: 90,
+      summary: 'Story first.',
+      steps: [
+        { trophy: 'reader', minutes: 20, how: 'Read it', trick: '' },
+        { trophy: 'Platinum', how: 'x' },
+        { trophy: 'Made up', how: 'y' },
+      ],
+      warnings: ['Missable', 3],
+    },
+    codex,
+  )
+  expect(ok.data).toMatchObject({ saved: { steps: 1 }, notTrophies: ['Platinum', 'Made up'] })
+  const plan = update.mock.calls[0][1].session_plan as Record<string, unknown>
+  expect(plan).toMatchObject({
+    minutes: 90,
+    summary: 'Story first.',
+    assistant: 'ChatGPT',
+    totalMinutes: 20,
+    warnings: ['Missable'],
+    ifTimeLeft: null,
+    steps: [{ trophy: 'Leitor', minutes: 20, how: 'Read it', trick: null, flexible: false }],
+  })
+  expect(
+    (await call('save_session_plan', { minutes: 5, summary: 's', steps: [{ trophy: 'Reader' }] }))
+      .isError,
+  ).toBe(true)
+  expect(
+    (await call('save_session_plan', { minutes: 60, summary: 's', steps: [{ trophy: 'Nope' }] }))
+      .isError,
+  ).toBe(true)
+})
+
+test('a tip goes to the history under the assistant, with its game when named', async () => {
+  const log = spyOn(activity, 'logAssistantTip').mockResolvedValue()
+  expect((await call('save_tip', { text: 'Use the bow.', game: game.name })).data).toMatchObject({
+    saved: true,
+    game: { id: game.id },
+  })
+  expect(log).toHaveBeenCalledWith(me.id, 'Assistant', 'Use the bow.', game.id)
+  await call('save_tip', { text: 'General tip' })
+  expect(log).toHaveBeenLastCalledWith(me.id, 'Assistant', 'General tip', undefined)
+  expect((await call('save_tip', {})).isError).toBe(true)
 })

@@ -27,6 +27,7 @@ import {
 } from './psn.ts'
 import { loadGroups } from './ranking.ts'
 import { lastTip, logTip, type TipKind } from './repository/activity.ts'
+import { prunePicks } from './repository/assistant-pick.ts'
 import { pruneExpired } from './repository/auth.ts'
 import { type Game, gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
@@ -628,7 +629,7 @@ export function startWatcher(minutes: number): void {
   run()
   setInterval(run, minutes * 60_000)
   const prune = () =>
-    Promise.all([pruneExpired(), pruneOauth()]).catch((e) =>
+    Promise.all([pruneExpired(), pruneOauth(), prunePicks()]).catch((e) =>
       console.error('prune failed:', e.message),
     )
   prune()

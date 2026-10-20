@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import type { IncomingMessage } from 'node:http'
 import * as auth from '../src/auth.ts'
 import { config } from '../src/config.ts'
-import { bearer, decide, origin } from '../src/oauth.ts'
+import { assistantName, bearer, decide, origin } from '../src/oauth.ts'
 import { resetRateLimits } from '../src/rate-limit.ts'
 import { makeUser } from './api-fixtures.ts'
 import { challengeOf, connect, fakeOauthStore, REDIRECT, send } from './oauth-store.ts'
@@ -310,4 +310,13 @@ test('connecting the same assistant again replaces its earlier connection', asyn
   const list = (await send('GET', '/api/connections')).body.connections
   expect(list).toHaveLength(1)
   expect(store.tokens.filter((t) => t.user === other.id)).toHaveLength(1)
+})
+
+test('an assistant goes by the name the app shows', () => {
+  expect(assistantName('Claude')).toBe('Claude')
+  expect(assistantName('claude-ai')).toBe('Claude')
+  expect(assistantName('Codex')).toBe('ChatGPT')
+  expect(assistantName('ChatGPT')).toBe('ChatGPT')
+  expect(assistantName('  Other app  ')).toBe('Other app')
+  expect(assistantName(null)).toBe('Assistant')
 })

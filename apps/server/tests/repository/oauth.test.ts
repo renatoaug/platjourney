@@ -78,8 +78,8 @@ test('tokens are created, rotated only while the refresh token lives, and read b
   expect(q.mock.calls[1][0]).toContain('refresh_expires_at > time::now()')
   q.mockResolvedValue([])
   expect(await rotateToken('old', 'oauth_client:1', hashes)).toBe(false)
-  q.mockResolvedValue([{ id: 'oauth_token:1', user: 'user:u1' }])
-  expect(await tokenOwner('a')).toEqual({ id: 'oauth_token:1', user: 'user:u1' })
+  q.mockResolvedValue([{ id: 'oauth_token:1', user: 'user:u1', client: 'Claude' }])
+  expect(await tokenOwner('a')).toEqual({ id: 'oauth_token:1', user: 'user:u1', client: 'Claude' })
   expect(q.mock.calls[3][0]).toContain('access_expires_at > time::now()')
 })
 

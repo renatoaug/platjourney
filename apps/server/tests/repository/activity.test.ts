@@ -4,6 +4,7 @@ import * as db from '../../src/db.ts'
 import {
   appendMessage,
   chatThreads,
+  logAssistantTip,
   logTip,
   markNotificationsRead,
   notificationsPage,
@@ -32,6 +33,19 @@ test('a tip without a game leaves the game out', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   await logTip('u1', 'chat', 'Oi')
   expect(q.mock.calls[0][1]).toEqual({ data: { user, kind: 'chat', content: 'Oi' } })
+})
+
+test("an assistant's tip is kept under its name, and is not a notification", async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await logAssistantTip('user:u1', 'Claude', 'Use the bow.', 'game:7')
+  expect(q.mock.calls[0]).toEqual([
+    'CREATE tip CONTENT $data',
+    { data: { user, kind: 'assistant', assistant: 'Claude', content: 'Use the bow.', game } },
+  ])
+  await logAssistantTip('user:u1', 'Claude', 'Any game')
+  expect(q.mock.calls[1][1]).toEqual({
+    data: { user, kind: 'assistant', assistant: 'Claude', content: 'Any game' },
+  })
 })
 
 test('recent tips come newest first with record ids as plain strings', async () => {

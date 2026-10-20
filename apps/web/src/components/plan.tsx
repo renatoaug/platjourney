@@ -34,6 +34,7 @@ const messages = defineMessages({
     sectionLabel: 'Roteiro da sessão',
     eyebrow: 'ROTEIRO DA SESSÃO',
     eyebrowGame: 'ROTEIRO DA SESSÃO · {game}',
+    by: 'feito no {name}',
     building: 'Montando o roteiro de {time}…',
     buildingLead: 'Escolhendo os troféus que cabem no seu tempo e a melhor ordem.',
     inviteTitle: 'Vai jogar agora? Eu monto o caminho.',
@@ -78,6 +79,7 @@ const messages = defineMessages({
     sectionLabel: 'Session route',
     eyebrow: 'SESSION ROUTE',
     eyebrowGame: 'SESSION ROUTE · {game}',
+    by: 'made in {name}',
     building: 'Building your {time} route…',
     buildingLead: 'Picking the trophies that fit your time and the best order.',
     inviteTitle: 'Playing now? I’ll map the way.',
@@ -131,6 +133,8 @@ export interface SessionPlan {
   totalMinutes: number
   warnings: string[]
   ifTimeLeft: string | null
+  /** A plan a connected assistant made in its chat: its name ('Claude', 'ChatGPT'). */
+  assistant?: string | null
   doneCount: number
   status: 'active' | 'done' | 'expired'
   // The step to play now, or -1 when nothing is left.
@@ -336,11 +340,14 @@ function planHeading(t: Translator<typeof messages>, plan: SessionPlan) {
   return t('headingActive', { done: plan.doneCount, total })
 }
 
-/** Under the heading: until when an active route holds, or when a closed one was made. */
+/** Under the heading: until when an active route holds, or when a closed one was made; and the
+ * assistant that made it, when one did. */
 function planSub(t: Translator<typeof messages>, plan: SessionPlan) {
-  if (plan.status === 'active')
-    return t('validUntil', { time: fmtMinutes(plan.minutes), clock: fmtClock(plan.expiresAt) })
-  return `${fmtMinutes(plan.minutes)} · ${fmtDate(plan.createdAt)}, ${fmtClock(plan.createdAt)}`
+  const when =
+    plan.status === 'active'
+      ? t('validUntil', { time: fmtMinutes(plan.minutes), clock: fmtClock(plan.expiresAt) })
+      : `${fmtMinutes(plan.minutes)} · ${fmtDate(plan.createdAt)}, ${fmtClock(plan.createdAt)}`
+  return plan.assistant ? `${when} · ${t('by', { name: plan.assistant })}` : when
 }
 
 /** The session plan card, every state of it. The container is `PlanCard`. */

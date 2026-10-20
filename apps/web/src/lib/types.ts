@@ -169,6 +169,8 @@ export interface Tip {
   content: string
   created_at: string
   game?: Game | null
+  /** For a tip a connected assistant saved: its name ('Claude', 'ChatGPT'). */
+  assistant?: string | null
   tip?: string
   read?: boolean
 }
@@ -268,6 +270,21 @@ export interface LibraryGame {
 }
 
 /** A game picked from the catalog graph for being close to games the player has. */
+/** A game a connected assistant suggested in its chat (save_suggestion), with the guide's facts. */
+export interface AssistantPick {
+  game: Game
+  reason: string
+  /** The assistant's name as shown: 'Claude', 'ChatGPT'. */
+  assistant: string
+  savedAt: string
+  difficulty: number
+  hours: number
+  playthroughs: number | null
+  hasMissables: boolean
+  hasOnline: boolean
+  hasDifficultyTrophy: boolean | null
+}
+
 export interface SimilarPick {
   game: Game
   platform: string

@@ -27,6 +27,7 @@ import * as ranking from '../src/ranking.ts'
 import { resetRateLimits } from '../src/rate-limit.ts'
 import * as recommend from '../src/recommend.ts'
 import * as activity from '../src/repository/activity.ts'
+import * as assistantPicks from '../src/repository/assistant-pick.ts'
 import * as games from '../src/repository/game.ts'
 import * as missing from '../src/repository/game-request.ts'
 import * as guides from '../src/repository/guide.ts'
@@ -921,6 +922,36 @@ test('recommendations by similar games answer from the graph, without the model'
   expect(recommend.recommendations).not.toHaveBeenCalled()
 })
 
+test("an assistant's suggestions come with the guide's facts, and leave when dismissed", async () => {
+  spyOn(assistantPicks, 'picksOf').mockResolvedValue([
+    { id: 'assistant_pick:a', game, reason: 'Short.', assistant: 'Claude', updated_at: 'd' },
+  ])
+  spyOn(similarRepo, 'guideFacts').mockResolvedValue([
+    { game: game.id, difficulty: 3, hours: 12, hasMissables: true, difficultyTrophy: null },
+  ])
+  const res = await send('GET', '/api/assistant-picks')
+  expect(res.body.items).toEqual([
+    {
+      game,
+      reason: 'Short.',
+      assistant: 'Claude',
+      savedAt: 'd',
+      difficulty: 3,
+      hours: 12,
+      playthroughs: null,
+      hasMissables: true,
+      hasOnline: false,
+      hasDifficultyTrophy: false,
+    },
+  ])
+  const drop = spyOn(assistantPicks, 'dropPick').mockResolvedValue(true)
+  expect((await send('POST', '/api/assistant-picks/dismiss', { game: 'x' })).status).toBe(400)
+  expect(await send('POST', '/api/assistant-picks/dismiss', { game: game.id })).toMatchObject({
+    status: 200,
+  })
+  expect(drop).toHaveBeenCalledWith(me.id, game.id)
+})
+
 test('a game page asks for its similar games by id', async () => {
   const items = [{ game, difficulty: 3, hours: 12, relation: 'expansion' as const }]
   const related = spyOn(similar, 'similarToGame').mockResolvedValue(items)
@@ -1089,6 +1120,7 @@ describe('the demo', () => {
     ['POST', '/api/chat', { text: 'oi' }],
     ['POST', '/api/trophy-tip', { np: 'NPWR1', trophyId: 1 }],
     ['POST', '/api/recommendations/dismiss', { game: 'game:2' }],
+    ['POST', '/api/assistant-picks/dismiss', { game: 'game:2' }],
     ['POST', '/api/recommendations/preferences', {}],
     ['POST', '/api/picks', {}],
     ['GET', '/api/recommendations?refresh=1'],

@@ -62,6 +62,7 @@ import {
   tipsBefore,
   unreadNotifications,
 } from './repository/activity.ts'
+import { dropPick, picksOf } from './repository/assistant-pick.ts'
 import {
   catalogGameForName,
   type Game,
@@ -1053,6 +1054,37 @@ const API_ROUTES: Record<string, ApiHandler> = {
     json(res, 200, { pick })
   },
   'POST /api/recommendations/dismiss': dismissPick,
+  // Games a connected assistant suggested (save_suggestion), with the guide's facts for the card.
+  'GET /api/assistant-picks': async ({ res, me }) => {
+    const picks = await picksOf(me.id, new Date().getFullYear())
+    const facts = new Map(
+      (await guideFacts(picks.map((p) => p.game.id))).map((f) => [String(f.game), f]),
+    )
+    return json(res, 200, {
+      items: picks.map((p) => {
+        const f = facts.get(p.game.id)
+        return {
+          game: p.game,
+          reason: p.reason,
+          assistant: p.assistant,
+          savedAt: p.updated_at,
+          difficulty: f?.difficulty ?? 0,
+          hours: f?.hours ?? 0,
+          playthroughs: f?.playthroughs ?? null,
+          hasMissables: f?.hasMissables ?? false,
+          hasOnline: f?.hasOnline ?? false,
+          hasDifficultyTrophy: f?.difficultyTrophy === undefined ? null : !!f.difficultyTrophy,
+        }
+      }),
+    })
+  },
+  'POST /api/assistant-picks/dismiss': async ({ req, res, me }) => {
+    const { game } = await readBody(req)
+    if (typeof game !== 'string' || !/^game:[\w-]+$/.test(game))
+      return json(res, 400, { error: 'game required' })
+    await dropPick(me.id, game)
+    return json(res, 200, { ok: true })
+  },
   'POST /api/recommendations/preferences': tastePreferences,
   // Recommendations by similar games: graph reads only, no model, so the demo has them too.
   'GET /api/recommendations/similar': async ({ res, me, titles }) =>
