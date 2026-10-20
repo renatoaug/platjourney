@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.25.5](https://github.com/renatoaug/platjourney/compare/v0.25.4...v0.25.5) (2026-10-20)
+
+### Bug Fixes
+
+* **web:** the transparent favicon in the browser tab again ([c9743dd](https://github.com/renatoaug/platjourney/commit/c9743dd3b95c20470978e0bfed4786a244ef6562))
+
 ## [0.25.4](https://github.com/renatoaug/platjourney/compare/v0.25.3...v0.25.4) (2026-10-20)
 
 ### Bug Fixes
