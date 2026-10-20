@@ -2,12 +2,15 @@ import '../env.ts'
 import { afterEach, expect, mock, spyOn, test } from 'bun:test'
 import * as db from '../../src/db.ts'
 import {
+  assistantPicks,
   dismiss,
+  dropAssistantPick,
   lastRecommended,
   listDismissed,
   listPicks,
   listRecommendations,
   recentPickGames,
+  saveAssistantPick,
   savePick,
   saveRecommendations,
   seenGames,
@@ -27,8 +30,8 @@ test('recommendations are the latest batch, without dismissed games', async () =
   expect(q.mock.calls[0][0]).toContain('game NOT IN (SELECT VALUE game FROM dismissal')
   expect(q.mock.calls[0][0]).toContain('LET $last = array::max(SELECT VALUE batch_at')
   expect(q.mock.calls[0][0]).toContain('AND batch_at = $last')
-  // The picks asked for one at a time are no batch.
-  expect(q.mock.calls[0][0].match(/source != 'pick'/g)).toHaveLength(2)
+  // The picks asked for one at a time and the assistants' suggestions are no batch.
+  expect(q.mock.calls[0][0].match(/source NOTINSIDE \['pick', 'assistant'\]/g)).toHaveLength(2)
   expect(q.mock.calls[0][1]).toEqual({ user })
 })
 
@@ -118,6 +121,8 @@ test('the latest time a game was recommended, in a batch or as a pick', async ()
     why: 'w',
   })
   expect(q.mock.calls[0][1]).toEqual({ user, game, since: '30d' })
+  // A game an assistant suggested is not Nexo's.
+  expect(q.mock.calls[0][0]).toContain("source != 'assistant'")
   expect((await lastRecommended('user:u1', 'game:7', 30))?.source).toBe('pick')
   expect(await lastRecommended('user:u1', 'game:7', 30)).toBeNull()
 })
@@ -128,4 +133,33 @@ test('the PS Plus catalog is the games the store put in those tiers', async () =
   expect(q.mock.calls[0][1]).toEqual({ tiers: ['essential', 'extra'], region: 'BR' })
   expect(await storePrice.plusCatalog([])).toEqual([])
   expect(q).toHaveBeenCalledTimes(1)
+})
+
+test("an assistant's suggestion replaces its last one for the game, with the new reason", async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await saveAssistantPick('user:u1', 'game:7', 'Short and fun.', 'Claude')
+  const [sql, vars] = q.mock.calls[0]
+  expect(sql).toContain(
+    "DELETE recommendation WHERE user = $user AND game = $game AND source = 'assistant'",
+  )
+  expect(sql).toContain("source: 'assistant', why: $why")
+  expect(vars).toEqual({ user, game, why: 'Short and fun.', assistant: 'Claude' })
+})
+
+test('the suggestions shown leave out old ones, saved games and dismissed ones', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue([
+    { id: new db.RecordId('recommendation', 'a'), game: { id: game, name: 'X' }, why: 'r' },
+  ])
+  const picks = await assistantPicks('user:u1', 2026)
+  const [sql, vars] = q.mock.calls[0]
+  expect(sql).toContain("source = 'assistant'")
+  expect(sql).toContain('created_at > time::now() - 30d')
+  expect(sql).toContain('game NOTINSIDE $saved AND game NOTINSIDE $dismissed')
+  expect(vars).toEqual({ user, year: 2026 })
+  expect(picks[0]).toMatchObject({ id: 'recommendation:a', game: { id: 'game:7' } })
+  await dropAssistantPick('user:u1', 'game:7')
+  expect(q.mock.calls[1]).toEqual([
+    "DELETE recommendation WHERE user = $user AND game = $game AND source = 'assistant'",
+    { user, game },
+  ])
 })

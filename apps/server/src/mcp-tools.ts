@@ -16,7 +16,6 @@ import { loadGroups, rankNextPlatinum } from './ranking.ts'
 import { dismissRecommendation } from './recommend.ts'
 import { RELEASES_AFTER_DAYS, RELEASES_BEFORE_DAYS } from './releases.ts'
 import { logAssistantTip } from './repository/activity.ts'
-import { savePick } from './repository/assistant-pick.ts'
 import {
   type Game,
   gameByName,
@@ -26,7 +25,7 @@ import {
 } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { listInterests } from './repository/interest.ts'
-import { isDismissReason } from './repository/recommendation.ts'
+import { isDismissReason, saveAssistantPick } from './repository/recommendation.ts'
 import { guideFacts } from './repository/similar.ts'
 import { type User, updateUser } from './repository/user.ts'
 import { similarPicks, similarToGame } from './similar.ts'
@@ -614,7 +613,7 @@ export const TOOLS: Tool[] = [
     run: async (user, args, from) => {
       const game = await gameFrom(args)
       const reason = textArg(args, 'reason', 280)
-      await savePick(user.id, game.id, reason, assistantOf(from))
+      await saveAssistantPick(user.id, game.id, reason, assistantOf(from))
       return { saved: gameRow(game), reason }
     },
   },

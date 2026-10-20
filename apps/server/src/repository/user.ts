@@ -155,7 +155,6 @@ export async function wipeUserData(id: string): Promise<void> {
     'tip',
     'message',
     'playtime',
-    'assistant_pick',
   ])
     await q(`DELETE ${table} WHERE user = $user`, { user })
   await q('UPDATE $user SET goal_targets = {}, taste_profile = NONE, session_plan = NONE', { user })

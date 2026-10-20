@@ -21,7 +21,10 @@ DEFINE INDEX IF NOT EXISTS recommendation_user_batch ON recommendation FIELDS us
 -- The picks the player asks Nexo for (Discover's "O que jogar agora?" and /pick on Telegram) are kept with the
 -- Discover batches, told apart by `source`: rows from before it have none and are Discover's. A pick names one
 -- game, why, where to start, and what the player asked: their mood, where to look and whether a game fit it.
-DEFINE FIELD IF NOT EXISTS source ON recommendation TYPE option<string> ASSERT $value = NONE OR $value IN ['discover', 'pick'];
+-- 'assistant': a game an assistant connected through MCP suggested (save_suggestion), with its reason in `why` and its
+-- name in `assistant`; Discover shows it for 30 days in its own shelf, never among Nexo's picks.
+DEFINE FIELD OVERWRITE source ON recommendation TYPE option<string> ASSERT $value = NONE OR $value IN ['discover', 'pick', 'assistant'];
+DEFINE FIELD IF NOT EXISTS assistant ON recommendation TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS first_step ON recommendation TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS mood ON recommendation TYPE option<string>;
 -- Where Nexo looked: the player's interests, or any game in the catalog.

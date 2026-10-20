@@ -27,13 +27,13 @@ import * as ranking from '../src/ranking.ts'
 import { resetRateLimits } from '../src/rate-limit.ts'
 import * as recommend from '../src/recommend.ts'
 import * as activity from '../src/repository/activity.ts'
-import * as assistantPicks from '../src/repository/assistant-pick.ts'
 import * as games from '../src/repository/game.ts'
 import * as missing from '../src/repository/game-request.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
 import * as pushSubs from '../src/repository/push-subscription.ts'
+import * as recRepo from '../src/repository/recommendation.ts'
 import * as statuses from '../src/repository/server-status.ts'
 import * as similarRepo from '../src/repository/similar.ts'
 import * as titles from '../src/repository/title.ts'
@@ -923,8 +923,8 @@ test('recommendations by similar games answer from the graph, without the model'
 })
 
 test("an assistant's suggestions come with the guide's facts, and leave when dismissed", async () => {
-  spyOn(assistantPicks, 'picksOf').mockResolvedValue([
-    { id: 'assistant_pick:a', game, reason: 'Short.', assistant: 'Claude', updated_at: 'd' },
+  spyOn(recRepo, 'assistantPicks').mockResolvedValue([
+    { id: 'recommendation:a', game, why: 'Short.', assistant: 'Claude', created_at: 'd' },
   ])
   spyOn(similarRepo, 'guideFacts').mockResolvedValue([
     { game: game.id, difficulty: 3, hours: 12, hasMissables: true, difficultyTrophy: null },
@@ -944,7 +944,7 @@ test("an assistant's suggestions come with the guide's facts, and leave when dis
       hasDifficultyTrophy: false,
     },
   ])
-  const drop = spyOn(assistantPicks, 'dropPick').mockResolvedValue(true)
+  const drop = spyOn(recRepo, 'dropAssistantPick').mockResolvedValue()
   expect((await send('POST', '/api/assistant-picks/dismiss', { game: 'x' })).status).toBe(400)
   expect(await send('POST', '/api/assistant-picks/dismiss', { game: game.id })).toMatchObject({
     status: 200,

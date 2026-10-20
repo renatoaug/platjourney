@@ -17,16 +17,16 @@ export interface RecommendationRow {
   generated_at: string
 }
 
-/** The latest batch, without the games dismissed since. The picks asked for one at a time are not
- * part of any batch. */
+/** The latest batch, without the games dismissed since. The picks asked for one at a time and the
+ * games assistants suggested are not part of any batch. */
 export async function listRecommendations(user: string): Promise<RecommendationRow[]> {
   return plain(
     await q<RecommendationRow[]>(
       // Rows from before batches were kept have no batch_at: with no batch since, they are the latest.
       `LET $last = array::max(SELECT VALUE batch_at FROM recommendation
-         WHERE user = $user AND batch_at != NONE AND source != 'pick');
+         WHERE user = $user AND batch_at != NONE AND source NOTINSIDE ['pick', 'assistant']);
        SELECT *, batch_at ?? created_at AS generated_at, game.* AS game FROM recommendation
-       WHERE user = $user AND batch_at = $last AND source != 'pick'
+       WHERE user = $user AND batch_at = $last AND source NOTINSIDE ['pick', 'assistant']
          AND game NOT IN (SELECT VALUE game FROM dismissal WHERE user = $user)
        ORDER BY created_at DESC`,
       { user: userRef(user) },
@@ -149,7 +149,8 @@ export async function recentPickGames(
   return [...new Set(plain(rows ?? []).map(String))]
 }
 
-/** The latest time Nexo recommended `game` to the player, in a batch or as a pick, within `days`. */
+/** The latest time Nexo recommended `game` to the player, in a batch or as a pick, within `days`.
+ * A game an assistant suggested is not Nexo's. */
 export async function lastRecommended(
   user: string,
   game: string,
@@ -158,6 +159,7 @@ export async function lastRecommended(
   const [row] = await q<{ at: string; source?: string; why: string }[]>(
     `SELECT created_at AS at, source, why FROM recommendation
      WHERE user = $user AND game = $game AND created_at > time::now() - <duration> $since
+       AND source != 'assistant'
      ORDER BY at DESC LIMIT 1`,
     { user: userRef(user), game: gameRef(game), since: `${days}d` },
   )
@@ -190,4 +192,56 @@ export async function listDismissed(user: string): Promise<Dismissed[]> {
       user: userRef(user),
     }),
   )
+}
+
+/** How long a game an assistant suggested stays on Discover. */
+const ASSISTANT_PICK_DAYS = 30
+
+export interface AssistantPick {
+  id: string
+  game: Game
+  why: string
+  assistant: string
+  created_at: string
+}
+
+/** Keeps a game an assistant suggested; the same game again replaces it, with the new reason and
+ * date. Like Nexo's, it keeps new batches from repeating the game for a while. */
+export async function saveAssistantPick(
+  user: string,
+  game: string,
+  why: string,
+  assistant: string,
+): Promise<void> {
+  await q(
+    `DELETE recommendation WHERE user = $user AND game = $game AND source = 'assistant';
+     CREATE recommendation CONTENT { user: $user, game: $game, source: 'assistant', why: $why,
+       assistant: $assistant, similar_to: [] };`,
+    { user: userRef(user), game: gameRef(game), why, assistant },
+  )
+}
+
+/** The games assistants suggested in the last ASSISTANT_PICK_DAYS, not saved to this year's
+ * interests nor dismissed. Newest first. */
+export async function assistantPicks(user: string, year: number): Promise<AssistantPick[]> {
+  return plain(
+    await q<AssistantPick[]>(
+      `LET $saved = SELECT VALUE game FROM interest WHERE user = $user AND year = $year;
+       LET $dismissed = SELECT VALUE game FROM dismissal WHERE user = $user;
+       SELECT id, game.* AS game, why, assistant, created_at FROM recommendation
+       WHERE user = $user AND source = 'assistant'
+         AND created_at > time::now() - ${ASSISTANT_PICK_DAYS}d
+         AND game NOTINSIDE $saved AND game NOTINSIDE $dismissed
+       ORDER BY created_at DESC;`,
+      { user: userRef(user), year },
+    ),
+  )
+}
+
+/** Takes a game an assistant suggested off Discover. */
+export async function dropAssistantPick(user: string, game: string): Promise<void> {
+  await q("DELETE recommendation WHERE user = $user AND game = $game AND source = 'assistant'", {
+    user: userRef(user),
+    game: gameRef(game),
+  })
 }

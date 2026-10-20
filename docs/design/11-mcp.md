@@ -73,7 +73,7 @@ What the player and the assistant decide in the chat can live in the app too, un
 
 | Tool | Does | Shows in the app |
 |---|---|---|
-| `save_suggestion` | Saves a recommended game with why, in one sentence (`assistant_pick`); the same game again updates it | Discover, "Sugeridos pelo Claude": for 30 days, until the game is saved to the interests or dismissed |
+| `save_suggestion` | Saves a recommended game with why, in one sentence (`recommendation`, source `assistant`); the same game again replaces it | Discover, "Sugeridos pelo Claude": for 30 days, until the game is saved to the interests or dismissed |
 | `save_session_plan` | Saves a plan for the game being played, each step named by its trophy (steps on no trophy of the game are left out and reported) | The session plan on the current game, the same checklist Nexo's plans use, which ticks steps off as PSN reports the trophies; it replaces the plan before |
 | `save_tip` | Saves a tip, with its game when named (`tip`, kind `assistant`) | History, under the assistant's name; not a notification |
 

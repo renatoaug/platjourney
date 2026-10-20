@@ -11,9 +11,9 @@ import * as psn from '../src/psn.ts'
 import * as ranking from '../src/ranking.ts'
 import { resetRateLimits } from '../src/rate-limit.ts'
 import * as activity from '../src/repository/activity.ts'
-import * as picks from '../src/repository/assistant-pick.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
+import * as recs from '../src/repository/recommendation.ts'
 import * as users from '../src/repository/user.ts'
 import * as watcher from '../src/watcher.ts'
 import { makeContext, makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
@@ -319,7 +319,7 @@ test('a plugin can refuse a tool, and each connection has a budget a minute', as
 })
 
 test("a suggestion is saved under the assistant's name; the demo saves nothing", async () => {
-  const save = spyOn(picks, 'savePick').mockResolvedValue()
+  const save = spyOn(recs, 'saveAssistantPick').mockResolvedValue()
   const claude = (await connect(me, 'v'.repeat(50), 'Claude')).access_token
   const { data } = await call(
     'save_suggestion',

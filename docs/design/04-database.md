@@ -115,8 +115,6 @@ erDiagram
     game ||--o{ recommendation : "recommended"
     user ||--o{ dismissal : "dismissed"
     game ||--o{ dismissal : "dismissed"
-    user ||--o{ assistant_pick : "was suggested"
-    game ||--o{ assistant_pick : "suggested"
     interest {
         id record(interest) PK
         user record(user) FK
@@ -149,6 +147,7 @@ erDiagram
         scope option(string)
         owned_only option(bool)
         fits option(bool)
+        assistant option(string)
         created_at datetime
     }
     dismissal {
@@ -156,15 +155,6 @@ erDiagram
         user record(user) FK
         game record(game) FK
         reason option(string)
-        created_at datetime
-        updated_at datetime
-    }
-    assistant_pick {
-        id record(assistant_pick) PK
-        user record(user) FK
-        game record(game) FK
-        reason string
-        assistant string
         created_at datetime
         updated_at datetime
     }
@@ -453,9 +443,8 @@ erDiagram
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN |
 | `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `source`: where the player saved it from (`releases`, the home's calendar; `recommendations`, Nexo's picks; `similar`, the lists of similar games; `title`, a game's page; `search`, the add panel), shown under the game on Interests, kept from the first save; none for older saves and Telegram. `next_pick_at`: when Nexo picked it as the next platinum on request (a pick among the interests, kept in `recommendation`), on one interest of the player at a time. `owned_at`: when the player said they already have it ("Já tenho" on a deal), for a game bought but never started, which PSN does not list yet; it is no longer shown as a deal nor in deal notices |
-| `recommendation` | game Nexo recommended: in a Discover batch, or one pick asked for | | `source`: `discover` for a batch's rows (none on rows from before it, read the same), `pick` for a game picked on request (Discover's "O que jogar agora?" and `/pick` on Telegram). **Batches**: every batch of the last year, with why and what it is similar to; `batch_at` groups a batch's rows. Discover shows the latest batch; the older ones keep new batches to games not shown yet, and shown games come back, the oldest first, only when those run out. Rows from before batches were kept have no `batch_at` and count as one batch. **Picks**: one game with `why`, `first_step` (where to start), what the player asked (`mood`, in their words; `scope`, `interests` or `any`; `owned_only`, only games they have) and `fits` (false when nothing matched the mood and Nexo chose the closest); no `batch_at`, and `platform`, `difficulty` and `hours` only when known. Discover shows the latest pick and the earlier ones; asking again leaves out the games picked in the last 24 hours in the same scope. A game started within 30 days of being recommended, either way, opens its start notice glad the player followed it. Rows older than a year are deleted with the batches |
+| `recommendation` | game Nexo recommended (in a Discover batch, or one pick asked for), or a connected assistant suggested | | `source`: `discover` for a batch's rows (none on rows from before it, read the same), `pick` for a game picked on request (Discover's "O que jogar agora?" and `/pick` on Telegram), `assistant` for a game an assistant connected through MCP suggested (`save_suggestion`). **Assistants**: `why` is its reason in one sentence and `assistant` the name shown (`Claude`, `ChatGPT`); suggesting the game again replaces the row. Discover shows these rows for 30 days in their own shelf, never among Nexo's batch, until the game is saved to this year's interests or dismissed; like Nexo's, they keep new batches from repeating the game, but a game started after one is not "the game Nexo recommended". **Batches**: every batch of the last year, with why and what it is similar to; `batch_at` groups a batch's rows. Discover shows the latest batch; the older ones keep new batches to games not shown yet, and shown games come back, the oldest first, only when those run out. Rows from before batches were kept have no `batch_at` and count as one batch. **Picks**: one game with `why`, `first_step` (where to start), what the player asked (`mood`, in their words; `scope`, `interests` or `any`; `owned_only`, only games they have) and `fits` (false when nothing matched the mood and Nexo chose the closest); no `batch_at`, and `platform`, `difficulty` and `hours` only when known. Discover shows the latest pick and the earlier ones; asking again leaves out the games picked in the last 24 hours in the same scope. A game started within 30 days of being recommended, either way, opens its start notice glad the player followed it. Rows older than a year are deleted with the batches |
 | `dismissal` | game the player dismissed | `user, game` | Never recommended again |
-| `assistant_pick` | game an assistant connected through MCP suggested (`save_suggestion`) | `user, game` | `reason` in one sentence and `assistant`, the name shown (`Claude`, `ChatGPT`). Suggesting the game again updates both and `updated_at`. Discover shows it until the game is saved to this year's interests or dismissed; deleted 30 days after `updated_at` and with the account |
 | `tip` | notice or tip Nexo wrote, or a tip an assistant saved | | `kind`: `start`, `unlock`, `session`, `route` (a tip on the game's route), `chat` (help on one trophy), `server`, `deal` (a saved game went on sale), `assistant` (saved by an assistant connected through MCP with `save_tip`, named in `assistant`; never a notification) |
 | `message` | chat message | | `role`: user or assistant |
 | `notification` | item in the bell | | `kind`: `start`, `unlock`, `session`, `route`, `server`, `deal`. Points at the `tip` it shows, when there is one |
