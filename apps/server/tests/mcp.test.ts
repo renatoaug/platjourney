@@ -71,11 +71,17 @@ test('initialize, ping and the tool list', async () => {
   expect(init.body.result).toMatchObject({
     protocolVersion: '2025-03-26',
     capabilities: { tools: { listChanged: false } },
-    serverInfo: { name: 'platjourney' },
+    serverInfo: { name: 'platjourney', websiteUrl: 'http://app.test' },
+  })
+  // The app's icon on its dark background, for the assistant's list of connectors.
+  expect(init.body.result.serverInfo.icons[0]).toEqual({
+    src: 'http://app.test/icon-192.png',
+    mimeType: 'image/png',
+    sizes: ['192x192'],
   })
   expect(
     (await rpc('initialize', { protocolVersion: '1999-01-01' })).body.result.protocolVersion,
-  ).toBe('2025-06-18')
+  ).toBe('2025-11-25')
   expect((await rpc('ping')).body).toEqual({ jsonrpc: '2.0', id, result: {} })
   const tools = (await rpc('tools/list')).body.result.tools
   expect(tools.map((t: { name: string }) => t.name)).toEqual([

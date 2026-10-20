@@ -11,12 +11,12 @@ import { tagged } from './costs.ts'
 import { isDemo } from './demo.ts'
 import { BadBody, json, readBody } from './http.ts'
 import { type Args, TOOLS, ToolError } from './mcp-tools.ts'
-import { bearer, resourceMetadataUrl } from './oauth.ts'
+import { bearer, origin, resourceMetadataUrl } from './oauth.ts'
 import { beforeTool, Refused } from './plugins.ts'
 import { allow } from './rate-limit.ts'
 import type { User } from './repository/user.ts'
 
-const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05']
+const PROTOCOLS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05']
 const byName = new Map(TOOLS.map((t) => [t.name, t]))
 const listed = TOOLS.map(({ name, description, inputSchema, changes, destructive }) => ({
   name,
@@ -141,7 +141,13 @@ async function getPrompt(params: Args) {
   }
 }
 
-async function answer(user: User, connection: string, msg: Args) {
+// The app's icon, on its dark background, for the assistant's list of connectors.
+const icons = (base: string) => [
+  { src: `${base}/icon-192.png`, mimeType: 'image/png', sizes: ['192x192'] },
+  { src: `${base}/icon-512.png`, mimeType: 'image/png', sizes: ['512x512'] },
+]
+
+async function answer(user: User, connection: string, msg: Args, base: string) {
   const params = (msg.params ?? {}) as Args
   switch (msg.method) {
     case 'initialize': {
@@ -149,7 +155,13 @@ async function answer(user: User, connection: string, msg: Args) {
       return {
         protocolVersion: PROTOCOLS.includes(asked) ? asked : PROTOCOLS[0],
         capabilities: { tools: { listChanged: false }, prompts: { listChanged: false } },
-        serverInfo: { name: 'platjourney', title: 'PlatJourney', version },
+        serverInfo: {
+          name: 'platjourney',
+          title: 'PlatJourney',
+          version,
+          websiteUrl: base,
+          icons: icons(base),
+        },
         instructions: INSTRUCTIONS,
       }
     }
@@ -233,7 +245,7 @@ export async function mcpRoute(
   }
   let reply: Args
   try {
-    const result = await answer(who.user, who.connection, msg)
+    const result = await answer(who.user, who.connection, msg, origin(req))
     reply =
       result === undefined
         ? { jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: 'Method not found' } }
