@@ -300,14 +300,19 @@ async function token(req: IncomingMessage, res: ServerResponse) {
 }
 
 // An assistant tells the instance it no longer holds a token (the player removed the connector):
-// the connection ends. Unknown tokens are answered the same way, as OAuth asks (RFC 7009).
+// the connection ends. Whoever holds a token can already use it, so any caller may end it: an
+// assistant can register more than one client and revoke from another (Claude registers two).
+// Unknown tokens are answered the same way, as OAuth asks (RFC 7009). Each request is logged, to
+// see which assistants revoke at all.
 async function revoke(req: IncomingMessage, res: ServerResponse) {
   if (!allow(`oauth-token|${clientIp(req) ?? ''}`, 30, 60_000))
     return json(res, 429, { error: 'too_many_requests' }, OPEN)
   const p = await readParams(req)
   const client = p.client_id ? await getClient(p.client_id) : undefined
-  if (!client) return json(res, 401, { error: 'invalid_client' }, OPEN)
-  if (p.token) await revokeToken(hash(p.token), client.id)
+  const ended = p.token ? await revokeToken(hash(p.token)) : false
+  console.log(
+    `oauth revoke from ${client?.name ?? 'an unknown client'}: ${ended ? 'connection ended' : 'no live token'}`,
+  )
   return res.writeHead(200, { ...OPEN, 'cache-control': 'no-store' }).end()
 }
 
