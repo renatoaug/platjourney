@@ -9,6 +9,8 @@ export type Target =
   | 'App'
   | 'AppLogo'
   | 'AppStateProvider'
+  | 'AskDialog'
+  | 'AskIdeas'
   | 'AskNexo'
   | 'AssistantMessage'
   | 'AuthError'

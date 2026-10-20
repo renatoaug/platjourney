@@ -15,6 +15,51 @@
     flex: none;
   }
 
+  /* The assistants' heading and line, with the suggestions button at their right once one is
+     connected. */
+  .connected-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .connected-head > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .connected-head .connected-sub {
+    margin: 0 0 2px;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .connected-head > button {
+    flex: none;
+    margin-bottom: 12px;
+  }
+
+  .connected-ideas {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .connected-ideas .icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* Disconnecting an assistant, in red. */
+  .connected-disconnect,
+  .connected-disconnect:hover {
+    border-color: color-mix(in srgb, var(--color-danger) var(--alpha-line), transparent);
+    color: var(--color-danger);
+  }
+
   @media (max-width: 480px) {
     .connected-row {
       flex-wrap: wrap;
@@ -40,6 +85,53 @@
     display: grid;
     gap: 14px;
     margin-top: auto;
+  }
+
+  /* The requests to try, in their dialog: each one copied with a click. */
+  .connected-idea-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .connected-idea {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-tag);
+    background: transparent;
+    color: var(--color-fg);
+    font: inherit;
+    font-size: var(--text-md);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease;
+  }
+
+  .connected-idea:hover {
+    border-color: var(--color-fg-muted);
+    background: var(--color-bg-subtle);
+  }
+
+  .connected-idea .icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    color: var(--color-fg-muted);
+  }
+
+  .connected-idea.is-copied {
+    border-color: var(--color-accent);
+    animation: connect-copied 0.35s ease;
+  }
+
+  .connected-idea.is-copied .icon {
+    color: var(--color-accent);
   }
 
   /* The connect guide's note on menu names, under its steps. */
@@ -181,7 +273,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .connect-copy.is-copied,
-    .connect-copy-all.is-copied {
+    .connect-copy-all.is-copied,
+    .connected-idea.is-copied {
       animation: none;
     }
   }

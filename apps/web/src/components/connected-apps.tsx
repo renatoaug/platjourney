@@ -65,6 +65,20 @@ const messages = defineMessages({
     disconnected: '{name} desconectado.',
     failed: 'Não deu para desconectar agora. Tente de novo.',
     loadFailed: 'Não conseguimos carregar os apps conectados.',
+    ideas: {
+      open: 'Sugestões',
+      eyebrow: 'COM O ASSISTENTE',
+      dialogTitle: 'O que pedir ao assistente',
+      dialogLead: 'Clique num pedido para copiar e cole no chat do Claude ou do ChatGPT.',
+      ask1: 'O que eu jogo agora?',
+      ask2: 'Quais troféus faltam na platina que estou fazendo?',
+      ask3: 'Como faço o troféu mais difícil do jogo que estou jogando?',
+      ask4: 'Monta um plano para a minha sessão de hoje',
+      ask5: 'Algum jogo dos meus interesses está em promoção hoje?',
+      ask6: 'Adiciona Astro Bot aos meus interesses',
+      ask7: 'Quais lançamentos combinam comigo?',
+      copy: 'Copiar o pedido',
+    },
   },
   [Language.En]: {
     title: 'Connected apps',
@@ -114,6 +128,20 @@ const messages = defineMessages({
     disconnected: '{name} disconnected.',
     failed: "Couldn't disconnect right now. Try again.",
     loadFailed: "We couldn't load the connected apps.",
+    ideas: {
+      open: 'Suggestions',
+      eyebrow: 'WITH YOUR ASSISTANT',
+      dialogTitle: 'What to ask your assistant',
+      dialogLead: 'Click a request to copy it, then paste it in the Claude or ChatGPT chat.',
+      ask1: 'What should I play now?',
+      ask2: 'Which trophies are left on the platinum I am going for?',
+      ask3: 'How do I get the hardest trophy in the game I am playing?',
+      ask4: 'Plan my play session for today',
+      ask5: 'Is any game in my interests on sale today?',
+      ask6: 'Add Astro Bot to my interests',
+      ask7: 'Which upcoming games suit me?',
+      copy: 'Copy the request',
+    },
   },
 })
 
@@ -178,8 +206,13 @@ export function ConnectedAppsCard({
     <div className="card" id="connected-apps">
       <h2>{t('title')}</h2>
       {telegram}
-      <h3 className="connected-sub">{t('assistants')}</h3>
-      <p className="connected-lead">{t('lead', { url: `${window.location.origin}/mcp` })}</p>
+      <div className="connected-head">
+        <div>
+          <h3 className="connected-sub">{t('assistants')}</h3>
+          <p className="connected-lead">{t('lead', { url: `${window.location.origin}/mcp` })}</p>
+        </div>
+        {load.kind === 'ready' && load.list.length > 0 && <AskIdeas />}
+      </div>
       <div className="connected-list">
         {load.kind === 'loading' && <Sk w="60%" h={13} />}
         {load.kind === 'error' && <p className="connected-empty">{t('loadFailed')}</p>}
@@ -201,7 +234,7 @@ export function ConnectedAppsCard({
               </span>
               <button
                 type="button"
-                className="ghost sm"
+                className="ghost sm connected-disconnect"
                 disabled={busy === c.id}
                 onClick={() => onDisconnect(c)}
               >
@@ -287,6 +320,73 @@ function CopyValue({ value }: { value: string }) {
         <Icon name={copied ? 'check' : 'copy'} />
       </button>
     </span>
+  )
+}
+
+const IDEAS = ['ask1', 'ask2', 'ask3', 'ask4', 'ask5', 'ask6', 'ask7'] as const
+
+// Beside the assistants' heading, once one is connected: what they can be asked, in a dialog, each request copied with a click.
+function AskIdeas() {
+  const t = useMessages(messages)
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button type="button" className="ghost sm connected-ideas" onClick={() => setOpen(true)}>
+        <Icon name="info" /> {t('ideas.open')}
+      </button>
+      {open && <AskDialog onClose={() => setOpen(false)} />}
+    </>
+  )
+}
+
+function AskDialog({ onClose }: { onClose: () => void }) {
+  const t = useMessages(messages)
+  const ref = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const dialog = ref.current
+    if (dialog && !dialog.open) dialog.showModal?.()
+  }, [])
+  const { copied, copy } = useCopy()
+  return (
+    <dialog
+      ref={ref}
+      className="onb install-guide connect-guide"
+      aria-label={t('ideas.dialogTitle')}
+      onCancel={(e) => {
+        e.preventDefault()
+        onClose()
+      }}
+    >
+      <div className="onb-grid" aria-hidden="true" />
+      <div className="onb-card">
+        <div className="onb-body">
+          <div className="onb-copy">
+            <span className="eyebrow">{t('ideas.eyebrow')}</span>
+            <h2>{t('ideas.dialogTitle')}</h2>
+            <p>{t('ideas.dialogLead')}</p>
+            <div className="connected-idea-list">
+              {IDEAS.map((key) => t(`ideas.${key}`)).map((idea) => (
+                <button
+                  type="button"
+                  key={idea}
+                  className={`connected-idea ${copied === idea ? 'is-copied' : ''}`}
+                  title={t('ideas.copy')}
+                  onClick={() => copy(idea)}
+                >
+                  <span>{idea}</span>
+                  <Icon name={copied === idea ? 'check' : 'copy'} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <footer className="onb-controls">
+          <button type="button" className="ghost sm" onClick={onClose}>
+            {t('hide')}
+          </button>
+        </footer>
+      </div>
+    </dialog>
   )
 }
 
