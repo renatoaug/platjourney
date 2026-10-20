@@ -1,4 +1,5 @@
 import { plain, q } from '../db.ts'
+import type { AssistantKey } from './activity.ts'
 import type { Game } from './game.ts'
 import { gameRef } from './game.ts'
 import { userRef } from './user.ts'
@@ -128,7 +129,7 @@ export async function listPicks(user: string, limit = 30): Promise<PickRow[]> {
   return plain(
     await q<PickRow[]>(
       `SELECT id, game.* AS game, why, first_step, mood, scope, owned_only, fits, created_at
-       FROM recommendation WHERE user = $user AND source = 'pick' AND recommender = 'Nexo'
+       FROM recommendation WHERE user = $user AND source = 'pick' AND recommender = 'nexo'
        ORDER BY created_at DESC LIMIT $limit`,
       { user: userRef(user), limit },
     ),
@@ -143,7 +144,7 @@ export async function recentPickGames(
 ): Promise<string[]> {
   const rows = await q<unknown[]>(
     `SELECT VALUE game FROM recommendation WHERE user = $user AND source = 'pick'
-       AND recommender = 'Nexo' AND scope = $scope AND created_at > time::now() - <duration> $since`,
+       AND recommender = 'nexo' AND scope = $scope AND created_at > time::now() - <duration> $since`,
     { user: userRef(user), scope, since: `${hours}h` },
   )
   return [...new Set(plain(rows ?? []).map(String))]
@@ -159,7 +160,7 @@ export async function lastRecommended(
   const [row] = await q<{ at: string; source?: string; why: string }[]>(
     `SELECT created_at AS at, source, why FROM recommendation
      WHERE user = $user AND game = $game AND created_at > time::now() - <duration> $since
-       AND recommender = 'Nexo'
+       AND recommender = 'nexo'
      ORDER BY at DESC LIMIT 1`,
     { user: userRef(user), game: gameRef(game), since: `${days}d` },
   )
@@ -201,7 +202,7 @@ export interface AssistantPick {
   id: string
   game: Game
   why: string
-  assistant: string
+  assistant: AssistantKey
   created_at: string
 }
 
@@ -211,11 +212,11 @@ export async function saveAssistantPick(
   user: string,
   game: string,
   why: string,
-  assistant: string,
+  assistant: AssistantKey,
 ): Promise<void> {
   await q(
     `DELETE recommendation WHERE user = $user AND game = $game AND source = 'pick'
-       AND recommender != 'Nexo';
+       AND recommender != 'nexo';
      CREATE recommendation CONTENT { user: $user, game: $game, source: 'pick', why: $why,
        recommender: $assistant, similar_to: [] };`,
     { user: userRef(user), game: gameRef(game), why, assistant },
@@ -230,7 +231,7 @@ export async function assistantPicks(user: string, year: number): Promise<Assist
       `LET $saved = SELECT VALUE game FROM interest WHERE user = $user AND year = $year;
        LET $dismissed = SELECT VALUE game FROM dismissal WHERE user = $user;
        SELECT id, game.* AS game, why, recommender AS assistant, created_at FROM recommendation
-       WHERE user = $user AND source = 'pick' AND recommender != 'Nexo'
+       WHERE user = $user AND source = 'pick' AND recommender != 'nexo'
          AND created_at > time::now() - ${ASSISTANT_PICK_DAYS}d
          AND game NOTINSIDE $saved AND game NOTINSIDE $dismissed
        ORDER BY created_at DESC;`,
@@ -242,7 +243,7 @@ export async function assistantPicks(user: string, year: number): Promise<Assist
 /** Takes a game an assistant suggested off Discover. */
 export async function dropAssistantPick(user: string, game: string): Promise<void> {
   await q(
-    "DELETE recommendation WHERE user = $user AND game = $game AND source = 'pick' AND recommender != 'Nexo'",
+    "DELETE recommendation WHERE user = $user AND game = $game AND source = 'pick' AND recommender != 'nexo'",
     { user: userRef(user), game: gameRef(game) },
   )
 }

@@ -9,6 +9,7 @@ import { clientIp } from './access.ts'
 import { config } from './config.ts'
 import { BadBody, json } from './http.ts'
 import { allow } from './rate-limit.ts'
+import type { AssistantKey } from './repository/activity.ts'
 import {
   createClient,
   createToken,
@@ -319,23 +320,23 @@ async function revoke(req: IncomingMessage, res: ServerResponse) {
 /** The player and connection behind a request's bearer token; undefined without a live one. */
 export async function bearer(
   req: IncomingMessage,
-): Promise<{ user: User; connection: string; assistant: string } | undefined> {
+): Promise<{ user: User; connection: string; assistant: AssistantKey } | undefined> {
   const m = /^Bearer ([a-f0-9]{64})$/.exec(req.headers.authorization ?? '')
   if (!m) return undefined
   const owner = await tokenOwner(hash(m[1]))
   const user = owner && (await getUser(owner.user))
   return user && owner
-    ? { user, connection: owner.id, assistant: assistantName(owner.client) }
+    ? { user, connection: owner.id, assistant: assistantKey(owner.client) }
     : undefined
 }
 
-/** The assistant's name as the app shows it, from the name its client registered with: ChatGPT's
- * desktop app registers as Codex. */
-export function assistantName(client: string | null | undefined): string {
-  const name = (client ?? '').trim()
-  if (/claude/i.test(name)) return 'Claude'
-  if (/chatgpt|openai|codex/i.test(name)) return 'ChatGPT'
-  return name.slice(0, 40) || 'Assistant'
+/** The assistant, from the name its client registered with: ChatGPT's desktop app registers as
+ * Codex. */
+export function assistantKey(client: string | null | undefined): AssistantKey {
+  const name = client ?? ''
+  if (/claude/i.test(name)) return 'claude'
+  if (/chatgpt|openai|codex/i.test(name)) return 'chatgpt'
+  return 'other'
 }
 
 /** Answers the OAuth documents and endpoints; false for any other request. */

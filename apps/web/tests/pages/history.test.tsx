@@ -93,7 +93,7 @@ test("a tip an assistant saved carries the assistant's name and its own filter",
   const tip: Tip = {
     id: 't9',
     kind: 'assistant',
-    assistant: 'Claude',
+    assistant: 'claude',
     content: 'Use o arco no chefe.',
     created_at: hoursAgo(1),
     game,

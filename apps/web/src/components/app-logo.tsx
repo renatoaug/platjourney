@@ -11,6 +11,10 @@ export const ASSISTANTS = [
 ] as const
 export type Assistant = (typeof ASSISTANTS)[number]
 
+/** An assistant's name from the key the server stores ('claude', 'chatgpt'); null for 'other'. */
+export const assistantName = (key?: string | null): string | null =>
+  ASSISTANTS.find((a) => a.key === key)?.name ?? null
+
 export function AppLogo({ name }: { name: string }) {
   const logo = ASSISTANTS.find((a) => a.match.test(name))?.logo
   return logo ? (

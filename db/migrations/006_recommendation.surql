@@ -30,7 +30,6 @@ DEFINE FIELD IF NOT EXISTS owned_only ON recommendation TYPE option<bool>;
 -- False when nothing in the list matched the mood and Nexo chose the closest.
 DEFINE FIELD IF NOT EXISTS fits ON recommendation TYPE option<bool>;
 DEFINE INDEX IF NOT EXISTS recommendation_user_created ON recommendation FIELDS user, created_at;
--- Who recommended it: 'Nexo', or an assistant connected through MCP (a pick it saved with save_suggestion), by the
--- name the app shows ('Claude', 'ChatGPT'). Rows from before it are Nexo's, filled in once here.
-DEFINE FIELD IF NOT EXISTS recommender ON recommendation TYPE string DEFAULT 'Nexo';
-UPDATE recommendation SET recommender = 'Nexo' WHERE recommender = NONE;
+-- Who recommended it: Nexo, or an assistant connected through MCP (a pick it saved with save_suggestion); 'other' is
+-- an assistant the app does not know by name.
+DEFINE FIELD IF NOT EXISTS recommender ON recommendation TYPE 'nexo' | 'claude' | 'chatgpt' | 'other' DEFAULT 'nexo';

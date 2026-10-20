@@ -13,7 +13,7 @@ import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Markdown } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
-import { AppLogo } from './app-logo'
+import { AppLogo, assistantName } from './app-logo'
 import './tip.css'
 
 /** Also read by the notifications panel, which shows the same items. */
@@ -82,7 +82,7 @@ export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?:
   const tr = useMessages(messages)
   const t = tipItem
   // A tip an assistant saved carries its name instead of the kind.
-  const kind = (t.kind === 'assistant' && t.assistant) || kindLabel(tr, t.kind)
+  const kind = (t.kind === 'assistant' && assistantName(t.assistant)) || kindLabel(tr, t.kind)
   if (compact)
     return (
       <div className="tip">

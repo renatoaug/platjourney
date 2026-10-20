@@ -14,6 +14,7 @@ import { type Args, TOOLS, ToolError } from './mcp-tools.ts'
 import { bearer, origin, resourceMetadataUrl } from './oauth.ts'
 import { beforeTool, Refused } from './plugins.ts'
 import { allow } from './rate-limit.ts'
+import type { AssistantKey } from './repository/activity.ts'
 import type { User } from './repository/user.ts'
 
 const PROTOCOLS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05']
@@ -38,7 +39,7 @@ const text = (value: unknown, isError = false) => ({
 interface Caller {
   user: User
   connection: string
-  assistant: string
+  assistant: AssistantKey
 }
 
 async function callTool({ user, connection, assistant }: Caller, params: Args) {

@@ -1,12 +1,12 @@
 import { afterEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { AssistantPicks } from '../../src/components/assistant-picks'
-import type { AssistantPick } from '../../src/lib/types'
+import type { AssistantKey, AssistantPick } from '../../src/lib/types'
 import { mockApi, renderApp } from '../support/web'
 
 afterEach(() => mock.restore())
 
-const pick = (id: string, name: string, assistant = 'Claude'): AssistantPick => ({
+const pick = (id: string, name: string, assistant: AssistantKey = 'claude'): AssistantPick => ({
   game: { id, name } as AssistantPick['game'],
   reason: `${name} is short and fun.`,
   assistant,
@@ -37,7 +37,7 @@ test("the assistant's suggestions, with its name and reason; one leaves when rem
 test('suggestions from both assistants share one title; none or a failure shows nothing', async () => {
   mockApi({
     '/api/assistant-picks': {
-      items: [pick('game:1', 'Far Cry 5'), pick('game:2', 'Inside', 'ChatGPT')],
+      items: [pick('game:1', 'Far Cry 5'), pick('game:2', 'Inside', 'chatgpt')],
     },
   })
   renderApp(<AssistantPicks />)
@@ -47,4 +47,11 @@ test('suggestions from both assistants share one title; none or a failure shows 
   const { container } = renderApp(<AssistantPicks />)
   await new Promise((r) => setTimeout(r, 10))
   expect(container.querySelector('.game-band')).toBeNull()
+})
+
+test('an assistant the app does not know by name shows as one', async () => {
+  mockApi({ '/api/assistant-picks': { items: [pick('game:1', 'Far Cry 5', 'other')] } })
+  renderApp(<AssistantPicks />)
+  const shelf = await screen.findByRole('region', { name: 'Sugeridos pelo Assistente' })
+  expect(shelf.querySelector('.band-tag')?.textContent).toBe('Assistente')
 })

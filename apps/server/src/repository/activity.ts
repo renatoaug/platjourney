@@ -3,6 +3,10 @@ import type { Game } from './game.ts'
 import { gameRef } from './game.ts'
 import { userRef } from './user.ts'
 
+/** An assistant connected through MCP, as the database stores it with what it saved (an enum);
+ * the app shows its name. */
+export type AssistantKey = 'claude' | 'chatgpt' | 'other'
+
 export type TipKind =
   | 'start'
   | 'unlock'
@@ -17,8 +21,8 @@ export interface Tip {
   kind: TipKind
   content: string
   game: Game | null
-  /** For a tip a connected assistant saved: its name ('Claude', 'ChatGPT'). */
-  assistant?: string | null
+  /** For a tip a connected assistant saved: which one. */
+  assistant?: AssistantKey | null
   created_at: string
 }
 
@@ -42,7 +46,7 @@ export async function logTip(
  * the player was in its chat when it was written. */
 export async function logAssistantTip(
   user: string,
-  assistant: string,
+  assistant: AssistantKey,
   content: string,
   game?: string,
 ): Promise<void> {

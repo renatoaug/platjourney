@@ -5,11 +5,13 @@ import { defineMessages, Language, type Translator, translator, useMessages } fr
 import { ApiError, api, del } from '../lib/api'
 import { fmtClock, fmtDate, fmtMinutes } from '../lib/format'
 import { plainText } from '../lib/text'
+import type { AssistantKey } from '../lib/types'
 import { modelWorkDone } from '../plugins'
 import { Icon } from '../ui/icon'
 import { GuideText, Markdown } from '../ui/markdown'
 import { repeat, Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
+import { assistantName } from './app-logo'
 import { DemoNote } from './demo'
 import './plan.css'
 
@@ -35,6 +37,7 @@ const messages = defineMessages({
     eyebrow: 'ROTEIRO DA SESSÃO',
     eyebrowGame: 'ROTEIRO DA SESSÃO · {game}',
     by: 'feito no {name}',
+    byOther: 'feito num assistente',
     building: 'Montando o roteiro de {time}…',
     buildingLead: 'Escolhendo os troféus que cabem no seu tempo e a melhor ordem.',
     inviteTitle: 'Vai jogar agora? Eu monto o caminho.',
@@ -80,6 +83,7 @@ const messages = defineMessages({
     eyebrow: 'SESSION ROUTE',
     eyebrowGame: 'SESSION ROUTE · {game}',
     by: 'made in {name}',
+    byOther: 'made in an assistant',
     building: 'Building your {time} route…',
     buildingLead: 'Picking the trophies that fit your time and the best order.',
     inviteTitle: 'Playing now? I’ll map the way.',
@@ -133,8 +137,8 @@ export interface SessionPlan {
   totalMinutes: number
   warnings: string[]
   ifTimeLeft: string | null
-  /** A plan a connected assistant made in its chat: its name ('Claude', 'ChatGPT'). */
-  assistant?: string | null
+  /** A plan a connected assistant made in its chat: which one. */
+  assistant?: AssistantKey | null
   doneCount: number
   status: 'active' | 'done' | 'expired'
   // The step to play now, or -1 when nothing is left.
@@ -347,7 +351,9 @@ function planSub(t: Translator<typeof messages>, plan: SessionPlan) {
     plan.status === 'active'
       ? t('validUntil', { time: fmtMinutes(plan.minutes), clock: fmtClock(plan.expiresAt) })
       : `${fmtMinutes(plan.minutes)} · ${fmtDate(plan.createdAt)}, ${fmtClock(plan.createdAt)}`
-  return plan.assistant ? `${when} · ${t('by', { name: plan.assistant })}` : when
+  if (!plan.assistant) return when
+  const name = assistantName(plan.assistant)
+  return `${when} · ${name ? t('by', { name }) : t('byOther')}`
 }
 
 /** The session plan card, every state of it. The container is `PlanCard`. */

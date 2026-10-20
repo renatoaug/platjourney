@@ -15,7 +15,7 @@ import { catalogTrophies, profileSummary, type TitleProgress, type TrophyStatus 
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
 import { dismissRecommendation } from './recommend.ts'
 import { RELEASES_AFTER_DAYS, RELEASES_BEFORE_DAYS } from './releases.ts'
-import { logAssistantTip } from './repository/activity.ts'
+import { type AssistantKey, logAssistantTip } from './repository/activity.ts'
 import {
   type Game,
   gameByName,
@@ -39,7 +39,7 @@ export class ToolError extends Error {}
 export type Args = Record<string, unknown>
 /** Which assistant called: what the app shows next to what it saved. */
 interface From {
-  assistant: string
+  assistant: AssistantKey
 }
 export interface Tool {
   name: string
@@ -118,7 +118,7 @@ async function interestCommand(user: User, command: string) {
   await handleInterestCommand(user, command, await library(user.psn_account_id))
 }
 
-const assistantOf = (from?: From) => from?.assistant ?? 'Assistant'
+const assistantOf = (from?: From): AssistantKey => from?.assistant ?? 'other'
 
 // A required text argument, trimmed and cut to `max` characters.
 function textArg(args: Args, key: string, max: number): string {

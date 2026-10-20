@@ -5,6 +5,7 @@ import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import type { AssistantPick } from '../lib/types'
 import { Icon } from '../ui/icon'
+import { assistantName } from './app-logo'
 import { useDemo } from './demo'
 import { GameCard, GameShelf } from './game-band'
 import { SaveToInterests } from './save-to-interests'
@@ -14,6 +15,7 @@ const messages = defineMessages({
     eyebrow: 'DOS SEUS ASSISTENTES',
     title: 'Sugeridos no seu chat',
     titleOne: 'Sugeridos pelo {name}',
+    unnamed: 'Assistente',
     lead: 'Os jogos que o seu assistente recomendou numa conversa. Ficam aqui por 30 dias.',
     dismissAria: 'Tirar {name} das sugestões',
     dismissTip: 'Tirar das sugestões',
@@ -22,6 +24,7 @@ const messages = defineMessages({
     eyebrow: 'FROM YOUR ASSISTANTS',
     title: 'Suggested in your chat',
     titleOne: 'Suggested by {name}',
+    unnamed: 'Assistant',
     lead: 'The games your assistant recommended in a conversation. They stay here for 30 days.',
     dismissAria: 'Remove {name} from the suggestions',
     dismissTip: 'Remove from the suggestions',
@@ -44,7 +47,8 @@ export function AssistantPicks() {
     setPicks((list) => list.filter((x) => x.game.id !== p.game.id))
     api('/api/assistant-picks/dismiss', { game: p.game.id }).catch(() => {})
   }
-  const names = [...new Set(picks.map((p) => p.assistant))]
+  const nameOf = (p: AssistantPick) => assistantName(p.assistant) ?? t('unnamed')
+  const names = [...new Set(picks.map(nameOf))]
   return (
     <GameShelf
       id="assistant-picks-title"
@@ -62,7 +66,7 @@ export function AssistantPicks() {
             hasMissables: p.hasMissables,
             hasOnline: p.hasOnline,
             hasDifficultyTrophy: p.hasDifficultyTrophy,
-            tag: p.assistant,
+            tag: nameOf(p),
             reason: p.reason,
             reasonTitle: p.reason,
             reasonLines: 3,

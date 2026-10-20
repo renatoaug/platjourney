@@ -37,14 +37,14 @@ test('a tip without a game leaves the game out', async () => {
 
 test("an assistant's tip is kept under its name, and is not a notification", async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
-  await logAssistantTip('user:u1', 'Claude', 'Use the bow.', 'game:7')
+  await logAssistantTip('user:u1', 'claude', 'Use the bow.', 'game:7')
   expect(q.mock.calls[0]).toEqual([
     'CREATE tip CONTENT $data',
-    { data: { user, kind: 'assistant', assistant: 'Claude', content: 'Use the bow.', game } },
+    { data: { user, kind: 'assistant', assistant: 'claude', content: 'Use the bow.', game } },
   ])
-  await logAssistantTip('user:u1', 'Claude', 'Any game')
+  await logAssistantTip('user:u1', 'claude', 'Any game')
   expect(q.mock.calls[1][1]).toEqual({
-    data: { user, kind: 'assistant', assistant: 'Claude', content: 'Any game' },
+    data: { user, kind: 'assistant', assistant: 'claude', content: 'Any game' },
   })
 })
 

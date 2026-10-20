@@ -924,7 +924,7 @@ test('recommendations by similar games answer from the graph, without the model'
 
 test("an assistant's suggestions come with the guide's facts, and leave when dismissed", async () => {
   spyOn(recRepo, 'assistantPicks').mockResolvedValue([
-    { id: 'recommendation:a', game, why: 'Short.', assistant: 'Claude', created_at: 'd' },
+    { id: 'recommendation:a', game, why: 'Short.', assistant: 'claude', created_at: 'd' },
   ])
   spyOn(similarRepo, 'guideFacts').mockResolvedValue([
     { game: game.id, difficulty: 3, hours: 12, hasMissables: true, difficultyTrophy: null },
@@ -934,7 +934,7 @@ test("an assistant's suggestions come with the guide's facts, and leave when dis
     {
       game,
       reason: 'Short.',
-      assistant: 'Claude',
+      assistant: 'claude',
       savedAt: 'd',
       difficulty: 3,
       hours: 12,

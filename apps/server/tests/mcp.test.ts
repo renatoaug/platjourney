@@ -327,7 +327,7 @@ test("a suggestion is saved under the assistant's name; the demo saves nothing",
     claude,
   )
   expect(data).toMatchObject({ saved: { id: game.id }, reason: 'Short and fun.' })
-  expect(save).toHaveBeenCalledWith(me.id, game.id, 'Short and fun.', 'Claude')
+  expect(save).toHaveBeenCalledWith(me.id, game.id, 'Short and fun.', 'claude')
   expect((await call('save_suggestion', { game: game.name })).isError).toBe(true)
   expect((await call('save_suggestion', { game: 'Nope', reason: 'x' })).isError).toBe(true)
 })
@@ -363,7 +363,7 @@ test('a session plan names the trophies as the list does, for the game being pla
   expect(plan).toMatchObject({
     minutes: 90,
     summary: 'Story first.',
-    assistant: 'ChatGPT',
+    assistant: 'chatgpt',
     totalMinutes: 20,
     warnings: ['Missable'],
     ifTimeLeft: null,
@@ -385,8 +385,8 @@ test('a tip goes to the history under the assistant, with its game when named', 
     saved: true,
     game: { id: game.id },
   })
-  expect(log).toHaveBeenCalledWith(me.id, 'Assistant', 'Use the bow.', game.id)
+  expect(log).toHaveBeenCalledWith(me.id, 'other', 'Use the bow.', game.id)
   await call('save_tip', { text: 'General tip' })
-  expect(log).toHaveBeenLastCalledWith(me.id, 'Assistant', 'General tip', undefined)
+  expect(log).toHaveBeenLastCalledWith(me.id, 'other', 'General tip', undefined)
   expect((await call('save_tip', {})).isError).toBe(true)
 })
