@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.27.0](https://github.com/renatoaug/platjourney/compare/v0.26.0...v0.27.0) (2026-10-20)
+
+### Features
+
+* **mcp:** keep what an assistant settles in the chat ([#65](https://github.com/renatoaug/platjourney/issues/65)) ([070e85f](https://github.com/renatoaug/platjourney/commit/070e85f7e968ae5c32b2745b53ea7fc7fd0e8ebf))
+
 ## [0.26.0](https://github.com/renatoaug/platjourney/compare/v0.25.5...v0.26.0) (2026-10-20)
 
 ### Features
