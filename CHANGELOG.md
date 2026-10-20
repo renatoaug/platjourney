@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.25.3](https://github.com/renatoaug/platjourney/compare/v0.25.2...v0.25.3) (2026-10-20)
+
+### Bug Fixes
+
+* **server:** draw the app icon without a mask and let any client revoke a token ([#63](https://github.com/renatoaug/platjourney/issues/63)) ([f27a1b6](https://github.com/renatoaug/platjourney/commit/f27a1b6f0ba38e021fc2ab48e6a48546e28b0385))
+
 ## [0.25.2](https://github.com/renatoaug/platjourney/compare/v0.25.1...v0.25.2) (2026-10-20)
 
 ### Bug Fixes
