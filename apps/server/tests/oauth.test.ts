@@ -44,6 +44,7 @@ test('the two metadata documents point an assistant to sign-in and to /mcp', asy
     registration_endpoint: 'http://app.test/oauth/register',
     code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['none'],
+    revocation_endpoint: 'http://app.test/oauth/revoke',
   })
   expect((await send('OPTIONS', '/oauth/token')).status).toBe(204)
   expect((await send('GET', '/oauth/nothing')).status).toBe(404)
@@ -280,4 +281,30 @@ test('the demo can connect an assistant but lists no connections', async () => {
   // Its code buys a token like anyone's, but the shared account lists none of them.
   await connect(demo)
   expect((await send('GET', '/api/connections')).body).toEqual({ connections: [] })
+})
+
+test('an assistant that revokes its token ends the connection; another client cannot', async () => {
+  const mine = await connect(me)
+  const who = (token: string) =>
+    bearer({ headers: { authorization: `Bearer ${token}` } } as unknown as IncomingMessage)
+  const revoke = (body: Record<string, string>) =>
+    send('POST', '/oauth/revoke', new URLSearchParams(body).toString(), form)
+  // Another registered client cannot end it.
+  const { client_id: stranger } = (await register()).body
+  expect((await revoke({ token: mine.access_token, client_id: stranger })).status).toBe(200)
+  expect((await who(mine.access_token))?.user.id).toBe(me.id)
+  expect((await revoke({ token: mine.access_token, client_id: 'nobody' })).status).toBe(401)
+  // Its own client can, with the refresh token too, and an unknown token answers the same.
+  expect((await revoke({ token: mine.refresh_token, client_id: mine.clientId })).status).toBe(200)
+  expect(await who(mine.access_token)).toBeUndefined()
+  expect((await revoke({ token: 'f'.repeat(64), client_id: mine.clientId })).status).toBe(200)
+})
+
+test('connecting the same assistant again replaces its earlier connection', async () => {
+  await connect(me)
+  await connect(me, 'x'.repeat(60))
+  await connect(other, 'y'.repeat(60))
+  const list = (await send('GET', '/api/connections')).body.connections
+  expect(list).toHaveLength(1)
+  expect(store.tokens.filter((t) => t.user === other.id)).toHaveLength(1)
 })

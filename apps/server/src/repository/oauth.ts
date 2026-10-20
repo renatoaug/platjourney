@@ -117,6 +117,24 @@ export async function rotateToken(
   return Array.isArray(rows) && rows.length > 0
 }
 
+/** Ends the connection one of its tokens (access or refresh) belongs to, for this client only. */
+export async function revokeToken(tokenHash: string, client: string): Promise<void> {
+  await q(
+    `DELETE oauth_token WHERE (access_hash = $hash OR refresh_hash = $hash)
+       AND client = type::record($client)`,
+    { hash: tokenHash, client },
+  )
+}
+
+/** Ends the player's earlier connections of the same assistant (same name), so connecting it again
+ * replaces the old one instead of listing it twice. */
+export async function replaceConnections(user: string, name: string): Promise<void> {
+  await q('DELETE oauth_token WHERE user = $user AND client.name = $name', {
+    user: userRef(user),
+    name,
+  })
+}
+
 /** The connection a live access token belongs to, marked as used now. */
 export async function tokenOwner(
   accessHash: string,

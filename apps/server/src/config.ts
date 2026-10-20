@@ -52,7 +52,7 @@ export const config = {
   // connection may make a minute (0 for no limit).
   mcp: {
     accessMinutes: 60,
-    refreshDays: Number(process.env.MCP_REFRESH_DAYS ?? 30),
+    refreshDays: Number(process.env.MCP_REFRESH_DAYS ?? 14),
     perMinute: Math.max(0, Number(process.env.MCP_RATE_LIMIT ?? 60) || 0),
   },
   // Notices as push to the browser and the installed web app (Web Push). Off without both VAPID
