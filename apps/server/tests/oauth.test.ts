@@ -283,21 +283,24 @@ test('the demo can connect an assistant but lists no connections', async () => {
   expect((await send('GET', '/api/connections')).body).toEqual({ connections: [] })
 })
 
-test('an assistant that revokes its token ends the connection; another client cannot', async () => {
+test('revoking a token ends its connection, from any client, and each request is logged', async () => {
+  const log = spyOn(console, 'log').mockImplementation(() => {})
   const mine = await connect(me)
   const who = (token: string) =>
     bearer({ headers: { authorization: `Bearer ${token}` } } as unknown as IncomingMessage)
   const revoke = (body: Record<string, string>) =>
     send('POST', '/oauth/revoke', new URLSearchParams(body).toString(), form)
-  // Another registered client cannot end it.
-  const { client_id: stranger } = (await register()).body
-  expect((await revoke({ token: mine.access_token, client_id: stranger })).status).toBe(200)
+  // An unknown token is answered like a known one.
+  expect((await revoke({ token: 'f'.repeat(64), client_id: 'nobody' })).status).toBe(200)
   expect((await who(mine.access_token))?.user.id).toBe(me.id)
-  expect((await revoke({ token: mine.access_token, client_id: 'nobody' })).status).toBe(401)
-  // Its own client can, with the refresh token too, and an unknown token answers the same.
-  expect((await revoke({ token: mine.refresh_token, client_id: mine.clientId })).status).toBe(200)
+  // Claude registers two clients and may revoke from the other one: it still ends.
+  const { client_id: other } = (await register()).body
+  expect((await revoke({ token: mine.refresh_token, client_id: other })).status).toBe(200)
   expect(await who(mine.access_token)).toBeUndefined()
-  expect((await revoke({ token: 'f'.repeat(64), client_id: mine.clientId })).status).toBe(200)
+  expect(log.mock.calls.map((c) => c[0])).toEqual([
+    'oauth revoke from an unknown client: no live token',
+    'oauth revoke from Claude: connection ended',
+  ])
 })
 
 test('connecting the same assistant again replaces its earlier connection', async () => {

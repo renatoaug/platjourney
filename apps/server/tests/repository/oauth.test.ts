@@ -104,11 +104,15 @@ test('a player lists, ends one or all of their connections', async () => {
 
 test('a token revoked by its client, and the same assistant connected again, end their rows', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
-  await revokeToken('h', 'oauth_client:1')
+  q.mockResolvedValue([{}])
+  expect(await revokeToken('h')).toBe(true)
   expect(q.mock.calls[0][0]).toContain('access_hash = $hash OR refresh_hash = $hash')
-  expect(q.mock.calls[0][1]).toEqual({ hash: 'h', client: 'oauth_client:1' })
+  expect(q.mock.calls[0][1]).toEqual({ hash: 'h' })
+  q.mockResolvedValue([])
+  expect(await revokeToken('h')).toBe(false)
+  q.mockResolvedValue(undefined)
   await replaceConnections('user:u1', 'Claude')
-  expect(q.mock.calls[1]).toEqual([
+  expect(q.mock.calls[2]).toEqual([
     'DELETE oauth_token WHERE user = $user AND client.name = $name',
     { user, name: 'Claude' },
   ])
