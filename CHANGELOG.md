@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.25.4](https://github.com/renatoaug/platjourney/compare/v0.25.3...v0.25.4) (2026-10-20)
+
+### Bug Fixes
+
+* **web:** copy buttons that say they copied, and a consent page that fits ([#64](https://github.com/renatoaug/platjourney/issues/64)) ([524aa70](https://github.com/renatoaug/platjourney/commit/524aa70b2eda42584c8204745b7e17817b2c26b2))
+
 ## [0.25.3](https://github.com/renatoaug/platjourney/compare/v0.25.2...v0.25.3) (2026-10-20)
 
 ### Bug Fixes
