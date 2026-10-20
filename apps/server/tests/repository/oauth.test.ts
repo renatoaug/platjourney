@@ -9,6 +9,8 @@ import {
   deleteConnectionsOf,
   getClient,
   pruneOauth,
+  replaceConnections,
+  revokeToken,
   rotateToken,
   saveCode,
   takeCode,
@@ -98,4 +100,16 @@ test('a player lists, ends one or all of their connections', async () => {
   expect(q.mock.calls[3][0]).toContain('DELETE oauth_token WHERE user = $user')
   await pruneOauth()
   expect(q.mock.calls[4][0]).toContain('refresh_expires_at < time::now()')
+})
+
+test('a token revoked by its client, and the same assistant connected again, end their rows', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await revokeToken('h', 'oauth_client:1')
+  expect(q.mock.calls[0][0]).toContain('access_hash = $hash OR refresh_hash = $hash')
+  expect(q.mock.calls[0][1]).toEqual({ hash: 'h', client: 'oauth_client:1' })
+  await replaceConnections('user:u1', 'Claude')
+  expect(q.mock.calls[1]).toEqual([
+    'DELETE oauth_token WHERE user = $user AND client.name = $name',
+    { user, name: 'Claude' },
+  ])
 })

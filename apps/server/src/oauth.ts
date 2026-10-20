@@ -14,6 +14,8 @@ import {
   createToken,
   getClient,
   type OauthClient,
+  replaceConnections,
+  revokeToken,
   rotateToken,
   saveCode,
   takeCode,
@@ -66,6 +68,8 @@ function authorizationServer(req: IncomingMessage) {
     authorization_endpoint: `${base}/oauth/authorize`,
     token_endpoint: `${base}/oauth/token`,
     registration_endpoint: `${base}/oauth/register`,
+    revocation_endpoint: `${base}/oauth/revoke`,
+    revocation_endpoint_auth_methods_supported: ['none'],
     response_types_supported: ['code'],
     grant_types_supported: ['authorization_code', 'refresh_token'],
     code_challenge_methods_supported: ['S256'],
@@ -290,7 +294,21 @@ async function token(req: IncomingMessage, res: ServerResponse) {
     !verifierMatches(p.code_verifier ?? '', code.challenge)
   )
     return json(res, 400, { error: 'invalid_grant' }, OPEN)
+  // Connecting the same assistant again (it registers anew each time) replaces its old connection.
+  await replaceConnections(code.user, client.name)
   return issue(res, client, undefined, code.user)
+}
+
+// An assistant tells the instance it no longer holds a token (the player removed the connector):
+// the connection ends. Unknown tokens are answered the same way, as OAuth asks (RFC 7009).
+async function revoke(req: IncomingMessage, res: ServerResponse) {
+  if (!allow(`oauth-token|${clientIp(req) ?? ''}`, 30, 60_000))
+    return json(res, 429, { error: 'too_many_requests' }, OPEN)
+  const p = await readParams(req)
+  const client = p.client_id ? await getClient(p.client_id) : undefined
+  if (!client) return json(res, 401, { error: 'invalid_client' }, OPEN)
+  if (p.token) await revokeToken(hash(p.token), client.id)
+  return res.writeHead(200, { ...OPEN, 'cache-control': 'no-store' }).end()
 }
 
 /** The player and connection behind a request's bearer token; undefined without a live one. */
@@ -305,6 +323,21 @@ export async function bearer(
 }
 
 /** Answers the OAuth documents and endpoints; false for any other request. */
+type OauthHandler = (req: IncomingMessage, res: ServerResponse, url: URL) => unknown
+
+// The endpoints by method and path; the two documents also answer with a resource path after
+// their name (/.well-known/oauth-protected-resource/mcp), which is why they match by prefix.
+const ENDPOINTS: Record<string, OauthHandler> = {
+  'POST /oauth/register': (req, res) => register(req, res),
+  'GET /oauth/authorize': (_req, res, url) => authorize(res, url),
+  'POST /oauth/token': (req, res) => token(req, res),
+  'POST /oauth/revoke': (req, res) => revoke(req, res),
+}
+const DOCUMENTS: [string, (req: IncomingMessage) => object][] = [
+  ['/.well-known/oauth-protected-resource', protectedResource],
+  ['/.well-known/oauth-authorization-server', authorizationServer],
+]
+
 export async function oauthRoute(
   req: IncomingMessage,
   res: ServerResponse,
@@ -312,19 +345,15 @@ export async function oauthRoute(
   method: string,
 ): Promise<boolean> {
   const path = url.pathname
-  const ours = path.startsWith('/.well-known/oauth-') || path.startsWith('/oauth/')
-  if (!ours) return false
+  if (!path.startsWith('/.well-known/oauth-') && !path.startsWith('/oauth/')) return false
   if (method === 'OPTIONS') {
     res.writeHead(204, { ...OPEN, 'access-control-allow-methods': 'GET, POST' }).end()
     return true
   }
-  if (method === 'GET' && path.startsWith('/.well-known/oauth-protected-resource'))
-    json(res, 200, protectedResource(req), OPEN)
-  else if (method === 'GET' && path.startsWith('/.well-known/oauth-authorization-server'))
-    json(res, 200, authorizationServer(req), OPEN)
-  else if (method === 'POST' && path === '/oauth/register') await register(req, res)
-  else if (method === 'GET' && path === '/oauth/authorize') await authorize(res, url)
-  else if (method === 'POST' && path === '/oauth/token') await token(req, res)
+  const document = method === 'GET' && DOCUMENTS.find(([prefix]) => path.startsWith(prefix))
+  const endpoint = ENDPOINTS[`${method} ${path}`]
+  if (document) json(res, 200, document[1](req), OPEN)
+  else if (endpoint) await endpoint(req, res, url)
   else json(res, 404, { error: 'not found' }, OPEN)
   return true
 }

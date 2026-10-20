@@ -98,6 +98,18 @@ export function fakeOauthStore(people: User[]) {
     Object.assign(t, h, live(h))
     return true
   })
+  spyOn(repo, 'revokeToken').mockImplementation(async (hash, client) => {
+    const i = tokens.findIndex(
+      (t) => (t.access_hash === hash || t.refresh_hash === hash) && t.client === client,
+    )
+    if (i >= 0) tokens.splice(i, 1)
+  })
+  spyOn(repo, 'replaceConnections').mockImplementation(async (user, name) => {
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      const owner = clients.find((c) => c.id === tokens[i].client)
+      if (tokens[i].user === user && owner?.name === name) tokens.splice(i, 1)
+    }
+  })
   spyOn(repo, 'tokenOwner').mockImplementation(async (hash) => {
     const t = tokens.find((x) => x.access_hash === hash && x.access_expires > Date.now())
     if (!t) return undefined
