@@ -96,8 +96,15 @@ test('Claude and ChatGPT, when not connected, show how to connect them in a dial
   // What to click is in bold, what to paste in the accent.
   expect(screen.getByText('Adicionar servidor MCP').tagName).toBe('B')
   expect(screen.getByText(`${window.location.origin}/mcp`).className).toBe('connect-value')
+  // The button says it copied, on itself, without a toast.
   fireEvent.click(screen.getByText('Copiar endereço'))
-  expect(await screen.findByText('Endereço copiado.')).toBeTruthy()
+  expect(await screen.findByText('Copiado!')).toBeTruthy()
+  expect(document.querySelector('.toast')).toBeNull()
+  // Each value to paste has its own copy button.
+  fireEvent.click(screen.getAllByRole('button', { name: 'Copiar PlatJourney' })[0])
+  expect(write).toHaveBeenCalledWith('PlatJourney')
+  // Both the big button and the value's own one say so.
+  await waitFor(() => expect(screen.getAllByRole('button', { name: 'Copiado!' })).toHaveLength(2))
   expect(write).toHaveBeenCalledWith(`${window.location.origin}/mcp`)
   fireEvent.click(screen.getByText('Fechar'))
   expect(document.querySelector('dialog.connect-guide')).toBeNull()

@@ -12,9 +12,11 @@
   }
 
   /* The app shell hides .logo on a phone (the sidebar becomes the bottom bar); this page keeps it. */
+  /* The shared .logo leaves room below for the sidebar's menu; here it only heads the card. */
   .connect .connect-logo {
     display: flex;
-    margin-bottom: 18px;
+    margin-bottom: 8px;
+    padding: 0;
   }
 
   .connect h1 {

@@ -41,6 +41,7 @@ export type Target =
   | 'ConnectedApps'
   | 'ConnectedAppsCard'
   | 'ConnectedAppsSkeleton'
+  | 'CopyValue'
   | 'CountUp'
   | 'Cover'
   | 'DealCard'
