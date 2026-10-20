@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.26.0](https://github.com/renatoaug/platjourney/compare/v0.25.5...v0.26.0) (2026-10-20)
+
+### Features
+
+* **web:** suggestions of what to ask a connected assistant, and disconnecting in red ([116c9f2](https://github.com/renatoaug/platjourney/commit/116c9f24b011929fe4132f1945ffc65e1c4e45f3))
+
 ## [0.25.5](https://github.com/renatoaug/platjourney/compare/v0.25.4...v0.25.5) (2026-10-20)
 
 ### Bug Fixes
