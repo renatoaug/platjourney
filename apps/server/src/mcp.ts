@@ -53,7 +53,9 @@ async function callTool({ user, connection, assistant }: Caller, params: Args) {
   try {
     await beforeTool({ user, tool: tool.name })
     const args = (params.arguments ?? {}) as Args
-    const value = await tagged({ user: user.id }, () => tool.run(user, args, { assistant }))
+    const result = await tagged({ user: user.id }, () => tool.run(user, args, { assistant }))
+    const value =
+      tool.next && result && typeof result === 'object' ? { ...result, next: tool.next } : result
     return { ...text(value), structuredContent: value }
   } catch (e) {
     if (e instanceof ToolError || e instanceof Refused) return text(e.message, true)
