@@ -80,4 +80,4 @@ Three MCP prompts, which an assistant offers as shortcuts (a slash command, a me
 
 ## Protocol
 
-Streamable HTTP without sessions: each `POST /mcp` carries one JSON-RPC message and gets JSON back. Notifications get `202`. There is no server-sent stream, so `GET /mcp` answers `405`. Protocol versions `2025-06-18`, `2025-03-26` and `2024-11-05` are accepted; the server answers with the client's when it knows it, else the newest. The code is in `apps/server/src/mcp.ts` and `apps/server/src/oauth.ts`.
+Streamable HTTP without sessions: each `POST /mcp` carries one JSON-RPC message and gets JSON back. Notifications get `202`. There is no server-sent stream, so `GET /mcp` answers `405`. Protocol versions `2025-11-25`, `2025-06-18`, `2025-03-26` and `2024-11-05` are accepted; the server answers with the client's when it knows it, else the newest. `initialize` names the server with its website and icons (`/icon-192.png`, `/icon-512.png`, on the app's dark background), which assistants show in their list of connectors; `/favicon.ico` is the same icon for those that read the site's. The code is in `apps/server/src/mcp.ts` and `apps/server/src/oauth.ts`.
