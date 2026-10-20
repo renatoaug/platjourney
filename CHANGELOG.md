@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.25.2](https://github.com/renatoaug/platjourney/compare/v0.25.1...v0.25.2) (2026-10-20)
+
+### Bug Fixes
+
+* **server:** end a connection when the assistant revokes it, and keep one per assistant ([#62](https://github.com/renatoaug/platjourney/issues/62)) ([d469c04](https://github.com/renatoaug/platjourney/commit/d469c04f206e87e1af8ba9b51e72abf18953e108))
+
 ## [0.25.1](https://github.com/renatoaug/platjourney/compare/v0.25.0...v0.25.1) (2026-10-20)
 
 ### Bug Fixes
