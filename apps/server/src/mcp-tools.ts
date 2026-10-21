@@ -13,7 +13,12 @@ import { playtimes } from './playtime.ts'
 import { profilePage } from './profile.ts'
 import { catalogTrophies, profileSummary, type TitleProgress, type TrophyStatus } from './psn.ts'
 import { loadGroups, rankNextPlatinum } from './ranking.ts'
-import { dismissRecommendation } from './recommend.ts'
+import {
+  dismissRecommendation,
+  saveAssistantRecommendations,
+  type TasteProfile,
+  tasteOf,
+} from './recommend.ts'
 import { RELEASES_AFTER_DAYS, RELEASES_BEFORE_DAYS } from './releases.ts'
 import { type AssistantKey, logAssistantTip } from './repository/activity.ts'
 import {
@@ -56,7 +61,14 @@ export interface Tool {
 }
 
 const SAVE_PICK =
-  'When you recommend one of these games to the player, save your main pick with save_suggestion (the game, why in one sentence and where to start).'
+  'When you recommend one of these games to the player, save your main pick with save_suggestion (the game, why in two or three sentences about this player, and where to start).'
+
+const SAVE_LIST =
+  "When you recommend a list of games from the player's taste, save it with save_recommendations (each game with why in two or three sentences about this player): their PlatJourney app shows it as your picks."
+
+// What a reason for a game says, so an assistant's reads like Nexo's.
+const WHY =
+  "in two or three sentences in the player's language: what they platinumed or played lately that leads here (with the hours), this game's time and difficulty from its guide, and how it fits their taste"
 
 const gameArg = {
   type: 'string',
@@ -134,6 +146,29 @@ function textArg(args: Args, key: string, max: number): string {
 }
 
 const plainName = (s: string) => s.trim().toLowerCase()
+
+// How many games a saved list holds: fewer is a pick (save_suggestion), more is not read.
+const MIN_LIST = 3
+const MAX_LIST = 10
+
+// Up to `max` short texts from an array argument.
+const strings = (v: unknown, max: number): string[] =>
+  Array.isArray(v)
+    ? v
+        .filter((x): x is string => typeof x === 'string' && !!x.trim())
+        .map((x) => x.trim().slice(0, 60))
+        .slice(0, max)
+    : []
+
+// The taste an assistant read, when it sent one with a summary and genres.
+function profileArg(v: unknown): TasteProfile | undefined {
+  if (!v || typeof v !== 'object') return undefined
+  const p = v as Args
+  const summary = optText(p.summary, 300, '')
+  const genres = strings(p.genres, 8)
+  if (!summary || !genres.length) return undefined
+  return { summary, genres, traits: strings(p.traits, 8), avoid: strings(p.avoid, 8) }
+}
 
 // A trimmed text argument cut to `max` characters, or `fallback` when missing or empty.
 const optText = <F>(v: unknown, max: number, fallback: F) =>
@@ -452,7 +487,7 @@ export const TOOLS: Tool[] = [
     description:
       "Games PlatJourney recommends from the player's library (its graph of similar games, no model): like the ones they play, quick platinums, and the rest of series they own. Each says which of the player's games led to it.",
     inputSchema: { type: 'object', properties: {} },
-    next: SAVE_PICK,
+    next: `${SAVE_PICK} ${SAVE_LIST}`,
     run: async (user) => {
       const titles = await library(user.psn_account_id)
       const picks = await similarPicks(user, titles, await ownedGames(user.psn_account_id))
@@ -469,6 +504,14 @@ export const TOOLS: Tool[] = [
         inYourSeries: picks.series.slice(0, 10).map(row),
       }
     },
+  },
+  {
+    name: 'get_taste_profile',
+    description:
+      "The player's taste as PlatJourney keeps it: a summary, the genres and traits they like, what they avoid, and their rules for recommendations (no missables, one playthrough, most hours or difficulty). Read it before recommending games from their taste. The profile is null when none was made yet: build it from get_platinums and get_library, and save it with save_recommendations.",
+    inputSchema: { type: 'object', properties: {} },
+    next: SAVE_LIST,
+    run: async (user) => tasteOf(user),
   },
   {
     name: 'get_similar_games',
@@ -608,26 +651,27 @@ export const TOOLS: Tool[] = [
   {
     name: 'save_suggestion',
     description:
-      'Saves the game you recommended to the player, with why in one sentence and where to start, so it shows in their PlatJourney app as their latest pick, under your name. Call it with your main pick when you recommend what to play; the same game again updates it.',
+      'Saves the game you recommended to the player, with why and where to start, so it shows in their PlatJourney app as their latest pick, under your name. Call it with your main pick when you recommend what to play; the same game again updates it.',
     inputSchema: {
       type: 'object',
       properties: {
         game: gameArg,
         reason: {
           type: 'string',
-          description: "Why this game, for this player, in one sentence in the player's language.",
+          description: `Why this game, for this player, ${WHY}.`,
         },
         firstStep: {
           type: 'string',
-          description: "Where to start, in one sentence in the player's language.",
+          description:
+            "Where to start: the first thing to do in the game for the platinum (a missable to watch, an order to follow), in one sentence in the player's language.",
         },
       },
-      required: ['game', 'reason'],
+      required: ['game', 'reason', 'firstStep'],
     },
     changes: true,
     run: async (user, args, from) => {
       const game = await gameFrom(args)
-      const reason = textArg(args, 'reason', 280)
+      const reason = textArg(args, 'reason', 600)
       const firstStep = optText(args.firstStep, 280, undefined)
       await saveAssistantPick(user.id, {
         game: game.id,
@@ -636,6 +680,79 @@ export const TOOLS: Tool[] = [
         assistant: assistantOf(from),
       })
       return { saved: gameRow(game), reason, firstStep: firstStep ?? null }
+    },
+  },
+  {
+    name: 'save_recommendations',
+    description:
+      "Saves the list of games you recommended from the player's taste, so their PlatJourney app shows it as your picks, under your name, in place of the last list. Only catalog games with a PlatJourney guide that the player does not own count; the others come back as skipped.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        games: {
+          type: 'array',
+          description: `The games, best first (${MIN_LIST} to ${MAX_LIST}).`,
+          items: {
+            type: 'object',
+            properties: {
+              game: gameArg,
+              reason: { type: 'string', description: `Why this game, for this player, ${WHY}.` },
+              similarTo: {
+                type: 'array',
+                items: { type: 'string' },
+                description: "The player's games that led to it, by name.",
+              },
+            },
+            required: ['game', 'reason'],
+          },
+        },
+        profile: {
+          type: 'object',
+          description:
+            "The player's taste you read from their games, kept only when PlatJourney has none yet (get_taste_profile returned null).",
+          properties: {
+            summary: { type: 'string', description: "One sentence in the player's language." },
+            genres: { type: 'array', items: { type: 'string' } },
+            traits: { type: 'array', items: { type: 'string' } },
+            avoid: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['summary', 'genres'],
+        },
+      },
+      required: ['games'],
+    },
+    changes: true,
+    run: async (user, args, from) => {
+      const list = Array.isArray(args.games) ? (args.games as Args[]) : []
+      if (list.length < MIN_LIST)
+        throw new ToolError(`Save at least ${MIN_LIST} games; for one game use save_suggestion.`)
+      const items: { game: Game; why: string; similarTo: string[] }[] = []
+      const missing: string[] = []
+      for (const g of list.slice(0, MAX_LIST)) {
+        const game = await gameFrom(g).catch(() => undefined)
+        if (!game) {
+          missing.push(String(g.game ?? ''))
+          continue
+        }
+        if (items.some((i) => i.game.id === game.id)) continue
+        items.push({
+          game,
+          why: textArg(g, 'reason', 600),
+          similarTo: strings(g.similarTo, 5),
+        })
+      }
+      const assistant = assistantOf(from)
+      const { saved, skipped } = await saveAssistantRecommendations(
+        user,
+        items,
+        await ownedGames(user.psn_account_id),
+        assistant,
+        profileArg(args.profile),
+      )
+      return {
+        saved: saved.map(gameRow),
+        skipped: [...missing.map((m) => ({ game: m, reason: 'not in the catalog' })), ...skipped],
+      }
     },
   },
   {

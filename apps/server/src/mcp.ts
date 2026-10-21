@@ -65,7 +65,7 @@ async function callTool({ user, connection, assistant }: Caller, params: Args) {
 }
 
 const INSTRUCTIONS =
-  "PlatJourney knows this player's PlayStation trophies and has a researched platinum guide for many games. Ground answers about trophies, missables, collectibles and what to platinum in these tools instead of memory, and say which guide page a passage came from. Change the player's interests or goal only when they ask. What you settle with the player can live in their PlatJourney app too: when you recommend a game, save your main pick with save_suggestion; when you plan a session, save it with save_session_plan; save a tip with save_tip when the player asks or it is worth coming back to."
+  "PlatJourney knows this player's PlayStation trophies and has a researched platinum guide for many games. Ground answers about trophies, missables, collectibles and what to platinum in these tools instead of memory, and say which guide page a passage came from. Change the player's interests or goal only when they ask. What you settle with the player can live in their PlatJourney app too: when you recommend a game, save your main pick with save_suggestion; when you recommend a list from their taste (read get_taste_profile first), save it with save_recommendations; when you plan a session, save it with save_session_plan; save a tip with save_tip when the player asks or it is worth coming back to."
 
 // How Nexo thinks (services/ai method.py), asked once and kept: it changes only with a new version.
 let method: Promise<{ pick: string; plan: string; tip: string }> | null = null

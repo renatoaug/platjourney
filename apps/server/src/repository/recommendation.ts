@@ -16,10 +16,12 @@ export interface RecommendationRow {
   why: string
   similar_to: string[]
   generated_at: string
+  /** Who made the batch: Nexo, or an assistant that saved its list with save_recommendations. */
+  recommender?: Recommender
 }
 
-/** The latest batch, without the games dismissed since. The picks asked for one at a time are not
- * part of any batch. */
+/** The latest batch, Nexo's or an assistant's, without the games dismissed since. The picks asked
+ * for one at a time are not part of any batch. */
 export async function listRecommendations(user: string): Promise<RecommendationRow[]> {
   return plain(
     await q<RecommendationRow[]>(
@@ -35,7 +37,8 @@ export async function listRecommendations(user: string): Promise<RecommendationR
   )
 }
 
-/** Adds a batch; the ones before stay, so the next batches bring other games for a while. */
+/** Adds a batch; the ones before stay, so the next batches bring other games for a while. An
+ * assistant's batch carries its name. */
 export async function saveRecommendations(
   user: string,
   rows: {
@@ -49,6 +52,7 @@ export async function saveRecommendations(
     why: string
     similar_to: string[]
   }[],
+  recommender: Recommender = 'nexo',
 ): Promise<void> {
   const batch = new Date()
   for (const r of rows) {
@@ -59,6 +63,7 @@ export async function saveRecommendations(
         game: gameRef(r.game),
         batch_at: batch,
         source: 'discover',
+        recommender,
       },
     })
   }

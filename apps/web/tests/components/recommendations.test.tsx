@@ -71,6 +71,27 @@ test('the section: ANÁLISE DO NEXO, and six cards a page', () => {
   expect(section.querySelectorAll('.band-card')).toHaveLength(2)
 })
 
+test("a list saved in the chat shows as the assistant's picks, with its logo", () => {
+  const { unmount } = renderApp(
+    <Recommendations
+      state={{ status: 'ok', recs: { ...recsData, by: 'claude' } }}
+      onDismiss={() => {}}
+    />,
+  )
+  const section = screen.getByRole('region', { name: 'Escolhas do Claude' })
+  expect(within(section).getByText('DO SEU CHAT')).toBeTruthy()
+  expect(section.querySelector('.recs-by img')?.getAttribute('src')).toBe('/claude.svg')
+  expect(within(section).getByText(/O que o Claude recomendou no chat/)).toBeTruthy()
+  unmount()
+  renderApp(
+    <Recommendations
+      state={{ status: 'ok', recs: { ...recsData, by: 'other' } }}
+      onDismiss={() => {}}
+    />,
+  )
+  expect(screen.getByRole('region', { name: 'Escolhas do seu assistente' })).toBeTruthy()
+})
+
 test('before the player asks: one line and the button', () => {
   const onAsk = mock()
   renderApp(<Recommendations state={{ status: 'idle' }} onDismiss={() => {}} onAsk={onAsk} />)

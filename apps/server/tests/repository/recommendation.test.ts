@@ -33,7 +33,7 @@ test('recommendations are the latest batch, without dismissed games', async () =
   expect(q.mock.calls[0][1]).toEqual({ user })
 })
 
-test('a new batch keeps the old ones and stamps each row with the same batch time', async () => {
+test('a new batch keeps the old ones and stamps each row with the same batch time and its maker', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   const row = {
     game: 'game:7',
@@ -48,8 +48,18 @@ test('a new batch keeps the old ones and stamps each row with the same batch tim
   expect(q.mock.calls).toHaveLength(2)
   const [first, second] = q.mock.calls.map((c) => (c[1] as { data: Record<string, unknown> }).data)
   expect(q.mock.calls[0][0]).toBe('CREATE recommendation CONTENT $data')
-  expect(first).toEqual({ ...row, user, game, batch_at: expect.any(Date), source: 'discover' })
+  expect(first).toEqual({
+    ...row,
+    user,
+    game,
+    batch_at: expect.any(Date),
+    source: 'discover',
+    recommender: 'nexo',
+  })
   expect(second.batch_at).toBe(first.batch_at)
+  // An assistant's batch carries its name.
+  await saveRecommendations('user:u1', [row], 'claude')
+  expect((q.mock.calls[2][1] as { data: Record<string, unknown> }).data.recommender).toBe('claude')
 })
 
 test('seen games drop old batches and come back the one shown longest ago first', async () => {

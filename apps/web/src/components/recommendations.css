@@ -226,4 +226,16 @@
     flex-wrap: wrap;
     margin-top: auto;
   }
+
+  /* A list an assistant saved: its logo before the line. */
+  .recs-by {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .recs-by .app-logo {
+    width: 16px;
+    height: 16px;
+  }
 }

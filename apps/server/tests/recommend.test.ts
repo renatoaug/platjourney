@@ -9,6 +9,8 @@ import {
   readPrefs,
   recommendationReport,
   recommendations,
+  saveAssistantRecommendations,
+  tasteOf,
 } from '../src/recommend.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
@@ -198,6 +200,7 @@ test('an empty batch is generated even with no previous one', async () => {
     prefs: emptyPrefs(),
     items: [],
     generatedAt: null,
+    by: 'nexo',
   })
   expect(ai.mock.calls[0][1]).toMatchObject({ candidates: [] })
 })
@@ -226,6 +229,7 @@ test('the report lists each pick with its profile', () => {
       prefs: emptyPrefs(),
       items: [item, { ...item, hasMissables: false }],
       generatedAt: null,
+      by: 'nexo',
     }),
   ).toBe(
     [
@@ -238,13 +242,25 @@ test('the report lists each pick with its profile', () => {
     ].join('\n'),
   )
   expect(
-    recommendationReport({ profile: null, prefs: emptyPrefs(), items: [item], generatedAt: null }),
+    recommendationReport({
+      profile: null,
+      prefs: emptyPrefs(),
+      items: [item],
+      generatedAt: null,
+      by: 'nexo',
+    }),
   ).toStartWith('Próximas platinas')
 })
 
 test('an empty report asks to try again', () => {
   expect(
-    recommendationReport({ profile: null, prefs: emptyPrefs(), items: [], generatedAt: null }),
+    recommendationReport({
+      profile: null,
+      prefs: emptyPrefs(),
+      items: [],
+      generatedAt: null,
+      by: 'nexo',
+    }),
   ).toBe('Ainda não tenho recomendações. Tenta de novo em 1 minuto.')
 })
 
@@ -270,6 +286,7 @@ test('an empty library is not searched', async () => {
     prefs: emptyPrefs(),
     items: [],
     generatedAt: null,
+    by: 'nexo',
     reason: 'no-library',
   })
   expect(ai).not.toHaveBeenCalled()
@@ -343,4 +360,73 @@ test('games already shown go to the service apart, oldest first', async () => {
   expect(body.seen).toEqual(['game:7', 'game:8'])
   expect(body.exclude).toEqual([])
   expect(recs.seenGames).toHaveBeenCalledWith(user.id, 365)
+})
+
+test("an assistant's batch shows under its name until Nexo makes a new one", async () => {
+  spyOn(recs, 'listRecommendations').mockResolvedValue([row({ recommender: 'claude' })])
+  spyOn(guides, 'getGuide').mockResolvedValue(undefined)
+  expect((await recommendations(user, [makeTitle()], [])).by).toBe('claude')
+})
+
+test("an assistant's list keeps the games with a guide the player neither owns nor turned down", async () => {
+  spyOn(recs, 'listDismissed').mockResolvedValue([{ game: dismissed } as never])
+  spyOn(graph, 'guideFacts').mockResolvedValue([
+    { game: picked.id, difficulty: 3, hours: 20, playthroughs: 2, hasMissables: true },
+    { game: byName.id, difficulty: 5, hours: 40, difficultyTrophy: null },
+    { game: dismissed.id, difficulty: 2, hours: 10 },
+    { game: owned.id, difficulty: 2, hours: 10 },
+  ])
+  const save = spyOn(recs, 'saveRecommendations').mockResolvedValue(undefined)
+  const update = spyOn(users, 'updateUser').mockResolvedValue(undefined)
+  const item = (game: typeof picked) => ({ game, why: 'Porque sim', similarTo: ['Owned'] })
+  const result = await saveAssistantRecommendations(
+    user,
+    [item(picked), item(byName), item(dismissed), item(owned), item(saved)],
+    [owned],
+    'claude',
+    { summary: 'Outro perfil', genres: ['Ação'], traits: [], avoid: [] },
+  )
+  expect(result).toEqual({
+    saved: [picked, byName],
+    skipped: [
+      { game: 'Dismissed', reason: 'they turned it down' },
+      { game: 'Owned', reason: 'already in their library' },
+      { game: 'Saved', reason: 'no PlatJourney guide yet' },
+    ],
+  })
+  expect(save).toHaveBeenCalledWith(
+    user.id,
+    [
+      expect.objectContaining({ game: picked.id, difficulty: 3, hours: 20, playthroughs: 2 }),
+      expect.objectContaining({
+        game: byName.id,
+        has_difficulty_trophy: false,
+        has_missables: false,
+      }),
+    ],
+    'claude',
+  )
+  // Nexo's profile stays; a player without one gets the assistant's.
+  expect(update).not.toHaveBeenCalled()
+  const fresh = makeUser({ taste_profile: undefined })
+  await saveAssistantRecommendations(fresh, [item(picked)], [], 'chatgpt', {
+    summary: 'Explorador',
+    genres: ['RPG'],
+    traits: [],
+    avoid: [],
+  })
+  expect(update).toHaveBeenCalledWith(fresh.id, {
+    taste_profile: { summary: 'Explorador', genres: ['RPG'], traits: [], avoid: [] },
+  })
+})
+
+test('the taste read by an assistant is the profile with the player changes and rules', () => {
+  const changed = makeUser({
+    taste_profile: { summary: 'S', genres: ['RPG'], traits: [], avoid: [] },
+    taste_prefs: { added: { genres: ['Terror'] }, removed: {}, filters: { noOnline: true } },
+  })
+  expect(tasteOf(changed)).toEqual({
+    profile: { summary: 'S', genres: ['RPG', 'Terror'], traits: [], avoid: [] },
+    filters: { noOnline: true },
+  })
 })

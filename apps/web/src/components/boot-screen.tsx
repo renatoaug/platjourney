@@ -1,5 +1,5 @@
-/** While the app starts: Nexo with the controller's four buttons around it, pressed one after the
- * other, and a line that changes as it waits. Covers the screen until the first data arrives, then
+/** While the app starts: the name on top, Nexo with the controller's four buttons around it,
+ * pressed one after the other, and a line that changes as it waits. Covers the screen until the first data arrives, then
  * fades out (`leaving`). */
 import { useEffect, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
@@ -58,6 +58,12 @@ export function BootScreen({ leaving = false }: { leaving?: boolean }) {
       role="status"
       aria-label={t('label')}
     >
+      <span className="boot-brand" aria-hidden="true">
+        <img src="/logo.svg" alt="" width="28" height="28" />
+        <span>
+          plat<span className="boot-brand-accent">journey</span>
+        </span>
+      </span>
       <div className="boot-stage" aria-hidden="true">
         {KEYS.map((k) => (
           <span key={k.name} className={`boot-key boot-key-${k.name}`}>
