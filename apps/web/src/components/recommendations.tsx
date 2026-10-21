@@ -7,6 +7,7 @@ import { nameText, plainText } from '../lib/text'
 import type { Game, InterestSource } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { EmptyState, ErrorState } from '../ui/states'
+import { AppLogo, assistantName } from './app-logo'
 import { useDemo } from './demo'
 import { type CardItem, GameCard, GameShelf, ShelfSkeleton } from './game-band'
 import { SaveToInterests } from './save-to-interests'
@@ -47,6 +48,13 @@ const messages = defineMessages({
       'Jogue e conquiste alguns troféus: o Nexo usa a sua biblioteca para recomendar a próxima platina.',
     eyebrow: 'ANÁLISE DO NEXO',
     title: 'Escolhas do Nexo',
+    byAssistant: {
+      eyebrow: 'DO SEU CHAT',
+      title: 'Escolhas do {name}',
+      unnamed: 'Escolhas do seu assistente',
+      lead: 'O que o {name} recomendou no chat pelo seu perfil gamer.',
+      leadUnnamed: 'O que o seu assistente recomendou no chat pelo seu perfil gamer.',
+    },
     lead: 'Escolhidas pelo seu perfil gamer: os gêneros que você mais platina, o seu ritmo e o que você costuma evitar.',
     ask: 'O Nexo lê o seu gosto e os guias para escolher a dedo as próximas platinas.',
     askButton: 'Pedir ao Nexo',
@@ -82,6 +90,13 @@ const messages = defineMessages({
       'Play and earn a few trophies: Nexo uses your library to recommend the next platinum.',
     eyebrow: "NEXO'S ANALYSIS",
     title: "Nexo's picks",
+    byAssistant: {
+      eyebrow: 'FROM YOUR CHAT',
+      title: "{name}'s picks",
+      unnamed: "Your assistant's picks",
+      lead: '{name} recommended these in the chat from your gamer profile.',
+      leadUnnamed: 'Your assistant recommended these in the chat from your gamer profile.',
+    },
     lead: 'Picked from your gamer profile: the genres you platinum most, your pace and what you tend to avoid.',
     ask: 'Nexo reads your taste and the guides to hand-pick your next platinums.',
     askButton: 'Ask Nexo',
@@ -132,6 +147,8 @@ export interface Recs {
   prefs?: TastePrefs
   items: Recommendation[]
   generatedAt?: string
+  /** Who made the batch: Nexo, or the assistant that saved its list in the chat. */
+  by?: 'nexo' | 'claude' | 'chatgpt' | 'other'
   /** No library to learn a taste from yet: nothing was searched. */
   reason?: 'no-library'
 }
@@ -475,14 +492,36 @@ export function Recommendations({
 }) {
   const t = useMessages(messages)
   const items = state.status === 'ok' ? (state.recs.items ?? []) : []
+  const by = state.status === 'ok' && items.length ? (state.recs.by ?? 'nexo') : 'nexo'
+  const name = assistantName(by)
   return (
     <GameShelf
       id="recs-title"
       bodyId="recs"
       className="recs-shelf"
-      eyebrow={t('eyebrow')}
-      title={t('title')}
-      lead={t('lead')}
+      eyebrow={
+        by === 'nexo' ? (
+          t('eyebrow')
+        ) : (
+          <span className="recs-by">
+            <AppLogo name={name ?? ''} /> {t('byAssistant.eyebrow')}
+          </span>
+        )
+      }
+      title={
+        by === 'nexo'
+          ? t('title')
+          : name
+            ? t('byAssistant.title', { name })
+            : t('byAssistant.unnamed')
+      }
+      lead={
+        by === 'nexo'
+          ? t('lead')
+          : name
+            ? t('byAssistant.lead', { name })
+            : t('byAssistant.leadUnnamed')
+      }
       actions={
         <RecsActions state={state} onRefresh={onRefresh} refreshDisabled={refreshDisabled} />
       }

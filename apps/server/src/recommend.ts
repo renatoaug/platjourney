@@ -13,9 +13,11 @@ import {
   listDismissed,
   listRecommendations,
   type RecommendationRow,
+  type Recommender,
   saveRecommendations,
   seenGames,
 } from './repository/recommendation.ts'
+import { type GuideFacts, guideFacts } from './repository/similar.ts'
 import { type User, updateUser } from './repository/user.ts'
 import { graphCandidates } from './similar.ts'
 
@@ -41,7 +43,7 @@ const CACHE_DAYS = 7
 // batches are kept this long.
 const SEEN_KEEP_DAYS = 365
 
-interface TasteProfile {
+export interface TasteProfile {
   summary: string
   genres: string[]
   traits: string[]
@@ -167,6 +169,8 @@ interface Recommendations {
   prefs: TastePrefs
   items: Recommendation[]
   generatedAt: string | null
+  /** Who made the batch shown: Nexo, or the assistant that saved its list. */
+  by: Recommender
   /** No library to learn a taste from: nothing was searched. */
   reason?: 'no-library'
 }
@@ -265,12 +269,20 @@ export async function recommendations(
       prefs,
       items: await Promise.all(current.map(toView)),
       generatedAt,
+      by: current[0]?.recommender ?? 'nexo',
     }
   }
 
   // Without a single game there is no taste to start from; the model is not asked.
   if (library.length === 0)
-    return { profile: null, prefs, items: [], generatedAt: null, reason: 'no-library' }
+    return {
+      profile: null,
+      prefs,
+      items: [],
+      generatedAt: null,
+      by: 'nexo',
+      reason: 'no-library',
+    }
 
   const owned = new Set(accountGames.map((g) => g.id))
   const [dismissed, interests, games, seen] = await Promise.all([
@@ -328,7 +340,76 @@ export async function recommendations(
     prefs,
     items: await Promise.all(saved.map(toView)),
     generatedAt: saved[0]?.generated_at ?? null,
+    by: 'nexo',
   }
+}
+
+/** The player's taste as recommendations read it: the profile with their changes, and their rules.
+ * Null profile when no batch was ever made and the player added nothing. */
+export function tasteOf(user: User): { profile: TasteProfile | null; filters: RecFilters } {
+  const prefs = readPrefs(user.taste_prefs) ?? emptyPrefs()
+  return {
+    profile: effectiveProfile((user.taste_profile as TasteProfile | null) ?? null, prefs),
+    filters: prefs.filters,
+  }
+}
+
+// Why a game of an assistant's list is left out, or null when it is kept.
+function skipReason(game: string, owned: Set<string>, dismissed: Set<string>, f?: GuideFacts) {
+  if (owned.has(game)) return 'already in their library'
+  if (dismissed.has(game)) return 'they turned it down'
+  if (f?.difficulty == null || f.hours == null) return 'no PlatJourney guide yet'
+  return null
+}
+
+// A game of an assistant's list as a batch row, its numbers from the guide.
+function assistantRow(game: Game, f: GuideFacts, why: string, similarTo: string[]) {
+  return {
+    game: game.id,
+    platform: game.platforms?.includes('PS5') ? 'PS5' : (game.platforms?.[0] ?? 'PS5'),
+    difficulty: Number(f.difficulty),
+    hours: Number(f.hours),
+    ...(Number(f.playthroughs) > 0 ? { playthroughs: Number(f.playthroughs) } : {}),
+    ...(f.difficultyTrophy !== undefined
+      ? { has_difficulty_trophy: Boolean(f.difficultyTrophy) }
+      : {}),
+    has_missables: Boolean(f.hasMissables),
+    why,
+    similar_to: similarTo,
+  }
+}
+
+/** A list an assistant made with the player, saved as the latest batch under its name, so Discover
+ * shows it where Nexo's picks are. Only games with a guide (the cards show its numbers) that the
+ * player neither owns nor turned down; the rest come back as skipped. The assistant's profile is
+ * kept only when there is none yet: Nexo's, and the player's changes to it, stay. */
+export async function saveAssistantRecommendations(
+  user: User,
+  items: { game: Game; why: string; similarTo: string[] }[],
+  accountGames: Game[],
+  assistant: Exclude<Recommender, 'nexo'>,
+  profile?: TasteProfile,
+): Promise<{ saved: Game[]; skipped: { game: string; reason: string }[] }> {
+  const owned = new Set(accountGames.map((g) => g.id))
+  const dismissed = new Set((await listDismissed(user.id)).map((d) => d.game.id))
+  const facts = new Map((await guideFacts(items.map((i) => i.game.id))).map((f) => [f.game, f]))
+  const saved: Game[] = []
+  const skipped: { game: string; reason: string }[] = []
+  const rows = []
+  for (const { game, why, similarTo } of items) {
+    const f = facts.get(game.id)
+    const reason = skipReason(game.id, owned, dismissed, f)
+    if (reason || !f) {
+      skipped.push({ game: game.name, reason: reason ?? 'no PlatJourney guide yet' })
+      continue
+    }
+    saved.push(game)
+    rows.push(assistantRow(game, f, why, similarTo))
+  }
+  if (rows.length) await saveRecommendations(user.id, rows, assistant)
+  if (rows.length && profile && !user.taste_profile)
+    await updateUser(user.id, { taste_profile: profile })
+  return { saved, skipped }
 }
 
 export async function dismissRecommendation(

@@ -10,6 +10,7 @@ import { Refused, registerPlugin, resetPlugins } from '../src/plugins.ts'
 import * as psn from '../src/psn.ts'
 import * as ranking from '../src/ranking.ts'
 import { resetRateLimits } from '../src/rate-limit.ts'
+import * as recommend from '../src/recommend.ts'
 import * as activity from '../src/repository/activity.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
@@ -98,6 +99,7 @@ test('initialize, ping and the tool list', async () => {
     'get_library',
     'get_next_platinums',
     'get_recommendations',
+    'get_taste_profile',
     'get_similar_games',
     'get_releases',
     'get_platinums',
@@ -107,6 +109,7 @@ test('initialize, ping and the tool list', async () => {
     'set_yearly_goal',
     'dismiss_recommendation',
     'save_suggestion',
+    'save_recommendations',
     'save_session_plan',
     'save_tip',
   ])
@@ -346,6 +349,75 @@ test("a suggestion is saved as the assistant's pick; the demo saves nothing", as
   expect(save.mock.calls[1][1]).toMatchObject({ firstStep: undefined })
   expect((await call('save_suggestion', { game: game.name })).isError).toBe(true)
   expect((await call('save_suggestion', { game: 'Nope', reason: 'x' })).isError).toBe(true)
+})
+
+test("the taste reads the player's profile and rules, and asks to save a list", async () => {
+  const { data } = await call('get_taste_profile')
+  expect(data).toEqual({
+    profile: null,
+    filters: {},
+    next: expect.stringContaining('save_recommendations'),
+  })
+})
+
+test("a list is saved as the assistant's batch, at least three catalog games", async () => {
+  const other = makeGame({ id: 'game:2', name: 'Other' })
+  const third = makeGame({ id: 'game:3', name: 'Third' })
+  spyOn(games, 'getGame').mockImplementation(async (g) =>
+    [game, other, third].find((x) => x.id === g),
+  )
+  spyOn(lib, 'ownedGames').mockResolvedValue([])
+  const save = spyOn(recommend, 'saveAssistantRecommendations').mockResolvedValue({
+    saved: [game, other],
+    skipped: [{ game: 'Third', reason: 'no PlatJourney guide yet' }],
+  })
+  const claude = (await connect(me, 'v'.repeat(50), 'Claude')).access_token
+  expect(
+    (await call('save_recommendations', { games: [{ game: game.id, reason: 'x' }] }, claude))
+      .content[0].text,
+  ).toContain('at least 3')
+  const { data } = await call(
+    'save_recommendations',
+    {
+      games: [
+        { game: game.id, reason: ' Long and calm. ', similarTo: ['Days Gone', 4] },
+        { game: game.id, reason: 'again' },
+        { game: 'game:2', reason: 'Close to it.' },
+        { game: 'game:3', reason: 'Short.' },
+        { game: 'Made Up', reason: 'y' },
+      ],
+      profile: { summary: 'Explorer', genres: ['RPG'], avoid: ['Online'] },
+    },
+    claude,
+  )
+  expect(data).toEqual({
+    saved: [expect.objectContaining({ id: game.id }), expect.objectContaining({ id: 'game:2' })],
+    skipped: [
+      { game: 'Made Up', reason: 'not in the catalog' },
+      { game: 'Third', reason: 'no PlatJourney guide yet' },
+    ],
+  })
+  const [user, items, owned, assistant, profile] = save.mock.calls[0]
+  expect(user.id).toBe(me.id)
+  // The same game twice counts once; only text names lead to a game.
+  expect(items).toEqual([
+    { game, why: 'Long and calm.', similarTo: ['Days Gone'] },
+    { game: other, why: 'Close to it.', similarTo: [] },
+    { game: third, why: 'Short.', similarTo: [] },
+  ])
+  expect(owned).toEqual([])
+  expect(assistant).toBe('claude')
+  expect(profile).toEqual({ summary: 'Explorer', genres: ['RPG'], traits: [], avoid: ['Online'] })
+  // A profile without genres is not kept.
+  await call(
+    'save_recommendations',
+    {
+      games: [game.id, 'game:2', 'game:3'].map((g) => ({ game: g, reason: 'x' })),
+      profile: { summary: 'Explorer' },
+    },
+    claude,
+  )
+  expect(save.mock.calls[1][4]).toBeUndefined()
 })
 
 test('a session plan names the trophies as the list does, for the game being played', async () => {
