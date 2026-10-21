@@ -3,12 +3,18 @@
      latest pick. */
   .nexo-pick {
     display: grid;
-    gap: 10px;
+    gap: 16px;
     margin-top: 20px;
-    padding: 12px 14px;
+    padding: 18px 20px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
-    background: var(--color-surface);
+    background:
+      radial-gradient(
+        ellipse at 0% 0%,
+        color-mix(in srgb, var(--color-accent) 9%, transparent),
+        transparent 65%
+      ),
+      var(--color-surface);
     transition:
       border-color 0.4s ease,
       box-shadow 0.4s ease;
@@ -69,7 +75,7 @@
 
   .nexo-pick-copy h2 {
     margin: 0 0 2px;
-    font-size: var(--text-lg);
+    font-size: var(--text-2xl);
   }
 
   .nexo-pick-copy p {
@@ -182,7 +188,107 @@
     gap: 10px;
   }
 
-  .nexo-pick-latest,
+  .nexo-pick .nexo-pick-latest {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px 20px;
+    padding: 16px 0 0;
+    border: 0;
+    border-top: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .nexo-pick-body {
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .nexo-pick-art {
+    overflow: hidden;
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+  }
+
+  .nexo-pick-detail {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .nexo-pick-body .nexo-pick-game {
+    justify-content: flex-start;
+    gap: 10px;
+    font-size: var(--text-lg);
+    line-height: var(--leading-tight);
+  }
+
+  .nexo-pick-first span {
+    display: inline;
+    margin-right: 6px;
+  }
+
+  .nexo-pick-latest > .nexo-pick-body,
+  .nexo-pick-latest > .nexo-pick-nofit {
+    grid-column: 1 / -1;
+  }
+
+  .nexo-pick-latest > .nexo-pick-by {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .nexo-pick .nexo-pick-latest > button {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .nexo-pick-history .nexo-pick-body {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  @media (max-width: 600px) {
+    .nexo-pick {
+      padding: 18px;
+    }
+
+    .nexo-pick-body {
+      grid-template-columns: 64px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .nexo-pick-body .nexo-pick-game {
+      font-size: var(--text-lg);
+    }
+
+    .nexo-pick .nexo-pick-latest {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .nexo-pick .nexo-pick-latest > button {
+      grid-column: 1;
+      grid-row: auto;
+      justify-self: start;
+    }
+
+    .nexo-pick-body .nexo-pick-detail {
+      display: contents;
+    }
+
+    .nexo-pick-body .nexo-pick-detail > p {
+      grid-column: 1 / -1;
+    }
+
+    .nexo-pick-body .nexo-pick-game {
+      align-self: center;
+    }
+  }
+
   .nexo-pick-wait {
     display: grid;
     gap: 6px;
@@ -230,9 +336,10 @@
   }
 
   .nexo-pick-cover {
-    flex: none;
-    width: 48px;
-    height: 27px;
+    display: block;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 3 / 4;
     border-radius: var(--radius-tag);
     object-fit: cover;
   }

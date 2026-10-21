@@ -148,7 +148,17 @@ function ReleaseCard({ r, today }: { r: Release; today: number }) {
 }
 
 /** The section: two tabs (coming up, just out) over a row of games. */
-export function ReleasesView({ load, now = Date.now() }: { load: ReleasesLoad; now?: number }) {
+/** `look`: 'section' on the overview, 'band' among Discover's shelves (their one-line head, the
+ * tabs after the hairline). */
+export function ReleasesView({
+  load,
+  now = Date.now(),
+  look = 'section',
+}: {
+  load: ReleasesLoad
+  now?: number
+  look?: 'section' | 'band'
+}) {
   const t = useMessages(messages)
   const [tab, setTab] = useState<'upcoming' | 'recent'>('upcoming')
   const today = Math.floor(now / DAY)
@@ -157,22 +167,36 @@ export function ReleasesView({ load, now = Date.now() }: { load: ReleasesLoad; n
     tab === 'upcoming'
       ? all.filter((r) => dayOf(r.released_at) >= today)
       : all.filter((r) => dayOf(r.released_at) < today).reverse()
+  const tabs = (
+    // biome-ignore lint/a11y/useSemanticElements: a pair of tabs; the group role names it
+    <div className="segmented" role="group" aria-label={t('title')}>
+      {(['upcoming', 'recent'] as const).map((k) => (
+        <button key={k} type="button" aria-pressed={tab === k} onClick={() => setTab(k)}>
+          {t(k)}
+        </button>
+      ))}
+    </div>
+  )
   return (
-    <section className="releases" aria-labelledby="releases-title">
-      <div className="section-head">
-        <div>
+    <section
+      className={look === 'band' ? 'releases game-band' : 'releases'}
+      aria-labelledby="releases-title"
+    >
+      {look === 'band' ? (
+        <div className="band-head">
           <span className="eyebrow">{t('eyebrow')}</span>
           <h2 id="releases-title">{t('title')}</h2>
+          {tabs}
         </div>
-        {/* biome-ignore lint/a11y/useSemanticElements: a pair of tabs; the group role names it */}
-        <div className="segmented" role="group" aria-label={t('title')}>
-          {(['upcoming', 'recent'] as const).map((k) => (
-            <button key={k} type="button" aria-pressed={tab === k} onClick={() => setTab(k)}>
-              {t(k)}
-            </button>
-          ))}
+      ) : (
+        <div className="section-head">
+          <div>
+            <span className="eyebrow">{t('eyebrow')}</span>
+            <h2 id="releases-title">{t('title')}</h2>
+          </div>
+          {tabs}
         </div>
-      </div>
+      )}
       {load.status === 'loading' && (
         <div className="releases-row" aria-hidden="true">
           {[0, 1, 2, 3, 4, 5].map((n) => (
@@ -206,7 +230,13 @@ export function ReleasesView({ load, now = Date.now() }: { load: ReleasesLoad; n
 const fetchReleases = () => api<Release[]>('/api/releases')
 
 /** The section with its request. */
-export function Releases({ fetch = fetchReleases }: { fetch?: () => Promise<Release[]> }) {
+export function Releases({
+  fetch = fetchReleases,
+  look,
+}: {
+  fetch?: () => Promise<Release[]>
+  look?: 'section' | 'band'
+}) {
   const [load, setLoad] = useState<ReleasesLoad>({ status: 'loading' })
   useEffect(() => {
     let live = true
@@ -217,5 +247,5 @@ export function Releases({ fetch = fetchReleases }: { fetch?: () => Promise<Rele
       live = false
     }
   }, [fetch])
-  return <ReleasesView load={load} />
+  return <ReleasesView load={load} look={look} />
 }

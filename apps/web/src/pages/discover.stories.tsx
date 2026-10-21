@@ -3,10 +3,21 @@ import { MockAppState, SAMPLE_DATA } from '../app/app-state'
 import { rankingData } from '../components/game-cards.stories'
 import { picksData } from '../components/nexo-pick.stories'
 import { recsData } from '../components/recommendations.stories'
+import { ReleasesView } from '../components/releases'
+import { releasesData } from '../components/releases.stories'
 import { serversData } from '../components/servers.stories'
 import { similarData } from '../components/similar-picks.stories'
 import { Language } from '../i18n/i18n'
 import { Discover } from './discover'
+
+// The calendar in a fixed state, so the stories need no network.
+const releases = (
+  <ReleasesView
+    load={{ status: 'ok', releases: releasesData }}
+    now={Date.UTC(2026, 9, 13, 15)}
+    look="band"
+  />
+)
 
 const meta: Meta = { title: 'Pages/Discover', parameters: { layout: 'fullscreen' } }
 export default meta
@@ -21,7 +32,7 @@ export const Loaded: Story = {
         cache: { similar: similarData, recsChecked: true, picks: [] },
       }}
     >
-      <Discover />
+      <Discover releases={releases} />
     </MockAppState>
   ),
 }
@@ -35,7 +46,7 @@ export const NexoPicks: Story = {
         cache: { similar: similarData, recs: recsData, picks: picksData },
       }}
     >
-      <Discover />
+      <Discover releases={releases} />
     </MockAppState>
   ),
 }
@@ -47,7 +58,7 @@ export const Empty: Story = {
         cache: { similar: { items: [], quick: [], series: [] }, recsChecked: true, picks: [] },
       }}
     >
-      <Discover />
+      <Discover releases={releases} />
     </MockAppState>
   ),
 }
@@ -65,7 +76,7 @@ export const Loading: Story = {
         },
       }}
     >
-      <Discover />
+      <Discover releases={releases} />
     </MockAppState>
   ),
 }

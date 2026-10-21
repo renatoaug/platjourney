@@ -145,20 +145,24 @@ const MAX_MOOD = 120
 function PickBody({ pick }: { pick: NexoPick }) {
   const t = useMessages(messages)
   return (
-    <>
-      <Link className="nexo-pick-game" to={titleHref(pick.game.id)}>
+    <div className="nexo-pick-body">
+      <div className="nexo-pick-art">
         <Cover url={pick.game.cover_url} name={pick.game.name} className="nexo-pick-cover" />
-        <b>{pick.game.name}</b>
-        <Icon name="arrow" />
-      </Link>
-      {pick.mood && <p className="nexo-pick-asked">{t('asked', { mood: pick.mood })}</p>}
-      <p>{plainText(pick.why)}</p>
-      {pick.firstStep && (
-        <p className="nexo-pick-first">
-          <span>{t('first')}</span> {plainText(pick.firstStep)}
-        </p>
-      )}
-    </>
+      </div>
+      <div className="nexo-pick-detail">
+        <Link className="nexo-pick-game" to={titleHref(pick.game.id)}>
+          <b>{pick.game.name}</b>
+          <Icon name="arrow" />
+        </Link>
+        {pick.mood && <p className="nexo-pick-asked">{t('asked', { mood: pick.mood })}</p>}
+        <p>{plainText(pick.why)}</p>
+        {pick.firstStep && (
+          <p className="nexo-pick-first">
+            <span>{t('first')}:</span> {plainText(pick.firstStep)}
+          </p>
+        )}
+      </div>
+    </div>
   )
 }
 

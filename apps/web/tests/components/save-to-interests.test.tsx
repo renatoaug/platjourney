@@ -55,7 +55,7 @@ test('short platinums and the same series can be saved from Discover', async () 
         ? savedGoals(astro.game)
         : savedGoals(forbidden.game),
   })
-  renderApp(<Discover />, {
+  renderApp(<Discover releases={null} />, {
     value: { data: SAMPLE_DATA, cache: { similar: similarData, recsChecked: true } },
   })
   const quick = screen.getByRole('region', { name: 'Platina relâmpago' })
@@ -89,7 +89,7 @@ test('a similar game on the game page can be saved, as a suggestion', async () =
 test('the demo has no bookmark on any card', () => {
   mockApi({})
   const demo = { ...SAMPLE_ME, demo: true }
-  renderApp(<Discover />, {
+  renderApp(<Discover releases={null} />, {
     value: {
       me: demo,
       data: { ...SAMPLE_DATA, ranking: rankingData },
