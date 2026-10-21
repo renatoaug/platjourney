@@ -169,6 +169,10 @@ export interface Tip {
   content: string
   created_at: string
   game?: Game | null
+  /** A notice about several games (a digest of deals): the first four, for their covers. */
+  games?: Pick<Game, 'id' | 'name' | 'cover_url'>[]
+  /** How many games it names: past four, the last cover says how many more. */
+  games_count?: number
   /** For a tip a connected assistant saved: which one. */
   assistant?: AssistantKey | null
   tip?: string

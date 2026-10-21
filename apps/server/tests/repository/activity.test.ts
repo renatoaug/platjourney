@@ -29,6 +29,19 @@ test('a tip is created with its user and game, and becomes a notification unless
   expect(vars).toEqual({ data: { user, kind: 'unlock', content: 'Boa!', game } })
 })
 
+test('a notice about several games keeps them, and no single game', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await logTip('user:u1', 'deal', '2 jogos', undefined, ['game:7', 'game:8'])
+  expect(q.mock.calls[0][1]).toEqual({
+    data: {
+      user,
+      kind: 'deal',
+      content: '2 jogos',
+      games: [game, new db.RecordId('game', 8)],
+    },
+  })
+})
+
 test('a tip without a game leaves the game out', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   await logTip('u1', 'chat', 'Oi')
@@ -54,7 +67,7 @@ test('recent tips come newest first with record ids as plain strings', async () 
   ])
   const tips = await recentTips('user:u1')
   expect(q.mock.calls[0]).toEqual([
-    'SELECT *, game.* AS game FROM tip WHERE user = $user ORDER BY created_at DESC LIMIT $limit',
+    'SELECT *, game.* AS game, array::slice(games ?? [], 0, 4).{id, name, cover_url} AS games, array::len(games ?? []) AS games_count FROM tip WHERE user = $user ORDER BY created_at DESC LIMIT $limit',
     { user, limit: 30 },
   ])
   expect(tips).toEqual([{ id: 'tip:a', game: { id: 'game:7', name: 'X' } }] as never)

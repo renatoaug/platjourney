@@ -103,3 +103,39 @@ test("a tip an assistant saved carries the assistant's name and its own filter",
   expect(screen.getAllByRole('article')).toHaveLength(1)
   expect(document.querySelector('.entry .k')?.textContent).toBe('Claude')
 })
+
+test('a digest of deals shows the covers of the games it names, under the interests', () => {
+  const tip: Tip = {
+    id: 't10',
+    kind: 'deal',
+    content: '2 jogos dos seus interesses estão mais baratos na PS Store:',
+    created_at: hoursAgo(1),
+    game: null,
+    games: [
+      { id: 'game:1', name: 'Days Gone', cover_url: 'https://img/1.jpg' },
+      { id: 'game:2', name: 'Inside' },
+    ],
+  }
+  renderApp(<History />, { value: { data: { ...SAMPLE_DATA, tips: [tip] } } })
+  const stack = document.querySelector('.entry-covers') as HTMLElement
+  expect(stack.dataset.count).toBe('2')
+  expect(stack.querySelector('img')?.getAttribute('src')).toBe('https://img/1.jpg')
+  // A game without a cover gets the placeholder with its initial.
+  expect(stack.querySelector('.cover-placeholder')).toBeTruthy()
+  expect(screen.getByText('Seus interesses')).toBeTruthy()
+})
+
+test('past four games, the last cover of the mosaic says how many more', () => {
+  const games = ['1', '2', '3', '4'].map((n) => ({ id: `game:${n}`, name: `Jogo ${n}` }))
+  const tip: Tip = {
+    id: 't11',
+    kind: 'deal',
+    content: '6 jogos dos seus interesses estão mais baratos na PS Store:',
+    created_at: hoursAgo(1),
+    game: null,
+    games,
+    games_count: 6,
+  }
+  renderApp(<History />, { value: { data: { ...SAMPLE_DATA, tips: [tip] } } })
+  expect(document.querySelector('.entry-covers-more')?.textContent).toBe('+3')
+})

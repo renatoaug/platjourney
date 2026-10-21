@@ -113,11 +113,16 @@ async function tell(userId: string, items: News[]) {
   if (!told.length) return
   if (told.length === 1) return say(user, told[0].game, told[0].one)
   const lines = [t('digest', { count: told.length }), ...told.map((x) => x.line)]
-  await say(user, undefined, lines.join('\n'))
+  await say(
+    user,
+    undefined,
+    lines.join('\n'),
+    told.map((x) => x.game),
+  )
 }
 
-async function say(user: User, game: string | undefined, text: string) {
-  await logTip(user.id, 'deal', text, game)
+async function say(user: User, game: string | undefined, text: string, games: string[] = []) {
+  await logTip(user.id, 'deal', text, game, games)
   await deliver(user, text)
 }
 
