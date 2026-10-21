@@ -1,7 +1,7 @@
 /** Nothing renders until we know who is signed in: the login screen, the app, or an offline notice.
  * The boot screen covers the start, until the session is known and, signed in, the first data. */
 import { useCallback, useEffect, useState } from 'react'
-import { HashRouter } from 'react-router'
+import { BrowserRouter } from 'react-router'
 import { BootScreen } from '../components/boot-screen'
 import { OfflineScreen } from '../components/offline-screen'
 import {
@@ -122,12 +122,12 @@ export function App() {
       {/* An assistant asking to connect gets the consent page alone, after the sign-in if needed. */}
       {session.kind === 'in' && isConnectPage() && <Connect me={session.me} />}
       {session.kind === 'in' && !isConnectPage() && (
-        <HashRouter>
+        <BrowserRouter>
           <AppStateProvider me={session.me}>
             <FirstData onReady={markFirstData} />
             <Shell />
           </AppStateProvider>
-        </HashRouter>
+        </BrowserRouter>
       )}
       {session.kind === 'out' && <Login onSignedIn={signIn} />}
       {session.kind === 'offline' && <OfflineScreen onRetry={loadSession} />}

@@ -1,4 +1,4 @@
-import { afterEach, expect, jest, test } from 'bun:test'
+import { afterEach, expect, jest, mock, test } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { ToastHost, toast } from '../../src/ui/toast'
 
@@ -21,11 +21,11 @@ test('an error is announced as an alert', () => {
 
 test('a success is a status with its burst and its action link', () => {
   render(<ToastHost />)
-  act(() => toast('Salvo', 'success', { href: '#/goals', label: 'Ver' }))
+  act(() => toast('Salvo', 'success', { href: '/goals', label: 'Ver' }))
   const el = screen.getByRole('status')
   expect(el.textContent).toContain('Salvo')
   expect(el.querySelectorAll('.burst i')).toHaveLength(10)
-  expect(screen.getByRole('link', { name: 'Ver' }).getAttribute('href')).toBe('#/goals')
+  expect(screen.getByRole('link', { name: 'Ver' }).getAttribute('href')).toBe('/goals')
 })
 
 test('info is neutral: no mark', () => {
@@ -51,7 +51,7 @@ test('it leaves on its own', () => {
 test('a click dismisses it early, but not a click on its link', () => {
   jest.useFakeTimers()
   render(<ToastHost />)
-  act(() => toast('Salvo', 'success', { href: '#/goals', label: 'Ver' }))
+  act(() => toast('Salvo', 'success', { href: '/goals', label: 'Ver' }))
   fireEvent.click(screen.getByRole('link', { name: 'Ver' }))
   expect(screen.getByRole('status').className).not.toContain('leave')
   fireEvent.click(screen.getByRole('status'))
@@ -62,4 +62,15 @@ test('a click dismisses it early, but not a click on its link', () => {
 
 test('without a host, toast does nothing', () => {
   expect(() => toast('ninguém ouve')).not.toThrow()
+})
+
+test("a link to one of the app's pages moves the address in place, without loading the app again", () => {
+  const moved = mock(() => {})
+  window.addEventListener('popstate', moved)
+  render(<ToastHost />)
+  act(() => toast('Salvo', 'success', { href: '/goals', label: 'Ver' }))
+  fireEvent.click(screen.getByRole('link', { name: 'Ver' }))
+  expect(location.pathname).toBe('/goals')
+  expect(moved).toHaveBeenCalledTimes(1)
+  window.removeEventListener('popstate', moved)
 })

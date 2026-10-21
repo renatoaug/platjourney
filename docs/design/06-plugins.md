@@ -159,11 +159,11 @@ function HelloPage() {
 const plugin: PluginModule = {
   before: { Notifications: Wave },
   replace: { AuthFootnote: Footnote },
-  // A page: route #/hello and an item at the end of the menu.
+  // A page: route /hello and an item at the end of the menu.
   pages: [{ path: '/hello', label: { 'pt-BR': 'Olá', en: 'Hello' }, icon: 'bolt', component: HelloPage }],
   // The button next to the message when the server refused model work with this plugin's code.
   refusalAction: ({ code }) =>
-    code === 'hello_blocked' ? { href: '#/hello', label: 'Saiba mais' } : undefined,
+    code === 'hello_blocked' ? { href: '/hello', label: 'Saiba mais' } : undefined,
 }
 export default plugin
 ```

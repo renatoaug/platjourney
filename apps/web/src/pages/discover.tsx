@@ -1,7 +1,7 @@
 /** Discover: one game for the moment (the player says what they feel like), Nexo's picks for their
  * taste (asked for with a button), games like the player's, the next platinum from the library, short
  * platinums and the same series. */
-import { useCallback, useEffect, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
@@ -18,6 +18,7 @@ import {
   type Recs,
   type RecsState,
 } from '../components/recommendations'
+import { Releases } from '../components/releases'
 import { SaveToInterests } from '../components/save-to-interests'
 import {
   NAMES_SLOT,
@@ -219,7 +220,8 @@ function Ranking() {
   )
 }
 
-export function Discover() {
+/** `releases` replaces the calendar's own request (stories and tests pass it in a fixed state). */
+export function Discover({ releases = <Releases look="band" /> }: { releases?: ReactNode } = {}) {
   const t = useMessages(messages)
   const { cache, me } = useApp()
   // From the interests' "Deixa o Nexo escolher": the pick looks among the saved games.
@@ -349,6 +351,8 @@ export function Discover() {
       {me.demo && <DemoNote />}
       <Ranking />
       <DiscoverBands similar={similar} />
+      {/* The same calendar as the overview: what is out now and coming soon, worth discovering too. */}
+      {releases}
     </Page>
   )
 }

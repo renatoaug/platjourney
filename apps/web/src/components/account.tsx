@@ -125,8 +125,7 @@ const deleteAccount = (onlineId: string) => del('/api/account', { onlineId })
 
 // Leaving the account starts over from the login screen.
 const restart = () => {
-  location.hash = '#/'
-  location.reload()
+  location.assign('/')
 }
 
 // Whether Nexo writes this player's automatic notices; only shown when the instance allows it.

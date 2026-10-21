@@ -430,7 +430,7 @@ describe('push', () => {
   test('a test notice goes to every device of the player', async () => {
     const to = spyOn(push, 'pushTo').mockResolvedValue(2)
     expect((await send('POST', '/api/push/test')).body).toEqual({ sent: 2 })
-    expect(to.mock.calls[0][1]).toMatchObject({ title: 'Nexo', url: '/#/history' })
+    expect(to.mock.calls[0][1]).toMatchObject({ title: 'Nexo', url: '/history' })
   })
 })
 

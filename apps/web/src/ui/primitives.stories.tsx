@@ -76,7 +76,7 @@ export const Toasts: Story = {
       <button
         type="button"
         className="ghost"
-        onClick={() => toast('Guia atualizado.', 'info', { href: '#/game', label: 'Abrir' })}
+        onClick={() => toast('Guia atualizado.', 'info', { href: '/game', label: 'Abrir' })}
       >
         Info com ação
       </button>
@@ -87,9 +87,7 @@ export const Toasts: Story = {
 export const States: Story = {
   render: () => (
     <div className="card stack">
-      <EmptyState action={<a href="#/discover">Descobrir jogos</a>}>
-        Nada por aqui ainda.
-      </EmptyState>
+      <EmptyState action={<a href="/discover">Descobrir jogos</a>}>Nada por aqui ainda.</EmptyState>
       <ErrorState>Não conseguimos carregar. Tente de novo.</ErrorState>
       <PendingState>Pesquisando o guia deste jogo…</PendingState>
     </div>

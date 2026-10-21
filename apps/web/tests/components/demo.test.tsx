@@ -224,7 +224,7 @@ describe('what the demo cannot do', () => {
       '/api/recommendations?stored=1': { profile: null, items: [] },
       '/api/recommendations': recsData,
     })
-    renderApp(<Discover />, { value: { me: demo, data: SAMPLE_DATA, cache: {} } })
+    renderApp(<Discover releases={null} />, { value: { me: demo, data: SAMPLE_DATA, cache: {} } })
     expect(await screen.findByRole('link', { name: /Sekiro/ })).toBeTruthy()
     expect(document.querySelector('.rec-actions')).toBeNull()
     fireEvent.click(await screen.findByRole('button', { name: /Pedir ao Nexo/ }))

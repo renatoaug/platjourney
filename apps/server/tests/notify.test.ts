@@ -26,7 +26,7 @@ test('a notice goes to Telegram and to push', async () => {
   const user = makeUser({ telegram_chat_id: '42' })
   await deliver(user, '**Oi**')
   expect(send).toHaveBeenCalledWith('42', '**Oi**')
-  expect(pushed).toHaveBeenCalledWith(user, { title: 'Nexo', body: 'Oi', url: '/#/history' })
+  expect(pushed).toHaveBeenCalledWith(user, { title: 'Nexo', body: 'Oi', url: '/history' })
 })
 
 test('Telegram is skipped when not linked or turned off', async () => {

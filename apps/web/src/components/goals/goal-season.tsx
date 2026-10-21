@@ -13,7 +13,7 @@ const messages = defineMessages({
     season: {
       invalid: 'Informe um número inteiro maior que zero.',
       eyebrow: 'TEMPORADA {year}',
-      title: 'Seu progresso no ano.',
+      title: 'Cada platina conta.',
       captionTop: 'platinas',
       captionBottom: 'conquistadas',
       ofTarget: 'da meta',
@@ -35,7 +35,7 @@ const messages = defineMessages({
     season: {
       invalid: 'Enter a whole number greater than zero.',
       eyebrow: '{year} SEASON',
-      title: 'Your progress this year.',
+      title: 'Every platinum counts.',
       captionTop: 'platinums',
       captionBottom: 'earned',
       ofTarget: 'of goal',

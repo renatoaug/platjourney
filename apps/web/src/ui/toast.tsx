@@ -1,5 +1,5 @@
 /** Toast: short feedback at the bottom of the screen, with an optional action. Call toast() from anywhere; <ToastHost /> renders it. */
-import { useEffect, useState } from 'react'
+import { type MouseEvent, useEffect, useState } from 'react'
 import { Icon } from './icon'
 import './toast.css'
 
@@ -22,6 +22,15 @@ let next = 0
 /**
  * @param kind  error is the default (failures); success pops with a burst; info is neutral
  */
+// A link to one of the app's pages opens it in place, without loading the app again: the toast
+// sits outside the router, so it moves the address and the router follows (popstate).
+const inApp = (href: string) => (e: MouseEvent) => {
+  if (!href.startsWith('/') || e.metaKey || e.ctrlKey || e.shiftKey) return
+  e.preventDefault()
+  history.pushState(null, '', href)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
 export function toast(text: string, kind: ToastKind = 'error', action?: ToastAction) {
   if (!KINDS.includes(kind)) throw new Error(`toast kind must be one of ${KINDS.join(', ')}`)
   listener?.({ id: ++next, text, kind, action })
@@ -84,7 +93,7 @@ export function ToastHost() {
       )}
       <span className="toast-text">{item.text}</span>
       {item.action && (
-        <a className="toast-action" href={item.action.href}>
+        <a className="toast-action" href={item.action.href} onClick={inApp(item.action.href)}>
           {item.action.label} <Icon name="arrow" />
         </a>
       )}

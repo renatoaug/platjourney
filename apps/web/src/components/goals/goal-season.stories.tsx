@@ -67,3 +67,7 @@ export const SaveFails: Story = {
 }
 
 export const Loading: Story = { render: () => <GoalSeasonSkeleton /> }
+
+export const GoalReached: Story = {
+  render: () => <Demo goals={{ ...sampleGoals, done: sampleGoals.target + 2 }} />,
+}

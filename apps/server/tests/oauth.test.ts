@@ -94,8 +94,8 @@ test('authorize sends a good request to the consent page and never to an unknown
   const ok = await send('GET', q())
   expect(ok.status).toBe(302)
   const page = new URL(ok.headers.location, 'http://app.test')
-  expect(page.pathname + page.hash.slice(0, 10)).toBe('/#/connect?')
-  expect(new URLSearchParams(page.hash.split('?')[1]).get('state')).toBe('xyz')
+  expect(page.pathname).toBe('/connect')
+  expect(page.searchParams.get('state')).toBe('xyz')
   // An address the client never registered is answered here, not followed.
   const unknown = await send('GET', q({ redirect_uri: 'https://evil.example/cb' }))
   expect(unknown.status).toBe(400)
