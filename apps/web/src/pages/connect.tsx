@@ -66,10 +66,10 @@ const READS = ['profile', 'current', 'interests', 'guides'] as const
 const CHANGES = ['interests', 'recommendations'] as const
 
 /** True when the address is the consent page's, so the app opens it instead of its own frame. */
-export const isConnectPage = (hash = window.location.hash) => hash.startsWith('#/connect')
+export const isConnectPage = (path = window.location.pathname) => path.startsWith('/connect')
 
-function askFrom(hash: string) {
-  const p = new URLSearchParams(hash.split('?')[1] ?? '')
+function askFrom(search: string) {
+  const p = new URLSearchParams(search)
   return {
     clientId: p.get('client_id') ?? '',
     redirectUri: p.get('redirect_uri') ?? '',
@@ -90,7 +90,7 @@ export function Connect({
   me: Me
   go?: (url: string) => void
 }) {
-  const [ask] = useState(() => askFrom(window.location.hash))
+  const [ask] = useState(() => askFrom(window.location.search))
   const [load, setLoad] = useState<ConsentLoad>({ kind: 'loading' })
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)

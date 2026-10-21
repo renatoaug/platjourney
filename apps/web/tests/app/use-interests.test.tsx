@@ -45,7 +45,7 @@ test('saving a game adds it and offers to see the list', async () => {
   await waitFor(() => expect(out('saved')).toBe('sim'))
   expect(calls[0].body).toEqual({ command: `add ${ghost.game.id}` })
   expect(screen.getByText('Ghost of Tsushima salvo nos interesses')).toBeTruthy()
-  expect(screen.getByRole('link', { name: 'Ver' }).getAttribute('href')).toBe('#/goals')
+  expect(screen.getByRole('link', { name: 'Ver' }).getAttribute('href')).toBe('/goals')
 })
 
 test('a saved game is removed by its interest id', async () => {

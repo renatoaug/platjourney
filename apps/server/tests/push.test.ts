@@ -113,7 +113,7 @@ test('push is off without both keys, and the header refuses to sign', () => {
 test('a send posts the encrypted message with the push headers', async () => {
   const ua = device()
   const fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 201 }))
-  const status = await sendPush(ua.sub, { title: 'Nexo', body: 'Oi', url: '/#/history' })
+  const status = await sendPush(ua.sub, { title: 'Nexo', body: 'Oi', url: '/history' })
   expect(status).toBe(201)
   const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
   expect(url).toBe(ua.sub.endpoint)
@@ -124,7 +124,7 @@ test('a send posts the encrypted message with the push headers', async () => {
   expect(JSON.parse(decrypt(ua, Buffer.from(init.body as Uint8Array)))).toEqual({
     title: 'Nexo',
     body: 'Oi',
-    url: '/#/history',
+    url: '/history',
   })
 })
 

@@ -613,7 +613,7 @@ async function dropPush({ req, res, me }: Api) {
 
 // A test notice to every device of the player, so they see it works.
 async function testPush({ res, me, t }: Api) {
-  const sent = await pushTo(me, { title: 'Nexo', body: t('pushTest'), url: '/#/history' })
+  const sent = await pushTo(me, { title: 'Nexo', body: t('pushTest'), url: '/history' })
   return json(res, 200, { sent })
 }
 
@@ -1216,7 +1216,7 @@ function staticHeaders(path: string, type: string) {
   }
 }
 
-// Static files from the built app; anything unknown falls back to the app shell (hash routing).
+// Static files from the built app; anything unknown falls back to the app shell, which routes the address.
 // False when not even the shell is there.
 function servedStatic(req: IncomingMessage, res: ServerResponse, path: string): boolean {
   const file = path === '/' ? 'index.html' : path.slice(1)

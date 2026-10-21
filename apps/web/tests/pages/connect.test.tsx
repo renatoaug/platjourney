@@ -14,7 +14,7 @@ const params = new URLSearchParams({
 const client = { name: 'Claude', redirectHost: 'assistant.example' }
 
 beforeEach(() => {
-  window.location.hash = `#/connect?${params}`
+  history.replaceState(null, '', `/connect?${params}`)
 })
 
 afterEach(() => {
@@ -88,7 +88,7 @@ test('a link the server does not know says to start again; it waits while it che
 
 test('the app opens the consent page alone, and asks to sign in first when needed', async () => {
   expect(isConnectPage()).toBe(true)
-  expect(isConnectPage('#/settings')).toBe(false)
+  expect(isConnectPage('/settings')).toBe(false)
   mockApi({ '/api/me': { user: SAMPLE_ME }, '/api/oauth/client': client })
   render(<App />)
   expect(await screen.findByRole('heading', { name: /Claude quer usar/ })).toBeTruthy()

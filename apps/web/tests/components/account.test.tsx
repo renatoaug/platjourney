@@ -24,9 +24,9 @@ const type = (label: string, value: string) => {
   fireEvent.blur(input)
 }
 
-let reload: ReturnType<typeof spyOn>
+let restart: ReturnType<typeof spyOn>
 beforeEach(() => {
-  reload = spyOn(location, 'reload').mockImplementation(() => {})
+  restart = spyOn(location, 'assign').mockImplementation(() => {})
 })
 afterEach(() => mock.restore())
 
@@ -151,7 +151,7 @@ describe('Account', () => {
     type('Digite jogador para confirmar', 'JOGADOR ')
     expect(confirm.disabled).toBe(false)
     fireEvent.click(confirm)
-    await waitFor(() => expect(reload).toHaveBeenCalled())
+    await waitFor(() => expect(restart).toHaveBeenCalledWith('/'))
     const [url, init] = fetchSpy.mock.calls[0]
     expect(url).toBe('/api/account')
     expect(init?.method).toBe('DELETE')
@@ -163,7 +163,7 @@ describe('Account', () => {
     show()
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
     expect(screen.getByRole('button', { name: 'Saindo…' })).toBeTruthy()
-    await waitFor(() => expect(reload).toHaveBeenCalled())
+    await waitFor(() => expect(restart).toHaveBeenCalledWith('/'))
   })
 
   test('a sign out the server did not confirm keeps the player in and says so', async () => {
@@ -177,10 +177,10 @@ describe('Account', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2))
     expect(await screen.findByRole('alert')).toBeTruthy()
-    expect(reload).not.toHaveBeenCalled()
+    expect(restart).not.toHaveBeenCalled()
     // The same button tries again.
     fireEvent.click(screen.getByRole('button', { name: 'Sair' }))
-    await waitFor(() => expect(reload).toHaveBeenCalled())
+    await waitFor(() => expect(restart).toHaveBeenCalledWith('/'))
   })
 
   test('the introduction can be watched again from the preferences', () => {

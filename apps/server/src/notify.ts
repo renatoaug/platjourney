@@ -5,7 +5,7 @@ import type { User } from './repository/user.ts'
 import { sendMessage } from './telegram.ts'
 
 /** The screen a tapped notification opens: the history, where every notice is kept. */
-const HISTORY = '/#/history'
+const HISTORY = '/history'
 
 /** Notices are written in markdown for Telegram; a push notification shows plain text. */
 export function plainText(markdown: string): string {

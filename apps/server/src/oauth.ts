@@ -1,6 +1,6 @@
 /** OAuth 2.1 for assistants connected through MCP (Claude, ChatGPT and others): they find how to
  * sign in from the two metadata documents, register themselves, send the player to the consent
- * page (/#/connect) and trade the code for tokens with PKCE. The player allows from their own
+ * page (/connect) and trade the code for tokens with PKCE. The player allows from their own
  * session; the assistant then reaches /mcp with a bearer token that reads only that player's data.
  * Only hashes of codes and tokens are stored. */
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
@@ -212,7 +212,7 @@ async function authorize(res: ServerResponse, url: URL) {
     code_challenge: ask.challenge,
     ...(ask.state !== null ? { state: ask.state } : {}),
   })
-  return res.writeHead(302, { location: `/#/connect?${page}` }).end()
+  return res.writeHead(302, { location: `/connect?${page}` }).end()
 }
 
 /** The player's answer on the consent page: where to send the browser, with a code when allowed. */

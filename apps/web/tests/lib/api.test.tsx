@@ -98,7 +98,7 @@ test("a plugin's refusal shows its message with the action the plugin offers", a
   render(<ToastHost />)
   plugins.push({
     refusalAction: ({ code }) =>
-      code === 'hello_blocked' ? { href: '#/hello', label: 'Saiba mais' } : undefined,
+      code === 'hello_blocked' ? { href: '/hello', label: 'Saiba mais' } : undefined,
   })
   mockApi({
     '/api/chat': reply(402, {
@@ -113,7 +113,7 @@ test("a plugin's refusal shows its message with the action the plugin offers", a
     expect(screen.getByRole('alert').textContent).toContain(
       'Recomendações estão desligadas para esta conta.',
     )
-    expect(screen.getByRole('link', { name: /Saiba mais/ }).getAttribute('href')).toBe('#/hello')
+    expect(screen.getByRole('link', { name: /Saiba mais/ }).getAttribute('href')).toBe('/hello')
   } finally {
     plugins.pop()
   }
