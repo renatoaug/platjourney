@@ -26,6 +26,26 @@
     pointer-events: none;
   }
 
+  /* The name, small, at the top: whose screen this is while it loads. */
+  .boot-brand {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateX(-50%);
+    color: var(--color-fg);
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .boot-brand-accent {
+    color: var(--color-accent);
+  }
+
   .boot-stage {
     position: relative;
     width: 200px;
