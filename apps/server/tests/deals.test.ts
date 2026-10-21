@@ -104,6 +104,9 @@ test('several deals for one player arrive as one notice listing them', async () 
   expect(text).toContain('2 jogos dos seus interesses estão mais baratos na PS Store:')
   expect(text).toContain('• **Days Gone**: 70% off')
   expect(text).toContain('• **Inside**: 50% off')
+  // No single game: the digest keeps the games it names, for their covers in the history.
+  expect(tip.mock.calls[0][3]).toBeUndefined()
+  expect(tip.mock.calls[0][4]).toEqual(['game:1', 'game:2'])
 })
 
 test('the demo player never gets a deal notice', async () => {

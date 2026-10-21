@@ -21,6 +21,10 @@ export interface Tip {
   kind: TipKind
   content: string
   game: Game | null
+  /** A notice about several games: the first four, for their covers. */
+  games?: Pick<Game, 'id' | 'name' | 'cover_url'>[]
+  /** How many games it names, past the four covers too. */
+  games_count?: number
   /** For a tip a connected assistant saved: which one. */
   assistant?: AssistantKey | null
   created_at: string
@@ -32,13 +36,23 @@ export async function logTip(
   kind: TipKind,
   content: string,
   game?: string,
+  /** The games a notice about several names, when it has no single game. */
+  games: string[] = [],
 ): Promise<void> {
   await q(
     `LET $tip = (CREATE ONLY tip CONTENT $data);
      IF $tip.kind != 'chat' {
        CREATE notification CONTENT { user: $tip.user, kind: $tip.kind, content: $tip.content, game: $tip.game, tip: $tip.id };
      };`,
-    { data: { user: userRef(user), kind, content, ...(game ? { game: gameRef(game) } : {}) } },
+    {
+      data: {
+        user: userRef(user),
+        kind,
+        content,
+        ...(game ? { game: gameRef(game) } : {}),
+        ...(games.length ? { games: games.map(gameRef) } : {}),
+      },
+    },
   )
 }
 
@@ -61,10 +75,14 @@ export async function logAssistantTip(
   })
 }
 
+// The covers of a notice about several games: the first four, for the history's mosaic.
+const GAMES =
+  'array::slice(games ?? [], 0, 4).{id, name, cover_url} AS games, array::len(games ?? []) AS games_count'
+
 export async function recentTips(user: string, limit = 30): Promise<Tip[]> {
   return plain(
     await q<Tip[]>(
-      'SELECT *, game.* AS game FROM tip WHERE user = $user ORDER BY created_at DESC LIMIT $limit',
+      `SELECT *, game.* AS game, ${GAMES} FROM tip WHERE user = $user ORDER BY created_at DESC LIMIT $limit`,
       { user: userRef(user), limit },
     ),
   )
@@ -88,7 +106,7 @@ export async function lastTip(
 export async function tipsBefore(user: string, before: Date, limit = 30): Promise<Tip[]> {
   return plain(
     await q<Tip[]>(
-      'SELECT *, game.* AS game FROM tip WHERE user = $user AND created_at < $before ORDER BY created_at DESC LIMIT $limit',
+      `SELECT *, game.* AS game, ${GAMES} FROM tip WHERE user = $user AND created_at < $before ORDER BY created_at DESC LIMIT $limit`,
       { user: userRef(user), before, limit },
     ),
   )

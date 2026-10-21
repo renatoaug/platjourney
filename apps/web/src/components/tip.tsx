@@ -30,6 +30,7 @@ export const messages = defineMessages({
       assistant: 'assistente',
     },
     library: 'Sua biblioteca',
+    interests: 'Seus interesses',
   },
   [Language.En]: {
     kind: {
@@ -43,6 +44,7 @@ export const messages = defineMessages({
       assistant: 'assistant',
     },
     library: 'Your library',
+    interests: 'Your interests',
   },
 })
 
@@ -83,6 +85,8 @@ export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?:
   const t = tipItem
   // A tip an assistant saved carries its name instead of the kind.
   const kind = (t.kind === 'assistant' && assistantName(t.assistant)) || kindLabel(tr, t.kind)
+  // Without a game: a digest of deals is about the interests, anything else about the library.
+  const about = tr(t.kind === 'deal' ? 'interests' : 'library')
   if (compact)
     return (
       <div className="tip">
@@ -90,7 +94,7 @@ export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?:
           <span className={`k kind-${t.kind}`}>
             <KindMark tip={t} /> {kind}
           </span>
-          {t.game?.name || tr('library')}
+          {t.game?.name || about}
         </b>
         <Markdown className="tip-content tip-preview" text={t.content} />
         <time>{fmtWhen(t.created_at)}</time>
@@ -107,7 +111,24 @@ export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?:
         </span>
       </div>
       <div className="entry-body">
-        {t.game && <Cover url={t.game.cover_url} name={t.game.name} className="entry-cover" />}
+        {t.game?.id ? (
+          <Cover url={t.game.cover_url} name={t.game.name} className="entry-cover" />
+        ) : (
+          !!t.games?.length && (
+            // A notice about several games: their covers as a mosaic in one cover's space.
+            <span className="entry-covers" data-count={t.games.length}>
+              {t.games.map((g) => (
+                <Cover key={g.id} url={g.cover_url} name={g.name} className="entry-cover" />
+              ))}
+              {/* Past four games, the last cover says how many more the list names. */}
+              {(t.games_count ?? 0) > t.games.length && (
+                <span className="entry-covers-more">
+                  +{(t.games_count ?? 0) - t.games.length + 1}
+                </span>
+              )}
+            </span>
+          )
+        )}
         <div className="entry-main">
           <div className="entry-head">
             {t.game?.id ? (
@@ -115,7 +136,7 @@ export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?:
                 {t.game.name}
               </Link>
             ) : (
-              <span className="tip-game muted">{tr('library')}</span>
+              <span className="tip-game muted">{about}</span>
             )}
             <span className={`k kind-${t.kind}`}>{kind}</span>
           </div>
