@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.31.0](https://github.com/renatoaug/platjourney/compare/v0.30.0...v0.31.0) (2026-10-21)
+
+### Features
+
+* **web:** addresses without the hash ([#71](https://github.com/renatoaug/platjourney/issues/71)) ([a6535e2](https://github.com/renatoaug/platjourney/commit/a6535e2c20b8a1656cbc94461619fd9fb762d8ee))
+
 ## [0.30.0](https://github.com/renatoaug/platjourney/compare/v0.29.0...v0.30.0) (2026-10-21)
 
 ### Features
