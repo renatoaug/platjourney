@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.30.0](https://github.com/renatoaug/platjourney/compare/v0.29.0...v0.30.0) (2026-10-21)
+
+### Features
+
+* **web:** a digest of deals with the covers of its games ([#70](https://github.com/renatoaug/platjourney/issues/70)) ([730c10d](https://github.com/renatoaug/platjourney/commit/730c10d9dbeed17f411778afd36c4cf691a7e488))
+
 ## [0.29.0](https://github.com/renatoaug/platjourney/compare/v0.28.1...v0.29.0) (2026-10-21)
 
 ### Features
