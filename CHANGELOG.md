@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.29.0](https://github.com/renatoaug/platjourney/compare/v0.28.1...v0.29.0) (2026-10-21)
+
+### Features
+
+* **mcp:** an assistant's list of picks from the player's taste ([#69](https://github.com/renatoaug/platjourney/issues/69)) ([cf7ca47](https://github.com/renatoaug/platjourney/commit/cf7ca477a1725f09d6181d2e722beb5b859a0500))
+
 ## [0.28.1](https://github.com/renatoaug/platjourney/compare/v0.28.0...v0.28.1) (2026-10-20)
 
 ## [0.28.0](https://github.com/renatoaug/platjourney/compare/v0.27.1...v0.28.0) (2026-10-20)
