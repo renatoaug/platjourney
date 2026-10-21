@@ -72,6 +72,7 @@ const messages = defineMessages({
       dialogTitle: 'O que pedir ao assistente',
       dialogLead: 'Clique num pedido para copiar e cole no chat do Claude ou do ChatGPT.',
       ask1: 'O que eu jogo agora?',
+      askTaste: 'Me recomenda jogos pelo meu perfil',
       ask2: 'Quais troféus faltam na platina que estou fazendo?',
       ask3: 'Como faço o troféu mais difícil do jogo que estou jogando?',
       ask4: 'Monta um plano para a minha sessão de hoje',
@@ -135,6 +136,7 @@ const messages = defineMessages({
       dialogTitle: 'What to ask your assistant',
       dialogLead: 'Click a request to copy it, then paste it in the Claude or ChatGPT chat.',
       ask1: 'What should I play now?',
+      askTaste: 'Recommend games from my taste',
       ask2: 'Which trophies are left on the platinum I am going for?',
       ask3: 'How do I get the hardest trophy in the game I am playing?',
       ask4: 'Plan my play session for today',
@@ -316,7 +318,7 @@ function CopyValue({ value }: { value: string }) {
   )
 }
 
-const IDEAS = ['ask1', 'ask2', 'ask3', 'ask4', 'ask5', 'ask6', 'ask7'] as const
+const IDEAS = ['ask1', 'askTaste', 'ask2', 'ask3', 'ask4', 'ask5', 'ask6', 'ask7'] as const
 
 // Beside the assistants' heading, once one is connected: what they can be asked, in a dialog, each request copied with a click.
 function AskIdeas() {
