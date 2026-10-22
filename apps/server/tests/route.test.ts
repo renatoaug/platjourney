@@ -1,5 +1,11 @@
 import { expect, test } from 'bun:test'
-import { type Milestone, reachedMilestone, routeNotice, stillOpen } from '../src/route.ts'
+import {
+  currentMilestone,
+  type Milestone,
+  reachedMilestone,
+  routeNotice,
+  stillOpen,
+} from '../src/route.ts'
 
 const milestones: Milestone[] = [
   {
@@ -55,4 +61,11 @@ test('a milestone drops the tips about trophies already earned, and is gone when
   expect(
     stillOpen({ ...milestone, tips: [milestone.tips[0]] }, ['Primeira Compra']),
   ).toBeUndefined()
+})
+
+test('the stretch the player is in is the furthest milestone reached, or the opening one', () => {
+  expect(currentMilestone(guide, [])).toBe(milestones[0])
+  expect(currentMilestone(guide, [' fim do capítulo 1'])).toBe(milestones[1])
+  expect(currentMilestone(guide, ['Fim do Capítulo 1', 'Fim do Capítulo 2'])).toBe(milestones[2])
+  expect(currentMilestone(undefined, ['Fim do Capítulo 1'])).toBeUndefined()
 })

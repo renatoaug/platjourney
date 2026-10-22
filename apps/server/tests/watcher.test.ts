@@ -160,7 +160,7 @@ describe('session start', () => {
     spyOn(Math, 'random').mockReturnValue(0)
     await checkUser(user)
     const text =
-      '🎮 Hora de jogar! Falta 1 troféu para a platina de **Days Gone**.\n\n**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Terceiro**.\nFaça algo\n\nBoa jogatina! 🍀'
+      '🎮 Hora de jogar! Falta 1 troféu para a platina de **Days Gone**.\n\n**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Terceiro**.\nFaça algo\n\n📍 **Neste trecho do jogo**\n• Compre o arco.\n\nBoa jogatina! 🍀'
     expect(logTip).toHaveBeenCalledWith(user.id, 'session', text, game.id)
     expect(send.mock.calls).toEqual([['42', text]])
     expect(updateUser.mock.calls[0][1].session_notice_at).toBeInstanceOf(Date)
@@ -274,11 +274,68 @@ describe('session start', () => {
         '🎮 Hora de jogar! Faltam 3 troféus para a platina de **Days Gone**.',
         '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Terceiro**.\nFaça algo',
         '**Dica**: Use o arco de longe.',
+        '📍 **Neste trecho do jogo**\n• Compre o arco.',
         '⚠️ **Terceiro** é perdível: antes do capítulo 5.',
         '**Quase lá**: Colecionador, 34 de 50.',
         'Boa jogatina! 🍀',
       ].join('\n\n'),
     )
+  })
+
+  test('a trophy the roadmap leaves to a later phase is not the focus before then', () => {
+    const guide = {
+      roadmap: [
+        { phase: 'Fase 1 — História', goal: '', trophies: ['Capítulo 1', 'Capítulo 2', 'Pinhas'] },
+        { phase: 'Fase 2 — Seleção de capítulo', goal: '', trophies: ['Pinhas'] },
+      ],
+      tricks: [{ trophy: 'Pinhas', trick: 'Carregue cada disparo.', source: 'x' }],
+    } as unknown as Guide
+    const ctx = {
+      guide,
+      trophies: [
+        makeTrophy({ id: 1, name: 'Capítulo 1', earned: true }),
+        makeTrophy({ id: 2, name: 'Capítulo 2' }),
+        makeTrophy({ id: 3, name: 'Pinhas' }),
+      ],
+    }
+    expect(todaysFocus(ctx).trophy?.name).toBe('Capítulo 2')
+    // With the rest of the phase done, it is the focus again.
+    ctx.trophies[1] = makeTrophy({ id: 2, name: 'Capítulo 2', earned: true })
+    expect(todaysFocus(ctx).trophy?.name).toBe('Pinhas')
+  })
+
+  test('the stretch the player is in lists its collectibles and drops tips about trophies they have', () => {
+    const guide = {
+      milestones: [
+        { after: null, tips: [{ kind: 'warning', text: 'Guarde facas.', trophy: null }] },
+        {
+          after: 'Capítulo 1',
+          tips: [
+            { kind: 'collectible', text: 'Souvenir 1: na tenda do mercado.', trophy: 'Lembranças' },
+            { kind: 'collectible', text: 'Flor 1/5: a caminho da torre.', trophy: 'Herbalista' },
+          ],
+        },
+        { after: 'Capítulo 2', tips: [{ kind: 'item', text: 'Pegue a besta.', trophy: null }] },
+      ],
+    } as unknown as Guide
+    const ctx = {
+      game,
+      title: makeTitle(),
+      guide,
+      groups: null,
+      owned: false,
+      trophies: [
+        makeTrophy({ id: 1, name: 'Capítulo 1', earned: true }),
+        makeTrophy({ id: 2, name: 'Capítulo 2' }),
+        makeTrophy({ id: 3, name: 'Lembranças' }),
+        makeTrophy({ id: 4, name: 'Herbalista', earned: true }),
+      ],
+    } as unknown as Parameters<typeof sessionNotice>[2]
+    expect(sessionNotice(user, 'x', ctx)).toContain(
+      '📍 **Neste trecho do jogo**\n• Souvenir 1: na tenda do mercado.\n\n',
+    )
+    expect(sessionNotice(user, 'x', ctx)).not.toContain('Flor 1/5')
+    expect(sessionNotice(user, 'x', ctx, true)).not.toContain('Neste trecho')
   })
 
   test('the focus is a missable first, then a trophy with a trick, then the next in order', () => {
@@ -561,6 +618,29 @@ describe('checkUser', () => {
     await checkUser(user)
     expect(logTip.mock.calls[0][1]).toBe('unlock')
     expect(send).toHaveBeenCalledTimes(1)
+  })
+
+  test('the first trophy of a game watched with none earned gets its notice', async () => {
+    getTitle.mockResolvedValue(row({ earned: 0, earned_ids: [] }))
+    spyOn(psn, 'titleTrophies').mockResolvedValue([
+      trophies[0],
+      { ...trophies[1], earned: false },
+      trophies[2],
+    ])
+    recent.mockResolvedValue([makeTitle({ earned: 1 })])
+    const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
+    await checkUser(user)
+    expect(reaction.mock.calls[0][2].map((t) => t.id)).toEqual([1])
+    expect(send.mock.calls.map((c) => c[1])).toEqual(['Boa!'])
+  })
+
+  test('a title stored with trophies but no ids was never watched: its old trophies stay quiet', async () => {
+    getTitle.mockResolvedValue(row({ earned: 10, earned_ids: [] }))
+    const reaction = spyOn(nexo, 'unlockReaction')
+    await checkUser(user)
+    expect(reaction).not.toHaveBeenCalled()
+    expect(send).not.toHaveBeenCalled()
+    expect(saveEarned).toHaveBeenCalledWith(user.id, 'NPWR1_00', [1, 2])
   })
 
   test('the first sync of an old game sends nothing', async () => {
