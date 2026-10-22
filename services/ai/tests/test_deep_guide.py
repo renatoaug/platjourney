@@ -402,6 +402,87 @@ async def test_retrieve_puts_literal_matches_first_and_drops_weak_neighbours(
     assert seen['limit'] == 3
 
 
+@pytest.mark.parametrize(
+    ('content', 'expected'),
+    [
+        ('Souvenir #2\nInteract with her.\nHerbarium #1 (Flower 1/5): Arrowhead', True),
+        ('Go up the stairs.\nSub-Chapter: Ignifer\nObjective: Reach the South Tower', True),
+        ('The chapter ends here.\n## Chapter 3', True),
+        ('Steps to follow:', True),
+        ('Interact with the dying woman upstairs for the Souvenir.', False),
+        ('Is this the last one?', False),
+        ('', False),
+    ],
+)
+def test_ends_open_spots_a_passage_cut_after_a_title(content: str, expected: bool) -> None:
+    assert deepguide.ends_open(content) is expected
+
+
+async def test_retrieve_appends_the_next_passage_to_one_cut_after_a_title(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cut = passage(46).model_copy(
+        update={'content': 'Souvenir #2: Be at peace\nObjective: Reach the South Tower'}
+    )
+    asked: list[list[int]] = []
+
+    async def fake_stats(game: str) -> Stats:
+        return Stats(chunks=10, sources=[])
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        return [[0.1]]
+
+    async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
+        return []
+
+    async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
+        return [ScoredPassage(**cut.model_dump(), score=0.9), scored(10, 0.8)]
+
+    async def at_positions(game: str, positions: list[int]) -> list[Passage]:
+        asked.append(positions)
+        return [passage(47).model_copy(update={'content': 'The flower is by the tower gate.'})]
+
+    monkeypatch.setattr(guidestore, 'stats', fake_stats)
+    monkeypatch.setattr(llm, 'embed', embed)
+    monkeypatch.setattr(guidestore, 'mentioning', mentioning)
+    monkeypatch.setattr(guidestore, 'search', search)
+    monkeypatch.setattr(guidestore, 'at_positions', at_positions)
+    found = await deepguide.retrieve(GAME, 'onde fica a flor?', [])
+    assert asked == [[47]]
+    assert [p.position for p in found] == [46, 10]
+    assert found[0].content.endswith('Reach the South Tower\nThe flower is by the tower gate.')
+    assert found[1].content == 'C10'
+
+
+async def test_retrieve_leaves_a_cut_passage_alone_when_the_next_is_another_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cut = passage(46).model_copy(update={'content': 'Objective: Reach the South Tower'})
+
+    async def fake_stats(game: str) -> Stats:
+        return Stats(chunks=10, sources=[])
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        return [[0.1]]
+
+    async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
+        return []
+
+    async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
+        return [ScoredPassage(**cut.model_dump(), score=0.9)]
+
+    async def at_positions(game: str, positions: list[int]) -> list[Passage]:
+        return [passage(47).model_copy(update={'url': 'https://b'})]
+
+    monkeypatch.setattr(guidestore, 'stats', fake_stats)
+    monkeypatch.setattr(llm, 'embed', embed)
+    monkeypatch.setattr(guidestore, 'mentioning', mentioning)
+    monkeypatch.setattr(guidestore, 'search', search)
+    monkeypatch.setattr(guidestore, 'at_positions', at_positions)
+    [found] = await deepguide.retrieve(GAME, 'onde fica a flor?', [])
+    assert found.content == 'Objective: Reach the South Tower'
+
+
 async def test_retrieve_skips_the_model_without_passages(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_stats(game: str) -> Stats:
         return Stats(chunks=0, sources=[])

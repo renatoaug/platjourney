@@ -62,12 +62,14 @@ flowchart LR
     q --> semantic["Nearest passages by meaning<br/>(cosine ≥ 0.25)"]
     literal --> pick["Up to 6 passages,<br/>literal first"]
     semantic --> pick
-    pick --> prompt["Passages + PSN facts + guide"]
+    pick --> cont["A passage cut after a title<br/>takes the next one of its page"]
+    cont --> prompt["Passages + PSN facts + guide"]
     prompt --> answer[Nexo answers]
     pick -. "none found" .-> gap[("guide_request:<br/>what the guides miss")]
 ```
 
 - **Trophy names first.** Guides are mostly in English and players often ask in Portuguese, so the trophies a question names are matched literally, in English.
+- **A title takes its text.** A page splits into passages of a fixed size, so a passage can end on a title or a label ("Objective: Reach the South Tower", a collectible's name) with the steps in the next one. When a chosen passage ends that way, the next passage of the same page is appended to it.
 - **Newest wins.** Each passage goes with its site, heading path and date; when passages disagree, Nexo trusts the most recent one (games change with patches).
 - **Nothing found.** Nexo still answers from the PSN facts and the guide, and the question is stored in `guide_request`, so whoever runs the instance sees what the guides miss.
 
@@ -78,6 +80,7 @@ flowchart LR
 | Exact scan, no vector index | A game has a few hundred passages at most; scanning is fast, exact and works with any vector size |
 | One embedding model at a time | Vectors from different models do not compare; rows of another size are skipped, and `bun run embed --all` re-embeds after a switch |
 | Literal before semantic | The passage that names trophy X is the right one, even when the question is worded far from the guide |
+| The next passage, not new chunks | Appending the following passage fixes a cut title at answer time; re-splitting every page would mean re-embedding the whole store |
 | Written guides only | Never search results, forum threads or videos, and only where the site allows it |
 
 ## Recommendations use the same vectors
