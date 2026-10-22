@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.31.1](https://github.com/renatoaug/platjourney/compare/v0.31.0...v0.31.1) (2026-10-22)
+
+### Bug Fixes
+
+* **ai:** append the next passage to one cut after a title ([#72](https://github.com/renatoaug/platjourney/issues/72)) ([ae27760](https://github.com/renatoaug/platjourney/commit/ae2776046675d23c7eb9bdbb4d7805eb77e56d79))
+
 ## [0.31.0](https://github.com/renatoaug/platjourney/compare/v0.30.0...v0.31.0) (2026-10-21)
 
 ### Features
