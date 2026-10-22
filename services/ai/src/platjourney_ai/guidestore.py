@@ -123,6 +123,18 @@ async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passag
     return [Passage.model_validate(r) for r in rows]
 
 
+async def at_positions(game: str, positions: list[int]) -> list[Passage]:
+    """The passages at the given positions, for the one that follows a passage cut short."""
+    if not positions:
+        return []
+    rows = await db.rows(
+        f'SELECT {_FIELDS} FROM guide_chunk WHERE game = type::record($game) '
+        'AND position IN $positions',
+        {'game': game, 'positions': positions},
+    )
+    return [Passage.model_validate(r) for r in rows]
+
+
 async def stats(game: str) -> Stats:
     rows = await db.rows(
         'SELECT source, url, count() AS n FROM guide_chunk '

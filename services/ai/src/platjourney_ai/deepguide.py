@@ -10,6 +10,7 @@ import asyncio
 import io
 import ipaddress
 import logging
+import re
 import socket
 import time
 from datetime import UTC, datetime, timedelta
@@ -376,4 +377,42 @@ async def retrieve(game: Game, question: str, terms: list[str], limit: int = 6) 
             continue
         seen.add(p.position)
         out.append(p)
-    return out[:limit]
+    return await _with_continuation(game, out[:limit])
+
+
+# The last line of a passage that stops on a title or a label ("Objective: Reach the South
+# Tower", "Herbarium #1 (Flower 1/5): Arrowhead", "## Chapter 2") with the text it introduces
+# left in the next passage.
+_OPEN_LINE = re.compile(r'^(#{1,6}\s.*|[^.!?]*:.*|.*#\d.*)$')
+_OPEN_LINE_MAX = 80
+
+
+def ends_open(content: str) -> bool:
+    lines = [line.strip() for line in content.splitlines() if line.strip()]
+    if not lines:
+        return False
+    last = lines[-1]
+    return (
+        len(last) <= _OPEN_LINE_MAX
+        and not last.endswith(('.', '!', '?', '"', '”', ')'))
+        and _OPEN_LINE.match(last) is not None
+    ) or last.endswith(':')
+
+
+async def _with_continuation(game: Game, passages: list[Passage]) -> list[Passage]:
+    """A passage cut right after a title gets the next one of the same page appended, so the
+    model sees the steps and not only where they start (the way a page splits into passages
+    can leave a collectible's name in one and its location in the next)."""
+    open_ = [p for p in passages if ends_open(p.content)]
+    if not open_:
+        return passages
+    taken = {p.position for p in passages}
+    wanted = [p.position + 1 for p in open_ if p.position + 1 not in taken]
+    following = {n.position: n for n in await guidestore.at_positions(game.id, wanted)}
+    out: list[Passage] = []
+    for p in passages:
+        n = following.get(p.position + 1)
+        if n is not None and n.url == p.url and ends_open(p.content):
+            p = p.model_copy(update={'content': f'{p.content}\n{n.content}'})
+        out.append(p)
+    return out
