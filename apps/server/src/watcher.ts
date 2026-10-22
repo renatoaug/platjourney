@@ -35,7 +35,7 @@ import { pruneOauth } from './repository/oauth.ts'
 import { lastRecommended } from './repository/recommendation.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
 import { listUsers, type User, updateUser } from './repository/user.ts'
-import { reachedMilestone, routeNotice, stillOpen } from './route.ts'
+import { currentMilestone, reachedMilestone, routeNotice, stillOpen } from './route.ts'
 import { checkServers } from './servers.ts'
 
 const messages = defineMessages({
@@ -65,6 +65,8 @@ const messages = defineMessages({
     focusBehind:
       '**Sugestão de próximo troféu**\nPelo momento em que você está, vale buscar **{trophy}**, que ficou para trás.',
     tip: '**Dica**: {tip}',
+    // The guide's tips for the stretch the player is in: a chapter's collectibles, a missable there.
+    here: '📍 **Neste trecho do jogo**',
     missable: '⚠️ **{trophy}** é perdível: {when}',
     almost: '**Quase lá**: {trophy}, {value} de {target}.',
     focusStill: 'A sugestão de próximo troféu continua sendo **{trophy}**.',
@@ -109,6 +111,7 @@ const messages = defineMessages({
     focusBehind:
       '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.',
     tip: '**Tip**: {tip}',
+    here: '📍 **Where you are in the game**',
     missable: '⚠️ **{trophy}** is missable: {when}',
     almost: '**Almost there**: {trophy}, {value} of {target}.',
     focusStill: 'The suggested next trophy is still **{trophy}**.',
@@ -472,8 +475,11 @@ async function check(user: User): Promise<void> {
   // A first sync of an account must not greet every old game as new.
   const firstSync = !prev && latest.earned > 0 && latest.progress >= 10
   const justStarted = !firstSync && !prev?.last_tip_at && latest.progress < 10
-  const unlocked =
-    knownIds.size > 0 ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
+  // The ids seen are trusted when there are some, or when the stored title had none earned: the
+  // first trophy of a game is news too. A title stored with trophies but no ids was never watched
+  // (another game was in front then), and announcing its old trophies would be wrong.
+  const watched = knownIds.size > 0 || prev?.earned === 0
+  const unlocked = watched ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
 
   const route = routeFor(
     user,
@@ -525,6 +531,8 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext, again
     blocks.push(`${line}\n${focus.detail}`)
     if (trick) blocks.push(t('tip', { tip: trick }))
   }
+  const stretch = hereTips(ctx)
+  if (stretch.length) blocks.push([t('here'), ...stretch.map((tip) => `• ${tip}`)].join('\n'))
   if (missable) blocks.push(t('missable', { trophy: missable.trophy, when: missable.when }))
   // The tracked trophy closest to done, past halfway.
   const almost = missing
@@ -546,6 +554,14 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext, again
     )
   blocks.push(t('goodSession'))
   return blocks.join('\n\n')
+}
+
+// The guide's tips for the stretch the player is in, without those about trophies they have.
+function hereTips(ctx: GameContext): string[] {
+  const earned = ctx.trophies.filter((x) => x.earned).map((x) => x.name)
+  const current = currentMilestone(ctx.guide, earned)
+  const open = current && stillOpen(current, earned)
+  return open ? open.tips.map((tip) => tip.text) : []
 }
 
 // A full session notice repeats itself when the player opens the same game again the same day

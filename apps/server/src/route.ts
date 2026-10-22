@@ -13,9 +13,10 @@ const messages = defineMessages({
 })
 
 // The guide's real-time route: after a story trophy, what matters right there
-// (a missable about to close, an item worth grabbing, a trophy that is easy now).
+// (a missable about to close, an item worth grabbing, a trophy that is easy now, where the
+// collectibles of the chapter just reached are).
 interface RouteTip {
-  kind: 'missable' | 'item' | 'advantage' | 'trophy' | 'warning'
+  kind: 'missable' | 'item' | 'advantage' | 'trophy' | 'warning' | 'collectible'
   text: string
   trophy: string | null
 }
@@ -39,6 +40,17 @@ export function reachedMilestone(
   return (guide?.milestones ?? [])
     .filter((m) => (m.after ? names.has(norm(m.after)) : started))
     .at(-1)
+}
+
+// The stretch the player is in now: the furthest milestone whose story trophy they have, or the
+// opening one before any. The session notice repeats its tips, so a player who comes back to a
+// chapter game hears again where that chapter's collectibles are.
+export function currentMilestone(
+  guide: Pick<Guide, 'milestones'> | undefined,
+  earned: string[],
+): Milestone | undefined {
+  const have = new Set(earned.map(norm))
+  return (guide?.milestones ?? []).filter((m) => !m.after || have.has(norm(m.after))).at(-1)
 }
 
 // The milestone without the tips about trophies the player already has: telling them to earn

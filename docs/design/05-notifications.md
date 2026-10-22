@@ -22,8 +22,8 @@ The watcher visits every player one after the other, every `POLL_MINUTES` (15 by
 | Kind | When | What it says |
 |---|---|---|
 | `start` | A game played for the first time, still early (under 10% of its trophies) | A start tip for the game, with the guide's note on what comes first |
-| `unlock` | New trophies earned since the last visit, on the game being played | The trophies as the title, then Nexo's comment, the session's focus, and the guide's note when a roadmap step was reached |
-| `session` | The player opens a game (PSN presence), at most once every 6 hours | What is left for the platinum, the suggested next trophy, a tip, a missable still open and a trophy almost done. Opening the same game again within a day with nothing earned since gets one line: the game and the suggestion |
+| `unlock` | New trophies earned since the last visit, on the game being played, the first one of a game included | The trophies as the title, then Nexo's comment, the session's focus, and the guide's note when a roadmap step was reached |
+| `session` | The player opens a game (PSN presence), at most once every 6 hours | What is left for the platinum, the suggested next trophy, a tip, the guide's tips for the stretch the player is in (a chapter's collectibles), a missable still open and a trophy almost done. Opening the same game again within a day with nothing earned since gets one line: the game and the suggestion |
 | `route` | A roadmap step reached without new trophies | The guide's note on what comes next |
 | `server` | A game in the library has its online servers shutting down (daily check, only with `AI_RESEARCH` on) | The warning with the date |
 | `deal` | Daily PlayStation Store check: a saved game goes on sale or its sale gets deeper, or enters the PS Plus catalog of the tier the player picked; games already owned are left out | One notice a day per player: a single game as a sentence (the price and until when, or that it entered the player's PS Plus); several as one list, a line per game |
@@ -58,6 +58,8 @@ Right under the 🏆 title, the notice opens with a line in PlatJourney's own vo
 
 - **Seen trophies are saved** after every sweep, even when Telegram fails, so the next sweep never sends or pays for the same notice twice.
 - **One check per player at a time**: a sign-in and the sweep running together wait for each other, so the same unlock is not announced twice.
-- **A first sync does not greet old games**: an account connected with progress already made gets no start notice for every game it has.
+- **A first sync does not greet old games**: an account connected with progress already made gets no start notice for every game it has, and a title stored with trophies but no ids seen (it was never the game in front) gets no trophy notice for them. A title stored with none earned is watched: its first trophy is news.
+- **The suggestion follows the roadmap's plan**: a trophy the roadmap names again in a later phase (chapter select, New Game+) is not the suggested next one while the current phase has other trophies open.
+- **Where the player is**: the guide's milestones are tips tied to story trophies. The furthest one the player has marks the stretch they are in; the session notice repeats its tips still open, so a chapter's collectibles (tips of kind `collectible`) come back every session until the trophy they count for is earned.
 - **The trophy name shows once**, as the 🏆 title; a heading Nexo repeats is dropped, and markdown headings reach Telegram as bold.
 - **The chat's game is not the game played**: `/game` and links into the chat change only the conversation; the notices follow the game PSN shows.
