@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.31.3](https://github.com/renatoaug/platjourney/compare/v0.31.2...v0.31.3) (2026-10-22)
+
+### Bug Fixes
+
+* **notices:** collectible name on its own line in the stretch block ([#74](https://github.com/renatoaug/platjourney/issues/74)) ([0fa0cba](https://github.com/renatoaug/platjourney/commit/0fa0cbaa1d68e367a1baa8d2e2da5e1c2ba0ecf3))
+
 ## [0.31.2](https://github.com/renatoaug/platjourney/compare/v0.31.1...v0.31.2) (2026-10-22)
 
 ### Bug Fixes
