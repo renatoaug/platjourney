@@ -330,12 +330,17 @@ describe('session start', () => {
         makeTrophy({ id: 3, name: 'Lembranças' }),
         makeTrophy({ id: 4, name: 'Herbalista', earned: true }),
       ],
-    } as unknown as Parameters<typeof sessionNotice>[2]
+    } as unknown as NonNullable<Parameters<typeof sessionNotice>[2]>
     expect(sessionNotice(user, 'x', ctx)).toContain(
-      '📍 **Neste trecho do jogo**\n• Souvenir 1: na tenda do mercado.\n\n',
+      '📍 **Neste trecho do jogo**\n• **Souvenir 1**\nNa tenda do mercado.\n\n',
     )
     expect(sessionNotice(user, 'x', ctx)).not.toContain('Flor 1/5')
     expect(sessionNotice(user, 'x', ctx, true)).not.toContain('Neste trecho')
+    // Several tips are set apart by a blank line.
+    ctx.trophies[3] = makeTrophy({ id: 4, name: 'Herbalista' })
+    expect(sessionNotice(user, 'x', ctx)).toContain(
+      '• **Souvenir 1**\nNa tenda do mercado.\n\n• **Flor 1/5**\nA caminho da torre.',
+    )
   })
 
   test('the focus is a missable first, then a trophy with a trick, then the next in order', () => {

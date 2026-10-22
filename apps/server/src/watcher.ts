@@ -532,7 +532,7 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext, again
     if (trick) blocks.push(t('tip', { tip: trick }))
   }
   const stretch = hereTips(ctx)
-  if (stretch.length) blocks.push([t('here'), ...stretch.map((tip) => `• ${tip}`)].join('\n'))
+  if (stretch) blocks.push(`${t('here')}\n${stretch}`)
   if (missable) blocks.push(t('missable', { trophy: missable.trophy, when: missable.when }))
   // The tracked trophy closest to done, past halfway.
   const almost = missing
@@ -557,11 +557,20 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext, again
 }
 
 // The guide's tips for the stretch the player is in, without those about trophies they have.
-function hereTips(ctx: GameContext): string[] {
+function hereTips(ctx: GameContext): string {
   const earned = ctx.trophies.filter((x) => x.earned).map((x) => x.name)
   const current = currentMilestone(ctx.guide, earned)
   const open = current && stillOpen(current, earned)
-  return open ? open.tips.map((tip) => tip.text) : []
+  return open ? open.tips.map(tipLine).join('\n\n') : ''
+}
+
+// A collectible tip opens with its name ("Souvenir 1/21, Best player: ..."): the name goes in
+// bold on a line of its own, the directions below it.
+function tipLine(tip: { kind: string; text: string }): string {
+  const at = tip.text.indexOf(': ')
+  if (tip.kind !== 'collectible' || at < 0) return `• ${tip.text}`
+  const rest = tip.text.slice(at + 2)
+  return `• **${tip.text.slice(0, at)}**\n${rest.charAt(0).toUpperCase()}${rest.slice(1)}`
 }
 
 // A full session notice repeats itself when the player opens the same game again the same day
