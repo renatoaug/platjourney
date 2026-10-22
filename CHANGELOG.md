@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.31.2](https://github.com/renatoaug/platjourney/compare/v0.31.1...v0.31.2) (2026-10-22)
+
+### Bug Fixes
+
+* **notices:** first trophy, later-phase focus and the stretch's tips ([#73](https://github.com/renatoaug/platjourney/issues/73)) ([f1fee60](https://github.com/renatoaug/platjourney/commit/f1fee60d3cd11892d39065e04001454062943e6c))
+
 ## [0.31.1](https://github.com/renatoaug/platjourney/compare/v0.31.0...v0.31.1) (2026-10-22)
 
 ### Bug Fixes
