@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.31.7](https://github.com/renatoaug/platjourney/compare/v0.31.6...v0.31.7) (2026-10-23)
+
+### Bug Fixes
+
+* **web:** difficulty meter fits narrow cards ([#78](https://github.com/renatoaug/platjourney/issues/78)) ([80d87b3](https://github.com/renatoaug/platjourney/commit/80d87b30e8a1362ae61bc08b7ab5193c313a89cf))
+
 ## [0.31.6](https://github.com/renatoaug/platjourney/compare/v0.31.5...v0.31.6) (2026-10-23)
 
 ### Bug Fixes
