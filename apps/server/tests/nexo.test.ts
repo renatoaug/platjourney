@@ -78,6 +78,15 @@ test('an unlock reaction sends the trophies just earned, and opens with them as 
   expect(logTip).toHaveBeenCalledWith('user:u1', 'unlock', text, 'game:1')
 })
 
+test('the collectibles go after Nexo’s words as written, never through the model', async () => {
+  const unlocked = [makeTrophy({ earned: true })]
+  const block = '📍 **Neste trecho do jogo**\n• **Flor 2/5, Camomila**\nNa árvore com vasos.'
+  const text = await unlockReaction(user, ctx, unlocked, undefined, block)
+  expect(ai).toHaveBeenCalledWith('/nexo/tip', { kind: 'unlock', context, unlocked })
+  expect(text).toBe(`🏆 **${unlocked[0].name}**\n\nResposta\n\n${block}`)
+  expect(await proactiveTip(user, ctx, undefined, undefined, block)).toBe(`Resposta\n\n${block}`)
+})
+
 test('an unlock reaction drops the trophy name Nexo repeats as a heading', () => {
   expect(withoutTitle('## Fogo Cruzado\n\nMandou bem.', ['Fogo Cruzado'])).toBe('Mandou bem.')
   expect(withoutTitle('**Fogo Cruzado**\nMandou bem.', ['Fogo Cruzado'])).toBe('Mandou bem.')

@@ -211,11 +211,21 @@ const nexoNotices = (user: User) => config.automatic.notices && user.ai_notices 
 
 // The guide's note on what comes next, when this start or these unlocks reach one of its
 // milestones. It needs no model, so it goes out whatever the notices switch says.
+// The collectibles go apart, as the guide writes them, after whatever text comes before (Nexo's
+// words or a template): Nexo would shorten them to a name, and the spot is the point.
 function routeFor(user: User, ctx: GameContext, unlocked: string[], started: boolean) {
   const reached = reachedMilestone(ctx.guide, unlocked, started)
   const earned = ctx.trophies.filter((t) => t.earned).map((t) => t.name)
   const milestone = reached && stillOpen(reached, earned)
-  return milestone ? routeNotice(milestone, userLocale(user)) : undefined
+  if (!milestone) return undefined
+  const common = milestone.tips.filter((tip) => tip.kind !== 'collectible')
+  const found = milestone.tips.filter((tip) => tip.kind === 'collectible')
+  return {
+    text: common.length ? routeNotice({ ...milestone, tips: common }, userLocale(user)) : undefined,
+    collectibles: found.length
+      ? `${translator(messages, user)('here')}\n${found.map(tipLine).join('\n\n')}`
+      : undefined,
+  }
 }
 
 // One message per sweep: what happened, then the guide's note on what comes next.
@@ -391,7 +401,8 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
       together(
         followed ? followedNotice(user, ctx.game.id) : undefined,
         startNotice(user, ctx),
-        route,
+        route?.text,
+        route?.collectibles,
       ),
       ctx.game.id,
     )
@@ -404,23 +415,29 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
         unlockNotice(user, ctx, unlocked),
         markNotice(user, ctx, unlocked),
         focusNotice(user, ctx, unlocked),
-        route,
+        route?.text,
+        route?.collectibles,
       ),
       ctx.game.id,
     )
-  else if (route) await plainNotice(user, 'route', route, ctx.game.id)
+  else if (route)
+    await plainNotice(user, 'route', together(route.text, route.collectibles), ctx.game.id)
 }
 
 async function nexoNews({ user, ctx, latest, justStarted, unlocked, route }: News): Promise<void> {
   if (justStarted) {
     console.log(`${user.psn_online_id}: new game ${latest.name}`)
     const followed = await followedRecommendation(user, ctx.game.id)
-    await notify(user, await proactiveTip(user, ctx, route, followed ?? undefined))
+    await notify(
+      user,
+      await proactiveTip(user, ctx, route?.text, followed ?? undefined, route?.collectibles),
+    )
     await markTipSent(user.id, latest.npCommunicationId)
   } else if (unlocked.length > 0) {
     console.log(`${user.psn_online_id}: unlocked ${unlocked.map((t) => t.name).join(', ')}`)
-    await notify(user, await unlockReaction(user, ctx, unlocked, route))
-  } else if (route) await plainNotice(user, 'route', route, ctx.game.id)
+    await notify(user, await unlockReaction(user, ctx, unlocked, route?.text, route?.collectibles))
+  } else if (route)
+    await plainNotice(user, 'route', together(route.text, route.collectibles), ctx.game.id)
 }
 
 async function tellNews(news: News): Promise<void> {

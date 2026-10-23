@@ -558,6 +558,39 @@ describe('checkUser', () => {
     expect(send.mock.calls.map((c) => c[1])).toEqual(['Boa!'])
   })
 
+  test('a chapter trophy hands Nexo the common tips and adds the next stretch’s collectibles as written', async () => {
+    getGuide.mockResolvedValue({
+      milestones: [
+        { after: null, tips: [{ kind: 'warning', text: 'Jogue no Difícil.', trophy: null }] },
+        {
+          after: 'Segundo',
+          tips: [
+            { kind: 'item', text: 'Compre o arco.', trophy: null },
+            {
+              kind: 'collectible',
+              text: 'Souvenir 3/21, Um túmulo: no jardim cercado.',
+              trophy: 'Lembranças',
+            },
+          ],
+        },
+      ],
+    } as unknown as Guide)
+    const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
+    await checkUser(user)
+    expect(reaction.mock.calls[0][3]).toBe('Agora vale saber:\n• Compre o arco.')
+    expect(reaction.mock.calls[0][4]).toBe(
+      '📍 **Neste trecho do jogo**\n• **Souvenir 3/21, Um túmulo**\nNo jardim cercado.',
+    )
+    // The plain notice ends with the same block.
+    config.automatic.notices = false
+    send.mockClear()
+    getTitle.mockResolvedValue(row())
+    await checkUser({ ...user, id: 'user:w2' })
+    expect(send.mock.calls.at(-1)?.[1]).toEndWith(
+      'Agora vale saber:\n• Compre o arco.\n\n📍 **Neste trecho do jogo**\n• **Souvenir 3/21, Um túmulo**\nNo jardim cercado.',
+    )
+  })
+
   test('two checks at once send the reaction once', async () => {
     let stored = row()
     getTitle.mockImplementation(async () => stored)
