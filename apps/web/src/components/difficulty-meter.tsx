@@ -61,8 +61,10 @@ export function DifficultyMeter({
       )}
       <span className="dm-body">
         <span className="dm-band">
-          {name}
-          {estimated && <em> · {t('estimated')}</em>}
+          <span className="dm-name">
+            {name}
+            {estimated && <em> · {t('estimated')}</em>}
+          </span>
           {look === 'score' && <span className="dm-of">/10</span>}
         </span>
         {segments}
