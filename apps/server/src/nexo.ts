@@ -94,13 +94,16 @@ export async function proactiveTip(
   ctx: GameContext,
   route?: string,
   recommended?: { daysAgo: number; why: string },
+  /** Sent as written after Nexo's words: the stretch's collectibles (watcher.ts). */
+  after?: string,
 ): Promise<string> {
-  const text = await ask(user, 'tip', '/nexo/tip', {
+  const said = await ask(user, 'tip', '/nexo/tip', {
     kind: 'start',
     context: aiContext(ctx, user),
     ...(route ? { route } : {}),
     ...(recommended ? { recommended } : {}),
   })
+  const text = after ? `${said}\n\n${after}` : said
   await logTip(user.id, 'start', text, ctx.game.id)
   return text
 }
@@ -110,6 +113,8 @@ export async function unlockReaction(
   ctx: GameContext,
   unlocked: TrophyStatus[],
   route?: string,
+  /** Sent as written after Nexo's words: the stretch's collectibles (watcher.ts). */
+  after?: string,
 ): Promise<string> {
   // The target is the server's, the same the session notice named: Nexo does not pick another.
   const focus = focusAfter(ctx, unlocked)
@@ -146,7 +151,8 @@ export async function unlockReaction(
   // At a mark, our own line opens the message under the trophy (a paragraph of its own, so it does not
   // read as part of the title), and Nexo's words follow it.
   const cheer = mark ? `\n\n${markCheer(user, mark.kind)}` : ''
-  const titled = `${unlocked.map((t) => `🏆 **${tidy(t.name)}**`).join('\n')}${cheer}\n\n${body}`
+  const tail = after ? `\n\n${after}` : ''
+  const titled = `${unlocked.map((t) => `🏆 **${tidy(t.name)}**`).join('\n')}${cheer}\n\n${body}${tail}`
   await logTip(user.id, 'unlock', titled, ctx.game.id)
   return titled
 }
