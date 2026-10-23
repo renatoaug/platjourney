@@ -26,20 +26,38 @@
     line-height: 1;
   }
 
+  /* The column shrinks with the card: an auto track would grow to the band's one-line text and
+     push the bar past a narrow card's edge. */
   .dm .dm-body {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 6px;
     min-width: 0;
+    container-type: inline-size;
+  }
+
+  /* Short on room, the band's name stays and the "/10" goes. */
+  @container (max-width: 125px) {
+    .dm .dm-of {
+      display: none;
+    }
   }
 
   .dm .dm-band {
     display: flex;
+    min-width: 0;
     white-space: nowrap;
     align-items: baseline;
     gap: 6px;
     color: var(--color-fg);
     font-size: var(--text-base);
     font-weight: var(--weight-semibold);
+  }
+
+  .dm-band .dm-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .dm-band em {
@@ -49,6 +67,7 @@
   }
 
   .dm .dm-of {
+    flex-shrink: 0;
     margin-left: auto;
     color: var(--color-fg-subtle);
     font-size: var(--text-sm);
