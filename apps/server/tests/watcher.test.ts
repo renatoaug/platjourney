@@ -335,7 +335,11 @@ describe('session start', () => {
       '📍 **Neste trecho do jogo**\n• **Souvenir 1**\nNa tenda do mercado.\n\n',
     )
     expect(sessionNotice(user, 'x', ctx)).not.toContain('Flor 1/5')
-    expect(sessionNotice(user, 'x', ctx, true)).not.toContain('Neste trecho')
+    // Opened again with nothing new: one line, and the stretch's collectibles still there.
+    expect(sessionNotice(user, 'x', ctx, true)).toContain('de novo')
+    expect(sessionNotice(user, 'x', ctx, true)).toContain(
+      '\n\n📍 **Neste trecho do jogo**\n• **Souvenir 1**\nNa tenda do mercado.',
+    )
     // Several tips are set apart by a blank line.
     ctx.trophies[3] = makeTrophy({ id: 4, name: 'Herbalista' })
     expect(sessionNotice(user, 'x', ctx)).toContain(

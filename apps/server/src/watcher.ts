@@ -505,7 +505,7 @@ const comparable = (name: string) =>
 // The session-start notice: the game and what is left, then what to do today, from the guide and the PSN
 // list, so it costs no model and gets no count wrong. Lines with nothing to say are left out.
 // With `again`, the player already got the full notice for this game and earned nothing since:
-// only the suggestion, in one line.
+// only the suggestion, in one line, and the collectibles of the stretch they are in.
 export function sessionNotice(user: User, game: string, ctx?: GameContext, again = false): string {
   const t = translator(messages, user)
   if (!ctx) return `${t('playing', { game })} ${t('goodSession')}`
@@ -514,10 +514,7 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext, again
     (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
   )
   const { trophy: focus, trick, missable, behind } = todaysFocus(ctx)
-  if (again) {
-    const still = focus ? t('focusStill', { trophy: focus.name }) : undefined
-    return [t('again', { game: gameName(ctx) }), still, t('goodSession')].filter(Boolean).join(' ')
-  }
+  if (again) return againNotice(user, ctx, focus?.name)
 
   const blocks = [
     missing.length
@@ -557,11 +554,22 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext, again
 }
 
 // The guide's tips for the stretch the player is in, without those about trophies they have.
-function hereTips(ctx: GameContext): string {
+function againNotice(user: User, ctx: GameContext, focus?: string): string {
+  const t = translator(messages, user)
+  const still = focus ? t('focusStill', { trophy: focus }) : undefined
+  const line = [t('again', { game: gameName(ctx) }), still, t('goodSession')]
+    .filter(Boolean)
+    .join(' ')
+  const stretch = hereTips(ctx, 'collectible')
+  return stretch ? `${line}\n\n${t('here')}\n${stretch}` : line
+}
+
+function hereTips(ctx: GameContext, kind?: string): string {
   const earned = ctx.trophies.filter((x) => x.earned).map((x) => x.name)
   const current = currentMilestone(ctx.guide, earned)
   const open = current && stillOpen(current, earned)
-  return open ? open.tips.map(tipLine).join('\n\n') : ''
+  const tips = open?.tips.filter((tip) => !kind || tip.kind === kind) ?? []
+  return tips.map(tipLine).join('\n\n')
 }
 
 // A collectible tip opens with its name ("Souvenir 1/21, Best player: ..."): the name goes in
