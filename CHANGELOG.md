@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.31.6](https://github.com/renatoaug/platjourney/compare/v0.31.5...v0.31.6) (2026-10-23)
+
+### Bug Fixes
+
+* **catalog:** keep store editions of a known game out of the release sync ([#77](https://github.com/renatoaug/platjourney/issues/77)) ([cfa4cb7](https://github.com/renatoaug/platjourney/commit/cfa4cb7cb3e7f5a3a4506f24e148c4c8babf4c2f))
+
 ## [0.31.5](https://github.com/renatoaug/platjourney/compare/v0.31.4...v0.31.5) (2026-10-23)
 
 ### Bug Fixes
