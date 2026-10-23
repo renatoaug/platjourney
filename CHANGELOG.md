@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.31.4](https://github.com/renatoaug/platjourney/compare/v0.31.3...v0.31.4) (2026-10-23)
+
+### Bug Fixes
+
+* **notices:** keep the stretch's collectibles in the short session notice ([#75](https://github.com/renatoaug/platjourney/issues/75)) ([39e6a16](https://github.com/renatoaug/platjourney/commit/39e6a16589b1c30fbda643852427d4dbbf96c7f9))
+
 ## [0.31.3](https://github.com/renatoaug/platjourney/compare/v0.31.2...v0.31.3) (2026-10-22)
 
 ### Bug Fixes
