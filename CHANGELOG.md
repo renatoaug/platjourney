@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.31.5](https://github.com/renatoaug/platjourney/compare/v0.31.4...v0.31.5) (2026-10-23)
+
+### Bug Fixes
+
+* **notices:** send the next stretch's collectibles as written, not through Nexo ([#76](https://github.com/renatoaug/platjourney/issues/76)) ([97bb68f](https://github.com/renatoaug/platjourney/commit/97bb68f827d38b20dfef673eacac2ff1a6034427))
+
 ## [0.31.4](https://github.com/renatoaug/platjourney/compare/v0.31.3...v0.31.4) (2026-10-23)
 
 ### Bug Fixes
