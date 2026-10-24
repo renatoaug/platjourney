@@ -131,18 +131,6 @@
     margin: 7px 0;
   }
 
-  @keyframes burst {
-    0% {
-      opacity: 1;
-      transform: translate(0, 0) scale(1);
-    }
-
-    100% {
-      opacity: 0;
-      transform: translate(var(--dx), var(--dy)) scale(0.2);
-    }
-  }
-
   @keyframes pop {
     0% {
       transform: scale(0);

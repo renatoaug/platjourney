@@ -1,3 +1,20 @@
+/* The same layer order as the app: generic pieces (base) under shared components like the app's
+   toast (ui), under this page (screens). */
+@layer base, ui, screens;
+
+@layer base {
+  .icon {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+  }
+}
+
 @layer screens {
   * {
     box-sizing: border-box;
@@ -127,17 +144,6 @@
 
   .lang button[aria-pressed="true"] {
     color: var(--color-accent);
-  }
-
-  .icon {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    flex: none;
   }
 
   .hero {
@@ -1955,5 +1961,123 @@
       animation: none;
       transition: none;
     }
+  }
+
+  /* Real questions: the question unfolds its detail (Nexo's answer, the passages found now) in
+     place, so the table never redraws under the pointer. */
+  .real .link-btn {
+    margin: 0;
+    color: var(--color-fg);
+    font-size: inherit;
+    text-align: left;
+  }
+
+  .real .link-btn:hover {
+    color: var(--color-accent);
+  }
+
+  .real-actions {
+    text-align: right;
+  }
+
+  .real-buttons {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* Already promoted: a quiet state in the size of the buttons beside it. */
+  .in-golden {
+    display: inline-flex;
+    align-items: center;
+    align-self: stretch;
+    gap: 8px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    color: var(--color-accent);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .in-golden .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .btn.danger-ghost {
+    color: var(--color-danger);
+  }
+
+  .btn.danger-ghost:hover {
+    background: var(--color-danger-surface);
+  }
+
+  .row-actions {
+    text-align: right;
+  }
+
+  .row-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn.icon-only {
+    padding: 6px 8px;
+  }
+
+  .btn.icon-only .icon {
+    margin: 0;
+  }
+
+  .real-detail > td {
+    padding: 0;
+    border-top: 0;
+  }
+
+  .real-collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+      grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.22s ease;
+  }
+
+  .real-detail.open .real-collapse {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .real-collapse > div {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .real-collapse .detail-content {
+    padding: 20px 24px;
+    background: var(--color-surface);
+  }
+
+  .real-detail h4 {
+    margin-bottom: 8px;
+    color: var(--color-fg-muted);
+    font: 11px var(--font-mono);
+    text-transform: uppercase;
+  }
+
+  .real-detail pre {
+    white-space: pre-wrap;
+  }
+
+  .real-detail .sk {
+    display: block;
+    margin-top: 10px;
+  }
+
+  .real-passage + .real-passage {
+    margin-top: 12px;
   }
 }

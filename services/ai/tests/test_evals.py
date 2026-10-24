@@ -152,3 +152,12 @@ def test_a_stored_guide_reads_in_camel_case_like_the_server_sends_it() -> None:
         'mostTedious': {'trophy': 'A'},
         'roadmap': [{'phase': 'F'}],
     }
+
+
+def test_a_real_answer_is_from_the_guide_when_it_links_one_of_its_pages() -> None:
+    from evals.view import source
+
+    pages = {'https://guide.example/trophies?ref=1', 'https://wiki.example/collectibles'}
+    assert source('Veja o [guia](https://guide.example/trophies).', pages) == 'guide'
+    assert source('Fonte: ([site](https://other.example/a?utm_source=openai))', pages) == 'web'
+    assert source('Sem links aqui.', pages) == 'none'
