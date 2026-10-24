@@ -59,9 +59,15 @@ While a refresh runs, the old passages keep answering. A game with no readable g
 flowchart LR
     q[Player's question] --> names["Trophy names it mentions,<br/>in the guide's language"]
     names --> literal["Passages that name them<br/>(up to 3)"]
-    q --> semantic["Nearest passages by meaning<br/>(cosine ≥ 0.25)"]
+    q --> en["The question in English<br/>(small model)"]
+    en --> semantic["Nearest passages by meaning<br/>(cosine ≥ 0.25)"]
+    en --> words["Passages with its words<br/>(BM25)"]
+    q --> own["Passages with the words<br/>and meaning as asked"]
+    semantic --> fuse["Fused by rank, weighed by<br/>the guide's language"]
+    words --> fuse
+    own --> fuse
     literal --> pick["Up to 6 passages,<br/>literal first"]
-    semantic --> pick
+    fuse --> pick
     pick --> cont["A passage cut after a title<br/>takes the next one of its page"]
     cont --> prompt["Passages + PSN facts + guide"]
     prompt --> answer[Nexo answers]
@@ -69,6 +75,7 @@ flowchart LR
 ```
 
 - **Trophy names first.** Guides are mostly in English and players often ask in Portuguese, so the trophies a question names are matched literally, in English.
+- **One language for the search, weighed by the guide's.** Almost every passage is in English, so a small model (`AI_MODEL_SEARCH`, by default `gpt-5.4-nano` on OpenAI) puts the question in English first. The searches are fused by rank (reciprocal rank fusion): the vectors and the keywords (BM25 over the game's passages, which finds exact names the vectors miss, like "Virginia vinyl") of the English question, and the keywords and vectors of the question as asked. Each counts by how much of that game's guide is in Portuguese: a guide mostly in English leans on the translation, one mostly in Portuguese (about 30 games) on the player's own words, and no search counts less than 0.3. If the translation fails, the vectors rank alone.
 - **A title takes its text.** A page splits into passages of a fixed size, so a passage can end on a title or a label ("Objective: Reach the South Tower", a collectible's name) with the steps in the next one. When a chosen passage ends that way, the next passage of the same page is appended to it.
 - **Newest wins.** Each passage goes with its site, heading path and date; when passages disagree, Nexo trusts the most recent one (games change with patches).
 - **Nothing found.** Nexo still answers from the PSN facts and the guide, and the question is stored in `guide_request`, so whoever runs the instance sees what the guides miss.
@@ -78,6 +85,9 @@ flowchart LR
 | Choice | Why |
 |---|---|
 | Exact scan, no vector index | A game has a few hundred passages at most; scanning is fast, exact and works with any vector size |
+| Keywords scored in the service, no full-text index | The same few hundred passages: BM25 over them takes milliseconds, and SurrealDB's match operator needs every word of the query in a passage |
+| Translate the question, not the passages | One short call per question instead of translating every page; the passages keep the guides' own names |
+| Rank fusion, not score mixing | Cosine and BM25 scores do not compare; a passage near the top of two lists wins |
 | One embedding model at a time | Vectors from different models do not compare; rows of another size are skipped, and `bun run embed --all` re-embeds after a switch |
 | Literal before semantic | The passage that names trophy X is the right one, even when the question is worded far from the guide |
 | The next passage, not new chunks | Appending the following passage fixes a cut title at answer time; re-splitting every page would mean re-embedding the whole store |

@@ -376,8 +376,11 @@ async def test_retrieve_puts_literal_matches_first_and_drops_weak_neighbours(
 ) -> None:
     seen: dict[str, Any] = {}
 
-    async def fake_stats(game: str) -> Stats:
-        return Stats(chunks=10, sources=[])
+    async def passages(game: str) -> list[Passage]:
+        return [passage(n) for n in range(1, 11)]
+
+    async def in_english(question: str) -> str:
+        return 'where is the bow?'
 
     async def embed(texts: list[str]) -> list[list[float]]:
         seen['embedded'] = texts
@@ -391,15 +394,166 @@ async def test_retrieve_puts_literal_matches_first_and_drops_weak_neighbours(
         seen['limit'] = limit
         return [scored(2, 0.9), scored(4, 0.5), scored(5, 0.2)]
 
-    monkeypatch.setattr(guidestore, 'stats', fake_stats)
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
     monkeypatch.setattr(llm, 'embed', embed)
     monkeypatch.setattr(guidestore, 'mentioning', mentioning)
     monkeypatch.setattr(guidestore, 'search', search)
     found = await deepguide.retrieve(GAME, 'onde fica o arco?', ['Toxophilite'], limit=3)
     assert [p.position for p in found] == [7, 2, 4]
-    assert seen['embedded'] == ['Far Cry 3: onde fica o arco? Toxophilite']
+    assert seen['embedded'] == ['Far Cry 3: where is the bow? Toxophilite']
     assert seen['literal'] == (['Toxophilite'], 3)
-    assert seen['limit'] == 3
+    assert seen['limit'] == deepguide.CANDIDATES
+
+
+async def test_retrieve_fuses_the_keywords_of_the_english_question_with_the_vectors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    every = [
+        passage(1).model_copy(update={'content': 'Walk to the shelf in the hospital.'}),
+        passage(2).model_copy(update={'content': 'The Virginia vinyl is on the record player.'}),
+        passage(3).model_copy(update={'content': 'O vinil fica na estante.'}),
+    ]
+
+    async def passages(game: str) -> list[Passage]:
+        return every
+
+    async def in_english(question: str) -> str:
+        return 'where is the Virginia vinyl?'
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        return [[0.1]]
+
+    async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
+        return []
+
+    async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
+        # The vectors alone put the wrong passage first.
+        return [ScoredPassage(**every[0].model_dump(), score=0.6)]
+
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
+    monkeypatch.setattr(llm, 'embed', embed)
+    monkeypatch.setattr(guidestore, 'mentioning', mentioning)
+    monkeypatch.setattr(guidestore, 'search', search)
+    found = await deepguide.retrieve(GAME, 'onde fica o vinil da Virginia?', [], limit=3)
+    # The exact name wins; the Portuguese passage still comes in through the player's own words.
+    assert [p.position for p in found] == [2, 1, 3]
+
+
+async def test_retrieve_without_a_translation_ranks_by_the_vectors_alone(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    every = [
+        passage(1).model_copy(update={'content': 'Walk to the shelf.'}),
+        passage(2).model_copy(update={'content': 'O vinil da Virginia fica na estante.'}),
+    ]
+
+    async def passages(game: str) -> list[Passage]:
+        return every
+
+    async def in_english(question: str) -> str | None:
+        return None
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        assert texts == ['Far Cry 3: onde fica o vinil da Virginia?']
+        return [[0.1]]
+
+    async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
+        return []
+
+    async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
+        return [ScoredPassage(**every[0].model_dump(), score=0.6)]
+
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
+    monkeypatch.setattr(llm, 'embed', embed)
+    monkeypatch.setattr(guidestore, 'mentioning', mentioning)
+    monkeypatch.setattr(guidestore, 'search', search)
+    found = await deepguide.retrieve(GAME, 'onde fica o vinil da Virginia?', [])
+    assert [p.position for p in found] == [1]
+
+
+def test_the_searches_weigh_by_the_language_of_the_game_guide() -> None:
+    # Mostly English: the translation leads, the player's own words count the least.
+    assert deepguide.weights(0.05) == (1.0, 1.0, deepguide.MIN_WEIGHT, 0.0)
+    # Half and half: every search counts in full.
+    assert deepguide.weights(0.5) == (1.0, 1.0, 1.0, 1.0)
+    # Mostly Portuguese: the player's own words lead.
+    assert deepguide.weights(0.9) == (deepguide.MIN_WEIGHT, deepguide.MIN_WEIGHT, 1.0, 1.0)
+
+
+async def test_a_guide_largely_in_portuguese_is_searched_by_the_question_as_asked_too(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    every = [
+        passage(1).model_copy(
+            update={'content': 'Você não pode perder a pena dourada no capítulo 2.'}
+        ),
+        passage(2).model_copy(
+            update={'content': 'Depois do chefe, isso também conta para o troféu.'}
+        ),
+        passage(3).model_copy(update={'content': 'The golden feather is in chapter 2.'}),
+    ]
+    embedded: list[list[str]] = []
+
+    async def passages(game: str) -> list[Passage]:
+        return every
+
+    async def in_english(question: str) -> str | None:
+        return 'where is the golden feather?'
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        embedded.append(texts)
+        return [[0.1], [0.2]]
+
+    async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
+        return []
+
+    async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
+        hit = every[2] if vector == [0.1] else every[0]
+        return [ScoredPassage(**hit.model_dump(), score=0.7)]
+
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
+    monkeypatch.setattr(llm, 'embed', embed)
+    monkeypatch.setattr(guidestore, 'mentioning', mentioning)
+    monkeypatch.setattr(guidestore, 'search', search)
+    found = await deepguide.retrieve(GAME, 'onde fica a pena dourada?', [])
+    assert embedded == [
+        ['Far Cry 3: where is the golden feather?', 'Far Cry 3: onde fica a pena dourada?']
+    ]
+    # The Portuguese passage leads: two thirds of the guide is in Portuguese.
+    assert found[0].position == 1
+
+
+async def test_the_question_goes_to_english_once_and_falls_back_to_itself(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    asked: list[dict[str, Any]] = []
+
+    async def respond(step: str | None = None, **params: Any) -> llm.Reply:
+        asked.append({'step': step, **params})
+        return llm.Reply(' where is the gentian flower? ')
+
+    monkeypatch.setattr(llm, 'respond', respond)
+    assert (
+        await deepguide.in_english('onde fica a flor genciana do capítulo 4?')
+        == 'where is the gentian flower?'
+    )
+    assert (
+        await deepguide.in_english('onde fica a flor genciana do capítulo 4?')
+        == 'where is the gentian flower?'
+    )
+    assert len(asked) == 1
+    assert asked[0]['step'] == 'search'
+    assert asked[0]['input'] == 'onde fica a flor genciana do capítulo 4?'
+
+    async def broken(step: str | None = None, **params: Any) -> llm.Reply:
+        raise RuntimeError('down')
+
+    monkeypatch.setattr(llm, 'respond', broken)
+    assert await deepguide.in_english('cadê o baú?') is None
 
 
 @pytest.mark.parametrize(
@@ -426,8 +580,11 @@ async def test_retrieve_appends_the_next_passage_to_one_cut_after_a_title(
     )
     asked: list[list[int]] = []
 
-    async def fake_stats(game: str) -> Stats:
-        return Stats(chunks=10, sources=[])
+    async def passages(game: str) -> list[Passage]:
+        return [cut, passage(10)]
+
+    async def in_english(question: str) -> str:
+        return question
 
     async def embed(texts: list[str]) -> list[list[float]]:
         return [[0.1]]
@@ -442,7 +599,8 @@ async def test_retrieve_appends_the_next_passage_to_one_cut_after_a_title(
         asked.append(positions)
         return [passage(47).model_copy(update={'content': 'The flower is by the tower gate.'})]
 
-    monkeypatch.setattr(guidestore, 'stats', fake_stats)
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
     monkeypatch.setattr(llm, 'embed', embed)
     monkeypatch.setattr(guidestore, 'mentioning', mentioning)
     monkeypatch.setattr(guidestore, 'search', search)
@@ -459,8 +617,11 @@ async def test_retrieve_leaves_a_cut_passage_alone_when_the_next_is_another_page
 ) -> None:
     cut = passage(46).model_copy(update={'content': 'Objective: Reach the South Tower'})
 
-    async def fake_stats(game: str) -> Stats:
-        return Stats(chunks=10, sources=[])
+    async def passages(game: str) -> list[Passage]:
+        return [cut, passage(10)]
+
+    async def in_english(question: str) -> str:
+        return question
 
     async def embed(texts: list[str]) -> list[list[float]]:
         return [[0.1]]
@@ -474,7 +635,8 @@ async def test_retrieve_leaves_a_cut_passage_alone_when_the_next_is_another_page
     async def at_positions(game: str, positions: list[int]) -> list[Passage]:
         return [passage(47).model_copy(update={'url': 'https://b'})]
 
-    monkeypatch.setattr(guidestore, 'stats', fake_stats)
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
     monkeypatch.setattr(llm, 'embed', embed)
     monkeypatch.setattr(guidestore, 'mentioning', mentioning)
     monkeypatch.setattr(guidestore, 'search', search)
@@ -484,13 +646,17 @@ async def test_retrieve_leaves_a_cut_passage_alone_when_the_next_is_another_page
 
 
 async def test_retrieve_skips_the_model_without_passages(monkeypatch: pytest.MonkeyPatch) -> None:
-    async def fake_stats(game: str) -> Stats:
-        return Stats(chunks=0, sources=[])
+    async def passages(game: str) -> list[Passage]:
+        return []
 
     async def embed(texts: list[str]) -> list[list[float]]:
         raise AssertionError('no embedding for a game without passages')
 
-    monkeypatch.setattr(guidestore, 'stats', fake_stats)
+    async def in_english(question: str) -> str | None:
+        raise AssertionError('no translation for a game without passages')
+
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
     monkeypatch.setattr(llm, 'embed', embed)
     assert await deepguide.retrieve(GAME, 'onde?', []) == []
 

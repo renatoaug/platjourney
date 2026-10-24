@@ -1,5 +1,5 @@
 {
-  "about": "Questions players ask Nexo about a game, in pt-BR, and what a passage that answers them must contain. `terms` are the English trophy names nexo.mentioned_trophies finds when the question names a trophy by its pt-BR (or English) name. A retrieved passage is relevant when its heading plus content contains every keyword of at least one group in `relevant` (case-insensitive).",
+  "about": "Questions players ask Nexo about a game, in pt-BR, and what a passage that answers them must contain. `terms` are the English trophy names nexo.mentioned_trophies finds when the question names a trophy by its pt-BR (or English) name. A retrieved passage is relevant when its heading plus content contains every keyword of at least one group in `relevant` (case-insensitive). Most questions name a collectible, a place or a character rather than a trophy, the way players ask about a chapter, and some are answered only by passages written in Portuguese.",
   "games": [
     {
       "game": "game:1020",
@@ -241,6 +241,1842 @@
           "question": "onde ficam os Xeno-archives do primeiro bioma?",
           "terms": [],
           "relevant": [["xeno-archive", "overgrown ruins"], ["xenoglyph", "overgrown"]]
+        }
+      ]
+    },
+    {
+      "game": "game:18366",
+      "name": "Sniper Elite 4",
+      "cases": [
+        {
+          "question": "onde fica a águia de pedra na missão 1?",
+          "terms": [],
+          "relevant": [["stone eagle", "lighthouse"]]
+        },
+        {
+          "question": "como pego a última carta no cais da missão 1?",
+          "terms": [],
+          "relevant": [["last letter", "dock"]]
+        },
+        {
+          "question": "como pego a carta de casa na missão 1?",
+          "terms": [],
+          "relevant": [["letter from home"]]
+        }
+      ]
+    },
+    {
+      "game": "game:26298",
+      "name": "Sea of Solitude",
+      "cases": [
+        {
+          "question": "onde fica a mensagem em garrafa no capítulo 7?",
+          "terms": [],
+          "relevant": [["burning down the house", "bottle"]]
+        },
+        {
+          "question": "onde acho as gaivotas do capítulo 3?",
+          "terms": [],
+          "relevant": [["sound of silence", "seagull"]]
+        },
+        {
+          "question": "onde acho a mensagem em garrafa do capítulo 6?",
+          "terms": [],
+          "relevant": [["hurt", "bottle"]]
+        }
+      ]
+    },
+    {
+      "game": "game:62151",
+      "name": "Life Is Strange 2",
+      "cases": [
+        {
+          "question": "onde fica o chaveiro de urso?",
+          "terms": [],
+          "relevant": [["bear keychain"]]
+        },
+        {
+          "question": "onde pego a pena de pássaro no episódio 1?",
+          "terms": [],
+          "relevant": [["bird feather"]]
+        },
+        {
+          "question": "onde acho o cartão da agente Flores?",
+          "terms": [],
+          "relevant": [["flores", "card"]]
+        }
+      ]
+    },
+    {
+      "game": "game:27094",
+      "name": "Stories Untold",
+      "cases": [
+        {
+          "question": "onde acho a fita cassete no quarto do hospital no episódio 4?",
+          "terms": [],
+          "relevant": [["cassette", "hospital"]]
+        }
+      ]
+    },
+    {
+      "game": "game:121084",
+      "name": "In Sound Mind",
+      "cases": [
+        {
+          "question": "onde fica o vinil da Virginia?",
+          "terms": [],
+          "relevant": [["virginia", "vinyl"]]
+        },
+        {
+          "question": "onde acho o vinil da Rosemary?",
+          "terms": [],
+          "relevant": [["rosemary", "vinyl"]]
+        },
+        {
+          "question": "onde pego o vinil do Desmond?",
+          "terms": [],
+          "relevant": [["desmond", "vinyl"]]
+        }
+      ]
+    },
+    {
+      "game": "game:25260",
+      "name": "Dusk",
+      "cases": [
+        {
+          "question": "onde fica a barra de sabonete no Neobabel?",
+          "terms": [],
+          "relevant": [["soap", "neobabel"]]
+        },
+        {
+          "question": "onde acho a barra de sabonete na Cidade Fantasma?",
+          "terms": [],
+          "relevant": [["soap", "ghost town"]]
+        },
+        {
+          "question": "onde fica a barra de sabonete no reator Érebo?",
+          "terms": [],
+          "relevant": [["soap", "erebus"]]
+        }
+      ]
+    },
+    {
+      "game": "game:538",
+      "name": "BioShock Infinite",
+      "cases": [
+        {
+          "question": "onde pego a infusão nos telhados do centro de Comstock?",
+          "terms": [],
+          "relevant": [["infusion", "rooftops", "comstock"]]
+        },
+        {
+          "question": "onde fica o voxofone da Ilha do Monumento?",
+          "terms": [],
+          "relevant": [["voxophone", "monument"]]
+        },
+        {
+          "question": "onde pego a infusão no Campo do Soldado?",
+          "terms": [],
+          "relevant": [["infusion", "soldier"]]
+        }
+      ]
+    },
+    {
+      "game": "game:8366",
+      "name": "Sniper Elite III",
+      "cases": [
+        {
+          "question": "onde acho as cartas para Martin no hangar 3?",
+          "terms": [],
+          "relevant": [["letters to martin"]]
+        },
+        {
+          "question": "onde fica o diário de guerra sobre a última defesa?",
+          "terms": [],
+          "relevant": [["last defense"]]
+        },
+        {
+          "question": "onde acho a nota de sobrevivência sobre tempestades de areia?",
+          "terms": [],
+          "relevant": [["sandstorm"]]
+        }
+      ]
+    },
+    {
+      "game": "game:1937",
+      "name": "Killzone: Shadow Fall",
+      "cases": [
+        {
+          "question": "onde fica o dossiê do Thomas Sinclair?",
+          "terms": [],
+          "relevant": [["sinclair"]]
+        },
+        {
+          "question": "onde fica a página 34 dos quadrinhos do Stahl?",
+          "terms": [],
+          "relevant": [["stahl", "comic"]]
+        },
+        {
+          "question": "onde fica o registro do pesquisador 1?",
+          "terms": [],
+          "relevant": [["researcher log"]]
+        }
+      ]
+    },
+    {
+      "game": "game:302704",
+      "name": "Doom: The Dark Ages",
+      "cases": [
+        {
+          "question": "onde fica a Rubi no capítulo 17, Templo de Lomarith?",
+          "terms": [],
+          "relevant": [["ruby", "lomarith"]]
+        },
+        {
+          "question": "onde pego a página do códice no Templo de Lomarith?",
+          "terms": [],
+          "relevant": [["codex", "lomarith"]]
+        }
+      ]
+    },
+    {
+      "game": "game:27316",
+      "name": "A Plague Tale: Innocence",
+      "cases": [
+        {
+          "question": "onde fica a flor aquilégia no capítulo 4?",
+          "terms": [],
+          "relevant": [["aquilegia", "laurentius"]]
+        },
+        {
+          "question": "onde acho a flor lavanda no capítulo 9?",
+          "terms": [],
+          "relevant": [["lavender", "ramparts"]]
+        },
+        {
+          "question": "onde fica o rosário da igreja no capítulo 3?",
+          "terms": [],
+          "relevant": [["rosary", "church"]]
+        }
+      ]
+    },
+    {
+      "game": "game:135254",
+      "name": "Crash Bandicoot 4: It's About Time",
+      "cases": [
+        {
+          "question": "como destravo o modo N. Verted no Crash 4?",
+          "terms": [],
+          "relevant": [["n. verted", "trouble brewing"]]
+        },
+        {
+          "question": "onde acho a joia escondida na fase Jetboard Jetty?",
+          "terms": [],
+          "relevant": [["jetboard jetty", "u-turn"]]
+        },
+        {
+          "question": "como pego a joia escondida da fase Hook, Line and Sinker?",
+          "terms": [],
+          "relevant": [["hook, line and sinker", "sword lizard"]]
+        }
+      ]
+    },
+    {
+      "game": "game:116238",
+      "name": "Sniper Elite 5",
+      "cases": [
+        {
+          "question": "onde fica a águia de pedra 2 perto da mansão?",
+          "terms": [],
+          "relevant": [["stone eagle 2", "manor"]]
+        },
+        {
+          "question": "onde acho a carta pessoal 4 na mansão?",
+          "terms": [],
+          "relevant": [["personal letter 4", "tower"]]
+        },
+        {
+          "question": "tem documento confidencial no escritório do Möller? onde fica?",
+          "terms": [],
+          "relevant": [["classified documents 4", "möller"]]
+        }
+      ]
+    },
+    {
+      "game": "game:2993",
+      "name": "The Wolf Among Us",
+      "cases": [
+        {
+          "question": "como libero a entrada do Barba Azul no Livro de Fábulas?",
+          "terms": [],
+          "relevant": [["bluebeard file", "bigby"]]
+        },
+        {
+          "question": "onde libero a entrada do Cavaleiro sem Cabeça?",
+          "terms": [],
+          "relevant": [["headless horseman", "crane"]]
+        },
+        {
+          "question": "como lido com a Maria Sangrenta na Sheppard Metalworks?",
+          "terms": [],
+          "relevant": [["bloody mary", "sheppard"]]
+        }
+      ]
+    },
+    {
+      "game": "game:152203",
+      "name": "Trek to Yomi",
+      "cases": [
+        {
+          "question": "onde acho o artefato da vila do lago perto do santuário?",
+          "terms": [],
+          "relevant": [["lake-side village", "hill"]]
+        },
+        {
+          "question": "onde acho a melhoria da Ozutsu no capítulo 5?",
+          "terms": [],
+          "relevant": [["ozutsu upgrade", "destroyed building"]]
+        },
+        {
+          "question": "onde fica o artefato na vila onde a lua aparece?",
+          "terms": [],
+          "relevant": [["can see the moon", "ladder"]]
+        }
+      ]
+    },
+    {
+      "game": "game:7599",
+      "name": "Life Is Strange",
+      "cases": [
+        {
+          "question": "como tiro foto do caminhão do caminhoneiro no episódio 3?",
+          "terms": [],
+          "relevant": [["trucker", "his truck"]]
+        },
+        {
+          "question": "onde acho o cervo no ferro-velho pra tirar foto?",
+          "terms": [],
+          "relevant": [["junkyard", "deer"]]
+        },
+        {
+          "question": "onde fica a foto do pássaro morto com as formigas?",
+          "terms": [],
+          "relevant": [["dead bird", "ants"]]
+        }
+      ]
+    },
+    {
+      "game": "game:11169",
+      "name": "Final Fantasy VII Remake",
+      "cases": [
+        {
+          "question": "onde pego o disco Tema da Tifa?",
+          "terms": [],
+          "relevant": [["music disc #3", "jukebox"]]
+        },
+        {
+          "question": "como ganho o amuleto Crescent Moon Charm no capítulo 3?",
+          "terms": [],
+          "relevant": [["crescent moon charm", "discovery"]]
+        },
+        {
+          "question": "onde fica o disco Stamp no capítulo 5?",
+          "terms": [],
+          "relevant": [["music disc #28", "vending machine"]]
+        }
+      ]
+    },
+    {
+      "game": "game:76253",
+      "name": "Devil May Cry 5",
+      "cases": [
+        {
+          "question": "onde acho o fragmento de orbe azul 1 na missão 1, perto da ponte quebrada?",
+          "terms": [],
+          "relevant": [["blue orb fragment #1", "destroyed bridge"]]
+        },
+        {
+          "question": "como pego a arma King Cerberus?",
+          "terms": [],
+          "relevant": [["king cerberus", "end of mission"]]
+        },
+        {
+          "question": "de qual missão secreta vem o fragmento de orbe azul 31?",
+          "terms": [],
+          "relevant": [["blue orb fragment #31", "secret mission #12"]]
+        }
+      ]
+    },
+    {
+      "game": "game:8352",
+      "name": "The Unfinished Swan",
+      "cases": [
+        {
+          "question": "onde fica a página de histórias no Monumento do Rei?",
+          "terms": [],
+          "relevant": [["king's monument", "electrified ladder"]]
+        },
+        {
+          "question": "onde estouro os balões do jardim das estátuas?",
+          "terms": [],
+          "relevant": [["statue garden", "balloons"]]
+        },
+        {
+          "question": "onde acho a página de histórias da cidade vazia depois da ponte?",
+          "terms": [],
+          "relevant": [["empty city", "bridge"]]
+        }
+      ]
+    },
+    {
+      "game": "game:51524",
+      "name": "The Walking Dead: The Final Season",
+      "cases": [
+        {
+          "question": "onde acho a ferradura no episódio 3, perto do barco dos Raiders?",
+          "terms": [],
+          "relevant": [["horseshoe", "raider"]]
+        },
+        {
+          "question": "onde pego o fragmento de crânio depois da pesca no episódio 4?",
+          "terms": [],
+          "relevant": [["skull fragment", "fishing sequence"]]
+        },
+        {
+          "question": "onde acho o crânio de javali perto da estufa?",
+          "terms": [],
+          "relevant": [["wild boar skull", "greenhouse"]]
+        }
+      ]
+    },
+    {
+      "game": "game:7965",
+      "name": "Kholat",
+      "cases": [
+        {
+          "question": "onde fica a página da estação de radar, no bunker?",
+          "terms": [],
+          "relevant": [["radar station", "bunker"]]
+        },
+        {
+          "question": "onde pego a página no sino da igreja abandonada?",
+          "terms": [],
+          "relevant": [["church bell", "pinned"]]
+        },
+        {
+          "question": "onde acho a página no altar da cratera vermelha?",
+          "terms": [],
+          "relevant": [["altar", "rock slab"]]
+        }
+      ]
+    },
+    {
+      "game": "game:145089",
+      "name": "Nobody Saves the World",
+      "cases": [
+        {
+          "question": "onde fica o terceiro ninho, perto da casa da mãe do Randy?",
+          "terms": [],
+          "relevant": [["randy", "ancient robot"]]
+        },
+        {
+          "question": "onde acho a fada escondida na caverna do sudoeste do mapa?",
+          "terms": [],
+          "relevant": [["southwest", "cave"]]
+        },
+        {
+          "question": "como chego no quinto ninho, perto do Dark Nest?",
+          "terms": [],
+          "relevant": [["dark nest", "blue flame"]]
+        }
+      ]
+    },
+    {
+      "game": "game:26226",
+      "name": "Celeste",
+      "cases": [
+        {
+          "question": "como desbloqueio o lado B da Forsaken City?",
+          "terms": [],
+          "relevant": [["forsaken city", "cassette"]]
+        },
+        {
+          "question": "onde pego o cristal do lado C do Summit?",
+          "terms": [],
+          "relevant": [["summit c-side", "crystal"]]
+        },
+        {
+          "question": "qual é o coração de cristal do Golden Ridge?",
+          "terms": [],
+          "relevant": [["golden ridge", "crystal heart"]]
+        }
+      ]
+    },
+    {
+      "game": "game:103330",
+      "name": "Nioh 2",
+      "cases": [
+        {
+          "question": "onde ficam os cristais de Amrita na missão O Demônio Destemido?",
+          "terms": [],
+          "relevant": [["high-spirited demon", "amrita shard"]]
+        },
+        {
+          "question": "onde estão os sinos da missão A Destruição se Avizinha?",
+          "terms": [],
+          "relevant": [["ruin draws near", "bell"]]
+        },
+        {
+          "question": "onde estão os grupos de borboletas da Usura-Hicho na missão A Lâmina Ensandecida?",
+          "terms": [],
+          "relevant": [["frenzied blaze", "butterflies"]]
+        }
+      ]
+    },
+    {
+      "game": "game:1979",
+      "name": "Battlefield 4",
+      "cases": [
+        {
+          "question": "onde acho a arma M39 EMR em Baku?",
+          "terms": [],
+          "relevant": [["m39 emr", "locker"]]
+        },
+        {
+          "question": "onde fica a AK 5C em Suez?",
+          "terms": [],
+          "relevant": [["ak 5c", "osprey"]]
+        },
+        {
+          "question": "onde pego a M240B em Singapura, perto da ponte?",
+          "terms": [],
+          "relevant": [["m240b", "scaffolding"]]
+        }
+      ]
+    },
+    {
+      "game": "game:144765",
+      "name": "Life is Strange: True Colors",
+      "cases": [
+        {
+          "question": "onde acho a comida da Val no capítulo 3?",
+          "terms": [],
+          "relevant": [["record store", "valkyrie"]]
+        },
+        {
+          "question": "onde fica a memória das gomas de THC no capítulo 2?",
+          "terms": [],
+          "relevant": [["dispensary", "gummies"]]
+        },
+        {
+          "question": "como acho a Birdwatcher no parque?",
+          "terms": [],
+          "relevant": [["birdwatcher", "archway"]]
+        }
+      ]
+    },
+    {
+      "game": "game:252826",
+      "name": "South of Midnight",
+      "cases": [
+        {
+          "question": "onde fica a telha de lata 9 no capítulo 7?",
+          "terms": [],
+          "relevant": [["tin flip", "grocery store"]]
+        },
+        {
+          "question": "onde acho a leitura O lamento de Abernathy no capítulo 6?",
+          "terms": [],
+          "relevant": [["abernathy", "wagon"]]
+        },
+        {
+          "question": "onde tem o felpo da toca perto da casa da Bunny?",
+          "terms": [],
+          "relevant": [["bunny", "burrow"]]
+        }
+      ]
+    },
+    {
+      "game": "game:24017",
+      "name": "The Bunker",
+      "cases": [
+        {
+          "question": "onde pego o boneco da mãe no começo do jogo?",
+          "terms": [],
+          "relevant": [["mother", "maintenance book"]]
+        },
+        {
+          "question": "onde fica o boneco do Sam no capítulo 2?",
+          "terms": [],
+          "relevant": [["filing cabinet", "double door"]]
+        },
+        {
+          "question": "onde acho o boneco do Churchill?",
+          "terms": [],
+          "relevant": [["emergency door", "churchill"]]
+        }
+      ]
+    },
+    {
+      "game": "game:228542",
+      "name": "Armored Core VI: Fires of Rubicon",
+      "cases": [
+        {
+          "question": "onde fica o fuzil de plasma Nebulosa na missão Sabotagem do Túnel?",
+          "terms": [],
+          "relevant": [["tunnel sabotage", "plasma rifle"]]
+        },
+        {
+          "question": "onde acho a motosserra Problema em Dobro?",
+          "terms": [],
+          "relevant": [["double trouble", "chainsaw"]]
+        },
+        {
+          "question": "como pego o gerador Aorta na Cidade Flutuante?",
+          "terms": [],
+          "relevant": [["floating city", "fog control"]]
+        }
+      ]
+    },
+    {
+      "game": "game:317621",
+      "name": "The Midnight Walk",
+      "cases": [
+        {
+          "question": "onde acho a boneca de pano, a figura de argila 1, no capítulo 1?",
+          "terms": [],
+          "relevant": [["ragdoll", "cave"]]
+        },
+        {
+          "question": "onde acho o disco O segredo do pescador de almas no capítulo 1?",
+          "terms": [],
+          "relevant": [["soulfisher", "shell"]]
+        },
+        {
+          "question": "onde fica o disco Meu lugar feliz?",
+          "terms": [],
+          "relevant": [["happyplace", "wooden bridge"]]
+        }
+      ]
+    },
+    {
+      "game": "game:9694",
+      "name": "Danganronpa 2: Goodbye Despair",
+      "cases": [
+        {
+          "question": "onde fica o boneco Monokuma do capítulo 2 que está boiando na praia?",
+          "terms": [],
+          "relevant": [["life preserver", "chandler beach"]]
+        },
+        {
+          "question": "onde acho o boneco da montanha-russa no capítulo 4?",
+          "terms": [],
+          "relevant": [["rollercoaster", "last car"]]
+        },
+        {
+          "question": "onde fica o boneco do Arquivo Monokuma no capítulo 4?",
+          "terms": [],
+          "relevant": [["monokuma archive", "statue"]]
+        }
+      ]
+    },
+    {
+      "game": "game:19452",
+      "name": "Wonder Boy: The Dragon's Trap",
+      "cases": [
+        {
+          "question": "onde fica a pedra do Homem-Falcão?",
+          "terms": [],
+          "relevant": [["hawkman", "volcano"]]
+        },
+        {
+          "question": "como pego a pedra do Homem-Rato?",
+          "terms": [],
+          "relevant": [["mouseman", "blue snakes"]]
+        },
+        {
+          "question": "onde fica a pedra do Homem-Peixe?",
+          "terms": [],
+          "relevant": [["piranha", "palm trees"]]
+        }
+      ]
+    },
+    {
+      "game": "game:12579",
+      "name": "Danganronpa V3: Killing Harmony",
+      "cases": [
+        {
+          "question": "onde fica o monokuma escondido no laboratório da Pianista Suprema?",
+          "terms": [],
+          "relevant": [["monokuma", "pianist"]]
+        },
+        {
+          "question": "onde acho o monokuma escondido na sala das caldeiras?",
+          "terms": [],
+          "relevant": [["monokuma", "boiler room"]]
+        },
+        {
+          "question": "qual o monokuma escondido no laboratório da Maki no capítulo 2?",
+          "terms": [],
+          "relevant": [["monokuma", "maki"]]
+        }
+      ]
+    },
+    {
+      "game": "game:9730",
+      "name": "Firewatch",
+      "cases": [
+        {
+          "question": "onde fica a câmera do Brian Goodwin?",
+          "terms": [],
+          "relevant": [["brian goodwin", "camera"]]
+        },
+        {
+          "question": "como abro a caixa de correio do Wapiti?",
+          "terms": [],
+          "relevant": [["wapiti", "post box"]]
+        },
+        {
+          "question": "onde acho a tartaruga perto do Aspen Grove?",
+          "terms": [],
+          "relevant": [["aspen grove", "turtle"]]
+        }
+      ]
+    },
+    {
+      "game": "game:194404",
+      "name": "The Quarry",
+      "cases": [
+        {
+          "question": "onde acho a caixa do guarda-florestal?",
+          "terms": [],
+          "relevant": [["ranger box"]]
+        },
+        {
+          "question": "como faço o canhoto de ingresso aparecer no capítulo 10?",
+          "terms": [],
+          "relevant": [["ticket stub", "chapter 10"]]
+        },
+        {
+          "question": "onde pego a carta de tarô na casa dos Hackett?",
+          "terms": [],
+          "relevant": [["hackett", "tarot"]]
+        }
+      ]
+    },
+    {
+      "game": "game:4845",
+      "name": "The LEGO Movie Videogame",
+      "cases": [
+        {
+          "question": "onde fica o manual dourado no Canteiro de Construção?",
+          "terms": [],
+          "relevant": [["construction site", "golden instruction"]]
+        },
+        {
+          "question": "como chego na descida do submarino?",
+          "terms": [],
+          "relevant": [["ride on the submarine"]]
+        },
+        {
+          "question": "onde pego as calças explosivas do Peixe-Boi?",
+          "terms": [],
+          "relevant": [["explosive", "pants"]]
+        }
+      ]
+    },
+    {
+      "game": "game:4754",
+      "name": "Alien: Isolation",
+      "cases": [
+        {
+          "question": "onde pego o cartão de identificação do E. Koorlander?",
+          "terms": [],
+          "relevant": [["koorlander", "mission 8"]]
+        },
+        {
+          "question": "onde acho o registro de arquivo sobre o incidente da Nostromo?",
+          "terms": [],
+          "relevant": [["nostromo", "amanda"]]
+        },
+        {
+          "question": "onde pego o cartão do Watson na missão 2?",
+          "terms": [],
+          "relevant": [["watson", "mission 2"]]
+        }
+      ]
+    },
+    {
+      "game": "game:101448",
+      "name": "Carto",
+      "cases": [
+        {
+          "question": "como pego a peça secreta do deserto no capítulo 5?",
+          "terms": [],
+          "relevant": [["cactus", "desert"]]
+        },
+        {
+          "question": "como faço o tornado de fogo aparecer no capítulo 7?",
+          "terms": [],
+          "relevant": [["tornado", "tile"]]
+        },
+        {
+          "question": "onde pego a peça secreta do festival de pesca?",
+          "terms": [],
+          "relevant": [["fishing", "secret piece"]]
+        }
+      ]
+    },
+    {
+      "game": "game:3218",
+      "name": "Vanquish",
+      "cases": [
+        {
+          "question": "onde fica a estátua do Pangloss na missão Hostil?",
+          "terms": [],
+          "relevant": [["hostile", "statue"]]
+        },
+        {
+          "question": "como libero o troféu do chefe Argus na missão 2-3?",
+          "terms": [],
+          "relevant": [["argus", "quick time"]]
+        },
+        {
+          "question": "onde fica a estátua do Pangloss no elevador da missão Confiança?",
+          "terms": [],
+          "relevant": [["pangloss", "elevator"]]
+        }
+      ]
+    },
+    {
+      "game": "game:978",
+      "name": "Resident Evil: Revelations",
+      "cases": [
+        {
+          "question": "como abro a piscina purificada no episódio 4?",
+          "terms": [],
+          "relevant": [["purified", "pool"]]
+        },
+        {
+          "question": "onde escaneio o chão depois de enfrentar o Draghignazzo?",
+          "terms": [],
+          "relevant": [["draghignazzo", "observation hall"]]
+        },
+        {
+          "question": "quais inimigos aparecem com a Rachael no episódio 4?",
+          "terms": [],
+          "relevant": [["rachael", "episode 4", "wall"]]
+        }
+      ]
+    },
+    {
+      "game": "game:70396",
+      "name": "Trüberbrook",
+      "cases": [
+        {
+          "question": "quem é o Barbarossa 2000 e onde falo com ele?",
+          "terms": [],
+          "relevant": [["barbarossa"]]
+        },
+        {
+          "question": "onde pego a gravação do Modelo do Sistema Solar?",
+          "terms": [],
+          "relevant": [["solar system model"]]
+        },
+        {
+          "question": "onde leio o jornal sobre dinossauros em Trüberbrook?",
+          "terms": [],
+          "relevant": [["dinosaur", "trüberbrook"]]
+        }
+      ]
+    },
+    {
+      "game": "game:152242",
+      "name": "A Plague Tale: Requiem",
+      "cases": [
+        {
+          "question": "onde fica a flor genciana no capítulo 4?",
+          "terms": [],
+          "relevant": [["gentian"]]
+        },
+        {
+          "question": "onde pego o souvenir Tesouro de seda?",
+          "terms": [],
+          "relevant": [["silk", "treasure"]]
+        },
+        {
+          "question": "como chego no souvenir do cervo?",
+          "terms": [],
+          "relevant": [["stag", "souvenir"]]
+        }
+      ]
+    },
+    {
+      "game": "game:26580",
+      "name": "Sally Face",
+      "cases": [
+        {
+          "question": "onde fica a fita Fantasma no galpão do jardim?",
+          "terms": [],
+          "relevant": [["phantom", "shed"]]
+        },
+        {
+          "question": "onde pego a fita Fome no apartamento 503?",
+          "terms": [],
+          "relevant": [["hunger", "503"]]
+        },
+        {
+          "question": "onde fica a fita do apartamento 404?",
+          "terms": [],
+          "relevant": [["bridge", "404"]]
+        },
+        {
+          "question": "como uso o Gear Boy pra achar coisa escondida?",
+          "terms": [],
+          "relevant": [["super gear boy", "pontos de interesse"]]
+        }
+      ]
+    },
+    {
+      "game": "game:347633",
+      "name": "Mortal Shell II",
+      "cases": [
+        {
+          "question": "onde pego a Blackblood Stone no Pulsing Caves?",
+          "terms": [],
+          "relevant": [["blackblood", "pulsing"]]
+        },
+        {
+          "question": "como acho o Baghead? onde ele fica?",
+          "terms": [],
+          "relevant": [["baghead", "desolate"]]
+        },
+        {
+          "question": "onde fica a Corroded Stone no Sunken Village?",
+          "terms": [],
+          "relevant": [["corroded", "sunken"]]
+        }
+      ]
+    },
+    {
+      "game": "game:65503",
+      "name": "Sky: Children of the Light",
+      "cases": [
+        {
+          "question": "onde pego a luz alada no Vault of Knowledge?",
+          "terms": [],
+          "relevant": [["winged light", "ladder"]]
+        },
+        {
+          "question": "como consigo o emote de telecinese no Vault of Knowledge?",
+          "terms": [],
+          "relevant": [["telekinesis", "emote"]]
+        },
+        {
+          "question": "onde fica a Starlight Dessert com as luzes no alto da torre?",
+          "terms": [],
+          "relevant": [["starlight", "tower"]]
+        }
+      ]
+    },
+    {
+      "game": "game:6072",
+      "name": "Styx: Master of Shadows",
+      "cases": [
+        {
+          "question": "onde fica a relíquia no apartamento do Barimen, perto da sacada?",
+          "terms": [],
+          "relevant": [["barimen", "balcony"]]
+        },
+        {
+          "question": "quem é o Ector e onde acho ele?",
+          "terms": [],
+          "relevant": [["ector", "incinerator"]]
+        },
+        {
+          "question": "onde fica a relíquia do Akenash Atrium perto dos Cabysses?",
+          "terms": [],
+          "relevant": [["cabysses", "incinerator"]]
+        }
+      ]
+    },
+    {
+      "game": "game:4999",
+      "name": "Marvel: Ultimate Alliance",
+      "cases": [
+        {
+          "question": "onde pego as figuras de ação do Demolidor?",
+          "terms": [],
+          "relevant": [["daredevil", "action figure", "five"]]
+        },
+        {
+          "question": "onde fica o disco de simulação na Torre Stark?",
+          "terms": [],
+          "relevant": [["stark tower", "simulator"]]
+        },
+        {
+          "question": "como pego o disco do Deadpool no Grande Salão?",
+          "terms": [],
+          "relevant": [["deadpool", "grand hall"]]
+        }
+      ]
+    },
+    {
+      "game": "game:205201",
+      "name": "Crisis Core: Final Fantasy VII - Reunion",
+      "cases": [
+        {
+          "question": "onde pego a mensagem do Lazard no Monte Tamblin?",
+          "terms": [],
+          "relevant": [["lazard", "tamblin"]]
+        },
+        {
+          "question": "como entro no clube de fãs Couro Vermelho do Setor 8?",
+          "terms": [],
+          "relevant": [["red leather", "fan club"]]
+        },
+        {
+          "question": "onde ficam os brilhos dourados em Banora?",
+          "terms": [],
+          "relevant": [["banora", "gold"]]
+        }
+      ]
+    },
+    {
+      "game": "game:7444",
+      "name": "Shovel Knight",
+      "cases": [
+        {
+          "question": "quem é o Cooper e onde acho ele na House of Joustus?",
+          "terms": [],
+          "relevant": [["cooper", "house of joustus"]]
+        },
+        {
+          "question": "onde acho a partitura 14 no Hall dos Campeões?",
+          "terms": [],
+          "relevant": [["hall of champions", "music sheet"]]
+        },
+        {
+          "question": "onde fica a partitura 8 no Armor Outpost?",
+          "terms": [],
+          "relevant": [["armor outpost", "music sheet"]]
+        }
+      ]
+    },
+    {
+      "game": "game:136",
+      "name": "Devil May Cry 3: Dante's Awakening",
+      "cases": [
+        {
+          "question": "onde fica o fragmento de orbe azul perto do Love Planet?",
+          "terms": [],
+          "relevant": [["love planet"]]
+        },
+        {
+          "question": "onde pego o Golden Sun na missão 16?",
+          "terms": [],
+          "relevant": [["golden sun"]]
+        },
+        {
+          "question": "como faço o desafio da estátua com Agni & Rudra no corredor escuro?",
+          "terms": [],
+          "relevant": [["agni", "dark corridor"]]
+        }
+      ]
+    },
+    {
+      "game": "game:115830",
+      "name": "Crime Scene Cleaner",
+      "cases": [
+        {
+          "question": "onde fica a fita cassete na Sala dos Patos?",
+          "terms": [],
+          "relevant": [["duck room", "tape"]]
+        },
+        {
+          "question": "como funciona o enigma dos manequins no coreto?",
+          "terms": [],
+          "relevant": [["mannequin", "bandstand"]]
+        },
+        {
+          "question": "onde fica a Katana na câmara das TVs?",
+          "terms": [],
+          "relevant": [["katana", "tvs"]]
+        }
+      ]
+    },
+    {
+      "game": "game:121894",
+      "name": "Black Book",
+      "cases": [
+        {
+          "question": "como chego na vila de Kusheva?",
+          "terms": [],
+          "relevant": [["kusheva"]]
+        },
+        {
+          "question": "onde pego as ervas no moinho velho?",
+          "terms": [],
+          "relevant": [["old mill", "herb"]]
+        },
+        {
+          "question": "onde converso com a demônia na banya do lago Kotjil?",
+          "terms": [],
+          "relevant": [["kotjil", "banya"]]
+        }
+      ]
+    },
+    {
+      "game": "game:119390",
+      "name": "Ni no Kuni: Wrath of the White Witch Remastered",
+      "cases": [
+        {
+          "question": "o que é o Seek Fortune e como uso no mapa-múndi?",
+          "terms": [],
+          "relevant": [["seek fortune"]]
+        },
+        {
+          "question": "onde fica o tesouro na No Longer Mine Island?",
+          "terms": [],
+          "relevant": [["no longer mine", "solitary beach"]]
+        },
+        {
+          "question": "onde fica a região isolada no noroeste de Summerlands?",
+          "terms": [],
+          "relevant": [["summerlands", "forest"]]
+        }
+      ]
+    },
+    {
+      "game": "game:8255",
+      "name": "Trine 3: The Artifacts of Power",
+      "cases": [
+        {
+          "question": "onde fica o trineângulo da melancia gigante do Pontius?",
+          "terms": [],
+          "relevant": [["pontius", "watermelon"]]
+        },
+        {
+          "question": "onde pego o trineângulo perto do moinho na Arredores da Academia?",
+          "terms": [],
+          "relevant": [["neighborhood of the academy", "mill"]]
+        },
+        {
+          "question": "onde ficam os trineângulos em Arredores da Academia?",
+          "terms": [],
+          "relevant": [["trineangle", "academy"]]
+        }
+      ]
+    },
+    {
+      "game": "game:305158",
+      "name": "Life is Strange: Double Exposure",
+      "cases": [
+        {
+          "question": "onde fica o vitral pra tirar a foto no capítulo 3?",
+          "terms": [],
+          "relevant": [["stained glass"]]
+        },
+        {
+          "question": "onde acho a gata da Loretta no bar?",
+          "terms": [],
+          "relevant": [["loretta", "flyer"]]
+        },
+        {
+          "question": "onde fica a árvore de canecas pra foto?",
+          "terms": [],
+          "relevant": [["mug tree"]]
+        }
+      ]
+    },
+    {
+      "game": "game:152249",
+      "name": "Marvel's Guardians of the Galaxy",
+      "cases": [
+        {
+          "question": "onde compro a boneca no capítulo 6? é a da máquina de vendas?",
+          "terms": [],
+          "relevant": [["holographic", "doll"]]
+        },
+        {
+          "question": "onde compro o bilhete de loteria?",
+          "terms": [],
+          "relevant": [["lottery"]]
+        },
+        {
+          "question": "como pego o cartão de acesso da Nikki?",
+          "terms": [],
+          "relevant": [["access card"]]
+        }
+      ]
+    },
+    {
+      "game": "game:14763",
+      "name": "Hob",
+      "cases": [
+        {
+          "question": "como ativo a vista do Grande Conduíte?",
+          "terms": [],
+          "relevant": [["great conduit", "vista"]]
+        },
+        {
+          "question": "onde fica a alavanca da ilha do Bomber?",
+          "terms": [],
+          "relevant": [["bomber", "lever"]]
+        },
+        {
+          "question": "como ativo a vista da torre giratória?",
+          "terms": [],
+          "relevant": [["tower", "vista"]]
+        }
+      ]
+    },
+    {
+      "game": "game:17030",
+      "name": "LEGO Star Wars: The Force Awakens",
+      "cases": [
+        {
+          "question": "onde pego os minikits do Castelo da Maz, no porão com as aranhas?",
+          "terms": [],
+          "relevant": [["maz", "spider"]]
+        },
+        {
+          "question": "onde fica o quebra-cabeça das cores no Eravana?",
+          "terms": [],
+          "relevant": [["eravana", "puzzle"]]
+        },
+        {
+          "question": "onde atiro nas aves no Posto Avançado de Niima?",
+          "terms": [],
+          "relevant": [["niima", "bird"]]
+        }
+      ]
+    },
+    {
+      "game": "game:348168",
+      "name": "Resonance: A Plague Tale Legacy",
+      "cases": [
+        {
+          "question": "onde acho a relíquia da Rainha minoica?",
+          "terms": [],
+          "relevant": [["minoan", "queen"]]
+        },
+        {
+          "question": "onde fica a planta do labirinto?",
+          "terms": [],
+          "relevant": [["labyrinth", "plan"]]
+        },
+        {
+          "question": "como pego as moedas perfuradas do Teseu?",
+          "terms": [],
+          "relevant": [["theseus", "coin"]]
+        }
+      ]
+    },
+    {
+      "game": "game:18853",
+      "name": "Aragami",
+      "cases": [
+        {
+          "question": "onde pego o talismã em Kyûryu?",
+          "terms": [],
+          "relevant": [["talisman", "kyuryu"]]
+        },
+        {
+          "question": "onde acho o pergaminho em Kyûryu?",
+          "terms": [],
+          "relevant": [["kyuryu", "scroll"]]
+        }
+      ]
+    },
+    {
+      "game": "game:50199",
+      "name": "Metro: Last Light Redux",
+      "cases": [
+        {
+          "question": "onde pego a página do diário no capítulo Veneza?",
+          "terms": [],
+          "relevant": [["venice", "diary"]]
+        },
+        {
+          "question": "onde acho a página do diário no Bolshoi?",
+          "terms": [],
+          "relevant": [["bolshoi", "diary"]]
+        },
+        {
+          "question": "e a página do diário no capítulo Polis, onde fica?",
+          "terms": [],
+          "relevant": [["polis", "diary"]]
+        }
+      ]
+    },
+    {
+      "game": "game:133306",
+      "name": "Call of the Sea",
+      "cases": [
+        {
+          "question": "onde acho a lata de sardinha no capítulo 3?",
+          "terms": [],
+          "relevant": [["sardine"]]
+        },
+        {
+          "question": "onde fica o cartão-postal da Norah?",
+          "terms": [],
+          "relevant": [["postcard", "norah"]]
+        },
+        {
+          "question": "onde tá o barril de carga do capítulo 1?",
+          "terms": [],
+          "relevant": [["barrel", "cargo"]]
+        }
+      ]
+    },
+    {
+      "game": "game:381247",
+      "name": "Ace Combat 8: Wings of Theve",
+      "cases": [
+        {
+          "question": "como derrubo o ás inimigo Crematio?",
+          "terms": [],
+          "relevant": [["crematio", "nomad"]]
+        },
+        {
+          "question": "como pego o ás Raia na missão 3?",
+          "terms": [],
+          "relevant": [["raia", "mission 03"]]
+        },
+        {
+          "question": "como derrubo o ás Orcus?",
+          "terms": [],
+          "relevant": [["orcus"]]
+        }
+      ]
+    },
+    {
+      "game": "game:9708",
+      "name": "Danganronpa Another Episode: Ultra Despair Girls",
+      "cases": [
+        {
+          "question": "onde acho a Monaca escondida no metrô?",
+          "terms": [],
+          "relevant": [["monaca", "subway"]]
+        },
+        {
+          "question": "onde acho o Socki, a meia, no hospital?",
+          "terms": [],
+          "relevant": [["socki", "hospital"]]
+        },
+        {
+          "question": "onde acho o alvo Gontakerus no hospital?",
+          "terms": [],
+          "relevant": [["gontakerus"]]
+        }
+      ]
+    },
+    {
+      "game": "game:171225",
+      "name": "Wuchang: Fallen Feathers",
+      "cases": [
+        {
+          "question": "qual a ordem certa entre Cloudspire e Mt. Zhenwu no Wuchang pra não perder troféu?",
+          "terms": [],
+          "relevant": [["antecipar mt. zhenwu", "cloudspire"]]
+        },
+        {
+          "question": "posso conversar com o Narrador no Altar de Zhenwu logo cedo no Wuchang sem estragar a platina?",
+          "terms": [],
+          "relevant": [["narrador", "altar de zhenwu"]]
+        }
+      ]
+    },
+    {
+      "game": "game:6801",
+      "name": "Far Cry 4",
+      "cases": [
+        {
+          "question": "como libero as torres de sino no Far Cry 4 e dá pra subir de helicóptero?",
+          "terms": [],
+          "relevant": [["torre do sino", "buzzer"]]
+        },
+        {
+          "question": "onde fica a porta do Shangri-La no Far Cry 4 pro troféu da missão do Yogi?",
+          "terms": [],
+          "relevant": [["rosto assustador", "shangri-la"]]
+        }
+      ]
+    },
+    {
+      "game": "game:37016",
+      "name": "Metro Exodus",
+      "cases": [
+        {
+          "question": "como solto os vagões do trem em Moscou pro troféu Técnico Ferroviário?",
+          "terms": [],
+          "relevant": [["alavanca vermelha", "vagões"]]
+        },
+        {
+          "question": "como mato o peixe gigante no Metro Exodus pro troféu do Pescador?",
+          "terms": [],
+          "relevant": [["bagre", "tsar fish"]]
+        }
+      ]
+    },
+    {
+      "game": "game:117731",
+      "name": "Persona 5 Strikers",
+      "cases": [
+        {
+          "question": "o troféu What are Friends For do Persona 5 Strikers é perdível? até quando dá pra fazer os requests?",
+          "terms": [],
+          "relevant": [["ponto de não retorno", "what are friends for"]]
+        },
+        {
+          "question": "preciso usar o Clear Save pra limpar os Dire Shadows no Persona 5 Strikers?",
+          "terms": [],
+          "relevant": [["clear save", "dire shadows"]]
+        }
+      ]
+    },
+    {
+      "game": "game:204381",
+      "name": "The Plucky Squire",
+      "cases": [
+        {
+          "question": "como pego o Errinho mais escondido do The Plucky Squire?",
+          "terms": [],
+          "relevant": [["cidade dos caracóis", "página preta"]]
+        },
+        {
+          "question": "o Colecionador de Arte do Plucky Squire é perdível? a Martinha some depois que zero?",
+          "terms": [],
+          "relevant": [["martinha", "desaparece após você zerar"]]
+        }
+      ]
+    },
+    {
+      "game": "game:119177",
+      "name": "Call of Duty: Modern Warfare",
+      "cases": [
+        {
+          "question": "como faço o troféu Dois Coelhos no Terra Natal do CoD MW?",
+          "terms": [],
+          "relevant": [["dois coelhos", "terra natal"]]
+        },
+        {
+          "question": "como faço o carro bomba na Estrada da Morte no CoD MW pro troféu?",
+          "terms": [],
+          "relevant": [["estrada da morte", "carro bomba"]]
+        }
+      ]
+    },
+    {
+      "game": "game:psn_NPWR02565_00",
+      "name": "BLAZBLUE CONTINUUM SHIFT EXTEND Trophy",
+      "cases": [
+        {
+          "question": "preciso zerar o arcade com todos os personagens no BlazBlue pro troféu?",
+          "terms": [],
+          "relevant": [["zerar o arcade", "todos os personagens"]]
+        },
+        {
+          "question": "o modo Challenge do BlazBlue ajuda a aprender combos pros troféus?",
+          "terms": [],
+          "relevant": [["challenge mode", "muitos combos"]]
+        }
+      ]
+    },
+    {
+      "game": "game:8248",
+      "name": "Marvel vs. Capcom 3: Fate of Two Worlds",
+      "cases": [
+        {
+          "question": "qual time usar pra pegar o Herculean Task no MvC3?",
+          "terms": [],
+          "relevant": [["herculean task", "tron-bonne"]]
+        },
+        {
+          "question": "qual time monto pro troféu Avengers Assemble no MvC3?",
+          "terms": [],
+          "relevant": [["avengers assemble", "captain america"]]
+        }
+      ]
+    },
+    {
+      "game": "game:493",
+      "name": "Heavy Rain",
+      "cases": [
+        {
+          "question": "como faço o troféu The Bear no Heavy Rain? é o da contra-mão?",
+          "terms": [],
+          "relevant": [["the bear", "contra-mão"]]
+        },
+        {
+          "question": "como nocauteio 50 pessoas no Lexington Station do Heavy Rain?",
+          "terms": [],
+          "relevant": [["lexington station", "nocauteie 50 pessoas"]]
+        }
+      ]
+    },
+    {
+      "game": "game:3212",
+      "name": "The Sims 4",
+      "cases": [
+        {
+          "question": "como faço o Jogo Triplo no Sims 4? preciso de berço?",
+          "terms": [],
+          "relevant": [["triplets", "berço"]]
+        },
+        {
+          "question": "como pego o troféu Casa Cheia no Sims 4?",
+          "terms": [],
+          "relevant": [["black widow", "casa cheia"]]
+        }
+      ]
+    },
+    {
+      "game": "game:103288",
+      "name": "Jump Force",
+      "cases": [
+        {
+          "question": "quantos itens de saque preciso farmar na missão Aprimoramento pro Jump Force?",
+          "terms": [],
+          "relevant": [["aprimoramento", "1000 itens"]]
+        },
+        {
+          "question": "quem é o chefe da missão 14 do modo especialista no Jump Force?",
+          "terms": [],
+          "relevant": [["número 14", "goku"]]
+        }
+      ]
+    },
+    {
+      "game": "game:361855",
+      "name": "LEGO Batman: Legacy of the Dark Knight",
+      "cases": [
+        {
+          "question": "como consigo o troféu Computer Privileges no Batcomputer?",
+          "terms": [],
+          "relevant": [["protetor de tela", "batcomputer"]]
+        },
+        {
+          "question": "onde eu compro as expansões da Bat Cave?",
+          "terms": [],
+          "relevant": [["construction crawlers", "expansões"]]
+        }
+      ]
+    },
+    {
+      "game": "game:279643",
+      "name": "The First Berserker: Khazan",
+      "cases": [
+        {
+          "question": "como derrubo o Yetuga sem apanhar à toa?",
+          "terms": [],
+          "relevant": [["yetuga", "gelo"]]
+        },
+        {
+          "question": "o que faço pra quebrar as pernas da Aratra?",
+          "terms": [],
+          "relevant": [["aratra", "pernas"]]
+        }
+      ]
+    },
+    {
+      "game": "game:3042",
+      "name": "Dying Light",
+      "cases": [
+        {
+          "question": "quais colecionáveis tem no Dying Light, tem estátua de zumbi?",
+          "terms": [],
+          "relevant": [["estátuas de zumbis", "bandeiras"]]
+        },
+        {
+          "question": "como abro baú trancado sem chave?",
+          "terms": [],
+          "relevant": [["gazua", "trancados"]]
+        }
+      ]
+    },
+    {
+      "game": "game:115846",
+      "name": "AI Limit",
+      "cases": [
+        {
+          "question": "onde acho a chave do cemitério pra pegar o Blader?",
+          "terms": [],
+          "relevant": [["chave do cemitério", "frank"]]
+        },
+        {
+          "question": "onde tá a amostra de solo do tanque de sedimentação?",
+          "terms": [],
+          "relevant": [["tanque de sedimentação", "amostra de solo"]]
+        }
+      ]
+    },
+    {
+      "game": "game:139346",
+      "name": "Need for Speed: Hot Pursuit - Remastered",
+      "cases": [
+        {
+          "question": "como faço o troféu Burnout sem bater?",
+          "terms": [],
+          "relevant": [["burnout", "nitrous"]]
+        },
+        {
+          "question": "o que eu preciso pro troféu Shaken, Not Stirred?",
+          "terms": [],
+          "relevant": [["shaken", "aston martin"]]
+        }
+      ]
+    },
+    {
+      "game": "game:103269",
+      "name": "Dead or Alive 6",
+      "cases": [
+        {
+          "question": "ao importar o save do PS4 o que ainda tenho que refazer?",
+          "terms": [],
+          "relevant": [["sobrevivência", "contra o tempo"]]
+        },
+        {
+          "question": "como ganho o troféu do Fatal Rush?",
+          "terms": [],
+          "relevant": [["fatal rush", "finalize"]]
+        }
+      ]
+    },
+    {
+      "game": "game:6007",
+      "name": "Resogun",
+      "cases": [
+        {
+          "question": "como mato os keepers em grupo na ordem certa?",
+          "terms": [],
+          "relevant": [["keepers", "brilho verde"]]
+        }
+      ]
+    },
+    {
+      "game": "game:1267",
+      "name": "Sleeping Dogs",
+      "cases": [
+        {
+          "question": "como consigo o Hijacker, aquele de pular em carro andando?",
+          "terms": [],
+          "relevant": [["hijacker", "fort knox"]]
+        },
+        {
+          "question": "como faço o peixe cair em cima do inimigo na boate?",
+          "terms": [],
+          "relevant": [["aquário", "boate"]]
+        }
+      ]
+    },
+    {
+      "game": "game:194436",
+      "name": "Flintlock: The Siege of Dawn",
+      "cases": [
+        {
+          "question": "onde acho as peças do conjunto do Sapador?",
+          "terms": [],
+          "relevant": [["ombreira de sapador", "elmo de sapador"]]
+        },
+        {
+          "question": "como derrubo o Dukmar sem levar o raio dele?",
+          "terms": [],
+          "relevant": [["dukmar", "carregue"]]
+        }
+      ]
+    },
+    {
+      "game": "game:7708",
+      "name": "Saints Row: Gat Out of Hell",
+      "cases": [
+        {
+          "question": "tem como pegar o troféu da moto na missão Extraction Facility?",
+          "terms": [],
+          "relevant": [["extraction facility", "moto"]]
+        },
+        {
+          "question": "onde acho a Uriel's Edge pro troféu das armas?",
+          "terms": [],
+          "relevant": [["uriel", "palácio"]]
+        }
+      ]
+    },
+    {
+      "game": "game:115843",
+      "name": "Unpacking",
+      "cases": [
+        {
+          "question": "como faço o manequim dançar dab?",
+          "terms": [],
+          "relevant": [["manequim", "dab"]]
+        },
+        {
+          "question": "como ganho o troféu de perigo elétrico com a torradeira?",
+          "terms": [],
+          "relevant": [["torradeira", "banheira"]]
+        }
+      ]
+    },
+    {
+      "game": "game:3025",
+      "name": "Middle-earth: Shadow of Mordor",
+      "cases": [
+        {
+          "question": "onde acho os ithildin? preciso ativar o modo espectro pra ver eles?",
+          "terms": [],
+          "relevant": [["ithildin", "modo espectro"]]
+        },
+        {
+          "question": "como faço os desafios de sobrevivência? preciso de cogumelo pra algum?",
+          "terms": [],
+          "relevant": [["sobrevivência", "cogumelo"]]
+        }
+      ]
+    },
+    {
+      "game": "game:158980",
+      "name": "Final Fantasy",
+      "cases": [
+        {
+          "question": "onde eu aprendo as magias Ciclone e Palamecia no FF2?",
+          "terms": [],
+          "relevant": [["castelo fynn"]]
+        },
+        {
+          "question": "onde fica o acampamento dos rebeldes pro troféu do explorador?",
+          "terms": [],
+          "relevant": [["acampamento dos rebeldes"]]
+        }
+      ]
+    },
+    {
+      "game": "game:37030",
+      "name": "Dishonored: Death of the Outsider",
+      "cases": [
+        {
+          "question": "dá pra pegar o troféu de fantasma sem ninguém me ver em todas as missões?",
+          "terms": [],
+          "relevant": [["fantasma", "nunca detectado"]]
+        },
+        {
+          "question": "onde ficam os contratos da primeira missão?",
+          "terms": [],
+          "relevant": [["contratos", "quarto de billie"]]
+        }
+      ]
+    },
+    {
+      "game": "game:137989",
+      "name": "Party Animals",
+      "cases": [
+        {
+          "question": "como pego a conquista do gato do boliche?",
+          "terms": [],
+          "relevant": [["hóquei animal", "disco"]]
+        },
+        {
+          "question": "como consigo o picolé no Ichiban?",
+          "terms": [],
+          "relevant": [["ichiban", "congelando"]]
+        }
+      ]
+    },
+    {
+      "game": "game:109277",
+      "name": "Samurai Shodown",
+      "cases": [
+        {
+          "question": "como faço os 100 da disputa fantasma? preciso usar sempre a mesma sombra?",
+          "terms": [],
+          "relevant": [["disputa fantasma", "sombra"]]
+        },
+        {
+          "question": "como ganho tempo extra no contra o tempo?",
+          "terms": [],
+          "relevant": [["contra o tempo", "150"]]
+        }
+      ]
+    },
+    {
+      "game": "game:1384",
+      "name": "Hotline Miami",
+      "cases": [
+        {
+          "question": "tenho que pegar todas as máscaras antes de tirar a platina?",
+          "terms": [],
+          "relevant": [["puzzle letters", "máscaras"]]
+        },
+        {
+          "question": "o Guns For Show exige usar todo tipo de arma?",
+          "terms": [],
+          "relevant": [["guns for show", "todas as armas"]]
+        }
+      ]
+    },
+    {
+      "game": "game:9927",
+      "name": "Persona 5",
+      "cases": [
+        {
+          "question": "dá pra perder troféu no Persona 5 se eu não puder escolher capítulo?",
+          "terms": [],
+          "relevant": [["falta de seleção"]]
+        },
+        {
+          "question": "onde tomo suco no quiosque pro troféu?",
+          "terms": [],
+          "relevant": [["quiosque", "shibuya"]]
+        }
+      ]
+    },
+    {
+      "game": "game:119374",
+      "name": "Final Fantasy VIII Remastered",
+      "cases": [
+        {
+          "question": "como desbloqueio o guardião Quezacotl?",
+          "terms": [],
+          "relevant": [["quezacotl", "guardião"]]
+        },
+        {
+          "question": "como perco uma carta rara no Triple Triad?",
+          "terms": [],
+          "relevant": [["perca uma carta rara"]]
+        }
+      ]
+    },
+    {
+      "game": "game:2165",
+      "name": "War Thunder",
+      "cases": [
+        {
+          "question": "o troféu Precisão destrutiva exige derrubar avião de outro jogador?",
+          "terms": [],
+          "relevant": [["precisão destrutiva", "jogador"]]
+        },
+        {
+          "question": "como pego o British Patriot?",
+          "terms": [],
+          "relevant": [["british patriot", "tier"]]
+        }
+      ]
+    },
+    {
+      "game": "game:7194",
+      "name": "Steins;Gate",
+      "cases": [
+        {
+          "question": "como pego o final da Kurisu? tenho que carregar qual save?",
+          "terms": [],
+          "relevant": [["final de kurisu", "slot 1"]]
+        },
+        {
+          "question": "o final da Mayuri depende de alguma coisa?",
+          "terms": [],
+          "relevant": [["bandeiras", "mayuri"]]
         }
       ]
     }
