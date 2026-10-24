@@ -6,6 +6,7 @@ import { ai } from './ai.ts'
 import { browseGuides } from './browse.ts'
 import { tagged } from './costs.ts'
 import { isDemo, storedSummary, trophiesFor } from './demo.ts'
+import { demoContext, getCurrent } from './game-context.ts'
 import { handleInterestCommand, yearProgress } from './interests.ts'
 import { library, ownedGames } from './library.ts'
 import type { PlanStep, SessionPlan } from './planner.ts'
@@ -34,7 +35,6 @@ import { isDismissReason, saveAssistantPick } from './repository/recommendation.
 import { guideFacts } from './repository/similar.ts'
 import { type User, updateUser } from './repository/user.ts'
 import { similarPicks, similarToGame } from './similar.ts'
-import { demoContext, getCurrent } from './watcher.ts'
 
 const MAX_TROPHIES = 300
 

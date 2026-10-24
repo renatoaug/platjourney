@@ -25,6 +25,14 @@ import { config } from './config.ts'
 import { tagged } from './costs.ts'
 import { deepGuideStats, ensureDeepGuide } from './deepguide.ts'
 import { DemoReadOnly, isDemo, storedSummary, trophiesFor } from './demo.ts'
+import {
+  demoContext,
+  forgetUser,
+  getChat,
+  getCurrent,
+  setChat,
+  setChatFromCatalog,
+} from './game-context.ts'
 import { ensureGuide, GUIDE_VERSION, type Guide } from './guide.ts'
 import { BadBody, json, readBody, SECURITY_HEADERS } from './http.ts'
 import {
@@ -82,16 +90,7 @@ import { type GuideFacts, guideFacts } from './repository/similar.ts'
 import { setLinkCode, type User, updateUser } from './repository/user.ts'
 import { similarPicks, similarToGame } from './similar.ts'
 import { botInfo, botUsername } from './telegram.ts'
-import {
-  chatOrCheck,
-  demoContext,
-  forgetUser,
-  getChat,
-  getCurrent,
-  setChat,
-  setChatFromCatalog,
-  watchNow,
-} from './watcher.ts'
+import { chatOrCheck, watchNow } from './watcher.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {

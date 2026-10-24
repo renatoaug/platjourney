@@ -4,10 +4,26 @@ import { config } from '../src/config.ts'
 import * as deepguide from '../src/deepguide.ts'
 import { DEMO_ACCOUNT_ID } from '../src/demo.ts'
 import { focusAfter, todaysFocus } from '../src/focus.ts'
+import {
+  demoContext,
+  forgetUser,
+  getChat,
+  getCurrent,
+  setChat,
+  setChatFromCatalog,
+  setCurrent,
+} from '../src/game-context.ts'
 import type { Guide } from '../src/guide.ts'
 import * as guide from '../src/guide.ts'
 import * as lib from '../src/library.ts'
 import * as nexo from '../src/nexo.ts'
+import {
+  focusNotice,
+  followedNotice,
+  followedRecommendation,
+  sessionNotice,
+  unlockNotice,
+} from '../src/notices.ts'
 import * as playtime from '../src/playtime.ts'
 import { Refused } from '../src/plugins.ts'
 import * as psn from '../src/psn.ts'
@@ -27,21 +43,9 @@ import * as telegram from '../src/telegram.ts'
 import {
   chatOrCheck,
   checkUser,
-  demoContext,
-  focusNotice,
-  followedNotice,
-  followedRecommendation,
-  forgetUser,
-  getChat,
-  getCurrent,
   SESSION_AGAIN_HOURS,
   SESSION_NOTICE_HOURS,
-  sessionNotice,
-  setChat,
-  setChatFromCatalog,
-  setCurrent,
   startWatcher,
-  unlockNotice,
   watchNow,
 } from '../src/watcher.ts'
 import { counts, makeGame, makeTitle, makeTrophy, makeUser } from './fixtures.ts'

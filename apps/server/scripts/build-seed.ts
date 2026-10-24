@@ -15,12 +15,12 @@
 import { isAbsolute, resolve } from 'node:path'
 import { camelKeys, closeDb, gameId, plain, q, snakeKeys } from '../src/db.ts'
 import type { Guide } from '../src/guide.ts'
+import { startNotice, together, unlockNotice } from '../src/notices.ts'
 import type { SessionPlan } from '../src/planner.ts'
 import { catalogTrophies, type TitleGroups, type TrophyStatus } from '../src/psn.ts'
 import type { Game } from '../src/repository/game.ts'
 import type { User } from '../src/repository/user.ts'
 import { reachedMilestone, routeNotice } from '../src/route.ts'
-import { startNotice, together, unlockNotice } from '../src/watcher.ts'
 
 const ANCHOR = '2026-10-01T00:00:00.000Z'
 const YEAR = new Date(ANCHOR).getUTCFullYear()
