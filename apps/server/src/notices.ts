@@ -1,4 +1,4 @@
-import { focusAfter, tidy, todaysFocus } from './focus.ts'
+import { focusAfter, storyTrophy, tidy, todaysFocus } from './focus.ts'
 import {
   defineMessages,
   fmtRate,
@@ -219,11 +219,18 @@ export function routeFor(user: User, ctx: GameContext, unlocked: string[], start
 
 // The session's focus after these unlocks, for the plain notice: the same target the session notice
 // named, or the next one when the player just earned it.
-export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
+// With the next chapter's checklist in the same message, a focus that is only that chapter's story
+// trophy is left out: the checklist says more than "finish chapter 5".
+export const focusNotice = (
+  user: User,
+  ctx: GameContext,
+  unlocked: GameContext['trophies'],
+  checklist = false,
+) => {
   const t = translator(messages, user)
   const focus = focusAfter(ctx, unlocked)
   const done = focus.completed ? t('phaseDone', { phase: focus.completed }) : undefined
-  if (!focus.trophy) return done
+  if (!focus.trophy || (checklist && storyTrophy(ctx.guide, focus.trophy.name))) return done
   const next = !focus.changed
     ? t('focusStill', { trophy: focus.trophy.name })
     : focus.behind

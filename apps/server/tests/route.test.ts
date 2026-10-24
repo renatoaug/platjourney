@@ -58,10 +58,10 @@ test('a stretch sums up what to pick up by type and names its missables', () => 
     { kind: 'missable' as const, text: 'Não mate o guarda.', trophy: 'Piedade' },
   ]
   expect(collectibleSummary(tips)).toBe(
-    '4 coisas para pegar aqui: 1 Flor, 2 Souvenir, 1 Baú secreto. Além do troféu **Piedade**, que é perdível. Seguem na ordem.',
+    '4 coisas para pegar aqui: 1 flor, 2 souvenirs e 1 baú secreto. Além do troféu **Piedade**, que é perdível. Seguem na ordem.',
   )
   expect(collectibleSummary(tips.slice(0, 1), 'en')).toBe(
-    '1 thing to pick up here: 1 Flor. In order:',
+    '1 thing to pick up here: 1 flor. In order:',
   )
   expect(collectibleSummary([tips[4]])).toBe(
     'Aqui tem o troféu **Piedade**, que é perdível. Seguem na ordem.',
@@ -70,6 +70,40 @@ test('a stretch sums up what to pick up by type and names its missables', () => 
   expect(tipLine({ kind: 'trophy', text: 'Atordoe o guarda.', trophy: 'Piedade' })).toBe(
     '• 🏆 **Piedade**: Atordoe o guarda.',
   )
+})
+
+test('the summary writes each type in the plural, as in a sentence', () => {
+  const tip = (name: string) => ({
+    kind: 'collectible' as const,
+    text: name,
+    trophy: null,
+    name,
+    steps: ['x'],
+  })
+  const tips = [
+    tip('Baú de ferramentas 3/24'),
+    tip('Baú de ferramentas 4/24'),
+    tip('Baú secreto 2/10'),
+    tip('Baú secreto 3/10'),
+    tip('Flor 1/5: Anêmona'),
+    tip('Flor 2/5: Íris'),
+    tip('Faca'),
+    tip('Faca'),
+  ]
+  expect(collectibleSummary(tips)).toBe(
+    '8 coisas para pegar aqui: 2 baús de ferramentas, 2 baús secretos, 2 flores e 2 facas. Seguem na ordem.',
+  )
+  expect(
+    collectibleSummary(
+      [
+        tip('Box of tools 1/3'),
+        tip('Box of tools 2/3'),
+        tip('Secret chest 1/2'),
+        tip('Secret chest 2/2'),
+      ],
+      'en',
+    ),
+  ).toBe('4 things to pick up here: 2 boxes of tools and 2 secret chests. In order:')
 })
 
 test('a checklist item goes out numbered, with the sub-chapter, one step per line and how to get it back', () => {
@@ -101,7 +135,7 @@ test('a checklist item goes out numbered, with the sub-chapter, one step per lin
     '**7. ⚠️ Piedade: não matar o guarda das docas**\n• Atire Ignifer nele antes de começar a te caçar.\n↩️ Se der errado, reinicie a seção.',
   )
   expect(collectibleSummary([flower, { ...flower, name: 'Faca', trophy: null }, mercy])).toBe(
-    '2 coisas para pegar aqui: 1 Flor, 1 Faca. Além do troféu **Piedade**, que é perdível. Seguem na ordem.',
+    '2 coisas para pegar aqui: 1 flor e 1 faca. Além do troféu **Piedade**, que é perdível. Seguem na ordem.',
   )
 })
 

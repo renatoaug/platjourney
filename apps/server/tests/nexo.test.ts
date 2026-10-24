@@ -2,6 +2,7 @@ import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
 import { currentTag } from '../src/costs.ts'
+import type { GameContext } from '../src/nexo.ts'
 import { proactiveTip, reply, trophyHelp, unlockReaction, withoutTitle } from '../src/nexo.ts'
 import * as plugins from '../src/plugins.ts'
 import * as activity from '../src/repository/activity.ts'
@@ -85,6 +86,34 @@ test('the collectibles go after Nexo’s words as written, never through the mod
   expect(ai).toHaveBeenCalledWith('/nexo/tip', { kind: 'unlock', context, unlocked })
   expect(text).toBe(`🏆 **${unlocked[0].name}**\n\nResposta\n\n${block}`)
   expect(await proactiveTip(user, ctx, undefined, undefined, block)).toBe(`Resposta\n\n${block}`)
+})
+
+test('with the next chapter’s checklist, a focus that is only its story trophy is left out; the relief goes under the trophy', async () => {
+  const chapters = makeContext({
+    trophies: [
+      makeTrophy({ id: 1, name: 'Capítulo 4', earned: true }),
+      makeTrophy({ id: 2, name: 'Capítulo 5' }),
+      // Far from any mark (first, halfway, final stretch), so no cheer of its own.
+      makeTrophy({ id: 3, name: 'Primeiro', earned: true }),
+      ...Array.from({ length: 12 }, (_, i) => makeTrophy({ id: 10 + i, name: `Extra ${i}` })),
+    ],
+    guide: {
+      roadmap: [{ phase: 'História', goal: '', trophies: ['Capítulo 4', 'Capítulo 5'] }],
+      milestones: [
+        { after: null, tips: [] },
+        { after: 'Capítulo 4', tips: [] },
+        { after: 'Capítulo 5', tips: [] },
+      ],
+    } as unknown as GameContext['guide'],
+  })
+  const unlocked = [chapters.trophies[0]]
+  const relief = '🔒 **Capítulo 4** era perdível.'
+  const text = await unlockReaction(user, chapters, unlocked, undefined, 'checklist', relief)
+  expect((ai.mock.calls[0][1] as { focus?: unknown }).focus).toBeUndefined()
+  expect(text).toBe(`🏆 **Capítulo 4**\n\n${relief}\n\nResposta\n\nchecklist`)
+  ai.mockClear()
+  await unlockReaction(user, chapters, unlocked)
+  expect((ai.mock.calls[0][1] as { focus?: { trophy?: string } }).focus?.trophy).toBe('Capítulo 5')
 })
 
 test('an unlock reaction drops the trophy name Nexo repeats as a heading', () => {
