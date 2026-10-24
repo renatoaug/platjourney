@@ -1,3 +1,4 @@
+import { getChat, setChat } from './game-context.ts'
 import { guideSummary } from './guide.ts'
 import {
   defineMessages,
@@ -18,7 +19,6 @@ import { recommendationReport, recommendations } from './recommend.ts'
 import { type User, updateUser } from './repository/user.ts'
 import { serverReport } from './servers.ts'
 import { sendMessage } from './telegram.ts'
-import { getChat, setChat } from './watcher.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {

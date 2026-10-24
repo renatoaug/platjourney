@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as browse from '../src/browse.ts'
 import { config } from '../src/config.ts'
 import * as demo from '../src/demo.ts'
+import * as gameContext from '../src/game-context.ts'
 import * as interests from '../src/interests.ts'
 import * as lib from '../src/library.ts'
 import * as playtime from '../src/playtime.ts'
@@ -16,7 +17,6 @@ import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as recs from '../src/repository/recommendation.ts'
 import * as users from '../src/repository/user.ts'
-import * as watcher from '../src/watcher.ts'
 import { makeContext, makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
 import { connect, fakeOauthStore, send } from './oauth-store.ts'
 
@@ -167,7 +167,7 @@ test("the profile is the token owner's, never another player's", async () => {
 })
 
 test('the current game lists the base-game trophies still missing', async () => {
-  spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
+  spyOn(gameContext, 'getCurrent').mockReturnValue(undefined)
   expect((await call('get_current_game')).data).toEqual({
     playing: null,
     next: 'If you plan a session for this game, save the plan with save_session_plan.',
@@ -177,7 +177,7 @@ test('the current game lists the base-game trophies still missing', async () => 
     makeTrophy({ id: 2, name: 'Faltando', nameEn: 'Missing', groupId: 'default', earned: false }),
     makeTrophy({ id: 3, name: 'DLC', groupId: '001', earned: false }),
   ]
-  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext({ trophies, hoursPlayed: 12 }))
+  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext({ trophies, hoursPlayed: 12 }))
   spyOn(ranking, 'loadGroups').mockResolvedValue({ base: { earned: 5, total: 10 } } as never)
   const { data } = await call('get_current_game')
   expect(data.playing).toMatchObject({ hoursPlayed: 12, baseGame: { earned: 5, total: 10 } })
@@ -422,7 +422,7 @@ test("a list is saved as the assistant's batch, at least three catalog games", a
 
 test('a session plan names the trophies as the list does, for the game being played', async () => {
   const update = spyOn(users, 'updateUser').mockResolvedValue()
-  spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
+  spyOn(gameContext, 'getCurrent').mockReturnValue(undefined)
   expect((await call('save_session_plan', { minutes: 60, summary: 's', steps: [] })).isError).toBe(
     true,
   )
@@ -430,7 +430,7 @@ test('a session plan names the trophies as the list does, for the game being pla
     makeTrophy({ id: 1, name: 'Leitor', nameEn: 'Reader' }),
     makeTrophy({ id: 2, name: 'Platina', nameEn: 'Platinum', type: 'platinum' }),
   ]
-  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext({ trophies }))
+  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext({ trophies }))
   const codex = (await connect(me, 'v'.repeat(50), 'Codex')).access_token
   const ok = await call(
     'save_session_plan',

@@ -9,6 +9,7 @@ import * as browser from '../src/browse.ts'
 import { config } from '../src/config.ts'
 import * as deepguide from '../src/deepguide.ts'
 import { DEMO_ACCOUNT_ID } from '../src/demo.ts'
+import * as gameContext from '../src/game-context.ts'
 import * as guide from '../src/guide.ts'
 import { GUIDE_VERSION, type Guide } from '../src/guide.ts'
 import { pagePolicy, SECURITY_HEADERS } from '../src/http.ts'
@@ -131,11 +132,11 @@ beforeEach(() => {
   spyOn(users, 'setLinkCode').mockResolvedValue()
   spyOn(telegram, 'botInfo').mockResolvedValue({ username: 'nexo_bot', name: 'Nexo' })
   spyOn(telegram, 'botUsername').mockResolvedValue('nexo_bot')
-  spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
+  spyOn(gameContext, 'getCurrent').mockReturnValue(undefined)
   spyOn(watcher, 'watchNow').mockImplementation(() => {})
-  spyOn(watcher, 'forgetUser').mockImplementation(() => {})
+  spyOn(gameContext, 'forgetUser').mockImplementation(() => {})
   // The chat follows the game being played unless a test picks another.
-  spyOn(watcher, 'getChat').mockImplementation((u) => watcher.getCurrent(u))
+  spyOn(gameContext, 'getChat').mockImplementation((u) => gameContext.getCurrent(u))
 })
 
 afterEach(() => {
@@ -296,7 +297,7 @@ test("the chat reads the current game's conversation, another game's, or the one
   const read = spyOn(activity, 'recentMessages').mockResolvedValue([])
   await send('GET', '/api/chat')
   expect(read).toHaveBeenLastCalledWith(me.id, 40, null)
-  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext())
+  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext())
   await send('GET', '/api/chat')
   expect(read).toHaveBeenLastCalledWith(me.id, 40, makeContext().game.id)
   await send('GET', '/api/chat?game=game:9')
@@ -462,7 +463,7 @@ test('deleting the account forgets the user and clears the cookie', async () => 
   const res = await send('DELETE', '/api/account', { onlineId: 'Kratos' })
   expect(res.headers['set-cookie']).toContain('Max-Age=0')
   expect(remove).toHaveBeenCalledWith(me, 'Kratos')
-  expect(watcher.forgetUser).toHaveBeenCalledWith(me.id)
+  expect(gameContext.forgetUser).toHaveBeenCalledWith(me.id)
   await send('DELETE', '/api/account', {})
   expect(remove).toHaveBeenLastCalledWith(me, '')
 })
@@ -556,7 +557,7 @@ test('state without a current game starts watching and ranks the library', async
 
 test('state shows the current game and leaves it out of the ranking', async () => {
   config.automatic.research = false
-  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext({ hoursPlayed: 3 }))
+  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext({ hoursPlayed: 3 }))
   const { body } = await send('GET', '/api/state')
   expect(watcher.watchNow).not.toHaveBeenCalled()
   expect(ranking.rankNextPlatinum).toHaveBeenCalledWith([title], me, 20, ['NPWR1'])
@@ -736,7 +737,7 @@ test('plans are read, discarded and made for 15 to 600 minutes', async () => {
   expect((await send('DELETE', '/api/plan')).body).toEqual({ plan: null })
   expect((await send('POST', '/api/plan', { minutes: 60 })).status).toBe(409)
   const ctx = makeContext()
-  spyOn(watcher, 'getCurrent').mockReturnValue(ctx)
+  spyOn(gameContext, 'getCurrent').mockReturnValue(ctx)
   expect((await send('POST', '/api/plan', { minutes: 5 })).status).toBe(400)
   expect((await send('POST', '/api/plan', { minutes: '60' })).status).toBe(400)
   expect((await send('POST', '/api/plan', { minutes: 60 })).body).toEqual({ plan: { minutes: 60 } })
@@ -1184,7 +1185,7 @@ describe('the demo', () => {
 
   test('state loads the stored current game at once, with the stored profile', async () => {
     const ctx = makeContext()
-    const load = spyOn(watcher, 'demoContext').mockResolvedValue(ctx)
+    const load = spyOn(gameContext, 'demoContext').mockResolvedValue(ctx)
     spyOn(lib, 'library').mockResolvedValue([makeTitle({ earnedByType: counts(3, 1, 0, 1) })])
     const { body } = await send('GET', '/api/state')
     expect(load).toHaveBeenCalledWith(demo)
@@ -1354,7 +1355,7 @@ test('the chat game switch lists the player titles by name and loads the one pic
     makeTitle({ npCommunicationId: 'NPWR1', name: 'Days Gone' }),
     makeTitle({ npCommunicationId: 'NPWR2', name: 'Ghost of Tsushima', progress: 64 }),
   ])
-  spyOn(watcher, 'getCurrent').mockReturnValue(makeContext())
+  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext())
   spyOn(games, 'searchCatalog').mockResolvedValue([])
   const found = await send('GET', '/api/library?q=ghost')
   expect(found.body).toEqual([
@@ -1365,7 +1366,7 @@ test('the chat game switch lists the player titles by name and loads the one pic
       current: false,
     }),
   ])
-  const set = spyOn(watcher, 'setChat').mockResolvedValue(makeContext())
+  const set = spyOn(gameContext, 'setChat').mockResolvedValue(makeContext())
   const res = await send('POST', '/api/current', { np: 'NPWR2' })
   expect(res.status).toBe(200)
   expect(set.mock.calls[0][1]).toMatchObject({ npCommunicationId: 'NPWR2' })
@@ -1376,7 +1377,7 @@ test('the game switch also offers catalog games outside the library and talks ab
   spyOn(lib, 'library').mockResolvedValue([
     makeTitle({ npCommunicationId: 'NPWR2', name: 'Jogo Exemplo Dois' }),
   ])
-  spyOn(watcher, 'getCurrent').mockReturnValue(undefined)
+  spyOn(gameContext, 'getCurrent').mockReturnValue(undefined)
   const outside = makeGame({
     id: 'game:9',
     name: 'Jogo Exemplo Novo',
@@ -1395,8 +1396,8 @@ test('the game switch also offers catalog games outside the library and talks ab
   ])
   spyOn(games, 'getGame').mockImplementation((async (id: string) =>
     id === 'game:9' ? outside : owned) as never)
-  const fromCatalog = spyOn(watcher, 'setChatFromCatalog').mockResolvedValue(makeContext())
-  const set = spyOn(watcher, 'setChat').mockResolvedValue(makeContext())
+  const fromCatalog = spyOn(gameContext, 'setChatFromCatalog').mockResolvedValue(makeContext())
+  const set = spyOn(gameContext, 'setChat').mockResolvedValue(makeContext())
   expect((await send('POST', '/api/current', { game: 'game:9' })).status).toBe(200)
   expect(fromCatalog.mock.calls[0][1]).toBe(outside)
   // A catalog game the player owns goes through the title, with progress.
