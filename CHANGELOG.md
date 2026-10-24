@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.34.0](https://github.com/renatoaug/platjourney/compare/v0.33.0...v0.34.0) (2026-10-24)
+
+### Features
+
+* **evals:** real player questions in the viewer, promoted to the golden set ([#91](https://github.com/renatoaug/platjourney/issues/91)) ([6194461](https://github.com/renatoaug/platjourney/commit/6194461b7325607855c953128607547d1e82ebaa))
+
 ## [0.33.0](https://github.com/renatoaug/platjourney/compare/v0.32.1...v0.33.0) (2026-10-24)
 
 ### Features
