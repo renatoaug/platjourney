@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.33.0](https://github.com/renatoaug/platjourney/compare/v0.32.1...v0.33.0) (2026-10-24)
+
+### Features
+
+* **ai:** search the deep guide in English with keywords and vectors ([#89](https://github.com/renatoaug/platjourney/issues/89)) ([dcfdf61](https://github.com/renatoaug/platjourney/commit/dcfdf618587b935e535436a43f1180d24e38ae2e))
+
 ## [0.32.1](https://github.com/renatoaug/platjourney/compare/v0.32.0...v0.32.1) (2026-10-24)
 
 ### Bug Fixes
