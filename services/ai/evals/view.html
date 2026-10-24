@@ -8,6 +8,8 @@
 <!-- The app's own design tokens, served by view.py. -->
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/view.css">
+<!-- After view.css, which declares the layer order: the app's toast sits in ui, above base. -->
+<link rel="stylesheet" href="/toast.css">
 </head>
 <body>
 <main class="shell">
@@ -38,6 +40,7 @@
   <section class="workspace"><div class="workspace-top"><div><span class="tag" data-t="workspaceLabel"></span><h2 data-t="workspaceTitle">Evaluation history</h2></div><div class="tabs" role="tablist" aria-label="Evals">
     <button type="button" role="tab" aria-selected="true" data-tab="runs" data-t="runs"></button>
     <button type="button" role="tab" aria-selected="false" data-tab="questions" data-t="questions"></button>
+    <button type="button" role="tab" aria-selected="false" data-tab="real" data-t="real"></button>
   </div>
   </div><div id="tab" role="tabpanel"></div></section>
 </main>
@@ -52,6 +55,7 @@
 </dialog>
 
 <dialog id="qdialog" class="wide" aria-labelledby="qdialog-title"></dialog>
+<div id="toast-host"></div>
 
 <script>
   const TEXT = {
@@ -101,7 +105,35 @@
       loadError: 'Could not load the evaluations',
       retry: 'Try again',
       runs: 'Runs',
-      questions: 'Questions',
+      questions: 'Golden set',
+      real: 'Real questions',
+      realHint: 'What players asked Nexo in the chat, newest first. Who asked is never shown.',
+      realAll: 'All',
+      realUncited: 'No guide cited',
+      realNoGuide: 'No passages',
+      realNew: 'Not in golden set',
+      realEmptyTitle: 'No questions here',
+      realEmptyBody: 'Players have not asked Nexo anything that fits this filter yet.',
+      colAsked: 'Asked',
+      colGuide: 'Passages',
+      colSource: 'Source',
+      answerNow: 'Nexo’s answer',
+      searchAgain: 'Search again',
+      searching: 'Searching…',
+      searchedAs: 'Searched as: {q}',
+      passagesNow: 'Passages Nexo would read now',
+      noPassagesNow: 'No passage found for this question.',
+      toEval: 'Promote to golden set',
+      inEval: 'In golden set',
+      deleteQuestion: 'Delete',
+      promoted: 'Question promoted to the golden set',
+      deleted: 'Question deleted',
+      deleteTitle: 'Delete this question?',
+      deleteBody: 'No run has asked it yet, so nothing is lost. This cannot be undone.',
+      cannotDelete: 'Asked in {n} run cases: archive it to stop asking it.',
+      sourceGuide: 'Guide',
+      sourceWeb: 'Web',
+      sourceNone: 'None',
       run: 'Run',
       running: 'Running…',
       cancel: 'Cancel',
@@ -249,7 +281,35 @@
       loadError: 'Não foi possível carregar as avaliações',
       retry: 'Tentar novamente',
       runs: 'Runs',
-      questions: 'Perguntas',
+      questions: 'Golden set',
+      real: 'Perguntas reais',
+      realHint: 'O que os jogadores perguntaram ao Nexo no chat, das mais novas para as mais antigas. Quem perguntou nunca aparece.',
+      realAll: 'Todas',
+      realUncited: 'Sem guia citado',
+      realNoGuide: 'Sem trechos',
+      realNew: 'Fora do golden set',
+      realEmptyTitle: 'Nenhuma pergunta aqui',
+      realEmptyBody: 'Os jogadores ainda não perguntaram nada ao Nexo que caiba neste filtro.',
+      colAsked: 'Quando',
+      colGuide: 'Trechos',
+      colSource: 'Fonte',
+      answerNow: 'Resposta do Nexo',
+      searchAgain: 'Buscar de novo',
+      searching: 'Buscando…',
+      searchedAs: 'Buscado como: {q}',
+      passagesNow: 'Trechos que o Nexo leria agora',
+      noPassagesNow: 'Nenhum trecho encontrado para esta pergunta.',
+      toEval: 'Promover ao golden set',
+      inEval: 'No golden set',
+      deleteQuestion: 'Excluir',
+      promoted: 'Pergunta promovida ao golden set',
+      deleted: 'Pergunta excluída',
+      deleteTitle: 'Excluir esta pergunta?',
+      deleteBody: 'Nenhuma rodada fez esta pergunta ainda, então nada se perde. Não dá para desfazer.',
+      cannotDelete: 'Já usada em {n} casos de rodadas: arquive para não perguntar mais.',
+      sourceGuide: 'Guia',
+      sourceWeb: 'Web',
+      sourceNone: 'Nenhuma',
       run: 'Rodar',
       running: 'Rodando…',
       cancel: 'Cancelar',
@@ -439,12 +499,17 @@
   let qsuite = 'answers'
   let editing = null
   let qlist = []
+  let realList = null
+  let realFilter = 'all'
+  const realOpen = new Set()
+  const realFound = {}
 
   // Adding and editing a question happen in a modal over the list.
-  function openQuestion(id) {
+  // A draft fills a new question (a real question taken to the eval); it is saved as new.
+  function openQuestion(id, draft = null) {
     editing = id
     const d = document.getElementById('qdialog')
-    d.innerHTML = questionForm(id === 'new' ? null : qlist.find((q) => plain(q.id) === id))
+    d.innerHTML = questionForm(id === 'new' ? draft : qlist.find((q) => plain(q.id) === id))
     d.showModal()
     d.querySelector('.game-search:not([readonly]), input:not([type=hidden]), textarea')?.focus()
     // A saved question keeps only the game's name or id: fetch the rest (cover, platforms) for the chip.
@@ -471,7 +536,7 @@
 
   // Each tab says how much it holds: runs so far, questions asked across the suites.
   function drawTabs() {
-    const counts = { runs: runs.length, questions: suites.reduce((n, s) => n + s.questions, 0) }
+    const counts = { runs: runs.length, questions: suites.reduce((n, s) => n + s.questions, 0), real: realList ? realList.length : '' }
     for (const b of document.querySelectorAll('[data-tab]')) {
       b.innerHTML = `${t(b.dataset.tab)}${suites.length ? `<span class="count">${counts[b.dataset.tab]}</span>` : ''}`
     }
@@ -755,7 +820,7 @@
   function questionForm(q) {
     const data = q?.data ?? {}
     return `<form id="qform" method="dialog">
-      <div class="dialog-head"><h3 id="qdialog-title">${q ? t('editQuestion') : t('newQuestion')}</h3>
+      <div class="dialog-head"><h3 id="qdialog-title">${editing !== 'new' ? t('editQuestion') : t('newQuestion')}</h3>
         <button type="button" class="btn sm" id="qclose" aria-label="${t('cancel')}">${icon('close')}</button></div>
       ${FIELDS[qsuite]
         .map(([key, label, kind]) => {
@@ -767,7 +832,7 @@
           return `<label class="field"><span>${text}</span>${kind === 'text' || kind === 'lines' || kind === 'groups' ? `<textarea name="${key}"${req}>${v}</textarea>` : `<input name="${key}" value="${v}"${kind === 'number' ? ' type="number" min="1"' : ''}${req}>`}</label>`
         })
         .join('')}
-      ${q ? `<label class="muted"><input type="checkbox" name="active" ${q.active ? 'checked' : ''}> ${t('active')}</label>` : ''}
+      ${editing !== 'new' ? `<label class="muted"><input type="checkbox" name="active" ${q?.active ? 'checked' : ''}> ${t('active')}</label>` : ''}
       <div class="row" style="justify-content:flex-end;margin-top:12px">
         <button type="button" class="btn" id="qcancel">${t('cancel')}</button>
         <button class="btn primary">${t('save')}</button>
@@ -797,7 +862,7 @@
             <td>${main(q)}</td>
             <td class="muted">${esc(qsuite === 'scope' ? (q.data.forbidden || []).join(', ') : q.data.name || q.data.game || '')}</td>
             <td class="muted nowrap">${when(q.created_at)}</td>
-            <td style="text-align:right"><button type="button" class="btn sm" data-edit="${plain(q.id)}">${icon('edit')}${q.active ? t('edit') : t('archived')}</button></td>
+            <td class="row-actions">${questionActions(q)}</td>
           </tr>`,
           )
           .join('')}</tbody></table>
@@ -806,6 +871,159 @@
 
   // While a run goes on, only what changed is redrawn: the run's item in the list, its header and
   // the new question panels at the end of the report. Open rows, the comparison and the scroll stay put.
+  // The real questions: what players asked, Nexo's answer, and the passages the search finds now.
+  const REAL_FILTERS = {
+    all: () => true,
+    uncited: (q) => q.source !== 'guide',
+    noguide: (q) => !q.passages,
+    new: (q) => !q.in_eval,
+  }
+
+  // The passages found now for one question: a skeleton while the search runs, then the list.
+  function realPassages(q) {
+    const found = realFound[q.id]
+    if (!found) return `<p class="muted">${t('searchAgain')}…</p>`
+    if (found === 'loading')
+      return `<p class="muted">${t('searching')}</p><span class="sk" style="width:92%;height:14px"></span><span class="sk" style="width:70%;height:14px"></span><span class="sk" style="width:84%;height:14px"></span>`
+    return `<div class="fade"><p class="muted">${esc(t('searchedAs').replace('{q}', found.english || q.question))}</p>
+      ${found.passages.length ? found.passages.map((p, i) => `<section class="real-passage"><h4>${i + 1}. ${esc(p.source)} — ${esc(p.heading)}</h4><pre>${esc(p.content)}</pre></section>`).join('') : `<p class="muted">${t('noPassagesNow')}</p>`}</div>`
+  }
+
+  // Every row has its detail (Nexo's answer, the passages found now) right below it, collapsed:
+  // opening one only unfolds it, so the table never redraws under the pointer.
+  function realRow(q) {
+    const open = realOpen.has(q.id)
+    const name = `real-${plain(q.id)}`
+    return `<tr style="view-transition-name: ${name}">
+        <td><button type="button" class="link-btn" data-real-open="${esc(q.id)}" aria-expanded="${open}" aria-controls="${name}-detail">${esc(q.question)}</button></td>
+        <td class="muted">${esc(q.name || '')}</td>
+        <td class="muted">${q.passages || '—'}</td>
+        <td class="muted">${t({ guide: 'sourceGuide', web: 'sourceWeb', none: 'sourceNone' }[q.source])}</td>
+        <td class="muted nowrap">${when(q.asked_at)}</td>
+        <td class="nowrap real-actions" data-real-actions="${esc(q.id)}">${realActions(q)}</td>
+      </tr>
+      <tr class="real-detail ${open ? 'open' : ''}" id="${name}-detail" style="view-transition-name: ${name}-detail">
+        <td colspan="6"><div class="real-collapse"><div><div class="detail-content">
+          <section><h4>${t('answerNow')}</h4><pre>${esc(q.answer || '—')}</pre></section>
+          <section><h4>${t('passagesNow')}</h4><div data-real-found="${esc(q.id)}">${realPassages(q)}</div></section>
+        </div></div></div></td>
+      </tr>`
+  }
+
+  function realActions(q) {
+    return `<div class="real-buttons"><button type="button" class="btn sm" data-real-search="${esc(q.id)}">${icon('search')}${t('searchAgain')}</button>
+      ${q.in_eval ? `<span class="in-golden">${icon('check')}${t('inEval')}</span>` : `<button type="button" class="btn sm" data-real-eval="${esc(q.id)}">${icon('plus')}${t('toEval')}</button>`}</div>`
+  }
+
+  async function drawReal(animate = true) {
+    const el = document.getElementById('tab')
+    if (!realList) {
+      el.innerHTML = questionsSkeleton()
+      realList = await api('/api/real')
+      drawTabs()
+    }
+    const list = realList.filter(REAL_FILTERS[realFilter])
+    el.innerHTML = `<p class="subtle">${t('realHint')}</p>
+      <div class="toolbar">
+        ${Object.keys(REAL_FILTERS)
+          .map((f) => `<button type="button" class="chip ${f === realFilter ? 'active' : ''}" data-real-filter="${f}" aria-pressed="${f === realFilter}">${t({ all: 'realAll', uncited: 'realUncited', noguide: 'realNoGuide', new: 'realNew' }[f])}<span class="count">${realList.filter(REAL_FILTERS[f]).length}</span></button>`)
+          .join('')}
+      </div>
+      ${list.length ? '' : empty(t('realEmptyTitle'), t('realEmptyBody'))}
+      <div class="table-wrap ${animate ? 'fade' : ''}" tabindex="0" role="region" aria-label="${t('real')}" ${list.length ? '' : 'hidden'}>
+        <table class="questions real"><thead><tr><th>${t('question')}</th><th>${t('game')}</th><th>${t('colGuide')}</th><th>${t('colSource')}</th><th>${t('colAsked')}</th><th></th></tr></thead>
+        <tbody>${list.map(realRow).join('')}</tbody></table>
+      </div>`
+  }
+
+  function toggleReal(id, open = !realOpen.has(id)) {
+    open ? realOpen.add(id) : realOpen.delete(id)
+    const name = `real-${plain(id)}`
+    document.getElementById(`${name}-detail`)?.classList.toggle('open', open)
+    document.querySelector(`[data-real-open="${CSS.escape(id)}"]`)?.setAttribute('aria-expanded', open)
+  }
+
+  function fillFound(id) {
+    const q = realList.find((x) => x.id === id)
+    const box = document.querySelector(`[data-real-found="${CSS.escape(id)}"]`)
+    if (q && box) box.innerHTML = realPassages(q)
+  }
+
+  async function searchReal(id) {
+    const q = realList.find((x) => x.id === id)
+    realFound[id] = 'loading'
+    fillFound(id)
+    toggleReal(id, true)
+    try {
+      realFound[id] = await api('/api/real/search', { method: 'POST', body: { game: q.game, question: q.question } })
+    } catch (e) {
+      delete realFound[id]
+      fillFound(id)
+      throw e
+    }
+    fillFound(id)
+  }
+
+  let promoting = null
+
+  // Edit with the pencil, delete with the bin. Only a question no run asked can go (the server
+  // refuses the others); for one with history the bin is off and says why.
+  function questionActions(q) {
+    const id = plain(q.id)
+    const label = q.active ? t('edit') : `${t('edit')} (${t('archived')})`
+    const bin = `<button type="button" class="btn sm icon-only danger-ghost" data-delete="${id}" aria-label="${t('deleteQuestion')}" ${q.used ? 'disabled' : `title="${t('deleteQuestion')}"`}>${icon('trash')}</button>`
+    return `<div class="row-buttons"><button type="button" class="btn sm icon-only" data-edit="${id}" aria-label="${esc(label)}" title="${esc(label)}">${icon('edit')}</button>
+      ${q.used ? `<span title="${esc(t('cannotDelete').replace('{n}', q.used))}">${bin}</span>` : bin}</div>`
+  }
+
+  async function deleteQuestion(id) {
+    if (!(await ask(t('deleteTitle'), t('deleteBody'), t('deleteQuestion')))) return
+    await api(`/api/questions/${qsuite}/${id}`, { method: 'DELETE' })
+    realList = null
+    toast(t('deleted'))
+    await drawQuestions()
+    refresh()
+  }
+
+  function realToEval(id) {
+    const q = realList.find((x) => x.id === id)
+    promoting = id
+    qsuite = 'retrieval'
+    openQuestion('new', { data: { game: q.game, name: q.name, question: q.question, terms: [], relevant: [] } })
+  }
+
+  // The app's success toast (apps/web/src/ui/toast.tsx), with its stylesheet: the same markup and
+  // the same timing, so a confirmation here looks like one in the app.
+  let toastTimers = []
+  function toast(text) {
+    const host = document.getElementById('toast-host')
+    for (const timer of toastTimers) clearTimeout(timer)
+    host.innerHTML = `<div class="toast success" role="status"><span class="burst" aria-hidden="true">${'<i></i>'.repeat(10)}</span><span class="toast-mark">${icon('check')}</span><span class="toast-text">${esc(text)}</span></div>`
+    const el = host.firstElementChild
+    requestAnimationFrame(() => el.classList.add('show'))
+    const leave = () => {
+      el.classList.remove('show')
+      el.classList.add('leave')
+      toastTimers = [setTimeout(() => el.remove(), 350)]
+    }
+    el.addEventListener('click', leave)
+    toastTimers = [setTimeout(leave, 4200)]
+  }
+
+  // After a promoted question is saved, only its row changes.
+  function promoted() {
+    const q = realList?.find((x) => x.id === promoting)
+    promoting = null
+    if (!q) return
+    q.in_eval = true
+    toast(t('promoted'))
+    const cell = document.querySelector(`[data-real-actions="${CSS.escape(q.id)}"]`)
+    if (cell) cell.innerHTML = realActions(q)
+    for (const chip of document.querySelectorAll('[data-real-filter]')) {
+      chip.querySelector('.count').textContent = realList.filter(REAL_FILTERS[chip.dataset.realFilter]).length
+    }
+  }
+
   async function poll() {
     const before = JSON.stringify(suites.map((s) => [s.suite, s.running, s.questions, s.estimate_usd]))
     const [fresh, freshSuites] = await Promise.all([api('/api/runs'), api('/api/suites')])
@@ -878,8 +1096,29 @@
     })
   }
 
+  // Where the viewer is, in the address (in English), so a reload opens the same tab, the same
+  // suite of the golden set and the same filter of the real questions.
+  const TAB_PARAM = { runs: 'runs', questions: 'golden-set', real: 'real-questions' }
+  const FILTER_PARAM = { all: 'all', uncited: 'no-guide-cited', noguide: 'no-passages', new: 'not-in-golden-set' }
+  const fromParam = (map, value) => Object.keys(map).find((key) => map[key] === value)
+
+  function readLocation() {
+    const params = new URLSearchParams(location.search)
+    tab = fromParam(TAB_PARAM, params.get('tab')) ?? 'runs'
+    if (SUITES.includes(params.get('suite'))) qsuite = params.get('suite')
+    realFilter = fromParam(FILTER_PARAM, params.get('filter')) ?? 'all'
+  }
+
+  function saveLocation() {
+    const params = new URLSearchParams({ tab: TAB_PARAM[tab] })
+    if (tab === 'questions') params.set('suite', qsuite)
+    if (tab === 'real' && realFilter !== 'all') params.set('filter', FILTER_PARAM[realFilter])
+    history.replaceState(null, '', `${location.pathname}?${params}`)
+  }
+
   function selectTab(name) {
     tab = name
+    saveLocation()
     for (const b of document.querySelectorAll('[data-tab]')) b.setAttribute('aria-selected', b.dataset.tab === name)
   }
 
@@ -891,13 +1130,17 @@
     translateStatic()
     drawSuites()
     drawTabs()
-    return tab === 'runs' ? drawRuns() : drawQuestions()
+    return drawTab()
   }
 
   function openTab(name) {
     selectTab(name)
     editing = null
-    return tab === 'runs' ? drawRuns() : drawQuestions()
+    return drawTab()
+  }
+
+  function drawTab() {
+    return { runs: drawRuns, questions: drawQuestions, real: drawReal }[tab]()
   }
 
   async function startRun(suite) {
@@ -952,6 +1195,7 @@
 
   function openQuestionSuite(name) {
     qsuite = name
+    saveLocation()
     editing = null
     return drawQuestions()
   }
@@ -976,6 +1220,21 @@
     ],
     [(el) => el.dataset.qsuite, (el) => openQuestionSuite(el.dataset.qsuite)],
     [(el) => el.id === 'qadd', () => openQuestion('new')],
+    [(el) => el.dataset.delete, (el) => deleteQuestion(el.dataset.delete).catch(showError)],
+    [
+      (el) => el.dataset.realFilter,
+      (el) => {
+        realFilter = el.dataset.realFilter
+        saveLocation()
+        return morph(() => drawReal(false))
+      },
+    ],
+    [
+      (el) => el.dataset.realOpen,
+      (el) => toggleReal(el.dataset.realOpen),
+    ],
+    [(el) => el.dataset.realSearch, (el) => searchReal(el.dataset.realSearch).catch(showError)],
+    [(el) => el.dataset.realEval, (el) => realToEval(el.dataset.realEval)],
     [(el) => el.dataset.edit, (el) => openQuestion(el.dataset.edit)],
     [(el) => el.id === 'qcancel' || el.id === 'qclose', () => closeQuestion()],
   ]
@@ -1006,7 +1265,8 @@
     if (editing === 'new') await api(`/api/questions/${qsuite}`, { method: 'POST', body: { data } })
     else await api(`/api/questions/${qsuite}/${editing}`, { method: 'PUT', body: { data, active: form.get('active') === 'on' } })
     closeQuestion()
-    drawQuestions()
+    if (tab === 'real') promoted()
+    else drawQuestions()
     refresh()
   })
 
@@ -1196,7 +1456,11 @@
   translateStatic()
   document.getElementById('tab').innerHTML = runsSkeleton()
   document.getElementById('suites').innerHTML = suitesSkeleton()
-  refresh().catch(showError)
+  readLocation()
+  selectTab(tab)
+  refresh()
+    .then(() => tab === 'runs' || drawTab())
+    .catch(showError)
 </script>
 </body>
 </html>
