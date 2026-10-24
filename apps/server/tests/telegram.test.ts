@@ -1,6 +1,13 @@
 import './env.ts'
 import { afterEach, expect, mock, spyOn, test } from 'bun:test'
-import { botInfo, botUsername, incomingMessages, sendMessage, sendTyping } from '../src/telegram.ts'
+import {
+  botInfo,
+  botUsername,
+  incomingMessages,
+  messageParts,
+  sendMessage,
+  sendTyping,
+} from '../src/telegram.ts'
 
 afterEach(() => mock.restore())
 
@@ -96,4 +103,16 @@ test('incoming updates yield text messages and move the offset', async () => {
   expect((await messages.next()).value).toEqual({ chatId: '4', text: 'tchau' })
   await messages.return(undefined)
   expect(sent(fetch).map((c) => c.body.offset)).toEqual([0, 0, 13])
+})
+
+test('a long message goes in parts cut between paragraphs, and an endless paragraph where it must', () => {
+  const a = 'a'.repeat(30)
+  const b = 'b'.repeat(30)
+  expect(messageParts(`${a}\n\n${b}`, 70)).toEqual([`${a}\n\n${b}`])
+  expect(messageParts(`${a}\n\n${b}\n\n${a}`, 70)).toEqual([`${a}\n\n${b}`, a])
+  expect(messageParts('c'.repeat(150), 70)).toEqual([
+    'c'.repeat(70),
+    'c'.repeat(70),
+    'c'.repeat(10),
+  ])
 })

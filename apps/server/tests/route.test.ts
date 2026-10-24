@@ -72,6 +72,39 @@ test('a stretch sums up what to pick up by type and names its missables', () => 
   )
 })
 
+test('a checklist item goes out numbered, with the sub-chapter, one step per line and how to get it back', () => {
+  const flower = {
+    kind: 'collectible' as const,
+    text: 'Flor 3/5, Genciana: na praia.',
+    trophy: 'Herbalista',
+    name: 'Flor 3/5: Genciana',
+    where: 'Subcapítulo Trabalho noturno',
+    steps: [
+      'Na praia com navios ancorados, vá para o lado direito.',
+      'A flor roxa fica no fim do caminho.',
+    ],
+    ifMissed: null,
+  }
+  expect(tipLine(flower, 'pt-BR', 1)).toBe(
+    '**1. Flor 3/5: Genciana**\n*Subcapítulo Trabalho noturno*\n• Na praia com navios ancorados, vá para o lado direito.\n• A flor roxa fica no fim do caminho.',
+  )
+  const mercy = {
+    kind: 'missable' as const,
+    text: 'Não mate o guarda.',
+    trophy: 'Piedade',
+    name: 'Piedade: não matar o guarda das docas',
+    where: null,
+    steps: ['Atire Ignifer nele antes de começar a te caçar.'],
+    ifMissed: 'Se der errado, reinicie a seção.',
+  }
+  expect(tipLine(mercy, 'pt-BR', 7)).toBe(
+    '**7. ⚠️ Piedade: não matar o guarda das docas**\n• Atire Ignifer nele antes de começar a te caçar.\n↩️ Se der errado, reinicie a seção.',
+  )
+  expect(collectibleSummary([flower, { ...flower, name: 'Faca', trophy: null }, mercy])).toBe(
+    '2 coisas para pegar aqui: 1 Flor, 1 Faca. Além do troféu **Piedade**, que é perdível. Seguem na ordem.',
+  )
+})
+
 test('a milestone drops the tips about trophies already earned, and is gone when none are left', () => {
   const milestone: Milestone = {
     after: 'Fim do Capítulo 1',

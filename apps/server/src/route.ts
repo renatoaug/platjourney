@@ -50,8 +50,16 @@ const messages = defineMessages({
 // collectibles of the chapter just reached are).
 export interface RouteTip {
   kind: 'missable' | 'item' | 'advantage' | 'trophy' | 'warning' | 'collectible'
+  // The tip in one or two sentences, for where a checklist item does not fit.
   text: string
   trophy: string | null
+  // A chapter's checklist item (a collectible, an item to pick up, a missable) step by step: what it
+  // is ("Flor 3/5: Genciana"), the sub-chapter and objective, the steps from the previous item, and
+  // how to tell you went past it and get it back. Guides written before this have only `text`.
+  name?: string
+  where?: string | null
+  steps?: string[]
+  ifMissed?: string | null
 }
 
 export interface Milestone {
@@ -103,11 +111,23 @@ export function routeNotice(milestone: Milestone, locale: Locale = DEFAULT_LOCAL
   return [head, ...tips].join('\n')
 }
 
-// One tip as a line. A collectible opens with its name ("Souvenir 1/21, Best player: ..."): the
-// name goes in bold on a line of its own, the directions below it. A tip about a trophy names the
-// trophy, and says so when it is missable.
-export function tipLine(tip: RouteTip, locale: Locale = DEFAULT_LOCALE): string {
+// One tip as a line. A checklist item goes out numbered, its name in bold, the sub-chapter in
+// italics and one step per line. An older collectible opens with its name ("Souvenir 1/21, Best
+// player: ..."): the name goes in bold on a line of its own, the directions below it. A tip about a
+// trophy names the trophy, and says so when it is missable.
+export function tipLine(tip: RouteTip, locale: Locale = DEFAULT_LOCALE, n?: number): string {
   const t = translator(messages, locale)
+  if (tip.name && tip.steps?.length) {
+    const title = `**${n ? `${n}. ` : ''}${tip.kind === 'missable' ? '⚠️ ' : ''}${tip.name}**`
+    return [
+      title,
+      tip.where ? `*${tip.where}*` : '',
+      ...tip.steps.map((step) => `• ${step}`),
+      tip.ifMissed ? `↩️ ${tip.ifMissed}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n')
+  }
   const at = tip.text.indexOf(': ')
   if (tip.kind === 'collectible' && at >= 0) {
     const rest = tip.text.slice(at + 2)
@@ -120,7 +140,7 @@ export function tipLine(tip: RouteTip, locale: Locale = DEFAULT_LOCALE): string 
 // The collectible's type from its name: "Flor 3/5, Genciana" is a Flor, "Baú secreto 2/10" a Baú
 // secreto.
 const collectibleType = (tip: RouteTip) => {
-  const name = tip.text.split(': ')[0] ?? tip.text
+  const name = tip.name?.split(': ')[0] ?? tip.text.split(': ')[0] ?? tip.text
   return (
     name.match(/^(.*?)\s+\d+(?:\s*\/\s*\d+)?(?:\D|$)/)?.[1] ??
     name.split(',')[0] ??

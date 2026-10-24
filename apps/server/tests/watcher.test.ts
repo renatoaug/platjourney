@@ -164,7 +164,7 @@ describe('session start', () => {
     spyOn(Math, 'random').mockReturnValue(0)
     await checkUser(user)
     const text =
-      '🎮 Hora de jogar! Falta 1 troféu para a platina de **Days Gone**.\n\n**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Terceiro**.\nFaça algo\n\n📍 **Neste trecho do jogo**\n• Compre o arco.\n\nBoa jogatina! 🍀'
+      '🎮 Hora de jogar! Falta 1 troféu para a platina de **Days Gone**.\n\n**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Terceiro**.\nFaça algo\n\n📍 **Neste trecho do jogo**\n\n• Compre o arco.\n\nBoa jogatina! 🍀'
     expect(logTip).toHaveBeenCalledWith(user.id, 'session', text, game.id)
     expect(send.mock.calls).toEqual([['42', text]])
     expect(updateUser.mock.calls[0][1].session_notice_at).toBeInstanceOf(Date)
@@ -278,7 +278,7 @@ describe('session start', () => {
         '🎮 Hora de jogar! Faltam 3 troféus para a platina de **Days Gone**.',
         '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Terceiro**.\nFaça algo',
         '**Dica**: Use o arco de longe.',
-        '📍 **Neste trecho do jogo**\n• Compre o arco.',
+        '📍 **Neste trecho do jogo**\n\n• Compre o arco.',
         '⚠️ **Terceiro** é perdível: antes do capítulo 5.',
         '**Quase lá**: Colecionador, 34 de 50.',
         'Boa jogatina! 🍀',
@@ -336,13 +336,13 @@ describe('session start', () => {
       ],
     } as unknown as NonNullable<Parameters<typeof sessionNotice>[2]>
     expect(sessionNotice(user, 'x', ctx)).toContain(
-      '📍 **Neste trecho do jogo**\n1 coisa para pegar aqui: 1 Souvenir. Seguem na ordem.\n• **Souvenir 1**\nNa tenda do mercado.\n\n',
+      '📍 **Neste trecho do jogo**\n1 coisa para pegar aqui: 1 Souvenir. Seguem na ordem.\n\n• **Souvenir 1**\nNa tenda do mercado.\n\n',
     )
     expect(sessionNotice(user, 'x', ctx)).not.toContain('Flor 1/5')
     // Opened again with nothing new: one line, and the stretch's collectibles still there.
     expect(sessionNotice(user, 'x', ctx, true)).toContain('de novo')
     expect(sessionNotice(user, 'x', ctx, true)).toContain(
-      '\n\n📍 **Neste trecho do jogo**\n1 coisa para pegar aqui: 1 Souvenir. Seguem na ordem.\n• **Souvenir 1**\nNa tenda do mercado.',
+      '\n\n📍 **Neste trecho do jogo**\n1 coisa para pegar aqui: 1 Souvenir. Seguem na ordem.\n\n• **Souvenir 1**\nNa tenda do mercado.',
     )
     // Several tips are set apart by a blank line.
     ctx.trophies[3] = makeTrophy({ id: 4, name: 'Herbalista' })
@@ -585,7 +585,7 @@ describe('checkUser', () => {
     expect(reaction.mock.calls[0][3]).toBe('Agora vale saber:\n• Compre o arco.')
     // The summary names the missable; the checklist keeps the guide's order.
     const apart =
-      '📍 **Neste trecho do jogo**\n1 coisa para pegar aqui: 1 Souvenir. Além do troféu **Piedade**, que é perdível. Seguem na ordem.\n• **Souvenir 3/21, Um túmulo**\nNo jardim cercado.\n\n• ⚠️ **Piedade** é perdível: Não mate o guarda das docas.'
+      '📍 **Neste trecho do jogo**\n1 coisa para pegar aqui: 1 Souvenir. Além do troféu **Piedade**, que é perdível. Seguem na ordem.\n\n• **Souvenir 3/21, Um túmulo**\nNo jardim cercado.\n\n• ⚠️ **Piedade** é perdível: Não mate o guarda das docas.'
     expect(reaction.mock.calls[0][4]).toBe(apart)
     // The plain notice ends with the same block.
     config.automatic.notices = false
@@ -644,7 +644,7 @@ describe('checkUser', () => {
     } as unknown as Guide)
     const cheer = '🎯 Perdível no bolso: **Segundo**. Um susto a menos no caminho da platina.'
     const tip =
-      '📍 **Neste trecho do jogo**\nAqui tem o troféu **Terceiro**, que é perdível. Seguem na ordem.\n• ⚠️ **Terceiro** é perdível: Poupe o guarda.'
+      '📍 **Neste trecho do jogo**\nAqui tem o troféu **Terceiro**, que é perdível. Seguem na ordem.\n\n• ⚠️ **Terceiro** é perdível: Poupe o guarda.'
     const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
     await checkUser(user)
     expect(reaction.mock.calls[0][3]).toBeUndefined()

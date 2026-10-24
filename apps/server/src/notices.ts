@@ -339,5 +339,5 @@ function stretchBlock(user: User, tips: RouteTip[]): string {
   const head = [translator(messages, user)('here'), collectibleSummary(tips, locale)]
     .filter(Boolean)
     .join('\n')
-  return `${head}\n${tips.map((tip) => tipLine(tip, locale)).join('\n\n')}`
+  return `${head}\n\n${tips.map((tip, i) => tipLine(tip, locale, i + 1)).join('\n\n')}`
 }
