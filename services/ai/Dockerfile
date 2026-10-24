@@ -1,5 +1,5 @@
 # The AI service, to run PlatJourney locally with `bun run docker:up`.
-FROM python:3.14-slim
+FROM python:3.15-slim
 RUN pip install --no-cache-dir uv==0.11.10
 WORKDIR /app/services/ai
 ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 UV_PYTHON_DOWNLOADS=never
