@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.32.1](https://github.com/renatoaug/platjourney/compare/v0.32.0...v0.32.1) (2026-10-24)
+
+### Bug Fixes
+
+* **server:** plural checklist summary, relief under the trophy, no story focus next to a checklist ([#88](https://github.com/renatoaug/platjourney/issues/88)) ([8f19b66](https://github.com/renatoaug/platjourney/commit/8f19b6669a02d11e8e91c5f7f6c0ed83a855ed44))
+
 ## [0.32.0](https://github.com/renatoaug/platjourney/compare/v0.31.11...v0.32.0) (2026-10-24)
 
 ### Features
