@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.32.0](https://github.com/renatoaug/platjourney/compare/v0.31.11...v0.32.0) (2026-10-24)
+
+### Features
+
+* **server:** chapter checklist and named missables in notices ([#87](https://github.com/renatoaug/platjourney/issues/87)) ([c0e1164](https://github.com/renatoaug/platjourney/commit/c0e1164b6d4f94e5b4e41621e5e4160d2eb059b4))
+
 ## [0.31.11](https://github.com/renatoaug/platjourney/compare/v0.31.10...v0.31.11) (2026-10-24)
 
 ## [0.31.10](https://github.com/renatoaug/platjourney/compare/v0.31.9...v0.31.10) (2026-10-24)
