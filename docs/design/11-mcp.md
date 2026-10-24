@@ -37,7 +37,7 @@ sequenceDiagram
 
 ## Tools
 
-None calls the model: using them costs the instance nothing. The reads say so (`readOnlyHint`); the changes run the same commands as the web and Telegram, are refused for the demo, and the assistant is told to make them only when the player asks. The tools live in `apps/server/src/mcp-tools.ts`.
+None calls the model: using them costs the instance nothing. The reads say so (`readOnlyHint`); the changes run the same commands as the web and Telegram, are refused for the demo, and the assistant is told to make them only when the player asks. The tools live in `apps/server/src/mcp-tools/`, by area (the player, the catalog, the picks, the interests and what an assistant saves), and `apps/server/src/mcp-tools.ts` lists them in the order the assistant sees.
 
 **Reads**
 
