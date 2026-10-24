@@ -148,6 +148,54 @@ const collectibleType = (tip: RouteTip) => {
   ).trim()
 }
 
+// Borrowed words keep the plural of their language: souvenirs, not souvenires.
+const LOANWORDS = new Set([
+  'souvenir',
+  'poster',
+  'pôster',
+  'laser',
+  'sticker',
+  'trailer',
+  'scanner',
+])
+
+// Portuguese plurals by ending, the first that matches: flor, flores; anel, anéis; baú, baús.
+const PLURAL_ENDINGS: [RegExp, string][] = [
+  [/ão$/, 'ões'],
+  [/([rz])$/, '$1es'],
+  [/([sx])$/, '$1'],
+  [/m$/, 'ns'],
+  [/al$/, 'ais'],
+  [/el$/, 'éis'],
+  [/ol$/, 'óis'],
+  [/ul$/, 'uis'],
+  [/$/, 's'],
+]
+
+// One Portuguese word in the plural: flor, flores; baú, baús; secreto, secretos.
+const pluralWord = (word: string) => {
+  if (LOANWORDS.has(word)) return `${word}s`
+  const [ending, plural] = PLURAL_ENDINGS.find(([re]) => re.test(word)) ?? [/$/, 's']
+  return word.replace(ending, plural)
+}
+
+// A count of one type, lowercase as in a sentence: "1 flor", "2 baús de ferramentas", "2 souvenirs".
+// In Portuguese every word before a "de" takes the plural; in English the last word does, or the one
+// before an "of".
+function counted(n: number, type: string, locale: Locale): string {
+  const words = type.toLowerCase().split(/\s+/)
+  if (n === 1) return `1 ${words.join(' ')}`
+  if (locale === Language.PtBR) {
+    const stop = words.findIndex((w) => /^d[aeo]s?$/.test(w))
+    return `${n} ${words.map((w, i) => (stop < 0 || i < stop ? pluralWord(w) : w)).join(' ')}`
+  }
+  const of = words.indexOf('of')
+  const head = of > 0 ? of - 1 : words.length - 1
+  const english = (w: string) =>
+    /(x|z|ch|sh|ss)$/.test(w) ? `${w}es` : w.endsWith('s') ? w : `${w}s`
+  return `${n} ${words.map((w, i) => (i === head ? english(w) : w)).join(' ')}`
+}
+
 // The stretch's checklist summed up: how many things to pick up, by type in the order they first
 // appear, and the missable trophies by name. Empty when there is neither.
 export function collectibleSummary(tips: RouteTip[], locale: Locale = DEFAULT_LOCALE): string {
@@ -161,7 +209,9 @@ export function collectibleSummary(tips: RouteTip[], locale: Locale = DEFAULT_LO
   const types = new Map<string, number>()
   for (const tip of found)
     types.set(collectibleType(tip), (types.get(collectibleType(tip)) ?? 0) + 1)
-  const list = [...types].map(([type, n]) => `${n} ${type}`).join(', ')
+  const list = new Intl.ListFormat(locale, { type: 'conjunction' }).format(
+    [...types].map(([type, n]) => counted(n, type, locale)),
+  )
   const parts = [
     found.length ? t('collectibles', { count: found.length, types: list }) : '',
     missables.length

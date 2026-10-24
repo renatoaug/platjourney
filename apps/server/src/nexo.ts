@@ -1,7 +1,7 @@
 import { AiError, ai } from './ai.ts'
 import { aiContext } from './ai-context.ts'
 import { tagged } from './costs.ts'
-import { focusAfter, tidy } from './focus.ts'
+import { focusAfter, storyTrophy, tidy } from './focus.ts'
 import type { Guide } from './guide.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
 import { markCheer, progressMark } from './marks.ts'
@@ -115,9 +115,17 @@ export async function unlockReaction(
   route?: string,
   /** Sent as written after Nexo's words: the stretch's collectibles (watcher.ts). */
   after?: string,
+  /** Our own line right under the trophy, before Nexo's words: a missable just earned. */
+  relief?: string,
 ): Promise<string> {
   // The target is the server's, the same the session notice named: Nexo does not pick another.
-  const focus = focusAfter(ctx, unlocked)
+  // When it is only the next chapter's story trophy and the checklist of that chapter follows, the
+  // checklist is the guidance: "finish chapter 5" says nothing the player does not know.
+  const target = focusAfter(ctx, unlocked)
+  const focus =
+    after && storyTrophy(ctx.guide, target.trophy?.name)
+      ? { ...target, trophy: undefined, trick: undefined }
+      : target
   // The first trophy, halfway, the final stretch or the platinum: the notice marks it.
   const mark = progressMark(ctx.trophies, unlocked)
   const text = await ask(user, 'tip', '/nexo/tip', {
@@ -150,7 +158,10 @@ export async function unlockReaction(
   )
   // At a mark, our own line opens the message under the trophy (a paragraph of its own, so it does not
   // read as part of the title), and Nexo's words follow it.
-  const cheer = mark ? `\n\n${markCheer(user, mark.kind)}` : ''
+  const cheer = [mark ? markCheer(user, mark.kind) : '', relief ?? '']
+    .filter(Boolean)
+    .map((line) => `\n\n${line}`)
+    .join('')
   const tail = after ? `\n\n${after}` : ''
   const titled = `${unlocked.map((t) => `🏆 **${tidy(t.name)}**`).join('\n')}${cheer}\n\n${body}${tail}`
   await logTip(user.id, 'unlock', titled, ctx.game.id)

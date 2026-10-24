@@ -6,6 +6,7 @@
 // the story and came back for the side activities has trophies open in several phases at once.
 // So nothing here says which phase the player is in. A phase describes trophies: how many are
 // left in it, which one the focus belongs to, and when the last one of a phase falls.
+import type { Guide } from './guide.ts'
 import type { GameContext } from './nexo.ts'
 import type { TrophyStatus } from './psn.ts'
 
@@ -36,6 +37,13 @@ interface Focus {
 // PSN sometimes writes a name with a double space ("Caçador de  Emboscadas"); the guide copies it.
 // Compared and shown with single spaces.
 export const tidy = (name: string) => name.replace(/\s+/g, ' ').trim()
+
+// A trophy that opens one of the guide's milestones: the story trophy for finishing a chapter.
+export function storyTrophy(guide: Pick<Guide, 'milestones'> | undefined, name?: string): boolean {
+  if (!name) return false
+  const key = tidy(name).toLowerCase()
+  return (guide?.milestones ?? []).some((m) => m.after && tidy(m.after).toLowerCase() === key)
+}
 
 const shortName = (phase: string) => tidy(phase.split(/\s[—–-]\s/)[0])
 
