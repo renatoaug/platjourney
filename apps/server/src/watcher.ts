@@ -9,6 +9,7 @@ import {
   followedNotice,
   followedRecommendation,
   markNotice,
+  missableCheer,
   routeFor,
   sessionNotice,
   startNotice,
@@ -107,6 +108,7 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
       'unlock',
       together(
         unlockNotice(user, ctx, unlocked),
+        missableCheer(user, ctx, unlocked),
         markNotice(user, ctx, unlocked),
         focusNotice(user, ctx, unlocked),
         route?.text,
@@ -129,7 +131,8 @@ async function nexoNews({ user, ctx, latest, justStarted, unlocked, route }: New
     await markTipSent(user.id, latest.npCommunicationId)
   } else if (unlocked.length > 0) {
     console.log(`${user.psn_online_id}: unlocked ${unlocked.map((t) => t.name).join(', ')}`)
-    await notify(user, await unlockReaction(user, ctx, unlocked, route?.text, route?.collectibles))
+    const after = together(missableCheer(user, ctx, unlocked), route?.collectibles) || undefined
+    await notify(user, await unlockReaction(user, ctx, unlocked, route?.text, after))
   } else if (route)
     await plainNotice(user, 'route', together(route.text, route.collectibles), ctx.game.id)
 }

@@ -28,7 +28,8 @@ interface Focus {
   // from a later phase: then the focus is something left behind, not the next step.
   phase?: string
   behind?: boolean
-  // A missable still open, the one in the focus's phase first.
+  // A missable still open in the focus's phase. One the roadmap plans for later (a New Game+ skill)
+  // is not news yet: repeating it in every notice buries the one that matters now.
   missable?: { trophy: string; when: string }
 }
 
@@ -70,7 +71,7 @@ export function todaysFocus(ctx: Pick<GameContext, 'trophies' | 'guide'>): Focus
   const trophy = name ? open.get(name) : undefined
   const behind = !!first && roadmap.slice(at + 1).some((r) => r.trophies.some((n) => earned.has(n)))
   const missables = (guide?.missables ?? []).filter((m) => open.has(tidy(m.trophy)))
-  const missable = missables.find((m) => first?.trophies.includes(tidy(m.trophy))) ?? missables[0]
+  const missable = missables.find((m) => first?.trophies.includes(tidy(m.trophy)))
   return {
     phases,
     ...(trophy ? { trophy: { ...trophy, name: tidy(trophy.name) } } : {}),

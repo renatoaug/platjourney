@@ -65,10 +65,31 @@ function toTelegramHtml(text: string): string {
   )
 }
 
+// Telegram caps messages at 4096 chars. A longer text goes in parts cut between paragraphs, so a
+// checklist item or a bold name is never split in two; a single paragraph longer than that is cut
+// where it must.
+export function messageParts(text: string, max = 4000): string[] {
+  const parts: string[] = []
+  let part = ''
+  for (const paragraph of text.split('\n\n')) {
+    const next = part ? `${part}\n\n${paragraph}` : paragraph
+    if (next.length <= max) {
+      part = next
+      continue
+    }
+    if (part) parts.push(part)
+    part = paragraph
+    while (part.length > max) {
+      parts.push(part.slice(0, max))
+      part = part.slice(max)
+    }
+  }
+  if (part) parts.push(part)
+  return parts
+}
+
 export async function sendMessage(chatId: string, text: string): Promise<void> {
-  // Telegram caps messages at 4096 chars.
-  for (let i = 0; i < text.length; i += 4000) {
-    const chunk = text.slice(i, i + 4000)
+  for (const chunk of messageParts(text)) {
     await call('sendMessage', {
       chat_id: chatId,
       text: toTelegramHtml(chunk),
