@@ -5,17 +5,31 @@ const messages = defineMessages({
   [Language.PtBR]: {
     after: 'Agora vale saber:',
     before: 'Antes de começar:',
+    // A tip about one trophy names it, so the player knows what it is for.
+    missableTip: '⚠️ **{trophy}** é perdível: {text}',
+    trophyTip: '🏆 **{trophy}**: {text}',
+    // The collectibles of a stretch, counted by type before the list ("2 Souvenir, 1 Flor").
+    collectibles: {
+      one: '1 colecionável aqui: {types}.',
+      other: '{count} colecionáveis aqui: {types}.',
+    },
   },
   [Language.En]: {
     after: 'Worth knowing now:',
     before: 'Before you start:',
+    missableTip: '⚠️ **{trophy}** is missable: {text}',
+    trophyTip: '🏆 **{trophy}**: {text}',
+    collectibles: {
+      one: '1 collectible here: {types}.',
+      other: '{count} collectibles here: {types}.',
+    },
   },
 })
 
 // The guide's real-time route: after a story trophy, what matters right there
 // (a missable about to close, an item worth grabbing, a trophy that is easy now, where the
 // collectibles of the chapter just reached are).
-interface RouteTip {
+export interface RouteTip {
   kind: 'missable' | 'item' | 'advantage' | 'trophy' | 'warning' | 'collectible'
   text: string
   trophy: string | null
@@ -66,6 +80,42 @@ export function stillOpen(milestone: Milestone, earned: string[]): Milestone | u
 export function routeNotice(milestone: Milestone, locale: Locale = DEFAULT_LOCALE): string {
   const t = translator(messages, locale)
   const head = t(milestone.after ? 'after' : 'before')
-  const tips = milestone.tips.map((t) => `• ${t.text}`)
+  const tips = milestone.tips.map((tip) => tipLine(tip, locale))
   return [head, ...tips].join('\n')
+}
+
+// One tip as a line. A collectible opens with its name ("Souvenir 1/21, Best player: ..."): the
+// name goes in bold on a line of its own, the directions below it. A tip about a trophy names the
+// trophy, and says so when it is missable.
+export function tipLine(tip: RouteTip, locale: Locale = DEFAULT_LOCALE): string {
+  const t = translator(messages, locale)
+  const at = tip.text.indexOf(': ')
+  if (tip.kind === 'collectible' && at >= 0) {
+    const rest = tip.text.slice(at + 2)
+    return `• **${tip.text.slice(0, at)}**\n${rest.charAt(0).toUpperCase()}${rest.slice(1)}`
+  }
+  if (!tip.trophy || tip.kind === 'collectible') return `• ${tip.text}`
+  return `• ${t(tip.kind === 'missable' ? 'missableTip' : 'trophyTip', { trophy: tip.trophy, text: tip.text })}`
+}
+
+// The collectible's type from its name: "Flor 3/5, Genciana" is a Flor, "Baú secreto 2/10" a Baú
+// secreto.
+const collectibleType = (tip: RouteTip) => {
+  const name = tip.text.split(': ')[0] ?? tip.text
+  return (
+    name.match(/^(.*?)\s+\d+(?:\s*\/\s*\d+)?(?:\D|$)/)?.[1] ??
+    name.split(',')[0] ??
+    name
+  ).trim()
+}
+
+// How many collectibles a stretch has, by type, in the order they first appear. Empty without any.
+export function collectibleSummary(tips: RouteTip[], locale: Locale = DEFAULT_LOCALE): string {
+  const found = tips.filter((tip) => tip.kind === 'collectible')
+  if (!found.length) return ''
+  const types = new Map<string, number>()
+  for (const tip of found)
+    types.set(collectibleType(tip), (types.get(collectibleType(tip)) ?? 0) + 1)
+  const list = [...types].map(([type, n]) => `${n} ${type}`).join(', ')
+  return translator(messages, locale)('collectibles', { count: found.length, types: list })
 }

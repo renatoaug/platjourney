@@ -336,13 +336,13 @@ describe('session start', () => {
       ],
     } as unknown as NonNullable<Parameters<typeof sessionNotice>[2]>
     expect(sessionNotice(user, 'x', ctx)).toContain(
-      '📍 **Neste trecho do jogo**\n• **Souvenir 1**\nNa tenda do mercado.\n\n',
+      '📍 **Neste trecho do jogo**\n1 colecionável aqui: 1 Souvenir.\n• **Souvenir 1**\nNa tenda do mercado.\n\n',
     )
     expect(sessionNotice(user, 'x', ctx)).not.toContain('Flor 1/5')
     // Opened again with nothing new: one line, and the stretch's collectibles still there.
     expect(sessionNotice(user, 'x', ctx, true)).toContain('de novo')
     expect(sessionNotice(user, 'x', ctx, true)).toContain(
-      '\n\n📍 **Neste trecho do jogo**\n• **Souvenir 1**\nNa tenda do mercado.',
+      '\n\n📍 **Neste trecho do jogo**\n1 colecionável aqui: 1 Souvenir.\n• **Souvenir 1**\nNa tenda do mercado.',
     )
     // Several tips are set apart by a blank line.
     ctx.trophies[3] = makeTrophy({ id: 4, name: 'Herbalista' })
@@ -562,7 +562,7 @@ describe('checkUser', () => {
     expect(send.mock.calls.map((c) => c[1])).toEqual(['Boa!'])
   })
 
-  test('a chapter trophy hands Nexo the common tips and adds the next stretch’s collectibles as written', async () => {
+  test('a chapter trophy hands Nexo the common tips and adds the next stretch’s missables and collectibles as written', async () => {
     getGuide.mockResolvedValue({
       milestones: [
         { after: null, tips: [{ kind: 'warning', text: 'Jogue no Difícil.', trophy: null }] },
@@ -575,6 +575,7 @@ describe('checkUser', () => {
               text: 'Souvenir 3/21, Um túmulo: no jardim cercado.',
               trophy: 'Lembranças',
             },
+            { kind: 'missable', text: 'Não mate o guarda das docas.', trophy: 'Piedade' },
           ],
         },
       ],
@@ -582,17 +583,16 @@ describe('checkUser', () => {
     const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
     await checkUser(user)
     expect(reaction.mock.calls[0][3]).toBe('Agora vale saber:\n• Compre o arco.')
-    expect(reaction.mock.calls[0][4]).toBe(
-      '📍 **Neste trecho do jogo**\n• **Souvenir 3/21, Um túmulo**\nNo jardim cercado.',
-    )
+    // The missable comes first, by name; the collectibles are counted before the list.
+    const apart =
+      '📍 **Neste trecho do jogo**\n1 colecionável aqui: 1 Souvenir.\n• ⚠️ **Piedade** é perdível: Não mate o guarda das docas.\n\n• **Souvenir 3/21, Um túmulo**\nNo jardim cercado.'
+    expect(reaction.mock.calls[0][4]).toBe(apart)
     // The plain notice ends with the same block.
     config.automatic.notices = false
     send.mockClear()
     getTitle.mockResolvedValue(row())
     await checkUser({ ...user, id: 'user:w2' })
-    expect(send.mock.calls.at(-1)?.[1]).toEndWith(
-      'Agora vale saber:\n• Compre o arco.\n\n📍 **Neste trecho do jogo**\n• **Souvenir 3/21, Um túmulo**\nNo jardim cercado.',
-    )
+    expect(send.mock.calls.at(-1)?.[1]).toEndWith(`Agora vale saber:\n• Compre o arco.\n\n${apart}`)
   })
 
   test('two checks at once send the reaction once', async () => {

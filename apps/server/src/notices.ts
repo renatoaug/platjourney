@@ -11,7 +11,15 @@ import { markCheer, progressMark } from './marks.ts'
 import type { GameContext } from './nexo.ts'
 import { lastRecommended } from './repository/recommendation.ts'
 import type { User } from './repository/user.ts'
-import { currentMilestone, reachedMilestone, routeNotice, stillOpen } from './route.ts'
+import {
+  collectibleSummary,
+  currentMilestone,
+  type RouteTip,
+  reachedMilestone,
+  routeNotice,
+  stillOpen,
+  tipLine,
+} from './route.ts'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -161,20 +169,20 @@ export const unlockNotice = (user: User, ctx: Named, unlocked: GameContext['trop
 
 // The guide's note on what comes next, when this start or these unlocks reach one of its
 // milestones. It needs no model, so it goes out whatever the notices switch says.
-// The collectibles go apart, as the guide writes them, after whatever text comes before (Nexo's
-// words or a template): Nexo would shorten them to a name, and the spot is the point.
+// Missables and collectibles go apart, as the guide writes them, after whatever text comes before
+// (Nexo's words or a template): Nexo would shorten them, and the trophy's name and the spot are the
+// point.
 export function routeFor(user: User, ctx: GameContext, unlocked: string[], started: boolean) {
   const reached = reachedMilestone(ctx.guide, unlocked, started)
   const earned = ctx.trophies.filter((t) => t.earned).map((t) => t.name)
   const milestone = reached && stillOpen(reached, earned)
   if (!milestone) return undefined
-  const common = milestone.tips.filter((tip) => tip.kind !== 'collectible')
-  const found = milestone.tips.filter((tip) => tip.kind === 'collectible')
+  const apart = (tip: RouteTip) => tip.kind === 'collectible' || tip.kind === 'missable'
+  const common = milestone.tips.filter((tip) => !apart(tip))
+  const kept = milestone.tips.filter(apart)
   return {
     text: common.length ? routeNotice({ ...milestone, tips: common }, userLocale(user)) : undefined,
-    collectibles: found.length
-      ? `${translator(messages, user)('here')}\n${found.map(tipLine).join('\n\n')}`
-      : undefined,
+    collectibles: kept.length ? stretchBlock(user, kept) : undefined,
   }
 }
 
@@ -235,9 +243,10 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext, again
     blocks.push(`${line}\n${focus.detail}`)
     if (trick) blocks.push(t('tip', { tip: trick }))
   }
-  const stretch = hereTips(ctx)
-  if (stretch) blocks.push(`${t('here')}\n${stretch}`)
-  if (missable) blocks.push(t('missable', { trophy: missable.trophy, when: missable.when }))
+  const stretch = hereTips(user, ctx)
+  if (stretch) blocks.push(stretch)
+  if (missable && !stretch.includes(`**${missable.trophy}**`))
+    blocks.push(t('missable', { trophy: missable.trophy, when: missable.when }))
   // The tracked trophy closest to done, past halfway.
   const almost = missing
     .filter(
@@ -267,23 +276,28 @@ function againNotice(user: User, ctx: GameContext, focus?: string): string {
   const line = [t('again', { game: gameName(ctx) }), still, t('goodSession')]
     .filter(Boolean)
     .join(' ')
-  const stretch = hereTips(ctx, 'collectible')
-  return stretch ? `${line}\n\n${t('here')}\n${stretch}` : line
+  const stretch = hereTips(user, ctx, ['missable', 'collectible'])
+  return stretch ? `${line}\n\n${stretch}` : line
 }
 
-function hereTips(ctx: GameContext, kind?: string): string {
+function hereTips(user: User, ctx: GameContext, kinds?: string[]): string {
   const earned = ctx.trophies.filter((x) => x.earned).map((x) => x.name)
   const current = currentMilestone(ctx.guide, earned)
   const open = current && stillOpen(current, earned)
-  const tips = open?.tips.filter((tip) => !kind || tip.kind === kind) ?? []
-  return tips.map(tipLine).join('\n\n')
+  const tips = open?.tips.filter((tip) => !kinds || kinds.includes(tip.kind)) ?? []
+  return tips.length ? stretchBlock(user, tips) : ''
 }
 
-// A collectible tip opens with its name ("Souvenir 1/21, Best player: ..."): the name goes in
-// bold on a line of its own, the directions below it.
-function tipLine(tip: { kind: string; text: string }): string {
-  const at = tip.text.indexOf(': ')
-  if (tip.kind !== 'collectible' || at < 0) return `• ${tip.text}`
-  const rest = tip.text.slice(at + 2)
-  return `• **${tip.text.slice(0, at)}**\n${rest.charAt(0).toUpperCase()}${rest.slice(1)}`
+// "Where you are in the game": how many collectibles, by type, then the missables first and the
+// rest in the guide's order.
+function stretchBlock(user: User, tips: RouteTip[]): string {
+  const locale = userLocale(user)
+  const ordered = [
+    ...tips.filter((tip) => tip.kind === 'missable'),
+    ...tips.filter((tip) => tip.kind !== 'missable'),
+  ]
+  const head = [translator(messages, user)('here'), collectibleSummary(tips, locale)]
+    .filter(Boolean)
+    .join('\n')
+  return `${head}\n${ordered.map((tip) => tipLine(tip, locale)).join('\n\n')}`
 }
