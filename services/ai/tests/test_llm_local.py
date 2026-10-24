@@ -158,6 +158,26 @@ def test_each_feature_can_have_its_own_provider_and_model(
     assert llm.route() == llm.Route('local', 'qwen3-8b')
 
 
+def test_the_search_step_has_its_own_model_and_a_small_one_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, 'ai_provider', 'openai')
+    monkeypatch.setattr(settings, 'openai_model', 'gpt-5.5')
+    monkeypatch.setattr(settings, 'openai_small_model', 'gpt-5.4-nano')
+    monkeypatch.setattr(settings, 'ai_model_chat', '')
+    monkeypatch.setattr(settings, 'ai_model_search', '')
+    tag('chat')
+    # The translation runs inside the chat request, on its own model.
+    assert llm.route('search') == llm.Route('openai', 'gpt-5.4-nano')
+    assert llm.route() == llm.Route('openai', 'gpt-5.5')
+    monkeypatch.setattr(settings, 'ai_model_search', 'local:qwen3-8b')
+    assert llm.route('search') == llm.Route('local', 'qwen3-8b')
+    monkeypatch.setattr(settings, 'ai_model_search', '')
+    monkeypatch.setattr(settings, 'ai_provider', 'local')
+    monkeypatch.setattr(settings, 'local_model', 'qwen3-8b')
+    assert llm.route('search') == llm.Route('local', 'qwen3-8b')
+
+
 async def test_the_feature_route_picks_the_client_and_the_web_search(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

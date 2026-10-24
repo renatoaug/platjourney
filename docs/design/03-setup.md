@@ -71,6 +71,7 @@ and open http://localhost:3000 (only this machine can reach it). The first time,
 | `PSN_NPSSO` | NPSSO of the throwaway PSN account. Treat it like a password |
 | `TELEGRAM_BOT_TOKEN` | The bot's token |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | OpenAI key and default model (not needed with local models) |
+| `OPENAI_SMALL_MODEL` | The small OpenAI model for one-line jobs, like putting a question in English before the deep guide search (`AI_MODEL_SEARCH` overrides it) |
 | `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET` | The IGDB app |
 | `SURREAL_URL`, `SURREAL_USER`, `SURREAL_PASS`, `SURREAL_NS`, `SURREAL_DB` | SurrealDB; Docker Compose reads the user and password too |
 | `AI_URL`, `AI_TOKEN` | Where the AI service listens and the token the server calls it with (`openssl rand -hex 24`); the service refuses to start with a token under 32 characters |
@@ -118,6 +119,7 @@ The AI service can run on your own machine, for free, with any server that speak
 | `guide_index` | Finding deep guide pages |
 | `server_check` | Online server checks |
 | `judge` | The model that grades Nexo's answers in the evals ([evals](08-evals.md)) |
+| `search` | Putting the player's question in English before the deep guide search ([retrieval](07-rag.md)); unset on OpenAI it is `OPENAI_SMALL_MODEL` |
 
 Web search follows each feature's provider. An OpenAI model needs its price in `services/ai/src/platjourney_ai/costs.py`, or its calls are recorded at $0.
 

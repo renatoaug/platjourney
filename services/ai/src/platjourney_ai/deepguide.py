@@ -22,7 +22,7 @@ import httpx
 from pydantic import BaseModel
 from pypdf import PdfReader
 
-from . import guidestore, llm
+from . import guidestore, keywords, llm
 from .guidestore import Passage, Source
 from .guidetext import chunk_text, html_to_text, page_date
 from .schemas import Game, Wire
@@ -357,22 +357,68 @@ async def ensure(game: Game, trophy_total: int | None = None) -> Status:
     return await status(game)
 
 
+# How many passages each search hands to the fusion.
+CANDIDATES = 30
+# The keyword search with the player's own words weighs less than the other two lists: it only
+# helps the few passages written in Portuguese, and its common words match everything else.
+OWN_WORDS_WEIGHT = 0.3
+
+TRANSLATE = (
+    'Translate this question about a PlayStation game into English, the way an English-speaking '
+    'player would search a trophy guide: game terms as English guides name them (flor → flower, '
+    'baú secreto → secret chest), proper nouns as they are. Add nothing the question does not '
+    'say. Reply with the translation only. A question already in English comes back unchanged.'
+)
+_translated: dict[str, str] = {}
+_TRANSLATED_MAX = 1000
+
+
+async def in_english(question: str) -> str | None:
+    """The question in English, the language of almost every passage, from a small model. A
+    question asked again is not translated again; a failure gives None, so the search goes on
+    without it."""
+    if question in _translated:
+        return _translated[question]
+    try:
+        reply = await llm.respond(step='search', instructions=TRANSLATE, input=question)
+        english = reply.output_text.strip() or question
+    except Exception:
+        log.warning('question translation failed; searching with it as asked', exc_info=True)
+        return None
+    if len(_translated) >= _TRANSLATED_MAX:
+        _translated.clear()
+    _translated[question] = english
+    return english
+
+
 async def retrieve(game: Game, question: str, terms: list[str], limit: int = 6) -> list[Passage]:
-    """The passages most relevant to a question about this game. Guides are written in English
-    while the player asks in Portuguese, so trophy names found in the question are passed as
-    `terms` (their English names) and matched literally; those passages come first, the
-    semantic neighbours fill the rest."""
-    stats = await guidestore.stats(game.id)
-    if stats.chunks == 0:
+    """The passages most relevant to a question about this game. Guides are written mostly in
+    English while the player asks in Portuguese, so the question is put in English first. Three
+    searches are fused: the vectors and the keywords of the English question, and, weighing less,
+    the keywords of the question as asked, for the passages written in Portuguese. Trophy names
+    found in the question are passed as `terms` (their English names) and matched literally;
+    those passages come first."""
+    every = await guidestore.passages(game.id)
+    if not every:
         return []
-    [vector] = await llm.embed([f'{game.name}: {" ".join([question, *terms])}'])
+    english = await in_english(question)
+    [vector] = await llm.embed([f'{game.name}: {" ".join([english or question, *terms])}'])
     literal, semantic = await asyncio.gather(
         guidestore.mentioning(game.id, terms, 3),
-        guidestore.search(game.id, vector, limit),
+        guidestore.search(game.id, vector, CANDIDATES),
     )
+    lists = [[s.position for s in semantic if s.score > MIN_SCORE]]
+    weights = [1.0]
+    # Without a translation (it failed) the vectors rank alone, as before: Portuguese keywords at
+    # full weight outrank them with common words.
+    if english is not None:
+        lists += [keywords.rank(every, english), keywords.rank(every, question)]
+        weights += [1.0, OWN_WORDS_WEIGHT]
+    ranked = keywords.fuse(lists, weights)
+    at = {p.position: p for p in every}
     seen: set[int] = set()
     out: list[Passage] = []
-    for p in [*literal, *(s for s in semantic if s.score > MIN_SCORE)]:
+    for p in [*literal, *(at[n] for n in ranked if n in at)]:
         if p.position in seen:
             continue
         seen.add(p.position)

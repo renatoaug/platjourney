@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     ai_model_server_check: str = ''
     # The model that grades Nexo's answers in the evals (`bun run ai:eval answers`).
     ai_model_judge: str = ''
+    # The model that puts a player's question in English before the deep guide search. It runs
+    # inside another feature's request (the chat), so it is chosen here and not by the action;
+    # unset on OpenAI it is OPENAI_SMALL_MODEL, a one-line job.
+    ai_model_search: str = ''
 
     # Hosted web search (OpenAI only). Off, every answer comes from the stored guides, the deep
     # guide passages and the catalog, which is cheaper and faster; a local model never searches.
@@ -48,6 +52,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str = ''
     openai_model: str = 'gpt-5.5'
+    openai_small_model: str = 'gpt-5.4-nano'
     embedding_model: str = 'text-embedding-3-small'
 
     surreal_url: str = 'http://localhost:8000/rpc'

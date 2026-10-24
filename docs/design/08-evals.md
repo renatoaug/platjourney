@@ -17,7 +17,7 @@ flowchart LR
 
 | Suite | What it measures | Passes when | Cost per question |
 |---|---|---|---|
-| `retrieval` | Whether the deep guide search brings a passage that answers the question | A relevant passage is among the top 6 (recall@6, MRR) | Embeddings, a fraction of a cent |
+| `retrieval` | Whether the deep guide search brings a passage that answers the question | A relevant passage is among the top 6 (recall@6, MRR) | The question's translation and embeddings, a fraction of a cent |
 | `scope` | Whether Nexo stays on PlayStation and keeps its rules when asked not to | The reply is short and says nothing from `forbidden` | One chat call |
 | `answers` | Whether Nexo's answer about a game is right, on point and about what the player still lacks: how to get a trophy, missables, collectibles, time and difficulty, online, points of no return, PS4 and PS5 lists, where to start | The judge scores it 4 or 5 out of 5, with nothing from `avoid` | ~US$ 0.02 (answer and judge) |
 

@@ -109,6 +109,16 @@ async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredP
     return [ScoredPassage.model_validate(r) for r in rows]
 
 
+async def passages(game: str) -> list[Passage]:
+    """Every passage of a game's deep guide, without the vectors: the keyword search scores them
+    all."""
+    rows = await db.rows(
+        f'SELECT {_FIELDS} FROM guide_chunk WHERE game = type::record($game) ORDER BY position',
+        {'game': game},
+    )
+    return [Passage.model_validate(r) for r in rows]
+
+
 async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
     """Passages that mention one of the given terms (trophy names in the guide's language)."""
     if not terms:

@@ -41,25 +41,32 @@ class Route:
     model: str
 
 
-def route() -> Route:
-    """Where the current request's feature runs: its AI_MODEL_<FEATURE>, else AI_PROVIDER."""
-    chosen = str(getattr(settings, f'ai_model_{current_tag.get().action}', '') or '')
+# Steps that run inside another feature's request with a model of their own (the cost still goes
+# to that request's tag), and the OpenAI model they use when AI_MODEL_<STEP> is unset.
+SMALL_STEPS = frozenset({'search'})
+
+
+def route(step: str | None = None) -> Route:
+    """Where the current request's feature runs: its AI_MODEL_<FEATURE>, else AI_PROVIDER. A
+    `step` (the question's translation for the search) picks AI_MODEL_<STEP> instead."""
+    chosen = str(getattr(settings, f'ai_model_{step or current_tag.get().action}', '') or '')
     provider, _, model = chosen.partition(':')
     if (provider or settings.ai_provider) == 'local':
         return Route('local', model or settings.local_model)
+    default = settings.openai_small_model if step in SMALL_STEPS else settings.openai_model
     if (provider or settings.ai_provider) == 'codex':
-        return Route('codex', model or settings.openai_model)
-    return Route('openai', model or settings.openai_model)
+        return Route('codex', model or default)
+    return Route('openai', model or default)
 
 
 def web_search_on() -> bool:
     return settings.ai_web_search and route().provider in ('openai', 'codex')
 
 
-async def respond(**params: Any) -> Reply:
+async def respond(step: str | None = None, **params: Any) -> Reply:
     """A Responses API call (instructions, input, tools, reasoning, text); the model comes
-    from the feature's route."""
-    chosen = route()
+    from the feature's route, or the step's."""
+    chosen = route(step)
     if chosen.provider == 'local':
         return await _respond_locally(params, chosen.model)
     if chosen.provider == 'codex':
