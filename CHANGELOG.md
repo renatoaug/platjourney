@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.31.11](https://github.com/renatoaug/platjourney/compare/v0.31.10...v0.31.11) (2026-10-24)
+
 ## [0.31.10](https://github.com/renatoaug/platjourney/compare/v0.31.9...v0.31.10) (2026-10-24)
 
 ## [0.31.9](https://github.com/renatoaug/platjourney/compare/v0.31.8...v0.31.9) (2026-10-24)
