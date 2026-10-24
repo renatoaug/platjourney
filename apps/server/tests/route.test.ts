@@ -49,7 +49,7 @@ test('the notice names the trophy and marks each tip by kind', () => {
   expect(routeNotice(milestones[0])).toBe('Antes de começar:\n• Jogue no Difícil desde o início.')
 })
 
-test('a stretch counts its collectibles by type, in the order they appear', () => {
+test('a stretch sums up what to pick up by type and names its missables', () => {
   const tips = [
     { kind: 'collectible' as const, text: 'Flor 3/5, Genciana: Na praia.', trophy: 'Herbalista' },
     { kind: 'collectible' as const, text: 'Souvenir 5/21, Seda: Na varanda.', trophy: 'Memórias' },
@@ -57,9 +57,16 @@ test('a stretch counts its collectibles by type, in the order they appear', () =
     { kind: 'collectible' as const, text: 'Souvenir 6/21, Areia: No píer.', trophy: 'Memórias' },
     { kind: 'missable' as const, text: 'Não mate o guarda.', trophy: 'Piedade' },
   ]
-  expect(collectibleSummary(tips)).toBe('4 colecionáveis aqui: 1 Flor, 2 Souvenir, 1 Baú secreto.')
-  expect(collectibleSummary(tips.slice(0, 1), 'en')).toBe('1 collectible here: 1 Flor.')
-  expect(collectibleSummary([tips[4]])).toBe('')
+  expect(collectibleSummary(tips)).toBe(
+    '4 coisas para pegar aqui: 1 Flor, 2 Souvenir, 1 Baú secreto. Além do troféu **Piedade**, que é perdível. Seguem na ordem.',
+  )
+  expect(collectibleSummary(tips.slice(0, 1), 'en')).toBe(
+    '1 thing to pick up here: 1 Flor. In order:',
+  )
+  expect(collectibleSummary([tips[4]])).toBe(
+    'Aqui tem o troféu **Piedade**, que é perdível. Seguem na ordem.',
+  )
+  expect(collectibleSummary([])).toBe('')
   expect(tipLine({ kind: 'trophy', text: 'Atordoe o guarda.', trophy: 'Piedade' })).toBe(
     '• 🏆 **Piedade**: Atordoe o guarda.',
   )

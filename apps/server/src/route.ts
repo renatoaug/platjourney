@@ -8,11 +8,21 @@ const messages = defineMessages({
     // A tip about one trophy names it, so the player knows what it is for.
     missableTip: '⚠️ **{trophy}** é perdível: {text}',
     trophyTip: '🏆 **{trophy}**: {text}',
-    // The collectibles of a stretch, counted by type before the list ("2 Souvenir, 1 Flor").
+    // The stretch's checklist, summed up before the list: what to pick up, counted by type
+    // ("2 Souvenir, 1 Flor"), and its missable trophies by name.
     collectibles: {
-      one: '1 colecionável aqui: {types}.',
-      other: '{count} colecionáveis aqui: {types}.',
+      one: '1 coisa para pegar aqui: {types}.',
+      other: '{count} coisas para pegar aqui: {types}.',
     },
+    alsoMissable: {
+      one: 'Além do troféu {trophies}, que é perdível.',
+      other: 'Além dos troféus {trophies}, que são perdíveis.',
+    },
+    onlyMissable: {
+      one: 'Aqui tem o troféu {trophies}, que é perdível.',
+      other: 'Aqui tem os troféus {trophies}, que são perdíveis.',
+    },
+    inOrder: 'Seguem na ordem.',
   },
   [Language.En]: {
     after: 'Worth knowing now:',
@@ -20,9 +30,18 @@ const messages = defineMessages({
     missableTip: '⚠️ **{trophy}** is missable: {text}',
     trophyTip: '🏆 **{trophy}**: {text}',
     collectibles: {
-      one: '1 collectible here: {types}.',
-      other: '{count} collectibles here: {types}.',
+      one: '1 thing to pick up here: {types}.',
+      other: '{count} things to pick up here: {types}.',
     },
+    alsoMissable: {
+      one: 'Plus the trophy {trophies}, which is missable.',
+      other: 'Plus the trophies {trophies}, which are missable.',
+    },
+    onlyMissable: {
+      one: 'The trophy {trophies} is missable here.',
+      other: 'The trophies {trophies} are missable here.',
+    },
+    inOrder: 'In order:',
   },
 })
 
@@ -109,13 +128,28 @@ const collectibleType = (tip: RouteTip) => {
   ).trim()
 }
 
-// How many collectibles a stretch has, by type, in the order they first appear. Empty without any.
+// The stretch's checklist summed up: how many things to pick up, by type in the order they first
+// appear, and the missable trophies by name. Empty when there is neither.
 export function collectibleSummary(tips: RouteTip[], locale: Locale = DEFAULT_LOCALE): string {
+  const t = translator(messages, locale)
   const found = tips.filter((tip) => tip.kind === 'collectible')
-  if (!found.length) return ''
+  const missables = [
+    ...new Set(
+      tips.filter((tip) => tip.kind === 'missable' && tip.trophy).map((tip) => `**${tip.trophy}**`),
+    ),
+  ]
   const types = new Map<string, number>()
   for (const tip of found)
     types.set(collectibleType(tip), (types.get(collectibleType(tip)) ?? 0) + 1)
   const list = [...types].map(([type, n]) => `${n} ${type}`).join(', ')
-  return translator(messages, locale)('collectibles', { count: found.length, types: list })
+  const parts = [
+    found.length ? t('collectibles', { count: found.length, types: list }) : '',
+    missables.length
+      ? t(found.length ? 'alsoMissable' : 'onlyMissable', {
+          count: missables.length,
+          trophies: missables.join(', '),
+        })
+      : '',
+  ].filter(Boolean)
+  return parts.length ? `${parts.join(' ')} ${t('inOrder')}` : ''
 }

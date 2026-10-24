@@ -332,16 +332,12 @@ function asMissables(ctx: GameContext, tips: RouteTip[]): RouteTip[] {
   )
 }
 
-// "Where you are in the game": how many collectibles, by type, then the missables first and the
-// rest in the guide's order.
+// "Where you are in the game": the checklist summed up (what to pick up, the missables by name),
+// then each item in the order the player meets it.
 function stretchBlock(user: User, tips: RouteTip[]): string {
   const locale = userLocale(user)
-  const ordered = [
-    ...tips.filter((tip) => tip.kind === 'missable'),
-    ...tips.filter((tip) => tip.kind !== 'missable'),
-  ]
   const head = [translator(messages, user)('here'), collectibleSummary(tips, locale)]
     .filter(Boolean)
     .join('\n')
-  return `${head}\n${ordered.map((tip) => tipLine(tip, locale)).join('\n\n')}`
+  return `${head}\n${tips.map((tip) => tipLine(tip, locale)).join('\n\n')}`
 }
