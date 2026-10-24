@@ -64,6 +64,13 @@ const messages = defineMessages({
     focusNewBehind:
       '**Sugestão de próximo troféu**\nPelo momento em que você está, vale buscar **{trophy}**, que ficou para trás.\n{detail}',
     phaseDone: '🎉 Fechou a {phase} do roteiro!',
+    // A missable just earned: one of these, the same per trophy.
+    missableEarned: {
+      a: '🔒 **{trophy}** era perdível e agora é seu para sempre. Esse não escapou!',
+      b: '🎯 Perdível no bolso: **{trophy}**. Um susto a menos no caminho da platina.',
+      c: '😮‍💨 Ufa! **{trophy}** era perdível e você não deixou passar.',
+      d: '🛟 **{trophy}** resgatado na hora certa. Menos um perdível tirando o sono.',
+    },
     unlocked: '🏆 **{trophy}** ({type}) em **{game}**',
     unlockedRate: '🏆 **{trophy}** ({type}, {rate}% de quem joga) em **{game}**',
     types: {
@@ -109,6 +116,12 @@ const messages = defineMessages({
     focusNewBehind:
       '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.\n{detail}',
     phaseDone: '🎉 You closed {phase} of the roadmap!',
+    missableEarned: {
+      a: "🔒 **{trophy}** was missable and now it's yours for good. That one didn't get away!",
+      b: '🎯 Missable in the bag: **{trophy}**. One less scare on the way to the platinum.',
+      c: "😮‍💨 Phew! **{trophy}** was missable and you didn't let it slip.",
+      d: '🛟 **{trophy}** rescued right on time. One less missable keeping you up at night.',
+    },
     unlocked: '🏆 **{trophy}** ({type}) in **{game}**',
     unlockedRate: '🏆 **{trophy}** ({type}, {rate}% of players) in **{game}**',
     types: {
@@ -150,6 +163,23 @@ export const followedNotice = (user: User, game: string) => {
   return translator(messages, user)(`followed.${FOLLOWED[sum % FOLLOWED.length]}`)
 }
 
+// The trophies just earned that the guide lists as missable, each with a line of relief.
+export const missableCheer = (
+  user: User,
+  ctx: GameContext,
+  unlocked: GameContext['trophies'],
+): string | undefined => {
+  const t = translator(messages, user)
+  const missables = new Set((ctx.guide?.missables ?? []).map((m) => tidy(m.trophy).toLowerCase()))
+  const lines = unlocked
+    .filter((x) => missables.has(tidy(x.name).toLowerCase()))
+    .map((x) => {
+      const sum = [...x.name].reduce((n, c) => n + c.charCodeAt(0), 0)
+      return t(`missableEarned.${FOLLOWED[sum % FOLLOWED.length]}`, { trophy: tidy(x.name) })
+    })
+  return lines.length ? lines.join('\n') : undefined
+}
+
 export const unlockNotice = (user: User, ctx: Named, unlocked: GameContext['trophies']) => {
   const t = translator(messages, user)
   return unlocked
@@ -175,8 +205,9 @@ export const unlockNotice = (user: User, ctx: Named, unlocked: GameContext['trop
 export function routeFor(user: User, ctx: GameContext, unlocked: string[], started: boolean) {
   const reached = reachedMilestone(ctx.guide, unlocked, started)
   const earned = ctx.trophies.filter((t) => t.earned).map((t) => t.name)
-  const milestone = reached && stillOpen(reached, earned)
-  if (!milestone) return undefined
+  const open = reached && stillOpen(reached, earned)
+  if (!open) return undefined
+  const milestone = { ...open, tips: asMissables(ctx, open.tips) }
   const apart = (tip: RouteTip) => tip.kind === 'collectible' || tip.kind === 'missable'
   const common = milestone.tips.filter((tip) => !apart(tip))
   const kept = milestone.tips.filter(apart)
@@ -284,8 +315,21 @@ function hereTips(user: User, ctx: GameContext, kinds?: string[]): string {
   const earned = ctx.trophies.filter((x) => x.earned).map((x) => x.name)
   const current = currentMilestone(ctx.guide, earned)
   const open = current && stillOpen(current, earned)
-  const tips = open?.tips.filter((tip) => !kinds || kinds.includes(tip.kind)) ?? []
+  const tips = asMissables(ctx, open?.tips ?? []).filter(
+    (tip) => !kinds || kinds.includes(tip.kind),
+  )
   return tips.length ? stretchBlock(user, tips) : ''
+}
+
+// A tip about a trophy the guide lists as missable is a missable tip, whatever kind the milestone
+// gave it: many guides wrote "trophy" for a missable there.
+function asMissables(ctx: GameContext, tips: RouteTip[]): RouteTip[] {
+  const missables = new Set((ctx.guide?.missables ?? []).map((m) => tidy(m.trophy).toLowerCase()))
+  return tips.map((tip) =>
+    tip.trophy && tip.kind !== 'collectible' && missables.has(tidy(tip.trophy).toLowerCase())
+      ? { ...tip, kind: 'missable' }
+      : tip,
+  )
 }
 
 // "Where you are in the game": how many collectibles, by type, then the missables first and the

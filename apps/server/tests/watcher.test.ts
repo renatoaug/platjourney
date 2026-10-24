@@ -628,6 +628,35 @@ describe('checkUser', () => {
     expect(send.mock.calls).toEqual([['42', text]])
   })
 
+  test('a missable just earned gets a line of relief, and a tip about a listed missable says so', async () => {
+    getGuide.mockResolvedValue({
+      missables: [
+        { trophy: 'Segundo', when: 'No capítulo 2.', how: 'Leia a carta.' },
+        { trophy: 'Terceiro', when: 'No capítulo 3.', how: 'Poupe o guarda.' },
+      ],
+      milestones: [
+        { after: null, tips: [] },
+        {
+          after: 'Segundo',
+          tips: [{ kind: 'trophy', text: 'Poupe o guarda.', trophy: 'Terceiro' }],
+        },
+      ],
+    } as unknown as Guide)
+    const cheer = '🎯 Perdível no bolso: **Segundo**. Um susto a menos no caminho da platina.'
+    const tip = '📍 **Neste trecho do jogo**\n• ⚠️ **Terceiro** é perdível: Poupe o guarda.'
+    const reaction = spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
+    await checkUser(user)
+    expect(reaction.mock.calls[0][3]).toBeUndefined()
+    expect(reaction.mock.calls[0][4]).toBe(`${cheer}\n\n${tip}`)
+    config.automatic.notices = false
+    send.mockClear()
+    getTitle.mockResolvedValue(row())
+    await checkUser({ ...user, id: 'user:w3' })
+    const text = send.mock.calls.at(-1)?.[1] ?? ''
+    expect(text.split('\n\n')[1]).toBe(cheer)
+    expect(text).toEndWith(tip)
+  })
+
   test('a player who turned Nexo’s notices off gets the plain one', async () => {
     const reaction = spyOn(nexo, 'unlockReaction')
     await checkUser({ ...user, ai_notices: false })
