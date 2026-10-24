@@ -474,6 +474,59 @@ async def test_retrieve_without_a_translation_ranks_by_the_vectors_alone(
     assert [p.position for p in found] == [1]
 
 
+def test_the_searches_weigh_by_the_language_of_the_game_guide() -> None:
+    # Mostly English: the translation leads, the player's own words count the least.
+    assert deepguide.weights(0.05) == (1.0, 1.0, deepguide.MIN_WEIGHT, 0.0)
+    # Half and half: every search counts in full.
+    assert deepguide.weights(0.5) == (1.0, 1.0, 1.0, 1.0)
+    # Mostly Portuguese: the player's own words lead.
+    assert deepguide.weights(0.9) == (deepguide.MIN_WEIGHT, deepguide.MIN_WEIGHT, 1.0, 1.0)
+
+
+async def test_a_guide_largely_in_portuguese_is_searched_by_the_question_as_asked_too(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    every = [
+        passage(1).model_copy(
+            update={'content': 'Você não pode perder a pena dourada no capítulo 2.'}
+        ),
+        passage(2).model_copy(
+            update={'content': 'Depois do chefe, isso também conta para o troféu.'}
+        ),
+        passage(3).model_copy(update={'content': 'The golden feather is in chapter 2.'}),
+    ]
+    embedded: list[list[str]] = []
+
+    async def passages(game: str) -> list[Passage]:
+        return every
+
+    async def in_english(question: str) -> str | None:
+        return 'where is the golden feather?'
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        embedded.append(texts)
+        return [[0.1], [0.2]]
+
+    async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
+        return []
+
+    async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
+        hit = every[2] if vector == [0.1] else every[0]
+        return [ScoredPassage(**hit.model_dump(), score=0.7)]
+
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
+    monkeypatch.setattr(llm, 'embed', embed)
+    monkeypatch.setattr(guidestore, 'mentioning', mentioning)
+    monkeypatch.setattr(guidestore, 'search', search)
+    found = await deepguide.retrieve(GAME, 'onde fica a pena dourada?', [])
+    assert embedded == [
+        ['Far Cry 3: where is the golden feather?', 'Far Cry 3: onde fica a pena dourada?']
+    ]
+    # The Portuguese passage leads: two thirds of the guide is in Portuguese.
+    assert found[0].position == 1
+
+
 async def test_the_question_goes_to_english_once_and_falls_back_to_itself(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

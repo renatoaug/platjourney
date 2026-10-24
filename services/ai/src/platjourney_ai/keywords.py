@@ -127,6 +127,58 @@ def rank(passages: list[Passage], query: str) -> list[int]:
     return [position for position, _ in sorted(scored, key=lambda s: -s[1])]
 
 
+# Words that tell a Portuguese passage from an English or a Spanish one: common in guides of each
+# language, none shared.
+_PORTUGUESE = frozenset(
+    [
+        'você',
+        'não',
+        'troféu',
+        'com',
+        'uma',
+        'são',
+        'também',
+        'pelo',
+        'pela',
+        'isso',
+        'depois',
+        'quando',
+    ]
+)
+_ENGLISH = frozenset(
+    [
+        'you',
+        'the',
+        'and',
+        'with',
+        'trophy',
+        'chapter',
+        'this',
+        'that',
+        'are',
+        'after',
+        'when',
+        'from',
+        'your',
+        'will',
+    ]
+)
+_SPANISH = frozenset(
+    ['el', 'los', 'del', 'con', 'una', 'pero', 'muy', 'hay', 'cuando', 'puedes', 'tienes', 'trofeo']
+)
+
+
+def portuguese(passage: Passage) -> bool:
+    found = _WORD.findall(f'{passage.heading}\n{passage.content}'.lower())
+    pt = sum(w in _PORTUGUESE for w in found)
+    return pt > sum(w in _ENGLISH for w in found) and pt > sum(w in _SPANISH for w in found)
+
+
+def portuguese_share(passages: list[Passage]) -> float:
+    """How much of a game's deep guide is written in Portuguese, from 0 to 1."""
+    return sum(map(portuguese, passages)) / len(passages) if passages else 0.0
+
+
 def fuse(lists: list[list[int]], weights: list[float], depth: int = 30, k: int = 60) -> list[int]:
     """Reciprocal rank fusion: each list adds weight / (k + rank) to the positions it ranks, so a
     passage near the top of several lists wins without comparing their scores."""

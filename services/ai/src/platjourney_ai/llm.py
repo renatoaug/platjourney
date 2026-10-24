@@ -42,8 +42,8 @@ class Route:
 
 
 # Steps that run inside another feature's request with a model of their own (the cost still goes
-# to that request's tag), and the OpenAI model they use when AI_MODEL_<STEP> is unset.
-SMALL_STEPS = frozenset({'search'})
+# to that request's tag), and the OpenAI model each uses when its AI_MODEL_<STEP> is unset.
+STEP_MODELS = {'search': 'gpt-5.4-nano'}
 
 
 def route(step: str | None = None) -> Route:
@@ -53,7 +53,7 @@ def route(step: str | None = None) -> Route:
     provider, _, model = chosen.partition(':')
     if (provider or settings.ai_provider) == 'local':
         return Route('local', model or settings.local_model)
-    default = settings.openai_small_model if step in SMALL_STEPS else settings.openai_model
+    default = STEP_MODELS.get(step or '', settings.openai_model)
     if (provider or settings.ai_provider) == 'codex':
         return Route('codex', model or default)
     return Route('openai', model or default)

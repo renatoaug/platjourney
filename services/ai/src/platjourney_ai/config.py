@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     ai_model_judge: str = ''
     # The model that puts a player's question in English before the deep guide search. It runs
     # inside another feature's request (the chat), so it is chosen here and not by the action;
-    # unset on OpenAI it is OPENAI_SMALL_MODEL, a one-line job.
+    # unset on OpenAI it is a small model (llm.STEP_MODELS), for a one-line job.
     ai_model_search: str = ''
 
     # Hosted web search (OpenAI only). Off, every answer comes from the stored guides, the deep
@@ -52,7 +52,6 @@ class Settings(BaseSettings):
 
     openai_api_key: str = ''
     openai_model: str = 'gpt-5.5'
-    openai_small_model: str = 'gpt-5.4-nano'
     embedding_model: str = 'text-embedding-3-small'
 
     surreal_url: str = 'http://localhost:8000/rpc'

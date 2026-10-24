@@ -357,11 +357,27 @@ async def ensure(game: Game, trophy_total: int | None = None) -> Status:
     return await status(game)
 
 
+def near(found: list[guidestore.ScoredPassage]) -> list[int]:
+    """The positions of the vector search's passages close enough to count."""
+    return [s.position for s in found if s.score > MIN_SCORE]
+
+
 # How many passages each search hands to the fusion.
 CANDIDATES = 30
-# The keyword search with the player's own words weighs less than the other two lists: it only
-# helps the few passages written in Portuguese, and its common words match everything else.
-OWN_WORDS_WEIGHT = 0.3
+# The least a search counts in the fusion, whatever the language of the game's guide.
+MIN_WEIGHT = 0.3
+
+
+def weights(portuguese: float) -> tuple[float, float, float, float]:
+    """How much each search counts, from how much of the game's guide is in Portuguese: the
+    vectors and keywords of the English question, then the keywords and vectors of the question
+    as asked. A guide mostly in English leans on the translation, one mostly in Portuguese on the
+    player's own words; each search counts at least MIN_WEIGHT, the vectors as asked only once a
+    quarter of the guide is in Portuguese."""
+    english = min(1.0, max(MIN_WEIGHT, 2 * (1 - portuguese)))
+    own = min(1.0, max(MIN_WEIGHT, 2 * portuguese))
+    return english, english, own, own if portuguese >= 0.25 else 0.0
+
 
 TRANSLATE = (
     'Translate this question about a PlayStation game into English, the way an English-speaking '
@@ -393,28 +409,39 @@ async def in_english(question: str) -> str | None:
 
 async def retrieve(game: Game, question: str, terms: list[str], limit: int = 6) -> list[Passage]:
     """The passages most relevant to a question about this game. Guides are written mostly in
-    English while the player asks in Portuguese, so the question is put in English first. Three
-    searches are fused: the vectors and the keywords of the English question, and, weighing less,
-    the keywords of the question as asked, for the passages written in Portuguese. Trophy names
-    found in the question are passed as `terms` (their English names) and matched literally;
-    those passages come first."""
+    English while the player asks in Portuguese, so the question is put in English first. The
+    searches are fused by rank: the vectors and the keywords of the English question, the keywords
+    of the question as asked and, for a guide largely in Portuguese, its vectors too, each weighed
+    by how much of the game's guide is in each language (`weights`). Trophy names found in the
+    question are passed as `terms` (their English names) and matched literally; those passages
+    come first."""
     every = await guidestore.passages(game.id)
     if not every:
         return []
     english = await in_english(question)
-    [vector] = await llm.embed([f'{game.name}: {" ".join([english or question, *terms])}'])
-    literal, semantic = await asyncio.gather(
-        guidestore.mentioning(game.id, terms, 3),
-        guidestore.search(game.id, vector, CANDIDATES),
+    english_vectors, english_words, own_words, own_vectors = weights(
+        keywords.portuguese_share(every)
     )
-    lists = [[s.position for s in semantic if s.score > MIN_SCORE]]
-    weights = [1.0]
+    asked = f'{game.name}: {" ".join([english or question, *terms])}'
+    # A guide largely in Portuguese is also searched by the meaning of the question as asked.
+    own = f'{game.name}: {" ".join([question, *terms])}' if english and own_vectors else None
+    vectors = await llm.embed([asked, own] if own else [asked])
+    literal, found = await asyncio.gather(
+        guidestore.mentioning(game.id, terms, 3),
+        asyncio.gather(*(guidestore.search(game.id, v, CANDIDATES) for v in vectors)),
+    )
+    semantic, *native = found
+    lists: list[list[int]] = [near(semantic)]
+    ranks = [english_vectors if english is not None else 1.0]
     # Without a translation (it failed) the vectors rank alone, as before: Portuguese keywords at
     # full weight outrank them with common words.
     if english is not None:
         lists += [keywords.rank(every, english), keywords.rank(every, question)]
-        weights += [1.0, OWN_WORDS_WEIGHT]
-    ranked = keywords.fuse(lists, weights)
+        ranks += [english_words, own_words]
+        if native:
+            lists.append(near(native[0]))
+            ranks.append(own_vectors)
+    ranked = keywords.fuse(lists, ranks)
     at = {p.position: p for p in every}
     seen: set[int] = set()
     out: list[Passage] = []

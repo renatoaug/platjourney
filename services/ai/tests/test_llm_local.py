@@ -163,7 +163,6 @@ def test_the_search_step_has_its_own_model_and_a_small_one_by_default(
 ) -> None:
     monkeypatch.setattr(settings, 'ai_provider', 'openai')
     monkeypatch.setattr(settings, 'openai_model', 'gpt-5.5')
-    monkeypatch.setattr(settings, 'openai_small_model', 'gpt-5.4-nano')
     monkeypatch.setattr(settings, 'ai_model_chat', '')
     monkeypatch.setattr(settings, 'ai_model_search', '')
     tag('chat')

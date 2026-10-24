@@ -62,8 +62,8 @@ flowchart LR
     q --> en["The question in English<br/>(small model)"]
     en --> semantic["Nearest passages by meaning<br/>(cosine ≥ 0.25)"]
     en --> words["Passages with its words<br/>(BM25)"]
-    q --> own["Passages with the words as asked<br/>(BM25, lighter)"]
-    semantic --> fuse["Fused by rank"]
+    q --> own["Passages with the words<br/>and meaning as asked"]
+    semantic --> fuse["Fused by rank, weighed by<br/>the guide's language"]
     words --> fuse
     own --> fuse
     literal --> pick["Up to 6 passages,<br/>literal first"]
@@ -75,7 +75,7 @@ flowchart LR
 ```
 
 - **Trophy names first.** Guides are mostly in English and players often ask in Portuguese, so the trophies a question names are matched literally, in English.
-- **One language for the search.** Almost every passage is in English, so a small model (`AI_MODEL_SEARCH`, by default `OPENAI_SMALL_MODEL`) puts the question in English first. Three searches are fused by rank (reciprocal rank fusion): the vectors of the English question, its keywords (BM25 over the game's passages, which finds exact names the vectors miss, like "Virginia vinyl"), and, weighing less, the keywords of the question as asked, for the few passages written in Portuguese. If the translation fails, the vectors rank alone.
+- **One language for the search, weighed by the guide's.** Almost every passage is in English, so a small model (`AI_MODEL_SEARCH`, by default `gpt-5.4-nano` on OpenAI) puts the question in English first. The searches are fused by rank (reciprocal rank fusion): the vectors and the keywords (BM25 over the game's passages, which finds exact names the vectors miss, like "Virginia vinyl") of the English question, and the keywords and vectors of the question as asked. Each counts by how much of that game's guide is in Portuguese: a guide mostly in English leans on the translation, one mostly in Portuguese (about 30 games) on the player's own words, and no search counts less than 0.3. If the translation fails, the vectors rank alone.
 - **A title takes its text.** A page splits into passages of a fixed size, so a passage can end on a title or a label ("Objective: Reach the South Tower", a collectible's name) with the steps in the next one. When a chosen passage ends that way, the next passage of the same page is appended to it.
 - **Newest wins.** Each passage goes with its site, heading path and date; when passages disagree, Nexo trusts the most recent one (games change with patches).
 - **Nothing found.** Nexo still answers from the PSN facts and the guide, and the question is stored in `guide_request`, so whoever runs the instance sees what the guides miss.

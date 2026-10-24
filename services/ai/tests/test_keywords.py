@@ -31,3 +31,11 @@ def test_fuse_rewards_what_several_lists_agree_on_and_weighs_each_list() -> None
     assert keywords.fuse([[1, 2], [2]], [1, 1]) == [2, 1]
     assert keywords.fuse([[1, 2], [2]], [1, 0.01]) == [1, 2]
     assert keywords.fuse([[1, 2, 3]], [1], depth=2) == [1, 2]
+
+
+def test_a_passage_is_portuguese_only_over_english_and_spanish() -> None:
+    assert keywords.portuguese(passage(1, 'Você não pode perder este troféu depois do chefe.'))
+    assert not keywords.portuguese(passage(2, 'You can get this trophy after the boss.'))
+    assert not keywords.portuguese(passage(3, 'Puedes conseguir el trofeo con una espada.'))
+    assert keywords.portuguese_share([passage(1, 'Você não pode.'), passage(2, 'You can.')]) == 0.5
+    assert keywords.portuguese_share([]) == 0

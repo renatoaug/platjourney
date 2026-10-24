@@ -1,5 +1,5 @@
 {
-  "about": "Questions players ask Nexo about a game, in pt-BR, and what a passage that answers them must contain. `terms` are the English trophy names nexo.mentioned_trophies finds when the question names a trophy by its pt-BR (or English) name. A retrieved passage is relevant when its heading plus content contains every keyword of at least one group in `relevant` (case-insensitive). Most questions name a collectible, a place or a character rather than a trophy, the way players ask about a chapter.",
+  "about": "Questions players ask Nexo about a game, in pt-BR, and what a passage that answers them must contain. `terms` are the English trophy names nexo.mentioned_trophies finds when the question names a trophy by its pt-BR (or English) name. A retrieved passage is relevant when its heading plus content contains every keyword of at least one group in `relevant` (case-insensitive). Most questions name a collectible, a place or a character rather than a trophy, the way players ask about a chapter, and some are answered only by passages written in Portuguese.",
   "games": [
     {
       "game": "game:1020",
@@ -1129,6 +1129,11 @@
           "question": "onde fica a fita do apartamento 404?",
           "terms": [],
           "relevant": [["bridge", "404"]]
+        },
+        {
+          "question": "como uso o Gear Boy pra achar coisa escondida?",
+          "terms": [],
+          "relevant": [["super gear boy", "pontos de interesse"]]
         }
       ]
     },
@@ -1565,6 +1570,513 @@
           "question": "onde acho o alvo Gontakerus no hospital?",
           "terms": [],
           "relevant": [["gontakerus"]]
+        }
+      ]
+    },
+    {
+      "game": "game:171225",
+      "name": "Wuchang: Fallen Feathers",
+      "cases": [
+        {
+          "question": "qual a ordem certa entre Cloudspire e Mt. Zhenwu no Wuchang pra não perder troféu?",
+          "terms": [],
+          "relevant": [["antecipar mt. zhenwu", "cloudspire"]]
+        },
+        {
+          "question": "posso conversar com o Narrador no Altar de Zhenwu logo cedo no Wuchang sem estragar a platina?",
+          "terms": [],
+          "relevant": [["narrador", "altar de zhenwu"]]
+        }
+      ]
+    },
+    {
+      "game": "game:6801",
+      "name": "Far Cry 4",
+      "cases": [
+        {
+          "question": "como libero as torres de sino no Far Cry 4 e dá pra subir de helicóptero?",
+          "terms": [],
+          "relevant": [["torre do sino", "buzzer"]]
+        },
+        {
+          "question": "onde fica a porta do Shangri-La no Far Cry 4 pro troféu da missão do Yogi?",
+          "terms": [],
+          "relevant": [["rosto assustador", "shangri-la"]]
+        }
+      ]
+    },
+    {
+      "game": "game:37016",
+      "name": "Metro Exodus",
+      "cases": [
+        {
+          "question": "como solto os vagões do trem em Moscou pro troféu Técnico Ferroviário?",
+          "terms": [],
+          "relevant": [["alavanca vermelha", "vagões"]]
+        },
+        {
+          "question": "como mato o peixe gigante no Metro Exodus pro troféu do Pescador?",
+          "terms": [],
+          "relevant": [["bagre", "tsar fish"]]
+        }
+      ]
+    },
+    {
+      "game": "game:117731",
+      "name": "Persona 5 Strikers",
+      "cases": [
+        {
+          "question": "o troféu What are Friends For do Persona 5 Strikers é perdível? até quando dá pra fazer os requests?",
+          "terms": [],
+          "relevant": [["ponto de não retorno", "what are friends for"]]
+        },
+        {
+          "question": "preciso usar o Clear Save pra limpar os Dire Shadows no Persona 5 Strikers?",
+          "terms": [],
+          "relevant": [["clear save", "dire shadows"]]
+        }
+      ]
+    },
+    {
+      "game": "game:204381",
+      "name": "The Plucky Squire",
+      "cases": [
+        {
+          "question": "como pego o Errinho mais escondido do The Plucky Squire?",
+          "terms": [],
+          "relevant": [["cidade dos caracóis", "página preta"]]
+        },
+        {
+          "question": "o Colecionador de Arte do Plucky Squire é perdível? a Martinha some depois que zero?",
+          "terms": [],
+          "relevant": [["martinha", "desaparece após você zerar"]]
+        }
+      ]
+    },
+    {
+      "game": "game:119177",
+      "name": "Call of Duty: Modern Warfare",
+      "cases": [
+        {
+          "question": "como faço o troféu Dois Coelhos no Terra Natal do CoD MW?",
+          "terms": [],
+          "relevant": [["dois coelhos", "terra natal"]]
+        },
+        {
+          "question": "como faço o carro bomba na Estrada da Morte no CoD MW pro troféu?",
+          "terms": [],
+          "relevant": [["estrada da morte", "carro bomba"]]
+        }
+      ]
+    },
+    {
+      "game": "game:psn_NPWR02565_00",
+      "name": "BLAZBLUE CONTINUUM SHIFT EXTEND Trophy",
+      "cases": [
+        {
+          "question": "preciso zerar o arcade com todos os personagens no BlazBlue pro troféu?",
+          "terms": [],
+          "relevant": [["zerar o arcade", "todos os personagens"]]
+        },
+        {
+          "question": "o modo Challenge do BlazBlue ajuda a aprender combos pros troféus?",
+          "terms": [],
+          "relevant": [["challenge mode", "muitos combos"]]
+        }
+      ]
+    },
+    {
+      "game": "game:8248",
+      "name": "Marvel vs. Capcom 3: Fate of Two Worlds",
+      "cases": [
+        {
+          "question": "qual time usar pra pegar o Herculean Task no MvC3?",
+          "terms": [],
+          "relevant": [["herculean task", "tron-bonne"]]
+        },
+        {
+          "question": "qual time monto pro troféu Avengers Assemble no MvC3?",
+          "terms": [],
+          "relevant": [["avengers assemble", "captain america"]]
+        }
+      ]
+    },
+    {
+      "game": "game:493",
+      "name": "Heavy Rain",
+      "cases": [
+        {
+          "question": "como faço o troféu The Bear no Heavy Rain? é o da contra-mão?",
+          "terms": [],
+          "relevant": [["the bear", "contra-mão"]]
+        },
+        {
+          "question": "como nocauteio 50 pessoas no Lexington Station do Heavy Rain?",
+          "terms": [],
+          "relevant": [["lexington station", "nocauteie 50 pessoas"]]
+        }
+      ]
+    },
+    {
+      "game": "game:3212",
+      "name": "The Sims 4",
+      "cases": [
+        {
+          "question": "como faço o Jogo Triplo no Sims 4? preciso de berço?",
+          "terms": [],
+          "relevant": [["triplets", "berço"]]
+        },
+        {
+          "question": "como pego o troféu Casa Cheia no Sims 4?",
+          "terms": [],
+          "relevant": [["black widow", "casa cheia"]]
+        }
+      ]
+    },
+    {
+      "game": "game:103288",
+      "name": "Jump Force",
+      "cases": [
+        {
+          "question": "quantos itens de saque preciso farmar na missão Aprimoramento pro Jump Force?",
+          "terms": [],
+          "relevant": [["aprimoramento", "1000 itens"]]
+        },
+        {
+          "question": "quem é o chefe da missão 14 do modo especialista no Jump Force?",
+          "terms": [],
+          "relevant": [["número 14", "goku"]]
+        }
+      ]
+    },
+    {
+      "game": "game:361855",
+      "name": "LEGO Batman: Legacy of the Dark Knight",
+      "cases": [
+        {
+          "question": "como consigo o troféu Computer Privileges no Batcomputer?",
+          "terms": [],
+          "relevant": [["protetor de tela", "batcomputer"]]
+        },
+        {
+          "question": "onde eu compro as expansões da Bat Cave?",
+          "terms": [],
+          "relevant": [["construction crawlers", "expansões"]]
+        }
+      ]
+    },
+    {
+      "game": "game:279643",
+      "name": "The First Berserker: Khazan",
+      "cases": [
+        {
+          "question": "como derrubo o Yetuga sem apanhar à toa?",
+          "terms": [],
+          "relevant": [["yetuga", "gelo"]]
+        },
+        {
+          "question": "o que faço pra quebrar as pernas da Aratra?",
+          "terms": [],
+          "relevant": [["aratra", "pernas"]]
+        }
+      ]
+    },
+    {
+      "game": "game:3042",
+      "name": "Dying Light",
+      "cases": [
+        {
+          "question": "quais colecionáveis tem no Dying Light, tem estátua de zumbi?",
+          "terms": [],
+          "relevant": [["estátuas de zumbis", "bandeiras"]]
+        },
+        {
+          "question": "como abro baú trancado sem chave?",
+          "terms": [],
+          "relevant": [["gazua", "trancados"]]
+        }
+      ]
+    },
+    {
+      "game": "game:115846",
+      "name": "AI Limit",
+      "cases": [
+        {
+          "question": "onde acho a chave do cemitério pra pegar o Blader?",
+          "terms": [],
+          "relevant": [["chave do cemitério", "frank"]]
+        },
+        {
+          "question": "onde tá a amostra de solo do tanque de sedimentação?",
+          "terms": [],
+          "relevant": [["tanque de sedimentação", "amostra de solo"]]
+        }
+      ]
+    },
+    {
+      "game": "game:139346",
+      "name": "Need for Speed: Hot Pursuit - Remastered",
+      "cases": [
+        {
+          "question": "como faço o troféu Burnout sem bater?",
+          "terms": [],
+          "relevant": [["burnout", "nitrous"]]
+        },
+        {
+          "question": "o que eu preciso pro troféu Shaken, Not Stirred?",
+          "terms": [],
+          "relevant": [["shaken", "aston martin"]]
+        }
+      ]
+    },
+    {
+      "game": "game:103269",
+      "name": "Dead or Alive 6",
+      "cases": [
+        {
+          "question": "ao importar o save do PS4 o que ainda tenho que refazer?",
+          "terms": [],
+          "relevant": [["sobrevivência", "contra o tempo"]]
+        },
+        {
+          "question": "como ganho o troféu do Fatal Rush?",
+          "terms": [],
+          "relevant": [["fatal rush", "finalize"]]
+        }
+      ]
+    },
+    {
+      "game": "game:6007",
+      "name": "Resogun",
+      "cases": [
+        {
+          "question": "como mato os keepers em grupo na ordem certa?",
+          "terms": [],
+          "relevant": [["keepers", "brilho verde"]]
+        }
+      ]
+    },
+    {
+      "game": "game:1267",
+      "name": "Sleeping Dogs",
+      "cases": [
+        {
+          "question": "como consigo o Hijacker, aquele de pular em carro andando?",
+          "terms": [],
+          "relevant": [["hijacker", "fort knox"]]
+        },
+        {
+          "question": "como faço o peixe cair em cima do inimigo na boate?",
+          "terms": [],
+          "relevant": [["aquário", "boate"]]
+        }
+      ]
+    },
+    {
+      "game": "game:194436",
+      "name": "Flintlock: The Siege of Dawn",
+      "cases": [
+        {
+          "question": "onde acho as peças do conjunto do Sapador?",
+          "terms": [],
+          "relevant": [["ombreira de sapador", "elmo de sapador"]]
+        },
+        {
+          "question": "como derrubo o Dukmar sem levar o raio dele?",
+          "terms": [],
+          "relevant": [["dukmar", "carregue"]]
+        }
+      ]
+    },
+    {
+      "game": "game:7708",
+      "name": "Saints Row: Gat Out of Hell",
+      "cases": [
+        {
+          "question": "tem como pegar o troféu da moto na missão Extraction Facility?",
+          "terms": [],
+          "relevant": [["extraction facility", "moto"]]
+        },
+        {
+          "question": "onde acho a Uriel's Edge pro troféu das armas?",
+          "terms": [],
+          "relevant": [["uriel", "palácio"]]
+        }
+      ]
+    },
+    {
+      "game": "game:115843",
+      "name": "Unpacking",
+      "cases": [
+        {
+          "question": "como faço o manequim dançar dab?",
+          "terms": [],
+          "relevant": [["manequim", "dab"]]
+        },
+        {
+          "question": "como ganho o troféu de perigo elétrico com a torradeira?",
+          "terms": [],
+          "relevant": [["torradeira", "banheira"]]
+        }
+      ]
+    },
+    {
+      "game": "game:3025",
+      "name": "Middle-earth: Shadow of Mordor",
+      "cases": [
+        {
+          "question": "onde acho os ithildin? preciso ativar o modo espectro pra ver eles?",
+          "terms": [],
+          "relevant": [["ithildin", "modo espectro"]]
+        },
+        {
+          "question": "como faço os desafios de sobrevivência? preciso de cogumelo pra algum?",
+          "terms": [],
+          "relevant": [["sobrevivência", "cogumelo"]]
+        }
+      ]
+    },
+    {
+      "game": "game:158980",
+      "name": "Final Fantasy",
+      "cases": [
+        {
+          "question": "onde eu aprendo as magias Ciclone e Palamecia no FF2?",
+          "terms": [],
+          "relevant": [["castelo fynn"]]
+        },
+        {
+          "question": "onde fica o acampamento dos rebeldes pro troféu do explorador?",
+          "terms": [],
+          "relevant": [["acampamento dos rebeldes"]]
+        }
+      ]
+    },
+    {
+      "game": "game:37030",
+      "name": "Dishonored: Death of the Outsider",
+      "cases": [
+        {
+          "question": "dá pra pegar o troféu de fantasma sem ninguém me ver em todas as missões?",
+          "terms": [],
+          "relevant": [["fantasma", "nunca detectado"]]
+        },
+        {
+          "question": "onde ficam os contratos da primeira missão?",
+          "terms": [],
+          "relevant": [["contratos", "quarto de billie"]]
+        }
+      ]
+    },
+    {
+      "game": "game:137989",
+      "name": "Party Animals",
+      "cases": [
+        {
+          "question": "como pego a conquista do gato do boliche?",
+          "terms": [],
+          "relevant": [["hóquei animal", "disco"]]
+        },
+        {
+          "question": "como consigo o picolé no Ichiban?",
+          "terms": [],
+          "relevant": [["ichiban", "congelando"]]
+        }
+      ]
+    },
+    {
+      "game": "game:109277",
+      "name": "Samurai Shodown",
+      "cases": [
+        {
+          "question": "como faço os 100 da disputa fantasma? preciso usar sempre a mesma sombra?",
+          "terms": [],
+          "relevant": [["disputa fantasma", "sombra"]]
+        },
+        {
+          "question": "como ganho tempo extra no contra o tempo?",
+          "terms": [],
+          "relevant": [["contra o tempo", "150"]]
+        }
+      ]
+    },
+    {
+      "game": "game:1384",
+      "name": "Hotline Miami",
+      "cases": [
+        {
+          "question": "tenho que pegar todas as máscaras antes de tirar a platina?",
+          "terms": [],
+          "relevant": [["puzzle letters", "máscaras"]]
+        },
+        {
+          "question": "o Guns For Show exige usar todo tipo de arma?",
+          "terms": [],
+          "relevant": [["guns for show", "todas as armas"]]
+        }
+      ]
+    },
+    {
+      "game": "game:9927",
+      "name": "Persona 5",
+      "cases": [
+        {
+          "question": "dá pra perder troféu no Persona 5 se eu não puder escolher capítulo?",
+          "terms": [],
+          "relevant": [["falta de seleção"]]
+        },
+        {
+          "question": "onde tomo suco no quiosque pro troféu?",
+          "terms": [],
+          "relevant": [["quiosque", "shibuya"]]
+        }
+      ]
+    },
+    {
+      "game": "game:119374",
+      "name": "Final Fantasy VIII Remastered",
+      "cases": [
+        {
+          "question": "como desbloqueio o guardião Quezacotl?",
+          "terms": [],
+          "relevant": [["quezacotl", "guardião"]]
+        },
+        {
+          "question": "como perco uma carta rara no Triple Triad?",
+          "terms": [],
+          "relevant": [["perca uma carta rara"]]
+        }
+      ]
+    },
+    {
+      "game": "game:2165",
+      "name": "War Thunder",
+      "cases": [
+        {
+          "question": "o troféu Precisão destrutiva exige derrubar avião de outro jogador?",
+          "terms": [],
+          "relevant": [["precisão destrutiva", "jogador"]]
+        },
+        {
+          "question": "como pego o British Patriot?",
+          "terms": [],
+          "relevant": [["british patriot", "tier"]]
+        }
+      ]
+    },
+    {
+      "game": "game:7194",
+      "name": "Steins;Gate",
+      "cases": [
+        {
+          "question": "como pego o final da Kurisu? tenho que carregar qual save?",
+          "terms": [],
+          "relevant": [["final de kurisu", "slot 1"]]
+        },
+        {
+          "question": "o final da Mayuri depende de alguma coisa?",
+          "terms": [],
+          "relevant": [["bandeiras", "mayuri"]]
         }
       ]
     }
