@@ -10,6 +10,8 @@ Your PlayStation platinum journey, guided by Nexo: PlatJourney watches your PSN 
   <a href="docs/decisions/">🧭 Decisions</a>
 </p>
 
+https://github.com/user-attachments/assets/32fb3419-df6d-4361-a952-4caf3bf5ef21
+
 ## Stack
 
 Web in React, API in Bun, AI in Python, data in SurrealDB.
