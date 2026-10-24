@@ -56,7 +56,7 @@ Tests live next to the code they cover, never inside `src/`: `apps/server/tests/
 
 ## AI service
 
-Every prompt, model call, embedding and vector search lives in `services/ai` (Python 3.14, FastAPI). The server gathers the facts (PSN, database, the player's history) and stores results; it calls the service with `ai(path, body)` from `apps/server/src/ai.ts`, and the cost tag set with `tagged()` travels as headers so each call is recorded against its user and action. Never add a prompt or an OpenAI call to TypeScript.
+Every prompt, model call, embedding and vector search lives in `services/ai` (Python 3.15, FastAPI). The server gathers the facts (PSN, database, the player's history) and stores results; it calls the service with `ai(path, body)` from `apps/server/src/ai.ts`, and the cost tag set with `tagged()` travels as headers so each call is recorded against its user and action. Never add a prompt or an OpenAI call to TypeScript.
 
 - Features: `src/platjourney_ai/<feature>.py` with its routes in `routers/<feature>.py`. Model calls only through `llm.py` (`respond`, `research_json`, `embed`), so their cost is recorded. Payloads from the server are `Wire` models in `schemas.py`.
 - Tests in `tests/` mock the model; `bun run ai:test`. Evals in `evals/` run against the real model and database and cost tokens; `bun run ai:eval` before changing a prompt or the retrieval, run and compare them in `bun run ai:eval:view` ([docs/design/08-evals.md](docs/design/08-evals.md)). Evals only read the app's database; their questions and runs live in the `evals` database.
