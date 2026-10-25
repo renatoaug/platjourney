@@ -22,7 +22,7 @@ flowchart LR
     score -- "best 60" --> cands["Candidates"]
     seeds --> taste["Taste vector"] --> vec["Nearest games<br/>by embedding"] -- "fills to 48" --> cands
     cands --> rules["The player's rules<br/>(guide facts)"] --> model["Model: taste profile<br/>+ 6 picks, explained"]
-    cands --> pick["Model: one game for now<br/>('O que jogar agora?')"]
+    cands --> pick["Model: one game for now<br/>('What to play now?')"]
 ```
 
 ## The similar-games graph
