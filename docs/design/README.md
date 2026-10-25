@@ -15,4 +15,4 @@ How PlatJourney is built, in reading order. Each note describes the code as it i
 | [09-mobile.md](09-mobile.md) | Installing PlatJourney on a phone from the browser, and the native app built with Capacitor from the same code |
 | [10-sources.md](10-sources.md) | PSN, the web sources behind guides and how they are used |
 | [11-mcp.md](11-mcp.md) | Using PlatJourney from Claude, ChatGPT and other assistants: the MCP server, its sign-in (OAuth) and its tools |
-| [12-recommendations.md](12-recommendations.md) | The similar-games graph, taste vectors, Nexo's picks and "O que jogar agora?": which games, from which data, and when a model is involved |
+| [12-recommendations.md](12-recommendations.md) | The similar-games graph, taste vectors, Nexo's picks and "What to play now?": which games, from which data, and when a model is involved |

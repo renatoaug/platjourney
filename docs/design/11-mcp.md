@@ -74,7 +74,7 @@ What the player and the assistant decide in the chat can live in the app too, un
 
 | Tool | Does | Shows in the app |
 |---|---|---|
-| `save_suggestion` | Saves the main pick with why and where to start (a `recommendation` of source `pick` with the assistant as `recommender`); the same game again replaces it | Discover's "O que jogar agora?", as the latest pick with the assistant's logo and name, and with the earlier picks |
+| `save_suggestion` | Saves the main pick with why and where to start (a `recommendation` of source `pick` with the assistant as `recommender`); the same game again replaces it | Discover's "What to play now?", as the latest pick with the assistant's logo and name, and with the earlier picks |
 | `save_recommendations` | Saves a list of 3 to 10 games from the player's taste, each with why, as a batch (`recommendation` of source `discover` with the assistant as `recommender`). Only catalog games with a guide the player neither owns nor dismissed; the rest come back as skipped. The assistant's taste profile is kept only when the player has none | Discover, in place of Nexo's picks, as "Escolhas do Claude" with its logo, until a newer batch (Nexo's or an assistant's) |
 | `save_session_plan` | Saves a plan for the game being played, each step named by its trophy (steps on no trophy of the game are left out and reported) | The session plan on the current game, the same checklist Nexo's plans use, which ticks steps off as PSN reports the trophies; it replaces the plan before |
 | `save_tip` | Saves a tip, with its game when named (`tip`, kind `assistant`) | History, under the assistant's name; not a notification |

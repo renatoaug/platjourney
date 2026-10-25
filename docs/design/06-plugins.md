@@ -119,11 +119,11 @@ const plugin: Plugin = {
   register(ctx) {
     // GET /api/ext/hello/greeting, for a signed-in player.
     ctx.route('hello/greeting', async ({ res, me }) => {
-      ctx.json(res, 200, { text: `Olá, ${me?.psn_online_id}` })
+      ctx.json(res, 200, { text: `Hello, ${me?.psn_online_id}` })
     })
     // A file at the site's root, before the app's static files.
     ctx.intercept('/hello.txt', async ({ res }) => {
-      res.writeHead(200, { 'content-type': 'text/plain' }).end('olá')
+      res.writeHead(200, { 'content-type': 'text/plain' }).end('hello')
     })
   },
 }
@@ -147,13 +147,13 @@ function Footnote({ original }: ReplaceProps) {
   return (
     <>
       {original}
-      <p className="hello-note">Uma instância de amigos.</p>
+      <p className="hello-note">An instance for friends.</p>
     </>
   )
 }
 
 function HelloPage() {
-  return <div className="card">Uma página inteira do plugin.</div>
+  return <div className="card">A whole page from the plugin.</div>
 }
 
 const plugin: PluginModule = {
@@ -163,7 +163,7 @@ const plugin: PluginModule = {
   pages: [{ path: '/hello', label: { 'pt-BR': 'Olá', en: 'Hello' }, icon: 'bolt', component: HelloPage }],
   // The button next to the message when the server refused model work with this plugin's code.
   refusalAction: ({ code }) =>
-    code === 'hello_blocked' ? { href: '/hello', label: 'Saiba mais' } : undefined,
+    code === 'hello_blocked' ? { href: '/hello', label: 'Learn more' } : undefined,
 }
 export default plugin
 ```
