@@ -1,43 +1,122 @@
 # Notifications
 
-What PlatJourney tells a player on its own, without being asked: when it sends, where it goes, what each message says and the rules that keep it from repeating.
+What PlatJourney sends a player without being asked: when each notice is sent, where it goes, what it contains, which parts are written by the model and which are not, and the rules that keep notices from repeating.
 
-## Where a notice goes
+## Overview
 
-Every notice is written to the web first, under the bell and in the history. Then it goes to each channel the player has, chosen on the settings page under Notificações:
+A background job, the **watcher**, visits every player every `POLL_MINUTES` (15 by default), reads their PSN title list and compares it with the last visit. What changed decides the notice: a game started, trophies earned, a game opened. Two daily jobs add the notices about sales and about online servers shutting down.
 
-| Channel | When | What it shows |
+Every notice is written to the web first (the bell and the history), then sent to the channels the player turned on: Telegram and push.
+
+Most of a notice needs no model at the moment it is sent. The data comes from PSN and from the game's structured guide ([features](02-features.md)), which was written once, when the guide was researched. The model writes only Nexo's comment on a start or an unlock, and only when the instance and the player allow it. No notice uses the deep guide or hybrid search ([retrieval](07-rag.md)): those serve the chat.
+
+```mermaid
+flowchart LR
+    psn[("PSN<br/>title list, presence")] --> watcher["Watcher<br/>every POLL_MINUTES"]
+    guide[("Structured guide<br/>roadmap, missables,<br/>milestones")] --> watcher
+    watcher --> news{"What changed?"}
+    news -- "game started<br/>trophies earned" --> nexo["Nexo's comment<br/>(model, optional)"]
+    news -- "game opened<br/>roadmap step reached" --> tpl["Template"]
+    nexo --> msg["One message:<br/>title, comment, checklist"]
+    tpl --> msg
+    store[("store_price")] --> deals["Daily deals job"] --> msg
+    servers[("server_status")] --> shut["Daily server job"] --> msg
+    msg --> web["Web: bell and history"]
+    msg --> tg["Telegram"]
+    msg --> push["Push"]
+```
+
+## Channels
+
+| Channel | Condition | What it shows |
 |---|---|---|
-| Telegram | The chat is linked and "No Telegram" is on (`user.notify_telegram`, on by default) | The full notice, markdown turned into Telegram's HTML |
-| Push | The device turned "Neste aparelho" on (`push_subscription`), and the instance has VAPID keys | A notification titled Nexo with the notice as plain text, cut at 900 characters; a tap opens the history |
+| Web | Always | The notice under the bell and in the history |
+| Telegram | The chat is linked and "No Telegram" is on in the settings (`user.notify_telegram`, on by default) | The full notice; markdown is converted to Telegram's HTML. A message over 4,000 characters is sent in parts, cut between paragraphs so a checklist item is never split |
+| Push | The device turned "Neste aparelho" on in the settings (`push_subscription`), and the instance has VAPID keys | A notification titled Nexo with the notice as plain text, cut at 900 characters; a tap opens the history |
 
-A notice counts as read once the player opens the bell, on any device, or writes anything to Nexo on Telegram (a bot never learns when a message is read, so writing is the closest sign).
+A notice counts as read once the player opens the bell on any device, or writes anything to Nexo on Telegram (a bot never learns when a message is read, so writing is the closest sign).
 
-Push is Web Push, sent from `apps/server/src/push.ts` with no library: each message is encrypted for the device and signed with the instance's key. It works in desktop browsers, on Android and, on iPhone, only with PlatJourney added to the home screen (iOS 16.4 or later); in a Safari tab the profile explains how to add it. The native app has no push yet and says so. `apps/web/public/sw.js` shows the notification and opens the app on a tap. A channel that fails never stops the others, nor the sweep.
+Push is Web Push: each message is encrypted for the device and signed with the instance's key, with no third-party service. It works in desktop browsers, on Android and, on iPhone, only with PlatJourney added to the home screen (iOS 16.4 or later); in a Safari tab the settings explain how to add it. The native app has no push yet and says so. A channel that fails never stops the others, nor the sweep.
 
-## When the watcher sends
+## Kinds of notice
 
-The watcher visits every player one after the other, every `POLL_MINUTES` (15 by default), and compares the PSN title list with what it saw last time.
-
-| Kind | When | What it says |
-|---|---|---|
-| `start` | A game played for the first time, still early (under 10% of its trophies) | A start tip for the game, with the guide's note on what comes first |
-| `unlock` | New trophies earned since the last visit, on the game being played, the first one of a game included | The trophies as the title, then Nexo's comment, the session's focus, and the guide's note when a roadmap step was reached |
-| `session` | The player opens a game (PSN presence), at most once every 6 hours | What is left for the platinum, the suggested next trophy, a tip, the guide's tips for the stretch the player is in (a chapter's collectibles), a missable still open and a trophy almost done. Opening the same game again within a day with nothing earned since gets one line: the game and the suggestion, followed by the collectibles still open in the stretch the player is in |
-| `route` | A roadmap step reached without new trophies | The guide's note on what comes next |
-| `server` | A game in the library has its online servers shutting down (daily check, only with `AI_RESEARCH` on) | The warning with the date |
-| `deal` | Daily PlayStation Store check: a saved game goes on sale or its sale gets deeper, or enters the PS Plus catalog of the tier the player picked; games already owned are left out | One notice a day per player: a single game as a sentence (the price and until when, or that it entered the player's PS Plus); several as one list, a line per game |
+| Kind | Trigger | Content | Written by |
+|---|---|---|---|
+| `start` | A game played for the first time, still early (under 10% of its trophies) | A welcome to the game and the first tips; the guide's note on what comes first and the first chapter's checklist | Nexo, or a template |
+| `unlock` | New trophies earned since the last visit on the game being played, the first one of a game included | The trophies as the title, then Nexo's comment, a line for a missable just earned, the progress mark, the suggested next trophy, the guide's note and the next chapter's checklist when a roadmap step was reached | Nexo, or a template |
+| `session` | The player opens a game (PSN presence), at most once every 6 hours | What is left for the platinum, the suggested next trophy and its tip, the checklist of the stretch the player is in, a missable still open and a trophy almost done. Opening the same game again within a day with nothing earned since gets one line (the game and the suggestion) and the checklist | Template |
+| `route` | A roadmap step reached without new trophies (a sync that caught up) | The guide's note on what comes next and the chapter's checklist | Template |
+| `deal` | Daily PlayStation Store check: a saved game goes on sale or its sale gets deeper, or enters the PS Plus catalog of the tier the player picked; owned games are left out | One notice a day per player: one game as a sentence (price and until when, or that it entered PS Plus), several as a list | Template |
+| `server` | A game in the library has its online servers shutting down (daily check, only with `AI_RESEARCH` on) | The warning with the date and the stored note | Template |
 
 One sweep sends at most one message per player: what happened, then what comes next, in the same text.
 
-## Nexo or plain
+## Who writes what
 
-| Who writes | When |
-|---|---|
-| Nexo | `AI_NOTICES` is on for the instance and the player kept "Avisos escritos pelo Nexo" on in the profile |
-| A plain template | Either one is off, a plugin refused the model work, or the model failed (quota, outage) |
+| Part of a notice | Source | Model at send time |
+|---|---|---|
+| Trophy names, counts, progress, rarity | PSN | No |
+| Suggested next trophy, its tip, missables, point of no return | The structured guide (roadmap, tricks, missables) | No |
+| Chapter checklist (collectibles, items, missables with their steps) | The guide's milestones | No |
+| Progress mark line ("Metade do jogo base: 20 de 40 troféus.") | Fixed texts, one of three picked at random per mark | No |
+| Missable relief line ("🔒 **X** era perdível e agora é seu para sempre.") | Fixed texts, one of four picked per trophy | No |
+| Session, route, deal and server notices | Templates in the player's language | No |
+| Nexo's comment on a start or an unlock | The model, from PSN data and the relevant parts of the structured guide | Yes, when allowed |
+| Server status and its note | A daily model check with web search, stored in `server_status`; the notice reads the stored row | No at send time |
 
-The plain template needs no model, so a player always hears about a trophy, whatever happens to the AI service.
+### Nexo's comment
+
+Nexo writes the comment of a `start` or `unlock` notice when `AI_NOTICES` is on for the instance and the player kept "Avisos escritos pelo Nexo" on in the profile. If either is off, a plugin refused the model work, or the model failed (quota, outage), the template is used: a player always hears about a trophy, whatever happens to the AI service.
+
+What the model receives:
+
+- the player's progress on the game: earned trophies (most recent first), missing ones, the guide's missables and roadmap, and the tricks and bugs of the trophies the notice is about;
+- the instruction for the kind of notice: a start (what the platinum is like, three concrete tips for the first hours), an unlock (comment the trophies, keep the suggested next trophy the server chose, never pick another), a progress mark (first trophy, halfway, final stretch, platinum, each with its own ask);
+- the guide's note on what comes next, when a roadmap step was reached, to say in its own words without translating names.
+
+What it does not receive: the deep guide passages. Notices are short and about what the player just did; the structured guide covers that. Web search is available to the model when `AI_WEB_SEARCH` is on, as in the chat. The model cites no source in a notice; a source line it adds anyway is removed.
+
+Two things are kept out of the model's hands and appended as written, because the model would shorten them: the chapter checklist and the missable relief line.
+
+## The chapter checklist
+
+For linear games the guide has **milestones**: one per chapter, opened by the trophy for finishing the previous chapter, with that chapter's checklist. Each item is a collectible, an item the player needs (a knife for a secret chest), or a missable trophy, with its name, the sub-chapter and objective, the steps to it and how to recover it when missed.
+
+The checklist goes into three notices:
+
+- **Unlock** of a chapter trophy: the next chapter's checklist, after Nexo's comment.
+- **Session**: the checklist of the stretch the player is in, every time they open the game, until the trophies it counts for are earned.
+- **Route**: when the step was reached without new trophies.
+
+Format, in the player's language:
+
+```
+📍 Neste trecho do jogo
+8 coisas para pegar aqui: 2 souvenirs, 2 baús de ferramentas, 2 facas, 1 baú secreto e 1 flor. Além do troféu Piedade, que é perdível. Seguem na ordem.
+
+1. Flor 3/5: Genciana
+Subcapítulo Trabalho noturno, objetivo "Chegar ao barco da Ordem"
+• Na praia com os grandes navios atracados, siga pelo lado direito.
+• Recolha a flor roxa perto do fim do caminho.
+
+…
+
+7. ⚠️ Piedade: não matar o guarda nas docas
+Subcapítulo Cooperação obrigatória, objetivo "Chegar ao barco da Ordem"
+• Enquanto ele fala parado diante de você, acerte-o com Ignifer.
+• Atire resina nele para aumentar o fogo e afastar os ratos.
+↩️ Se matar o guarda ou falhar na fuga, reinicie a seção.
+```
+
+Rules:
+
+- **Summary first.** The opening line counts the items by type, in the plural, and names the missable trophies, so the player knows what the chapter holds before the list.
+- **Game order.** Items come in the order the player meets them; a missable sits where it happens, marked ⚠️.
+- **Earned items drop out.** A tip about a trophy the player already has is not shown; a milestone with nothing left is not shown.
+- **Missables by the guide's list.** A tip about a trophy the guide lists as missable is shown as missable whatever kind the milestone gave it.
+- **Guides without steps.** A milestone written before the checklist format has one-line tips; they are shown with the name in bold and the directions below.
+- **No "finish the chapter".** When the checklist of the next chapter is in the message, the suggested next trophy is left out if it is only that chapter's story trophy: the checklist says more.
+- **A missable from a later phase is not news.** Only a missable in the roadmap phase the player is in is named as the session's missable; one planned for New Game+ waits for its phase.
 
 ## Progress marks
 
@@ -52,7 +131,7 @@ Some unlocks reach a point of the journey, and that notice marks it. The count i
 
 When one unlock reaches two marks (a short list), the later one wins: platinum, then final stretch, then halfway, then first trophy.
 
-Right under the 🏆 title, the notice opens with a line in PlatJourney's own voice, one of three per mark picked at random, written in `apps/server/src/marks.ts` (for example "Tá aberta a porteira! Agora é um troféu atrás do outro até a platina."). Nexo's words follow it, told not to celebrate again. The plain notice opens with the same kind of line, followed by a fixed line for the mark ("Metade do jogo base: 20 de 40 troféus.").
+Right under the 🏆 title, the notice opens with a line in PlatJourney's own voice, one of three per mark picked at random (for example "Tá aberta a porteira! Agora é um troféu atrás do outro até a platina."). A missable just earned adds its relief line in the same place. Nexo's words follow, told not to celebrate again. The plain notice opens with the same lines, followed by a fixed line for the mark ("Metade do jogo base: 20 de 40 troféus.").
 
 ## Rules that keep it clean
 
@@ -60,6 +139,6 @@ Right under the 🏆 title, the notice opens with a line in PlatJourney's own vo
 - **One check per player at a time**: a sign-in and the sweep running together wait for each other, so the same unlock is not announced twice.
 - **A first sync does not greet old games**: an account connected with progress already made gets no start notice for every game it has, and a title stored with trophies but no ids seen (it was never the game in front) gets no trophy notice for them. A title stored with none earned is watched: its first trophy is news.
 - **The suggestion follows the roadmap's plan**: a trophy the roadmap names again in a later phase (chapter select, New Game+) is not the suggested next one while the current phase has other trophies open.
-- **Where the player is**: the guide's milestones are tips tied to story trophies. The furthest one the player has marks the stretch they are in; the session notice repeats its tips still open, so a chapter's collectibles (tips of kind `collectible`) come back every session until the trophy they count for is earned. A collectible tip opens with its name ("Souvenir 1/21, Best player: ..."): the notice puts the name in bold on its own line, the directions below, and a blank line between tips. When a start or a trophy reaches a milestone, its collectible tips never go to Nexo (it would shorten them to a name): they close the message as written, in the same block, after Nexo's words or the template.
 - **The trophy name shows once**, as the 🏆 title; a heading Nexo repeats is dropped, and markdown headings reach Telegram as bold.
 - **The chat's game is not the game played**: `/game` and links into the chat change only the conversation; the notices follow the game PSN shows.
+- **Loading a game prepares the chat**: when the watcher loads a game for a player, it also asks for the game's deep guide to be indexed, so a question about it in the chat finds passages. The notice itself does not wait for it.
