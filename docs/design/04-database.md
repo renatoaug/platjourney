@@ -9,7 +9,7 @@ Every table has `created_at`, set once by the database. Tables whose rows change
 The data is a graph with vectors in it: players, games, trophy lists, guides and passages point at each other, and Nexo and the recommendations search by meaning. SurrealDB holds both in one place ([ADR-002](../decisions/ADR-002-surrealdb.md)):
 
 - **Record links instead of joins.** A field typed `record<game>` holds the game itself; `SELECT game.name FROM title` follows it without a join table, and `type::record($id)` turns an id from the API back into a link.
-- **Vectors next to the data.** `game.embedding` and `guide_chunk.embedding` are plain arrays, compared with `vector::similarity::cosine` in the same query that filters by game or excludes what the player owns (see [retrieval](07-rag.md)). No separate vector store to keep in sync.
+- **Vectors next to the data.** `game.embedding` and `guide_chunk.embedding` are plain arrays, compared with `vector::similarity::cosine` in the same query that filters by game or excludes what the player owns (see [retrieval](07-nexo.md)). No separate vector store to keep in sync.
 - **Schema in files, still flexible where it helps.** Tables are `SCHEMAFULL`, with types and checks (`ASSERT`) per field, defined by idempotent `.surql` files; objects that change shape with the model's output (a guide, a session plan, a trophy list) are `FLEXIBLE`.
 - **One process to run.** Locally it is one Docker container; the server and the AI service talk to it over the same RPC, from TypeScript and Python.
 

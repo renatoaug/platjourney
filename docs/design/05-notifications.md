@@ -8,7 +8,7 @@ A background job, the **watcher**, visits every player every `POLL_MINUTES` (15 
 
 Every notice is written to the web first (the bell and the history), then sent to the channels the player turned on: Telegram and push.
 
-Most of a notice needs no model at the moment it is sent. The data comes from PSN and from the game's structured guide ([features](02-features.md)), which was written once, when the guide was researched. The model writes only Nexo's comment on a start or an unlock, and only when the instance and the player allow it. No notice uses the deep guide or hybrid search ([retrieval](07-rag.md)): those serve the chat.
+Most of a notice needs no model at the moment it is sent. The data comes from PSN and from the game's structured guide ([features](02-features.md)), which was written once, when the guide was researched. The model writes only Nexo's comment on a start or an unlock, and only when the instance and the player allow it. No notice uses the deep guide or hybrid search ([retrieval](07-nexo.md)): those serve the chat.
 
 ```mermaid
 flowchart LR
