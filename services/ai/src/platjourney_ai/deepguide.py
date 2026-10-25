@@ -22,7 +22,7 @@ import httpx
 from pydantic import BaseModel
 from pypdf import PdfReader
 
-from . import guidestore, keywords, llm
+from . import chapters, guidestore, keywords, llm
 from .guidestore import Passage, Source
 from .guidetext import chunk_text, html_to_text, page_date
 from .schemas import Game, Wire
@@ -364,6 +364,11 @@ def near(found: list[guidestore.ScoredPassage]) -> list[int]:
 
 # How many passages each search hands to the fusion.
 CANDIDATES = 30
+# How much the passages of the chapter a question names count in the fusion.
+CHAPTER_WEIGHT = 1.0
+# How much the passages of the chapter the player is probably in count, when the question names
+# none: a guess from their trophies, so it nudges and never leaves anything out.
+HERE_WEIGHT = 0.3
 # The least a search counts in the fusion, whatever the language of the game's guide.
 MIN_WEIGHT = 0.3
 
@@ -407,14 +412,22 @@ async def in_english(question: str) -> str | None:
     return english
 
 
-async def retrieve(game: Game, question: str, terms: list[str], limit: int = 6) -> list[Passage]:
+async def retrieve(
+    game: Game,
+    question: str,
+    terms: list[str],
+    limit: int = 6,
+    here: frozenset[chapters.Chapter] = frozenset(),
+) -> list[Passage]:
     """The passages most relevant to a question about this game. Guides are written mostly in
     English while the player asks in Portuguese, so the question is put in English first. The
     searches are fused by rank: the vectors and the keywords of the English question, the keywords
     of the question as asked and, for a guide largely in Portuguese, its vectors too, each weighed
     by how much of the game's guide is in each language (`weights`). Trophy names found in the
     question are passed as `terms` (their English names) and matched literally; those passages
-    come first."""
+    come first. A question that names a chapter adds the passages under it to the fusion, and
+    passages about another chapter are left out. Otherwise `here`, the chapter the player is
+    probably in, adds its passages with a lower weight."""
     every = await guidestore.passages(game.id)
     if not every:
         return []
@@ -441,6 +454,16 @@ async def retrieve(game: Game, question: str, terms: list[str], limit: int = 6) 
         if native:
             lists.append(near(native[0]))
             ranks.append(own_vectors)
+    asked = chapters.named(f'{question}\n{english or ""}')
+    labels = {p.position: chapters.named(p.heading) for p in every} if asked or here else {}
+    units = {unit for found in labels.values() for unit, _ in found}
+    asked = chapters.in_terms_of(asked, units)
+    if asked:
+        lists.append(in_chapter(labels, asked, lists[0]))
+        ranks.append(CHAPTER_WEIGHT)
+    elif here:
+        lists.append(in_chapter(labels, chapters.in_terms_of(here, units), lists[0]))
+        ranks.append(HERE_WEIGHT)
     ranked = keywords.fuse(lists, ranks)
     at = {p.position: p for p in every}
     seen: set[int] = set()
@@ -450,7 +473,21 @@ async def retrieve(game: Game, question: str, terms: list[str], limit: int = 6) 
             continue
         seen.add(p.position)
         out.append(p)
-    return await _with_continuation(game, out[:limit])
+    # A passage about another chapter is not the answer to a question about this one, unless
+    # nothing else came back.
+    kept = [p for p in out if not chapters.elsewhere(labels.get(p.position, frozenset()), asked)]
+    return await _with_continuation(game, (kept or out)[:limit])
+
+
+def in_chapter(
+    labels: dict[int, frozenset[chapters.Chapter]],
+    asked: frozenset[chapters.Chapter],
+    semantic: list[int],
+) -> list[int]:
+    """The passages under every chapter the question names, the ones the vector search found
+    first, in its order, then the rest in page order."""
+    inside = {position for position, found in labels.items() if asked <= found}
+    return [n for n in semantic if n in inside] + sorted(inside - set(semantic))
 
 
 # The last line of a passage that stops on a title or a label ("Objective: Reach the South

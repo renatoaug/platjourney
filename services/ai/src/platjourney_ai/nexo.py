@@ -7,7 +7,7 @@ from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field
 
-from . import costs, db, deepguide, llm, method
+from . import chapters, costs, db, deepguide, llm, method
 from .config import settings
 from .guidestore import Passage
 from .schemas import GameContext, Trophy, Wire, shown_progress
@@ -231,7 +231,8 @@ async def passages(ctx: GameContext, question: str, terms: list[str]) -> tuple[s
     links go next to the source the answer cites)."""
     # The answer still works from the PSN facts and the guide JSON without passages.
     try:
-        chunks = await deepguide.retrieve(ctx.game, question, terms)
+        here = chapters.where_player_is(ctx.guide, ctx.trophies)
+        chunks = await deepguide.retrieve(ctx.game, question, terms, here=here)
     except Exception as e:
         log.error('retrieve failed: %s', e)
         return '', []
