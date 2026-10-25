@@ -118,7 +118,7 @@ The AI service can run on your own machine, for free, with any server that speak
 | `guide_index` | Finding deep guide pages |
 | `server_check` | Online server checks |
 | `judge` | The model that grades Nexo's answers in the evals ([evals](08-evals.md)) |
-| `search` | Putting the player's question in English before the deep guide search ([retrieval](07-rag.md)); unset on OpenAI it is `gpt-5.4-nano` |
+| `search` | Putting the player's question in English before the deep guide search ([retrieval](07-nexo.md)); unset on OpenAI it is `gpt-5.4-nano` |
 
 Web search follows each feature's provider. An OpenAI model needs its price in `services/ai/src/platjourney_ai/costs.py`, or its calls are recorded at $0.
 

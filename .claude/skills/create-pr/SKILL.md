@@ -13,6 +13,7 @@ Follow these steps, in order.
 - Push the branch before creating the PR.
 - The PR base is `main`: `gh pr create --base main ...`.
 - **Never** include in commits or in the PR: "Generated with Claude Code" footers, session links (`https://claude.ai/code/...`), `Claude-Session:` trailers, or `Co-Authored-By: Claude`. Technical content only.
+- **Everything in English**, including quoted app text. When the PR mentions a label, a notice line or a message the app shows, quote the English locale text (`"📍 Where you are in the game"`, `"On this device"`), never the Portuguese one. If a string has no English version yet, describe it in English instead of quoting it.
 
 ## 2. Title
 

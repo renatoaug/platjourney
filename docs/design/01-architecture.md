@@ -28,7 +28,7 @@ flowchart LR
 - **Browser → API.** The browser only talks to the server, with a session cookie. The server also serves the web app: built files in production, Vite in development.
 - **API.** Owns accounts, sessions and everything stored. Reads PSN and IGDB, and polls every player's profile on a schedule (the watcher).
 - **AI.** Only the server calls it. Each call carries its cost tag (player and action), so every model call lands in `llm_call` with its tokens and price.
-- **SurrealDB.** Stores everything, the guide passages and their vectors included ([database](04-database.md), [retrieval](07-rag.md)).
+- **SurrealDB.** Stores everything, the guide passages and their vectors included ([database](04-database.md), [retrieval](07-nexo.md)).
 - **Telegram.** Long polling; the bot answers in the player's language.
 
 ## Stack
