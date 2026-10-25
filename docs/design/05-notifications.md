@@ -32,7 +32,7 @@ flowchart LR
 |---|---|---|
 | Web | Always | The notice under the bell and in the history |
 | Telegram | The chat is linked and "No Telegram" is on in the settings (`user.notify_telegram`, on by default) | The full notice; markdown is converted to Telegram's HTML. A message over 4,000 characters is sent in parts, cut between paragraphs so a checklist item is never split |
-| Push | The device turned "Neste aparelho" on in the settings (`push_subscription`), and the instance has VAPID keys | A notification titled Nexo with the notice as plain text, cut at 900 characters; a tap opens the history |
+| Push | The device turned "On this device" on in the settings (`push_subscription`), and the instance has VAPID keys | A notification titled Nexo with the notice as plain text, cut at 900 characters; a tap opens the history |
 
 A notice counts as read once the player opens the bell on any device, or writes anything to Nexo on Telegram (a bot never learns when a message is read, so writing is the closest sign).
 
@@ -58,15 +58,15 @@ One sweep sends at most one message per player: what happened, then what comes n
 | Trophy names, counts, progress, rarity | PSN | No |
 | Suggested next trophy, its tip, missables, point of no return | The structured guide (roadmap, tricks, missables) | No |
 | Chapter checklist (collectibles, items, missables with their steps) | The guide's milestones | No |
-| Progress mark line ("Metade do jogo base: 20 de 40 troféus.") | Fixed texts, one of three picked at random per mark | No |
-| Missable relief line ("🔒 **X** era perdível e agora é seu para sempre.") | Fixed texts, one of four picked per trophy | No |
+| Progress mark line ("Halfway through the base game: 20 of 40 trophies.") | Fixed texts, one of three picked at random per mark | No |
+| Missable relief line ("🔒 **X** was missable and now it's yours for good.") | Fixed texts, one of four picked per trophy | No |
 | Session, route, deal and server notices | Templates in the player's language | No |
 | Nexo's comment on a start or an unlock | The model, from PSN data and the relevant parts of the structured guide | Yes, when allowed |
 | Server status and its note | A daily model check with web search, stored in `server_status`; the notice reads the stored row | No at send time |
 
 ### Nexo's comment
 
-Nexo writes the comment of a `start` or `unlock` notice when `AI_NOTICES` is on for the instance and the player kept "Avisos escritos pelo Nexo" on in the profile. If either is off, a plugin refused the model work, or the model failed (quota, outage), the template is used: a player always hears about a trophy, whatever happens to the AI service.
+Nexo writes the comment of a `start` or `unlock` notice when `AI_NOTICES` is on for the instance and the player kept "Notices written by Nexo" on in the profile. If either is off, a plugin refused the model work, or the model failed (quota, outage), the template is used: a player always hears about a trophy, whatever happens to the AI service.
 
 What the model receives:
 
@@ -88,24 +88,24 @@ The checklist goes into three notices:
 - **Session**: the checklist of the stretch the player is in, every time they open the game, until the trophies it counts for are earned.
 - **Route**: when the step was reached without new trophies.
 
-Format, in the player's language:
+Format (here in English; the player gets it in their language):
 
 ```
-📍 Neste trecho do jogo
-8 coisas para pegar aqui: 2 souvenirs, 2 baús de ferramentas, 2 facas, 1 baú secreto e 1 flor. Além do troféu Piedade, que é perdível. Seguem na ordem.
+📍 Where you are in the game
+8 things to pick up here: 2 souvenirs, 2 tool chests, 2 knives, 1 secret chest and 1 flower. Plus the trophy Mercy, which is missable. In order:
 
-1. Flor 3/5: Genciana
-Subcapítulo Trabalho noturno, objetivo "Chegar ao barco da Ordem"
-• Na praia com os grandes navios atracados, siga pelo lado direito.
-• Recolha a flor roxa perto do fim do caminho.
+1. Flower 3/5: Gentian
+Sub-chapter Night work, objective "Reach the Order's ship"
+• On the beach with the big ships docked, keep to the right side.
+• Pick the purple flower near the end of the path.
 
 …
 
-7. ⚠️ Piedade: não matar o guarda nas docas
-Subcapítulo Cooperação obrigatória, objetivo "Chegar ao barco da Ordem"
-• Enquanto ele fala parado diante de você, acerte-o com Ignifer.
-• Atire resina nele para aumentar o fogo e afastar os ratos.
-↩️ Se matar o guarda ou falhar na fuga, reinicie a seção.
+7. ⚠️ Mercy: do not kill the guard at the docks
+Sub-chapter Forced cooperation, objective "Reach the Order's ship"
+• While he stands talking in front of you, hit him with Ignifer.
+• Shoot tar at him to feed the fire and keep the rats away.
+↩️ If you kill the guard or fail the escape, restart the section.
 ```
 
 Rules:
@@ -131,7 +131,7 @@ Some unlocks reach a point of the journey, and that notice marks it. The count i
 
 When one unlock reaches two marks (a short list), the later one wins: platinum, then final stretch, then halfway, then first trophy.
 
-Right under the 🏆 title, the notice opens with a line in PlatJourney's own voice, one of three per mark picked at random (for example "Tá aberta a porteira! Agora é um troféu atrás do outro até a platina."). A missable just earned adds its relief line in the same place. Nexo's words follow, told not to celebrate again. The plain notice opens with the same lines, followed by a fixed line for the mark ("Metade do jogo base: 20 de 40 troféus.").
+Right under the 🏆 title, the notice opens with a line in PlatJourney's own voice, one of three per mark picked at random (for example "The gates are open! One trophy after another until the platinum."). A missable just earned adds its relief line in the same place. Nexo's words follow, told not to celebrate again. The plain notice opens with the same lines, followed by a fixed line for the mark ("Halfway through the base game: 20 of 40 trophies.").
 
 ## Rules that keep it clean
 

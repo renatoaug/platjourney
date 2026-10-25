@@ -1,6 +1,6 @@
 # Recommendations
 
-How PlatJourney suggests the next platinum: which games, from which data, and when a model is involved. Three engines feed the Discover screen, the game page, "O que jogar agora?" and the connected assistants; only one of them calls a model.
+How PlatJourney suggests the next platinum: which games, from which data, and when a model is involved. Three engines feed the Discover screen, the game page, "What to play now?" and the connected assistants; only one of them calls a model.
 
 ## Overview
 
@@ -8,7 +8,7 @@ How PlatJourney suggests the next platinum: which games, from which data, and wh
 |---|---|---|---|
 | **Similar-games graph** | IGDB's "similar games", expansions and series, stored as relations between catalog games, plus what other players platinumed | None | Discover: games like yours, quick platinums, same series. The game page: related games. The candidates the two other engines start from |
 | **Taste vectors** | An embedding per catalog game; the player's taste as a weighted mean of the embeddings of their games | Only the embedding model | Fills the candidate list when the graph leaves it short |
-| **Nexo's picks** | The candidates of the two engines above, the player's library, what they dismissed and what they said about their taste | Yes: a taste profile and six explained picks | Discover, on request, kept for a week. "O que jogar agora?" picks one game from the same candidates |
+| **Nexo's picks** | The candidates of the two engines above, the player's library, what they dismissed and what they said about their taste | Yes: a taste profile and six explained picks | Discover, on request, kept for a week. "What to play now?" picks one game from the same candidates |
 
 Every engine shows only games with a PlatJourney guide, never a game the player owns, dismissed or already saved as an interest, and every pick respects the rules the player set ([below](#the-players-rules)).
 
@@ -58,7 +58,7 @@ Every game the seeds point to through `similar_to` is a candidate, scored by:
 - a bonus of up to 0.5 for being high in a seed's IGDB list (the first 10 count);
 - 2 per other player who platinumed both a seed and the candidate.
 
-Each candidate keeps the three heaviest seeds that led to it, which the screen shows as "because you played X", with "você platinou" when the player did.
+Each candidate keeps the three heaviest seeds that led to it, which the screen shows as "because you played X", with "you platinumed X" when the player did.
 
 ### What is shown
 
@@ -123,7 +123,7 @@ Each pick is tied back to the candidate it names; a pick naming a game outside t
 - The player can edit the profile: add genres, traits and things to avoid, or remove what the profile got wrong. The additions are kept apart from the model's profile, so a new batch does not overwrite them.
 - Starting a game Nexo recommended within 30 days, in a batch or as a pick, opens the start notice glad the player followed the tip ([notifications](05-notifications.md)).
 
-## "O que jogar agora?"
+## "What to play now?"
 
 The player asks for one game for right now, and Nexo answers with the game, why it fits and what to do first. This is the mood of the moment, not the taste profile.
 
@@ -188,6 +188,6 @@ What the guide does not say passes: a rule never hides a game for lack of data.
 | What the player says wins over the library | A profile is a guess from behavior; a stated preference is not |
 | Dismissals with a reason | "Too long" or "online" says what to avoid; a name alone only hides that game |
 | Taste vector with negative weights | Games dropped early say what the player does not want |
-| The mood over the profile | "O que jogar agora?" answers a moment, not a taste |
+| The mood over the profile | "What to play now?" answers a moment, not a taste |
 
 The decision to add the graph is recorded in [ADR-009](../decisions/ADR-009-similar-games-graph.md).
