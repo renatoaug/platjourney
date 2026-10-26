@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.35.0](https://github.com/renatoaug/platjourney/compare/v0.34.1...v0.35.0) (2026-10-26)
+
+### Features
+
+* **ai:** favor the chapter a question names in the deep guide ([#92](https://github.com/renatoaug/platjourney/issues/92)) ([46bb6b3](https://github.com/renatoaug/platjourney/commit/46bb6b3796a7ae88eec2a20f88fc81a4a2c6e16f))
+
 ## [0.34.1](https://github.com/renatoaug/platjourney/compare/v0.34.0...v0.34.1) (2026-10-25)
 
 ## [0.34.0](https://github.com/renatoaug/platjourney/compare/v0.33.0...v0.34.0) (2026-10-24)
