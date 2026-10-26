@@ -645,6 +645,107 @@ async def test_retrieve_leaves_a_cut_passage_alone_when_the_next_is_another_page
     assert found.content == 'Objective: Reach the South Tower'
 
 
+async def test_retrieve_favors_the_chapter_the_question_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def titled(position: int, heading: str) -> Passage:
+        return passage(position).model_copy(update={'heading': heading})
+
+    every = [
+        titled(1, 'Collectibles > Chapter 2'),
+        titled(2, 'Collectibles > Chapter 3'),
+        titled(3, 'Collectibles > Chapter 13'),
+        titled(4, 'General tips'),
+    ]
+
+    async def passages(game: str) -> list[Passage]:
+        return every
+
+    async def in_english(question: str) -> str:
+        return 'where are the collectibles in chapter 3?'
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        return [[0.1]]
+
+    async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
+        return []
+
+    async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
+        return [ScoredPassage(**p.model_dump(), score=0.9 - p.position / 10) for p in every]
+
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
+    monkeypatch.setattr(llm, 'embed', embed)
+    monkeypatch.setattr(guidestore, 'mentioning', mentioning)
+    monkeypatch.setattr(guidestore, 'search', search)
+    found = await deepguide.retrieve(GAME, 'onde ficam os colecionáveis do capítulo 3?', [])
+    assert [p.position for p in found] == [2, 4]
+
+
+async def test_retrieve_nudges_toward_the_chapter_the_player_is_in(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    every = [
+        passage(1).model_copy(update={'heading': 'Collectibles > Chapter 2'}),
+        passage(2).model_copy(update={'heading': 'Collectibles > Chapter 3'}),
+    ]
+
+    async def passages(game: str) -> list[Passage]:
+        return every
+
+    async def in_english(question: str) -> str:
+        return 'where are the collectibles?'
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        return [[0.1]]
+
+    async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
+        return []
+
+    async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
+        return [ScoredPassage(**p.model_dump(), score=0.9 - p.position / 10) for p in every]
+
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
+    monkeypatch.setattr(llm, 'embed', embed)
+    monkeypatch.setattr(guidestore, 'mentioning', mentioning)
+    monkeypatch.setattr(guidestore, 'search', search)
+    question = 'onde ficam os colecionáveis?'
+    assert [p.position for p in await deepguide.retrieve(GAME, question, [])] == [1, 2]
+    here = frozenset({('chapter', 3)})
+    found = await deepguide.retrieve(GAME, question, [], here=here)
+    assert [p.position for p in found] == [2, 1]
+
+
+async def test_retrieve_keeps_other_chapters_when_nothing_else_is_left(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    other = passage(1).model_copy(update={'heading': 'Chapter 2'})
+
+    async def passages(game: str) -> list[Passage]:
+        return [other]
+
+    async def in_english(question: str) -> str:
+        return question
+
+    async def embed(texts: list[str]) -> list[list[float]]:
+        return [[0.1]]
+
+    async def mentioning(game: str, terms: list[str], limit: int = 4) -> list[Passage]:
+        return []
+
+    async def search(game: str, vector: list[float], limit: int = 6) -> list[ScoredPassage]:
+        return [ScoredPassage(**other.model_dump(), score=0.9)]
+
+    monkeypatch.setattr(guidestore, 'passages', passages)
+    monkeypatch.setattr(deepguide, 'in_english', in_english)
+    monkeypatch.setattr(llm, 'embed', embed)
+    monkeypatch.setattr(guidestore, 'mentioning', mentioning)
+    monkeypatch.setattr(guidestore, 'search', search)
+    found = await deepguide.retrieve(GAME, 'onde fica a flor do capítulo 5?', [])
+    assert [p.position for p in found] == [1]
+
+
 async def test_retrieve_skips_the_model_without_passages(monkeypatch: pytest.MonkeyPatch) -> None:
     async def passages(game: str) -> list[Passage]:
         return []

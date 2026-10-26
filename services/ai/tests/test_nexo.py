@@ -187,7 +187,11 @@ async def test_reply_sends_history_and_guide_passages(
     asked: list[list[str]] = []
 
     async def retrieve(
-        game: Game, question: str, terms: list[str], limit: int = 6
+        game: Game,
+        question: str,
+        terms: list[str],
+        limit: int = 6,
+        here: frozenset[tuple[str, int]] = frozenset(),
     ) -> list[Passage]:
         asked.append(terms)
         return [

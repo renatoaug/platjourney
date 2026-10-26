@@ -155,11 +155,12 @@ flowchart LR
         ok["Keyword · as asked"]
         ov["Vector · as asked<br/>(only when the guide is largely<br/>in the player's language)"]
     end
+    q --> ch["Chapter named<br/>in the question?"] -- yes --> chl["Passages of that chapter<br/>(5th list)"] --> rrf
     hy --> rrf["Rank fusion (RRF),<br/>weighted by the guide's language"]
     q --> names["Trophy names in the question<br/>(terms)"] --> literal["Literal matches<br/>(up to 3)"]
     literal --> pick["Final list: up to 6 passages,<br/>literal matches first"]
     rrf --> pick
-    pick --> cont["Passages cut after a heading<br/>get the next passage appended"]
+    pick --> cont["Other chapters left out;<br/>passages cut after a heading<br/>get the next passage appended"]
     cont --> prompt["Prompt: passages + PSN data + guide"]
     prompt --> answer[Nexo answers]
     pick -. "no passages" .-> gap[("guide_request")]
@@ -172,7 +173,7 @@ flowchart LR
 | **Hybrid search** | The translation to English succeeded (the normal case) | Vector and keyword search with the English question; keyword search with the question as asked; vector search with the question as asked when at least 25% of the game's passages are in the player's language. The lists are merged with rank fusion, weighted by the guide's language |
 | **Vector search only** | The translation failed (model error or timeout) | One vector search with the question as asked. This is the retrieval as it was before hybrid search |
 
-In both modes, literal matches of trophy names come first in the final list, and the final passages are completed the same way (step 7). Hybrid search includes the vector search as one of its lists, so it never returns less than vector search only would.
+In both modes, a chapter named in the question adds its passages and leaves out the passages of other chapters (step 6), literal matches of trophy names come first in the final list, and the final passages are completed the same way (step 8). Hybrid search includes the vector search as one of its lists, so it never returns less than vector search only would.
 
 #### Steps
 
@@ -183,12 +184,13 @@ In both modes, literal matches of trophy names come first in the final list, and
 | 3 | Keyword search (BM25) | hybrid |
 | 4 | Weights by the guide's language | hybrid |
 | 5 | Rank fusion (RRF) | hybrid |
-| 6 | Literal trophy-name matches | both |
-| 7 | Final list and continuation | both |
+| 6 | Chapter named in the question | both, when the question names one |
+| 7 | Literal trophy-name matches | both |
+| 8 | Final list and continuation | both |
 
 #### 1. Translation
 
-A small model translates the question to English: "onde fica o vinil da Virginia?" becomes "where is the Virginia vinyl?". The prompt asks for the translation only, with game terms as English guides name them, and returns an English question unchanged.
+A small model translates the question to English: a question in Portuguese about the Virginia vinyl becomes "where is the Virginia vinyl?". The prompt asks for the translation only, with game terms as English guides name them, and returns an English question unchanged.
 
 - Model: `AI_MODEL_SEARCH`, in the `provider:model` format of the other features. Unset, it is `gpt-5.4-nano` on OpenAI, or the local model with a local provider.
 - Cost: the call runs as a step of the chat request, so it is recorded against that request.
@@ -213,7 +215,7 @@ BM25 is the ranking function of classic search engines. Every passage of the gam
 - rare words count more than common ones (a name that appears in two passages beats a word in two hundred);
 - long passages are discounted;
 - constants k1 = 1.2 and b = 0.75, the usual values;
-- query words that carry no information ("onde", "fica", "where", "the") are removed first.
+- query words that carry no information ("where", "is", "the", and the same words in Portuguese) are removed first.
 
 It finds exact names of collectibles, places and characters, and misses synonyms and other languages: "vinil" never matches "vinyl". That is why it runs twice, with the English question and with the question as asked.
 
@@ -242,7 +244,7 @@ Supporting another player language means adding its common words to the classifi
 
 Reciprocal rank fusion merges the lists. Each list gives a passage `weight / (k + rank)` with `k = 60`, and the sums decide the final order. It uses ranks instead of scores because cosine similarity (0 to 1) and BM25 (unbounded) are not comparable. The constant `k` flattens the curve: rank 1 (1/61) and rank 5 (1/65) are close, rank 1 and rank 30 (1/90) are not.
 
-Example: "onde fica o vinil da Virginia?" in a game with an English guide, for the passage "Virginia vinyl: on the shelf by the window":
+Example: the Virginia vinyl question asked in Portuguese, in a game with an English guide, for the passage "Virginia vinyl: on the shelf by the window":
 
 | List | Rank of the passage | Weight | Contribution |
 |---|---|---|---|
@@ -253,11 +255,48 @@ Example: "onde fica o vinil da Virginia?" in a game with an English guide, for t
 
 A passage about another record ranked 1st by the vector search and unranked by the keyword search totals 1 / 61 = 0.0164, so the Virginia passage comes first. With vector search alone it was 9th and did not reach the prompt. The ranks are illustrative; the arithmetic is the real one.
 
-#### 6. Literal trophy-name matches
+#### 6. Chapter named in the question
+
+A question often says where the player is: "where are the collectibles in chapter 3?". Guide pages say it too, in their headings, and a passage's heading is the path of headings above it ("Collectibles Guide > Chapter 3", "Episode 3 Walkthrough > Chapter 1: Windy Nights"). Without this step, the passages of chapters 2, 4 and 13 compete with chapter 3's on the same words, and the vector search cannot tell them apart.
+
+**Reading a chapter.** The question (as asked and translated) and every passage heading are read the same way: a unit word followed by its number.
+
+| Unit | Words (English, Portuguese, Spanish) |
+|---|---|
+| chapter | chapter, chap., ch., capítulo, cap. |
+| episode | episode, ep., episódio, episodio |
+| act | act, ato, acto |
+| mission | mission, missão, misión |
+
+- The number can be digits ("Mission 09" is mission 9), Roman numerals ("Chapter III") or a number word up to twenty in English or Portuguese ("episode four"). Short forms ("ch.", "cap.") take digits only.
+- A range is about several chapters, not one: "Chapter 1-6", "Chapters 3 & 4" give none.
+- A chapter named after "to", "after", "until", their Portuguese equivalents and similar words is where something leads, not what the passage is about: "Chapter Select to Chapter 9" gives none.
+- "Level" and "stage" are not units: guides use them for experience levels ("Reach Level 99") as often as for places.
+
+**Matching units.** When the question uses a unit the game's guides never use and the guides use only one, the question is read in the guides' unit: "chapter 3" of a game whose guides count missions is mission 3.
+
+**Using it.**
+
+- The passages whose heading names every chapter the question names become one more list in the rank fusion (weight 1), in the order the vector search found them, then the rest in page order.
+- After the fusion, passages that name another chapter of the same unit are left out: chapter 13 when the question asks about chapter 3. Passages that name no chapter stay. If nothing would remain, nothing is left out.
+- A question that names no chapter is searched as before, with the nudge below in the chat.
+
+**The chapter the player is in.** In the chat, a question often means "here" without saying it: "where are the collectibles?". The chapter is then guessed from the player's trophies and the guide's milestones ([notifications](05-notifications.md#the-chapter-checklist)):
+
+1. The milestone the player is in is the last one whose opening trophy they have.
+2. If its checklist names the chapter ("Chapter 2, Train station"), that is the guess.
+3. Otherwise the opening trophy usually ends the chapter before: "Complete chapter 3" means the player is in chapter 4. A trophy that names a chapter without finishing it ("Find the mark in Chapter 5") means that chapter.
+4. Nothing to go on (the first milestone, a trophy that names no chapter or several), no guess.
+
+The guess is right for most linear games and sometimes one chapter off, so it only nudges: its passages join the fusion with weight 0.3, and nothing is left out. A chapter named in the question replaces the guess. The connected assistants' deep guide tool sends the question alone, so they get the chapter a question names, not the guess.
+
+The chapter is read from the heading at search time, not stored: reading a few hundred headings takes under a millisecond, and a change to the rules applies to every game at once, with no backfill.
+
+#### 7. Literal trophy-name matches
 
 When the question mentions trophies, up to 3 passages whose heading or text contains one of their names (case-insensitive) are taken. They go ahead of the fused list in both modes: the passage that names the trophy is the right one even when the question is worded differently from the guide. The terms are also appended to the text embedded in step 2.
 
-#### 7. Final list
+#### 8. Final list
 
 - Up to 6 passages: the literal matches, then the fused list (or the vector list in vector-only mode), without duplicates.
 - **Continuation.** Pages are split at a fixed size, so a passage can end on a heading or a label ("Objective: Reach the South Tower", a collectible's name) with the steps in the next passage. A passage ending that way gets the next passage of the same page appended to it.
@@ -274,6 +313,8 @@ When the question mentions trophies, up to 3 passages whose heading or text cont
 | Translation cache | 1,000 | Translations kept in memory |
 | BM25 k1, b | 1.2, 0.75 | Term saturation and length normalization |
 | RRF k | 60 | Smoothing constant |
+| Chapter list weight | 1 | How much the passages of the chapter a question names count in rank fusion |
+| Player chapter weight | 0.3 | How much the passages of the chapter the player is probably in count, when the question names none |
 | Literal matches | 3 | Trophy-name passages placed first |
 | Final passages | 6 | Passages sent to the prompt |
 
@@ -292,6 +333,26 @@ Measured when hybrid search shipped, on an index covering more than a thousand g
 | 188 questions naming collectibles, places and characters | 0.86 · 0.64 | 0.95 · 0.83 |
 | 64 questions answered only by Portuguese passages | 0.89 · 0.76 | 0.92 · 0.73 |
 
+The chapter step was measured the same way, on 43 questions that name a chapter ("where are the collectibles in chapter 3?", across 17 games whose guides label chapters), counting a passage of that chapter as correct:
+
+| Question set | Hybrid (recall@6 · MRR) | Hybrid with chapters (recall@6 · MRR) |
+|---|---|---|
+| 43 questions naming a chapter | 0.72 · 0.45 | 0.91 · 0.68 |
+| The 285 questions above, together | 0.95 · 0.81 | 0.96 · 0.82 |
+
+On the 285 questions, 12 changed rank, all of them naming a chapter, episode or mission: 9 moved up (3 from missing to first) and 3 moved down by one to three positions. A chapter list weight of 0.5 gave 0.81 · 0.61 on the chapter set; 2 gave the same recall and slightly lower numbers on the 285. Leaving other chapters out changed one of the 285 questions and none of the 43.
+
+For the guessed chapter, the same 43 questions without their chapter ("where are the collectibles?") were run with the right chapter as the guess, and the 285 questions with a random chapter of the game as the guess, to see the cost of a guess that has nothing to do with the question:
+
+| Player chapter weight | 43 questions, right guess (recall@6 · MRR) | 285 questions, random guess (recall@6 · MRR) |
+|---|---|---|
+| 0 (no guess) | 0.42 · 0.19 | 0.95 · 0.81 |
+| 0.3 | 0.53 · 0.33 | 0.96 · 0.79 |
+| 0.5 | 0.53 · 0.36 | 0.96 · 0.78 |
+| 1 | 0.65 · 0.46 | 0.95 · 0.77 |
+
+0.3 keeps most of the gain of 0.5 with less cost when the guess is wrong; a higher weight trades too much on questions about another part of the game.
+
 Keyword search with the question as asked and no translation scored below vector search alone (recall@6 0.81): the common words of a Portuguese question match the wrong English passages. Fixed weights (instead of the language weights of step 4) dropped the Portuguese-passage set to 0.78 · 0.57.
 
 ### Design decisions
@@ -303,6 +364,9 @@ Keyword search with the question as asked and no translation scored below vector
 | BM25 in the service, no database full-text index | Same size argument; SurrealDB's match operator is a filter (all words required), not a ranking |
 | Rank fusion instead of score mixing | Cosine and BM25 scores are on different scales |
 | Weights from the guide's language | Fixed weights hurt games whose guide is in the player's language (see Measurements) |
+| Chapter read from headings at search time | Headings already carry the chapter; reading them per question is instant, needs no stored field or backfill, and a rule change applies everywhere |
+| The player's chapter guessed, only nudging | The guess comes from trophies and is sometimes a chapter off; a light weight helps when it is right and costs little when it is not |
+| Chapter as one more list, not a filter alone | A question names a chapter and a thing; the fusion keeps both, and passages without a chapter label (general tips) can still answer |
 | Literal matches first | A passage that names the trophy is the right one regardless of the question's wording |
 | Continuation instead of re-splitting | Appending the next passage at retrieval time fixes headings cut from their text; re-splitting would re-embed every page |
 | One embedding model at a time | Embeddings from different models are not comparable; rows with another vector size are skipped, and `bun run embed --all` re-embeds after a model change |
