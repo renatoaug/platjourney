@@ -34,7 +34,7 @@ async function guideFor(user: User, title: TitleProgress, ctxTrophies: GameConte
   // The demo player reads the stored guide and never asks for one.
   if (isDemo(user)) return cached
   if (!config.automatic.research) {
-    if (!cached) await requestGuide(game.id)
+    if (!cached) await requestGuide(game.id, user.id)
     return cached
   }
   return ensureGuide(game, ctxTrophies, { name: title.name, platform: title.platform })
@@ -98,7 +98,7 @@ export async function setChatFromCatalog(user: User, game: Game): Promise<GameCo
     lastUpdated: '',
   }
   const guide = await getGuide<Guide>(game.id)
-  if (!guide && !isDemo(user)) await requestGuide(game.id)
+  if (!guide && !isDemo(user)) await requestGuide(game.id, user.id)
   const ctx: GameContext = {
     game,
     title,

@@ -295,6 +295,7 @@ erDiagram
     guide_request {
         id record(guide_request) PK
         game record(game) FK "unique"
+        users array(record)
         requests int
         questions array(object)
         created_at datetime
@@ -460,7 +461,7 @@ erDiagram
 | `game` | catalog game | `slug`, `igdb_id` | From IGDB; `np_communication_ids` ties it to PSN lists; `embedding` for recommendations. The game page's gallery and "about" card read `screenshot_ids` (IGDB image ids of its scenes, artwork when it has none), `developers`, `website` (the official site) and `released_at` (the first release day, at midnight UTC); `bun run catalog:media` fills them for games already in the catalog. `hypes` is how many people follow the game on IGDB before release: the home's calendar lists the most awaited first. `store_url` is its PlayStation Store page, where its price is read. A store edition is the game itself, its name kept in `aliases`; a PS4/PS5 remaster of a game that never came to them is its own record. `series` holds the ids of the IGDB collections the game belongs to (games sharing one are the same series), written by `bun run catalog:similar` |
 | `guide` | game with a researched guide | `game` | The guide itself is an object; also the deep guide's pages and passage count |
 | `guide_chunk` | passage of a deep guide | | Text, heading path, source page and its date, and the vector |
-| `guide_request` | game asked for without a guide | `game` | How many times and the questions, for whoever runs the instance |
+| `guide_request` | game asked for without a guide | `game` | The players who opened it without a guide (`users`, written by the server; reloading or opening it again adds no one), how many they are (`requests`) and the questions, for whoever runs the instance |
 | `game_request` | name searched on Guides that neither the catalog nor IGDB had | `key` (the name normalized for search) | Who asked, each account once, and how many; for whoever runs the instance to add by hand |
 | `store_price` | game someone saved in their interests, per store region | `game, region` | Its PlayStation Store price in a region (`region`, upper case; only `BR` is read today), in cents, read every day at 10:00 (Brazil time) and overwritten: price, full price, percent off, when the sale ends, whether PS Plus includes it and what members pay when the store gives them a lower price (`plus_price`), and the lowest tier whose catalog includes it (`plus_tier`). A game the player's own tier includes is a `deal` notice too, once. A new or deeper sale is a `deal` notice to everyone who saved the game |
 | `similar_to` | IGDB "similar game" link between two catalog games (`in -> similar_to -> out`) | `in, out` | A relation table. `rank` is the position of `out` in IGDB's list of `in` (0 the most similar). `bun run catalog:similar` deletes a game's outgoing edges and writes them again, only to games in the catalog; the server does it at 4:30 every night for games without edges yet and for the whole catalog on Sundays, so older games also point at new ones. The recommendations by similarity walk the player's games through these edges |

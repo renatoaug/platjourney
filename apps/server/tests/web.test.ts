@@ -650,7 +650,7 @@ test('a catalog game without trophy lists has no trophies', async () => {
   const res = await send('GET', '/api/title?game=game:1&platform=PS4')
   expect(res.body).toMatchObject({ trophies: null, platform: 'PS4', queued: true, guide: null })
   expect(psn.catalogTrophies).not.toHaveBeenCalled()
-  expect(requests.requestGuide).toHaveBeenCalledWith('game:1')
+  expect(requests.requestGuide).toHaveBeenCalledWith('game:1', me.id)
 })
 
 test('without research an old guide is still shown', async () => {
@@ -688,7 +688,7 @@ test('research is capped: a few at a time, and a daily number per player', async
   for (const n of [1, 2, 3]) await send('GET', `/api/title?game=game:${n}`)
   const fourth = await send('GET', '/api/title?game=game:4')
   expect(fourth.body).toMatchObject({ guide: null, queued: true })
-  expect(requests.requestGuide).toHaveBeenCalledWith('game:4')
+  expect(requests.requestGuide).toHaveBeenCalledWith('game:4', me.id)
   expect(build).toHaveBeenCalledTimes(3)
   for (const finish of pending.splice(0)) finish(freshGuide)
   await Bun.sleep(0)
