@@ -39,7 +39,8 @@ SCHEMA: dict[str, Any] = {
                     'trick': {
                         'type': ['string', 'null'],
                         'description': (
-                            'A known trick from the guide that applies, at most 25 words, or null'
+                            'A known trick from the guide that applies, at most 25 words, or '
+                            'null. Never a rewording of how: null when the guide has nothing more'
                         ),
                     },
                     'flexible': {
@@ -58,8 +59,9 @@ SCHEMA: dict[str, Any] = {
             'type': 'array',
             'items': {'type': 'string'},
             'description': (
-                'At most 2 warnings, only real risks in THIS session (a missable, a point of no '
-                'return), each up to 14 words, pt-BR. Empty when there is none'
+                'At most 2 warnings, only real risks the player can hit in THIS session from '
+                'where they are (a missable, a point of no return); a risk from a later act or '
+                'chapter stays out. Each up to 14 words, pt-BR. Empty when there is none'
             ),
         },
         'ifTimeLeft': {
