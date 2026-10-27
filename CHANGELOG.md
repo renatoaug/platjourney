@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.36.0](https://github.com/renatoaug/platjourney/compare/v0.35.6...v0.36.0) (2026-10-27)
+
+### Features
+
+* **plan:** keep every session plan and how it ended ([#100](https://github.com/renatoaug/platjourney/issues/100)) ([aebb163](https://github.com/renatoaug/platjourney/commit/aebb163f58d6400434aff96271c5328d7f8b34d3))
+
 ## [0.35.6](https://github.com/renatoaug/platjourney/compare/v0.35.5...v0.35.6) (2026-10-27)
 
 ### Bug Fixes
