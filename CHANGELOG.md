@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.36.1](https://github.com/renatoaug/platjourney/compare/v0.36.0...v0.36.1) (2026-10-27)
+
+### Bug Fixes
+
+* **plan:** move plans with an empty field ([#101](https://github.com/renatoaug/platjourney/issues/101)) ([fc578db](https://github.com/renatoaug/platjourney/commit/fc578db9ec31a435942708ad43fa19336dc821d2))
+
 ## [0.36.0](https://github.com/renatoaug/platjourney/compare/v0.35.6...v0.36.0) (2026-10-27)
 
 ### Features
