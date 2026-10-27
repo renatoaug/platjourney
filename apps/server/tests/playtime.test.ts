@@ -1,7 +1,7 @@
 import './env.ts'
 import { afterEach, expect, mock, spyOn, test } from 'bun:test'
 import * as lib from '../src/library.ts'
-import { hours, playtimes } from '../src/playtime.ts'
+import { hours, playtimes, storeName } from '../src/playtime.ts'
 import * as psn from '../src/psn.ts'
 import * as games from '../src/repository/game.ts'
 import * as repo from '../src/repository/playtime.ts'
@@ -29,13 +29,16 @@ test('stored playtime answers at once while PSN is synced behind it', async () =
   const other = makeGame({ id: 'game:21', name: 'Other' })
   spyOn(psn, 'playedGames').mockResolvedValue([
     played('Gone™', 3600, '2026-02-01', '2026-03-01'),
-    played('Gone', 1800, '2026-01-01', null),
+    played('Gone (PlayStation®5)', 1800, '2026-01-01', null),
     played('Other', 600, null, '2026-04-01'),
     played('Never', 0, null, null),
+    played('SHAREfactory™', 900, null, null),
   ])
   spyOn(lib, 'library').mockResolvedValue([makeTitle({ name: 'GONE' })])
   const forTitle = spyOn(games, 'gameForTitle').mockResolvedValue(gone)
-  const forName = spyOn(games, 'gameForName').mockResolvedValue(other)
+  const forName = spyOn(games, 'catalogGameForName').mockImplementation(async (name) =>
+    name === 'Other' ? other : undefined,
+  )
   const save = spyOn(repo, 'savePlaytime').mockResolvedValue(undefined)
   const stored = {
     game: 'game:20',
@@ -53,6 +56,8 @@ test('stored playtime answers at once while PSN is synced behind it', async () =
 
   expect(forTitle).toHaveBeenCalledTimes(2)
   expect(forName).toHaveBeenCalledWith('Other')
+  // A name no catalog knows is not stored as a game, and its playtime is left out.
+  expect(forName).toHaveBeenCalledWith('SHAREfactory™')
   expect(save.mock.calls).toEqual([
     [
       'user:pt1',
@@ -88,6 +93,15 @@ test('a failed sync is logged and the stored playtime still answers', async () =
   expect((await playtimes(user)).size).toBe(0)
   await until(() => error.mock.calls.length > 0)
   expect(error).toHaveBeenCalledWith('playtime sync failed:', 'psn down')
+})
+
+test('store names lose the console and edition tags', () => {
+  expect(storeName('Grand Theft Auto V (PlayStation®5)')).toBe('Grand Theft Auto V')
+  expect(storeName('Terraria – PlayStation®4 Edition')).toBe('Terraria')
+  expect(storeName('Worms [PS1 Emulation]')).toBe('Worms')
+  expect(storeName('Once Human (Gratuito para jogar)')).toBe('Once Human')
+  expect(storeName('Where Winds Meet (F2P)')).toBe('Where Winds Meet')
+  expect(storeName('Marvel’s Spider-Man 2')).toBe('Marvel’s Spider-Man 2')
 })
 
 test('hours are rounded to one decimal, null when unknown', () => {

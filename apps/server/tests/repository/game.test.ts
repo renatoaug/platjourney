@@ -7,7 +7,6 @@ import {
   catalogGameForName,
   type Game,
   gameByName,
-  gameForName,
   gameForTitle,
   gameRef,
   gamesForTitles,
@@ -235,17 +234,6 @@ test('no titles means no query', async () => {
   const q = spyOn(db, 'q')
   expect((await gamesForTitles([])).size).toBe(0)
   expect(q).not.toHaveBeenCalled()
-})
-
-test('a free name uses the catalog first and IGDB otherwise', async () => {
-  const named = makeGame({ id: 'game:9901', name: 'Mu Odyssey', slug: 'mu-odyssey' })
-  await indexed(named)
-  fakeDb([named])
-  const resolve = spyOn(igdb, 'resolveGame').mockResolvedValue(null)
-  expect((await gameForName('mu odyssey')).id).toBe('game:9901')
-  expect(resolve).not.toHaveBeenCalled()
-  const created = await gameForName('Nu Unknown', 'PS5')
-  expect(created).toMatchObject({ id: 'game:psn_nu_unknown', platforms: ['PS5'] })
 })
 
 test('a name a player typed becomes a catalog game only when IGDB knows it', async () => {

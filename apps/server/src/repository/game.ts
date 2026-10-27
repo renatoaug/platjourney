@@ -228,14 +228,6 @@ export async function catalogGameForName(
   return entry ? upsertFromCatalog(entry, name, undefined, platform) : undefined
 }
 
-// A name PSN reported (a played title): stored even when IGDB does not know it.
-export async function gameForName(name: string, platform?: string): Promise<Game> {
-  const known = await gameByName(name)
-  if (known) return known
-  const entry = await resolveGame(name).catch(() => null)
-  return upsertFromCatalog(entry, name, undefined, platform)
-}
-
 // Search only existing catalog records; never create a game from free text.
 // Every catalog game whose name or alias has all the words of the query, or the query with its
 // spaces dropped ("aila" finds "A.I.L.A", "spiderman" finds "Spider-Man"); exact and prefix

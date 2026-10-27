@@ -2,27 +2,42 @@ import { isDemo } from './demo.ts'
 import { normalizeName } from './igdb.ts'
 import { library } from './library.ts'
 import { playedGames } from './psn.ts'
-import { gameForName, gameForTitle } from './repository/game.ts'
+import { catalogGameForName, gameForTitle } from './repository/game.ts'
 import { listPlaytimes, type Playtime, savePlaytime } from './repository/playtime.ts'
 import type { User } from './repository/user.ts'
 
 const TTL_MS = 10 * 60_000
 const cache = new Map<string, { at: number; byGame: Map<string, Playtime> }>()
 
+// A store name carries what a trophy list's name does not: the console, an edition tag, a
+// free-to-play note ("Grand Theft Auto V (PlayStation®5)", "Terraria – PlayStation®4 Edition",
+// "Worms [PS1 Emulation]"). Without them it is the game's name.
+const STORE_TAGS =
+  /[([]?\s*(?:playstation\s*®?\s*[45](?:\s*edition)?|ps[45]|ps1 emulation|f2p|gratuito para jogar)\s*[)\]]?/gi
+export const storeName = (name: string) =>
+  name
+    .replace(STORE_TAGS, ' ')
+    .replace(/[\s–—:-]+$/, '')
+    .trim()
+
 // PSN reports playtime per store title (CUSA/PPSA), not per trophy list, so the
 // link to the catalog is by name: first against the player's own trophy titles,
-// then through the catalog search. Copies of the same game are summed.
+// then a catalog or IGDB game of that name. A name neither knows (an app, a store
+// name in another language) is left out: playtime never adds a game to the catalog.
+// Copies of the same game are summed.
 async function sync(user: User): Promise<void> {
   const [played, titles] = await Promise.all([
     playedGames(user.psn_account_id),
     library(user.psn_account_id),
   ])
-  const byName = new Map(titles.map((t) => [normalizeName(t.name), t]))
+  const key = (name: string) => normalizeName(storeName(name))
+  const byName = new Map(titles.map((t) => [key(t.name), t]))
   const totals = new Map<string, Playtime>()
   for (const p of played) {
     if (p.seconds <= 0) continue
-    const title = byName.get(normalizeName(p.name))
-    const game = title ? await gameForTitle(title) : await gameForName(p.name)
+    const title = byName.get(key(p.name))
+    const game = title ? await gameForTitle(title) : await catalogGameForName(storeName(p.name))
+    if (!game) continue
     const current = totals.get(game.id)
     totals.set(game.id, {
       game: game.id,
