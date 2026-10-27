@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.35.2](https://github.com/renatoaug/platjourney/compare/v0.35.1...v0.35.2) (2026-10-27)
+
+### Bug Fixes
+
+* **playtime:** stop adding store names to the catalog ([#94](https://github.com/renatoaug/platjourney/issues/94)) ([007b404](https://github.com/renatoaug/platjourney/commit/007b404768a1d357841dae9deb53e6325ba8c059))
+
 ## [0.35.1](https://github.com/renatoaug/platjourney/compare/v0.35.0...v0.35.1) (2026-10-27)
 
 ### Bug Fixes
