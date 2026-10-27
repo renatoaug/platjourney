@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.35.6](https://github.com/renatoaug/platjourney/compare/v0.35.5...v0.35.6) (2026-10-27)
+
+### Bug Fixes
+
+* **nexo:** open what-is-left answers with a summary ([#98](https://github.com/renatoaug/platjourney/issues/98)) ([b9c0e01](https://github.com/renatoaug/platjourney/commit/b9c0e013bdf913af8590d207b49e3296897785eb))
+
 ## [0.35.5](https://github.com/renatoaug/platjourney/compare/v0.35.4...v0.35.5) (2026-10-27)
 
 ### Bug Fixes
