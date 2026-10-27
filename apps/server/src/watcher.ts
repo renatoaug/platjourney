@@ -17,6 +17,7 @@ import {
   unlockNotice,
 } from './notices.ts'
 import { deliver } from './notify.ts'
+import { expirePlans } from './planner.ts'
 import { Refused } from './plugins.ts'
 import { nowPlaying, PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
 import { lastTip, logTip, type TipKind } from './repository/activity.ts'
@@ -303,7 +304,7 @@ export function startWatcher(minutes: number): void {
   run()
   setInterval(run, minutes * 60_000)
   const prune = () =>
-    Promise.all([pruneExpired(), pruneOauth()]).catch((e) =>
+    Promise.all([pruneExpired(), pruneOauth(), expirePlans()]).catch((e) =>
       console.error('prune failed:', e.message),
     )
   prune()

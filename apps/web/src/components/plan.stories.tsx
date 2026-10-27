@@ -118,6 +118,11 @@ export const Expired: Story = {
 /** No plan yet: the invite and the time picker. */
 export const Empty: Story = { render: () => <Demo plan={null} /> }
 
+/** Right after a route closed with no step done: the optional question above the invite. */
+export const AskReason: Story = {
+  render: () => <Demo plan={null} reasonAsk={{ onReason: () => {}, onSkip: () => {} }} />,
+}
+
 /** "Refazer roteiro": the picker with a way back to the current plan. */
 export const Picking: Story = { render: () => <Demo picking /> }
 

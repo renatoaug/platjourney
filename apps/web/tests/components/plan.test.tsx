@@ -190,5 +190,41 @@ describe('PlanCard', () => {
       expect(screen.getByText('Vai jogar agora? Eu monto o caminho.')).toBeTruthy(),
     )
     expect(fetchSpy.mock.calls.some(([, init]) => init?.method === 'DELETE')).toBe(true)
+    // A step was done: no question afterwards.
+    expect(screen.queryByText(/O roteiro não rolou/)).toBeNull()
+  })
+
+  test('a route closed with no step done asks why, once and optionally', async () => {
+    const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(((
+      _url: string,
+      init?: RequestInit,
+    ) =>
+      Promise.resolve(
+        init?.method === 'DELETE'
+          ? json({ plan: null, closed: 'session_plan:p', askReason: true })
+          : init?.method === 'POST'
+            ? json({ ok: true })
+            : json({ plan: samplePlan }),
+      )) as typeof fetch)
+    card()
+    await screen.findByText('Siga na ordem · 1 de 4')
+    fireEvent.click(screen.getByRole('button', { name: /Encerrar sessão/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Longo demais' }))
+    expect(await screen.findByText('Valeu, isso ajuda a melhorar os roteiros.')).toBeTruthy()
+    expect(screen.queryByText(/O roteiro não rolou/)).toBeNull()
+    const sent = fetchSpy.mock.calls.find(([url]) => String(url).endsWith('/api/plan/reason'))
+    expect(JSON.parse(String(sent?.[1]?.body))).toEqual({
+      id: 'session_plan:p',
+      reason: 'too_long',
+    })
+  })
+
+  test('the question can be skipped, and the invite stays usable', () => {
+    const skip = mock(() => {})
+    show({ plan: null, reasonAsk: { onReason: noop, onSkip: skip } })
+    expect(screen.getByText('O roteiro não rolou? Se quiser, conta o porquê.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Montar roteiro/ })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Agora não' }))
+    expect(skip).toHaveBeenCalled()
   })
 })

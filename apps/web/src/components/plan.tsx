@@ -61,6 +61,15 @@ const messages = defineMessages({
     endSession: 'Encerrar sessão',
     ready: 'Roteiro de {time} pronto',
     failed: 'Não conseguimos montar o roteiro. Tenta de novo.',
+    reasonAsk: 'O roteiro não rolou? Se quiser, conta o porquê.',
+    reasonSkip: 'Agora não',
+    reasonThanks: 'Valeu, isso ajuda a melhorar os roteiros.',
+    reason: {
+      not_useful: 'Não ajudou',
+      too_long: 'Longo demais',
+      other_game: 'Mudei de jogo',
+      no_time: 'Não deu pra jogar',
+    },
   },
   [Language.En]: {
     optionMinutes: '{count} min',
@@ -107,9 +116,22 @@ const messages = defineMessages({
     endSession: 'End session',
     ready: '{time} route ready',
     failed: 'We couldn’t build the route. Try again.',
+    reasonAsk: 'Route didn’t work out? Tell me why, if you like.',
+    reasonSkip: 'Not now',
+    reasonThanks: 'Thanks, that helps make better routes.',
+    reason: {
+      not_useful: 'Didn’t help',
+      too_long: 'Too long',
+      other_game: 'Switched games',
+      no_time: 'Didn’t get to play',
+    },
   },
 })
 const tr = translator(messages)
+
+// Why a route closed with no step done, asked once afterwards and never required.
+const PLAN_REASONS = ['not_useful', 'too_long', 'other_game', 'no_time'] as const
+export type PlanReason = (typeof PLAN_REASONS)[number]
 
 // A roadmap for one sitting: trophies that fit in the time available, in the
 // order to play them. It lives above the trophy list while the session lasts.
@@ -335,6 +357,35 @@ export interface PlanProps {
   sectionRef?: RefObject<HTMLElement | null>
   /** The demo: the stored route shows; building, redoing and ending one are not offered. */
   readOnly?: boolean
+  /** The route just closed with no step done: ask why, optionally. */
+  reasonAsk?: ReasonAskProps
+}
+
+interface ReasonAskProps {
+  onReason: (reason: PlanReason) => void
+  onSkip: () => void
+}
+
+/** Above the invite, once: why the last route did not work out. Any answer, or none, closes it. */
+function PlanReasonAsk({ ask }: { ask?: ReasonAskProps }) {
+  const t = useMessages(messages)
+  if (!ask) return null
+  const { onReason, onSkip } = ask
+  return (
+    <fieldset className="plan-reason" aria-label={t('reasonAsk')}>
+      <small className="muted">{t('reasonAsk')}</small>
+      <div className="chips">
+        {PLAN_REASONS.map((reason) => (
+          <button key={reason} type="button" className="chip" onClick={() => onReason(reason)}>
+            {t(`reason.${reason}`)}
+          </button>
+        ))}
+        <button type="button" className="button ghost sm" onClick={onSkip}>
+          {t('reasonSkip')}
+        </button>
+      </div>
+    </fieldset>
+  )
 }
 
 function planHeading(t: Translator<typeof messages>, plan: SessionPlan) {
@@ -370,6 +421,7 @@ export function Plan({
   onDiscard,
   sectionRef,
   readOnly = false,
+  reasonAsk,
 }: PlanProps) {
   const t = useMessages(messages)
   const section = (className: string, children: ReactNode) => (
@@ -408,6 +460,7 @@ export function Plan({
     return section(
       'plan plan-empty',
       <>
+        <PlanReasonAsk ask={reasonAsk} />
         <div className="plan-invite">
           <span className="plan-badge">
             <Icon name="compass" />
@@ -515,6 +568,8 @@ export function PlanCard() {
   const [busy, setBusy] = useState(false)
   const [picking, setPicking] = useState(false)
   const [discarding, setDiscarding] = useState(false)
+  // The route just closed with no step done, to ask why: its id.
+  const [closed, setClosed] = useState<string | null>(null)
   const [minutes, setMinutes] = useState(lastMinutes)
   const sectionRef = useRef<HTMLElement>(null)
   // Background refreshes must not replace the picker or a plan being built.
@@ -537,6 +592,7 @@ export function PlanCard() {
 
   const go = async () => {
     const asked = minutes
+    setClosed(null)
     setBusy(true)
     setPicking(false)
     try {
@@ -556,9 +612,18 @@ export function PlanCard() {
 
   const discard = async () => {
     setDiscarding(true)
-    await del('/api/plan').catch(() => {})
+    const r = await del<{ closed: string | null; askReason: boolean }>('/api/plan').catch(
+      () => null,
+    )
     setDiscarding(false)
     setPlan(null)
+    setClosed(r?.askReason && r.closed ? r.closed : null)
+  }
+
+  const reason = (why: PlanReason) => {
+    if (closed) api('/api/plan/reason', { id: closed, reason: why }).catch(() => {})
+    setClosed(null)
+    toast(tr('reasonThanks'), 'success')
   }
 
   return (
@@ -578,6 +643,7 @@ export function PlanCard() {
       onNew={() => setPicking(true)}
       onDiscard={discard}
       readOnly={me.demo === true}
+      reasonAsk={closed ? { onReason: reason, onSkip: () => setClosed(null) } : undefined}
     />
   )
 }

@@ -2,12 +2,13 @@ import { getCurrent } from '../game-context.ts'
 import type { Guide } from '../guide.ts'
 import { json, readBody } from '../http.ts'
 import { trophyHelp } from '../nexo.ts'
-import { currentPlan, discardPlan, planSession } from '../planner.ts'
+import { currentPlan, discardPlan, PLAN_REASONS, type PlanReason, planSession } from '../planner.ts'
 import { hours, playtimes } from '../playtime.ts'
 import { titleTrophies } from '../psn.ts'
 import { loadGroups } from '../ranking.ts'
 import { gameForTitle } from '../repository/game.ts'
 import { getGuide } from '../repository/guide.ts'
+import { setPlanReason } from '../repository/session-plan.ts'
 import type { Api, ApiHandler } from './api.ts'
 
 async function newPlan({ req, res, me }: Api) {
@@ -49,9 +50,22 @@ async function trophyTip({ req, res, me, titles }: Api) {
 export const PLAN_ROUTES: Record<string, ApiHandler> = {
   'GET /api/plan': async ({ res, me }) =>
     json(res, 200, { plan: await currentPlan(me, getCurrent(me)) }),
+  // The answer says which plan closed and whether to ask why (no step was done).
   'DELETE /api/plan': async ({ res, me }) => {
-    await discardPlan(me)
-    return json(res, 200, { plan: null })
+    const closed = await discardPlan(me, getCurrent(me))
+    return json(res, 200, {
+      plan: null,
+      closed: closed?.id ?? null,
+      askReason: closed?.askReason ?? false,
+    })
+  },
+  'POST /api/plan/reason': async ({ req, res, me }) => {
+    const { id, reason } = await readBody(req)
+    if (typeof id !== 'string' || !PLAN_REASONS.includes(reason as PlanReason))
+      return json(res, 400, { error: 'id and a known reason required' })
+    if (!(await setPlanReason(me.id, id, reason as PlanReason)))
+      return json(res, 404, { error: 'no closed plan of yours with that id' })
+    return json(res, 200, { ok: true })
   },
   'POST /api/plan': newPlan,
   'POST /api/trophy-tip': trophyTip,

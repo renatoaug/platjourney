@@ -419,7 +419,14 @@ const plan: SessionPlan = {
   warnings: playing.guide.missables.slice(0, 1).map((m) => `${m.trophy} — ${m.when}: ${m.how}`),
   ifTimeLeft: playing.guide.earlyTips[0] ?? null,
 }
-user.session_plan = plan
+const { game: _game, ...planRest } = plan
+const sessionPlan = {
+  ...snakeKeys(planRest),
+  user: 'demo',
+  game: key(playing.game.id),
+  np_communication_id: playing.list.np,
+  status: 'active',
+}
 
 // Interests: the order the player chose for this year.
 const interests: Row[] = []
@@ -494,7 +501,7 @@ notices.sort((a, b) => a.created_at.localeCompare(b.created_at))
 // The seed holds rows as the database stores them: objects with snake_case keys.
 const seed = {
   anchor: ANCHOR,
-  user: [{ ...user, session_plan: snakeKeys(user.session_plan) }],
+  user: [user],
   game: [...games.values()]
     .sort((a, b) => a.id.localeCompare(b.id))
     .map(({ id, igdb_id, ...rest }) => {
@@ -519,6 +526,7 @@ const seed = {
     created_at,
   })),
   message: [],
+  session_plan: [sessionPlan],
   // The last three notices are still unread under the bell.
   notification: notices.map((n, i) => ({
     user: 'demo',

@@ -13,52 +13,6 @@
         "2026": 12
       },
       "last_seen_at": "2026-09-30T22:00:00.000Z",
-      "session_plan": {
-        "game": "game:25076",
-        "game_name": "Red Dead Redemption 2",
-        "minutes": 120,
-        "created_at": "2026-09-30T20:00:00.000Z",
-        "summary": "Rota de 120 min com 4 troféus do guia de Red Dead Redemption 2, com o macete de cada um.",
-        "steps": [
-          {
-            "trophy": "Dando uma Mãozinha",
-            "minutes": 30,
-            "how": "Se você perdeu alguma missão de Honra, relatos de 2018 (patch 1.03) dizem que refazer a missão do Epílogo Home Improvement for Beginners pelo menu destrava o troféu na hora. Não foi possível confirmar se ainda funciona na versão atual, então não conte com isso: faça todas no caminho.",
-            "why": "Macete do guia (PowerPyx e TrueAchievements (busca)).",
-            "trick": null,
-            "flexible": true
-          },
-          {
-            "trophy": "Corrida do Ouro",
-            "minutes": 30,
-            "how": "Desligue o salvamento automático e faça um save manual antes de cada missão; se falhar um objetivo, recarregue o save em vez do checkpoint. Com 34 medalhas de sobra, pule as que combinam tempo com precisão. A missão bônus High and Low Finance, das edições Special e Ultimate, não conta: se uma medalha sua for dela, você vai precisar de 71.",
-            "why": "Macete do guia (PowerPyx, Gamers.Wiki e PlayStationTrophies (busca)).",
-            "trick": null,
-            "flexible": true
-          },
-          {
-            "trophy": "Ursopador",
-            "minutes": 30,
-            "how": "Só ursos-pardos contam (o urso-negro não), e só se o urso te derrubar, você se soltar no evento rápido e atirar nele ainda no chão. O ponto mais consistente é o meio do caminho entre Wallace Station e Watson's Cabin: chegue a pé, com Carbine Repeater ou escopeta melhorados e munição express. Para renascer, afaste-se um minuto, monte acampamento, durma um ou dois dias e volte.",
-            "why": "Macete do guia (PowerPyx e PlayStationTrophies (busca)).",
-            "trick": null,
-            "flexible": true
-          },
-          {
-            "trophy": "O Queridinho da América",
-            "minutes": 30,
-            "how": "Faça com o John depois do Epílogo, quando New Austin está liberado. Consiga 250 dólares de recompensa nos cinco estados; em Ambarino, que não tem cidade, mate alguém, coloque o corpo no cavalo e espere alguém chamar a lei, ou atire de longe nos guardas de Fort Wallace estando do lado de Ambarino do rio. Depois monte acampamento num lugar isolado e durma três dias. Com save manual antes e salvamento automático desligado, você recarrega e não paga as recompensas.",
-            "why": "Macete do guia (PowerPyx e PlayStationTrophies (busca)).",
-            "trick": null,
-            "flexible": true
-          }
-        ],
-        "total_minutes": 120,
-        "warnings": [
-          "Dando uma Mãozinha — Capítulos 2, 3, 4 e 6, cada missão no seu capítulo: São as missões opcionais de Honra: Capítulo 2 — Agiotagem e Outros Pecados (Money Lending and Other Sins) I a III, O Bom e Honesto Óleo de Cobra (Good, Honest Snake Oil) e Amamos de Verdade Uma Vez (We Loved Once and True) I a III; Capítulo 3 — A Rota do Verdadeiro Amor (The Course of True Love) I a III e Agiotagem IV; Capítulo 4 — Ajudando um Irmão (Help a Brother Out), Irmãos e Irmãs, Sem Exceção (Brothers and Sisters, One and All), Paternidade e Outros Sonhos (Fatherhood and Other Dreams) I e II e Agiotagem V; Capítulo 6 — Não Busque Absolvição I e II (Edith Downes em Annesburg, pede Honra 4 de 8), De Homens e Anjos (Of Men and Angels, Irmã Calderón em Saint Denis), A Rota do Verdadeiro Amor IV e V, Arqueologia para Iniciantes (Archeology for Beginners), Honra Entre Ladrões (Honor, Amongst Thieves), Agiotagem VI e VII e Sra. Sadie Adler, Viúva (Mrs. Sadie Adler, Widow) I e II. Mantenha a Honra alta e faça tudo antes de avançar a história de cada capítulo."
-        ],
-        "if_time_left": "Faça um save manual ao fim de cada capítulo e antes de cada missão importante; se a Honra cair ou um pedido do acampamento escapar, você volta sem refazer horas."
-      },
       "taste_profile": {
         "summary": "Mais platinas em Adventure, Role-playing (RPG), Hack and slash/Beat 'em up.",
         "genres": [
@@ -25036,6 +24990,57 @@
     }
   ],
   "message": [],
+  "session_plan": [
+    {
+      "user": "demo",
+      "game": "25076",
+      "game_name": "Red Dead Redemption 2",
+      "minutes": 120,
+      "created_at": "2026-09-30T20:00:00.000Z",
+      "summary": "Rota de 120 min com 4 troféus do guia de Red Dead Redemption 2, com o macete de cada um.",
+      "steps": [
+        {
+          "trophy": "Dando uma Mãozinha",
+          "minutes": 30,
+          "how": "Se você perdeu alguma missão de Honra, relatos de 2018 (patch 1.03) dizem que refazer a missão do Epílogo Home Improvement for Beginners pelo menu destrava o troféu na hora. Não foi possível confirmar se ainda funciona na versão atual, então não conte com isso: faça todas no caminho.",
+          "why": "Macete do guia (PowerPyx e TrueAchievements (busca)).",
+          "trick": null,
+          "flexible": true
+        },
+        {
+          "trophy": "Corrida do Ouro",
+          "minutes": 30,
+          "how": "Desligue o salvamento automático e faça um save manual antes de cada missão; se falhar um objetivo, recarregue o save em vez do checkpoint. Com 34 medalhas de sobra, pule as que combinam tempo com precisão. A missão bônus High and Low Finance, das edições Special e Ultimate, não conta: se uma medalha sua for dela, você vai precisar de 71.",
+          "why": "Macete do guia (PowerPyx, Gamers.Wiki e PlayStationTrophies (busca)).",
+          "trick": null,
+          "flexible": true
+        },
+        {
+          "trophy": "Ursopador",
+          "minutes": 30,
+          "how": "Só ursos-pardos contam (o urso-negro não), e só se o urso te derrubar, você se soltar no evento rápido e atirar nele ainda no chão. O ponto mais consistente é o meio do caminho entre Wallace Station e Watson's Cabin: chegue a pé, com Carbine Repeater ou escopeta melhorados e munição express. Para renascer, afaste-se um minuto, monte acampamento, durma um ou dois dias e volte.",
+          "why": "Macete do guia (PowerPyx e PlayStationTrophies (busca)).",
+          "trick": null,
+          "flexible": true
+        },
+        {
+          "trophy": "O Queridinho da América",
+          "minutes": 30,
+          "how": "Faça com o John depois do Epílogo, quando New Austin está liberado. Consiga 250 dólares de recompensa nos cinco estados; em Ambarino, que não tem cidade, mate alguém, coloque o corpo no cavalo e espere alguém chamar a lei, ou atire de longe nos guardas de Fort Wallace estando do lado de Ambarino do rio. Depois monte acampamento num lugar isolado e durma três dias. Com save manual antes e salvamento automático desligado, você recarrega e não paga as recompensas.",
+          "why": "Macete do guia (PowerPyx e PlayStationTrophies (busca)).",
+          "trick": null,
+          "flexible": true
+        }
+      ],
+      "total_minutes": 120,
+      "warnings": [
+        "Dando uma Mãozinha — Capítulos 2, 3, 4 e 6, cada missão no seu capítulo: São as missões opcionais de Honra: Capítulo 2 — Agiotagem e Outros Pecados (Money Lending and Other Sins) I a III, O Bom e Honesto Óleo de Cobra (Good, Honest Snake Oil) e Amamos de Verdade Uma Vez (We Loved Once and True) I a III; Capítulo 3 — A Rota do Verdadeiro Amor (The Course of True Love) I a III e Agiotagem IV; Capítulo 4 — Ajudando um Irmão (Help a Brother Out), Irmãos e Irmãs, Sem Exceção (Brothers and Sisters, One and All), Paternidade e Outros Sonhos (Fatherhood and Other Dreams) I e II e Agiotagem V; Capítulo 6 — Não Busque Absolvição I e II (Edith Downes em Annesburg, pede Honra 4 de 8), De Homens e Anjos (Of Men and Angels, Irmã Calderón em Saint Denis), A Rota do Verdadeiro Amor IV e V, Arqueologia para Iniciantes (Archeology for Beginners), Honra Entre Ladrões (Honor, Amongst Thieves), Agiotagem VI e VII e Sra. Sadie Adler, Viúva (Mrs. Sadie Adler, Widow) I e II. Mantenha a Honra alta e faça tudo antes de avançar a história de cada capítulo."
+      ],
+      "if_time_left": "Faça um save manual ao fim de cada capítulo e antes de cada missão importante; se a Honra cair ou um pedido do acampamento escapar, você volta sem refazer horas.",
+      "np_communication_id": "NPWR09412_00",
+      "status": "active"
+    }
+  ],
   "notification": [
     {
       "user": "demo",

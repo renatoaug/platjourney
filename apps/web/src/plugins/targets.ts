@@ -172,6 +172,7 @@ export type Target =
   | 'PlanActions'
   | 'PlanCard'
   | 'PlanPicker'
+  | 'PlanReasonAsk'
   | 'PlanSkeleton'
   | 'PlatinumCollection'
   | 'PlayingNote'

@@ -15,7 +15,6 @@ DEFINE FIELD IF NOT EXISTS taste_profile ON user TYPE option<object> FLEXIBLE;
 -- What the player changed in that profile (added and removed likes, genres and things to avoid) and
 -- the rules every recommendation must follow; kept when the model writes the profile again.
 DEFINE FIELD IF NOT EXISTS taste_prefs ON user TYPE option<object> FLEXIBLE;
-DEFINE FIELD IF NOT EXISTS session_plan ON user TYPE option<object> FLEXIBLE;
 -- Show progress with DLC trophies counted in; off means the base game only (what the platinum needs).
 DEFINE FIELD IF NOT EXISTS include_dlc_progress ON user TYPE bool DEFAULT false;
 -- The player's PS Plus tier, as they say (PSN does not tell): deals count the games its catalog includes.

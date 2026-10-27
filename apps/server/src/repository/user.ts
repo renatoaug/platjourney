@@ -14,7 +14,6 @@ export interface User {
   taste_profile: unknown | null
   // The player's own changes to the taste profile and their recommendation rules.
   taste_prefs?: unknown | null
-  session_plan: unknown | null
   include_dlc_progress?: boolean
   ps_plus?: 'none' | 'essential' | 'extra' | 'deluxe' | null
   // Nexo's words in automatic notices; off, plain templates (no model).
@@ -35,7 +34,7 @@ export interface User {
 export const userRef = (id: string): RecordId => rid('user', id.replace(/^user:/, ''))
 
 // Objects kept on the user, stored with snake_case keys (AGENTS.md, Database).
-const OBJECTS = ['session_plan', 'taste_profile', 'taste_prefs'] as const
+const OBJECTS = ['taste_profile', 'taste_prefs'] as const
 function fromRow<T extends User | undefined>(row: T): T {
   if (!row) return row
   const out = { ...row }
@@ -155,9 +154,10 @@ export async function wipeUserData(id: string): Promise<void> {
     'tip',
     'message',
     'playtime',
+    'session_plan',
   ])
     await q(`DELETE ${table} WHERE user = $user`, { user })
-  await q('UPDATE $user SET goal_targets = {}, taste_profile = NONE, session_plan = NONE', { user })
+  await q('UPDATE $user SET goal_targets = {}, taste_profile = NONE', { user })
 }
 
 export async function deleteUser(id: string): Promise<void> {

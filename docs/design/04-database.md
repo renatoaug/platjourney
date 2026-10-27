@@ -21,7 +21,7 @@ One diagram per area, with every field. Each field shows its name, then its type
 
 ### Players and their games
 
-The account and what PSN says about each game in the library.
+The account, what PSN says about each game in the library, and the session plans made for them.
 
 ```mermaid
 erDiagram
@@ -31,6 +31,8 @@ erDiagram
     game ||--o{ platinum : "of"
     user ||--o{ playtime : "played"
     game ||--o{ playtime : "for"
+    user ||--o{ session_plan : "planned"
+    game ||--o{ session_plan : "planned for"
     user {
         id record(user) PK
         psn_online_id string
@@ -44,7 +46,6 @@ erDiagram
         goal_targets object
         taste_profile option(object)
         taste_prefs option(object)
-        session_plan option(object)
         include_dlc_progress bool
         ai_notices bool
         notify_telegram bool
@@ -97,6 +98,24 @@ erDiagram
         last_played_at option(datetime)
         created_at datetime
         updated_at datetime
+    }
+    session_plan {
+        id record(session_plan) PK
+        user record(user) FK
+        game record(game) FK
+        game_name string
+        np_communication_id option(string)
+        minutes number
+        summary string
+        steps array(object)
+        total_minutes number
+        warnings array(string)
+        if_time_left option(string)
+        assistant option(string)
+        status string
+        reason option(string)
+        created_at datetime
+        ended_at option(datetime)
     }
     game {
         id record(game) PK
@@ -439,7 +458,7 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `user` | account | `psn_online_id_lower`, `psn_account_id`, `telegram_chat_id` (when set) | The PSN account id is the identity; `telegram_chat_id` is the linked Telegram chat, on one account at most (linking it takes it off any other), set from a `telegram_link_code` that works until `telegram_link_expires_at`. `session_notice_at` is when the last session-start notice went out. settings, goals, the current session and plan live here as objects; a plan an assistant saved (`save_session_plan`) says which in `session_plan.assistant` (`claude`, `chatgpt`, `other`). `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell. `notify_telegram` (on by default) sends notices to the linked chat; off, they reach only the web and push |
+| `user` | account | `psn_online_id_lower`, `psn_account_id`, `telegram_chat_id` (when set) | The PSN account id is the identity; `telegram_chat_id` is the linked Telegram chat, on one account at most (linking it takes it off any other), set from a `telegram_link_code` that works until `telegram_link_expires_at`. `session_notice_at` is when the last session-start notice went out. settings, goals and the current session live here as objects. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell. `notify_telegram` (on by default) sends notices to the linked chat; off, they reach only the web and push |
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN, matched to a catalog game by the store name without its console and edition tags; a name neither the player's trophy lists, the catalog nor IGDB knows is left out, never added as a game |
@@ -449,6 +468,7 @@ erDiagram
 | `tip` | notice or tip Nexo wrote, or a tip an assistant saved | | `kind`: `start`, `unlock`, `session`, `route` (a tip on the game's route), `chat` (help on one trophy), `server`, `deal` (a saved game went on sale), `assistant` (saved by an assistant connected through MCP with `save_tip`; `assistant` says which, `claude`, `chatgpt` or `other`; never a notification) |
 | `message` | chat message | | `role`: user or assistant |
 | `notification` | item in the bell | | `kind`: `start`, `unlock`, `session`, `route`, `server`, `deal`. Points at the `tip` it shows, when there is one |
+| `session_plan` | session plan | `user, status` | One row per plan, Nexo's or a connected assistant's (`assistant`: `claude`, `chatgpt`, `other`). `status`: `active` while on screen, `ended` (the player ended the session before its time), `dismissed` (closed once it was over), `replaced` (a new plan took its place) or `expired` (its time, the minutes asked plus an hour, ran out with no action; it still shows as a recap until the next day, and an hourly check marks it). The plan on screen is the player's latest `active` or `expired` one. Each step keeps its trophy and `trophy_id` on `np_communication_id`, and `done` (earned by `ended_at`; for an expired plan, checked against the trophies the last sync stored). `reason` is why the player closed a plan with no step done, when they answered the optional question: `not_useful`, `too_long`, `other_game` or `no_time`. Kept with the account and wiped with it |
 | `push_subscription` | browser or installed web app that turned push on | `endpoint` | Where its push service takes messages, and the device's keys (`p256dh`, `auth`) that encrypt each one. Saved again on the same endpoint moves the device to the account signed in; deleted when the player turns push off there, when the push service answers 404 or 410, and with the account |
 | `auth_session` | signed-in browser | `token_hash` | Only the hash of the cookie is stored |
 | `verification` | pending "About me" code | `psn_online_id_lower` | Expires; no account yet. `secret_hash` is the hash of the claim cookie: only its holder can finish the claim or get the same code again, and nobody else can replace the row until `expires_at` |
