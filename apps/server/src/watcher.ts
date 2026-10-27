@@ -23,7 +23,7 @@ import { lastTip, logTip, type TipKind } from './repository/activity.ts'
 import { pruneExpired } from './repository/auth.ts'
 import { pruneOauth } from './repository/oauth.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
-import { listUsers, type User, updateUser } from './repository/user.ts'
+import { getUser, listUsers, type User, updateUser } from './repository/user.ts'
 import { checkServers } from './servers.ts'
 
 // Proactive messages go to Telegram when the user linked it; they are always in
@@ -237,11 +237,18 @@ async function nothingNew(user: User, ctx: GameContext): Promise<boolean> {
   return !ctx.trophies.some((x) => x.earnedAt && new Date(x.earnedAt).getTime() > at)
 }
 
+function recentNotice(user: User): boolean {
+  const last = user.session_notice_at ? new Date(user.session_notice_at).getTime() : 0
+  return Date.now() - last < SESSION_NOTICE_HOURS * 3_600_000
+}
+
 // Tells the player once when they open a game, from PSN presence (players who hide their online
 // status never get it). The game they play is the one in context when the names match.
 async function sessionStart(user: User, ctx: GameContext, noticed: boolean): Promise<void> {
-  const last = user.session_notice_at ? new Date(user.session_notice_at).getTime() : 0
-  if (Date.now() - last < SESSION_NOTICE_HOURS * 3_600_000) return
+  if (recentNotice(user)) return
+  // Checks queued behind each other (sign-up and the first home load) carry the user as it was
+  // read before the first one ran: the stored stamp is the one that counts.
+  if (recentNotice((await getUser(user.id)) ?? user)) return
   const playing = await nowPlaying(user.psn_account_id)
   if (!playing) return
   // The start notice of a new game already went out in this sweep: it counts as this one.

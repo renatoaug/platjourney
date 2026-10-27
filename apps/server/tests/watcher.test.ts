@@ -92,6 +92,7 @@ let saveEarned: ReturnType<typeof spyOn<typeof titles, 'saveEarnedIds'>>
 let getGuide: ReturnType<typeof spyOn<typeof guides, 'getGuide'>>
 let playing: ReturnType<typeof spyOn<typeof psn, 'nowPlaying'>>
 let updateUser: ReturnType<typeof spyOn<typeof users, 'updateUser'>>
+let getUser: ReturnType<typeof spyOn<typeof users, 'getUser'>>
 
 beforeEach(() => {
   spyOn(sessions, 'pruneExpired').mockResolvedValue()
@@ -127,6 +128,7 @@ beforeEach(() => {
   send = spyOn(telegram, 'sendMessage').mockResolvedValue(undefined)
   playing = spyOn(psn, 'nowPlaying').mockResolvedValue(null)
   updateUser = spyOn(users, 'updateUser').mockResolvedValue(undefined)
+  getUser = spyOn(users, 'getUser').mockResolvedValue(undefined)
   spyOn(console, 'log').mockImplementation(() => {})
   spyOn(console, 'warn').mockImplementation(() => {})
 })
@@ -241,6 +243,15 @@ describe('session start', () => {
     expect(playing).not.toHaveBeenCalled()
     await checkUser({ ...user, session_notice_at: new Date(Date.now() - 7 * 3_600_000) })
     expect(playing).toHaveBeenCalledTimes(1)
+  })
+
+  test('a check queued behind one that just sent the notice reads the stamp it left', async () => {
+    unchanged()
+    playing.mockResolvedValue('DAYS GONE')
+    getUser.mockResolvedValue({ ...user, session_notice_at: new Date() })
+    await checkUser(user)
+    expect(playing).not.toHaveBeenCalled()
+    expect(send).not.toHaveBeenCalled()
   })
 
   test('nothing open, nothing sent and nothing stamped', async () => {
