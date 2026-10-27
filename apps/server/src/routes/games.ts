@@ -61,7 +61,7 @@ async function guideOrBuild(
   // Without automatic research (or over today's share of it) an older guide is still better
   // than none, and a missing one is listed for whoever runs the instance.
   if (!config.automatic.research || (!building.has(game.id) && !mayResearch(user))) {
-    if (!cached) await requestGuide(game.id)
+    if (!cached) await requestGuide(game.id, user.id)
     return { guide: cached ?? null, queued: !cached }
   }
   if (!building.has(game.id)) {

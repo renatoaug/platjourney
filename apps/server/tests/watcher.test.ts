@@ -807,7 +807,7 @@ describe('setCurrent', () => {
     const request = spyOn(requests, 'requestGuide').mockResolvedValue(undefined)
     const deep = spyOn(deepguide, 'ensureDeepGuide')
     const ctx = await setCurrent(user, makeTitle())
-    expect(request).toHaveBeenCalledWith(game.id)
+    expect(request).toHaveBeenCalledWith(game.id, user.id)
     expect(ctx.guide).toBeUndefined()
     expect(deep).not.toHaveBeenCalled()
     expect(getCurrent(user)).toBe(ctx)
@@ -982,7 +982,7 @@ test('a game outside the library becomes the chat game with its list, nothing ea
     platform: 'PS5',
   })
   expect(ctx?.title.definedByType.platinum).toBe(1)
-  expect(ask).toHaveBeenCalledWith('game:9')
+  expect(ask).toHaveBeenCalledWith('game:9', 'user:z')
   // Only the chat follows it: the game being played stays as it was.
   expect(getChat({ id: 'user:z' } as never)).toBe(ctx as never)
   expect(getCurrent({ id: 'user:z' } as never)).toBeUndefined()
