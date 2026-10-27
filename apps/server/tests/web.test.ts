@@ -35,6 +35,7 @@ import * as requests from '../src/repository/guide-request.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
 import * as pushSubs from '../src/repository/push-subscription.ts'
 import * as statuses from '../src/repository/server-status.ts'
+import * as plans from '../src/repository/session-plan.ts'
 import * as similarRepo from '../src/repository/similar.ts'
 import * as titles from '../src/repository/title.ts'
 import * as users from '../src/repository/user.ts'
@@ -733,10 +734,20 @@ test('the profile page adds the account', async () => {
 
 test('plans are read, discarded and made for 15 to 600 minutes', async () => {
   spyOn(planner, 'currentPlan').mockResolvedValue(null)
-  spyOn(planner, 'discardPlan').mockResolvedValue()
+  const discard = spyOn(planner, 'discardPlan').mockResolvedValue(null)
   const make = spyOn(planner, 'planSession').mockResolvedValue({ minutes: 60 } as never)
   expect((await send('GET', '/api/plan')).body).toEqual({ plan: null })
-  expect((await send('DELETE', '/api/plan')).body).toEqual({ plan: null })
+  expect((await send('DELETE', '/api/plan')).body).toEqual({
+    plan: null,
+    closed: null,
+    askReason: false,
+  })
+  discard.mockResolvedValueOnce({ id: 'session_plan:p', askReason: true })
+  expect((await send('DELETE', '/api/plan')).body).toEqual({
+    plan: null,
+    closed: 'session_plan:p',
+    askReason: true,
+  })
   expect((await send('POST', '/api/plan', { minutes: 60 })).status).toBe(409)
   const ctx = makeContext()
   spyOn(gameContext, 'getCurrent').mockReturnValue(ctx)
@@ -744,6 +755,22 @@ test('plans are read, discarded and made for 15 to 600 minutes', async () => {
   expect((await send('POST', '/api/plan', { minutes: '60' })).status).toBe(400)
   expect((await send('POST', '/api/plan', { minutes: 60 })).body).toEqual({ plan: { minutes: 60 } })
   expect(make).toHaveBeenCalledWith(me, ctx, 60)
+})
+
+test('a closed plan takes a known reason, only from its owner', async () => {
+  const set = spyOn(plans, 'setPlanReason').mockResolvedValue(true)
+  expect((await send('POST', '/api/plan/reason', { id: 'session_plan:p' })).status).toBe(400)
+  expect(
+    (await send('POST', '/api/plan/reason', { id: 'session_plan:p', reason: 'boring' })).status,
+  ).toBe(400)
+  expect(
+    (await send('POST', '/api/plan/reason', { id: 'session_plan:p', reason: 'too_long' })).body,
+  ).toEqual({ ok: true })
+  expect(set).toHaveBeenCalledWith(me.id, 'session_plan:p', 'too_long')
+  set.mockResolvedValueOnce(false)
+  expect(
+    (await send('POST', '/api/plan/reason', { id: 'session_plan:x', reason: 'no_time' })).status,
+  ).toBe(404)
 })
 
 test('a trophy tip needs a missing trophy from the library', async () => {
@@ -1090,6 +1117,7 @@ describe('the demo', () => {
     ['DELETE', '/api/telegram/link'],
     ['POST', '/api/plan', { minutes: 60 }],
     ['DELETE', '/api/plan'],
+    ['POST', '/api/plan/reason', { id: 'session_plan:p', reason: 'too_long' }],
     ['POST', '/api/chat', { text: 'oi' }],
     ['POST', '/api/trophy-tip', { np: 'NPWR1', trophyId: 1 }],
     ['POST', '/api/recommendations/dismiss', { game: 'game:2' }],
@@ -1120,6 +1148,7 @@ describe('the demo', () => {
       spyOn(auth, 'deleteAccount'),
       spyOn(planner, 'planSession'),
       spyOn(planner, 'discardPlan'),
+      spyOn(plans, 'setPlanReason'),
       spyOn(nexo, 'reply'),
       spyOn(nexo, 'trophyHelp'),
       users.updateUser,

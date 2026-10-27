@@ -83,11 +83,11 @@ test('updating sets values, clears nulls and ignores unsafe keys', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   await updateUser('user:u1', {
     telegram_chat_id: '42',
-    session_plan: null,
+    taste_profile: null,
     ['bad key' as 'telegram_link_code']: 'x',
   })
   expect(q.mock.calls[0]).toEqual([
-    'UPDATE $id SET telegram_chat_id = $telegram_chat_id, session_plan = NONE',
+    'UPDATE $id SET telegram_chat_id = $telegram_chat_id, taste_profile = NONE',
     { id: user, telegram_chat_id: '42' },
   ])
 })
@@ -108,7 +108,7 @@ test('wiping deletes every personal table and resets the profile fields', async 
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   await wipeUserData('user:u1')
   const sqls = q.mock.calls.map(([sql]) => sql)
-  expect(sqls.slice(0, 8)).toEqual(
+  expect(sqls.slice(0, 9)).toEqual(
     [
       'title',
       'interest',
@@ -118,10 +118,11 @@ test('wiping deletes every personal table and resets the profile fields', async 
       'tip',
       'message',
       'playtime',
+      'session_plan',
     ].map((t) => `DELETE ${t} WHERE user = $user`),
   )
-  expect(sqls[8]).toContain('goal_targets = {}')
-  expect(q.mock.calls.map(([, vars]) => vars)).toEqual(Array(9).fill({ user }))
+  expect(sqls[9]).toContain('goal_targets = {}')
+  expect(q.mock.calls.map(([, vars]) => vars)).toEqual(Array(10).fill({ user }))
 })
 
 test('deleting a user removes its record', async () => {
@@ -132,20 +133,18 @@ test('deleting a user removes its record', async () => {
 
 test('objects kept on the user are stored in snake_case and read in camelCase', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
-  await updateUser('user:u1', { session_plan: { totalMinutes: 60, ifTimeLeft: null } })
+  await updateUser('user:u1', { taste_profile: { likedGenres: ['rpg'], hoursPerWeek: null } })
   expect(q.mock.calls[0][1]).toEqual({
     id: user,
-    session_plan: { total_minutes: 60, if_time_left: null },
+    taste_profile: { liked_genres: ['rpg'], hours_per_week: null },
   })
   spyOn(db, 'one').mockResolvedValue({
     id: 'user:u1',
-    session_plan: { total_minutes: 60, if_time_left: null },
-    taste_profile: null,
+    taste_profile: { liked_genres: ['rpg'], hours_per_week: null },
   })
   expect(await getUser('user:u1')).toEqual({
     id: 'user:u1',
-    session_plan: { totalMinutes: 60, ifTimeLeft: null },
-    taste_profile: null,
+    taste_profile: { likedGenres: ['rpg'], hoursPerWeek: null },
   } as never)
 })
 

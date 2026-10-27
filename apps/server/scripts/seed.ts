@@ -22,6 +22,7 @@ interface Seed {
   server_status: Row[]
   tip: Row[]
   message: Row[]
+  session_plan?: Row[]
   notification?: Row[]
   recommendation?: Row[]
   playtime?: Row[]
@@ -97,6 +98,7 @@ const OWNED = [
   'notification',
   'recommendation',
   'playtime',
+  'session_plan',
   'auth_session',
 ]
 if (add)
@@ -109,7 +111,6 @@ const exists = async (sql: string, vars: Row) => (await one(sql, vars)) !== unde
 
 for (const u of seed.user) {
   const { key, ...rest } = u as { key: string; psn_online_id: string } & Row
-  const plan = rest.session_plan as Row | null | undefined
   await q('CREATE $id CONTENT $data', {
     id: rid('user', key),
     data: dropNulls({
@@ -117,7 +118,6 @@ for (const u of seed.user) {
       psn_online_id_lower: rest.psn_online_id.toLowerCase(),
       ...(rest.last_seen_at ? { last_seen_at: dt(rest.last_seen_at) } : {}),
       ...(rest.goal_targets ? { goal_targets: movedTargets(rest.goal_targets) } : {}),
-      ...(plan ? { session_plan: { ...plan, created_at: iso(plan.created_at) } } : {}),
     }),
   })
 }
@@ -193,6 +193,7 @@ await insert('dismissal', seed.dismissal, ['created_at'])
 await insert('server_status', seed.server_status)
 await insert('tip', seed.tip, ['created_at'])
 await insert('message', seed.message, ['created_at'])
+await insert('session_plan', seed.session_plan, ['created_at', 'ended_at'])
 await insert('notification', seed.notification, ['created_at', 'read_at'])
 await insert('recommendation', seed.recommendation, ['created_at'])
 await insert('playtime', seed.playtime, ['first_played_at', 'last_played_at'])

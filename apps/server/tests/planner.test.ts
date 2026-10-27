@@ -5,12 +5,15 @@ import { currentTag } from '../src/costs.ts'
 import {
   currentPlan,
   discardPlan,
+  expirePlans,
   type PlanView,
   planReport,
   planSession,
   type SessionPlan,
+  startPlan,
 } from '../src/planner.ts'
-import * as users from '../src/repository/user.ts'
+import * as plans from '../src/repository/session-plan.ts'
+import * as titles from '../src/repository/title.ts'
 import { makeContext, makeTrophy, makeUser } from './fixtures.ts'
 
 const user = makeUser()
@@ -51,12 +54,22 @@ test('a session plan is saved and ticks off what is already earned', async () =>
     const { game, gameName, minutes, createdAt, ...rest } = plan()
     return { ...rest, steps: [{ ...step('A', 30), flexible: undefined }, step('B', 60)] }
   }) as never)
-  const update = spyOn(users, 'updateUser').mockResolvedValue(undefined)
+  spyOn(plans, 'activePlan').mockResolvedValue(undefined)
+  const save = spyOn(plans, 'savePlan').mockImplementation(async (_u, p) => ({
+    ...p,
+    id: 'session_plan:n',
+  }))
   const view = await planSession(user, ctx, 90)
   expect(ai.mock.calls[0][0]).toBe('/plans/session')
   expect(ai.mock.calls[0][1]).toMatchObject({ minutes: 90 })
   expect(tag).toEqual({ user: 'user:u1', action: 'plan' })
-  expect(update.mock.calls[0][1].session_plan).toMatchObject({ game: 'game:1', minutes: 90 })
+  expect(save.mock.calls[0][1]).toMatchObject({ game: 'game:1', minutes: 90 })
+  // Each step keeps its trophy's id on the plan's list, to be checked later without PSN.
+  expect(save.mock.calls[0][1].steps.map((s) => [s.trophyId, s.done])).toEqual([
+    [1, false],
+    [2, false],
+  ])
+  expect(view.id).toBe('session_plan:n')
   expect(view.steps.map((s) => [s.done, s.startsAt, s.iconUrl, s.type, s.flexible])).toEqual([
     [true, 0, 'a.png', 'gold', false],
     [false, 30, null, 'bronze', false],
@@ -65,28 +78,22 @@ test('a session plan is saved and ticks off what is already earned', async () =>
 })
 
 test('there is no plan when none is stored, it is for another game or it is old', async () => {
-  const get = spyOn(users, 'getUser')
-  get.mockResolvedValueOnce(makeUser())
+  const get = spyOn(plans, 'activePlan')
+  get.mockResolvedValueOnce(undefined)
   expect(await currentPlan(user, ctx)).toBeNull()
-  get.mockResolvedValueOnce(makeUser({ session_plan: plan({ game: 'game:2' }) }))
+  get.mockResolvedValueOnce(plan({ game: 'game:2' }))
   expect(await currentPlan(user, ctx)).toBeNull()
-  get.mockResolvedValueOnce(
-    makeUser({ session_plan: plan({ createdAt: minutesAgo(90 + 60 + 20 * 60 + 1) }) }),
-  )
+  get.mockResolvedValueOnce(plan({ createdAt: minutesAgo(90 + 60 + 20 * 60 + 1) }))
   expect(await currentPlan(user, ctx)).toBeNull()
 })
 
 test('a plan past its time stays as an expired recap', async () => {
-  spyOn(users, 'getUser').mockResolvedValue(
-    makeUser({ session_plan: plan({ createdAt: minutesAgo(200) }) }),
-  )
+  spyOn(plans, 'activePlan').mockResolvedValue(plan({ createdAt: minutesAgo(200) }))
   expect(await currentPlan(user, ctx)).toMatchObject({ status: 'expired', nextIndex: -1 })
 })
 
 test('a plan with every step earned is done', async () => {
-  spyOn(users, 'getUser').mockResolvedValue(
-    makeUser({ session_plan: plan({ steps: [step('A', 30)] }) }),
-  )
+  spyOn(plans, 'activePlan').mockResolvedValue(plan({ steps: [step('A', 30)] }))
   expect(await currentPlan(user, ctx)).toMatchObject({
     status: 'done',
     doneCount: 1,
@@ -95,16 +102,80 @@ test('a plan with every step earned is done', async () => {
 })
 
 test('without a game context nothing is ticked off', async () => {
-  spyOn(users, 'getUser').mockResolvedValue(makeUser({ session_plan: plan() }))
+  spyOn(plans, 'activePlan').mockResolvedValue(plan())
   const view = (await currentPlan(user)) as PlanView
   expect(view.doneCount).toBe(0)
   expect(view.steps[0].iconUrl).toBeNull()
 })
 
-test('discarding clears the stored plan', async () => {
-  const update = spyOn(users, 'updateUser').mockResolvedValue(undefined)
-  await discardPlan(user)
-  expect(update).toHaveBeenCalledWith('user:u1', { session_plan: null })
+test('ending a running session keeps the plan as ended, with the steps done by then', async () => {
+  spyOn(plans, 'activePlan').mockResolvedValue(plan({ id: 'session_plan:p' }))
+  const close = spyOn(plans, 'closePlan').mockResolvedValue()
+  expect(await discardPlan(user, ctx)).toEqual({ id: 'session_plan:p', askReason: false })
+  expect(close.mock.calls[0][1]).toBe('ended')
+  expect(close.mock.calls[0][2].map((s) => [s.trophy, s.done])).toEqual([
+    ['A', true],
+    ['B', false],
+  ])
+})
+
+test('dismissing a plan that is over dates it to when its time ran out', async () => {
+  const createdAt = minutesAgo(500)
+  spyOn(plans, 'activePlan').mockResolvedValue(
+    plan({ id: 'session_plan:p', createdAt, status: 'expired' }),
+  )
+  const close = spyOn(plans, 'closePlan').mockResolvedValue()
+  await discardPlan(user, ctx)
+  expect(close.mock.calls[0][1]).toBe('dismissed')
+  expect(close.mock.calls[0][3]).toEqual(new Date(new Date(createdAt).getTime() + 150 * 60_000))
+})
+
+test('a plan closed with no step done asks why, and nothing on screen closes nothing', async () => {
+  const get = spyOn(plans, 'activePlan')
+  spyOn(plans, 'closePlan').mockResolvedValue()
+  get.mockResolvedValueOnce(plan({ id: 'session_plan:p', steps: [step('B', 60)] }))
+  expect(await discardPlan(user, ctx)).toEqual({ id: 'session_plan:p', askReason: true })
+  get.mockResolvedValueOnce(undefined)
+  expect(await discardPlan(user, ctx)).toBeNull()
+})
+
+test('a new plan replaces the active one, which keeps its steps done', async () => {
+  spyOn(plans, 'activePlan').mockResolvedValue(plan({ id: 'session_plan:old', status: 'active' }))
+  const close = spyOn(plans, 'closePlan').mockResolvedValue()
+  spyOn(plans, 'savePlan').mockImplementation(async (_u, p) => ({ ...p, id: 'session_plan:new' }))
+  const saved = await startPlan(user, plan(), ctx)
+  expect(close.mock.calls[0].slice(0, 2)).toEqual(['session_plan:old', 'replaced'])
+  expect(saved.id).toBe('session_plan:new')
+})
+
+test('an expired recap is not touched by a new plan', async () => {
+  spyOn(plans, 'activePlan').mockResolvedValue(plan({ id: 'session_plan:old', status: 'expired' }))
+  const close = spyOn(plans, 'closePlan').mockResolvedValue()
+  spyOn(plans, 'savePlan').mockImplementation(async (_u, p) => p)
+  await startPlan(user, plan(), ctx)
+  expect(close).not.toHaveBeenCalled()
+})
+
+test('the hourly check expires plans past their time, ticking steps from the stored trophies', async () => {
+  const late = plan({
+    id: 'session_plan:late',
+    createdAt: minutesAgo(151),
+    npCommunicationId: 'NPWR1',
+    steps: [
+      { ...step('A', 30), trophyId: 1 },
+      { ...step('B', 60), trophyId: 2 },
+    ],
+  })
+  spyOn(plans, 'activePlans').mockResolvedValue([
+    { ...late, user: 'user:u1' },
+    { ...plan({ id: 'session_plan:now' }), user: 'user:u2' },
+  ])
+  spyOn(titles, 'getTitle').mockResolvedValue({ earned_ids: [2] } as never)
+  const close = spyOn(plans, 'closePlan').mockResolvedValue()
+  expect(await expirePlans()).toBe(1)
+  expect(close.mock.calls[0][0]).toBe('session_plan:late')
+  expect(close.mock.calls[0][1]).toBe('expired')
+  expect(close.mock.calls[0][2].map((s) => s.done)).toEqual([false, true])
 })
 
 test('the report shows durations, done steps, tricks, warnings and spare time', () => {
@@ -135,9 +206,7 @@ test('the report shows durations, done steps, tricks, warnings and spare time', 
 })
 
 test('the demo plan never expires and is always the one being played', async () => {
-  spyOn(users, 'getUser').mockResolvedValue(
-    makeUser({ session_plan: plan({ createdAt: '2020-01-01T00:00:00Z' }) }),
-  )
+  spyOn(plans, 'activePlan').mockResolvedValue(plan({ createdAt: '2020-01-01T00:00:00Z' }))
   const view = await currentPlan(makeUser({ demo: true }), ctx)
   expect(view).toMatchObject({ status: 'active', doneCount: 1, nextIndex: 1 })
   expect(await currentPlan(makeUser(), ctx)).toBeNull()

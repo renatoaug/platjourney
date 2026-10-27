@@ -6,6 +6,7 @@ import * as demo from '../src/demo.ts'
 import * as gameContext from '../src/game-context.ts'
 import * as interests from '../src/interests.ts'
 import * as lib from '../src/library.ts'
+import * as planner from '../src/planner.ts'
 import * as playtime from '../src/playtime.ts'
 import { Refused, registerPlugin, resetPlugins } from '../src/plugins.ts'
 import * as psn from '../src/psn.ts'
@@ -421,7 +422,7 @@ test("a list is saved as the assistant's batch, at least three catalog games", a
 })
 
 test('a session plan names the trophies as the list does, for the game being played', async () => {
-  const update = spyOn(users, 'updateUser').mockResolvedValue()
+  const start = spyOn(planner, 'startPlan').mockImplementation(async (_u, p) => p)
   spyOn(gameContext, 'getCurrent').mockReturnValue(undefined)
   expect((await call('save_session_plan', { minutes: 60, summary: 's', steps: [] })).isError).toBe(
     true,
@@ -447,7 +448,7 @@ test('a session plan names the trophies as the list does, for the game being pla
     codex,
   )
   expect(ok.data).toMatchObject({ saved: { steps: 1 }, notTrophies: ['Platinum', 'Made up'] })
-  const plan = update.mock.calls[0][1].session_plan as Record<string, unknown>
+  const plan = start.mock.calls[0][1] as unknown as Record<string, unknown>
   expect(plan).toMatchObject({
     minutes: 90,
     summary: 'Story first.',

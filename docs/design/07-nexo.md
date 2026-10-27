@@ -79,7 +79,7 @@ The player says how long they have (`/plan <minutes>` on Telegram, or the planne
 
 The method: only trophies the player can get from where they are (inferred from the last earned trophies and the roadmap), missables first, then story trophies and grinds that pay off early; the platinum and DLC trophies never, unless nothing else is left; the steps are a route, from first to last. The context is the same as the chat's, with the whole guide as JSON.
 
-The plan is stored on the player and shown while it is valid: the session's length plus a grace period, then as a recap until the next day. Its steps tick themselves off as PSN reports the trophies earned. A connected assistant can save a plan the same way.
+Each plan is a row of `session_plan`, shown while it is valid: the session's length plus a grace period, then as a recap until the next day. Its steps tick themselves off as PSN reports the trophies earned. A connected assistant can save a plan the same way. Taking a plan off the screen keeps the row with how it ended (ended, dismissed, replaced by a new one, or expired with no action) and which steps were done, so the operator can read how plans go. When a plan closes with no step done, the card asks once, optionally, why (didn't help, too long, switched games, didn't get to play); skipping it costs nothing.
 
 ## Deep guide
 

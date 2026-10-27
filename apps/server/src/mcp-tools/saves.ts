@@ -2,13 +2,12 @@
  * recommendations, a session plan and a tip. */
 import { getCurrent } from '../game-context.ts'
 import { ownedGames } from '../library.ts'
-import type { PlanStep, SessionPlan } from '../planner.ts'
+import { type PlanStep, type SessionPlan, startPlan } from '../planner.ts'
 import type { TrophyStatus } from '../psn.ts'
 import { saveAssistantRecommendations, type TasteProfile } from '../recommend.ts'
 import { logAssistantTip } from '../repository/activity.ts'
 import type { Game } from '../repository/game.ts'
 import { saveAssistantPick } from '../repository/recommendation.ts'
-import { updateUser } from '../repository/user.ts'
 import {
   type Args,
   assistantOf,
@@ -258,7 +257,7 @@ export const saveSessionPlan: Tool = {
       ifTimeLeft: optText(args.ifTimeLeft, 300, null),
       assistant: assistantOf(from),
     }
-    await updateUser(user.id, { session_plan: plan })
+    await startPlan(user, plan, ctx)
     return { saved: { game: gameRow(ctx.game), steps: steps.length }, notTrophies: unknown }
   },
 }
