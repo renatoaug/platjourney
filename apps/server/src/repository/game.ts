@@ -168,7 +168,12 @@ export async function upsertFromCatalog(
 ): Promise<Game> {
   const key = entry ? String(entry.id) : `psn_${np ?? normalizeName(name).replace(/ /g, '_')}`
   const existing = plain(await one<Game>('SELECT * OMIT embedding FROM $id', { id: gameId(key) }))
-  const slug = entry?.slug ?? existing?.slug ?? normalizeName(name).replace(/ /g, '-')
+  // A name with no Latin letters or digits ("ロケットリーグ") normalizes to nothing: such games
+  // take their key as slug, or every one of them would share the empty slug, and the game.
+  const slug =
+    entry?.slug ??
+    existing?.slug ??
+    (normalizeName(name).replace(/ /g, '-') || key.replace(/_/g, '-'))
   if (!existing) {
     // The slug is unique: a game already holding it is this same game.
     const same = await gameBySlug(slug)
