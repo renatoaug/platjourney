@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.35.3](https://github.com/renatoaug/platjourney/compare/v0.35.2...v0.35.3) (2026-10-27)
+
+### Bug Fixes
+
+* **guide:** count guide requests once per player ([#95](https://github.com/renatoaug/platjourney/issues/95)) ([190dbfa](https://github.com/renatoaug/platjourney/commit/190dbfab3327ee8f16eaa38bc38ed714da7cc8a2))
+
 ## [0.35.2](https://github.com/renatoaug/platjourney/compare/v0.35.1...v0.35.2) (2026-10-27)
 
 ### Bug Fixes
