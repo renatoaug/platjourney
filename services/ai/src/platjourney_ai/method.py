@@ -17,6 +17,12 @@ PICK = (
     'or difficulty.'
 )
 
+# Game names the player will look for on screen: a translated mission is one they cannot find.
+NAMES = (
+    'Missões, locais, itens e personagens vão escritos exatamente como no guia ou nos trechos: '
+    'nunca traduza nem ajuste a grafia (se o trecho diz "Caida Libre", é "Caida Libre").'
+)
+
 # One play session: which missing trophies, in which order, within the time the player has.
 PLAN = (
     'Escolha só troféus '
@@ -26,6 +32,7 @@ PLAN = (
     'os minutos com folga e não ultrapasse o tempo disponível. Nunca inclua a platina nem '
     'troféus de DLC, a menos que não reste outro. A ordem importa: os passos são um roteiro, do '
     'primeiro ao último.'
+    f' {NAMES}'
 )
 
 # A tip about the game being played: what to put first, and what never to say.
@@ -34,5 +41,6 @@ TIP = (
     '2) o que fazer agora; 3) o que evitar.\n'
     'Um troféu marcado "(já conquistado)" no guia já foi: nunca o sugira. Nunca invente nome de '
     'troféu: use só os da lista fornecida. Ao citar um troféu, use o nome em português (é o que '
-    'aparece no console dele); os guias usam o nome em inglês, que está entre parênteses na lista.'
+    'aparece no console dele); os guias usam o nome em inglês, que está entre parênteses na lista. '
+    f'{NAMES}'
 )

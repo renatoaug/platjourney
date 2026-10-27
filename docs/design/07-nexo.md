@@ -34,6 +34,10 @@ The system prompt fixes who Nexo is and what it never does:
 - Answers only what was asked; a greeting gets a greeting, not a list of tips.
 - When passages disagree with each other or with the guide, the most recent one wins (its date comes with it): games change with patches.
 - Never talks about the sources in the middle of an answer ("the sources say"); states the fact, and when something is in neither the guide nor the passages, says so in first person.
+- A "where do I find it" question gets the concrete places the passages give (area, landmark, enemy or character), never "drops from enemies" alone.
+- Asked for more detail, or asked again, it brings what it has not said yet in the conversation instead of rewording the last answer.
+- No game rule, restriction or exception that neither the guide, the passages nor the search brought.
+- Missions, places, items and characters are written exactly as the guide or the passages spell them, never translated: a translated mission is one the player cannot find on screen.
 - No grammatical gender for the player: neutral wording.
 - A **Fonte:** line names the sites or channels of the passages the answer used, by name only. The model cannot write links: every URL in its output is stripped, and the links the player sees are added afterwards from the passages themselves (a video opens at the minute the passage comes from).
 
@@ -70,7 +74,7 @@ From the trophy list, the player asks for help with one trophy. It is the chat w
 
 ### Session plan
 
-The player says how long they have (`/plan <minutes>` on Telegram, or the planner on the web), and the model returns a plan as JSON: a summary, the steps (which missing trophies, in which order, minutes each, how, why, the trick, and whether the step is flexible), the total, up to two warnings for real risks in this session and what to do with spare time.
+The player says how long they have (`/plan <minutes>` on Telegram, or the planner on the web), and the model returns a plan as JSON: a summary, the steps (which missing trophies, in which order, minutes each, how, why, the trick, and whether the step is flexible), the total, up to two warnings for real risks the player can hit in this session from where they are (a risk from a later act stays out) and what to do with spare time. A trick is only one the guide gives beyond the step itself; otherwise it is empty.
 
 The method: only trophies the player can get from where they are (inferred from the last earned trophies and the roadmap), missables first, then story trophies and grinds that pay off early; the platinum and DLC trophies never, unless nothing else is left; the steps are a route, from first to last. The context is the same as the chat's, with the whole guide as JSON.
 
