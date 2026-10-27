@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.35.5](https://github.com/renatoaug/platjourney/compare/v0.35.4...v0.35.5) (2026-10-27)
+
+### Bug Fixes
+
+* **nexo:** sharper answers and plans ([#97](https://github.com/renatoaug/platjourney/issues/97)) ([8123918](https://github.com/renatoaug/platjourney/commit/8123918e5c06da4474eaa4de986cfdbd8e8d2d9b))
+
 ## [0.35.4](https://github.com/renatoaug/platjourney/compare/v0.35.3...v0.35.4) (2026-10-27)
 
 ### Bug Fixes
