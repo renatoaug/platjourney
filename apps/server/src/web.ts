@@ -20,6 +20,7 @@ import { type ApiHandler, apiMessages, requestLocale } from './routes/api.ts'
 import { authRoutes } from './routes/auth.ts'
 import { CHAT_ROUTES } from './routes/chat.ts'
 import { demoAnswered } from './routes/demo.ts'
+import { EVENT_ROUTES } from './routes/events.ts'
 import { GAME_ROUTES } from './routes/games.ts'
 import { HOME_ROUTES } from './routes/home.ts'
 import { INTEREST_ROUTES } from './routes/interests.ts'
@@ -104,6 +105,7 @@ const API_ROUTES: Record<string, ApiHandler> = {
   ...GAME_ROUTES,
   ...CHAT_ROUTES,
   ...PLAN_ROUTES,
+  ...EVENT_ROUTES,
   ...INTEREST_ROUTES,
 }
 

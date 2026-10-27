@@ -28,6 +28,7 @@ import * as ranking from '../src/ranking.ts'
 import { resetRateLimits } from '../src/rate-limit.ts'
 import * as recommend from '../src/recommend.ts'
 import * as activity from '../src/repository/activity.ts'
+import * as events from '../src/repository/event.ts'
 import * as games from '../src/repository/game.ts'
 import * as missing from '../src/repository/game-request.ts'
 import * as guides from '../src/repository/guide.ts'
@@ -731,6 +732,33 @@ test('the profile page adds the account', async () => {
   })
 })
 
+test('events are saved in batches, leaving out anything malformed', async () => {
+  const save = spyOn(events, 'saveEvents').mockResolvedValue()
+  expect((await send('POST', '/api/events', {})).status).toBe(400)
+  const now = Date.now()
+  const res = await send('POST', '/api/events', {
+    events: [
+      { name: 'screen', target: '/guides', path: '/guides', at: now - 1000 },
+      { name: 'open', target: 'key-note', path: '/title/game/1', at: now + 60_000 },
+      { name: 'click', target: 'x', path: '/' },
+      { name: 'search', target: '', path: '/guides' },
+      { name: 'search', target: 'elden', path: 'guides' },
+      { name: 'search', target: 'x'.repeat(300), path: '/guides' },
+    ],
+  })
+  expect(res.body).toEqual({ saved: 3 })
+  const saved = save.mock.calls[0][1]
+  expect(saved.map((e) => [e.name, e.target.length])).toEqual([
+    ['screen', 7],
+    ['open', 8],
+    ['search', 120],
+  ])
+  expect(saved[0].at).toEqual(new Date(now - 1000))
+  // A time ahead of the server becomes now.
+  expect(saved[1].at.getTime()).toBeLessThanOrEqual(Date.now())
+  expect(save.mock.calls[0][0]).toBe(me.id)
+})
+
 test('plans are read, discarded and made for 15 to 600 minutes', async () => {
   spyOn(planner, 'currentPlan').mockResolvedValue(null)
   spyOn(planner, 'discardPlan').mockResolvedValue()
@@ -1090,6 +1118,7 @@ describe('the demo', () => {
     ['DELETE', '/api/telegram/link'],
     ['POST', '/api/plan', { minutes: 60 }],
     ['DELETE', '/api/plan'],
+    ['POST', '/api/events', { events: [] }],
     ['POST', '/api/chat', { text: 'oi' }],
     ['POST', '/api/trophy-tip', { np: 'NPWR1', trophyId: 1 }],
     ['POST', '/api/recommendations/dismiss', { game: 'game:2' }],
@@ -1120,6 +1149,7 @@ describe('the demo', () => {
       spyOn(auth, 'deleteAccount'),
       spyOn(planner, 'planSession'),
       spyOn(planner, 'discardPlan'),
+      spyOn(events, 'saveEvents'),
       spyOn(nexo, 'reply'),
       spyOn(nexo, 'trophyHelp'),
       users.updateUser,

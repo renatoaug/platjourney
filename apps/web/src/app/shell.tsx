@@ -27,6 +27,7 @@ import {
   useMessages,
 } from '../i18n/i18n'
 import { number } from '../lib/format'
+import { startTracking, track } from '../lib/track'
 import { Discover } from '../pages/discover'
 import { Game } from '../pages/game'
 import { Goals } from '../pages/goals'
@@ -392,6 +393,10 @@ export function Shell() {
   const label = page
     ? page.label[locale]
     : t(isTitle ? 'nav.title' : (LABELS[pathname] ?? 'nav.home'))
+
+  // What the player opens, for the operator's panel; the demo is shared, so it sends nothing.
+  useEffect(() => (me.demo ? undefined : startTracking()), [me.demo])
+  useEffect(() => track('screen', pathname), [pathname])
 
   useEffect(() => {
     // A game page names the tab after the game once it knows it; a generic "Jogo" first would only

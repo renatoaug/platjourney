@@ -9,6 +9,7 @@ import { PageHero } from '../components/page-hero'
 import { titleHref } from '../components/tip'
 import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
+import { track } from '../lib/track'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Pager } from '../ui/pager'
@@ -555,7 +556,11 @@ export function Guides({
   // The search waits for a pause in typing.
   useEffect(() => {
     if (typed === q) return
-    const timer = setTimeout(() => change({ q: typed.trim() }), 300)
+    const timer = setTimeout(() => {
+      const words = typed.trim()
+      if (words.length >= 2) track('search', words)
+      change({ q: words })
+    }, 300)
     return () => clearTimeout(timer)
   })
 

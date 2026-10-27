@@ -21,6 +21,7 @@ import { Refused } from './plugins.ts'
 import { nowPlaying, PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
 import { lastTip, logTip, type TipKind } from './repository/activity.ts'
 import { pruneExpired } from './repository/auth.ts'
+import { pruneEvents } from './repository/event.ts'
 import { pruneOauth } from './repository/oauth.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
 import { getUser, listUsers, type User, updateUser } from './repository/user.ts'
@@ -303,7 +304,7 @@ export function startWatcher(minutes: number): void {
   run()
   setInterval(run, minutes * 60_000)
   const prune = () =>
-    Promise.all([pruneExpired(), pruneOauth()]).catch((e) =>
+    Promise.all([pruneExpired(), pruneOauth(), pruneEvents()]).catch((e) =>
       console.error('prune failed:', e.message),
     )
   prune()

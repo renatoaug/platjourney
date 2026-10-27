@@ -352,13 +352,14 @@ erDiagram
 
 ### Sign-in, access and costs
 
-Sessions, the pending sign-up code, where accounts are used from, the assistants connected through MCP and what each model call cost.
+Sessions, the pending sign-up code, where accounts are used from, what players do on screen, the assistants connected through MCP and what each model call cost.
 
 ```mermaid
 erDiagram
     user ||--o{ auth_session : "signs in with"
     user |o--o{ llm_call : "costs"
     user ||--o{ access : "is used from"
+    user ||--o{ event : "does"
     user ||--o{ oauth_token : "connects"
     oauth_client ||--o{ oauth_token : "holds"
     oauth_client ||--o{ oauth_code : "is given"
@@ -389,6 +390,14 @@ erDiagram
         count int
         created_at datetime
         updated_at datetime
+    }
+    event {
+        id record(event) PK
+        user record(user) FK
+        name string
+        target string
+        path string
+        created_at datetime
     }
     oauth_client {
         id record(oauth_client) PK
@@ -453,6 +462,7 @@ erDiagram
 | `auth_session` | signed-in browser | `token_hash` | Only the hash of the cookie is stored |
 | `verification` | pending "About me" code | `psn_online_id_lower` | Expires; no account yet. `secret_hash` is the hash of the claim cookie: only its holder can finish the claim or get the same code again, and nobody else can replace the row until `expires_at` |
 | `access` | address an account is used from | `user, ip_hash` | An HMAC of the IP, only with `ACCESS_HASH_SECRET` |
+| `event` | something a player did on screen | `user, created_at` | What leaves nothing else behind, for the operator: `name` is `screen` (a route opened; `target` is its path), `open` (a section expanded, such as a guide note; `target` is its name) or `search` (`target` is the words typed in the guides search, two letters or more). `path` is the screen it happened on. The page queues events and sends them in batches to `POST /api/events` (and on its way out, as a beacon); the demo sends none. Rows older than 180 days are deleted by the hourly check, and every row of an account goes with it |
 
 ## Catalog and guides
 
