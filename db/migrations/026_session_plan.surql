@@ -33,7 +33,8 @@ DEFINE INDEX IF NOT EXISTS session_plan_status ON session_plan FIELDS status;
 
 -- Plans kept on the player before this table: moved here as active (the hourly check expires the
 -- old ones), then the player's field goes. A database that never had the field moves nothing. One
--- transaction: the field is cleared and removed only if every plan was copied.
+-- transaction: the field is cleared and removed only if every plan was copied. A plan stored a
+-- missing value as NULL, which option<...> fields refuse: `?? NONE` turns it into a missing one.
 BEGIN TRANSACTION;
 LET $kept = SELECT id, session_plan FROM user WHERE session_plan != NONE;
 FOR $u IN $kept {
@@ -46,8 +47,8 @@ FOR $u IN $kept {
         steps: $u.session_plan.steps ?? [],
         total_minutes: $u.session_plan.total_minutes ?? 0,
         warnings: $u.session_plan.warnings ?? [],
-        if_time_left: $u.session_plan.if_time_left,
-        assistant: $u.session_plan.assistant,
+        if_time_left: $u.session_plan.if_time_left ?? NONE,
+        assistant: $u.session_plan.assistant ?? NONE,
         created_at: <datetime> $u.session_plan.created_at,
     };
 };
