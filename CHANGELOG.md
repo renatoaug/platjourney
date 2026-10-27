@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.35.1](https://github.com/renatoaug/platjourney/compare/v0.35.0...v0.35.1) (2026-10-27)
+
+### Bug Fixes
+
+* **watcher:** send the session notice once when checks queue up ([#93](https://github.com/renatoaug/platjourney/issues/93)) ([d16839f](https://github.com/renatoaug/platjourney/commit/d16839f239226849b79c5b76016635fa9edb0c63))
+
 ## [0.35.0](https://github.com/renatoaug/platjourney/compare/v0.34.1...v0.35.0) (2026-10-26)
 
 ### Features
