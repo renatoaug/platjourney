@@ -133,6 +133,15 @@ test('a title outside IGDB gets a psn key and keeps its platform', async () => {
   expect(game.id).toBe('game:psn_NPTINY')
 })
 
+test('titles named only in another script get a game each, not one shared blank slug', async () => {
+  fakeDb([])
+  const rocket = await upsertFromCatalog(null, 'ロケットリーグ®', 'NPJP1', 'PS4')
+  const jojo = await upsertFromCatalog(null, 'ジョジョの奇妙な冒険', 'NPJP2', 'PS4')
+  expect(rocket.id).toBe('game:psn_NPJP1')
+  expect(jojo.id).toBe('game:psn_NPJP2')
+  expect(jojo.slug).toBe('psn-NPJP2')
+})
+
 test('a new key whose slug already exists attaches to that game', async () => {
   const same = makeGame({
     id: 'game:9301',
