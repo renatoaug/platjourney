@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.35.4](https://github.com/renatoaug/platjourney/compare/v0.35.3...v0.35.4) (2026-10-27)
+
+### Bug Fixes
+
+* **catalog:** give titles named in another script their own game ([#96](https://github.com/renatoaug/platjourney/issues/96)) ([4303ac2](https://github.com/renatoaug/platjourney/commit/4303ac208e350328567b017922a71f6f2a29fc62))
+
 ## [0.35.3](https://github.com/renatoaug/platjourney/compare/v0.35.2...v0.35.3) (2026-10-27)
 
 ### Bug Fixes
