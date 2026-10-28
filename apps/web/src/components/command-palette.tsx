@@ -1,9 +1,11 @@
 /** Search from anywhere: ⌘K (Ctrl+K) or "/" opens it, and it finds catalog games (the ones with a
  * guide first) and the app's screens. Arrows move, Enter opens, Esc closes. */
+
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
+import { fmtPlayTime } from '../lib/format'
 import type { GuideCardItem, GuidesPage } from '../pages/guides'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
@@ -21,7 +23,7 @@ const messages = defineMessages({
     recent: 'Vistos há pouco',
     guide: 'Com guia',
     noGuide: 'Sem guia ainda',
-    hours: '~{hours}h',
+    hours: '~{time}',
     difficulty: 'Dificuldade {value}/10',
     empty: 'Nenhum jogo com “{query}”.',
     emptyHint: 'Peça o jogo na tela Guias e ele entra no catálogo.',
@@ -37,7 +39,7 @@ const messages = defineMessages({
     recent: 'Seen recently',
     guide: 'Has a guide',
     noGuide: 'No guide yet',
-    hours: '~{hours}h',
+    hours: '~{time}',
     difficulty: 'Difficulty {value}/10',
     empty: 'No game matching “{query}”.',
     emptyHint: 'Ask for it on the Guides screen and it joins the catalog.',
@@ -264,7 +266,7 @@ export function PaletteDialog({
         {g ? (
           <span className="palette-facts">
             {g.difficulty > 0 && <span>{t('difficulty', { value: g.difficulty })}</span>}
-            {g.hours > 0 && <span>{t('hours', { hours: g.hours })}</span>}
+            {g.hours > 0 && <span>{t('hours', { time: fmtPlayTime(g.hours) })}</span>}
             <span className="pill ok">{t('guide')}</span>
           </span>
         ) : (

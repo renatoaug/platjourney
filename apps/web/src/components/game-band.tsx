@@ -3,9 +3,11 @@
  * (with an optional tag and actions over it), the name, the facts as icons, the difficulty and a
  * short reason. The section has one slim head line (eyebrow and title on the left, the pages on the
  * right) and six cards a page. */
+
 import { type ReactNode, useState } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { fmtPlayTime } from '../lib/format'
 import type { Game } from '../lib/types'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
@@ -17,7 +19,7 @@ import './game-band.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    hours: '~{hours}h',
+    hours: '~{time}',
     hoursTitle: 'Tempo estimado para a platina',
     runs: {
       one: '{count} jogada',
@@ -29,7 +31,7 @@ const messages = defineMessages({
     pages: 'Páginas de {title}',
   },
   [Language.En]: {
-    hours: '~{hours}h',
+    hours: '~{time}',
     hoursTitle: 'Estimated time to platinum',
     runs: {
       one: '{count} playthrough',
@@ -90,7 +92,7 @@ function CardFacts({ item }: { item: CardItem }) {
     <span className="band-meta">
       {item.hours > 0 && (
         <span title={t('hoursTitle')}>
-          <Icon name="clock" /> {t('hours', { hours: item.hours })}
+          <Icon name="clock" /> {t('hours', { time: fmtPlayTime(item.hours) })}
         </span>
       )}
       {runs && Number.isInteger(runs) && runs > 0 ? (
