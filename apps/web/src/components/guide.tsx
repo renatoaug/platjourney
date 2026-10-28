@@ -10,7 +10,7 @@ import {
 } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
-import { fmtDate, fmtRate } from '../lib/format'
+import { fmtDate, fmtPlayTime, fmtRate } from '../lib/format'
 import { nameText } from '../lib/text'
 import type { DeepGuideStats, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
@@ -77,13 +77,6 @@ const messages = defineMessages({
       hours: 'Tempo estimado',
       hoursDetail: 'Para a platina, sem DLC',
       unknown: 'Sem dado ainda',
-      estimated: {
-        easy: 'Fácil (estimada)',
-        medium: 'Média (estimada)',
-        hard: 'Difícil (estimada)',
-        brutal: 'Muito difícil (estimada)',
-      },
-      estimatedDetail: 'Estimada pela raridade da platina: {rate}% de quem joga tem.',
       playthroughs: 'Jogadas mínimas',
       difficultyTrophy: 'Troféu de dificuldade',
       missables: 'Perdíveis',
@@ -195,13 +188,6 @@ const messages = defineMessages({
       hours: 'Estimated time',
       hoursDetail: 'For the platinum, without DLC',
       unknown: 'Not known yet',
-      estimated: {
-        easy: 'Easy (estimated)',
-        medium: 'Medium (estimated)',
-        hard: 'Hard (estimated)',
-        brutal: 'Very hard (estimated)',
-      },
-      estimatedDetail: 'Estimated from how rare the platinum is: {rate}% of players have it.',
       playthroughs: 'Minimum playthroughs',
       difficultyTrophy: 'Difficulty trophy',
       missables: 'Missables',
@@ -583,39 +569,24 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
   )
 }
 
-/** Without a researched difficulty, a band read from how many players have the platinum: the more
- * have it, the easier. */
-export function estimatedDifficulty(rate: number): 'easy' | 'medium' | 'hard' | 'brutal' {
-  if (rate >= 30) return 'easy'
-  if (rate >= 10) return 'medium'
-  if (rate >= 3) return 'hard'
-  return 'brutal'
-}
-
 // The first questions a hunter asks, answered at a glance. Older guides lack the
 // difficulty and post-game fields, so those pills only show when researched.
-function QuickFacts({ g, platinumRate }: { g: GuideDetail; platinumRate?: number | null }) {
+function QuickFacts({ g }: { g: GuideDetail }) {
   const t = useMessages(messages)
   const first = (text?: string | null) => (text ? text.split(/(?<=[.;])\s/)[0] : '')
   const online = g.onlineTrophies?.length ?? 0
   const missables = g.missables?.length ?? 0
   // [icon, label, value, detail shown on hover]; rows without a known value are left out.
   const facts: [string, string, string, string][] = [
-    // 0 means the sources do not say yet: then the platinum's rarity gives a band, when known.
+    // 0 means the sources do not say yet. The platinum's rarity is no stand-in: a free or casual game
+    // that many start and drop has a rare platinum without being hard.
     g.difficulty
       ? ['target', t('facts.difficulty'), `${g.difficulty}/10`, '']
-      : platinumRate != null
-        ? [
-            'target',
-            t('facts.difficulty'),
-            t(`facts.estimated.${estimatedDifficulty(platinumRate)}`),
-            t('facts.estimatedDetail', { rate: fmtRate(platinumRate) }),
-          ]
-        : ['target', t('facts.difficulty'), t('facts.unknown'), ''],
+      : ['target', t('facts.difficulty'), t('facts.unknown'), ''],
     [
       'clock',
       t('facts.hours'),
-      g.hours ? `~${g.hours}h` : t('facts.unknown'),
+      g.hours ? `~${fmtPlayTime(g.hours)}` : t('facts.unknown'),
       t('facts.hoursDetail'),
     ],
     [
@@ -1025,10 +996,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   ]
   const panels = [
     <Fragment key="summary">
-      <QuickFacts
-        g={g}
-        platinumRate={c?.trophies?.find((x) => x.type === 'platinum')?.earnedRate}
-      />
+      <QuickFacts g={g} />
       <p style={{ margin: 0, color: 'var(--color-fg)' }}>
         <GuideText text={g.overview} />
       </p>

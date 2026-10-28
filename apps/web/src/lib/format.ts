@@ -22,6 +22,9 @@ export const fmtRate = (rate?: number | null) => (rate == null ? '' : oneDecimal
 export const fmtHours = (h?: number | null) =>
   h == null ? '' : h >= 10 ? `${Math.round(h)}h` : `${oneDecimal().format(h)}h`
 
+/** A guide's time to platinum: minutes under an hour ("35 min"), hours above ("22,5h", "18h"). */
+export const fmtPlayTime = (h: number) => (h < 1 ? fmtMinutes(h * 60) : fmtHours(h))
+
 export const fmtDate = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleDateString(getLocale()) : ''
 

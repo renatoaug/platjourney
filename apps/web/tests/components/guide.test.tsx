@@ -1,12 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import {
-  estimatedDifficulty,
-  Guide,
-  type GuideGame,
-  GuideSkeleton,
-} from '../../src/components/guide'
+import { Guide, type GuideGame, GuideSkeleton } from '../../src/components/guide'
 import { current } from '../../src/fixtures'
 import type { GuideDetail } from '../../src/lib/types'
 
@@ -260,19 +255,18 @@ test('difficulty, hours and runs the sources do not give show as not known yet, 
   expect(screen.queryByText('0/10')).toBeNull()
 })
 
-test('without a researched difficulty, the platinum rarity gives an estimated band', () => {
-  const platinum = { type: 'platinum', name: 'Platina', earnedRate: 4.2 }
+test('without a researched difficulty, a rare platinum is not taken as hard', () => {
+  const platinum = { type: 'platinum', name: 'Platina', earnedRate: 1.2 }
   show({
     ...game,
     trophies: [platinum] as unknown as GuideGame['trophies'],
     guide: { ...guide, difficulty: 0 },
   })
-  const fact = screen.getByText('Difícil (estimada)')
-  expect(fact.closest('[data-tip]')?.getAttribute('data-tip')).toBe(
-    'Estimada pela raridade da platina: 4,2% de quem joga tem.',
-  )
+  expect(screen.queryByText(/estimada/)).toBeNull()
+  expect(screen.getAllByText('Sem dado ainda').length).toBeGreaterThan(0)
 })
 
-test('estimated bands follow how many players have the platinum', () => {
-  expect([45, 15, 5, 1].map(estimatedDifficulty)).toEqual(['easy', 'medium', 'hard', 'brutal'])
+test('a time under an hour shows in minutes', () => {
+  show({ ...game, guide: { ...guide, hours: 0.5833 } })
+  expect(screen.getByText('~35 min')).toBeTruthy()
 })

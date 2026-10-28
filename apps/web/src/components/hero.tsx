@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { fmtHours, pct } from '../lib/format'
+import { fmtHours, fmtPlayTime, pct } from '../lib/format'
 import { shownProgress } from '../lib/progress'
 import type { CurrentGame, GuideDetail } from '../lib/types'
 import { Icon } from '../ui/icon'
@@ -24,10 +24,9 @@ const messages = defineMessages({
     },
     played: '{hours} jogadas',
     guidePreparing: 'Seu guia está sendo preparado',
-    playedOf: '{played} jogadas de ~{hours}h',
-    playedOfShort: '{played}/~{hours}h',
-    hours: '~{hours} horas',
-    hoursShort: '~{hours}h',
+    playedOf: '{played} jogadas de ~{time}',
+    playedOfShort: '{played}/~{time}',
+    hours: '~{time}',
     playthroughs: {
       one: '{count} jornada',
       other: '{count} jornadas',
@@ -58,10 +57,9 @@ const messages = defineMessages({
     },
     played: '{hours} played',
     guidePreparing: 'Your guide is being prepared',
-    playedOf: '{played} played of ~{hours}h',
-    playedOfShort: '{played}/~{hours}h',
-    hours: '~{hours} hours',
-    hoursShort: '~{hours}h',
+    playedOf: '{played} played of ~{time}',
+    playedOfShort: '{played}/~{time}',
+    hours: '~{time}',
     playthroughs: {
       one: '{count} playthrough',
       other: '{count} playthroughs',
@@ -170,16 +168,13 @@ function HeroMeta({ c }: { c: CurrentGame }) {
           <Icon name="clock" />{' '}
           {played != null && g.hours > 0 ? (
             <Short
-              long={t('playedOf', { played: fmtHours(played), hours: g.hours })}
-              short={t('playedOfShort', { played: fmtHours(played), hours: g.hours })}
+              long={t('playedOf', { played: fmtHours(played), time: fmtPlayTime(g.hours) })}
+              short={t('playedOfShort', { played: fmtHours(played), time: fmtPlayTime(g.hours) })}
             />
           ) : played != null ? (
             t('played', { hours: fmtHours(played) })
           ) : (
-            <Short
-              long={t('hours', { hours: g.hours })}
-              short={t('hoursShort', { hours: g.hours })}
-            />
+            t('hours', { time: fmtPlayTime(g.hours) })
           )}
         </span>
       )}
