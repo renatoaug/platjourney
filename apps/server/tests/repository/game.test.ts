@@ -198,6 +198,16 @@ test('an unknown list id is resolved through IGDB and stored', async () => {
   expect(game).toMatchObject({ id: 'game:9601', name: 'Sigma', np_communication_ids: ['NPSIGMA'] })
 })
 
+test('a list named for its console edition resolves and is stored by the game name', async () => {
+  fakeDb([])
+  const resolve = spyOn(igdb, 'resolveGame').mockResolvedValue(null)
+  const game = await gameForTitle(
+    makeTitle({ npCommunicationId: 'NPEDITION', name: 'Minecraft: PlayStation®5 Edition' }),
+  )
+  expect(resolve).toHaveBeenCalledWith('Minecraft')
+  expect(game).toMatchObject({ id: 'game:psn_NPEDITION', name: 'Minecraft' })
+})
+
 test('an IGDB failure still stores the title under its psn key', async () => {
   fakeDb([])
   spyOn(igdb, 'resolveGame').mockRejectedValue(new Error('down'))

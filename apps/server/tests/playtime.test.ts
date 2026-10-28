@@ -1,9 +1,10 @@
 import './env.ts'
 import { afterEach, expect, mock, spyOn, test } from 'bun:test'
 import * as lib from '../src/library.ts'
-import { hours, playtimes, storeName } from '../src/playtime.ts'
+import { hours, playtimes } from '../src/playtime.ts'
 import * as psn from '../src/psn.ts'
 import * as games from '../src/repository/game.ts'
+import { storeName } from '../src/repository/game.ts'
 import * as repo from '../src/repository/playtime.ts'
 import { makeGame, makeTitle, makeUser } from './fixtures.ts'
 
