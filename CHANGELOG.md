@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.36.2](https://github.com/renatoaug/platjourney/compare/v0.36.1...v0.36.2) (2026-10-28)
+
+### Bug Fixes
+
+* **catalog:** match lists named for a console edition by the game's name ([#104](https://github.com/renatoaug/platjourney/issues/104)) ([06c029a](https://github.com/renatoaug/platjourney/commit/06c029a2e7be3b6c2fb53feb023afe5aa3c4233e))
+
 ## [0.36.1](https://github.com/renatoaug/platjourney/compare/v0.36.0...v0.36.1) (2026-10-27)
 
 ### Bug Fixes
