@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.36.3](https://github.com/renatoaug/platjourney/compare/v0.36.2...v0.36.3) (2026-10-28)
+
+### Bug Fixes
+
+* **guide:** minutes under an hour, and no difficulty guessed from rarity ([#105](https://github.com/renatoaug/platjourney/issues/105)) ([afc82ee](https://github.com/renatoaug/platjourney/commit/afc82eec55a0bf37402ded727af5db59f6065d7f))
+
 ## [0.36.2](https://github.com/renatoaug/platjourney/compare/v0.36.1...v0.36.2) (2026-10-28)
 
 ### Bug Fixes
