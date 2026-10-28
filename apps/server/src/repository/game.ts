@@ -28,6 +28,17 @@ export interface Game {
 
 export const gameRef = (id: string): RecordId => gameId(id.replace(/^game:/, ''))
 
+// A store name, and now and then a trophy list's name, carries more than the game's name: the console, an edition tag, a
+// free-to-play note ("Grand Theft Auto V (PlayStation®5)", "Terraria – PlayStation®4 Edition",
+// "Worms [PS1 Emulation]", "Minecraft: PlayStation®5 Edition"). Without them it is the game's name.
+const STORE_TAGS =
+  /[([]?\s*(?:playstation\s*®?\s*[45](?:\s*edition)?|ps[45]|ps1 emulation|f2p|gratuito para jogar)\s*[)\]]?/gi
+export const storeName = (name: string) =>
+  name
+    .replace(STORE_TAGS, ' ')
+    .replace(/[\s–—:-]+$/, '')
+    .trim()
+
 export async function getGame(id: string): Promise<Game | undefined> {
   return plain(await one<Game>('SELECT * OMIT embedding FROM $id', { id: gameRef(id) }))
 }
@@ -191,8 +202,10 @@ export async function upsertFromCatalog(
 export async function gameForTitle(title: TitleProgress): Promise<Game> {
   const known = await gameByNp(title.npCommunicationId)
   if (known) return known
-  const entry = await resolveGame(title.name).catch(() => null)
-  return upsertFromCatalog(entry, title.name, title.npCommunicationId, title.platform)
+  // A list named for its console edition is the game's list: matched and stored by the game's name.
+  const name = storeName(title.name) || title.name
+  const entry = await resolveGame(name).catch(() => null)
+  return upsertFromCatalog(entry, name, title.npCommunicationId, title.platform)
 }
 
 // Many titles at once: one query for everything already in the catalog. Unknown

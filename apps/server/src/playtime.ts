@@ -2,23 +2,12 @@ import { isDemo } from './demo.ts'
 import { normalizeName } from './igdb.ts'
 import { library } from './library.ts'
 import { playedGames } from './psn.ts'
-import { catalogGameForName, gameForTitle } from './repository/game.ts'
+import { catalogGameForName, gameForTitle, storeName } from './repository/game.ts'
 import { listPlaytimes, type Playtime, savePlaytime } from './repository/playtime.ts'
 import type { User } from './repository/user.ts'
 
 const TTL_MS = 10 * 60_000
 const cache = new Map<string, { at: number; byGame: Map<string, Playtime> }>()
-
-// A store name carries what a trophy list's name does not: the console, an edition tag, a
-// free-to-play note ("Grand Theft Auto V (PlayStation®5)", "Terraria – PlayStation®4 Edition",
-// "Worms [PS1 Emulation]"). Without them it is the game's name.
-const STORE_TAGS =
-  /[([]?\s*(?:playstation\s*®?\s*[45](?:\s*edition)?|ps[45]|ps1 emulation|f2p|gratuito para jogar)\s*[)\]]?/gi
-export const storeName = (name: string) =>
-  name
-    .replace(STORE_TAGS, ' ')
-    .replace(/[\s–—:-]+$/, '')
-    .trim()
 
 // PSN reports playtime per store title (CUSA/PPSA), not per trophy list, so the
 // link to the catalog is by name: first against the player's own trophy titles,
