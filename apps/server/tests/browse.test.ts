@@ -1,6 +1,6 @@
 import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
-import { browseGuides, forgetBrowseCache, PAGE_SIZE } from '../src/browse.ts'
+import { browseGuides, forgetBrowseCache, PAGE_SIZE, showcase } from '../src/browse.ts'
 import type { CatalogCard } from '../src/repository/game.ts'
 import * as games from '../src/repository/game.ts'
 import type { GuideSummary } from '../src/repository/guide.ts'
@@ -145,4 +145,17 @@ test('each filter counts what it would leave, with the other filters applied', a
     { name: 'RPG', count: 2 },
     { name: 'Puzzle', count: 1 },
   ])
+})
+
+test('the sign-in wall: the best rated covers of games with a guide, and how many guides', async () => {
+  cards.mockResolvedValue([
+    card('game:1', 'Bravo', { rating: 90, cover_url: 'b.jpg' }),
+    card('game:2', 'Alpha', { rating: 70, cover_url: 'a.jpg' }),
+    card('game:3', 'Charlie', { rating: 80 }),
+    card('game:4', 'Delta', { rating: 99, cover_url: 'd.jpg' }),
+  ])
+  const wall = await showcase()
+  // game:4 has no guide; game:3 has no cover.
+  expect(wall.covers).toEqual(['b.jpg', 'a.jpg'])
+  expect(wall.guides).toBe(3)
 })

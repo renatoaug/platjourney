@@ -12,6 +12,7 @@ import {
   sessionCookie,
   startClaim,
 } from '../auth.ts'
+import { showcase } from '../browse.ts'
 import { config } from '../config.ts'
 import { json, readBody } from '../http.ts'
 import { defineMessages, Language, translator } from '../i18n.ts'
@@ -40,6 +41,11 @@ export async function authRoutes(
   path: string,
   method: string,
 ): Promise<boolean> {
+  // The sign-in screen's wall of covers, read before anyone signs in.
+  if (path === '/api/auth/showcase' && method === 'GET') {
+    json(res, 200, await showcase())
+    return true
+  }
   if (!path.startsWith('/api/auth/') || method !== 'POST') return false
   // Each of these asks PSN or opens a session: a loop from one address is cut short, so it can
   // neither wear out the instance's PSN account nor fill the database with demo sessions.

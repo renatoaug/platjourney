@@ -1,0 +1,98 @@
+@layer screens {
+  .cover-wall {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    animation: wall-in 1.2s ease both;
+  }
+
+  /* Fades: the page's color at the edges and a dark pool in the middle, where the card sits. */
+  .cover-wall::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        70% 70% at 50% 50%,
+        color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent),
+        var(--color-bg) 100%
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent),
+        transparent 30%,
+        transparent 70%,
+        var(--color-bg)
+      );
+  }
+
+  .cover-wall-tilt {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    gap: 18px;
+    width: 170vw;
+    transform: translate(-50%, -50%) rotate(-12deg);
+  }
+
+  .cover-wall-row {
+    display: flex;
+    gap: 18px;
+    width: max-content;
+    animation: wall-drift 90s linear infinite;
+  }
+
+  .cover-wall-row.back {
+    animation-direction: reverse;
+    animation-duration: 110s;
+  }
+
+  .cover-wall-row img {
+    width: 150px;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+    opacity: 0.55;
+    filter: saturate(0.85);
+  }
+
+  /* A row holds its covers twice: half its width brings the second copy where the first was. */
+  @keyframes wall-drift {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes wall-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* On a phone the covers show above the card, where the line is, and fade under it. */
+  @media (max-width: 760px) {
+    .cover-wall-row img {
+      width: 96px;
+      opacity: 0.7;
+    }
+
+    .cover-wall::after {
+      background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-bg) var(--alpha-soft), transparent) 0%,
+        color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent) 30%,
+        var(--color-bg) 55%
+      );
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cover-wall,
+    .cover-wall-row {
+      animation: none;
+    }
+  }
+}

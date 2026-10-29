@@ -49,6 +49,7 @@ export type Target =
   | 'CopyValue'
   | 'CountUp'
   | 'Cover'
+  | 'CoverWall'
   | 'DealCard'
   | 'DealTag'
   | 'DealsSpotlight'
