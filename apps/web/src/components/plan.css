@@ -814,6 +814,23 @@
     gap: 6px;
   }
 
+  /* The focus card while it loads: neutral and still, without the tier color or the replay. */
+  .route-focus.route-focus-sk {
+    border-color: var(--color-border);
+    animation: none;
+  }
+
+  .route-focus-sk .route-focus-art {
+    overflow: hidden;
+    border-color: transparent;
+    background: none;
+    box-shadow: none;
+  }
+
+  .route-focus-sk .route-focus-art .sk {
+    display: block;
+  }
+
   /* The picked step, replayed in when another one is picked. */
   .route-focus {
     display: grid;

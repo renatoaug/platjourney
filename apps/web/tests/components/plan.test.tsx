@@ -117,7 +117,9 @@ describe('Plan', () => {
     expect(screen.getByText('Montando o roteiro de 1h…')).toBeTruthy()
     unmount()
     show({ plan: undefined })
-    expect(screen.getByRole('region', { name: 'Roteiro da sessão' }).className).toBe('plan')
+    expect(screen.getByRole('region', { name: 'Roteiro da sessão' }).className).toContain(
+      'plan-loading',
+    )
   })
 })
 
