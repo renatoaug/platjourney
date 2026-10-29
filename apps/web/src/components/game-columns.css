@@ -8,13 +8,38 @@
   }
 
   @media (max-width: 760px) {
+    /* HUD, like the other selectors: joined cells, the chosen one's fill sliding to it. */
     .game-switch {
       display: flex;
+      gap: 0;
       margin-bottom: 12px;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+      background: none;
     }
 
     .game-switch button {
       flex: 1;
+      border-right: 1px solid var(--color-border);
+      border-radius: 0;
+      font-size: var(--text-xs);
+      font-weight: var(--weight-semibold);
+      letter-spacing: var(--tracking-label);
+      text-transform: uppercase;
+    }
+
+    .game-switch button:last-child {
+      border-right: 0;
+    }
+
+    .game-switch button[aria-pressed="true"] {
+      background: var(--color-accent);
+      color: var(--color-on-accent);
+    }
+
+    .game-switch[data-slide] button[aria-pressed="true"] {
+      background: transparent;
     }
 
     .game-columns-wrap[data-side="guide"] .game-columns > :last-child,

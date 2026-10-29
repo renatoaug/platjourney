@@ -67,6 +67,9 @@ export function GameNav({
   const picked = useRef<string | null>(null)
   useEffect(() => {
     const els = present.map((id) => document.getElementById(id)).filter((e) => e !== null)
+    // A section hidden behind the phone's "Guia | Troféus" switch is where its pair of columns is.
+    const placed = (e: HTMLElement) =>
+      e.offsetParent ? e : (e.closest<HTMLElement>('.game-columns-wrap') ?? e)
     const heroEl = document.getElementById(hero)
     let settle: ReturnType<typeof setTimeout> | undefined
     const update = () => {
@@ -80,7 +83,7 @@ export function GameNav({
       }
       const line = 120
       const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4
-      const under = els.filter((e) => e.getBoundingClientRect().top <= line)
+      const under = els.filter((e) => placed(e).getBoundingClientRect().top <= line)
       setActive(atEnd && els.length ? els[els.length - 1].id : (under.at(-1)?.id ?? null))
     }
     update()

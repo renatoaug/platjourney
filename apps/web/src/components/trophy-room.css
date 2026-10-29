@@ -124,6 +124,30 @@
     font-weight: var(--weight-medium);
   }
 
+  /* Two by two on a phone, shorter, so the four records fit in about a screen. */
+  @media (max-width: 560px) {
+    .room-records {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .room-record {
+      min-height: 170px;
+    }
+
+    .room-record-body {
+      padding: 12px;
+    }
+
+    .room-record-body b {
+      font-size: var(--text-md);
+    }
+
+    .room-record-stat {
+      font-size: var(--text-xs);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .room-record-art {
       transition: none;

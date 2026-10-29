@@ -942,4 +942,17 @@
       animation: none;
     }
   }
+
+  /* On a phone each stop takes more room and its label may break into two lines. */
+  @media (max-width: 760px) {
+    .route-track {
+      min-width: calc(var(--stops) * 112px);
+    }
+
+    .route-tag {
+      white-space: normal;
+      text-align: center;
+      line-height: 1.2;
+    }
+  }
 }
