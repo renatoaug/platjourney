@@ -105,11 +105,20 @@ export async function planSession(
   ctx: GameContext,
   minutes: number,
 ): Promise<PlanView> {
+  // Asked again while a route of this game is on: the player wants another way, so the model is told
+  // which trophies to change.
+  // The demo asks the model nothing, and reads no plan before being refused.
+  const current = isDemo(user) ? undefined : await activePlan(user.id)
+  const avoid =
+    current?.status === 'active' && current.game === ctx.game.id
+      ? current.steps.map((s) => s.trophy)
+      : []
   const plan = await aroundModel({ user, action: 'plan' }, () =>
     tagged({ user: user.id, action: 'plan' }, () =>
       ai<Omit<SessionPlan, 'game' | 'gameName' | 'minutes' | 'createdAt'>>('/plans/session', {
         context: aiContext(ctx, user),
         minutes,
+        avoid,
       }),
     ),
   )

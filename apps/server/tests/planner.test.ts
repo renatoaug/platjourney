@@ -63,7 +63,7 @@ test('a session plan is saved and ticks off what is already earned', async () =>
   }))
   const view = await planSession(user, ctx, 90)
   expect(ai.mock.calls[0][0]).toBe('/plans/session')
-  expect(ai.mock.calls[0][1]).toMatchObject({ minutes: 90 })
+  expect(ai.mock.calls[0][1]).toMatchObject({ minutes: 90, avoid: [] })
   expect(tag).toEqual({ user: 'user:u1', action: 'plan' })
   expect(save.mock.calls[0][1]).toMatchObject({ game: 'game:1', minutes: 90 })
   // Each step keeps its trophy's id on the plan's list, to be checked later without PSN.
@@ -77,6 +77,18 @@ test('a session plan is saved and ticks off what is already earned', async () =>
     [false, 30, null, 'bronze', false],
   ])
   expect(view).toMatchObject({ status: 'active', doneCount: 1, nextIndex: 1 })
+})
+
+test('asking again while a route of the game is on asks the model for another way', async () => {
+  const ai = spyOn(aiModule, 'ai').mockImplementation((async () => {
+    const { game, gameName, minutes, createdAt, ...rest } = plan()
+    return rest
+  }) as never)
+  spyOn(plans, 'activePlan').mockResolvedValue(plan({ id: 'session_plan:old', status: 'active' }))
+  spyOn(plans, 'closePlan').mockResolvedValue()
+  spyOn(plans, 'savePlan').mockImplementation(async (_u, p) => ({ ...p, id: 'session_plan:n' }))
+  await planSession(user, ctx, 90)
+  expect(ai.mock.calls[0][1]).toMatchObject({ avoid: ['A', 'B'] })
 })
 
 test('there is no plan when none is stored, it is for another game or it is old', async () => {

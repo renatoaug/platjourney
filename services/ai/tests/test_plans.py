@@ -55,7 +55,7 @@ def test_plan_context_matches_the_server_format() -> None:
         [
             'Jogo: Days Gone (PS4) — 20% (2/4 troféus)',
             'Tempo jogado: 7.5h',
-            'Últimos conquistados: Recente, Antigo',
+            'Últimos conquistados, do mais recente: Recente (2026-02-01), Antigo (2026-01-01)',
             'Faltando (2):',
             '- [gold] Coletor (Survivor): Termine o jogo — 40% de quem joga — progresso 3/10',
             '- [gold] Extra (Survivor): Termine o jogo — 12.5% de quem joga — DLC',
@@ -79,11 +79,17 @@ def test_plan_context_uses_the_progress_the_player_chose() -> None:
     )
 
 
-def test_plan_input_ends_with_the_time_available() -> None:
-    assert planner.plan_input(ctx(), 90).endswith(
-        '\n\n---\nTempo disponível nesta sessão: 90 minutos.'
+def test_plan_input_ends_with_the_day_and_the_time_available() -> None:
+    assert planner.plan_input(ctx(), 90, today='2026-10-29').endswith(
+        '\n\n---\nHoje: 2026-10-29.\nTempo disponível nesta sessão: 90 minutos.'
     )
     assert planner.plan_input(ctx(), 90.0).endswith('90 minutos.')
+
+
+def test_a_redo_names_the_route_to_change() -> None:
+    text = planner.plan_input(ctx(), 60, avoid=['Coletor', 'Extra'], today='2026-10-29')
+    assert 'O jogador pediu outro roteiro. O atual tem: Coletor, Extra.' in text
+    assert 'outro roteiro' not in planner.plan_input(ctx(), 60, today='2026-10-29')
 
 
 def test_js_number_prints_like_javascript() -> None:
@@ -153,10 +159,12 @@ async def test_plan_session_calls_the_model_as_before(monkeypatch: pytest.Monkey
 
 
 def test_plan_route(monkeypatch: pytest.MonkeyPatch) -> None:
-    seen: list[tuple[GameContext, float]] = []
+    seen: list[tuple[GameContext, float, list[str] | None]] = []
 
-    async def plan_session(context: GameContext, minutes: float) -> dict[str, Any]:
-        seen.append((context, minutes))
+    async def plan_session(
+        context: GameContext, minutes: float, avoid: list[str] | None = None
+    ) -> dict[str, Any]:
+        seen.append((context, minutes, avoid))
         return PLAN
 
     monkeypatch.setattr(planner, 'plan_session', plan_session)
@@ -167,3 +175,11 @@ def test_plan_route(monkeypatch: pytest.MonkeyPatch) -> None:
     assert res.json() == PLAN
     assert seen[0][0].game.name == 'Days Gone'
     assert seen[0][1] == 45
+    assert seen[0][2] == []
+    # A redo sends the route to change.
+    TestClient(app).post(
+        '/plans/session',
+        json={'context': ctx_payload(), 'minutes': 45, 'avoid': ['Coletor']},
+        headers=HEADERS,
+    )
+    assert seen[1][2] == ['Coletor']

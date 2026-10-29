@@ -114,7 +114,7 @@ const PROMPTS: Prompt[] = [
     description: 'A route for today: which trophies of the game you are playing fit in your time.',
     arguments: [{ name: 'minutes', description: 'How long you can play now', required: true }],
     text: (m, a) =>
-      `Plan my play session of ${a.minutes || 60} minutes in the game I am playing. Read get_current_game for what is missing, get_guide for the roadmap and search_deep_guide for the steps. ${m.plan} Give the steps in order, each with the trophy and about how many minutes, and warn me of anything missable. Talk to me in my language.`,
+      `Plan my play session of ${a.minutes || 60} minutes in the game I am playing. Read get_current_game for what is missing, where I am (recentlyEarned) and the plan I have now (currentPlan): if I already have one, I want another way, with other trophies. Then get_guide for the roadmap and search_deep_guide for the steps. ${m.plan} Give the steps in order, each with the trophy and about how many minutes, and warn me of anything missable. Talk to me in my language.`,
   },
   {
     name: 'trophy_tip',

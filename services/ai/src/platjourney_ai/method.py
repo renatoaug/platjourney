@@ -31,7 +31,13 @@ PLAN = (
     'troféus que saem naturalmente na história, e grinds que rendem mais se começados cedo. Some '
     'os minutos com folga e não ultrapasse o tempo disponível. Nunca inclua a platina nem '
     'troféus de DLC, a menos que não reste outro. A ordem importa: os passos são um roteiro, do '
-    'primeiro ao último.'
+    'primeiro ao último. Comece de onde o jogador parou: se ele conquistou troféus nos últimos '
+    'dias, o primeiro passo continua daquele ponto do jogo (o mesmo capítulo, área ou modo), não '
+    'de um ponto que ele já passou ou ainda não alcançou. Se ele pedir outro roteiro, monte um '
+    'caminho diferente: troque os troféus do roteiro atual por outros que também cabem agora; '
+    'repita um só se não houver outro possível, e diga por quê. Nenhum passo ocupa quase a '
+    'sessão inteira: um troféu da história que leva muito tempo vem junto dos que saem no caminho '
+    '(colecionáveis, desafios e extras das mesmas missões), para o jogador ver o roteiro andar.'
     f' {NAMES}'
 )
 

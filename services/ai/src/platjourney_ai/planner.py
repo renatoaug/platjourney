@@ -1,6 +1,7 @@
 """The session plan: which trophies fit in one sitting, in which order, with the trick for each."""
 
 import json
+from datetime import date
 from typing import Any
 
 from . import llm, method
@@ -98,17 +99,25 @@ def _missing_line(t: Trophy) -> str:
     )
 
 
+# The latest trophies earned, with their day: where the player is in the game now.
+RECENT = 6
+
+
+def _recent(t: Trophy) -> str:
+    return f'{t.name} ({t.earned_at[:10]})' if t.earned_at else t.name
+
+
 def context(ctx: GameContext) -> str:
     shown = shown_progress(ctx)
     missing = [t for t in ctx.trophies if not t.earned]
     recent = sorted(
         (t for t in ctx.trophies if t.earned), key=lambda t: t.earned_at or '', reverse=True
-    )[:5]
+    )[:RECENT]
     lines = [
         f'Jogo: {ctx.title.name} ({ctx.title.platform}) — {shown.progress}% '
         f'({shown.earned}/{shown.total} troféus{shown.label})',
         f'Tempo jogado: {js_number(ctx.hours_played)}h' if ctx.hours_played is not None else '',
-        f'Últimos conquistados: {", ".join(t.name for t in recent)}',
+        f'Últimos conquistados, do mais recente: {", ".join(_recent(t) for t in recent)}',
         f'Faltando ({len(missing)}):',
         *(_missing_line(t) for t in missing),
         # Same text as JSON.stringify on the server: compact, accents kept.
@@ -119,11 +128,26 @@ def context(ctx: GameContext) -> str:
     return '\n'.join(line for line in lines if line)
 
 
-def plan_input(ctx: GameContext, minutes: float) -> str:
-    return f'{context(ctx)}\n\n---\nTempo disponível nesta sessão: {js_number(minutes)} minutos.'
+def plan_input(
+    ctx: GameContext, minutes: float, avoid: list[str] | None = None, today: str | None = None
+) -> str:
+    """`avoid` is the route the player asked to replace: its trophies are asked to change."""
+    day = today or date.today().isoformat()
+    redo = (
+        f'\nO jogador pediu outro roteiro. O atual tem: {", ".join(avoid)}. Monte um caminho '
+        'diferente, com outros troféus que também cabem agora.'
+        if avoid
+        else ''
+    )
+    return (
+        f'{context(ctx)}\n\n---\nHoje: {day}.{redo}\n'
+        f'Tempo disponível nesta sessão: {js_number(minutes)} minutos.'
+    )
 
 
-async def plan_session(ctx: GameContext, minutes: float) -> dict[str, Any]:
+async def plan_session(
+    ctx: GameContext, minutes: float, avoid: list[str] | None = None
+) -> dict[str, Any]:
     """Base-game trophies come first; the platinum itself is never a step."""
     response = await llm.respond(
         instructions=INSTRUCTIONS,
@@ -136,6 +160,6 @@ async def plan_session(ctx: GameContext, minutes: float) -> dict[str, Any]:
                 'strict': True,
             }
         },
-        input=plan_input(ctx, minutes),
+        input=plan_input(ctx, minutes, avoid),
     )
     return json.loads(response.output_text)
