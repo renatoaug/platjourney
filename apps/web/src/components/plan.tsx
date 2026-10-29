@@ -328,7 +328,7 @@ function Route({ plan }: { plan: SessionPlan }) {
         </ol>
       </div>
       {s ? (
-        <article key={open} className={`route-focus ${state(open)}`}>
+        <article key={open} className={`route-focus ${state(open)} tier-${s.type ?? 'bronze'}`}>
           <div className="route-focus-art">
             {s.iconUrl ? <img src={s.iconUrl} alt="" /> : <Icon name="trophy" />}
           </div>
@@ -580,36 +580,49 @@ export function Plan({
   return section(
     `plan plan-open ${closed ? 'plan-closed' : ''}`,
     <>
-      <header className="plan-top">
-        <div>
-          <span className="eyebrow">{t('eyebrowGame', { game: plan.gameName })}</span>
+      {/* A mission log: the band names the game and the time, the head the goal and the gauge. */}
+      <header className="mission-band">
+        <span className="mission-eyebrow">
+          <Icon name="compass" /> {t('eyebrowGame', { game: plan.gameName })}
+        </span>
+        <span className="mission-clock">
+          <Icon name="clock" /> {sub}
+        </span>
+      </header>
+      <div className="mission-head">
+        <div className="mission-goal">
           <h2>{heading}</h2>
           <p>{plainText(plan.summary)}</p>
-          <span className="plan-validity">
-            <Icon name="clock" /> {sub}
-          </span>
         </div>
-        <div className="plan-meter">
-          <b>{progress}%</b>
+        <div className="mission-meter">
           <div
-            className="bar"
+            className="mission-segs"
             role="progressbar"
             aria-label={t('progressLabel')}
             aria-valuenow={progress}
             aria-valuemin={0}
             aria-valuemax={100}
           >
-            <i style={{ width: `${progress}%` }} />
+            {plan.steps.map((step, i) => (
+              <i
+                // biome-ignore lint/suspicious/noArrayIndexKey: one segment per step, in order
+                key={i}
+                className={step.done ? 'on' : i === plan.nextIndex ? 'now' : ''}
+              />
+            ))}
           </div>
-          <span>
-            <Icon name="clock" />{' '}
-            {t('timeOf', {
-              used: fmtMinutes(plan.totalMinutes),
-              time: fmtMinutes(plan.minutes),
-            })}
+          <span className="mission-count">
+            <b>{progress}%</b>
+            <span>
+              <Icon name="clock" />{' '}
+              {t('timeOf', {
+                used: fmtMinutes(plan.totalMinutes),
+                time: fmtMinutes(plan.minutes),
+              })}
+            </span>
           </span>
         </div>
-      </header>
+      </div>
       {plan.warnings.length > 0 && (
         <details className="plan-warnings">
           <summary>
