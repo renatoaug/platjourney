@@ -1,5 +1,5 @@
 /** The sign-in screen's frame: the story panel on one side and the card that holds the current step. */
-import type { ReactNode, Ref } from 'react'
+import { type ReactNode, type Ref, useCallback, useState } from 'react'
 import {
   defineMessages,
   Language,
@@ -7,8 +7,10 @@ import {
   useLocale,
   useMessages,
 } from '../../i18n/i18n'
+import { BoldText } from '../../ui/bold-text'
 import { Icon } from '../../ui/icon'
 import { LanguageSwitcher } from '../language-switcher'
+import { CoverWall } from './cover-wall'
 import './auth-layout.css'
 
 const messages = defineMessages({
@@ -26,6 +28,7 @@ const messages = defineMessages({
       path: 'Encontre o caminho',
       earn: 'Conquiste a platina',
       footer: 'NO SEU RITMO. DO SEU JEITO.',
+      guides: '<b>{count}</b> guias de platina prontos',
     },
   },
   [Language.En]: {
@@ -42,6 +45,7 @@ const messages = defineMessages({
       path: 'Find the way',
       earn: 'Earn the platinum',
       footer: 'AT YOUR PACE. YOUR WAY.',
+      guides: '<b>{count}</b> platinum guides ready',
     },
   },
 })
@@ -55,8 +59,11 @@ export function AuthLayout({
 }) {
   const t = useMessages(messages)
   const locale = useLocale()
+  const [guides, setGuides] = useState<number | null>(null)
+  const onCount = useCallback((n: number) => setGuides(n), [])
   return (
     <div className="auth" id="auth">
+      <CoverWall onCount={onCount} />
       <div className="auth-layout">
         <section className="auth-story" aria-label="PlatJourney">
           <div className="logo auth-logo">
@@ -78,6 +85,11 @@ export function AuthLayout({
               <br />
               {t('story.leadBottom')}
             </p>
+            {guides ? (
+              <span className="auth-guides">
+                <BoldText text={t('story.guides', { count: guides.toLocaleString(locale) })} />
+              </span>
+            ) : null}
           </div>
           <div className="auth-journey" aria-hidden="true">
             <div>

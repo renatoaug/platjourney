@@ -20,8 +20,12 @@ beforeEach(() => setLocale('pt-BR', { persist: false }))
 // refused and fails the test that made it, instead of quietly hitting a server that is running here
 // and missing in CI.
 const unfaked: string[] = []
+// The sign-in screen's wall of covers is decoration every auth test would have to fake: it answers
+// "no covers" unless a test fakes it (the wall's own tests pass their covers in).
+const DECORATION = '/api/auth/showcase'
 globalThis.fetch = (async (input: RequestInfo | URL) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+  if (url === DECORATION) return new Response('null', { status: 404 })
   unfaked.push(url)
   throw new TypeError(`fetch not faked in this test: ${url}`)
 }) as unknown as typeof fetch

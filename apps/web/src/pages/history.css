@@ -53,4 +53,54 @@
     height: 1px;
     background: var(--color-border);
   }
+
+  /* The kinds as one HUD selector under the title, the chosen one's fill sliding to it. */
+  .history-filters {
+    flex-wrap: nowrap;
+    justify-self: start;
+    max-width: 100%;
+    gap: 0;
+    overflow-x: auto;
+    margin-top: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    backdrop-filter: blur(10px);
+    scrollbar-width: none;
+  }
+
+  .history-filters .chip {
+    flex: none;
+    padding: 8px 12px;
+    border: 0;
+    border-right: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .history-filters .chip:last-child {
+    border-right: 0;
+  }
+
+  .history-filters .chip:hover {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-wash), transparent);
+    color: var(--color-fg);
+  }
+
+  .history-filters .chip.active,
+  .history-filters .chip.active:hover {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .history-filters[data-slide] .chip.active,
+  .history-filters[data-slide] .chip.active:hover {
+    background: transparent;
+  }
 }

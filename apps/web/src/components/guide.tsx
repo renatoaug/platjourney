@@ -19,6 +19,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
 import { TrophyArt } from '../ui/trophy-art'
+import { bandOf } from './difficulty-meter'
 import { NexoHero } from './nexo-hero'
 import { nexoHref } from './tip'
 import './guide.css'
@@ -616,12 +617,21 @@ function QuickFacts({ g }: { g: GuideDetail }) {
   )
   if (g.postgame)
     facts.push(['compass', t('facts.postgame'), t('facts.postgameValue'), first(g.postgame)])
+  // The difficulty in its band's color, missables in the warning one when there are any.
+  const tone = new Map<string, string>([
+    [t('facts.difficulty'), g.difficulty ? `tone-${bandOf(g.difficulty)}` : ''],
+    [t('facts.missables'), missables ? 'tone-warn' : ''],
+  ])
   return (
     <dl className="quick-facts">
       {facts.map(([symbol, label, value, detail]) => (
-        <div key={label} className="quick-fact" data-tip={detail || undefined}>
+        <div
+          key={label}
+          className={`quick-fact ${tone.get(label) ?? ''}`.trim()}
+          data-tip={detail || undefined}
+        >
           <Icon name={symbol} />
-          <dt>{label}:</dt>
+          <dt>{label}</dt>
           <dd>{value}</dd>
         </div>
       ))}

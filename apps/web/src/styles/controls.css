@@ -241,4 +241,33 @@
     border-color: var(--color-danger);
     color: var(--color-bg);
   }
+
+  /* A segmented control with a sliding fill (useSlide): the chosen item's pill moves under the
+     items when the choice changes. Each control sets its own inset and corners. */
+  [data-slide] {
+    position: relative;
+    isolation: isolate;
+  }
+
+  [data-slide]::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: var(--slide-inset, 0);
+    bottom: var(--slide-inset, 0);
+    left: 0;
+    width: var(--slide-w, 0);
+    border-radius: var(--slide-radius, 0);
+    background: var(--color-accent);
+    transform: translateX(var(--slide-x, 0));
+    transition:
+      transform 0.3s cubic-bezier(0.3, 0.7, 0.2, 1),
+      width 0.3s cubic-bezier(0.3, 0.7, 0.2, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-slide]::before {
+      transition: none;
+    }
+  }
 }

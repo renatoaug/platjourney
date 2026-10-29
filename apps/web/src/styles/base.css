@@ -338,13 +338,6 @@
     }
   }
 
-  @keyframes onb-out {
-    to {
-      opacity: 0;
-      transform: scale(1.04);
-    }
-  }
-
   @keyframes onb-enter {
     from {
       opacity: 0;
@@ -352,140 +345,9 @@
     }
   }
 
-  @keyframes onb-slide {
-    from {
-      opacity: 0;
-      transform: translateX(-18px);
-    }
-  }
-
-  @keyframes onb-grow {
-    from {
-      width: 0;
-    }
-  }
-
-  @keyframes onb-ring {
-    from {
-      stroke-dashoffset: 327;
-    }
-  }
-
   @keyframes onb-grid {
     to {
       background-position: 40px 40px;
-    }
-  }
-
-  @keyframes onb-pop-up {
-    0% {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-
-    20%,
-    70% {
-      opacity: 1;
-      transform: none;
-    }
-
-    100% {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-  }
-
-  @keyframes onb-glow {
-    50% {
-      box-shadow: 0 0 22px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
-    }
-  }
-
-  @keyframes onb-spin-in {
-    from {
-      opacity: 0;
-      transform: rotate(-120deg) scale(0.6);
-    }
-  }
-
-  @keyframes onb-bob {
-    50% {
-      transform: translateY(-6px);
-    }
-  }
-
-  @keyframes onb-dot {
-    50% {
-      transform: translateY(-4px);
-      opacity: 0.4;
-    }
-  }
-
-  @keyframes onb-gone {
-    to {
-      opacity: 0;
-    }
-  }
-
-  @keyframes onb-reveal {
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes onb-spark {
-    from {
-      opacity: 1;
-      transform: rotate(var(--a)) translateY(0) scale(1);
-    }
-
-    to {
-      opacity: 0;
-      transform: rotate(var(--a)) translateY(-220px) scale(0.3);
-    }
-  }
-
-  @keyframes tour-in {
-    from {
-      opacity: 0;
-      transform: translateX(28px) scale(0.98);
-    }
-  }
-
-  @keyframes tour-spot {
-    50% {
-      box-shadow:
-        0 0 0 2px var(--color-accent),
-        0 0 22px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
-    }
-  }
-
-  @keyframes onb-switch-track {
-    to {
-      background: var(--color-accent);
-    }
-  }
-
-  @keyframes onb-switch-knob {
-    to {
-      transform: translateX(16px);
-      background: var(--color-on-accent);
-    }
-  }
-
-  @keyframes onb-type {
-    to {
-      width: 10ch;
-    }
-  }
-
-  @keyframes onb-sweep {
-    from {
-      transform: translateX(-100%);
-    }
-
-    to {
-      transform: translateX(250%);
     }
   }
 
@@ -507,5 +369,17 @@
       opacity: 0;
       transform: translateY(8px);
     }
+  }
+
+  /* Read by screen readers, never shown: a page's heading when its hero says it already. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }

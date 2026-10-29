@@ -4,7 +4,8 @@
     line-height: var(--leading-loose);
   }
 
-  #guide-card h2 {
+  /* The card's title band sets its own margins. */
+  #guide-card h2:not(.guide-heading) {
     margin-top: 0;
   }
 }

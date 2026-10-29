@@ -1,0 +1,176 @@
+@layer screens {
+  .game-nav {
+    position: sticky;
+    z-index: 5;
+    top: 0;
+    display: flex;
+    align-items: center;
+    margin: 0 0 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid transparent;
+    transition:
+      background-color 0.25s,
+      border-color 0.25s;
+  }
+
+  /* Past the hero the bar gets a floor of its own and the game's name slides in. */
+  .game-nav.stuck {
+    border-bottom-color: var(--color-border);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+    backdrop-filter: blur(14px);
+    /* The floor reaches past the page's side padding, to the column's edges. */
+    box-shadow:
+      -40px 0 0 color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent),
+      40px 0 0 color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+  }
+
+  .game-nav-game {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      max-width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 0.25s;
+  }
+
+  .game-nav.stuck .game-nav-game {
+    max-width: 420px;
+    margin-right: 18px;
+    opacity: 1;
+  }
+
+  .game-nav-game b {
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .game-nav-progress {
+    position: relative;
+    flex: none;
+    width: 64px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: var(--radius-tag);
+    background: var(--color-border-strong);
+  }
+
+  .game-nav-progress i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: inherit;
+    background: var(--color-accent);
+  }
+
+  .game-nav-pct {
+    color: var(--color-accent);
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* Quiet tabs, like the guide's: text with a line under the section in view. */
+  .game-nav ul {
+    display: flex;
+    gap: 2px;
+    margin: 0 0 0 auto;
+    padding: 3px;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-dim), transparent);
+    backdrop-filter: blur(12px);
+    list-style: none;
+    scrollbar-width: none;
+  }
+
+  .game-nav:not(.stuck) ul {
+    margin-left: 0;
+  }
+
+  .game-nav li {
+    margin: 0;
+    line-height: 1;
+  }
+
+  .game-nav a {
+    display: block;
+    padding: 6px 12px;
+    line-height: 1.2;
+    border-radius: var(--radius-pill);
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .game-nav a:hover,
+  .game-nav a:focus-visible {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-wash), transparent);
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+
+  .game-nav a[aria-current="location"],
+  .game-nav a[aria-current="location"]:hover {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  /* The sliding fill sits inside the track's padding, with its round ends. */
+  .game-nav ul[data-slide] {
+    --slide-inset: 3px;
+    --slide-radius: var(--radius-pill);
+  }
+
+  .game-nav ul[data-slide] a[aria-current="location"],
+  .game-nav ul[data-slide] a[aria-current="location"]:hover {
+    background: transparent;
+  }
+
+  /* The sections it links to stop under the bar, not behind it. */
+  :is(#plan-card, #guide-card, #trophies-card, #title-guide, #title-trophies, .game-columns-wrap) {
+    scroll-margin-top: 76px;
+  }
+
+  @media (max-width: 760px) {
+    .game-nav {
+      margin-right: -22px;
+      margin-left: -22px;
+      padding: 8px 22px;
+    }
+
+    .game-nav.stuck .game-nav-game {
+      display: none;
+    }
+
+    .game-nav ul {
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .game-nav {
+      margin-right: -16px;
+      margin-left: -16px;
+      padding: 8px 16px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .game-nav,
+    .game-nav-game,
+    .game-nav a {
+      transition: none;
+    }
+  }
+}

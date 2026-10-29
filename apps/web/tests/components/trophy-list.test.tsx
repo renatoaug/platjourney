@@ -68,7 +68,7 @@ describe('TrophyList', () => {
 
   test('shows the base game, pending first, eight per page', () => {
     show(many)
-    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Troféus (3/16)')
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Troféus 3/16')
     expect(results()).toBe('1–8 de 16 troféus · Jogo base')
     expect(names()[0]).not.toBe('De raspão')
     expect(screen.getAllByRole('article')).toHaveLength(8)
@@ -170,7 +170,7 @@ describe('TrophyList', () => {
 
   test('a catalog list counts trophies without the earned share', () => {
     show(catalog, { prefix: 'title-t' })
-    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Troféus (8)')
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Troféus 8')
     expect(screen.queryByRole('link', { name: /Pedir dica/ })).toBeNull()
   })
 

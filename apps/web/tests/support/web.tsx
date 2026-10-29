@@ -45,6 +45,8 @@ export function mockApi(routes: Record<string, Answer>) {
     init?: RequestInit,
   ) => {
     const path = String(input)
+    // The sign-in wall's covers: decoration, left out of the calls unless the test fakes them.
+    if (path === '/api/auth/showcase' && !(path in routes)) return reply(404, null)
     const method = init?.method ?? 'GET'
     const body = init?.body ? JSON.parse(String(init.body)) : undefined
     const call = { path, method, body }

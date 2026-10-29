@@ -40,6 +40,8 @@ export interface BrowsePage {
 
 // Covers in the top's collage.
 const COLLAGE = 14
+// Covers on the sign-in screen's wall.
+const SHOWCASE = 36
 
 export interface BrowseFilters {
   difficulty?: string
@@ -174,6 +176,13 @@ export async function browseGuides(
   }
 }
 
+/** What the sign-in screen shows before anyone signs in: the covers of the best rated games with a
+ * guide and how many guides there are. Nothing about any player. */
+export async function showcase(): Promise<{ covers: string[]; guides: number }> {
+  const { cards, guides } = await data()
+  return { covers: collageOf(cards, guides, SHOWCASE), guides: guides.size }
+}
+
 // The catalog cards for these ids, on the platform when one was picked, each with its guide.
 function itemsOf(
   ids: string[],
@@ -191,12 +200,16 @@ function itemsOf(
   return items
 }
 
-function collageOf(cards: Map<string, CatalogCard>, guides: Map<string, GuideSummary>): string[] {
+function collageOf(
+  cards: Map<string, CatalogCard>,
+  guides: Map<string, GuideSummary>,
+  size = COLLAGE,
+): string[] {
   return [...guides.keys()]
     .map((id) => cards.get(id))
     .filter((c): c is CatalogCard => !!c?.cover_url)
     .sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))
-    .slice(0, COLLAGE)
+    .slice(0, size)
     .map((c) => c.cover_url as string)
 }
 

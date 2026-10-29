@@ -387,4 +387,96 @@
       font-size: var(--text-4xl);
     }
   }
+
+  /* ---- On the wall of covers: the story floats on the left, the form is a glass card. ---- */
+  .auth {
+    position: relative;
+    isolation: isolate;
+    background: transparent;
+  }
+
+  .auth-layout {
+    gap: 48px;
+    align-items: center;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+    background: none;
+  }
+
+  .auth-story {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .auth-story h2 {
+    font-size: clamp(40px, 4.6vw, 64px);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    text-shadow: 0 4px 40px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+  }
+
+  .auth-guides {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 6px 14px;
+    border: 1px solid
+      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
+    backdrop-filter: blur(10px);
+    color: var(--color-fg-soft);
+    font-size: var(--text-sm);
+  }
+
+  .auth-guides b {
+    color: var(--color-trophy-platinum);
+    font-family: var(--font-display);
+  }
+
+  .auth-layout .auth-card {
+    padding: 36px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-heavy), transparent);
+    backdrop-filter: blur(18px);
+    box-shadow: var(--shadow-popover);
+  }
+
+  @media (max-width: 760px) {
+    .auth-layout {
+      gap: 24px;
+    }
+
+    .auth-layout .auth-card {
+      padding: 24px 20px;
+    }
+  }
+
+  /* A narrower screen keeps the line and the guide count over the card; the rest of the story goes. */
+  @media (max-width: 1100px) {
+    .auth-story-copy {
+      display: grid;
+      gap: 10px;
+    }
+
+    .auth-story-copy > .eyebrow,
+    .auth-story-copy p {
+      display: none;
+    }
+
+    .auth-story h2 {
+      margin: 12px 0 0;
+      font-size: clamp(30px, 8vw, 44px);
+    }
+
+    .auth-story {
+      display: grid;
+      gap: 4px;
+    }
+  }
 }

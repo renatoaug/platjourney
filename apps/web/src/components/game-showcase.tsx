@@ -95,7 +95,7 @@ const MODES_PT: Record<string, string> = {
   'Battle Royale': 'Battle royale',
 }
 
-const image = (id: string, size: string) =>
+export const image = (id: string, size: string) =>
   `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg`
 
 /** A swipe shorter than this is a tap, not a change of image. */
@@ -344,7 +344,7 @@ function StoreDeal({
   )
 }
 
-function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
+export function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
   const t = useMessages(messages)
   const d = store.deal
   const url = d?.storeUrl ?? store.url

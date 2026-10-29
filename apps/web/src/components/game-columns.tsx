@@ -3,6 +3,7 @@
  * whole guide. */
 import { type ReactNode, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { useSlide } from '../ui/use-slide'
 import './game-columns.css'
 
 const messages = defineMessages({
@@ -18,21 +19,24 @@ export function GameColumns({
   trophies,
   guide,
   style,
+  id,
 }: {
   trophies: ReactNode
   guide: ReactNode
   style?: React.CSSProperties
+  id?: string
 }) {
   const t = useMessages(messages)
   const [side, setSideState] = useState<Side>(remembered)
+  const switchRef = useSlide<HTMLDivElement>(side)
   const setSide = (s: Side) => {
     remembered = s
     setSideState(s)
   }
   return (
-    <div className="game-columns-wrap" data-side={side} style={style}>
+    <div className="game-columns-wrap" id={id} data-side={side} style={style}>
       {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control */}
-      <div className="segmented game-switch" role="group" aria-label={t('label')}>
+      <div className="segmented game-switch" role="group" aria-label={t('label')} ref={switchRef}>
         {(['guide', 'trophies'] as const).map((s) => (
           <button key={s} type="button" aria-pressed={side === s} onClick={() => setSide(s)}>
             {t(s)}

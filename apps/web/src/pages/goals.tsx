@@ -4,17 +4,19 @@ import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { messages as interestMessages, useInterests } from '../app/use-interests'
 import { DemoNote } from '../components/demo'
+import { image } from '../components/game-showcase'
 import { DealsSpotlight } from '../components/goals/deals-spotlight'
 import { GoalAddPanel } from '../components/goals/goal-add-panel'
 import { type Feedback, GoalSeason, GoalSeasonSkeleton } from '../components/goals/goal-season'
 import { InterestList, InterestListSkeleton } from '../components/goals/interest-list'
 import { NextPickLink } from '../components/goals/next-pick'
+import { NextUp, nextUp } from '../components/goals/next-up'
 import type { GoalFilter } from '../components/goals/season'
 import { useKept } from '../components/goals/use-kept'
 import { YearPlatinums } from '../components/goals/year-platinums'
-import { PageHero } from '../components/page-hero'
+import { PageTop } from '../components/page-top'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
-import type { Game, YearGoals } from '../lib/types'
+import type { Game, Interest, YearGoals } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
@@ -65,22 +67,30 @@ const DONE_TOASTS: Record<string, 'interestSaved' | 'interestRemoved' | 'interes
   owned: 'interestOwned',
 }
 
+/** The page's top: the title on the scene of the next platinum in the list, and its card beside. */
+function GoalsTop({ interests }: { interests: Interest[] }) {
+  const t = useMessages(messages)
+  const next = nextUp(interests)
+  const shot = next?.game.screenshot_ids?.[0]
+  return (
+    <PageTop
+      eyebrow={t('page.eyebrow')}
+      title={t('page.title')}
+      lead={t('page.lead')}
+      art={next && (shot ? image(shot, 't_1080p') : next.game.cover_url)}
+      tint={next?.game.tint}
+      aside={next && <NextUp interest={next} />}
+    />
+  )
+}
+
 export function Goals() {
   const t = useMessages(messages)
   const { data, sync, me } = useApp()
   const demo = me.demo === true
   return (
     <Page path="/goals">
-      {/* The player's own saved games on the shelf. */}
-      <PageHero
-        eyebrow={t('page.eyebrow')}
-        title={t('page.title')}
-        lead={t('page.lead')}
-        images={(data?.goals.interests ?? [])
-          .filter((i) => !i.done && i.game.cover_url)
-          .map((i) => i.game.cover_url as string)}
-        look="shelf"
-      />
+      <GoalsTop interests={data?.goals.interests ?? []} />
       <div id="goals">
         {data ? (
           <GoalsView goals={data.goals} readOnly={demo} />

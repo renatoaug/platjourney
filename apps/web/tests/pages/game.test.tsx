@@ -1,5 +1,5 @@
 import { afterEach, expect, mock, test } from 'bun:test'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { samplePlan } from '../../src/components/plan.stories'
 import { current } from '../../src/fixtures'
@@ -11,14 +11,18 @@ afterEach(() => mock.restore())
 
 const game = current as unknown as CurrentGame
 
-test('the current game: hero, trophies and guide', () => {
+test('the current game: hero with the next trophy, trophies and guide', () => {
+  mockApi({ '/api/plan': { plan: null } })
   renderApp(<GameScreen current={game} plan={<p>plano</p>} />)
   expect(screen.getByRole('heading', { level: 1, name: 'Jogo atual' })).toBeTruthy()
   expect(screen.getByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
   expect(screen.getByText('plano')).toBeTruthy()
   expect(document.getElementById('trophies-card')?.textContent).toContain('De raspão')
   expect(document.getElementById('guide-card')?.textContent).toContain('Burnout Apocalipse')
-  expect(screen.getByRole('link', { name: 'perguntar ao Nexo' }).getAttribute('href')).toBe('/nexo')
+  // The way to Nexo is the next trophy's tip, not a second button off on its own.
+  expect(screen.queryByRole('link', { name: /Conversar com o Nexo/ })).toBeNull()
+  const card = screen.getByRole('complementary', { name: 'Próximo troféu' })
+  expect(within(card).getByRole('link', { name: /Pedir dica/ })).toBeTruthy()
 })
 
 test('no game yet: only the hero, with how to start', () => {

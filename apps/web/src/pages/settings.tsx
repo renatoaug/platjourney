@@ -5,6 +5,8 @@ import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { AccountCards, AccountSkeleton } from '../components/account'
 import { ConnectedApps, ConnectedAppsSkeleton } from '../components/connected-apps'
+import { image } from '../components/game-showcase'
+import { PageTop } from '../components/page-top'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import type { Me } from '../lib/types'
@@ -69,6 +71,21 @@ export function Settings() {
  * The page from its load state, so its stories need no network.
  * @param apps  the connected apps card for the account (it loads its own list)
  */
+/** The page's top: the title on the scene of the game being played, when there is one. */
+function SettingsTop({ title, lead }: { title: string; lead: string }) {
+  const { data } = useApp()
+  const game = data?.current?.game
+  const shot = game?.screenshot_ids?.[0]
+  return (
+    <PageTop
+      title={title}
+      lead={lead}
+      art={shot ? image(shot, 't_1080p') : null}
+      tint={game?.tint}
+    />
+  )
+}
+
 export function SettingsView({
   load,
   title,
@@ -86,12 +103,7 @@ export function SettingsView({
 }) {
   return (
     <div id="settings-page">
-      <div className="page-head">
-        <div>
-          <h1>{title}</h1>
-          <p>{lead}</p>
-        </div>
-      </div>
+      <SettingsTop title={title} lead={lead} />
       {load.kind === 'error' ? (
         <ErrorState>{failed}</ErrorState>
       ) : (

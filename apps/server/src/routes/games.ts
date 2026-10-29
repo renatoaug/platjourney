@@ -26,6 +26,7 @@ import { getGuide } from '../repository/guide.ts'
 import { requestGuide } from '../repository/guide-request.ts'
 import type { User } from '../repository/user.ts'
 import { similarToGame } from '../similar.ts'
+import { withTints } from '../tint.ts'
 import { type Api, type ApiHandler, apiMessages, deepGuideOf, heroArt } from './api.ts'
 
 // Guide research takes a minute; the page polls while one of these is in flight.
@@ -98,7 +99,8 @@ async function titleDetail(url: URL, user: User) {
   )[0]
   if (!game && title) game = await gameForTitle(title)
   if (!game) return null
-  return title ? ownedDetail(user, game, title) : catalogDetail(user, game, platform)
+  const [tinted] = await withTints([game])
+  return title ? ownedDetail(user, tinted, title) : catalogDetail(user, tinted, platform)
 }
 
 async function ownedDetail(

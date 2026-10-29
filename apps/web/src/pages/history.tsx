@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
+import { PageTop } from '../components/page-top'
 import { TipItem, TipSkeleton } from '../components/tip'
 import { defineMessages, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
@@ -10,6 +11,7 @@ import { fmtDay } from '../lib/format'
 import type { Tip } from '../lib/types'
 import { repeat } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
+import { useSlide } from '../ui/use-slide'
 import './history.css'
 
 const messages = defineMessages({
@@ -169,15 +171,19 @@ export function History() {
     cache.tipKind = k
     setKindState(k)
   }
+  const filtersRef = useSlide<HTMLDivElement>(kind)
+  const latest = data?.tips.find((tip) => tip.game)
 
   return (
     <Page path="/history">
-      <div className="page-head">
-        <div>
-          <h1>{t('title')}</h1>
-          <p>{t('lead')}</p>
-        </div>
-        <div className="chips" id="tip-filters">
+      {/* The last game Nexo wrote about runs across the top. */}
+      <PageTop
+        title={t('title')}
+        lead={t('lead')}
+        art={latest?.game?.art_url ?? latest?.game?.cover_url}
+        tint={latest?.game?.tint}
+      >
+        <div className="chips history-filters" id="tip-filters" ref={filtersRef}>
           {FILTERS.map((f) => (
             <button
               key={f.kind}
@@ -190,7 +196,7 @@ export function History() {
             </button>
           ))}
         </div>
-      </div>
+      </PageTop>
       <div className="card">
         <div id="tips">
           {data ? (

@@ -1,0 +1,499 @@
+@layer screens {
+  .console {
+    position: relative;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    min-height: clamp(420px, 56vh, 600px);
+    overflow: hidden;
+    border: 1px solid
+      color-mix(
+        in srgb,
+        var(--game-tint, var(--color-accent)) var(--alpha-soft),
+        var(--color-border)
+      );
+    border-radius: var(--radius-card);
+    background: var(--game-tint-deep);
+    isolation: isolate;
+    transition:
+      background 1s ease,
+      border-color 1s ease;
+  }
+
+  .console-art {
+    position: absolute;
+    z-index: -2;
+    inset: 0;
+  }
+
+  .console-art img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+
+  /* The picture on stage never stands still: a slow zoom and pan, back and forth. */
+  .console-art img.on {
+    opacity: 1;
+    animation: console-drift 14s ease-in-out infinite alternate;
+    view-transition-name: game-art;
+  }
+
+  @keyframes console-drift {
+    from {
+      transform: scale(1.02) translate(0, 0);
+    }
+
+    to {
+      transform: scale(1.22) translate(-4%, -2%);
+    }
+  }
+
+  .console-art img.blur {
+    filter: blur(40px) saturate(1.3);
+  }
+
+  /* The game's own dark, solid behind the text on the left and the shelf at the bottom. */
+  .console::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        var(--game-tint-deep) 0%,
+        color-mix(in srgb, var(--game-tint-deep) var(--alpha-heavy), transparent) 30%,
+        transparent 72%
+      ),
+      linear-gradient(
+        0deg,
+        var(--game-tint-deep) 8%,
+        color-mix(in srgb, var(--game-tint-deep) var(--alpha-dim), transparent) 38%,
+        transparent 64%
+      );
+    transition: background 1s ease;
+  }
+
+  .console-focus {
+    align-self: end;
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    container-type: inline-size;
+    padding: 28px 32px 4px;
+  }
+
+  .console-focus > * {
+    animation: console-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .console-focus > :nth-child(2) {
+    animation-delay: 0.05s;
+  }
+
+  .console-focus > :nth-child(3) {
+    animation-delay: 0.1s;
+  }
+
+  .console-focus > :nth-child(4) {
+    animation-delay: 0.15s;
+  }
+
+  .console-focus > :nth-child(5) {
+    animation-delay: 0.2s;
+  }
+
+  .console-focus > :nth-child(6) {
+    animation-delay: 0.25s;
+  }
+
+  @keyframes console-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+
+  .console-focus .eyebrow {
+    color: var(--game-tint, var(--color-accent));
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .console-title {
+    margin: 0;
+    font-family: var(--font-display);
+    /* Shrinks with the name's length so it fits on one line; a letter is about half an em wide. */
+    font-size: min(clamp(34px, 4vw, 64px), 100cqi / var(--title-chars, 20) * 1.9);
+    font-weight: var(--weight-medium);
+    line-height: 1;
+    letter-spacing: -0.045em;
+    /* One line: a long name ends in an ellipsis instead of breaking. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 2px 30px color-mix(in srgb, var(--color-shadow) var(--alpha-glow), transparent);
+    view-transition-name: game-title;
+  }
+
+  /* The facts as glass chips, the same family as the game page's: the difficulty in its band's color. */
+  .console-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-fg-soft);
+    font-size: var(--text-sm);
+  }
+
+  .console-meta > * {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    backdrop-filter: blur(10px);
+    white-space: nowrap;
+  }
+
+  .console-meta .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .console-meta > .dm {
+    border-color: color-mix(in srgb, var(--dm-color) var(--alpha-glow), transparent);
+    background: color-mix(in srgb, var(--dm-color) var(--alpha-wash), transparent);
+    color: var(--dm-color);
+  }
+
+  .console-meta .dm-segments {
+    display: none;
+  }
+
+  /* A size container takes no width from its text: in a chip the band's name sizes it. */
+  .console-meta .dm-body {
+    display: flex;
+    align-items: center;
+    width: auto;
+    container-type: normal;
+  }
+
+  .console-meta :is(.dm-body, .dm-band) {
+    flex: none;
+    width: max-content;
+  }
+
+  .console-meta .dm-number {
+    font-size: var(--text-md);
+  }
+
+  .console-meta .dm-band {
+    font-size: var(--text-sm);
+  }
+
+  .console-meta .dm-name {
+    overflow: visible;
+    color: var(--dm-color);
+  }
+
+  /* The progress in one glass row: the count, the bar, the percent and the platinum at the end. */
+  .console-progress {
+    display: grid;
+    grid-template-columns: auto minmax(80px, 1fr) auto auto;
+    align-items: center;
+    gap: 14px;
+    max-width: 560px;
+    padding: 12px 16px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .console-progress :is(.console-progress-label, .bar-row) {
+    display: contents;
+  }
+
+  .console-progress-label > span:first-child {
+    grid-column: 1;
+    color: var(--color-fg-soft);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+  }
+
+  .console-progress-label b {
+    margin-right: 2px;
+    color: var(--color-fg);
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-medium);
+  }
+
+  .console-progress .bar {
+    grid-column: 2;
+    grid-row: 1;
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+  }
+
+  .console-progress .bar > i {
+    border-radius: inherit;
+  }
+
+  .console-progress-label > span:last-child {
+    grid-column: 3;
+    grid-row: 1;
+    color: var(--color-accent);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+  }
+
+  .console-progress .plat-mark {
+    display: grid;
+    grid-column: 4;
+    grid-row: 1;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-round);
+    color: var(--color-fg-subtle);
+  }
+
+  .console-progress .plat-mark .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .console-nexo {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    max-width: 620px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--color-fg) var(--alpha-tint), transparent);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    backdrop-filter: blur(10px);
+    color: var(--color-fg-soft);
+    font-size: var(--text-base);
+  }
+
+  .console-nexo b {
+    color: var(--color-fg);
+    font-weight: var(--weight-medium);
+  }
+
+  .console-nexo .dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    margin-top: 6px;
+    border-radius: var(--radius-round);
+    background: var(--color-accent);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .console-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .console .button.secondary {
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .console-shelf {
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+    overflow-x: auto;
+    padding: 26px 44px 14px;
+    scrollbar-width: none;
+  }
+
+  .console-shelf::-webkit-scrollbar {
+    display: none;
+  }
+
+  .console-slot {
+    display: flex;
+    flex: none;
+    gap: 14px;
+    align-items: flex-end;
+  }
+
+  .console-sep {
+    align-self: stretch;
+    display: grid;
+    align-content: end;
+    padding-bottom: 30px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .console-shelf button {
+    position: relative;
+    display: grid;
+    gap: 8px;
+    width: 88px;
+    padding: 0 0 22px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .console-cover {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+    transform-origin: bottom;
+    transition:
+      transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.35s;
+  }
+
+  .console-shelf button:hover {
+    background: none;
+  }
+
+  .console-shelf button:hover .console-cover {
+    transform: translateY(-3px);
+  }
+
+  .console-shelf button[aria-current="true"] .console-cover {
+    transform: scale(1.14);
+    box-shadow:
+      0 0 0 2px var(--color-fg),
+      0 18px 40px color-mix(in srgb, var(--color-shadow) var(--alpha-dim), transparent);
+  }
+
+  .console-name {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+    color: var(--color-fg);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .console-shelf button[aria-current="true"] .console-name {
+    opacity: 1;
+  }
+
+  .console-plat {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
+    color: var(--color-trophy-platinum);
+  }
+
+  .console-plat .icon {
+    width: 11px;
+    height: 11px;
+  }
+
+  .console-mini {
+    position: absolute;
+    right: 6px;
+    bottom: 30px;
+    left: 6px;
+    height: 3px;
+    overflow: hidden;
+    border-radius: var(--radius-tag);
+    background: color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+  }
+
+  .console-mini i {
+    display: block;
+    height: 100%;
+    background: var(--color-accent);
+  }
+
+  .console-shelf button[aria-current="true"] .console-mini,
+  .console-shelf button[aria-current="true"] .console-plat {
+    opacity: 0;
+  }
+
+  .console-hint {
+    position: absolute;
+    right: 20px;
+    bottom: 8px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .empty-console {
+    min-height: 360px;
+  }
+
+  .empty-console p {
+    margin: 0;
+    color: var(--color-fg-soft);
+  }
+
+  @media (max-width: 760px) {
+    .console {
+      min-height: clamp(520px, 80vh, 680px);
+    }
+
+    .console-focus {
+      padding: 28px 20px 4px;
+    }
+
+    .console-shelf {
+      padding: 32px 28px 16px;
+    }
+
+    .console-shelf button {
+      width: 84px;
+    }
+
+    .console-hint {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .console-focus > *,
+    .console-art img,
+    .console-art img.on {
+      animation: none;
+      transition: none;
+    }
+  }
+}

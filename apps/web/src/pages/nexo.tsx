@@ -11,6 +11,8 @@ import {
   threadKey,
 } from '../components/chat/threads'
 import { connectAccount, useDemo } from '../components/demo'
+import { GameBackdrop } from '../components/game-backdrop'
+import { image } from '../components/game-showcase'
 import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import type { AppStateData, CurrentGame, LibraryGame } from '../lib/types'
@@ -50,8 +52,22 @@ type ChatReply = { text?: string; error?: string; messages?: ChatMessage[] }
 
 export function Nexo() {
   // The demo's chat is closed: it shows sample exchanges and asks nothing of the server.
-  if (useDemo()) return <DemoNexo />
-  return <LiveNexo />
+  const demo = useDemo()
+  return (
+    <>
+      <PlayingBackdrop />
+      {demo ? <DemoNexo /> : <LiveNexo />}
+    </>
+  )
+}
+
+/** The scene of the game being played behind the chat, like the other screens' tops. */
+function PlayingBackdrop() {
+  const { data } = useApp()
+  const game = data?.current?.game
+  const shot = game?.screenshot_ids?.[0]
+  if (!shot) return null
+  return <GameBackdrop src={image(shot, 't_1080p')} tint={game?.tint} />
 }
 
 function DemoNexo() {

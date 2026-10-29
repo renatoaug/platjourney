@@ -7,18 +7,27 @@ import { Page } from '../app/page'
 import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
 import { DifficultyMeter } from '../components/difficulty-meter'
+import { GameBackdrop, ScenesButton, useScene } from '../components/game-backdrop'
 import { GameColumns } from '../components/game-columns'
-import { GameShowcase, GameShowcaseSkeleton, type GameStore } from '../components/game-showcase'
+import { GameNav, type GameSection } from '../components/game-nav'
+import { GameAbout, type GameStore, StoreOffer } from '../components/game-showcase'
 import { Guide, GuideSkeleton } from '../components/guide'
-import { HeroProgress, HeroSkeleton, Short, UnobtainableBanner } from '../components/hero'
+import {
+  HeroProgress,
+  HeroSkeleton,
+  Short,
+  TrophyBreakdown,
+  UnobtainableBanner,
+} from '../components/hero'
+import { NextTrophy } from '../components/next-trophy'
 import { SimilarGamesSection } from '../components/similar-games'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import { fmtHours } from '../lib/format'
+import { tintStyle } from '../lib/tint'
 import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
-import { GuideText } from '../ui/markdown'
 import { EmptyState, ErrorState } from '../ui/states'
 import './title.css'
 import { nexoHref } from '../components/tip'
@@ -203,10 +212,9 @@ function TitleSkeleton({ owned = true }: { owned?: boolean }) {
   const t = useMessages(messages)
   return (
     <>
-      <div className={`card hero${owned ? '' : ' hero-compact'}`}>
+      <div className="hero immersive">
         <HeroSkeleton />
       </div>
-      <GameShowcaseSkeleton />
       {owned ? (
         <GameColumns
           style={{ marginTop: 20 }}
@@ -236,7 +244,6 @@ function TitleSkeleton({ owned = true }: { owned?: boolean }) {
 /** The hero's foot: progress and the chat for a game in the library, saving and asking for one outside it. */
 function HeroBottom({ d }: { d: TitleDetail }) {
   const t = useMessages(messages)
-  const g = d.guide
   if (d.owned)
     return (
       <div className="hero-bottom">
@@ -246,6 +253,7 @@ function HeroBottom({ d }: { d: TitleDetail }) {
             total: d.total ?? 0,
             progress: d.progress ?? 0,
             groups: d.groups,
+            trophies: d.trophies,
           }}
         />
         <div className="cta">
@@ -255,13 +263,11 @@ function HeroBottom({ d }: { d: TitleDetail }) {
         </div>
       </div>
     )
+  // Outside the library the hero shows what there is to earn: the list by tier and how rare the
+  // platinum is.
   return (
     <div className="hero-bottom">
-      {g && (
-        <p className="hero-caption">
-          <GuideText text={g.overview} />
-        </p>
-      )}
+      {d.trophies?.length ? <TrophyBreakdown trophies={d.trophies} /> : null}
       <div className="cta">
         <SaveButton d={d} />
         {d.trophies?.length ? (
@@ -269,16 +275,25 @@ function HeroBottom({ d }: { d: TitleDetail }) {
             {t('askNexo')} <Icon name="arrow" />
           </Link>
         ) : null}
+        {d.store && <StoreOffer store={d.store} />}
       </div>
     </div>
   )
 }
 
-/** A loaded title: hero, the showcase and the similar games, then trophies and guide. */
+const TITLE_SECTIONS: [GameSection, string][] = [
+  ['guide', 'title-guide'],
+  ['trophies', 'title-trophies'],
+]
+
+/** A loaded title: its art across the top under the hero (and the next trophy, when it is in the
+ * library), the bar of its sections, the platinum map, trophies and guide, then the similar games. */
 function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
   const t = useMessages(messages)
   const g = d.guide
   const owned = d.owned
+  const shots = d.game.screenshot_ids ?? []
+  const [scene, setScene] = useScene(shots.length)
   const guide = (
     <Guide
       key={d.name}
@@ -296,27 +311,44 @@ function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
   )
   return (
     <>
-      <div className="card hero">
-        {d.icon && <img className="bgimg" src={d.icon} alt="" aria-hidden="true" />}
+      <GameBackdrop src={d.icon} shots={shots} at={scene} tint={d.game.tint} />
+      <div className="hero immersive tinted" id="title-hero" style={tintStyle(d.game.tint)}>
         <UnobtainableBanner guide={{ unobtainable: g?.unobtainable }} />
         <div className="inner">
           <div className="hero-top">
             {/* Outside the library there is nothing of the player's to show: no label, no progress. */}
             {owned && <span className="live-label">{t('inLibrary')}</span>}
-            <span className="platform">{d.platform}</span>
+            <span className="hero-tools">
+              <ScenesButton shots={shots} at={scene} name={d.name} onGo={setScene} />
+              <span className="platform">{d.platform}</span>
+            </span>
           </div>
           <div className="hero-headline">
             <h2 className="hero-title">{d.name}</h2>
             <TitleMeta d={d} />
           </div>
           <HeroBottom d={d} />
+          {/* The next trophy to go for; with nothing left to push, or outside the library, the facts. */}
+          <div className="hero-aside">
+            {owned && d.trophies ? (
+              <NextTrophy
+                trophies={d.trophies}
+                guide={g}
+                game={d.game.id}
+                np={d.np}
+                fallback={<GameAbout game={d.game} name={d.name} />}
+              />
+            ) : (
+              <GameAbout game={d.game} name={d.name} />
+            )}
+          </div>
         </div>
       </div>
-      <GameShowcase game={d.game} name={d.name} store={d.owned ? null : d.store} />
-      {similar}
+      <GameNav sections={TITLE_SECTIONS} hero="title-hero" name={d.name} progress={d.progress} />
       {/* Every game gets the same two columns as the current game: the guide on the left,
           the trophies beside it. A game whose PSN list is not known yet says so where the list goes. */}
       <GameColumns
+        id="game-columns"
         style={{ marginTop: 20 }}
         trophies={
           <div
@@ -352,6 +384,7 @@ function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
           </div>
         }
       />
+      {similar}
     </>
   )
 }

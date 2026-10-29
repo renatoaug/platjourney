@@ -139,7 +139,7 @@ describe('Guide', () => {
       },
     })
     expect(screen.getByText(/Indexando os guias completos/)).toBeTruthy()
-    expect(screen.getByText('Troféu de dificuldade:')).toBeTruthy()
+    expect(screen.getByText('Troféu de dificuldade')).toBeTruthy()
     expect(screen.getByText('1 troféu')).toBeTruthy()
     expect(within(panel()).getByText('Perdível:')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Ver como pegar/ }))

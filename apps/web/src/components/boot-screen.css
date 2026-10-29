@@ -9,6 +9,8 @@
   /* The copy in index.html carries [hidden] so it stays out of sight until this stylesheet arrives. */
   .boot-screen,
   .boot-screen[hidden] {
+    overflow: hidden;
+    isolation: isolate;
     position: fixed;
     inset: 0;
     z-index: 200;
@@ -17,7 +19,13 @@
     align-items: center;
     justify-content: center;
     gap: 26px;
-    background: var(--color-bg);
+    background:
+      radial-gradient(
+        600px 420px at 50% 50%,
+        color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent),
+        transparent 70%
+      ),
+      var(--color-bg);
     transition: opacity 0.25s ease;
   }
 
@@ -115,13 +123,20 @@
     overflow: hidden;
   }
 
+  /* The bar runs through the tiers: bronze, silver, gold, then the platinum. */
   .boot-bar::after {
     content: "";
     display: block;
     width: 40%;
     height: 100%;
     border-radius: var(--radius-pill);
-    background: var(--color-accent);
+    background: linear-gradient(
+      90deg,
+      var(--color-trophy-bronze),
+      var(--color-trophy-silver),
+      var(--color-trophy-gold),
+      var(--color-trophy-platinum)
+    );
     animation: boot-slide 1.6s ease-in-out infinite;
   }
 
@@ -166,11 +181,114 @@
     }
   }
 
+  /* The controller's symbols drifting up behind everything, faint. */
+  .boot-drift {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .boot-drift svg {
+    position: absolute;
+    bottom: -40px;
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: boot-drift 7s linear infinite both;
+  }
+
+  @keyframes boot-drift {
+    from {
+      opacity: 0;
+      transform: translateY(0) rotate(0deg);
+    }
+
+    5%,
+    85% {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+      transform: translateY(-105vh) rotate(160deg);
+    }
+  }
+
+  /* A trophy for waiting, dropping in at the top like the console's own. */
+  .boot-trophy {
+    position: absolute;
+    top: 96px;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px 10px 10px;
+    border: 1px solid
+      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-heavy), transparent);
+    box-shadow: var(--shadow-popover);
+    transform: translateX(-50%);
+    animation: boot-trophy 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  }
+
+  .boot-trophy-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-soft), transparent);
+    color: var(--color-trophy-platinum);
+    box-shadow: 0 0 16px
+      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
+  }
+
+  .boot-trophy-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .boot-trophy small {
+    display: block;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+
+  .boot-trophy b {
+    color: var(--color-fg);
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+  }
+
+  @keyframes boot-trophy {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -20px) scale(0.9);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .boot-nexo,
     .boot-key,
-    .boot-bar::after {
+    .boot-bar::after,
+    .boot-trophy {
       animation: none;
+    }
+
+    .boot-drift {
+      display: none;
     }
 
     .boot-screen {

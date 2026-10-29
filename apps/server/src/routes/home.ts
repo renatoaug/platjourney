@@ -16,8 +16,9 @@ import {
 import { listServerStatuses } from '../repository/server-status.ts'
 import { type GuideFacts, guideFacts } from '../repository/similar.ts'
 import type { User } from '../repository/user.ts'
+import { tints } from '../tint.ts'
 import { watchNow } from '../watcher.ts'
-import { type Api, type ApiHandler, currentView } from './api.ts'
+import { type Api, type ApiHandler, currentView, heroArt } from './api.ts'
 
 const summaries = new Map<
   string,
@@ -42,6 +43,7 @@ function rankingRow(
   r: Ranked,
   played: Awaited<ReturnType<typeof playtimes>>,
   facts: Map<string, GuideFacts>,
+  tinted: Map<string, string>,
 ) {
   const f = facts.get(r.game.id)
   const known = (v: unknown) => (typeof v === 'number' && v > 0 ? v : null)
@@ -51,6 +53,9 @@ function rankingRow(
     platform: r.title.platform,
     icon: r.title.iconUrl,
     cover: r.game.cover_url,
+    // The wide picture and the color the console home paints behind the game.
+    art: heroArt(r.game, r.title),
+    tint: tinted.get(r.game.id) ?? null,
     progress: r.baseProgress,
     remaining: r.remaining,
     hours: hours(played.get(r.game.id)),
@@ -73,6 +78,7 @@ async function state({ res, me, titles }: Api) {
   const facts = new Map(
     (await guideFacts(ranked.map((r) => r.game.id))).map((f) => [String(f.game), f]),
   )
+  const tinted = await tints(ranked.map((r) => r.game))
   return json(res, 200, {
     profile: await profile(me),
     // null, not missing: the web app reads a missing game as still loading.
@@ -82,7 +88,7 @@ async function state({ res, me, titles }: Api) {
       getChat(me) && getChat(me) !== ctx ? ((await currentView(me, getChat(me))) ?? null) : null,
     tips: await recentTips(me.id, 50),
     unread: await unreadNotifications(me.id),
-    ranking: ranked.map((r) => rankingRow(r, played, facts)),
+    ranking: ranked.map((r) => rankingRow(r, played, facts, tinted)),
     goals: await yearProgress(me, list, undefined, played),
     servers: (await listServerStatuses(ranked.map((r) => r.game.id))).filter(
       (s) => s.status !== 'unknown',

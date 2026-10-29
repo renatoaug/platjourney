@@ -1,0 +1,118 @@
+@layer screens {
+  /* The frame keeps the art behind its columns, above the page's own background. */
+  .app:has(> .game-backdrop) {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .app:has(> .game-backdrop) .topbar {
+    border-bottom-color: transparent;
+  }
+
+  .game-backdrop {
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    right: 0;
+    left: var(--sidebar);
+    height: clamp(420px, 62vh, 620px);
+    overflow: hidden;
+    pointer-events: none;
+    animation: backdrop-in 0.9s ease both;
+  }
+
+  .game-backdrop img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    opacity: 0.9;
+  }
+
+  /* A new scene fades in over the one before. */
+  .game-backdrop img.now {
+    view-transition-name: game-art;
+    animation: backdrop-fade 0.8s ease both;
+  }
+
+  @keyframes backdrop-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .scenes-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    color: var(--color-fg);
+    font-size: var(--text-md);
+    backdrop-filter: blur(10px);
+  }
+
+  .scenes-button:hover {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
+  }
+
+  .scenes-button .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Dark at the top for the bar, solid on the left for the text, the game's color through the
+     middle, and a long fade into the page at the bottom. */
+  .game-backdrop::after {
+    z-index: 1;
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent) 0%,
+        transparent 22%,
+        transparent 48%,
+        color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent) 82%,
+        var(--color-bg) 100%
+      ),
+      linear-gradient(
+        90deg,
+        var(--game-tint-deep) 0%,
+        color-mix(in srgb, var(--game-tint-deep) var(--alpha-heavy), transparent) 30%,
+        color-mix(in srgb, var(--game-tint-deep) var(--alpha-dim), transparent) 58%,
+        transparent 85%
+      );
+  }
+
+  @keyframes backdrop-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .game-backdrop {
+      left: 0;
+      height: clamp(460px, 74vh, 620px);
+    }
+
+    .game-backdrop img {
+      object-position: 65% 20%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .game-backdrop,
+    .game-backdrop img,
+    .game-backdrop img.now {
+      animation: none;
+    }
+  }
+}

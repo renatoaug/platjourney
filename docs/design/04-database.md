@@ -255,6 +255,7 @@ erDiagram
     game ||--o| guide_request : "is asked for"
     game ||--o| server_status : "online status"
     game ||--o{ store_price : "PS Store price per region"
+    game ||--o| game_tint : "its color"
     game ||--o{ similar_to : "is similar to (in)"
     similar_to }o--|| game : "out"
     game ||--o| expansion_of : "expands (in)"
@@ -341,6 +342,14 @@ erDiagram
         plus_price option(int)
         plus_tier option(string)
         currency string
+        created_at datetime
+        updated_at datetime
+    }
+    game_tint {
+        id record(game_tint) PK
+        game record(game) FK "unique"
+        color string
+        picture string
         created_at datetime
         updated_at datetime
     }
@@ -484,6 +493,7 @@ erDiagram
 | `guide_request` | game asked for without a guide | `game` | The players who opened it without a guide (`users`, written by the server; reloading or opening it again adds no one), how many they are (`requests`) and the questions, for whoever runs the instance |
 | `game_request` | name searched on Guides that neither the catalog nor IGDB had | `key` (the name normalized for search) | Who asked, each account once, and how many; for whoever runs the instance to add by hand |
 | `store_price` | game someone saved in their interests, per store region | `game, region` | Its PlayStation Store price in a region (`region`, upper case; only `BR` is read today), in cents, read every day at 10:00 (Brazil time) and overwritten: price, full price, percent off, when the sale ends, whether PS Plus includes it and what members pay when the store gives them a lower price (`plus_price`), and the lowest tier whose catalog includes it (`plus_tier`). A game the player's own tier includes is a `deal` notice too, once. A new or deeper sale is a `deal` notice to everyone who saved the game |
+| `game_tint` | catalog game whose picture was read for its color | `game` | `color` is the strongest hue of the game's catalog picture (`art_url`, else `cover_url`), as a light hex color the pages tint their background and labels with; `picture` is the address it was read from. The server reads it in the background the first time it sends the game and reads it again when the picture changes. Kept apart from `game` so reading it is not a change to the catalog row |
 | `similar_to` | IGDB "similar game" link between two catalog games (`in -> similar_to -> out`) | `in, out` | A relation table. `rank` is the position of `out` in IGDB's list of `in` (0 the most similar). `bun run catalog:similar` deletes a game's outgoing edges and writes them again, only to games in the catalog; the server does it at 4:30 every night for games without edges yet and for the whole catalog on Sundays, so older games also point at new ones. The recommendations by similarity walk the player's games through these edges |
 | `expansion_of` | standalone expansion or episode in the catalog (`expansion -> expansion_of -> base game`) | `in, out` | A relation table, from IGDB's `parent_game` of games that add to another one (a remaster or a port is not an expansion). Written by `bun run catalog:similar`; read in both directions for the "same series" picks and a game's page |
 | `server_status` | game whose online servers were checked | `game` | `status`: `active`, `announced`, `closed` or `unknown`; shared by everyone, and who was already warned is in `notification` |

@@ -15,6 +15,10 @@ const item = (n: number, guide = true): GuideCardItem => ({
     ? { difficulty: 3, hours: 12, hasMissables: n === 1, hasOnline: n === 1, unobtainable: null }
     : null,
 })
+// The main list, apart from the shelves above it (which show the same sample games).
+const list = () => within(document.querySelector('.guides-main') as HTMLElement)
+const inList = (text: string) => waitFor(() => list().getByText(text))
+
 const page = (items: GuideCardItem[], extra: Partial<GuidesPage> = {}): GuidesPage => ({
   page: 1,
   size: 24,
@@ -26,7 +30,7 @@ const page = (items: GuideCardItem[], extra: Partial<GuidesPage> = {}): GuidesPa
 test('the games with a guide, each linking to its page', async () => {
   mockApi({ '/api/guides': page([item(1), item(2)]) })
   renderApp(<Guides />, { path: '/guides', route: '/guides' })
-  const first = (await screen.findByText('Game 1')).closest('a') as HTMLElement
+  const first = (await inList('Game 1')).closest('a') as HTMLElement
   expect(first.getAttribute('href')).toContain('/title/game/game%3A1')
   expect(within(first).getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(within(first).getByText('~12h')).toBeTruthy()
@@ -40,14 +44,14 @@ test('a game without a guide or with an unavailable platinum says so', async () 
   if (gone.guide) gone.guide.unobtainable = 'Servers closed'
   mockApi({ '/api/guides': page([item(2, false), gone]) })
   renderApp(<Guides />, { path: '/guides', route: '/guides' })
-  expect(await screen.findByText('Sem guia ainda')).toBeTruthy()
-  expect(screen.getByText('Platina indisponível')).toBeTruthy()
+  expect(await inList('Sem guia ainda')).toBeTruthy()
+  expect(list().getByText('Platina indisponível')).toBeTruthy()
 })
 
 test('search, platform and order go to the request', async () => {
   const calls = mockApi({ '/api/guides': page([item(1)]) })
   renderApp(<Guides />, { path: '/guides', route: '/guides' })
-  await screen.findByText('Game 1')
+  await inList('Game 1')
   fireEvent.click(screen.getByRole('button', { name: 'PS Vita' }))
   await waitFor(() => expect(calls.at(-1)?.path).toBe('/api/guides?platform=PS+Vita'))
   expect(screen.getByRole('button', { name: 'PS Vita' }).getAttribute('aria-pressed')).toBe('true')
@@ -70,7 +74,7 @@ test('the pager asks for the next page', async () => {
     '/api/guides': page([item(1)], { total: 30 }),
   })
   renderApp(<Guides />, { path: '/guides', route: '/guides' })
-  await screen.findByText('Game 1')
+  await inList('Game 1')
   window.scrollTo = mock() as never
   fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }))
   await waitFor(() => expect(calls.at(-1)?.path).toBe('/api/guides?page=2'))
@@ -154,7 +158,7 @@ test('the filters go to the request, show their counts, and clear together', asy
     }),
   })
   renderApp(<Guides />, { path: '/guides', route: '/guides' })
-  await screen.findByText('Game 1')
+  await inList('Game 1')
   fireEvent.click(screen.getByRole('button', { name: /Fácil/ }))
   await waitFor(() => expect(calls.at(-1)?.path).toContain('difficulty=easy'))
   fireEvent.click(screen.getByRole('button', { name: /Até 25h/ }))
@@ -174,7 +178,7 @@ test('the filters go to the request, show their counts, and clear together', asy
 test('the list view shows the same games as rows', async () => {
   mockApi({ '/api/guides': page([item(1), item(2)]) })
   const { container } = renderApp(<Guides />, { path: '/guides', route: '/guides' })
-  await screen.findByText('Game 1')
+  await inList('Game 1')
   fireEvent.click(screen.getByRole('button', { name: 'Lista' }))
   await waitFor(() => expect(container.querySelectorAll('.guide-row')).toHaveLength(2))
   expect(container.querySelector('.guide-grid')).toBeNull()

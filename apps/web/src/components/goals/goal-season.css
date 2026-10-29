@@ -364,4 +364,77 @@
     font-size: var(--text-lg);
     color: var(--color-fg-muted);
   }
+
+  /* HUD: the twelve months as cells, lit where a platinum landed, the current one outlined. */
+  .goal-months {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 16px;
+  }
+
+  .goal-month {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+  }
+
+  .goal-month b {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 28px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-tag);
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-wash), transparent);
+    color: var(--color-on-accent);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  .goal-month.on b {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+  }
+
+  .goal-month.now b {
+    outline: 2px solid color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    outline-offset: 2px;
+  }
+
+  .goal-month.ahead b {
+    border-style: dashed;
+    background: none;
+  }
+
+  .goal-month small {
+    color: var(--color-fg-subtle);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+  }
+
+  .goal-month.now small {
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* Where the year ends at this pace: green when it reaches the goal, gold when it falls short. */
+  .goal-projection {
+    display: block;
+    margin-top: 6px;
+  }
+
+  .goal-projection.ahead {
+    color: var(--color-accent);
+  }
+
+  .goal-projection.behind {
+    color: var(--color-trophy-gold);
+  }
+
+  .goal-projection b {
+    font-family: var(--font-display);
+  }
 }

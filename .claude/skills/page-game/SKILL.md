@@ -9,18 +9,21 @@ Every game screen has the same anatomy. Do not invent another one. `example.tsx`
 
 ## Top to bottom
 
-1. **Hero** (`.card.hero`): cover art as `.bgimg`, `<UnobtainableBanner>` when the platinum is gone, then `.hero-top` (a live label on the left, the platform on the right), the game name in `.hero-title`, the `.meta` line (difficulty, hours, playthroughs, missables, online) and `.hero-bottom` with `<HeroProgress>` and one primary `.button` (all in `src/components/hero.tsx`).
-2. **Session plan** (`#plan-card`, `<PlanCard>`), only for the game being played now.
-3. **Showcase** (`<GameShowcase>` in `src/components/game-showcase.tsx`): the gallery of the game's scenes and the "Sobre" card (genres, studio, release, platforms, official site), from the catalog. Either one alone takes the whole width; a game without both shows nothing. On a phone the gallery drops its thumbnails.
-4. **Two columns** (`.grid.cols-2.game-columns`): the trophy list on the left (`<TrophyList>`, see the `page-list` skill) and the guide on the right (`<Guide>`). Without a trophy list the guide takes the whole width (`.guide-wide`).
+1. **Backdrop** (`<GameBackdrop>` in `src/components/game-backdrop.tsx`): the game's scene across the whole top of the screen, behind the top bar, still, fading into the page. It portals into the app frame, so it spans the content column whatever the page's width. `<ScenesButton>` in the hero opens the scenes full screen, and the backdrop follows the one picked there.
+2. **Hero** (`.hero.immersive`, no card): `<UnobtainableBanner>` when the platinum is gone, `.hero-top` with the scenes button and the platform on the right, the game name in `.hero-title`, the `.meta` chips (difficulty in its band's color, hours, playthroughs, missables, online) and `.hero-bottom` with `<HeroProgress>` (one glass row: count, bar, percent, the platinum's mark). Beside it, `.hero-aside` holds `<NextTrophy>`, or `<GameAbout>` (the facts card) when there is no trophy left to push or the game is not in the library (all in `src/components/hero.tsx`, `next-trophy.tsx`, `game-showcase.tsx`).
+3. **Sections bar** (`<GameNav>`): sticky, lights the section in view (Sessão, Guia, Troféus) and, past the hero, carries the game's name and progress.
+4. **Session plan** (`#plan-card`, `<PlanCard>`), only for the game being played now: the route as a track of its trophies and the picked step open under it.
+5. **Two columns** (`.grid.cols-2.game-columns`): the guide and the trophy list (`<Guide>`, `<TrophyList>`, see the `page-list` skill), each under a HUD title band. On a phone they take turns behind a "Guia | Troféus" switch.
+
+Segmented controls (the guide's tabs, the trophy status, the phone switch) are joined cells with the chosen one filled; `useSlide` from `src/ui/use-slide.ts` slides the fill to the choice.
 
 ## What changes with ownership
 
-| Game | Live label | Primary action | Trophies |
-| --- | --- | --- | --- |
-| Current game | SUA JORNADA ATUAL | Conversar com o Nexo | progress and "Pedir dica" |
-| Owned title | NA SUA BIBLIOTECA | Conversar com o Nexo | progress and "Pedir dica" |
-| Not owned | RECOMENDAÇÃO | Salvar nos interesses | catalog list, no progress, no rarity, no help |
+| Game | Primary action | Trophies |
+| --- | --- | --- |
+| Current game | "Pedir dica" on the next trophy | progress and "Pedir dica" |
+| Owned title | Conversar com o Nexo | progress and "Pedir dica" |
+| Not owned | Salvar nos interesses, Ver na PS Store | catalog list, no progress, no rarity, no help |
 
 ## The four states, always
 
@@ -33,12 +36,12 @@ Every game screen has the same anatomy. Do not invent another one. `example.tsx`
 
 ## Varies and does not vary
 
-**Varies:** the live label, the primary action, whether trophies show progress, the copy.
-**Does not vary:** the block order, the components, the four states, the two-column split, one primary button in the hero.
+**Varies:** the primary action, whether trophies show progress, the copy.
+**Does not vary:** the block order, the components, the four states, the two-column split, at most one primary button in the hero.
 
 ## Before saying done
 
-- [ ] Uses `HeroProgress`, `UnobtainableBanner`, `GameShowcase`, `TrophyList`, `Guide`, not local versions
+- [ ] Uses `GameBackdrop`, `HeroProgress`, `UnobtainableBanner`, `NextTrophy` or `GameAbout`, `GameNav`, `TrophyList`, `Guide`, not local versions
 - [ ] Its stories cover the four states
 - [ ] The four states exist
 - [ ] `bun run lint` passes

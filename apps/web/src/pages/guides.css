@@ -464,37 +464,44 @@
     box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 45%, transparent);
   }
 
-  /* The difficulty on the bottom of the cover, over a fade to the card. */
+  /* The difficulty as a glass chip on the cover's corner, in its band's color, like a game's page. */
   .guide-tile-score {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 48px 12px 10px;
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      color-mix(in srgb, var(--color-surface) 75%, transparent) 45%,
-      var(--color-surface)
-    );
+    top: 10px;
+    left: 10px;
   }
 
   .guide-tile-score .dm {
-    display: flex;
-    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid color-mix(in srgb, var(--dm-color) var(--alpha-glow), transparent);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
+    backdrop-filter: blur(10px);
+    white-space: nowrap;
   }
 
-  .guide-tile-score .dm .dm-number {
-    font-size: var(--text-5xl);
+  .guide-tile-score .dm .dm-segments {
+    display: none;
   }
 
   .guide-tile-score .dm .dm-body {
-    min-width: 0;
+    display: flex;
+    width: auto;
+    container-type: normal;
   }
 
-  .guide-tile-score .dm .dm-segments i {
-    min-width: 0;
-    height: 5px;
+  .guide-tile-score .dm :is(.dm-number, .dm-band, .dm-name) {
+    overflow: visible;
+    color: var(--dm-color);
+    font-size: var(--text-xs);
+  }
+
+  .guide-tile-score .dm .dm-number small {
+    font-size: var(--text-xs);
   }
 
   .band-medium {
@@ -629,5 +636,102 @@
     .guide-row-meta [role="img"] {
       display: none;
     }
+  }
+
+  /* The search on the page's top, glass over the day's scene. */
+  .page-top .guides-hero-search {
+    margin-top: 10px;
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
+    backdrop-filter: blur(12px);
+  }
+
+  /* ---- Posters: the cover fills the card, its facts over a fade at the bottom. ---- */
+  .guide-grid .guide-tile {
+    position: relative;
+    border-radius: var(--radius-card);
+    background: var(--color-bg-subtle);
+  }
+
+  .guide-grid .guide-tile-body {
+    position: absolute;
+    inset: auto 0 0;
+    gap: 4px;
+    padding: 56px 14px 14px;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent) 40%,
+      var(--color-bg)
+    );
+  }
+
+  .guide-grid .guide-tile-body h3 {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-tight);
+    text-shadow: 0 2px 12px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+  }
+
+  .guide-grid .guide-tile-sub {
+    color: var(--color-fg-soft);
+  }
+
+  .guide-grid .guide-tile-meta {
+    margin-top: 2px;
+    color: var(--color-fg-soft);
+    font-size: var(--text-xs);
+  }
+
+  /* The facts as small glass chips, the same family as the game page's. */
+  .guide-grid .guide-tile-meta > span {
+    height: 22px;
+    padding: 0 8px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+  }
+
+  .guide-grid .guide-tile-meta > [role="img"] {
+    border-color: color-mix(in srgb, var(--color-trophy-gold) var(--alpha-glow), transparent);
+    color: var(--color-trophy-gold);
+  }
+
+  .guide-grid .guide-tile:hover {
+    border-color: var(--color-accent);
+    box-shadow:
+      0 0 0 1px var(--color-accent),
+      0 16px 34px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+  }
+
+  /* ---- The filters as a HUD panel: a title band, then each group in its own block. ---- */
+  .guides-aside[open] {
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  .guides-aside .guide-filters {
+    gap: 0;
+  }
+
+  .guides-aside .guide-filters fieldset {
+    padding: 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .guides-aside .guide-filters fieldset:last-of-type {
+    border-bottom: 0;
+  }
+
+  .guides-aside .guide-filters legend {
+    float: left;
+    width: 100%;
+    color: var(--color-fg-soft);
+  }
+
+  .guides-aside .guide-option[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
   }
 }

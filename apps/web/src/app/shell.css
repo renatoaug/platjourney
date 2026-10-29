@@ -144,10 +144,6 @@
     }
   }
 
-  .nav a[data-tour-spot] {
-    animation: tour-spot 1.6s ease-in-out infinite;
-  }
-
   @media (max-width: 760px) {
     .nav .nav-more.active {
       color: var(--color-accent);

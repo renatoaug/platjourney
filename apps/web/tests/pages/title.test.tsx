@@ -16,7 +16,7 @@ afterEach(() => {
 })
 
 const guide = ownedData.guide as GuideDetail
-const hero = () => document.querySelector('.card.hero') as HTMLElement
+const hero = () => document.querySelector('.hero') as HTMLElement
 const meta = () => hero().querySelector('.meta')?.textContent
 // Only the title's own requests; the similar games ask once the title is in.
 const titleCalls = (calls: { path: string }[]) =>
@@ -77,7 +77,7 @@ test('loading: the two columns for a library game, the wide guide for one by nam
   expect(second.container.querySelector('.guide-wide .sk')).toBeTruthy()
 })
 
-test('a game the player does not own: the overview and saving it', async () => {
+test('a game the player does not own: its list by tier, its facts and saving it', async () => {
   const calls = mockApi({
     '/api/title': recommendedData,
     '/api/games/similar': { items: [] },
@@ -90,9 +90,9 @@ test('a game the player does not own: the overview and saving it', async () => {
   })
   renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
   await screen.findByRole('heading', { name: 'DAYS GONE' })
-  // Nothing of the player's to show: no library label, just the guide's overview.
+  // Nothing of the player's to show: no library label, but what there is to earn.
   expect(hero().querySelector('.live-label')).toBeNull()
-  expect(hero().textContent).toContain('A platina de Days Gone')
+  expect(hero().querySelector('.trophy-breakdown')?.textContent).toMatch(/\d+ troféus/)
   expect(meta()).toContain('~70 horas')
   // The catalog trophies still list, beside the guide.
   expect(document.getElementById('title-trophies')?.textContent).toContain('De raspão')

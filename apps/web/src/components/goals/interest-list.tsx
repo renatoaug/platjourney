@@ -16,6 +16,7 @@ import { Icon } from '../../ui/icon'
 import { Pager } from '../../ui/pager'
 import { Sk } from '../../ui/skeleton'
 import { EmptyState } from '../../ui/states'
+import { useSlide } from '../../ui/use-slide'
 import { type GoalFilter, goalState, started } from './season'
 import './interest-list.css'
 
@@ -168,11 +169,14 @@ function SavedFrom({ g }: { g: Interest }) {
 
 function Row({
   g,
+  rank,
   onRemove,
   busy,
   readOnly,
 }: {
   g: Interest
+  /** Its place among the games still to platinum, from 1. */
+  rank?: number
   onRemove?: () => void
   busy?: boolean
   readOnly?: boolean
@@ -188,8 +192,9 @@ function Row({
           <Icon name="grip" />
         </span>
       )}
-      <span className={`goal-game-status${g.done ? ' complete' : ''}`}>
-        <Icon name={g.done ? 'check' : 'circle'} />
+      {/* Its place in the list, or a check once platinumed. */}
+      <span className={`goal-game-status${g.done ? ' complete' : ''}${rank === 1 ? ' first' : ''}`}>
+        {g.done || !rank ? <Icon name={g.done ? 'check' : 'circle'} /> : <b>{rank}</b>}
       </span>
       <Cover url={g.game.cover_url} name={g.game.name} className="goal-cover" />
       <Link className="name" to={`/title/game/${encodeURIComponent(g.game.id)}`}>
@@ -253,6 +258,7 @@ export function InterestList({
   onReorder: (ids: string[]) => Promise<unknown>
 }) {
   const t = useMessages(messages)
+  const filtersRef = useSlide<HTMLDivElement>(filter)
   // Manual order for what is still to do; platinumed ones sink to the bottom.
   const open = interests.filter((g) => !g.done)
   const done = interests.filter((g) => g.done)
@@ -398,7 +404,7 @@ export function InterestList({
 
   return (
     <>
-      <div className="chips goal-filters">
+      <div className="chips goal-filters" ref={filtersRef}>
         {FILTERS.map((key) => (
           <button
             key={key}
@@ -437,7 +443,13 @@ export function InterestList({
                   if ((event.target as HTMLElement).closest('[data-grip]')) startDrag(event, g.id)
                 }}
               >
-                <Row g={g} busy={busy} readOnly={readOnly} onRemove={() => onRemove(g.id)} />
+                <Row
+                  g={g}
+                  rank={open.indexOf(g) + 1 || undefined}
+                  busy={busy}
+                  readOnly={readOnly}
+                  onRemove={() => onRemove(g.id)}
+                />
               </li>
             ))}
           </ul>

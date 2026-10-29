@@ -1,16 +1,15 @@
-/** Home: greeting, the current journey, Nexo's latest word, stats, the radar, the annual goal and recent activity. */
+/** Home: the console (the games, the one played first, on their art), stats, the radar, the annual goal and recent activity. */
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { AnnualGoal, AnnualGoalSkeleton } from '../components/annual-goal'
+import { Console, ConsoleSkeleton } from '../components/console'
 import { GameCardsSkeleton, RadarCard } from '../components/game-cards'
-import { Hero, HeroSkeleton } from '../components/hero'
-import { NexoBrief, NexoBriefSkeleton } from '../components/nexo-brief'
 import { Releases } from '../components/releases'
 import { StatTiles, StatTilesSkeleton } from '../components/stat-tiles'
 import { TipItem, TipSkeleton } from '../components/tip'
-import { defineMessages, getLocale, Language, type Translator, useMessages } from '../i18n/i18n'
+import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
 import type { ProfileSummary } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { repeat } from '../ui/skeleton'
@@ -24,10 +23,7 @@ const messages = defineMessages({
       afternoon: 'Boa tarde, {name}.',
       evening: 'Boa noite, {name}.',
     },
-    eyebrow: 'MENOS GRIND. MAIS CONQUISTAS.',
     titleFallback: 'Sua próxima conquista.',
-    sub: 'Cada troféu é um passo. Vamos à sua próxima conquista?',
-    subLoading: 'Cada troféu é um passo. Vamos ao próximo?',
     tilesLabel: 'Suas conquistas',
     radarEyebrow: 'CONTINUE A JORNADA',
     radarTitle: 'No radar da platina',
@@ -49,10 +45,7 @@ const messages = defineMessages({
       afternoon: 'Good afternoon, {name}.',
       evening: 'Good evening, {name}.',
     },
-    eyebrow: 'LESS GRIND. MORE TROPHIES.',
     titleFallback: 'Your next achievement.',
-    sub: 'Every trophy is a step. Ready for your next one?',
-    subLoading: 'Every trophy is a step. On to the next?',
     tilesLabel: 'Your achievements',
     radarEyebrow: 'KEEP THE JOURNEY GOING',
     radarTitle: 'On the platinum radar',
@@ -83,33 +76,14 @@ export function Home({ releases = <Releases /> }: { releases?: ReactNode } = {})
   const { data } = useApp()
   // The profile is missing while PSN has not answered for this player.
   const profile = data?.profile as ProfileSummary | null | undefined
-  const today = new Date().toLocaleDateString(getLocale(), {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
   const tips = data?.tips.filter((tip) => tip.kind !== 'chat').slice(0, 3)
 
   return (
     <Page path="/">
-      <div className="page-head home-heading">
-        <div>
-          <span className="eyebrow">{t('eyebrow')}</span>
-          <h1 id="home-title">{profile ? greeting(t, profile.onlineId) : t('titleFallback')}</h1>
-          <p id="home-sub">{data ? t('sub') : t('subLoading')}</p>
-        </div>
-        <span className="date-label" id="today">
-          {today}
-        </span>
-      </div>
-      <div className="mission-grid">
-        <div className="card hero" id="home-hero">
-          {data ? <Hero game={data.current} compact /> : <HeroSkeleton />}
-        </div>
-        <aside className="card nexo-brief" id="home-nexo">
-          {data ? <NexoBrief current={data.current} tips={data.tips} /> : <NexoBriefSkeleton />}
-        </aside>
-      </div>
+      <h1 className="sr-only" id="home-title">
+        {profile ? greeting(t, profile.onlineId) : t('titleFallback')}
+      </h1>
+      <div id="home-hero">{data ? <Console data={data} /> : <ConsoleSkeleton />}</div>
       <section className="tiles" id="tiles" aria-label={t('tilesLabel')}>
         {data ? <StatTiles profile={profile ?? null} goals={data.goals} /> : <StatTilesSkeleton />}
       </section>
