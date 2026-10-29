@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Page } from '../app/page'
 import { DifficultyMeter } from '../components/difficulty-meter'
-import { GameBackdrop } from '../components/game-backdrop'
 import { GENRES_PT, image } from '../components/game-showcase'
 import { GuideSpotlight, pickOfTheDay } from '../components/guide-spotlight'
+import { PageTop } from '../components/page-top'
 import { titleHref } from '../components/tip'
 import { defineMessages, getLocale, Language, useLocale, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
@@ -534,31 +534,24 @@ function GuidesTop({
 }) {
   const t = useMessages(messages)
   return (
-    <>
-      {featured?.shot && <GameBackdrop src={image(featured.shot, 't_1080p')} />}
-      <section className="guides-top">
-        <div className="guides-top-text">
-          <span className="eyebrow">{t('eyebrow')}</span>
-          <h1>{t('title')}</h1>
-          <p>
-            {count
-              ? t('leadCount', { count, total: count.toLocaleString(getLocale()) })
-              : t('lead')}
-          </p>
-          <label className="guides-hero-search">
-            <Icon name="search" />
-            <input
-              type="search"
-              aria-label={t('search')}
-              placeholder={t('searchPlaceholder')}
-              value={typed}
-              onChange={(e) => onType(e.target.value)}
-            />
-          </label>
-        </div>
-        {featured && <GuideSpotlight game={featured} />}
-      </section>
-    </>
+    <PageTop
+      eyebrow={t('eyebrow')}
+      title={t('title')}
+      lead={count ? t('leadCount', { count, total: count.toLocaleString(getLocale()) }) : t('lead')}
+      art={featured?.shot ? image(featured.shot, 't_1080p') : null}
+      aside={featured && <GuideSpotlight game={featured} />}
+    >
+      <label className="guides-hero-search">
+        <Icon name="search" />
+        <input
+          type="search"
+          aria-label={t('search')}
+          placeholder={t('searchPlaceholder')}
+          value={typed}
+          onChange={(e) => onType(e.target.value)}
+        />
+      </label>
+    </PageTop>
   )
 }
 

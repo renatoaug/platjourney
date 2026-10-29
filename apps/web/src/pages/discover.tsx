@@ -9,7 +9,7 @@ import { DemoNote } from '../components/demo'
 import { GameCard, GameShelf } from '../components/game-band'
 import { LibraryCard } from '../components/game-cards'
 import { NexoPickBox } from '../components/nexo-pick'
-import { PageHero } from '../components/page-hero'
+import { PageTop } from '../components/page-top'
 import {
   type DismissReason,
   openTaste,
@@ -310,7 +310,7 @@ export function Discover({ releases = <Releases look="band" /> }: { releases?: R
   }
 
   const noLibrary = similar.status === 'ok' && similar.recs.reason === 'no-library'
-  // Wide artworks of the games recommended.
+  // Wide artworks of the games recommended: the first runs across the top.
   const art = [
     ...(recs.status === 'ok' ? recs.recs.items : []),
     ...(similar.status === 'ok' ? similar.recs.items : []),
@@ -318,13 +318,7 @@ export function Discover({ releases = <Releases look="band" /> }: { releases?: R
 
   return (
     <Page path="/discover">
-      <PageHero
-        eyebrow={t('eyebrow')}
-        title={t('title')}
-        lead={t('lead')}
-        images={art}
-        look="art"
-      />
+      <PageTop eyebrow={t('eyebrow')} title={t('title')} lead={t('lead')} art={art[0]} />
       <NexoPickBox
         initialScope={params.get('scope') === 'interests' ? 'interests' : 'any'}
         spotlight={params.has('scope')}

@@ -638,62 +638,11 @@
     }
   }
 
-  /* The top: the title, the count and the search on the left, the guide of the day on the right,
-     straight on the day's scene that runs across the top of the screen. */
-  .guides-top {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 28px 40px;
-    min-height: clamp(280px, 38vh, 400px);
-    padding: 8px 0 32px;
-  }
-
-  .guides-top-text {
-    display: grid;
-    gap: 10px;
-    max-width: 640px;
-  }
-
-  .guides-top .eyebrow {
-    color: var(--color-accent);
-    font-size: var(--text-xs);
-    font-weight: var(--weight-semibold);
-    letter-spacing: var(--tracking-caps);
-    text-transform: uppercase;
-  }
-
-  .guides-top h1 {
-    margin: 0;
-    font-size: clamp(40px, 4.4vw, 72px);
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    text-shadow: 0 4px 40px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
-  }
-
-  .guides-top p {
-    margin: 0;
-    color: var(--color-fg-soft);
-    font-size: var(--text-body);
-  }
-
-  .guides-top .guides-hero-search {
+  /* The search on the page's top, glass over the day's scene. */
+  .page-top .guides-hero-search {
     margin-top: 10px;
     background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
     backdrop-filter: blur(12px);
-  }
-
-  @media (max-width: 1100px) {
-    .guides-top {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 760px) {
-    .guides-top {
-      min-height: 0;
-      padding-top: 40px;
-    }
   }
 
   /* ---- Posters: the cover fills the card, its facts over a fade at the bottom. ---- */
@@ -784,10 +733,5 @@
 
   .guides-aside .guide-option[aria-pressed="true"] {
     background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
-  }
-
-  /* The card keeps to the right, also when it drops under the title on a narrower screen. */
-  .guides-top .guide-spotlight {
-    justify-self: end;
   }
 }
