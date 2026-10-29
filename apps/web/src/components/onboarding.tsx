@@ -77,7 +77,13 @@ const messages = defineMessages({
       level: 'nível',
       rarest: 'mais rara',
       next: 'Próxima: {game}',
-      enter: 'Ir para o app',
+    },
+    welcome: {
+      eyebrow: 'Bem-vindo à jornada',
+      title: 'Obrigado por chegar, {name}.',
+      titleDemo: 'Obrigado por conhecer o PlatJourney.',
+      lead: 'Sua história já está aqui. Agora é escolher a próxima platina e ir atrás dela, um troféu de cada vez. O Nexo vai junto.',
+      go: 'Começar jornada',
     },
   },
   [Language.En]: {
@@ -139,7 +145,13 @@ const messages = defineMessages({
       level: 'level',
       rarest: 'rarest',
       next: 'Next: {game}',
-      enter: 'Go to the app',
+    },
+    welcome: {
+      eyebrow: 'Welcome to the journey',
+      title: 'Thanks for coming, {name}.',
+      titleDemo: 'Thanks for checking out PlatJourney.',
+      lead: 'Your story is here already. Now pick the next platinum and go after it, one trophy at a time. Nexo comes along.',
+      go: 'Start the journey',
     },
   },
 })
@@ -165,6 +177,13 @@ export function Onboarding() {
     () => !me.demo && !me.onboarded && installGuideDue(),
   )
   const profile = useProfile(open)
+  // The slides on the player's platinums need the profile: the first waits for it, a while at most.
+  const [waited, setWaited] = useState(false)
+  useEffect(() => {
+    if (!open) return
+    const timer = setTimeout(() => setWaited(true), PROFILE_WAIT_MS)
+    return () => clearTimeout(timer)
+  }, [open])
   useEffect(() => {
     const show = () => setOpen(true)
     document.addEventListener(OPEN_ONBOARDING, show)
@@ -198,12 +217,15 @@ export function Onboarding() {
       me={me}
       data={warming && !data?.current ? null : data}
       profile={profile}
+      waiting={!profile && !waited}
       onDone={done}
     />
   )
 }
 
 const SLIDE_MS = 6500
+// How long the first slide waits for the profile before the story goes on without it.
+const PROFILE_WAIT_MS = 5000
 
 type Platinum = ProfileData['platinums'][number]
 
@@ -519,14 +541,12 @@ function HunterCard({
   newest,
   rarest,
   next,
-  onEnter,
 }: {
   me: Me
   summary: ProfileSummary
   newest: Platinum[]
   rarest?: Platinum | null
   next?: string
-  onEnter: () => void
 }) {
   const t = useMessages(messages)
   return (
@@ -569,9 +589,41 @@ function HunterCard({
           <b>platjourney</b>
         </footer>
       </div>
-      <div className="story-row story-center rise" style={rise(3)}>
-        <button type="button" className="button" onClick={onEnter}>
-          {t('card.enter')} <Icon name="arrow" />
+    </>
+  )
+}
+
+/** The last word: thanks for coming, and the way into the app. */
+function Welcome({ me, onGo }: { me: Me; onGo: () => void }) {
+  const t = useMessages(messages)
+  return (
+    <>
+      <div className="story-orbit" aria-hidden="true">
+        {Array.from({ length: 24 }, (_, i) => (
+          <i
+            // biome-ignore lint/suspicious/noArrayIndexKey: decorative sparks never reorder
+            key={i}
+            style={{
+              left: `${(i * 41) % 100}%`,
+              top: `${10 + ((i * 29) % 80)}%`,
+              animationDelay: `${((i * 0.29) % 5).toFixed(2)}s`,
+            }}
+          />
+        ))}
+      </div>
+      <img className="story-welcome-nexo rise story-center" src="/nexo-avatar.svg" alt="" />
+      <span className="eyebrow rise story-center" style={rise(1)}>
+        {t('welcome.eyebrow')}
+      </span>
+      <h2 className="story-mid rise story-center" style={rise(2)}>
+        {me.demo ? t('welcome.titleDemo') : t('welcome.title', { name: me.onlineId })}
+      </h2>
+      <p className="story-lead rise story-center" style={rise(3)}>
+        {t('welcome.lead')}
+      </p>
+      <div className="story-row story-center rise" style={rise(4)}>
+        <button type="button" className="button" onClick={onGo}>
+          {t('welcome.go')} <Icon name="arrow" />
         </button>
       </div>
     </>
@@ -584,6 +636,7 @@ function slidesFor(
   data: AppStateData | null,
   profile: ProfileData | null,
   onDone: (to?: string) => void,
+  waiting = false,
 ): Slide[] {
   const summary = data?.profile
   const newest = [...(profile?.platinums ?? [])].sort((a, b) =>
@@ -595,7 +648,7 @@ function slidesFor(
   const slides: (Slide | false | null | undefined)[] = [
     {
       key: 'hello',
-      hold: !summary,
+      hold: !summary || waiting,
       body: <Hello me={me} summary={summary} cover={newest[0]?.game.cover_url ?? next?.cover} />,
     },
     newest.length > 0 && { key: 'platinums', body: <Platinums newest={newest} /> },
@@ -613,18 +666,16 @@ function slidesFor(
     next && { key: 'next', body: <Next game={next} onGo={() => onDone(next.to)} /> },
     summary && {
       key: 'card',
-      hold: true,
       center: true,
       body: (
-        <HunterCard
-          me={me}
-          summary={summary}
-          newest={newest}
-          rarest={rarest}
-          next={next?.name}
-          onEnter={() => onDone('/')}
-        />
+        <HunterCard me={me} summary={summary} newest={newest} rarest={rarest} next={next?.name} />
       ),
+    },
+    {
+      key: 'welcome',
+      hold: true,
+      center: true,
+      body: <Welcome me={me} onGo={() => onDone(next?.to ?? '/')} />,
     },
   ]
   return slides.filter((s): s is Slide => !!s)
@@ -635,17 +686,20 @@ export function Stories({
   me,
   data,
   profile,
+  waiting = false,
   onDone,
 }: {
   me: Me
   /** Null while the first PSN sync runs: the first slide waits for it. */
   data: AppStateData | null
   profile: ProfileData | null
+  /** The profile is on its way: the first slide holds until it lands. */
+  waiting?: boolean
   onDone: (to?: string) => void
 }) {
   const t = useMessages(messages)
   const ref = useRef<HTMLDialogElement>(null)
-  const slides = slidesFor(me, data, profile, onDone)
+  const slides = slidesFor(me, data, profile, onDone, waiting)
   const [at, setAt] = useState(0)
   const [progress, setProgress] = useState(0)
   const index = Math.min(at, slides.length - 1)

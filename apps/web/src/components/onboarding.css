@@ -854,4 +854,33 @@
       transition: none !important;
     }
   }
+
+  /* The welcome: Nexo floating over the line, the thanks and the way in. */
+  .story-welcome-nexo {
+    width: 96px;
+    height: 96px;
+    margin-bottom: 8px;
+    animation: welcome-float 3s ease-in-out infinite;
+  }
+
+  @keyframes welcome-float {
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  .story-lead {
+    max-width: 34ch;
+    margin: 0;
+    color: var(--color-fg-soft);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    text-align: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .story-welcome-nexo {
+      animation: none;
+    }
+  }
 }

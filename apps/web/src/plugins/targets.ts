@@ -282,5 +282,6 @@ export type Target =
   | 'UserText'
   | 'Username'
   | 'WaitingForSignal'
+  | 'Welcome'
   | 'YearPace'
   | 'YearPlatinums'

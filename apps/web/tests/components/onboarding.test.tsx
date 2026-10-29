@@ -1,5 +1,5 @@
 import { afterEach, expect, mock, test } from 'bun:test'
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
 import { Onboarding, OPEN_ONBOARDING } from '../../src/components/onboarding'
 import type { Me } from '../../src/lib/types'
@@ -140,4 +140,24 @@ test('while the first sync runs the hello waits with the sync line', () => {
     value: { me: player, data: { ...full, current: null }, warming: true },
   })
   expect(screen.getByText('Lendo seus troféus na PSN…')).toBeTruthy()
+})
+
+test('the story ends on a thank-you, and its button starts the journey at the next game', async () => {
+  const calls = mockApi({ '/api/profile': profile, 'POST /api/account/onboarded': { ok: true } })
+  renderApp(<Onboarding />, { value: { me: player, data: full } })
+  await Bun.sleep(20)
+  for (let i = 0; i < 7; i++) next()
+  expect(shown().textContent).toContain('Obrigado por chegar, ')
+  fireEvent.click(within(shown()).getByRole('button', { name: /Começar jornada/ }))
+  expect(path()).toBe('/game')
+  expect(calls.some((c) => c.path === '/api/account/onboarded')).toBe(true)
+})
+
+test('the first slide holds while the profile is on its way, then the platinum slides join', async () => {
+  let answer: (v: Response) => void = () => {}
+  mockApi({ '/api/profile': () => new Promise<Response>((r) => (answer = r)) })
+  renderApp(<Onboarding />, { value: { me: player, data: full } })
+  expect(document.querySelector('.story-bars')?.children.length).toBe(4)
+  answer(new Response(JSON.stringify(profile)))
+  await waitFor(() => expect(document.querySelector('.story-bars')?.children.length).toBe(8))
 })
