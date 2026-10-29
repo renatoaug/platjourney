@@ -210,7 +210,7 @@ describe('what the demo cannot do', () => {
       readOnly: true,
     }
     const { unmount } = render(<Plan plan={samplePlan} {...props} />)
-    expect(document.querySelector('.road')).toBeTruthy()
+    expect(document.querySelector('.route-track')).toBeTruthy()
     expect(document.querySelector('.plan-actions')).toBeNull()
     unmount()
     render(<Plan plan={null} {...props} />)

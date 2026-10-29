@@ -56,6 +56,8 @@ export interface Game {
   developers?: string[]
   website?: string | null
   released_at?: string | null
+  /** The game's color, read from its picture: tinted surfaces use it. */
+  tint?: string | null
 }
 
 export interface ProfileSummary {
@@ -185,6 +187,9 @@ export interface RankingItem {
   platform: string
   icon?: string
   cover?: string
+  /** The wide picture behind the game on the console home, and the game's color. */
+  art?: string | null
+  tint?: string | null
   progress: number
   remaining: number
   hours?: number

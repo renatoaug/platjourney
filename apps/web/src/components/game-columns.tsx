@@ -18,10 +18,12 @@ export function GameColumns({
   trophies,
   guide,
   style,
+  id,
 }: {
   trophies: ReactNode
   guide: ReactNode
   style?: React.CSSProperties
+  id?: string
 }) {
   const t = useMessages(messages)
   const [side, setSideState] = useState<Side>(remembered)
@@ -30,7 +32,7 @@ export function GameColumns({
     setSideState(s)
   }
   return (
-    <div className="game-columns-wrap" data-side={side} style={style}>
+    <div className="game-columns-wrap" id={id} data-side={side} style={style}>
       {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control */}
       <div className="segmented game-switch" role="group" aria-label={t('label')}>
         {(['guide', 'trophies'] as const).map((s) => (

@@ -1,5 +1,15 @@
 /* Cards, rows, tiles, tags, bars and the other shared surfaces. */
 @layer base {
+  /* A surface painted in a game's color (lib/tint): --game-tint is the light color of its picture,
+     --game-tint-deep the near-black of the same hue behind it. Without a game, the brand's own. */
+  .tinted {
+    --game-tint-deep: color-mix(
+      in srgb,
+      var(--game-tint, var(--color-accent)) var(--alpha-tint),
+      var(--color-bg)
+    );
+  }
+
   .empty {
     color: var(--color-fg-muted);
   }
@@ -560,9 +570,5 @@
     .plan {
       padding: 18px;
     }
-  }
-
-  .profile[data-tour-spot] {
-    animation: tour-spot 1.6s ease-in-out infinite;
   }
 }

@@ -15,6 +15,7 @@ import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState } from '../ui/states'
 import { TrophyArt } from '../ui/trophy-art'
+import { useSlide } from '../ui/use-slide'
 import { nexoHref } from './tip'
 import './trophy-list.css'
 
@@ -277,6 +278,18 @@ function resultsLine(t: Translator<typeof messages>, start: number, total: numbe
 }
 
 // `np` is the trophy list's id on PSN; with it, trophies not yet earned get a
+/** How many players have the trophy, on the row's right: the share big, its tier under it. */
+function TrophyRarity({ t }: { t: Trophy }) {
+  const tr = useMessages(messages)
+  if (!t.rarity && t.rarityTier == null) return null
+  return (
+    <span className="trophy-rarity">
+      <b>{fmtRate(t.earnedRate)}%</b>
+      <small>{rarityLabel(t, tr)}</small>
+    </span>
+  )
+}
+
 function TrophyCard({
   t,
   ask,
@@ -288,7 +301,7 @@ function TrophyCard({
   const help = ask && !t.earned
   return (
     <article
-      className={`trophy-row${t.earned ? ' is-earned' : ''}${t.type === 'platinum' ? ' is-platinum' : ''}`}
+      className={`trophy-row tier-${t.type}${t.earned ? ' is-earned' : ''}${t.type === 'platinum' ? ' is-platinum' : ''}`}
     >
       <div className="trophy-art">
         <TrophyArt url={t.iconUrl} />
@@ -306,11 +319,6 @@ function TrophyCard({
             <Icon name="trophy" />
             {TYPES[t.type] ? tr(TYPES[t.type]) : t.type}
           </span>
-          {(t.rarity || t.rarityTier != null) && (
-            <span>
-              {fmtRate(t.earnedRate)}% · {rarityLabel(t, tr)}
-            </span>
-          )}
           {t.earned && (
             <span className="trophy-earned-date">
               {t.earnedAt ? tr('earnedOn', { date: fmtDate(t.earnedAt) }) : tr('earned')}
@@ -328,6 +336,7 @@ function TrophyCard({
           </div>
         ) : null}
       </div>
+      <TrophyRarity t={t} />
       {help && t.type !== 'platinum' && (
         <Link
           className="trophy-help-btn"
@@ -429,6 +438,7 @@ export function TrophyList({
   const [chosenSort, setChosenSort] = useState<string | null>(null)
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
+  const statusRef = useSlide<HTMLDivElement>(status)
   const controlsRef = useRef<HTMLDivElement>(null)
   const pagerRef = useRef<HTMLElement>(null)
   const paged = useRef(false)
@@ -486,8 +496,8 @@ export function TrophyList({
       <h2 className="trophy-heading">
         <Icon name="trophy" />
         {t('heading')}{' '}
-        <span id={`${prefix}-count`} className="muted">
-          {catalogOnly ? `(${scope.length})` : `(${earned}/${scope.length})`}
+        <span id={`${prefix}-count`} className="heading-count">
+          {catalogOnly ? scope.length : `${earned}/${scope.length}`}
         </span>
       </h2>
       {list.length === 0 ? (
@@ -507,7 +517,12 @@ export function TrophyList({
             </label>
             <div className="trophy-toolbar">
               {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
-              <div className="trophy-status" role="group" aria-label={t('statusLabel')}>
+              <div
+                className="trophy-status"
+                role="group"
+                aria-label={t('statusLabel')}
+                ref={statusRef}
+              >
                 {(['all', 'pending', 'earned'] as const).map((value) => (
                   <button
                     key={value}

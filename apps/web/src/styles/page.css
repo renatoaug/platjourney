@@ -182,12 +182,4 @@
   .app[hidden] {
     display: none;
   }
-
-  /* Profile stop: the two settings it points at. */
-  #main-content [data-tour-spot] {
-    position: relative;
-    z-index: 1;
-    opacity: 1;
-    animation: tour-spot 1.6s ease-in-out infinite;
-  }
 }

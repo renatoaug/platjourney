@@ -134,31 +134,47 @@
   }
 
   /* A segmented control: buttons in a tray, the chosen one raised (trophy status, language). */
+  /* HUD look, like the guide's tabs: joined cells in one border, the chosen one filled. */
   .trophy-status {
     display: flex;
-    align-items: center;
-    gap: 3px;
-    padding: 3px;
-    background: var(--color-bg-subtle);
+    align-items: stretch;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-control);
   }
 
   .trophy-status button {
-    background: transparent;
+    padding: 8px 12px;
     border: 0;
+    border-right: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
     color: var(--color-fg-muted);
-    padding: 8px 11px;
-    font-size: var(--text-sm);
-    border-radius: var(--radius-tag);
-    font-weight: var(--weight-medium);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
   }
 
-  .trophy-status button[aria-pressed="true"] {
-    background: var(--color-border);
-    color: var(--color-fg);
+  .trophy-status button:last-child {
+    border-right: 0;
+  }
+
+  .trophy-status button[aria-pressed="true"],
+  .trophy-status button[aria-pressed="true"]:hover {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    transition: color 0.2s;
+  }
+
+  /* With the sliding fill, the pill under the items is the fill. */
+  .trophy-status[data-slide] button[aria-pressed="true"],
+  .trophy-status[data-slide] button[aria-pressed="true"]:hover {
+    background: transparent;
   }
 
   .trophy-status button:hover {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-wash), transparent);
     color: var(--color-fg);
   }
 
@@ -603,5 +619,120 @@
     .trophy-help-btn:hover {
       padding: 6px;
     }
+  }
+
+  /* ---- HUD: a log of the list. The icon framed in its tier's color (lit once earned), the name and
+     what to do, and how many players have it on the right, the number first. ---- */
+  .trophy-row {
+    --tier: var(--color-trophy-bronze);
+    align-items: center;
+  }
+
+  .trophy-row.tier-silver {
+    --tier: var(--color-trophy-silver);
+  }
+
+  .trophy-row.tier-gold {
+    --tier: var(--color-trophy-gold);
+  }
+
+  .trophy-row.tier-platinum {
+    --tier: var(--color-trophy-platinum);
+  }
+
+  .trophy-row .trophy-art {
+    border: 2px solid color-mix(in srgb, var(--tier) var(--alpha-glow), transparent);
+  }
+
+  .trophy-row.is-earned .trophy-art {
+    border-color: var(--tier);
+  }
+
+  .trophy-row-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .trophy-rarity {
+    display: grid;
+    flex: none;
+    justify-items: end;
+    gap: 2px;
+    min-width: 72px;
+    text-align: right;
+  }
+
+  .trophy-rarity b {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .trophy-rarity small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .trophy-row.is-platinum .trophy-rarity b {
+    color: var(--color-trophy-platinum);
+  }
+
+  /* The platinum lines up with the rest: same padding, its glow drawn behind the row instead. */
+  .trophy-row.is-platinum {
+    position: relative;
+    isolation: isolate;
+    margin: 0;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: none;
+  }
+
+  .trophy-row.is-platinum::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 6px -12px;
+    border-radius: var(--radius-control);
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-soft), transparent),
+      transparent 85%
+    );
+  }
+
+  /* The card's title as a HUD band: a label in capitals over the card's top, the count as a chip. */
+  .trophy-heading {
+    box-sizing: border-box;
+    height: 56px;
+    margin: -24px -24px 18px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+    font-size: var(--text-sm);
+    line-height: 1;
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .trophy-heading .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .heading-count {
+    margin-left: auto;
+    padding: 2px 10px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    color: var(--color-fg-soft);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: normal;
   }
 }

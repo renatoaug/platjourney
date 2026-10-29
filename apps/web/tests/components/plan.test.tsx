@@ -31,10 +31,13 @@ describe('Plan', () => {
     expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('25')
     expect(screen.getByText(/1 aviso para esta sessão/)).toBeTruthy()
     expect(screen.getByText('Feito')).toBeTruthy()
-    expect(screen.getByText('Agora')).toBeTruthy()
+    // The step to play now is on the track and open under it.
+    expect(screen.getAllByText('Agora')).toHaveLength(2)
     expect(screen.getByText('Depois do passo 2')).toBeTruthy()
     expect(screen.getByText('Qualquer momento')).toBeTruthy()
     expect(screen.getByText('Macete')).toBeTruthy()
+    // The session's end opens from the end of the track.
+    fireEvent.click(screen.getByRole('button', { name: /Fim da sessão/ }))
     expect(screen.getByText(/Sobrou tempo\? Cace orelhas/)).toBeTruthy()
     expect(screen.getByRole('button', { name: /Refazer roteiro/ })).toBeTruthy()
     expect(screen.getByRole('button', { name: /Encerrar sessão/ })).toBeTruthy()

@@ -1,5 +1,12 @@
 /** Session planner: pick the time you have, get the ordered route of trophies. */
-import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react'
+import {
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, type Translator, translator, useMessages } from '../i18n/i18n'
 import { ApiError, api, del } from '../lib/api'
@@ -233,79 +240,140 @@ function stepLabel(t: Translator<typeof messages>, s: PlanStep, i: number, state
   return t('step.after', { step: i })
 }
 
-function Step({ s, i, plan }: { s: PlanStep; i: number; plan: SessionPlan }) {
+/** The route as a track of its trophies (lit up to the step to play now) and, under it, the picked
+ * step open: what to do, the trick and the time. The session's end waits at the end of the track. */
+function Route({ plan }: { plan: SessionPlan }) {
   const t = useMessages(messages)
-  const state = s.done ? 'done' : i === plan.nextIndex ? 'next' : 'later'
-  const label = stepLabel(t, s, i, state)
-  const prevDone = i > 0 && plan.steps[i - 1].done
+  const steps = plan.steps
+  const [picked, setPicked] = useState<number | null>(null)
+  const next =
+    plan.nextIndex >= 0 && plan.nextIndex < steps.length && !steps[plan.nextIndex].done
+      ? plan.nextIndex
+      : steps.findIndex((s) => !s.done)
+  const open = picked ?? (next >= 0 ? next : steps.length)
+  const stops = steps.length + 1
+  const lit = (next >= 0 ? next : steps.length) / (stops - 1)
+  const s = steps[open] as PlanStep | undefined
+  const state = (i: number) => (steps[i].done ? 'done' : i === next ? 'next' : 'later')
   return (
-    <li
-      className={`road-step ${state} ${s.flexible ? 'flexible' : ''} ${prevDone ? 'prev-done' : ''}`}
-    >
-      <div className="road-rail">
-        <span className="road-clock">{fmtMinutes(s.startsAt)}</span>
-        <span className="road-node">{s.done ? <Icon name="check" /> : i + 1}</span>
-      </div>
-      {/* Only the step to play now is open; the rest is one line until asked for. */}
-      <details className="road-card" data-step={i} open={state === 'next'}>
-        <summary>
-          {s.iconUrl ? (
-            <img className={`road-art ${s.type ?? ''}`} src={s.iconUrl} alt="" loading="lazy" />
-          ) : (
-            <span className="road-art empty">
-              <Icon name="trophy" />
-            </span>
-          )}
-          <span className="road-title">
-            <span className="road-tag">{label}</span>
-            <h3>{s.trophy}</h3>
-          </span>
-          <span className="road-time">
-            <Icon name="clock" /> ~{fmtMinutes(s.minutes)}
-          </span>
-          <span className="road-chevron">
-            <Icon name="chevron-down" />
-          </span>
-        </summary>
-        <div className="road-body">
-          <Markdown text={s.how} />
-          {s.trick && (
-            <div className="plan-trick">
-              <Icon name="bookmark" />
-              <span>
-                <b>{t('step.trick')}</b> <GuideText text={s.trick} />
+    <>
+      <div className="route-scroll">
+        <ol className="route-track" style={{ '--stops': stops, '--lit': lit } as CSSProperties}>
+          {steps.map((step, i) => (
+            <li
+              // biome-ignore lint/suspicious/noArrayIndexKey: the route's order is fixed; a trophy can repeat
+              key={`${step.trophy}-${i}`}
+              className={`route-stop ${state(i)}${step.flexible ? ' flexible' : ''}`}
+              style={{ '--i': i } as CSSProperties}
+            >
+              <button
+                type="button"
+                aria-pressed={i === open}
+                data-step={i}
+                onClick={() => setPicked(i)}
+              >
+                <span className={`route-art ${step.type ?? ''}`}>
+                  {step.iconUrl ? (
+                    <img src={step.iconUrl} alt="" loading="lazy" />
+                  ) : (
+                    <Icon name="trophy" />
+                  )}
+                  {step.done && (
+                    <span className="route-check">
+                      <Icon name="check" />
+                    </span>
+                  )}
+                </span>
+                <span className="route-tag">{stepLabel(t, step, i, state(i))}</span>
+                <span className="route-clock">{fmtMinutes(step.startsAt)}</span>
+              </button>
+            </li>
+          ))}
+          <li className="route-stop end" style={{ '--i': steps.length } as CSSProperties}>
+            <button
+              type="button"
+              aria-pressed={open === steps.length}
+              onClick={() => setPicked(steps.length)}
+            >
+              <span className="route-art">
+                <Icon name="trophy" />
               </span>
-            </div>
-          )}
-        </div>
-      </details>
-    </li>
+              <span className="route-tag">{t('endTitle')}</span>
+              <span className="route-clock">{fmtMinutes(plan.totalMinutes)}</span>
+            </button>
+          </li>
+        </ol>
+      </div>
+      {s ? (
+        <article key={open} className={`route-focus ${state(open)}`}>
+          <div className="route-focus-art">
+            {s.iconUrl ? <img src={s.iconUrl} alt="" /> : <Icon name="trophy" />}
+          </div>
+          <div className="route-focus-body">
+            <header>
+              <span className="road-tag">{stepLabel(t, s, open, state(open))}</span>
+              <span className="road-time">
+                <Icon name="clock" /> ~{fmtMinutes(s.minutes)}
+              </span>
+            </header>
+            <h3>{s.trophy}</h3>
+            <Markdown text={s.how} />
+            {s.trick && (
+              <div className="plan-trick">
+                <Icon name="bookmark" />
+                <span>
+                  <b>{t('step.trick')}</b> <GuideText text={s.trick} />
+                </span>
+              </div>
+            )}
+          </div>
+        </article>
+      ) : (
+        <article key="end" className="route-focus end">
+          <div className="route-focus-art">
+            <Icon name="trophy" />
+          </div>
+          <div className="route-focus-body">
+            <h3>{t('endTitle')}</h3>
+            {plan.ifTimeLeft && (
+              <p>
+                {t('timeLeft')} {plainText(plan.ifTimeLeft)}
+              </p>
+            )}
+          </div>
+        </article>
+      )}
+    </>
   )
 }
 
 /** Placeholder route: four steps, used while the plan loads and while Nexo builds it. */
 function PlanSkeleton() {
   return (
-    <ol className="road">
-      {repeat(4, (i) => (
-        <li className="road-step later">
-          <div className="road-rail">
-            <Sk w="34px" h={10} />
-            <span className="road-node sk" style={{ animation: 'shimmer 1.3s infinite' }} />
-          </div>
-          <div className="road-card">
-            <div className="road-summary">
-              <Sk w="44px" h={44} style={{ borderRadius: 'var(--radius-control)', flex: 'none' }} />
-              <span className="road-title">
-                <Sk w="70px" h={14} />
-                <Sk w={`${140 + i * 30}px`} h={16} style={{ marginTop: 8 }} />
+    <>
+      <div className="route-scroll">
+        <ol className="route-track" style={{ '--stops': 5, '--lit': 0 } as CSSProperties}>
+          {repeat(5, () => (
+            <li className="route-stop later">
+              <span className="route-stop-sk">
+                <Sk w="56px" h={56} />
+                <Sk w="64px" h={10} />
+                <Sk w="32px" h={8} />
               </span>
-              <Sk w="60px" h={12} />
-            </div>
-          </div>
-        </li>
-      ))}
-    </ol>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <div className="route-focus">
+        <Sk w="96px" h={96} />
+        <div className="route-focus-body">
+          <Sk w="120px" h={18} />
+          <Sk w="240px" h={22} />
+          <Sk w="100%" h={12} />
+          <Sk w="80%" h={12} />
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -532,28 +600,7 @@ export function Plan({
           </ul>
         </details>
       )}
-      <ol className="road">
-        {plan.steps.map((s, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: the route's order is fixed; a trophy can repeat
-          <Step key={`${s.trophy}-${i}`} s={s} i={i} plan={plan} />
-        ))}
-        <li className={`road-step road-end ${plan.steps.at(-1)?.done ? 'prev-done' : ''}`}>
-          <div className="road-rail">
-            <span className="road-clock">{fmtMinutes(plan.totalMinutes)}</span>
-            <span className="road-node">
-              <Icon name="trophy" />
-            </span>
-          </div>
-          <div className="road-card road-finish">
-            <h3>{t('endTitle')}</h3>
-            {plan.ifTimeLeft && (
-              <p>
-                {t('timeLeft')} {plainText(plan.ifTimeLeft)}
-              </p>
-            )}
-          </div>
-        </li>
-      </ol>
+      <Route plan={plan} />
       {!readOnly && (
         <PlanActions closed={closed} discarding={discarding} onNew={onNew} onDiscard={onDiscard} />
       )}

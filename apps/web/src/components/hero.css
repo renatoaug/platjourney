@@ -1,9 +1,24 @@
 @layer screens {
   .hero {
+    /* The game's own near-black (a .tinted hero), else the brand's. */
+    --hero-shade: var(--game-tint-deep, var(--color-on-accent));
     position: relative;
     padding: 0;
     background: var(--color-surface-raised);
     isolation: isolate;
+  }
+
+  /* Opened from the console home, the art and the title fly over from it (view transition). */
+  .hero .bgimg {
+    view-transition-name: game-art;
+  }
+
+  .hero .hero-title {
+    view-transition-name: game-title;
+  }
+
+  .hero.tinted .live-label::before {
+    background: var(--game-tint, var(--color-accent));
   }
 
   .hero::after {
@@ -15,14 +30,14 @@
     background:
       linear-gradient(
         90deg,
-        var(--color-on-accent) 5%,
-        color-mix(in srgb, var(--color-on-accent) var(--alpha-heavy), transparent) 36%,
-        color-mix(in srgb, var(--color-on-accent) var(--alpha-glow), transparent) 62%,
+        var(--hero-shade) 5%,
+        color-mix(in srgb, var(--hero-shade) var(--alpha-heavy), transparent) 36%,
+        color-mix(in srgb, var(--hero-shade) var(--alpha-glow), transparent) 62%,
         transparent 100%
       ),
       linear-gradient(
         0deg,
-        color-mix(in srgb, var(--color-on-accent) var(--alpha-dim), transparent) 0%,
+        color-mix(in srgb, var(--hero-shade) var(--alpha-dim), transparent) 0%,
         transparent 45%
       );
   }
@@ -163,12 +178,50 @@
     color: var(--color-accent);
   }
 
+  .hero-progress .bar-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
   .hero-progress .bar {
+    flex: 1;
     height: 9px;
   }
 
   .hero-progress .bar i {
     box-shadow: var(--shadow-glow);
+  }
+
+  /* The platinum waits at the end of the bar, dim, and lights up once earned. */
+  .hero-progress .plat-mark {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border-radius: var(--radius-round);
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-fg-subtle);
+  }
+
+  .hero-progress .plat-mark .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .hero-progress .plat-mark.earned {
+    border-color: var(--color-trophy-platinum);
+    color: var(--color-trophy-platinum);
+    background: color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-line), transparent);
+    box-shadow:
+      0 0 8px color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-strong), transparent),
+      0 0 22px color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
+  }
+
+  .hero-progress .remaining .plat-done {
+    color: var(--color-trophy-platinum);
+    font-weight: var(--weight-medium);
   }
 
   .hero-progress .remaining {
@@ -375,5 +428,377 @@
     .hero-progress {
       max-width: none;
     }
+  }
+
+  /* The game page's hero: no card, straight on the art that runs across the top of the screen
+     (the backdrop), with the next trophy beside the headline. */
+  .hero.immersive {
+    background: none;
+    isolation: auto;
+  }
+
+  .hero.immersive::after,
+  .hero.immersive .bgimg {
+    display: none;
+  }
+
+  .hero.immersive .inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr auto;
+    gap: 22px 40px;
+    min-height: clamp(300px, 40vh, 420px);
+    padding: 4px 0 28px;
+  }
+
+  .hero.immersive .hero-top {
+    grid-column: 1 / -1;
+  }
+
+  .hero-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  /* A game outside the library: what it is, in a few lines. */
+  .hero-summary {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    max-width: 640px;
+  }
+
+  .hero.immersive .hero-headline {
+    align-self: end;
+  }
+
+  /* The page says what it is already; the name and the platform are enough. */
+  .hero.immersive .live-label {
+    visibility: hidden;
+  }
+
+  .hero.immersive .hero-title {
+    max-width: 18ch;
+    font-size: clamp(38px, 4.4vw, 72px);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    text-shadow: 0 4px 40px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+    text-wrap: balance;
+  }
+
+  /* The call to action sits under the progress, not off at the far end of it. */
+  .hero.immersive .hero-bottom {
+    grid-column: 1;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    max-width: 720px;
+  }
+
+  .hero.immersive .cta {
+    justify-content: flex-start;
+  }
+
+  .hero-aside {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    align-self: end;
+  }
+
+  @media (max-width: 1100px) {
+    .hero.immersive .inner {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+    }
+
+    .hero-aside {
+      grid-column: 1;
+      grid-row: auto;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .hero.immersive .inner {
+      min-height: 0;
+      padding: 40px 0 24px;
+    }
+
+    .hero.immersive .hero-title {
+      font-size: clamp(34px, 9vw, 52px);
+    }
+  }
+
+  /* A game outside the library: its list by tier, as quiet as the facts row above it. */
+  .trophy-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    color: var(--color-fg-soft);
+    font-size: var(--text-xs);
+  }
+
+  .trophy-breakdown b {
+    color: var(--color-fg);
+    font-weight: var(--weight-semibold);
+  }
+
+  .trophy-breakdown .tier {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .trophy-breakdown .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  /* The actions in one row: smaller buttons, the store as one more of them. */
+  .hero.immersive .cta {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .hero.immersive .cta > :is(.button, button),
+  .hero.immersive .cta .game-about-buy {
+    padding: 9px 14px;
+    font-size: var(--text-md);
+  }
+
+  .trophy-breakdown .platinum .icon {
+    color: var(--color-trophy-platinum);
+  }
+
+  .trophy-breakdown .gold .icon {
+    color: var(--color-trophy-gold);
+  }
+
+  .trophy-breakdown .silver .icon {
+    color: var(--color-trophy-silver);
+  }
+
+  .trophy-breakdown .bronze .icon {
+    color: var(--color-trophy-bronze);
+  }
+
+  .trophy-breakdown .plat-rate {
+    color: var(--color-trophy-platinum);
+  }
+
+  /* The facts card beside the headline: glass over the art, the cover and the facts as before. */
+  .hero-aside .game-about {
+    width: min(400px, 100%);
+    padding: 18px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-dim), transparent);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .hero-aside .game-about-cover {
+    width: 72px;
+    height: 96px;
+  }
+
+  /* The card on the right while the page loads, the size of the next trophy's card. */
+  .hero-aside-sk {
+    display: grid;
+    gap: 14px;
+    width: min(380px, 100%);
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-dim), transparent);
+  }
+
+  .hero-aside-sk-row {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 14px;
+  }
+
+  /* On the game page the facts and the list by tier are one family of glass chips: same height,
+     same border, the number first. No separators, no difficulty segments. */
+  .hero.immersive .meta,
+  .hero.immersive .trophy-breakdown {
+    gap: 8px;
+    font-size: var(--text-sm);
+  }
+
+  .hero.immersive .meta {
+    margin-top: 14px;
+  }
+
+  .hero.immersive .meta > span,
+  .hero.immersive .trophy-breakdown > * {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    backdrop-filter: blur(10px);
+    color: var(--color-fg-soft);
+  }
+
+  .hero.immersive .meta > span + span::before {
+    display: none;
+  }
+
+  /* A chip keeps its whole text: the row wraps instead of squeezing one. */
+  .hero.immersive .meta > * {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .hero.immersive .meta .dm-segments {
+    display: none;
+  }
+
+  /* A size container takes no width from its text: in a chip the band's name sizes it. */
+  .hero.immersive .meta .dm-body {
+    display: flex;
+    align-items: center;
+    width: auto;
+    container-type: normal;
+  }
+
+  .hero.immersive .meta .dm-number {
+    font-size: var(--text-md);
+  }
+
+  .hero.immersive .meta :is(.dm-body, .dm-band) {
+    flex: none;
+    width: max-content;
+  }
+
+  .hero.immersive .meta .dm-band {
+    font-size: var(--text-sm);
+  }
+
+  /* The progress in one glass row, beside the chips: the count, the bar, the percent and the
+     platinum at the end, lit once earned. What is left goes under it; "earned" needs no words. */
+  .hero.immersive .hero-progress {
+    display: grid;
+    grid-template-columns: auto minmax(80px, 1fr) auto auto;
+    grid-template-areas: "count bar pct plat";
+    align-items: center;
+    gap: 6px 14px;
+    padding: 12px 16px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .hero.immersive .hero-progress :is(.barlabel, .bar-row) {
+    display: contents;
+  }
+
+  .hero.immersive .hero-progress .barlabel > span {
+    grid-area: count;
+    color: var(--color-fg-soft);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+  }
+
+  .hero.immersive .hero-progress .barlabel > span b {
+    margin-right: 4px;
+    color: var(--color-fg);
+    font-size: var(--text-2xl);
+  }
+
+  /* One bar: done in green, the rest in grey. */
+  .hero.immersive .hero-progress .bar {
+    grid-area: bar;
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+  }
+
+  .hero.immersive .hero-progress .bar > i {
+    border-radius: inherit;
+  }
+
+  .hero.immersive .hero-progress .pct {
+    grid-area: pct;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+  }
+
+  .hero.immersive .hero-progress .plat-mark {
+    grid-area: plat;
+    width: 30px;
+    height: 30px;
+  }
+
+  /* What is left takes a row of its own only when there is something to say. */
+  .hero.immersive .hero-progress .remaining {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: var(--text-xs);
+  }
+
+  .hero.immersive .hero-progress .plat-done,
+  .hero.immersive .hero-progress .remaining:not(:has(> :not(.plat-done))) {
+    display: none;
+  }
+
+  /* The difficulty chip in its band's color: border, wash and name. */
+  .hero.immersive .meta > .dm {
+    border-color: color-mix(in srgb, var(--dm-color) var(--alpha-glow), transparent);
+    background: color-mix(in srgb, var(--dm-color) var(--alpha-wash), transparent);
+    color: var(--dm-color);
+  }
+
+  .hero.immersive .meta > .dm .dm-name {
+    color: var(--dm-color);
+  }
+
+  .hero.immersive .meta .dm-name {
+    overflow: visible;
+  }
+
+  .hero.immersive .meta > .ok {
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    color: var(--color-accent);
+  }
+
+  .hero.immersive .meta > .warn {
+    border-color: color-mix(in srgb, var(--color-trophy-gold) var(--alpha-glow), transparent);
+    color: var(--color-trophy-gold);
+  }
+
+  .hero.immersive .trophy-breakdown b {
+    color: var(--color-fg);
+  }
+
+  /* Only the total is a chip; the tiers after it are plain text split by thin dividers. */
+  .hero.immersive .trophy-breakdown > :not(b) {
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+
+  .hero.immersive .trophy-breakdown > :not(b) + :not(b)::before {
+    content: "";
+    width: 1px;
+    height: 12px;
+    margin-right: 6px;
+    background: var(--color-border-strong);
+  }
+
+  .hero.immersive .trophy-breakdown {
+    column-gap: 12px;
   }
 }

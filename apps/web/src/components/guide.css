@@ -92,15 +92,26 @@
     color: inherit;
   }
 
+  /* The card's title as a HUD band over its top, the same as the trophies card beside it. */
   .guide-heading {
     display: flex;
     align-items: center;
     gap: 10px;
+    height: 56px;
+    margin: -24px -24px 18px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+    font-size: var(--text-sm);
+    line-height: 1;
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
   }
 
   .guide-heading .icon {
-    width: 22px;
-    height: 22px;
+    width: 16px;
+    height: 16px;
     flex: none;
     color: var(--color-accent);
   }
@@ -1211,5 +1222,149 @@
   .key-ask .icon {
     width: 14px;
     height: 14px;
+  }
+
+  /* ---- HUD: the guide's numbers as a readout panel and its tabs as one segmented selector. ---- */
+
+  /* One bordered panel split in cells: the label small over the value, like a game's status screen. */
+  .quick-facts {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+  }
+
+  .quick-fact {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "icon label"
+      "value value";
+    align-items: center;
+    gap: 4px 6px;
+    padding: 10px 12px;
+    /* Lines between the cells, drawn by each cell; the panel's border closes the edges. */
+    box-shadow:
+      1px 0 0 var(--color-border),
+      0 1px 0 var(--color-border);
+  }
+
+  .quick-fact .icon {
+    grid-area: icon;
+    width: 12px;
+    height: 12px;
+    margin: 0;
+  }
+
+  .quick-fact dt {
+    grid-area: label;
+    overflow: hidden;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-label);
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+  }
+
+  .quick-fact dd {
+    grid-area: value;
+    overflow: hidden;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-tight);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* A cell in the color of what it says: the difficulty by band, missables as a warning. */
+  .quick-fact.tone-easy {
+    --tone: var(--color-accent);
+  }
+
+  .quick-fact.tone-medium,
+  .quick-fact.tone-warn {
+    --tone: var(--color-trophy-gold);
+  }
+
+  .quick-fact.tone-hard {
+    --tone: var(--color-highlight-warm);
+  }
+
+  .quick-fact.tone-brutal {
+    --tone: var(--color-danger);
+  }
+
+  .quick-fact[class*="tone-"] {
+    background: color-mix(in srgb, var(--tone) var(--alpha-wash), transparent);
+  }
+
+  .quick-fact[class*="tone-"] :is(.icon, dd) {
+    color: var(--tone);
+  }
+
+  /* The tabs as one segmented selector: joined cells, the chosen one filled. */
+  .guide-tabs {
+    gap: 0;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+  }
+
+  .guide-tabs button {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border: 0;
+    border-right: 1px solid var(--color-border);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .guide-tabs button:last-child {
+    border-right: 0;
+  }
+
+  .guide-tabs button:hover {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-wash), transparent);
+    color: var(--color-fg);
+  }
+
+  .guide-tabs button.active,
+  .guide-tabs button.active:hover {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  /* The tab bar (its place kept by the guide) becomes a fill that slides under the chosen tab. */
+  .guide-tabs {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .guide-tabs::after {
+    z-index: -1;
+    top: 0;
+    bottom: 0;
+    height: auto;
+  }
+
+  .guide-tabs button.active,
+  .guide-tabs button.active:hover {
+    background: transparent;
+  }
+
+  .guide-tabs button.active .guide-tab-count {
+    color: inherit;
+    opacity: 0.7;
   }
 }

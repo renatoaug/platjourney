@@ -61,13 +61,10 @@
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
   --color-highlight-warm: var(--palette-peach-300);
-  /* The tour's guide card: light, so it never reads as a part of the product */
-  --color-guide: var(--palette-platinum-100);
-  --color-guide-line: var(--palette-platinum-300);
-  --color-on-guide: var(--palette-neutral-950);
-  --color-on-guide-muted: var(--palette-neutral-700);
   /* Trophies */
   --color-trophy-platinum: var(--palette-platinum-300);
+  /* The light passing over platinum: shine on text, covers and the hunter card */
+  --color-trophy-platinum-light: var(--palette-platinum-100);
   --color-trophy-gold: var(--palette-gold-400);
   --color-trophy-silver: var(--palette-silver-300);
   --color-trophy-bronze: var(--palette-bronze-400);
