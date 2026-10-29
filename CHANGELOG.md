@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.4](https://github.com/renatoaug/platjourney/compare/v0.38.3...v0.38.4) (2026-10-29)
+
+### Bug Fixes
+
+* **web:** say an unplayed session plan waits for the session, with the day ([#113](https://github.com/renatoaug/platjourney/issues/113)) ([f33a832](https://github.com/renatoaug/platjourney/commit/f33a83210132ae9d2d746e5f65f26d8f50282558))
+
 ## [0.38.3](https://github.com/renatoaug/platjourney/compare/v0.38.2...v0.38.3) (2026-10-29)
 
 ### Bug Fixes
