@@ -63,6 +63,20 @@ export async function setPlanReason(
   return Array.isArray(rows) && rows.length > 0
 }
 
+/** Plans that expired since a moment, to tick off the trophies that came in after their time. */
+export async function expiredSince(since: Date): Promise<(SessionPlan & { user: string })[]> {
+  const rows = await q<unknown[]>(
+    "SELECT * FROM session_plan WHERE status = 'expired' AND ended_at >= $since AND user.demo != true",
+    { since },
+  )
+  return (rows ?? []).map((r) => fromRow(r) as SessionPlan & { user: string })
+}
+
+/** The steps of a closed plan, with what is done now; its status and end stay. */
+export async function setPlanSteps(id: string, steps: PlanStep[]): Promise<void> {
+  await q('UPDATE $id SET steps = $steps', { id: planRef(id), steps: snakeKeys(steps) })
+}
+
 /** Every active plan but the demo's, whose plan is always the one being played. */
 export async function activePlans(): Promise<(SessionPlan & { user: string })[]> {
   const rows = await q<unknown[]>(
