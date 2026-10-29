@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Page } from '../app/page'
 import { DifficultyMeter } from '../components/difficulty-meter'
-import { GENRES_PT } from '../components/game-showcase'
-import { PageHero } from '../components/page-hero'
+import { GameBackdrop } from '../components/game-backdrop'
+import { GENRES_PT, image } from '../components/game-showcase'
+import { GuideSpotlight, pickOfTheDay } from '../components/guide-spotlight'
 import { titleHref } from '../components/tip'
-import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
+import { defineMessages, getLocale, Language, useLocale, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
@@ -15,6 +16,7 @@ import { Pager } from '../ui/pager'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { toast } from '../ui/toast'
+import { useSlide } from '../ui/use-slide'
 import '../components/trophy-list.css'
 import './guides.css'
 
@@ -23,6 +25,10 @@ const messages = defineMessages({
     eyebrow: 'GUIAS DE PLATINA',
     title: 'Guias',
     lead: 'Todos os jogos com guia de platina. Busque qualquer jogo pelo nome.',
+    leadCount: {
+      one: '{total} jogo com guia de platina. Busque qualquer jogo pelo nome.',
+      other: '{total} jogos com guia de platina. Busque qualquer jogo pelo nome.',
+    },
     filters: 'Filtros',
     filtersOn: { one: 'Filtros · {count}', other: 'Filtros · {count}' },
     clear: 'Limpar filtros',
@@ -76,6 +82,10 @@ const messages = defineMessages({
     eyebrow: 'PLATINUM GUIDES',
     title: 'Guides',
     lead: 'Every game with a platinum guide. Search any game by name.',
+    leadCount: {
+      one: '{total} game with a platinum guide. Search any game by name.',
+      other: '{total} games with a platinum guide. Search any game by name.',
+    },
     filters: 'Filters',
     filtersOn: { one: 'Filters · {count}', other: 'Filters · {count}' },
     clear: 'Clear filters',
@@ -212,7 +222,7 @@ function GuideCard({ item }: { item: GuideCardItem }) {
         <Cover url={item.cover_url} name={item.name} className="guide-tile-cover" />
         {g && g.difficulty > 0 && (
           <span className="guide-tile-score">
-            <DifficultyMeter value={g.difficulty} />
+            <DifficultyMeter value={g.difficulty} look="compact" />
           </span>
         )}
       </span>
@@ -509,6 +519,49 @@ function GuideResults({
   )
 }
 
+/** The page's top: the title, the count and the search, the guide of the day beside them and its
+ * scene across the top of the screen. */
+function GuidesTop({
+  featured,
+  count,
+  typed,
+  onType,
+}: {
+  featured: GuideCardItem | null
+  count: number | null
+  typed: string
+  onType: (text: string) => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <>
+      {featured?.shot && <GameBackdrop src={image(featured.shot, 't_1080p')} />}
+      <section className="guides-top">
+        <div className="guides-top-text">
+          <span className="eyebrow">{t('eyebrow')}</span>
+          <h1>{t('title')}</h1>
+          <p>
+            {count
+              ? t('leadCount', { count, total: count.toLocaleString(getLocale()) })
+              : t('lead')}
+          </p>
+          <label className="guides-hero-search">
+            <Icon name="search" />
+            <input
+              type="search"
+              aria-label={t('search')}
+              placeholder={t('searchPlaceholder')}
+              value={typed}
+              onChange={(e) => onType(e.target.value)}
+            />
+          </label>
+        </div>
+        {featured && <GuideSpotlight game={featured} />}
+      </section>
+    </>
+  )
+}
+
 /** `load` answers a query string with a page of games; stories pass sample data instead of the API. */
 export function Guides({
   load: loadPage = fetchGuides,
@@ -536,6 +589,7 @@ export function Guides({
     if (typed.trim() !== q) setTyped(q)
   }
   const [load, setLoad] = useState<Load>({ status: 'loading' })
+  const platformRef = useSlide<HTMLDivElement>(platform)
 
   // Every change goes to the address, so a link or the back button gives the same list.
   const change = (next: Record<string, string>) =>
@@ -579,29 +633,18 @@ export function Guides({
 
   const searching = q.length >= 2
   const data = load.status === 'ok' ? load.data : null
-  // The top's collage stays as it was while a new page loads.
-  const [collage, setCollage] = useState<string[]>([])
-  if (data?.collage?.length && data.collage !== collage) setCollage(data.collage)
+  // Nothing searched, filtered or paged: the page opens with the guide of the day and the shelves.
+  const idle = !q && !platform && !activeFilters && page === 1
+  // The guide of the day and the count come from the first full list and stay while others load.
+  const [featured, setFeatured] = useState<GuideCardItem | null>(null)
+  const [count, setCount] = useState<number | null>(null)
+  if (data && idle && !sort && count !== data.total) {
+    setCount(data.total)
+    setFeatured(pickOfTheDay(data.items))
+  }
   return (
     <Page path="/guides">
-      <PageHero
-        eyebrow={t('eyebrow')}
-        title={t('title')}
-        lead={t('lead')}
-        images={collage}
-        look="covers"
-      >
-        <label className="guides-hero-search">
-          <Icon name="search" />
-          <input
-            type="search"
-            aria-label={t('search')}
-            placeholder={t('searchPlaceholder')}
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-          />
-        </label>
-      </PageHero>
+      <GuidesTop featured={featured} count={count} typed={typed} onType={setTyped} />
       <div className="guides-layout">
         <details
           className="guides-aside"
@@ -618,7 +661,12 @@ export function Guides({
         <div className="guides-main">
           <div className="guides-toolbar">
             {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
-            <div className="trophy-status" role="group" aria-label={t('platformLabel')}>
+            <div
+              className="trophy-status"
+              role="group"
+              aria-label={t('platformLabel')}
+              ref={platformRef}
+            >
               {['', ...PLATFORMS].map((value) => (
                 <button
                   key={value || 'all'}

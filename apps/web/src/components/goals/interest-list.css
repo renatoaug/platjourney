@@ -344,4 +344,101 @@
     background: var(--color-border);
     font-size: var(--text-base);
   }
+
+  /* ---- HUD: the filters as one segmented selector, the rows as a log of the list. ---- */
+  .goal-filters {
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+  }
+
+  .goal-filters .chip {
+    flex: 1;
+    justify-content: center;
+    white-space: nowrap;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 0;
+    border-right: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .goal-filters .chip:last-child {
+    border-right: 0;
+  }
+
+  .goal-filters .chip:hover {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-wash), transparent);
+    color: var(--color-fg);
+  }
+
+  .goal-filters .chip.active,
+  .goal-filters .chip.active:hover {
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .goal-filters[data-slide] .chip.active,
+  .goal-filters[data-slide] .chip.active:hover {
+    background: transparent;
+  }
+
+  .goal-filters .chip.active .chip-count {
+    color: inherit;
+    opacity: 0.7;
+  }
+
+  /* The place in the list as a number in a frame, the first one lit. */
+  .goal-game-status {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-control);
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+  }
+
+  .goal-game-status b {
+    font-weight: var(--weight-semibold);
+  }
+
+  .goal-game-status.first {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+  }
+
+  .goal-list .name .bar,
+  .drag-ghost .name .bar {
+    max-width: 220px;
+    height: 6px;
+    margin-top: 8px;
+    border-radius: var(--radius-pill);
+  }
+
+  /* The state as a chip: playing in the accent, not started quiet, platinumed in platinum. */
+  .goal-list .st {
+    flex: none;
+    padding: 3px 10px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .goal-list li.playing .st {
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+  }
+
+  .goal-list .done .st {
+    border-color: color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
+    color: var(--color-trophy-platinum);
+  }
 }

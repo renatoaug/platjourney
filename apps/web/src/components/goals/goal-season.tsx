@@ -1,7 +1,8 @@
 /** Season overview on the Interests screen: platinums of the year against the target, the pace, and the yearly target editor. */
 import { type FormEvent, useEffect, useRef, useState } from 'react'
-import { defineMessages, Language, useMessages } from '../../i18n/i18n'
+import { defineMessages, getLocale, Language, useMessages } from '../../i18n/i18n'
 import type { YearGoals } from '../../lib/types'
+import { BoldText } from '../../ui/bold-text'
 import { Icon } from '../../ui/icon'
 import { Sk } from '../../ui/skeleton'
 import { season } from './season'
@@ -29,6 +30,10 @@ const messages = defineMessages({
       noTarget: 'Ainda sem meta',
       edit: 'Editar meta',
       set: 'Definir meta',
+      months: 'Platinas por mês',
+      projection: 'No seu ritmo: <b>~{count}</b> até dezembro',
+      ahead: 'acima da meta',
+      behind: 'abaixo da meta',
     },
   },
   [Language.En]: {
@@ -51,9 +56,61 @@ const messages = defineMessages({
       noTarget: 'No goal yet',
       edit: 'Edit goal',
       set: 'Set goal',
+      months: 'Platinums per month',
+      projection: 'At your pace: <b>~{count}</b> by December',
+      ahead: 'above the goal',
+      behind: 'below the goal',
     },
   },
 })
+
+/** The year's twelve months as cells, each lit with how many platinums it had; the current one
+ * marked, the ones still ahead dim. */
+function MonthStrip({ goals: p, now }: { goals: YearGoals; now: Date }) {
+  const t = useMessages(messages)
+  const counts = Array.from({ length: 12 }, () => 0)
+  for (const x of p.platinumed) {
+    const at = new Date(x.at)
+    if (at.getFullYear() === p.year) counts[at.getMonth()] += 1
+  }
+  const month = p.year === now.getFullYear() ? now.getMonth() : 11
+  // Three letters a month (JAN, FEV…), without the abbreviation's dot some locales add.
+  const name = (m: number) =>
+    new Date(p.year, m, 1)
+      .toLocaleDateString(getLocale(), { month: 'short' })
+      .replace('.', '')
+      .slice(0, 3)
+  return (
+    <div className="goal-months" role="img" aria-label={t('season.months')}>
+      {counts.map((n, m) => (
+        <span
+          // biome-ignore lint/suspicious/noArrayIndexKey: the twelve months, fixed
+          key={m}
+          className={`goal-month${n ? ' on' : ''}${m === month ? ' now' : ''}${m > month ? ' ahead' : ''}`}
+        >
+          <b>{n || ''}</b>
+          <small>{name(m)}</small>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/** Where the year ends at the pace so far (platinums per month elapsed, times twelve): green when
+ * it reaches the goal, gold when it falls short. */
+function Projection({ goals: p, now }: { goals: YearGoals; now: Date }) {
+  const t = useMessages(messages)
+  if (p.year !== now.getFullYear() || !p.done) return null
+  const elapsed = now.getMonth() + now.getDate() / 31
+  const count = Math.round((p.done / Math.max(elapsed, 1)) * 12)
+  const reaches = !!p.target && count >= p.target
+  return (
+    <span className={`goal-projection ${reaches ? 'ahead' : 'behind'}`}>
+      <BoldText text={t('season.projection', { count })} />
+      {p.target ? ` · ${t(reaches ? 'season.ahead' : 'season.behind')}` : ''}
+    </span>
+  )
+}
 
 export interface Feedback {
   text: string
@@ -79,7 +136,8 @@ export function GoalSeason({
   onSet: (target: number) => Promise<boolean>
 }) {
   const t = useMessages(messages)
-  const { progress, pace } = season(p)
+  const now = new Date()
+  const { progress, pace } = season(p, now)
   const [value, setValue] = useState(String(p.target ?? 12))
   const input = useRef<HTMLInputElement>(null)
   const edit = useRef<HTMLButtonElement>(null)
@@ -163,7 +221,11 @@ export function GoalSeason({
         >
           <i style={{ width: `${progress}%` }} />
         </div>
-        <p className="goal-pace">{pace}</p>
+        <MonthStrip goals={p} now={now} />
+        <p className="goal-pace">
+          {pace}
+          <Projection goals={p} now={now} />
+        </p>
       </div>
       <div className="goal-control-wrap">
         <div id="goal-control">

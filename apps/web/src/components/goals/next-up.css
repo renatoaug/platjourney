@@ -1,0 +1,106 @@
+@layer screens {
+  .next-up {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 16px;
+    width: min(480px, 100%);
+    padding: 16px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-dim), transparent);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .next-up-cover {
+    width: 84px;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+  }
+
+  .next-up-body {
+    display: grid;
+    align-content: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .next-up .eyebrow {
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .next-up .eyebrow span {
+    color: var(--color-fg-muted);
+    font-weight: var(--weight-regular);
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
+  /* The name and, at the far end of its line, the way in. */
+  .next-up-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .next-up-head b {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-medium);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-snug);
+    text-wrap: balance;
+  }
+
+  .next-up .button {
+    flex: none;
+    gap: 6px;
+    height: 32px;
+    min-height: 0;
+    margin-top: 2px;
+    padding: 0 12px;
+    font-size: var(--text-sm);
+    white-space: nowrap;
+  }
+
+  .next-up .button .icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .next-up-progress {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-fg-soft);
+    font-size: var(--text-sm);
+  }
+
+  .next-up-progress .bar {
+    height: 6px;
+    border-radius: var(--radius-pill);
+  }
+
+  .next-up-sub {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  @media (max-width: 480px) {
+    .next-up {
+      grid-template-columns: 64px 1fr;
+      gap: 12px;
+    }
+
+    .next-up-cover {
+      width: 64px;
+    }
+  }
+}

@@ -68,4 +68,61 @@
       display: inline;
     }
   }
+
+  /* The top: the title on the left, the next platinum's card on the right, straight on its scene
+     that runs across the top of the screen. */
+  .goals-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 28px 40px;
+    min-height: clamp(260px, 34vh, 380px);
+    padding: 8px 0 32px;
+  }
+
+  .goals-top-text {
+    display: grid;
+    gap: 10px;
+    max-width: 640px;
+  }
+
+  .goals-top .eyebrow {
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .goals-top h1 {
+    margin: 0;
+    font-size: clamp(40px, 4.4vw, 72px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-shadow: 0 4px 40px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+  }
+
+  .goals-top p {
+    margin: 0;
+    color: var(--color-fg-soft);
+    font-size: var(--text-body);
+  }
+
+  @media (max-width: 1100px) {
+    .goals-top {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .goals-top {
+      min-height: 0;
+      padding-top: 40px;
+    }
+  }
+
+  /* The card keeps to the right, also when it drops under the title on a narrower screen. */
+  .goals-top .next-up {
+    justify-self: end;
+  }
 }
