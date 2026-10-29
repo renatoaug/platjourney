@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.37.0](https://github.com/renatoaug/platjourney/compare/v0.36.3...v0.37.0) (2026-10-29)
+
+### Features
+
+* **web:** a new visual identity on each game's art ([#107](https://github.com/renatoaug/platjourney/issues/107)) ([13616ae](https://github.com/renatoaug/platjourney/commit/13616ae08140f9bf44c06cdc9356ca82fc811328))
+
 ## [0.36.3](https://github.com/renatoaug/platjourney/compare/v0.36.2...v0.36.3) (2026-10-28)
 
 ### Bug Fixes
