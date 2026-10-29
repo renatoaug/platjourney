@@ -229,9 +229,9 @@ function Nav() {
       label: p.label[locale],
     })),
     { to: '/settings', icon: 'settings', label: t('nav.settings') },
-    { to: '/profile', icon: 'circle', label: t('nav.profile'), avatar: data?.profile?.avatarUrl },
-  ] as { to: string; icon: string; label: string; avatar?: string }[]
-  const inExtras = extras.some((e) => pathname === e.to)
+  ] as { to: string; icon: string; label: string }[]
+  const profile = data?.profile
+  const inExtras = pathname === '/profile' || extras.some((e) => pathname === e.to)
   // biome-ignore lint/correctness/useExhaustiveDependencies: a new route closes the sheet
   useEffect(() => setMore(false), [pathname])
   return (
@@ -284,11 +284,33 @@ function Nav() {
             />
             <div className="nav-sheet" id="nav-sheet">
               <span className="nav-sheet-handle" aria-hidden="true" />
+              {/* The player's card first: who they are and the way to their profile. */}
+              <NavLink to="/profile" className="nav-sheet-profile">
+                {profile?.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="" />
+                ) : (
+                  <span className="nav-sheet-icon">
+                    <Icon name="circle" />
+                  </span>
+                )}
+                <span>
+                  <b>{profile?.onlineId ?? t('nav.profile')}</b>
+                  {profile && (
+                    <small>
+                      {t('profileLine', {
+                        level: profile.level,
+                        platinums: number(profile.earned.platinum),
+                      })}
+                    </small>
+                  )}
+                </span>
+                <Icon name="chevron-right" />
+              </NavLink>
               <div className="nav-sheet-grid">
                 {extras.map((e, i) => (
                   <NavLink key={e.to} to={e.to} style={{ '--i': i } as CSSProperties}>
-                    <span className={`nav-sheet-icon${e.avatar ? ' is-avatar' : ''}`}>
-                      {e.avatar ? <img src={e.avatar} alt="" /> : <Icon name={e.icon} />}
+                    <span className="nav-sheet-icon">
+                      <Icon name={e.icon} />
                     </span>
                     {e.label}
                   </NavLink>

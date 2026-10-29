@@ -8,7 +8,12 @@ export function useProfile(enabled = true): ProfileData | null {
   const { cache } = useApp()
   const [data, setData] = useState(() => (cache.profile as ProfileData | undefined) ?? null)
   useEffect(() => {
-    if (!enabled || cache.profile) return
+    if (!enabled) return
+    // Opened after the profile screen filled the cache: use it, the state started before that.
+    if (cache.profile) {
+      setData(cache.profile as ProfileData)
+      return
+    }
     let live = true
     api<ProfileData>('/api/profile')
       .then((d) => {

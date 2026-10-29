@@ -466,13 +466,14 @@
     color: var(--color-fg-soft);
   }
 
+  /* On a phone the console is as tall as what it says, plus a strip of the art above it. */
   @media (max-width: 760px) {
     .console {
-      min-height: clamp(520px, 80vh, 680px);
+      min-height: 0;
     }
 
     .console-focus {
-      padding: 28px 20px 4px;
+      padding: 64px 20px 4px;
     }
 
     .console-shelf {

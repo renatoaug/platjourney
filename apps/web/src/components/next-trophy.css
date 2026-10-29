@@ -120,4 +120,11 @@
     padding: 0 14px;
     font-size: var(--text-md);
   }
+
+  /* Under the headline on a narrower screen: the whole width. */
+  @media (max-width: 1100px) {
+    .next-trophy {
+      width: 100%;
+    }
+  }
 }

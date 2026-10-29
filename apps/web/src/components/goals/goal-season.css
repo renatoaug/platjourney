@@ -399,9 +399,10 @@
     box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
   }
 
+  /* The current month: a ring inside its own cell, clear of the cells beside it. */
   .goal-month.now b {
-    outline: 2px solid color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
-    outline-offset: 2px;
+    border-color: var(--color-accent);
+    box-shadow: inset 0 0 0 1px var(--color-accent);
   }
 
   .goal-month.ahead b {

@@ -126,9 +126,8 @@
     color: var(--color-on-accent);
   }
 
-  /* The sliding fill sits inside the track's padding, with its round ends. */
+  /* The sliding fill takes the chosen link's box, with its round ends. */
   .game-nav ul[data-slide] {
-    --slide-inset: 3px;
     --slide-radius: var(--radius-pill);
   }
 
