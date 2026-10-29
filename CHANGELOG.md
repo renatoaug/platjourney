@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.0](https://github.com/renatoaug/platjourney/compare/v0.37.1...v0.38.0) (2026-10-29)
+
+### Features
+
+* **ai:** session plans that wait for the sitting, start where the player is and change on a redo ([#109](https://github.com/renatoaug/platjourney/issues/109)) ([441c72d](https://github.com/renatoaug/platjourney/commit/441c72d7becb431e9f7af5f88a2f515ddbc4ef19))
+
 ## [0.37.1](https://github.com/renatoaug/platjourney/compare/v0.37.0...v0.37.1) (2026-10-29)
 
 ### Bug Fixes
