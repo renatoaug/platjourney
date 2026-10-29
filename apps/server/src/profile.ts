@@ -4,6 +4,7 @@ import { type ProfileSummary, profileSummary, type TitleProgress, titleTrophies 
 import { type Game, gamesForTitles, getGame } from './repository/game.ts'
 import { listPlatinums, savePlatinum } from './repository/platinum.ts'
 import type { User } from './repository/user.ts'
+import { tints } from './tint.ts'
 
 export interface PlatinumEntry {
   game: Game
@@ -77,8 +78,10 @@ async function platinumList(
   }
   const played = await playtimes(user)
   const platformOf = new Map(library.map((t) => [t.npCommunicationId, t.platform]))
-  const list = (await listPlatinums(user.id)).map((r) => ({
-    game: r.game,
+  const rows = await listPlatinums(user.id)
+  const tinted = await tints(rows.map((r) => r.game))
+  const list = rows.map((r) => ({
+    game: tinted.has(r.game.id) ? { ...r.game, tint: tinted.get(r.game.id) } : r.game,
     platform: platformOf.get(r.np_communication_id) ?? '',
     earnedAt: r.earned_at,
     rarity: r.rarity_rate,

@@ -20,6 +20,7 @@
     "push:keys": "bun scripts/push-keys.ts"
   },
   "dependencies": {
+    "jpeg-js": "^0.4.4",
     "psn-api": "^2.18.1",
     "surrealdb": "^2.0.10"
   }

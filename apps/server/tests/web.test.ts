@@ -534,6 +534,9 @@ test('state without a current game starts watching and ranks the library', async
       platform: 'PS5',
       icon: 'icon.png',
       cover: 'cover.png',
+      // The picture behind the game on the console home; no color read yet for it.
+      art: 'icon.png',
+      tint: null,
       progress: 80,
       remaining: 2,
       hours: 2,

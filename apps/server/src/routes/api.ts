@@ -10,6 +10,7 @@ import { pushEnabled } from '../push.ts'
 import type { Game } from '../repository/game.ts'
 import type { User } from '../repository/user.ts'
 import { botInfo } from '../telegram.ts'
+import { withTints } from '../tint.ts'
 
 // Every route that counts requests answers with the same text when an address goes over.
 export const apiMessages = defineMessages({
@@ -87,7 +88,7 @@ export async function currentView(user: User, ctx = getCurrent(user)) {
   return (
     ctx && {
       deepGuide: await deepGuideOf(user, ctx.game),
-      game: ctx.game,
+      game: (await withTints([ctx.game]))[0],
       name: ctx.title.name,
       platform: ctx.title.platform,
       icon: heroArt(ctx.game, ctx.title),
