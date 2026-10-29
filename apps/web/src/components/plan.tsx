@@ -55,7 +55,9 @@ const messages = defineMessages({
     headingDone: 'Roteiro cumprido.',
     headingExpired: 'Sessão encerrada: {done} de {total} troféus.',
     headingActive: 'Siga na ordem · {done} de {total}',
-    validUntil: '{time} · vale até {clock}',
+    validUntil: '{time} · vale até {when}',
+    waiting: '{time} · espera sua sessão até {when}',
+    tomorrowAt: 'amanhã, {clock}',
     progressLabel: 'Progresso do roteiro',
     timeOf: '~{used} de {time}',
     warnings: {
@@ -112,7 +114,9 @@ const messages = defineMessages({
     headingDone: 'Route complete.',
     headingExpired: 'Session over: {done} of {total} trophies.',
     headingActive: 'Follow the order · {done} of {total}',
-    validUntil: '{time} · valid until {clock}',
+    validUntil: '{time} · valid until {when}',
+    waiting: '{time} · waits for your session until {when}',
+    tomorrowAt: 'tomorrow, {clock}',
     progressLabel: 'Route progress',
     timeOf: '~{used} of {time}',
     warnings: {
@@ -177,6 +181,8 @@ export interface SessionPlan {
   // The step to play now, or -1 when nothing is left.
   nextIndex: number
   expiresAt: string
+  // false while the player has not played since the plan was made: it waits for the sitting.
+  started?: boolean
 }
 
 const PLAN_OPTIONS = [30, 60, 120, 180, 300]
@@ -521,11 +527,26 @@ function planHeading(t: Translator<typeof messages>, plan: SessionPlan) {
 
 /** Under the heading: until when an active route holds, or when a closed one was made; and the
  * assistant that made it, when one did. */
+// The plan's end: the clock alone today, "tomorrow" on the next day, the date after that.
+function until(t: Translator<typeof messages>, iso: string, now = new Date()) {
+  const end = new Date(iso)
+  const tomorrow = new Date(now)
+  tomorrow.setDate(now.getDate() + 1)
+  if (end.toDateString() === now.toDateString()) return fmtClock(iso)
+  if (end.toDateString() === tomorrow.toDateString())
+    return t('tomorrowAt', { clock: fmtClock(iso) })
+  return `${fmtDate(iso)}, ${fmtClock(iso)}`
+}
+
 function planSub(t: Translator<typeof messages>, plan: SessionPlan) {
+  const time = fmtMinutes(plan.minutes)
   const when =
     plan.status === 'active'
-      ? t('validUntil', { time: fmtMinutes(plan.minutes), clock: fmtClock(plan.expiresAt) })
-      : `${fmtMinutes(plan.minutes)} · ${fmtDate(plan.createdAt)}, ${fmtClock(plan.createdAt)}`
+      ? t(plan.started === false ? 'waiting' : 'validUntil', {
+          time,
+          when: until(t, plan.expiresAt),
+        })
+      : `${time} · ${fmtDate(plan.createdAt)}, ${fmtClock(plan.createdAt)}`
   if (!plan.assistant) return when
   const name = assistantName(plan.assistant)
   return `${when} · ${name ? t('by', { name }) : t('byOther')}`
