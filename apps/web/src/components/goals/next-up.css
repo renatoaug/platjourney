@@ -12,9 +12,12 @@
     box-shadow: var(--shadow-popover);
   }
 
+  /* The cover as tall as the card's text, however many lines the name takes. */
   .next-up-cover {
+    align-self: stretch;
     width: 84px;
-    aspect-ratio: 3 / 4;
+    height: 100%;
+    min-height: 112px;
     object-fit: cover;
     border-radius: var(--radius-control);
   }
@@ -95,12 +98,13 @@
 
   @media (max-width: 480px) {
     .next-up {
-      grid-template-columns: 64px 1fr;
-      gap: 12px;
+      grid-template-columns: 72px 1fr;
+      gap: 14px;
     }
 
     .next-up-cover {
-      width: 64px;
+      width: 72px;
+      min-height: 96px;
     }
   }
 }

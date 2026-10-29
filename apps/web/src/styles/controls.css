@@ -253,16 +253,17 @@
     content: "";
     position: absolute;
     z-index: -1;
-    top: var(--slide-inset, 0);
-    bottom: var(--slide-inset, 0);
+    top: var(--slide-inset, 0px);
     left: 0;
     width: var(--slide-w, 0);
+    height: calc(var(--slide-h, 100%) - 2 * var(--slide-inset, 0px));
     border-radius: var(--slide-radius, 0);
     background: var(--color-accent);
-    transform: translateX(var(--slide-x, 0));
+    transform: translate(var(--slide-x, 0), var(--slide-y, 0));
     transition:
       transform 0.3s cubic-bezier(0.3, 0.7, 0.2, 1),
-      width 0.3s cubic-bezier(0.3, 0.7, 0.2, 1);
+      width 0.3s cubic-bezier(0.3, 0.7, 0.2, 1),
+      height 0.3s cubic-bezier(0.3, 0.7, 0.2, 1);
   }
 
   @media (prefers-reduced-motion: reduce) {

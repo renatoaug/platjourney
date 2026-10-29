@@ -4,31 +4,6 @@
     text-transform: uppercase;
   }
 
-  @media (max-width: 560px) {
-    .goal-filters {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      /* Its own width never widens the card: the row scrolls inside whatever space it gets. */
-      contain: inline-size;
-      /* Sideways only: overflow-x alone would let the row scroll (and clip) up and down too. */
-      overflow-y: hidden;
-      padding-block: 2px;
-      flex: 0 0 100%;
-      width: 100%;
-      scrollbar-width: none;
-      mask-image: linear-gradient(90deg, var(--color-fg) calc(100% - 28px), transparent);
-    }
-
-    .goal-filters::-webkit-scrollbar {
-      display: none;
-    }
-
-    .goal-filters .chip {
-      flex: none;
-      white-space: nowrap;
-    }
-  }
-
   .goal-list {
     list-style: none;
     padding: 0;
@@ -55,6 +30,13 @@
 
   .goal-grip.placeholder {
     cursor: default;
+  }
+
+  /* On a phone a row with nothing to drag starts at its cover, not at an empty slot. */
+  @media (max-width: 760px) {
+    .goal-grip.placeholder {
+      display: none;
+    }
   }
 
   .goal-grip .icon {
@@ -452,6 +434,25 @@
     .goal-list li a.name {
       flex: 1;
       min-width: 0;
+    }
+  }
+
+  /* On a phone the filters keep one line and scroll sideways, each cell whole. */
+  @media (max-width: 560px) {
+    .goal-filters {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      contain: inline-size;
+      scrollbar-width: none;
+    }
+
+    .goal-filters::-webkit-scrollbar {
+      display: none;
+    }
+
+    .goal-filters .chip {
+      flex: none;
     }
   }
 }

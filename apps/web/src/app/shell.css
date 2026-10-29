@@ -628,19 +628,6 @@
       color: var(--color-fg);
       overflow: hidden;
     }
-
-    /* The PSN avatar is a round picture: its tile becomes a circle, so the two shapes match. */
-    .nav-sheet-icon.is-avatar {
-      border-radius: var(--radius-round);
-      border-color: transparent;
-      background: none;
-    }
-
-    .nav-sheet-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -662,6 +649,91 @@
 
     100% {
       transform: translateY(0) scale(1);
+    }
+  }
+
+  /* ---- The "More" sheet: a glass panel, the player's card on top, the screens as glass tiles. ---- */
+  @media (max-width: 760px) {
+    .nav-sheet {
+      padding: 10px 14px 14px;
+      border-color: color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+      background:
+        radial-gradient(
+          120% 80% at 50% 0%,
+          color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent),
+          transparent 70%
+        ),
+        color-mix(in srgb, var(--color-surface) var(--alpha-heavy), transparent);
+      backdrop-filter: blur(20px);
+    }
+
+    .nav-sheet a.nav-sheet-profile {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      border: 1px solid
+        color-mix(in srgb, var(--color-accent) var(--alpha-line), var(--color-border));
+      border-radius: var(--radius-card);
+      background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+      color: var(--color-fg);
+      font-size: var(--text-md);
+      text-align: left;
+    }
+
+    .nav-sheet-profile img {
+      width: 48px;
+      height: 48px;
+      border: 2px solid var(--color-accent);
+      border-radius: var(--radius-round);
+      object-fit: cover;
+    }
+
+    .nav-sheet-profile b {
+      display: block;
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: var(--weight-semibold);
+    }
+
+    .nav-sheet-profile small {
+      color: var(--color-fg-muted);
+      font-size: var(--text-sm);
+    }
+
+    .nav-sheet-profile > .icon {
+      width: 18px;
+      height: 18px;
+      color: var(--color-fg-muted);
+    }
+
+    .nav-sheet-grid {
+      gap: 8px;
+    }
+
+    .nav-sheet-grid a {
+      padding: 14px 4px 12px;
+      border: 1px solid var(--color-border);
+      background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+      color: var(--color-fg-soft);
+    }
+
+    .nav-sheet-grid a.active {
+      border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+      background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    }
+
+    .nav-sheet-grid .nav-sheet-icon {
+      border: 0;
+      background: none;
+    }
+
+    .nav-sheet-grid .nav-sheet-icon .icon {
+      width: 22px;
+      height: 22px;
+      color: var(--color-accent);
     }
   }
 }

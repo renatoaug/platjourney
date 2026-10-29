@@ -161,3 +161,11 @@ test('the first slide holds while the profile is on its way, then the platinum s
   answer(new Response(JSON.stringify(profile)))
   await waitFor(() => expect(document.querySelector('.story-bars')?.children.length).toBe(8))
 })
+
+test('opened again after the profile screen loaded, the stories use that profile at once', async () => {
+  const cache: Record<string, unknown> = {}
+  renderApp(<Onboarding />, { value: { me: { ...player, onboarded: true }, data: full, cache } })
+  cache.profile = profile
+  fireEvent(document, new Event(OPEN_ONBOARDING))
+  await waitFor(() => expect(document.querySelector('.story-bars')?.children.length).toBe(8))
+})

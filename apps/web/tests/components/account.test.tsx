@@ -183,11 +183,11 @@ describe('Account', () => {
     await waitFor(() => expect(restart).toHaveBeenCalledWith('/'))
   })
 
-  test('the introduction can be watched again from the preferences', () => {
+  test('the stories can be watched again from the preferences', () => {
     const open = mock()
     document.addEventListener(OPEN_ONBOARDING, open)
     show()
-    fireEvent.click(screen.getByRole('button', { name: /Rever/ }))
+    fireEvent.click(screen.getByRole('button', { name: /^Ver$/ }))
     expect(open).toHaveBeenCalledTimes(1)
     document.removeEventListener(OPEN_ONBOARDING, open)
   })
