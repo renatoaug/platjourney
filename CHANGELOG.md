@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.3](https://github.com/renatoaug/platjourney/compare/v0.38.2...v0.38.3) (2026-10-29)
+
+### Bug Fixes
+
+* **web:** keep the picked route stop and match its skeleton to the mission log ([#112](https://github.com/renatoaug/platjourney/issues/112)) ([3e413b2](https://github.com/renatoaug/platjourney/commit/3e413b2e65b05bada560046ca77c27a0826bfece))
+
 ## [0.38.2](https://github.com/renatoaug/platjourney/compare/v0.38.1...v0.38.2) (2026-10-29)
 
 ### Bug Fixes
