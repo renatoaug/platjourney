@@ -236,6 +236,7 @@ export type Target =
   | 'Servers'
   | 'ServersSkeleton'
   | 'Settings'
+  | 'SettingsTop'
   | 'SettingsView'
   | 'ShelfSkeleton'
   | 'Shell'

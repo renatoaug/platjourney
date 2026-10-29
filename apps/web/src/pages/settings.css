@@ -64,4 +64,20 @@
       margin-top: 14px;
     }
   }
+
+  /* Each card's title as a HUD band over its top, like the rest of the app. */
+  .settings-grid .card > h2:first-child {
+    display: flex;
+    align-items: center;
+    height: 56px;
+    margin: -24px -24px 18px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    line-height: 1;
+    text-transform: uppercase;
+  }
 }
