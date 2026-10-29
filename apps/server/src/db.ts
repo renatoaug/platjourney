@@ -92,7 +92,9 @@ export async function one<T = unknown>(
 const idPart = (id: string | number) =>
   typeof id === 'string' && /^\d+$/.test(id) ? Number(id) : id
 export const rid = (table: string, id: string | number) => new RecordId(table, idPart(id))
-export const gameId = (id: string | number) => new RecordId('game', idPart(id))
+// Takes "3048" or "game:3048": a game's id as the API passes it keeps one table name, not two.
+export const gameId = (id: string | number) =>
+  new RecordId('game', idPart(typeof id === 'string' ? id.replace(/^game:/, '') : id))
 
 // Record ids come back as RecordId objects; the API and logs want "game:3048".
 export function plain<T>(value: T): T {

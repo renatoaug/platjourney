@@ -4,9 +4,13 @@ import { userRef } from './user.ts'
 
 const planRef = (id: string) => rid('session_plan', id.replace(/^session_plan:/, ''))
 
-// Rows are stored with snake_case keys (AGENTS.md, Database) and used with camelCase ones.
-const fromRow = (row: unknown): SessionPlan | undefined =>
-  row ? (camelKeys(plain(row)) as SessionPlan) : undefined
+// Rows are stored with snake_case keys (AGENTS.md, Database) and used with camelCase ones. Plans saved
+// before gameId took a full id point at "game:game:3048": read as "game:3048", the game they mean.
+const fromRow = (row: unknown): SessionPlan | undefined => {
+  if (!row) return undefined
+  const plan = camelKeys(plain(row)) as SessionPlan
+  return plan.game ? { ...plan, game: plan.game.replace(/^game:game:/, 'game:') } : plan
+}
 
 /** The plan on screen: the player's latest one still active, or expired and shown as a recap. */
 export async function activePlan(user: string): Promise<SessionPlan | undefined> {

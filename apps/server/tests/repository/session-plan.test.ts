@@ -41,7 +41,7 @@ test('a new plan is stored in snake_case, without empty optional fields, and rea
   expect(one.mock.calls[0][0]).toBe('CREATE session_plan CONTENT $data')
   expect(data).toMatchObject({
     user,
-    game: db.gameId('game:1'),
+    game: new db.RecordId('game', 1),
     game_name: 'Days Gone',
     np_communication_id: 'NPWR1',
     total_minutes: 30,
@@ -103,4 +103,14 @@ test('the active plans leave the demo out', async () => {
   const q = spyOn(db, 'q').mockResolvedValue([{ id: 'session_plan:p', user: 'user:u1' }])
   expect(await activePlans()).toEqual([{ id: 'session_plan:p', user: 'user:u1' }] as never)
   expect(q.mock.calls[0][0]).toContain('user.demo != true')
+})
+
+test('a plan saved with a doubled game id is read as the game it means', async () => {
+  spyOn(db, 'one').mockResolvedValue({
+    id: 'session_plan:p',
+    game: new db.RecordId('game', 'game:152242'),
+    status: 'active',
+    steps: [],
+  })
+  expect((await activePlan('user:u1'))?.game).toBe('game:152242')
 })

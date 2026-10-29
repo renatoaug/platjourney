@@ -112,6 +112,9 @@ test('numeric ids become numbers so they match the seed', () => {
   expect(rid('user', '42').id).toBe(42)
   expect(rid('user', 'abc').id).toBe('abc')
   expect(gameId(7)).toEqual(new RecordId('game', 7))
+  // A full id keeps one table name.
+  expect(gameId('game:7')).toEqual(new RecordId('game', 7))
+  expect(gameId('game:psn_NPWR1')).toEqual(new RecordId('game', 'psn_NPWR1'))
 })
 
 test('plain turns record ids into strings and bigints into numbers', () => {
