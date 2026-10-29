@@ -615,7 +615,7 @@ function Welcome({ me, onGo }: { me: Me; onGo: () => void }) {
       <span className="eyebrow rise story-center" style={rise(1)}>
         {t('welcome.eyebrow')}
       </span>
-      <h2 className="story-mid rise story-center" style={rise(2)}>
+      <h2 className="story-mid story-welcome-title rise story-center" style={rise(2)}>
         {me.demo ? t('welcome.titleDemo') : t('welcome.title', { name: me.onlineId })}
       </h2>
       <p className="story-lead rise story-center" style={rise(3)}>

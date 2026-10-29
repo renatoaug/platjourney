@@ -869,6 +869,10 @@
     }
   }
 
+  .story-welcome-title {
+    text-align: center;
+  }
+
   .story-lead {
     max-width: 34ch;
     margin: 0;
