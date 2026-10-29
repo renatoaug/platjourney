@@ -196,6 +196,7 @@ export type Target =
   | 'PlanSkeleton'
   | 'PlatinumCollection'
   | 'Platinums'
+  | 'PlayingBackdrop'
   | 'PlayingNote'
   | 'PlusSetting'
   | 'PreferencesCard'
