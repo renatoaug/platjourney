@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.37.1](https://github.com/renatoaug/platjourney/compare/v0.37.0...v0.37.1) (2026-10-29)
+
+### Bug Fixes
+
+* **web:** phone feedback on stories, interests, cards and the more sheet ([#108](https://github.com/renatoaug/platjourney/issues/108)) ([794917d](https://github.com/renatoaug/platjourney/commit/794917d80cc6437f93deb83ae78abdf584ae7514))
+
 ## [0.37.0](https://github.com/renatoaug/platjourney/compare/v0.36.3...v0.37.0) (2026-10-29)
 
 ### Features
