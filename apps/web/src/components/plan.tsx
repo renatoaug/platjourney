@@ -38,6 +38,8 @@ const messages = defineMessages({
       now: 'Agora',
       anytime: 'Qualquer momento',
       after: 'Depois do passo {step}',
+      short: 'Passo {step}',
+      free: 'Livre',
       trick: 'Macete',
     },
     sectionLabel: 'Roteiro da sessão',
@@ -93,6 +95,8 @@ const messages = defineMessages({
       now: 'Now',
       anytime: 'Any time',
       after: 'After step {step}',
+      short: 'Step {step}',
+      free: 'Any time',
       trick: 'Trick',
     },
     sectionLabel: 'Session route',
@@ -255,9 +259,28 @@ function Route({ plan }: { plan: SessionPlan }) {
   const lit = (next >= 0 ? next : steps.length) / (stops - 1)
   const s = steps[open] as PlanStep | undefined
   const state = (i: number) => (steps[i].done ? 'done' : i === next ? 'next' : 'later')
+  // On the track a short tag: the step's number, unless it is done, now or free.
+  const tag = (step: PlanStep, i: number) =>
+    step.done
+      ? t('step.done')
+      : i === next
+        ? t('step.now')
+        : step.flexible
+          ? t('step.free')
+          : t('step.short', { step: i + 1 })
+  // The stop open below stays in view on a track that scrolls sideways.
+  const track = useRef<HTMLDivElement>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `open` is the trigger: the stop it presses
+  useEffect(() => {
+    const box = track.current
+    const stop = box?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (!box || !stop) return
+    const left = stop.offsetLeft - (box.clientWidth - stop.offsetWidth) / 2
+    box.scrollTo({ left: Math.max(0, left), behavior: picked === null ? 'auto' : 'smooth' })
+  }, [open, picked])
   return (
     <>
-      <div className="route-scroll">
+      <div className="route-scroll" ref={track}>
         <ol className="route-track" style={{ '--stops': stops, '--lit': lit } as CSSProperties}>
           {steps.map((step, i) => (
             <li
@@ -284,7 +307,7 @@ function Route({ plan }: { plan: SessionPlan }) {
                     </span>
                   )}
                 </span>
-                <span className="route-tag">{stepLabel(t, step, i, state(i))}</span>
+                <span className="route-tag">{tag(step, i)}</span>
                 <span className="route-clock">{fmtMinutes(step.startsAt)}</span>
               </button>
             </li>

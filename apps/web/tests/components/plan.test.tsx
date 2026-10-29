@@ -33,8 +33,9 @@ describe('Plan', () => {
     expect(screen.getByText('Feito')).toBeTruthy()
     // The step to play now is on the track and open under it.
     expect(screen.getAllByText('Agora')).toHaveLength(2)
-    expect(screen.getByText('Depois do passo 2')).toBeTruthy()
-    expect(screen.getByText('Qualquer momento')).toBeTruthy()
+    // The track names each stop shortly: its number, or free when it fits any time.
+    expect(screen.getByText('Passo 3')).toBeTruthy()
+    expect(screen.getByText('Livre')).toBeTruthy()
     expect(screen.getByText('Macete')).toBeTruthy()
     // The session's end opens from the end of the track.
     fireEvent.click(screen.getByRole('button', { name: /Fim da sessão/ }))
