@@ -6,7 +6,14 @@ import { DEFAULT_LOCALE, defineMessages, Language, type Locale, translator } fro
 import type { GameContext } from './nexo.ts'
 import { aroundModel } from './plugins.ts'
 import type { AssistantKey } from './repository/activity.ts'
-import { activePlan, activePlans, closePlan, savePlan } from './repository/session-plan.ts'
+import {
+  activePlan,
+  activePlans,
+  closePlan,
+  expiredSince,
+  savePlan,
+  setPlanSteps,
+} from './repository/session-plan.ts'
 import { getTitle } from './repository/title.ts'
 import type { User } from './repository/user.ts'
 
@@ -80,9 +87,13 @@ export interface PlanView extends Omit<SessionPlan, 'status'> {
   expiresAt: string
 }
 
-// A plan belongs to one sitting: it stays active for the time asked plus a
-// grace period, then remains visible as a recap until the next day.
+// A plan belongs to one sitting: it stays active for the time asked plus a grace period from when the
+// player plays (a trophy of that game lands), waiting for that sitting up to a day; then it remains
+// visible as a recap until the next day. Trophies that land after its time still tick it off for a
+// while (PSN reports them late, and a player may finish a step right after).
 const GRACE_MINUTES = 60
+const WAIT_HOURS = 24
+const LATE_HOURS = 48
 const RECAP_HOURS = 20
 const DEMO_PLAN_AGE = 25 * 60_000
 
@@ -94,11 +105,20 @@ export async function planSession(
   ctx: GameContext,
   minutes: number,
 ): Promise<PlanView> {
+  // Asked again while a route of this game is on: the player wants another way, so the model is told
+  // which trophies to change.
+  // The demo asks the model nothing, and reads no plan before being refused.
+  const current = isDemo(user) ? undefined : await activePlan(user.id)
+  const avoid =
+    current?.status === 'active' && current.game === ctx.game.id
+      ? current.steps.map((s) => s.trophy)
+      : []
   const plan = await aroundModel({ user, action: 'plan' }, () =>
     tagged({ user: user.id, action: 'plan' }, () =>
       ai<Omit<SessionPlan, 'game' | 'gameName' | 'minutes' | 'createdAt'>>('/plans/session', {
         context: aiContext(ctx, user),
         minutes,
+        avoid,
       }),
     ),
   )
@@ -134,8 +154,23 @@ export async function startPlan(
   })
 }
 
-const endsAt = (plan: SessionPlan) =>
-  new Date(new Date(plan.createdAt).getTime() + (plan.minutes + GRACE_MINUTES) * 60_000)
+/** When a plan's time runs out. `lastPlayed` is when the player last earned a trophy of its game:
+ * before the plan (or unknown), the plan waits for the sitting up to a day; after it, the time asked
+ * counts from that play. */
+export function endsAt(plan: SessionPlan, lastPlayed?: string | Date | null): Date {
+  const created = new Date(plan.createdAt).getTime()
+  const span = (plan.minutes + GRACE_MINUTES) * 60_000
+  const played = lastPlayed ? new Date(lastPlayed).getTime() : Number.NaN
+  if (!(played > created))
+    return new Date(Math.max(created + span, created + WAIT_HOURS * 3_600_000))
+  return new Date(Math.max(created + span, played + GRACE_MINUTES * 60_000))
+}
+
+/** When the player last earned a trophy of the plan's game, from the last sync. */
+async function lastPlayedOn(user: string, plan: SessionPlan): Promise<string | null> {
+  if (!plan.npCommunicationId) return null
+  return (await getTitle(user, plan.npCommunicationId))?.last_updated_at ?? null
+}
 
 // The steps with whether each was earned: from the trophies just read when they are this game's,
 // otherwise from the earned trophies the last sync stored.
@@ -167,12 +202,22 @@ async function doneFromLibrary(user: string, plan: SessionPlan): Promise<PlanSte
 export async function expirePlans(now = Date.now()): Promise<number> {
   let n = 0
   for (const plan of await activePlans()) {
-    const end = endsAt(plan)
+    const end = endsAt(plan, await lastPlayedOn(String(plan.user), plan))
     if (now < end.getTime() || !plan.id) continue
     await closePlan(plan.id, 'expired', await doneFromLibrary(String(plan.user), plan), end)
     n++
   }
+  await tickLate(now)
   return n
+}
+
+// Plans expired in the last two days: a step whose trophy landed after the plan's time is done too.
+async function tickLate(now: number): Promise<void> {
+  for (const plan of await expiredSince(new Date(now - LATE_HOURS * 3_600_000))) {
+    if (!plan.id) continue
+    const steps = await doneFromLibrary(String(plan.user), plan)
+    if (steps.some((s, i) => s.done && !plan.steps[i]?.done)) await setPlanSteps(plan.id, steps)
+  }
 }
 
 // Steps tick themselves off as PSN reports the trophies earned.
@@ -196,9 +241,8 @@ function view(plan: SessionPlan, ctx?: GameContext): PlanView {
     return step
   })
   const doneCount = steps.filter((s) => s.done).length
-  const expiresAt = new Date(
-    new Date(plan.createdAt).getTime() + (plan.minutes + GRACE_MINUTES) * 60_000,
-  ).toISOString()
+  const lastPlayed = ctx?.game.id === plan.game ? ctx.title.lastUpdated : null
+  const expiresAt = endsAt(plan, lastPlayed).toISOString()
   const status: PlanStatus =
     steps.length > 0 && doneCount === steps.length
       ? 'done'
@@ -222,8 +266,8 @@ export async function currentPlan(user: User, ctx?: GameContext): Promise<PlanVi
   const plan = isDemo(user)
     ? { ...stored, createdAt: new Date(Date.now() - DEMO_PLAN_AGE).toISOString() }
     : stored
-  const age = Date.now() - new Date(plan.createdAt).getTime()
-  if (age > (plan.minutes + GRACE_MINUTES) * 60_000 + RECAP_HOURS * 3_600_000) return null
+  const lastPlayed = ctx?.game.id === plan.game ? ctx.title.lastUpdated : null
+  if (Date.now() > endsAt(plan, lastPlayed).getTime() + RECAP_HOURS * 3_600_000) return null
   return view(plan, ctx)
 }
 
@@ -236,14 +280,13 @@ export async function discardPlan(
   const current = await activePlan(user.id)
   if (!current?.id) return null
   const steps = await ticked(user, current, ctx)
-  const over = Date.now() > endsAt(current).getTime()
-  const done = steps.length > 0 && steps.every((s) => s.done)
-  await closePlan(
-    current.id,
-    over || done ? 'dismissed' : 'ended',
-    steps,
-    over ? endsAt(current) : new Date(),
+  const end = endsAt(
+    current,
+    ctx?.game.id === current.game ? ctx.title.lastUpdated : await lastPlayedOn(user.id, current),
   )
+  const over = Date.now() > end.getTime()
+  const done = steps.length > 0 && steps.every((s) => s.done)
+  await closePlan(current.id, over || done ? 'dismissed' : 'ended', steps, over ? end : new Date())
   return { id: current.id, askReason: !steps.some((s) => s.done) }
 }
 

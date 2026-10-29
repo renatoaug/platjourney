@@ -4,10 +4,13 @@ import { isDemo, storedSummary, trophiesFor } from '../demo.ts'
 import { demoContext, getCurrent } from '../game-context.ts'
 import { yearProgress } from '../interests.ts'
 import { library } from '../library.ts'
+import type { GameContext } from '../nexo.ts'
+import { currentPlan } from '../planner.ts'
 import { playtimes } from '../playtime.ts'
 import { profilePage } from '../profile.ts'
 import { catalogTrophies, profileSummary } from '../psn.ts'
 import { gamesForTitles } from '../repository/game.ts'
+import type { User } from '../repository/user.ts'
 import {
   baseProgress,
   gameArg,
@@ -42,12 +45,27 @@ export const getProfile: Tool = {
   },
 }
 
+// The latest trophies earned, with their dates: where the player is in the game now.
+const RECENT = 6
+
+/** The session plan on screen for this game, its trophies and whether each is done; null without one. */
+async function planRow(user: User, ctx: GameContext) {
+  const plan = await currentPlan(user, ctx)
+  if (!plan || plan.status !== 'active') return null
+  return {
+    summary: plan.summary,
+    minutes: plan.minutes,
+    validUntil: plan.expiresAt,
+    steps: plan.steps.map((s) => ({ trophy: s.trophy, minutes: s.minutes, done: s.done })),
+  }
+}
+
 export const getCurrentGame: Tool = {
   name: 'get_current_game',
   description:
-    'The game the player is playing now (from PSN): progress toward the platinum, hours played and the base-game trophies still missing.',
+    'The game the player is playing now (from PSN): progress toward the platinum, hours played, the base-game trophies still missing, the last ones earned with their dates (where the player is in the game) and the session plan they have now for it, if any.',
   inputSchema: { type: 'object', properties: {} },
-  next: 'If you plan a session for this game, save the plan with save_session_plan.',
+  next: 'If you plan a session for this game, start from where recentlyEarned puts the player, pick other trophies than currentPlan when they ask for another route, and save the plan with save_session_plan.',
   run: async (user) => {
     const ctx = getCurrent(user) ?? (isDemo(user) ? await demoContext(user) : undefined)
     if (!ctx) return { playing: null }
@@ -64,6 +82,12 @@ export const getCurrentGame: Tool = {
           .filter((t) => !t.earned && t.groupId === 'default')
           .slice(0, MAX_TROPHIES)
           .map(trophyRow),
+        recentlyEarned: ctx.trophies
+          .filter((t) => t.earned && t.earnedAt)
+          .sort((a, b) => (b.earnedAt ?? '').localeCompare(a.earnedAt ?? ''))
+          .slice(0, RECENT)
+          .map(trophyRow),
+        currentPlan: await planRow(user, ctx),
       },
     }
   },

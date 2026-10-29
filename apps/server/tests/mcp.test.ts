@@ -167,14 +167,22 @@ test("the profile is the token owner's, never another player's", async () => {
   expect(summary.mock.calls.map((c) => c[0])).toEqual([me.psn_account_id, other.psn_account_id])
 })
 
-test('the current game lists the base-game trophies still missing', async () => {
+test('the current game lists the trophies missing, the last earned and the plan on screen', async () => {
   spyOn(gameContext, 'getCurrent').mockReturnValue(undefined)
-  expect((await call('get_current_game')).data).toEqual({
-    playing: null,
-    next: 'If you plan a session for this game, save the plan with save_session_plan.',
-  })
+  const empty = (await call('get_current_game')).data
+  expect(empty.playing).toBeNull()
+  expect(empty.next).toContain('recentlyEarned')
+  expect(empty.next).toContain('currentPlan')
+  spyOn(planner, 'currentPlan').mockResolvedValue({
+    summary: 'Campanha',
+    minutes: 60,
+    expiresAt: '2026-10-30T12:00:00.000Z',
+    status: 'active',
+    steps: [{ trophy: 'Faltando', minutes: 30, done: false }],
+  } as never)
   const trophies = [
-    makeTrophy({ id: 1, name: 'Got it', earned: true }),
+    makeTrophy({ id: 4, name: 'Old one', earned: true, earnedAt: '2026-01-01T00:00:00Z' }),
+    makeTrophy({ id: 1, name: 'Got it', earned: true, earnedAt: '2026-10-28T00:00:00Z' }),
     makeTrophy({ id: 2, name: 'Faltando', nameEn: 'Missing', groupId: 'default', earned: false }),
     makeTrophy({ id: 3, name: 'DLC', groupId: '001', earned: false }),
   ]
@@ -185,6 +193,17 @@ test('the current game lists the base-game trophies still missing', async () => 
   expect(data.playing.missing).toEqual([
     expect.objectContaining({ name: 'Missing', localName: 'Faltando', earned: false, dlc: false }),
   ])
+  // Where the player is: the latest first, with their dates.
+  expect(data.playing.recentlyEarned.map((t: { earnedAt: string }) => t.earnedAt)).toEqual([
+    '2026-10-28T00:00:00Z',
+    '2026-01-01T00:00:00Z',
+  ])
+  expect(data.playing.currentPlan).toEqual({
+    summary: 'Campanha',
+    minutes: 60,
+    validUntil: '2026-10-30T12:00:00.000Z',
+    steps: [{ trophy: 'Faltando', minutes: 30, done: false }],
+  })
 })
 
 test('trophies of an owned game carry what was earned; another game shows its catalog list', async () => {

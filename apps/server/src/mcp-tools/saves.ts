@@ -195,7 +195,7 @@ export const saveRecommendations: Tool = {
 export const saveSessionPlan: Tool = {
   name: 'save_session_plan',
   description:
-    'Saves a plan for the play session you made for the game the player is playing now, so it shows in their PlatJourney app as a checklist that ticks each step off when PSN reports the trophy. Name each step by its trophy as get_current_game lists it. It replaces the session plan saved before.',
+    "Saves a plan for the play session you made for the game the player is playing now, so it shows in their PlatJourney app as a checklist that ticks each step off when PSN reports the trophy. Name each step by its trophy as get_current_game lists it, starting from where its recentlyEarned puts the player. It replaces the session plan on screen (get_current_game's currentPlan): when the player asked for another route, choose other trophies than that one.",
   inputSchema: {
     type: 'object',
     properties: {
