@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.1](https://github.com/renatoaug/platjourney/compare/v0.38.0...v0.38.1) (2026-10-29)
+
+### Bug Fixes
+
+* **server:** session plans point at their game again ([#110](https://github.com/renatoaug/platjourney/issues/110)) ([f8c8e75](https://github.com/renatoaug/platjourney/commit/f8c8e752727b4e3a2bc752ee266df469054b533a))
+
 ## [0.38.0](https://github.com/renatoaug/platjourney/compare/v0.37.1...v0.38.0) (2026-10-29)
 
 ### Features
