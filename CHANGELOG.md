@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.2](https://github.com/renatoaug/platjourney/compare/v0.38.1...v0.38.2) (2026-10-29)
+
+### Bug Fixes
+
+* **web:** restyle the open session route as a mission log ([#111](https://github.com/renatoaug/platjourney/issues/111)) ([cc3580b](https://github.com/renatoaug/platjourney/commit/cc3580b12697b6d30f35c7f10cab1a6b2198be79))
+
 ## [0.38.1](https://github.com/renatoaug/platjourney/compare/v0.38.0...v0.38.1) (2026-10-29)
 
 ### Bug Fixes
