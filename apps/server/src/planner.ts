@@ -85,6 +85,8 @@ export interface PlanView extends Omit<SessionPlan, 'status'> {
   // Index of the step to play now, or -1 when nothing is left.
   nextIndex: number
   expiresAt: string
+  // Whether the player has earned a trophy of the game since the plan was made; until then it waits.
+  started: boolean
 }
 
 // A plan belongs to one sitting: it stays active for the time asked plus a grace period from when the
@@ -154,16 +156,19 @@ export async function startPlan(
   })
 }
 
+/** Whether the player earned a trophy of the plan's game after the plan was made. */
+export const started = (plan: SessionPlan, lastPlayed?: string | Date | null) =>
+  !!lastPlayed && new Date(lastPlayed).getTime() > new Date(plan.createdAt).getTime()
+
 /** When a plan's time runs out. `lastPlayed` is when the player last earned a trophy of its game:
  * before the plan (or unknown), the plan waits for the sitting up to a day; after it, the time asked
  * counts from that play. */
 export function endsAt(plan: SessionPlan, lastPlayed?: string | Date | null): Date {
   const created = new Date(plan.createdAt).getTime()
   const span = (plan.minutes + GRACE_MINUTES) * 60_000
-  const played = lastPlayed ? new Date(lastPlayed).getTime() : Number.NaN
-  if (!(played > created))
+  if (!lastPlayed || !started(plan, lastPlayed))
     return new Date(Math.max(created + span, created + WAIT_HOURS * 3_600_000))
-  return new Date(Math.max(created + span, played + GRACE_MINUTES * 60_000))
+  return new Date(Math.max(created + span, new Date(lastPlayed).getTime() + GRACE_MINUTES * 60_000))
 }
 
 /** When the player last earned a trophy of the plan's game, from the last sync. */
@@ -256,6 +261,7 @@ function view(plan: SessionPlan, ctx?: GameContext): PlanView {
     status,
     nextIndex: status === 'active' ? steps.findIndex((s) => !s.done) : -1,
     expiresAt,
+    started: started(plan, lastPlayed),
   }
 }
 
@@ -268,7 +274,8 @@ export async function currentPlan(user: User, ctx?: GameContext): Promise<PlanVi
     : stored
   const lastPlayed = ctx?.game.id === plan.game ? ctx.title.lastUpdated : null
   if (Date.now() > endsAt(plan, lastPlayed).getTime() + RECAP_HOURS * 3_600_000) return null
-  return view(plan, ctx)
+  // The demo's plan is the session being played.
+  return isDemo(user) ? { ...view(plan, ctx), started: true } : view(plan, ctx)
 }
 
 // The player takes the plan off the screen: ending the session while it runs, or dismissing it once

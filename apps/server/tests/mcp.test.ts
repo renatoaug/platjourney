@@ -177,6 +177,7 @@ test('the current game lists the trophies missing, the last earned and the plan 
     summary: 'Campanha',
     minutes: 60,
     expiresAt: '2026-10-30T12:00:00.000Z',
+    started: false,
     status: 'active',
     steps: [{ trophy: 'Faltando', minutes: 30, done: false }],
   } as never)
@@ -202,6 +203,7 @@ test('the current game lists the trophies missing, the last earned and the plan 
     summary: 'Campanha',
     minutes: 60,
     validUntil: '2026-10-30T12:00:00.000Z',
+    started: false,
     steps: [{ trophy: 'Faltando', minutes: 30, done: false }],
   })
 })

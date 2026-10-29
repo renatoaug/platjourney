@@ -68,6 +68,22 @@ describe('Plan', () => {
     expect(screen.queryByText(/aviso/)).toBeNull()
   })
 
+  test('a plan not played yet says it waits for the session, with the day', () => {
+    const at = (h: number) => new Date(Date.now() + h * 3_600_000)
+    const tomorrow = at(24)
+    tomorrow.setHours(15, 53)
+    const clock = () => document.querySelector('.mission-clock')?.textContent
+    const { unmount } = show({
+      plan: { ...samplePlan, started: false, expiresAt: tomorrow.toISOString() },
+    })
+    expect(clock()).toContain('2h · espera sua sessão até amanhã, 15:53')
+    unmount()
+    const today = new Date()
+    today.setHours(23, 59)
+    show({ plan: { ...samplePlan, started: true, expiresAt: today.toISOString() } })
+    expect(clock()).toContain('2h · vale até 23:59')
+  })
+
   test('a plan an assistant made says so in the band', () => {
     const { rerender } = show({ plan: { ...samplePlan, status: 'expired', assistant: 'claude' } })
     expect(document.querySelector('.mission-clock')?.textContent).toContain('feito no Claude')

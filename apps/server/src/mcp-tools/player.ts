@@ -56,6 +56,8 @@ async function planRow(user: User, ctx: GameContext) {
     summary: plan.summary,
     minutes: plan.minutes,
     validUntil: plan.expiresAt,
+    // false: the player has not played since it was made, and it waits for the sitting until validUntil.
+    started: plan.started,
     steps: plan.steps.map((s) => ({ trophy: s.trophy, minutes: s.minutes, done: s.done })),
   }
 }

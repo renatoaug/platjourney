@@ -115,11 +115,11 @@ test('a plan the player has not played yet waits for the sitting, up to a day', 
   // Made 200 minutes ago, no trophy of the game since: still on, until a day after it was made.
   get.mockResolvedValueOnce(plan({ createdAt: minutesAgo(200) }))
   const waiting = await currentPlan(user, ctx)
-  expect(waiting).toMatchObject({ status: 'active', nextIndex: 1 })
+  expect(waiting).toMatchObject({ status: 'active', nextIndex: 1, started: false })
   expect(new Date(waiting?.expiresAt ?? 0).getTime()).toBeGreaterThan(Date.now() + 20 * 3_600_000)
   // Played ten minutes ago: the time counts from that play, with its grace.
   get.mockResolvedValueOnce(plan({ createdAt: minutesAgo(200) }))
-  expect(await currentPlan(user, playedAgo(10))).toMatchObject({ status: 'active' })
+  expect(await currentPlan(user, playedAgo(10))).toMatchObject({ status: 'active', started: true })
 })
 
 test('a plan with every step earned is done', async () => {
@@ -223,6 +223,7 @@ test('the report shows durations, done steps, tricks, warnings and spare time', 
     status: 'active',
     nextIndex: 1,
     expiresAt: '',
+    started: true,
   }
   expect(planReport(view)).toBe(
     [
