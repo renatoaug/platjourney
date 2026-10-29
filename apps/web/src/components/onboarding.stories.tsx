@@ -2,47 +2,33 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MockAppState, SAMPLE_DATA, SAMPLE_ME } from '../app/app-state'
 import { current } from '../fixtures'
 import { Language } from '../i18n/i18n'
+import { profileData } from '../pages/profile.stories'
 import { rankingData } from './game-cards.stories'
-import { Tour, WelcomeDialog } from './onboarding'
+import { Stories } from './onboarding'
 
 const meta: Meta = { title: 'Components/Onboarding', parameters: { layout: 'fullscreen' } }
 export default meta
 type Story = StoryObj
 
 const player = { ...SAMPLE_ME, onboarded: false }
-const demo = { ...player, onlineId: 'PlatJourneyDemo', demo: true }
-// A player with a game in progress, so every stop of the tour applies.
+// A player with a game in progress and a profile, so every slide has something to say.
 const data = { ...SAMPLE_DATA, current, ranking: rankingData }
 
-export const Welcome: Story = {
+export const Story: Story = {
   render: () => (
     <MockAppState>
-      <WelcomeDialog me={player} data={data} onStart={() => {}} onSkip={() => {}} />
+      <Stories me={player} data={data} profile={profileData} onDone={() => {}} />
     </MockAppState>
   ),
 }
 
-// The tour's card on its own; in the app it sits beside the page of its tab.
-const stop = (step: number, me = player): Story => ({
+// The first PSN sync still running: the first slide waits with the sync line.
+export const Syncing: Story = {
   render: () => (
     <MockAppState>
-      {/* The card portals to the body; this stands in for the page it sits beside. */}
-      <div style={{ minHeight: '100vh' }} />
-      <Tour step={step} setStep={() => {}} me={me} data={data} onDone={() => {}} />
+      <Stories me={player} data={null} profile={null} onDone={() => {}} />
     </MockAppState>
   ),
-})
+}
 
-export const Overview = stop(1)
-export const CurrentGame = stop(2)
-export const Notices = stop(3)
-export const Trophies = stop(4)
-export const SessionRoute = stop(5)
-export const Nexo = stop(6)
-export const NexoInTheDemo = stop(6, demo)
-export const Guides = stop(7)
-export const Discover = stop(8)
-export const Goals = stop(9)
-export const Profile = stop(10)
-export const ProfileInTheDemo = stop(10, demo)
-export const English: Story = { ...Welcome, globals: { locale: Language.En } }
+export const English: Story = { ...Story, globals: { locale: Language.En } }

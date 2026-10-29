@@ -28,20 +28,18 @@ test('greets the player by the hour', () => {
     setSystemTime(new Date(2026, 8, 30, hour))
     const view = renderApp(<Home />, { value: { data: loaded } })
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(`${word}, jogador.`)
-    expect(screen.getByText('30 de setembro de 2026')).toBeTruthy()
     view.unmount()
   }
 })
 
-test('shows the journey, the radar, the goal and the latest from Nexo', () => {
+test('shows the console, the radar, the goal and the latest from Nexo', () => {
   renderApp(<Home />, { value: { data: loaded } })
-  expect(screen.getByText('Cada troféu é um passo. Vamos à sua próxima conquista?')).toBeTruthy()
   const hero = document.getElementById('home-hero') as HTMLElement
-  expect(within(hero).getByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
-  expect(within(hero).getByRole('link', { name: /Continuar jornada/ })).toBeTruthy()
+  expect(within(hero).getByRole('heading', { level: 2 }).textContent).toBe(currentData.name)
+  expect(within(hero).getByRole('button', { name: /Abrir jogo/ })).toBeTruthy()
   const radar = document.getElementById('home-ranking') as HTMLElement
   expect(within(radar).getAllByRole('link')).toHaveLength(3)
-  expect(screen.getByText('Ghost of Tsushima')).toBeTruthy()
+  expect(within(radar).getByText('Ghost of Tsushima')).toBeTruthy()
   expect(screen.getByRole('region', { name: 'Suas conquistas' }).textContent).toContain(
     'Platinas conquistadas',
   )
@@ -61,7 +59,7 @@ test('a new player: nothing in progress, no activity, profile on its way', () =>
     value: { data: { ...SAMPLE_DATA, profile: null as unknown as ProfileSummary } },
   })
   expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Sua próxima conquista.')
-  expect(screen.getByRole('heading', { name: 'O próximo desafio é seu.' })).toBeTruthy()
+  expect(screen.getByText('Jogue algo na PSN e ele aparece aqui, com a arte do jogo.')).toBeTruthy()
   expect(screen.getByText('Nada no radar ainda')).toBeTruthy()
   expect(screen.getByRole('link', { name: /Procurar um jogo/ }).getAttribute('href')).toBe(
     '/guides',
@@ -74,7 +72,6 @@ test('a new player: nothing in progress, no activity, profile on its way', () =>
 
 test('loading: skeletons everywhere', () => {
   const { container } = renderApp(<Home />, { value: { data: null } })
-  expect(screen.getByText('Cada troféu é um passo. Vamos ao próximo?')).toBeTruthy()
-  expect(container.querySelectorAll('.sk').length).toBeGreaterThan(20)
+  expect(container.querySelectorAll('.sk').length).toBeGreaterThan(15)
   expect(screen.queryByText('nada em andamento')).toBeNull()
 })

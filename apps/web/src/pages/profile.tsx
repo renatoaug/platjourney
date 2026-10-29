@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { titleHref } from '../components/tip'
+import { TrophyRoom } from '../components/trophy-room'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import { compact, fmtHours, fmtLong, fmtRate, number, pct } from '../lib/format'
@@ -364,6 +365,7 @@ export function ProfileView({
           </div>
         </section>
       </div>
+      <TrophyRoom platinums={d.platinums} />
       <div className="profile-layout">
         <div className="profile-band">
           <div className="card">
