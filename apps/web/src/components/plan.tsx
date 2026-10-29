@@ -38,6 +38,8 @@ const messages = defineMessages({
       now: 'Agora',
       anytime: 'Qualquer momento',
       after: 'Depois do passo {step}',
+      short: 'Passo {step}',
+      free: 'Livre',
       trick: 'Macete',
     },
     sectionLabel: 'Roteiro da sessão',
@@ -93,6 +95,8 @@ const messages = defineMessages({
       now: 'Now',
       anytime: 'Any time',
       after: 'After step {step}',
+      short: 'Step {step}',
+      free: 'Any time',
       trick: 'Trick',
     },
     sectionLabel: 'Session route',
@@ -255,9 +259,28 @@ function Route({ plan }: { plan: SessionPlan }) {
   const lit = (next >= 0 ? next : steps.length) / (stops - 1)
   const s = steps[open] as PlanStep | undefined
   const state = (i: number) => (steps[i].done ? 'done' : i === next ? 'next' : 'later')
+  // On the track a short tag: the step's number, unless it is done, now or free.
+  const tag = (step: PlanStep, i: number) =>
+    step.done
+      ? t('step.done')
+      : i === next
+        ? t('step.now')
+        : step.flexible
+          ? t('step.free')
+          : t('step.short', { step: i + 1 })
+  // The stop open below stays in view on a track that scrolls sideways.
+  const track = useRef<HTMLDivElement>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `open` is the trigger: the stop it presses
+  useEffect(() => {
+    const box = track.current
+    const stop = box?.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (!box || !stop) return
+    const left = stop.offsetLeft - (box.clientWidth - stop.offsetWidth) / 2
+    box.scrollTo({ left: Math.max(0, left), behavior: picked === null ? 'auto' : 'smooth' })
+  }, [open, picked])
   return (
     <>
-      <div className="route-scroll">
+      <div className="route-scroll" ref={track}>
         <ol className="route-track" style={{ '--stops': stops, '--lit': lit } as CSSProperties}>
           {steps.map((step, i) => (
             <li
@@ -284,7 +307,7 @@ function Route({ plan }: { plan: SessionPlan }) {
                     </span>
                   )}
                 </span>
-                <span className="route-tag">{stepLabel(t, step, i, state(i))}</span>
+                <span className="route-tag">{tag(step, i)}</span>
                 <span className="route-clock">{fmtMinutes(step.startsAt)}</span>
               </button>
             </li>
@@ -305,7 +328,7 @@ function Route({ plan }: { plan: SessionPlan }) {
         </ol>
       </div>
       {s ? (
-        <article key={open} className={`route-focus ${state(open)}`}>
+        <article key={open} className={`route-focus ${state(open)} tier-${s.type ?? 'bronze'}`}>
           <div className="route-focus-art">
             {s.iconUrl ? <img src={s.iconUrl} alt="" /> : <Icon name="trophy" />}
           </div>
@@ -557,36 +580,49 @@ export function Plan({
   return section(
     `plan plan-open ${closed ? 'plan-closed' : ''}`,
     <>
-      <header className="plan-top">
-        <div>
-          <span className="eyebrow">{t('eyebrowGame', { game: plan.gameName })}</span>
+      {/* A mission log: the band names the game and the time, the head the goal and the gauge. */}
+      <header className="mission-band">
+        <span className="mission-eyebrow">
+          <Icon name="compass" /> {t('eyebrowGame', { game: plan.gameName })}
+        </span>
+        <span className="mission-clock">
+          <Icon name="clock" /> {sub}
+        </span>
+      </header>
+      <div className="mission-head">
+        <div className="mission-goal">
           <h2>{heading}</h2>
           <p>{plainText(plan.summary)}</p>
-          <span className="plan-validity">
-            <Icon name="clock" /> {sub}
-          </span>
         </div>
-        <div className="plan-meter">
-          <b>{progress}%</b>
+        <div className="mission-meter">
           <div
-            className="bar"
+            className="mission-segs"
             role="progressbar"
             aria-label={t('progressLabel')}
             aria-valuenow={progress}
             aria-valuemin={0}
             aria-valuemax={100}
           >
-            <i style={{ width: `${progress}%` }} />
+            {plan.steps.map((step, i) => (
+              <i
+                // biome-ignore lint/suspicious/noArrayIndexKey: one segment per step, in order
+                key={i}
+                className={step.done ? 'on' : i === plan.nextIndex ? 'now' : ''}
+              />
+            ))}
           </div>
-          <span>
-            <Icon name="clock" />{' '}
-            {t('timeOf', {
-              used: fmtMinutes(plan.totalMinutes),
-              time: fmtMinutes(plan.minutes),
-            })}
+          <span className="mission-count">
+            <b>{progress}%</b>
+            <span>
+              <Icon name="clock" />{' '}
+              {t('timeOf', {
+                used: fmtMinutes(plan.totalMinutes),
+                time: fmtMinutes(plan.minutes),
+              })}
+            </span>
           </span>
         </div>
-      </header>
+      </div>
       {plan.warnings.length > 0 && (
         <details className="plan-warnings">
           <summary>

@@ -33,8 +33,9 @@ describe('Plan', () => {
     expect(screen.getByText('Feito')).toBeTruthy()
     // The step to play now is on the track and open under it.
     expect(screen.getAllByText('Agora')).toHaveLength(2)
-    expect(screen.getByText('Depois do passo 2')).toBeTruthy()
-    expect(screen.getByText('Qualquer momento')).toBeTruthy()
+    // The track names each stop shortly: its number, or free when it fits any time.
+    expect(screen.getByText('Passo 3')).toBeTruthy()
+    expect(screen.getByText('Livre')).toBeTruthy()
     expect(screen.getByText('Macete')).toBeTruthy()
     // The session's end opens from the end of the track.
     fireEvent.click(screen.getByRole('button', { name: /Fim da sessão/ }))
@@ -67,9 +68,9 @@ describe('Plan', () => {
     expect(screen.queryByText(/aviso/)).toBeNull()
   })
 
-  test('a plan an assistant made says so under the heading', () => {
+  test('a plan an assistant made says so in the band', () => {
     const { rerender } = show({ plan: { ...samplePlan, status: 'expired', assistant: 'claude' } })
-    expect(document.querySelector('.plan-validity')?.textContent).toContain('feito no Claude')
+    expect(document.querySelector('.mission-clock')?.textContent).toContain('feito no Claude')
     rerender(
       <Plan
         plan={{ ...samplePlan, status: 'expired', assistant: 'other' }}
@@ -81,7 +82,7 @@ describe('Plan', () => {
         onDiscard={noop}
       />,
     )
-    expect(document.querySelector('.plan-validity')?.textContent).toContain('feito num assistente')
+    expect(document.querySelector('.mission-clock')?.textContent).toContain('feito num assistente')
   })
 
   test('a plan without steps is at zero', () => {
