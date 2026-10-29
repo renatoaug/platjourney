@@ -275,7 +275,12 @@ function Route({ plan }: { plan: SessionPlan }) {
     const box = track.current
     const stop = box?.querySelector<HTMLElement>('[aria-pressed="true"]')
     if (!box || !stop) return
-    const left = stop.offsetLeft - (box.clientWidth - stop.offsetWidth) / 2
+    // Measured on screen: the button's offsetLeft is from its own stop, not from the track.
+    const left =
+      box.scrollLeft +
+      stop.getBoundingClientRect().left -
+      box.getBoundingClientRect().left -
+      (box.clientWidth - stop.offsetWidth) / 2
     box.scrollTo({ left: Math.max(0, left), behavior: picked === null ? 'auto' : 'smooth' })
   }, [open, picked])
   return (
@@ -370,6 +375,32 @@ function Route({ plan }: { plan: SessionPlan }) {
   )
 }
 
+/** Placeholder mission head: the band, the goal and an empty gauge, in the open plan's places. */
+function MissionSkeleton({ title, lead }: { title?: ReactNode; lead?: ReactNode }) {
+  return (
+    <>
+      <header className="mission-band">
+        <Sk w="180px" h={10} />
+        <Sk w="80px" h={10} />
+      </header>
+      <div className="mission-head">
+        <div className="mission-goal">
+          {title ?? <Sk w="220px" h={26} />}
+          {lead ?? <Sk w="80%" h={12} style={{ marginTop: 10 }} />}
+        </div>
+        <div className="mission-meter">
+          <div className="mission-segs">
+            {repeat(4, () => (
+              <i />
+            ))}
+          </div>
+          <Sk w="48px" h={18} />
+        </div>
+      </div>
+    </>
+  )
+}
+
 /** Placeholder route: four steps, used while the plan loads and while Nexo builds it. */
 function PlanSkeleton() {
   return (
@@ -379,20 +410,22 @@ function PlanSkeleton() {
           {repeat(5, () => (
             <li className="route-stop later">
               <span className="route-stop-sk">
-                <Sk w="56px" h={56} />
-                <Sk w="64px" h={10} />
-                <Sk w="32px" h={8} />
+                <Sk w="56px" h={56} style={{ borderRadius: 12 }} />
+                <Sk w="44px" h={9} />
+                <Sk w="28px" h={8} />
               </span>
             </li>
           ))}
         </ol>
       </div>
-      <div className="route-focus">
-        <Sk w="96px" h={96} />
+      <div className="route-focus route-focus-sk">
+        <div className="route-focus-art">
+          <Sk h={0} style={{ height: '100%' }} />
+        </div>
         <div className="route-focus-body">
-          <Sk w="120px" h={18} />
-          <Sk w="240px" h={22} />
-          <Sk w="100%" h={12} />
+          <Sk w="72px" h={20} />
+          <Sk w="60%" h={22} />
+          <Sk h={12} />
           <Sk w="80%" h={12} />
         </div>
       </div>
@@ -522,14 +555,9 @@ export function Plan({
   )
   if (plan === undefined && !busy)
     return section(
-      'plan',
+      'plan plan-open plan-loading',
       <>
-        <div className="plan-head">
-          <div>
-            <Sk w="120px" h={9} />
-            <Sk w="220px" h={20} style={{ marginTop: 10 }} />
-          </div>
-        </div>
+        <MissionSkeleton />
         <PlanSkeleton />
       </>,
     )
@@ -537,13 +565,10 @@ export function Plan({
     return section(
       'plan plan-open',
       <>
-        <header className="plan-top">
-          <div>
-            <span className="eyebrow">{t('eyebrow')}</span>
-            <h2>{t('building', { time: fmtMinutes(minutes) })}</h2>
-            <p>{t('buildingLead')}</p>
-          </div>
-        </header>
+        <MissionSkeleton
+          title={<h2>{t('building', { time: fmtMinutes(minutes) })}</h2>}
+          lead={<p>{t('buildingLead')}</p>}
+        />
         <PlanSkeleton />
       </>,
     )

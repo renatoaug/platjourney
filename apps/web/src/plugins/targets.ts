@@ -137,6 +137,7 @@ export type Target =
   | 'Meta'
   | 'Missable'
   | 'MissingGame'
+  | 'MissionSkeleton'
   | 'MockAppState'
   | 'MomentList'
   | 'MonthStrip'
