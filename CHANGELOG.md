@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.5](https://github.com/renatoaug/platjourney/compare/v0.38.4...v0.38.5) (2026-10-30)
+
+### Bug Fixes
+
+* **server:** one step per trophy in session plans ([#114](https://github.com/renatoaug/platjourney/issues/114)) ([c029140](https://github.com/renatoaug/platjourney/commit/c029140a6136369dcadb44f8e6b3ff9acb803f2d))
+
 ## [0.38.4](https://github.com/renatoaug/platjourney/compare/v0.38.3...v0.38.4) (2026-10-29)
 
 ### Bug Fixes
