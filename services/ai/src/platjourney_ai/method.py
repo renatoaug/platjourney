@@ -37,7 +37,10 @@ PLAN = (
     'caminho diferente: troque os troféus do roteiro atual por outros que também cabem agora; '
     'repita um só se não houver outro possível, e diga por quê. Nenhum passo ocupa quase a '
     'sessão inteira: um troféu da história que leva muito tempo vem junto dos que saem no caminho '
-    '(colecionáveis, desafios e extras das mesmas missões), para o jogador ver o roteiro andar.'
+    '(colecionáveis, desafios e extras das mesmas missões), para o jogador ver o roteiro andar. '
+    'Cada passo é um troféu que sai nesta sessão, e cada troféu aparece em um passo só. '
+    'Colecionáveis e itens que avançam um troféu que não fecha agora não viram passo: entram no '
+    'como fazer do passo do trecho onde estão (ex.: "pegue o souvenir 17 no caminho").'
     f' {NAMES}'
 )
 

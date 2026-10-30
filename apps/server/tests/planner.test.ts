@@ -6,6 +6,7 @@ import {
   currentPlan,
   discardPlan,
   expirePlans,
+  oneStepPerTrophy,
   type PlanView,
   planReport,
   planSession,
@@ -176,6 +177,30 @@ test('a new plan replaces the active one, which keeps its steps done', async () 
   const saved = await startPlan(user, plan(), ctx)
   expect(close.mock.calls[0].slice(0, 2)).toEqual(['session_plan:old', 'replaced'])
   expect(saved.id).toBe('session_plan:new')
+})
+
+test('a trophy split across steps becomes one step, where it first came', async () => {
+  const split = [
+    { ...step('B', 10), how: 'pegue o souvenir 16', trick: 'atrás da porta' },
+    step('A', 20),
+    { ...step('B', 15), how: 'pegue o souvenir 17', flexible: true },
+  ]
+  expect(oneStepPerTrophy(split)).toEqual([
+    {
+      ...step('B', 25),
+      how: 'pegue o souvenir 16 pegue o souvenir 17',
+      trick: 'atrás da porta',
+      flexible: false,
+    },
+    step('A', 20),
+  ])
+  spyOn(plans, 'activePlan').mockResolvedValue(undefined)
+  const save = spyOn(plans, 'savePlan').mockImplementation(async (_u, p) => p)
+  await startPlan(user, plan({ steps: split }), ctx)
+  expect(save.mock.calls[0][1].steps.map((s) => [s.trophy, s.minutes, s.trophyId])).toEqual([
+    ['B', 25, 2],
+    ['A', 20, 1],
+  ])
 })
 
 test('an expired recap is not touched by a new plan', async () => {
