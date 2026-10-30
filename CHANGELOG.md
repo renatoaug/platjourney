@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.7](https://github.com/renatoaug/platjourney/compare/v0.38.6...v0.38.7) (2026-10-30)
+
+### Bug Fixes
+
+* **ai:** Nexo answers in the account's language and translates place names with the original ([#116](https://github.com/renatoaug/platjourney/issues/116)) ([ed0b411](https://github.com/renatoaug/platjourney/commit/ed0b41188c567127b974a3ae91a6229f7f3c885b))
+
 ## [0.38.6](https://github.com/renatoaug/platjourney/compare/v0.38.5...v0.38.6) (2026-10-30)
 
 ### Bug Fixes
