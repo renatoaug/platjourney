@@ -63,6 +63,7 @@ function planStep(step: Args, trophy: TrophyStatus): PlanStep {
     why: optText(step.why, 300, ''),
     trick: optText(step.trick, 300, null),
     flexible: step.flexible === true,
+    earns: step.earns !== false,
   }
 }
 
@@ -216,6 +217,11 @@ export const saveSessionPlan: Tool = {
             flexible: {
               type: 'boolean',
               description: 'True when it can be done at any point of the session.',
+            },
+            earns: {
+              type: 'boolean',
+              description:
+                'False when the step only moves its trophy forward (a few items of a collectible total): the app puts it inside the step of a trophy that pops this session.',
             },
           },
           required: ['trophy', 'how'],

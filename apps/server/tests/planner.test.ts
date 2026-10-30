@@ -6,6 +6,7 @@ import {
   currentPlan,
   discardPlan,
   expirePlans,
+  foldProgress,
   oneStepPerTrophy,
   type PlanView,
   planReport,
@@ -73,6 +74,8 @@ test('a session plan is saved and ticks off what is already earned', async () =>
     [2, false],
   ])
   expect(view.id).toBe('session_plan:n')
+  // The trophy's own description goes with each step, for the card under its name.
+  expect(view.steps.map((s) => s.detail)).toEqual(['Faça algo', 'Faça algo'])
   expect(view.steps.map((s) => [s.done, s.startsAt, s.iconUrl, s.type, s.flexible])).toEqual([
     [true, 0, 'a.png', 'gold', false],
     [false, 30, null, 'bronze', false],
@@ -203,6 +206,32 @@ test('a trophy split across steps becomes one step, where it first came', async 
   ])
 })
 
+test('a step that only moves a trophy forward goes inside the next step whose trophy pops', () => {
+  const trophies = [
+    makeTrophy({ id: 2, name: 'B' }),
+    makeTrophy({ id: 3, name: 'Exploradora', detail: 'Abra todos os baús secretos' }),
+  ]
+  const folded = foldProgress(
+    [
+      { ...step('Exploradora', 10), how: 'baú secreto 8 no pátio', earns: false },
+      step('B', 30),
+      { ...step('Pena', 5), how: 'pena 6 na torre', earns: false },
+    ],
+    trophies,
+  )
+  expect(folded.map((s) => [s.trophy, s.minutes])).toEqual([['B', 45]])
+  expect(folded[0].how).toBe(
+    [
+      'faça B',
+      'Para o troféu **Exploradora** (Abra todos os baús secretos), que não sai nesta sessão: baú secreto 8 no pátio',
+      'Para o troféu **Pena**, que não sai nesta sessão: pena 6 na torre',
+    ].join('\n\n'),
+  )
+  // With no trophy popping at all, the steps stay as they came.
+  const none = [{ ...step('Exploradora', 10), earns: false }]
+  expect(foldProgress(none, trophies)).toBe(none)
+})
+
 test('an expired recap is not touched by a new plan', async () => {
   spyOn(plans, 'activePlan').mockResolvedValue(plan({ id: 'session_plan:old', status: 'expired' }))
   const close = spyOn(plans, 'closePlan').mockResolvedValue()
@@ -241,8 +270,16 @@ test('the report shows durations, done steps, tricks, warnings and spare time', 
   const view: PlanView = {
     ...plan({ minutes: 125, warnings: ['Salve antes'], ifTimeLeft: 'Colete penas' }),
     steps: [
-      { ...step('A', 45), trick: 'pule', done: true, startsAt: 0, iconUrl: null, type: null },
-      { ...step('B', 60), done: false, startsAt: 45, iconUrl: null, type: null },
+      {
+        ...step('A', 45),
+        trick: 'pule',
+        done: true,
+        startsAt: 0,
+        iconUrl: null,
+        type: null,
+        detail: null,
+      },
+      { ...step('B', 60), done: false, startsAt: 45, iconUrl: null, type: null, detail: null },
     ],
     doneCount: 1,
     status: 'active',

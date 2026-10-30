@@ -162,6 +162,8 @@ interface PlanStep {
   startsAt: number
   iconUrl: string | null
   type: string | null
+  // The trophy's own description ("Open every secret chest"); absent on old plans.
+  detail?: string | null
 }
 
 export interface SessionPlan {
@@ -351,6 +353,7 @@ function Route({ plan }: { plan: SessionPlan }) {
               </span>
             </header>
             <h3>{s.trophy}</h3>
+            {s.detail && <p className="route-detail">{s.detail}</p>}
             <Markdown text={s.how} />
             {s.trick && (
               <div className="plan-trick">

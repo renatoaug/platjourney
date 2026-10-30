@@ -25,7 +25,7 @@ SCHEMA: dict[str, Any] = {
             'items': {
                 'type': 'object',
                 'additionalProperties': False,
-                'required': ['trophy', 'minutes', 'how', 'why', 'trick', 'flexible'],
+                'required': ['trophy', 'minutes', 'how', 'why', 'trick', 'flexible', 'earns'],
                 'properties': {
                     'trophy': {
                         'type': 'string',
@@ -48,6 +48,14 @@ SCHEMA: dict[str, Any] = {
                         'description': (
                             'A known trick from the guide that applies, at most 25 words, or '
                             'null. Never a rewording of how: null when the guide has nothing more'
+                        ),
+                    },
+                    'earns': {
+                        'type': 'boolean',
+                        'description': (
+                            'true if the trophy pops during this session once the step is done; '
+                            'false if the step only moves it forward (a few items of a collectible '
+                            'total, part of a counter)'
                         ),
                     },
                     'flexible': {

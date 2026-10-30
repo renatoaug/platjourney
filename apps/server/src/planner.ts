@@ -5,6 +5,7 @@ import { isDemo } from './demo.ts'
 import { DEFAULT_LOCALE, defineMessages, Language, type Locale, translator } from './i18n.ts'
 import type { GameContext } from './nexo.ts'
 import { aroundModel } from './plugins.ts'
+import type { TrophyStatus } from './psn.ts'
 import type { AssistantKey } from './repository/activity.ts'
 import {
   activePlan,
@@ -39,6 +40,9 @@ export interface PlanStep {
   // true when the step can be done at any point of the session (a grind, a
   // purchase); false when it only opens after the steps before it.
   flexible: boolean
+  // false when the step only moves its trophy forward (a few items of a collectible total): it is
+  // folded into a step whose trophy pops this session. Absent means it pops.
+  earns?: boolean
   // The trophy's id on the plan's PSN list, to check it later without PSN; absent on old plans.
   trophyId?: number | null
   // Earned by the time the plan ended; false while it is on screen.
@@ -79,6 +83,7 @@ export interface PlanView extends Omit<SessionPlan, 'status'> {
     startsAt: number
     iconUrl: string | null
     type: string | null
+    detail: string | null
   })[]
   doneCount: number
   status: PlanStatus
@@ -155,8 +160,31 @@ export function oneStepPerTrophy(steps: PlanStep[]): PlanStep[] {
     seen.how = [seen.how, s.how].filter(Boolean).join(' ')
     seen.trick = [...new Set([seen.trick, s.trick].filter(Boolean))].join(' ') || null
     seen.flexible = seen.flexible && s.flexible
+    // The merged step pops when any of its parts did.
+    if (seen.earns === false && s.earns !== false) delete seen.earns
   }
   return [...byTrophy.values()]
+}
+
+/** A session lists only trophies that pop in it. A step that only moves a collectible trophy forward
+ * goes inside the next step whose trophy pops (the one before, at the end), said as progress toward
+ * that trophy, so the player never expects it to pop. With no trophy popping, the steps stay. */
+export function foldProgress(steps: PlanStep[], trophies: TrophyStatus[]): PlanStep[] {
+  const pops = (s: PlanStep) => s.earns !== false
+  if (!steps.some(pops) || steps.every(pops)) return steps
+  const detail = new Map(trophies.map((t) => [t.name, t.detail]))
+  const out = steps.filter(pops).map((s) => ({ ...s }))
+  steps.forEach((s, i) => {
+    if (pops(s)) return
+    const after = steps.slice(i + 1).find(pops)
+    const host = out.find((o) => o.trophy === (after ?? steps.slice(0, i).findLast(pops))?.trophy)
+    if (!host) return
+    const about = detail.get(s.trophy)
+    const note = `Para o troféu **${s.trophy}**${about ? ` (${about})` : ''}, que não sai nesta sessão: ${s.how}`
+    host.how = [host.how, note].filter(Boolean).join('\n\n')
+    host.minutes += s.minutes
+  })
+  return out
 }
 
 export async function startPlan(
@@ -171,7 +199,7 @@ export async function startPlan(
   return savePlan(user.id, {
     ...plan,
     npCommunicationId: ctx.title.npCommunicationId,
-    steps: oneStepPerTrophy(plan.steps).map((s) => ({
+    steps: foldProgress(oneStepPerTrophy(plan.steps), ctx.trophies).map((s) => ({
       ...s,
       trophyId: byName.get(s.trophy) ?? null,
       done: false,
@@ -263,6 +291,7 @@ function view(plan: SessionPlan, ctx?: GameContext): PlanView {
       done: earned.has(s.trophy),
       startsAt: clock,
       iconUrl: trophy?.iconUrl ?? null,
+      detail: trophy?.detail ?? null,
       type: trophy?.type ?? null,
     }
     clock += s.minutes

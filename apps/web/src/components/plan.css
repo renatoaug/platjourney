@@ -1169,6 +1169,14 @@
       0 0 24px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
   }
 
+  /* The trophy's own description, under its name: what it asks for, apart from the route's text. */
+  .route-detail {
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-style: italic;
+  }
+
   /* The open step, in its trophy's color: border, wash and a glowing icon. */
   .route-focus {
     --tier: var(--color-trophy-bronze);
