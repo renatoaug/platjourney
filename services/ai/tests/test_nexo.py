@@ -561,3 +561,10 @@ async def test_an_account_in_english_gets_the_answer_in_english(monkeypatch: pyt
     assert text.endswith('Source: Guia A and Guia B')
     await nexo.ask('Como pego?', 'ctx')
     assert 'Idioma: o jogador usa o app em inglês' not in seen['instructions']
+
+
+def test_the_progress_summary_is_only_for_what_is_left():
+    # Any other question opens with its own answer, and hours need the time played.
+    assert 'A primeira frase responde o que o jogador perguntou' in nexo.SYSTEM
+    assert 'nada de resumo de progresso' in nexo.SYSTEM
+    assert 'tempo jogado estiver nos dados' in nexo.SYSTEM
