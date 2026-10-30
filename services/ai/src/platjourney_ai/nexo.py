@@ -273,10 +273,10 @@ def cite(text: str, used: list[Passage]) -> str:
         return name
 
     def line(m: re.Match[str]) -> str:
-        names = re.split(r'\s*,\s*|\s+e\s+', m.group(2).strip())
+        names = re.split(r'\s*,\s*|\s+(?:e|and)\s+', m.group(2).strip())
         return m.group(1) + ', '.join(link(n) for n in names if n)
 
-    return re.sub(r'^([ \t]*Fontes?:[ \t]*)(.+)$', line, text, flags=re.M)
+    return re.sub(r'^([ \t]*(?:Fontes?|Sources?):[ \t]*)(.+)$', line, text, flags=re.M)
 
 
 def start_prompt(ctx: GameContext) -> str:
@@ -458,10 +458,23 @@ def trophy_help_prompt(trophy: Trophy) -> str:
     return f'Quero uma dica para o troféu {trophy.name} (em inglês: {trophy.name_en}): {trophy.detail}.{progress} Pelos troféus que já conquistei e pelo roadmap do guia, diga onde provavelmente estou no jogo e se agora é um bom momento para ele ou quando fazer. Depois diga como pegar, o macete que economiza tempo e o que evitar. Se ele puder ser perdido, avise primeiro. Curto e direto.'  # noqa: E501
 
 
-async def ask(user_text: str, context: str, history: list[Turn] | None = None) -> str:
+# The app's language, when it is not Portuguese: the whole answer follows it.
+LANGUAGE = {
+    'en': (
+        '\n\nIdioma: o jogador usa o app em inglês. Escreva a resposta inteira em inglês, sem '
+        'misturar português. Cite os troféus pelo nome em inglês (o que vem entre parênteses na '
+        'lista) e os locais, missões e itens como a fonte escreve, sem tradução. A linha de fontes '
+        'começa com "Source:".'
+    ),
+}
+
+
+async def ask(
+    user_text: str, context: str, history: list[Turn] | None = None, locale: str = 'pt-BR'
+) -> str:
     turns = [t.model_dump() for t in history or []]
     response = await llm.respond(
-        instructions=system_prompt(),
+        instructions=system_prompt() + LANGUAGE.get(locale, ''),
         tools=[{'type': 'web_search'}],
         reasoning={'effort': 'low'},
         max_output_tokens=settings.chat_max_output_tokens,
@@ -472,8 +485,7 @@ async def ask(user_text: str, context: str, history: list[Turn] | None = None) -
 
 ROUTE_PROMPT = (
     '\n\nNa mesma mensagem, com as suas palavras, inclua esta orientação do guia sobre o que vem '
-    'agora. Escreva os nomes de missões, locais e itens exatamente como a orientação escreve: '
-    'nunca traduza um nome que está em inglês. Pule o que fala de '
+    'agora. Os nomes de missões, locais e itens seguem a regra de nomes acima. Pule o que fala de '
     'troféu que já está em "Conquistados":\n{route}'
 )
 
@@ -505,7 +517,7 @@ async def tip(
                 prompt += mark_prompt(mark)
     if route:
         prompt += ROUTE_PROMPT.format(route=route)
-    text = await ask(prompt, lean_context(ctx, [t.name_en for t in unlocked]))
+    text = await ask(prompt, lean_context(ctx, [t.name_en for t in unlocked]), locale=ctx.locale)
     # Automatic notices cite no source; the model sometimes adds one anyway.
     return re.sub(r'\n*^[ \t]*Fonte:.*$', '', text, flags=re.M).strip()
 
@@ -517,7 +529,10 @@ async def trophy_help(ctx: GameContext, trophy: Trophy) -> str:
     prompt = trophy_help_prompt(trophy)
     guide_passages, used = await passages(ctx, prompt, [trophy.name_en])
     context = lean_context(ctx, [trophy.name_en], prompt)
-    return cite(await ask(prompt, f'Contexto PSN do jogo:\n{context}{guide_passages}'), used)
+    return cite(
+        await ask(prompt, f'Contexto PSN do jogo:\n{context}{guide_passages}', locale=ctx.locale),
+        used,
+    )
 
 
 async def record_gap(ctx: GameContext, question: str) -> None:
@@ -545,14 +560,16 @@ class Moderated(Exception):
     """The player's message was flagged by moderation; no model was asked."""
 
 
-async def reply(text: str, ctx: GameContext | None, history: list[Turn]) -> str:
+async def reply(
+    text: str, ctx: GameContext | None, history: list[Turn], locale: str = 'pt-BR'
+) -> str:
     if await llm.flagged(text):
         raise Moderated
     if not ctx:
-        return await ask(text, 'Sem contexto PSN carregado.', history)
+        return await ask(text, 'Sem contexto PSN carregado.', history, locale)
     focus = mentioned_trophies(text, ctx)
     found, used = await passages(ctx, text, focus)
     if not found:
         await record_gap(ctx, text)
     context = f'Contexto PSN do jogo atual:\n{lean_context(ctx, focus, text)}{found}'
-    return cite(await ask(text, context, history), used)
+    return cite(await ask(text, context, history, ctx.locale), used)

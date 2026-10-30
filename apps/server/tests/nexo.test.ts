@@ -19,6 +19,7 @@ const context = {
   hoursPlayed: null,
   includeDlcProgress: false,
   owned: true,
+  locale: 'pt-BR',
 }
 
 let ai: ReturnType<typeof spyOn<typeof aiModule, 'ai'>>
@@ -145,6 +146,7 @@ test('a reply carries the conversation with notices in time order', async () => 
       { role: 'assistant', content: '(Aviso automático sobre Days Gone) Troféu!' },
       { role: 'assistant', content: 'olá' },
     ],
+    locale: 'pt-BR',
   })
   expect(append.mock.calls).toEqual([
     ['user:u1', 'user', 'e agora?', 'game:1'],

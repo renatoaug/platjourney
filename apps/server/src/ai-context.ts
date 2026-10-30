@@ -11,4 +11,6 @@ export const aiContext = (ctx: GameContext, user: User) => ({
   hoursPlayed: ctx.hoursPlayed ?? null,
   includeDlcProgress: user.include_dlc_progress === true,
   owned: ctx.owned !== false,
+  // Nexo writes in the app's language; an account with none set reads Portuguese.
+  locale: user.locale === 'en' ? 'en' : 'pt-BR',
 })

@@ -13,7 +13,13 @@ test('missing facts go to the service as null', () => {
     hoursPlayed: null,
     includeDlcProgress: false,
     owned: true,
+    locale: 'pt-BR',
   })
+})
+
+test("the account's language rides along, Portuguese when none is set", () => {
+  expect(aiContext(makeContext(), makeUser({ locale: 'en' })).locale).toBe('en')
+  expect(aiContext(makeContext(), makeUser({ locale: null })).locale).toBe('pt-BR')
 })
 
 test('the DLC preference and hours ride along', () => {

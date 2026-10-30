@@ -4,7 +4,7 @@ Models accept unknown fields so the server can send more than a feature reads.
 """
 
 import math
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
@@ -78,6 +78,8 @@ class GameContext(Wire):
     include_dlc_progress: bool = False
     # False when the player does not own the game: Nexo talks about it before they buy it.
     owned: bool = True
+    # The app's language for this player: Nexo writes in it.
+    locale: Literal['pt-BR', 'en'] = 'pt-BR'
 
 
 class Shown(BaseModel):
