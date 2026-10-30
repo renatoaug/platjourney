@@ -203,7 +203,8 @@ export const saveSessionPlan: Tool = {
       summary: { type: 'string', description: 'The plan in one or two sentences.' },
       steps: {
         type: 'array',
-        description: 'The trophies to go for, in order (up to 20).',
+        description:
+          'The trophies earned this session, in order (up to 20), each in one step only. Collectibles toward a trophy that will not finish this session are not steps: put them in the "how" of the step where they are.',
         items: {
           type: 'object',
           properties: {

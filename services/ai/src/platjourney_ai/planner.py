@@ -18,7 +18,10 @@ SCHEMA: dict[str, Any] = {
         },
         'steps': {
             'type': 'array',
-            'description': 'Trophies to go for, in the order to play them',
+            'description': (
+                'Trophies earned this session, in the order to play them; '
+                'each trophy in one step only'
+            ),
             'items': {
                 'type': 'object',
                 'additionalProperties': False,
@@ -34,7 +37,10 @@ SCHEMA: dict[str, Any] = {
                     },
                     'how': {
                         'type': 'string',
-                        'description': 'What to do, pt-BR, ONE sentence of at most 18 words',
+                        'description': (
+                            'What to do, pt-BR, at most 2 sentences and 40 words, with the '
+                            'collectibles of this stretch that count toward other trophies'
+                        ),
                     },
                     'why': {'type': 'string', 'description': 'Why now, pt-BR, at most 8 words'},
                     'trick': {

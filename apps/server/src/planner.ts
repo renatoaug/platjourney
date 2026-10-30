@@ -140,6 +140,25 @@ export async function planSession(
 
 // A new plan, Nexo's or a connected assistant's, takes the place of the one on screen; that one
 // keeps the steps done by now. Each step remembers its trophy's id, to be checked without PSN.
+/** One step per trophy: a trophy split across several steps (its collectibles one stretch at a time)
+ * never ticks off until the last one, so the steps of the same trophy become one, where it first
+ * came, with their minutes added and their texts joined. */
+export function oneStepPerTrophy(steps: PlanStep[]): PlanStep[] {
+  const byTrophy = new Map<string, PlanStep>()
+  for (const s of steps) {
+    const seen = byTrophy.get(s.trophy)
+    if (!seen) {
+      byTrophy.set(s.trophy, { ...s })
+      continue
+    }
+    seen.minutes += s.minutes
+    seen.how = [seen.how, s.how].filter(Boolean).join(' ')
+    seen.trick = [...new Set([seen.trick, s.trick].filter(Boolean))].join(' ') || null
+    seen.flexible = seen.flexible && s.flexible
+  }
+  return [...byTrophy.values()]
+}
+
 export async function startPlan(
   user: User,
   plan: SessionPlan,
@@ -152,7 +171,11 @@ export async function startPlan(
   return savePlan(user.id, {
     ...plan,
     npCommunicationId: ctx.title.npCommunicationId,
-    steps: plan.steps.map((s) => ({ ...s, trophyId: byName.get(s.trophy) ?? null, done: false })),
+    steps: oneStepPerTrophy(plan.steps).map((s) => ({
+      ...s,
+      trophyId: byName.get(s.trophy) ?? null,
+      done: false,
+    })),
   })
 }
 
