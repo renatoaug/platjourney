@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.8](https://github.com/renatoaug/platjourney/compare/v0.38.7...v0.38.8) (2026-10-30)
+
+### Bug Fixes
+
+* **ai:** progress summary only when the player asks what is left ([#117](https://github.com/renatoaug/platjourney/issues/117)) ([c4e6978](https://github.com/renatoaug/platjourney/commit/c4e697887010d084cbcef452ccd3d34cc48b6778))
+
 ## [0.38.7](https://github.com/renatoaug/platjourney/compare/v0.38.6...v0.38.7) (2026-10-30)
 
 ### Bug Fixes
