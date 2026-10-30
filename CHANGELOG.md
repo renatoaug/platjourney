@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.6](https://github.com/renatoaug/platjourney/compare/v0.38.5...v0.38.6) (2026-10-30)
+
+### Bug Fixes
+
+* **server:** sessions list only the trophies that pop in them ([#115](https://github.com/renatoaug/platjourney/issues/115)) ([f7c05b7](https://github.com/renatoaug/platjourney/commit/f7c05b74173c25aafc7c7fd9b2751c18c1d4971d))
+
 ## [0.38.5](https://github.com/renatoaug/platjourney/compare/v0.38.4...v0.38.5) (2026-10-30)
 
 ### Bug Fixes
