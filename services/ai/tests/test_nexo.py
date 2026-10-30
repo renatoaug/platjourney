@@ -423,7 +423,7 @@ async def test_a_tip_folds_the_guide_route_into_the_same_message(model: Model) -
     await nexo.tip('unlock', context(), [], route)
     content = model.calls[0]['input'][0]['content']
     assert content.endswith(nexo.ROUTE_PROMPT.format(route=route))
-    assert 'nunca traduza um nome' in content
+    assert 'regra de nomes' in content
     await nexo.tip('unlock', context(), [])
     assert 'orientação do guia' not in model.calls[1]['input'][0]['content']
 
@@ -546,3 +546,18 @@ def test_unlock_prompt_marks_the_journey() -> None:
     )
     assert 'faltam 3' in final and 'A, B, C' in final
     assert 'platina' in nexo.mark_prompt(nexo.Mark(kind='platinum', earned=40, total=40))
+
+
+async def test_an_account_in_english_gets_the_answer_in_english(monkeypatch: pytest.MonkeyPatch):
+    seen: dict[str, str] = {}
+
+    async def respond(**kw: Any):
+        seen['instructions'] = kw['instructions']
+        return SimpleNamespace(output_text='Do it now.\nSource: Guia A and Guia B')
+
+    monkeypatch.setattr(nexo.llm, 'respond', respond)
+    text = await nexo.ask('How do I get it?', 'ctx', locale='en')
+    assert 'Escreva a resposta inteira em inglês' in seen['instructions']
+    assert text.endswith('Source: Guia A and Guia B')
+    await nexo.ask('Como pego?', 'ctx')
+    assert 'Idioma: o jogador usa o app em inglês' not in seen['instructions']

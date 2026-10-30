@@ -211,7 +211,11 @@ export function reply(user: User, userText: string, ctx?: GameContext): Promise<
         user,
         'chat',
         '/nexo/reply',
-        { text: userText, context: ctx ? aiContext(ctx, user) : null },
+        {
+          text: userText,
+          context: ctx ? aiContext(ctx, user) : null,
+          locale: user.locale === 'en' ? 'en' : 'pt-BR',
+        },
         { text: userText, game: ctx?.game.id },
       )
     } catch (e) {

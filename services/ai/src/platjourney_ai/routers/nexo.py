@@ -40,6 +40,8 @@ class ReplyRequest(Wire):
     text: str = Field(max_length=4000)
     context: GameContext | None = None
     history: list[nexo.Turn] = Field(default_factory=list[nexo.Turn], max_length=50)
+    # The app's language, for a reply with no game context.
+    locale: Literal['pt-BR', 'en'] = 'pt-BR'
 
 
 @router.post('/tip')
@@ -58,7 +60,7 @@ async def trophy_help(body: TrophyHelpRequest) -> Answer:
 @router.post('/reply')
 async def reply(body: ReplyRequest) -> Answer:
     try:
-        return Answer(text=await nexo.reply(body.text, body.context, body.history))
+        return Answer(text=await nexo.reply(body.text, body.context, body.history, body.locale))
     except nexo.Moderated:
         # 422 tells the server the message itself was refused, not that the model failed.
         raise HTTPException(status_code=422, detail='moderated') from None
