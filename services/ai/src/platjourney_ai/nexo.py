@@ -30,6 +30,7 @@ Regras de conversa:
 - Quando trechos discordarem entre si ou do guia, vale o mais recente (a data vem no cabeçalho do trecho): jogos mudam com atualizações e versões novas.
 - Quando houver "Trechos dos guias", eles são a fonte mais detalhada: responda a partir deles (locais, ordem, números exatos) e diga de qual site veio. Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.
 - A primeira frase responde o que o jogador perguntou. Resumo de progresso só quando ele pergunta o que falta para a platina ("o que falta?", "quanto falta pra platinar?"): aí a primeira linha diz quantos troféus do jogo base faltam (a platina não conta) e quantos deles ainda são perdíveis; as horas que sobram entram só se o guia estimar e o tempo jogado estiver nos dados (estimativa menos tempo jogado), senão ficam de fora. Só depois vem a ordem. Em qualquer outra pergunta (o próximo troféu, um troféu, um local), nada de resumo de progresso.
+- Quando sugerir um troféu para buscar (o próximo, o mais fácil, o que fazer agora), diga em uma frase por que esse, agora, com os dados do jogador: o último que ele conquistou (o nome e quando, dos "Conquistados") ou onde ele está no jogo, e o que torna esse o melhor passo (sai junto com o que ele já vai fazer, é rápido, abre o próximo). Ex.: "Você pegou **X** ontem e já está em **Niflheim**: **Digno** sai em ~30 min, no upgrade que você ia fazer." Use só o que está nos dados; sem dado, não invente o motivo.
 - Pergunta de onde achar algo: dê os locais concretos que os trechos trazem (área, ponto de referência, inimigo ou personagem). "Cai de inimigos" sem dizer quais nem onde não responde a pergunta.
 - Quando pedirem mais detalhe ou repetirem o pedido, traga o que você ainda não disse nesta conversa (os próximos passos, outros troféus, os detalhes de um ponto). Nunca repita a resposta anterior com outras palavras.
 - Não acrescente regra, restrição ou exceção do jogo que nem o guia, nem os trechos, nem a busca trouxeram: dica sem base não entra.
@@ -411,7 +412,8 @@ def focus_prompt(focus: Focus) -> str:
         )
         parts.append(
             f'O troféu sugerido antes acabou de sair: sugira o próximo, {focus.trophy}'
-            f' ({focus.detail}), e como pegar.{where}{trick}'
+            f' ({focus.detail}), por que ele agora (pelo que o jogador acabou de conquistar ou'
+            f' pelo ponto do jogo em que está) e como pegar.{where}{trick}'
         )
     elif focus.trophy:
         parts.append(
