@@ -42,8 +42,11 @@
     }
   }
 
+  /* One column the width of the card: the header's chips or a long line scroll or wrap inside it
+     instead of widening the page past a phone's screen. */
   .chat-page {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr) auto;
     height: calc(100dvh - 145px);
     min-height: 460px;
@@ -617,7 +620,12 @@
     align-self: center;
   }
 
-  /* The mic beside Send: a round outline that pulses in the accent while it listens. */
+  /* Send: its word on a wide screen; on a phone, a round arrow beside the mic (below). */
+  .chat-send .icon {
+    display: none;
+  }
+
+  /* The mic beside Send: a round outline; while it records, the stop square. */
   .chatform > .chat-mic {
     align-self: center;
     display: grid;
@@ -646,6 +654,53 @@
   .chatform > .chat-mic.listening {
     color: var(--color-fg);
     border-color: var(--color-fg-subtle);
+  }
+
+  /* Both round, the same size, centered on the box. */
+  @media (max-width: 760px) {
+    .chatform > button.chat-send,
+    .chatform > button.chat-mic {
+      align-self: center;
+      display: grid;
+      place-items: center;
+      flex: none;
+      width: 44px;
+      height: 44px;
+      min-height: 0;
+      padding: 0;
+      border-radius: var(--radius-round);
+    }
+
+    .chat-send .icon {
+      display: block;
+      width: 20px;
+      height: 20px;
+    }
+
+    .chat-send .chat-send-label {
+      display: none;
+    }
+
+    /* The empty box's note about the commands, a small line under the placeholder. */
+    .chatform .chat-box .chat-hint {
+      overflow: hidden;
+      color: var(--color-fg-subtle);
+      font-size: var(--text-xs);
+      line-height: 1.3;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+
+    /* The counter shows only near the limit: an empty box is just the question. */
+    .chatform .chat-box .chat-count:not(.near) {
+      display: none;
+    }
+
+    .chatform .chat-box {
+      min-height: 44px;
+      align-content: center;
+    }
   }
 
   /* Phone header: Nexo a little smaller, its tagline beside the name, the game on one line. */
@@ -758,9 +813,16 @@
 
   /* The message box is one field: the trophy tag and the text on top, the counter on its own line at
      the bottom right, inside the border. The text area itself has no border, so nothing overlaps. */
+  /* The box shrinks with the screen: without this, the text area's default width (its cols) sets a
+     minimum and pushes Send off a narrow phone. */
+  .chatform,
   .chatform .chat-field,
   .chatform .chat-box {
     min-width: 0;
+  }
+
+  .chatform .chat-box {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .chatform .chat-box {

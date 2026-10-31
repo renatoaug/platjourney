@@ -8,6 +8,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type Translator, useMessages } from '../../i18n/i18n'
@@ -62,7 +63,8 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Texto colado cortado em {max} caracteres · ',
     placeholder: 'Nexo, qual é o próximo passo?',
-    placeholderShort: 'Pergunte ao Nexo…',
+    placeholderShort: 'Pergunte ao Nexo',
+    commandsHint: 'Digite / para comandos',
     trophy: {
       about: 'Sobre o troféu **{trophy}**: {text}',
       placeholder: 'Pergunte sobre o troféu…',
@@ -145,7 +147,8 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Pasted text cut at {max} characters · ',
     placeholder: 'Nexo, what is the next step?',
-    placeholderShort: 'Ask Nexo…',
+    placeholderShort: 'Ask Nexo',
+    commandsHint: 'Type / for commands',
     trophy: {
       about: 'About the trophy **{trophy}**: {text}',
       placeholder: 'Ask about this trophy…',
@@ -926,6 +929,20 @@ function useVoice(text: string, onText: (text: string) => void) {
   return { supported, listening, busy, levels, start, stop }
 }
 
+// The phone layout of the message box, followed as the window is resized or turned.
+const PHONE = '(max-width: 760px)'
+function useNarrow(): boolean {
+  return useSyncExternalStore(
+    (changed) => {
+      const query = window.matchMedia?.(PHONE)
+      query?.addEventListener('change', changed)
+      return () => query?.removeEventListener('change', changed)
+    },
+    () => Boolean(window.matchMedia?.(PHONE).matches),
+    () => false,
+  )
+}
+
 /** The mic next to Send, the stop square while it listens. */
 function MicButton({ voice, disabled }: { voice: ReturnType<typeof useVoice>; disabled: boolean }) {
   const t = useMessages(messages)
@@ -1016,7 +1033,7 @@ function ChatForm({
   }, [text])
   const near = text.length >= CHAT_MAX * 0.8
   // A phone has no keyboard shortcut to discover and its text is 16px: a short placeholder, on one line.
-  const narrow = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches
+  const narrow = useNarrow()
   return (
     <form ref={formRef} className="chatform" id="chat-form" onSubmit={onSubmit}>
       <div className="chat-field">
@@ -1068,6 +1085,12 @@ function ChatForm({
             />
           </div>
           {/* The count has its own line inside the box, under the text, so it never covers it. */}
+          {/* A phone's placeholder is short; where the commands are, it says so on the empty box. */}
+          {narrow && commands && !text && !attachment && !voice.listening && !voice.busy && (
+            <span className="chat-hint" aria-hidden="true">
+              {t('commandsHint')}
+            </span>
+          )}
           {!voice.listening && !voice.busy && (
             <span
               className={`chat-count${near ? ' near' : ''}${text.length >= CHAT_MAX ? ' full' : ''}`}
@@ -1086,6 +1109,8 @@ function ChatForm({
       <MicButton voice={voice} disabled={sending} />
       <button
         type="submit"
+        className="chat-send"
+        aria-label={t('send')}
         disabled={sending}
         onClick={(e) => {
           if (!voice.listening && !voice.busy) return
@@ -1094,7 +1119,8 @@ function ChatForm({
           voice.stop()
         }}
       >
-        {t('send')}
+        <Icon name="send" />
+        <span className="chat-send-label">{t('send')}</span>
       </button>
     </form>
   )
