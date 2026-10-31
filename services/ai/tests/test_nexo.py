@@ -573,3 +573,8 @@ def test_the_progress_summary_is_only_for_what_is_left():
 def test_a_missing_detail_is_only_said_when_the_player_asked_for_it():
     assert 'Quando o jogador perguntar algo que não está no guia' in nexo.SYSTEM
     assert 'nunca aponte o que falta sem ele ter perguntado' in nexo.SYSTEM
+
+
+def test_a_suggested_trophy_comes_with_why_now():
+    assert 'diga em uma frase por que esse, agora' in nexo.SYSTEM
+    assert 'sem dado, não invente o motivo' in nexo.SYSTEM
