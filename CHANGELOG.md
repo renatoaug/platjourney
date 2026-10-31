@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.40.0](https://github.com/renatoaug/platjourney/compare/v0.39.0...v0.40.0) (2026-10-31)
+
+### Features
+
+* **server:** fresh trophies before nexo answers ([#120](https://github.com/renatoaug/platjourney/issues/120)) ([987a619](https://github.com/renatoaug/platjourney/commit/987a6196d373749e3a03d5fdbe5eb69222527f4e))
+
 ## [0.39.0](https://github.com/renatoaug/platjourney/compare/v0.38.9...v0.39.0) (2026-10-31)
 
 ### Features
