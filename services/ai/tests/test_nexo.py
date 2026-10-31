@@ -568,3 +568,8 @@ def test_the_progress_summary_is_only_for_what_is_left():
     assert 'A primeira frase responde o que o jogador perguntou' in nexo.SYSTEM
     assert 'nada de resumo de progresso' in nexo.SYSTEM
     assert 'tempo jogado estiver nos dados' in nexo.SYSTEM
+
+
+def test_a_missing_detail_is_only_said_when_the_player_asked_for_it():
+    assert 'Quando o jogador perguntar algo que não está no guia' in nexo.SYSTEM
+    assert 'nunca aponte o que falta sem ele ter perguntado' in nexo.SYSTEM
