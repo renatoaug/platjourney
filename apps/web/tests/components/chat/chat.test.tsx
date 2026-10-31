@@ -275,36 +275,9 @@ describe('the game switch', () => {
 })
 
 describe('mic', () => {
-  const w = window as Window & { webkitSpeechRecognition?: unknown }
-
-  test('no mic where the device cannot dictate', () => {
-    delete w.webkitSpeechRecognition
+  test('no mic where the page cannot record', () => {
     show([])
     expect(screen.queryByRole('button', { name: 'Falar a pergunta' })).toBeNull()
-  })
-
-  test('what is said goes into the box after what was typed, for the player to send', async () => {
-    w.webkitSpeechRecognition = class {
-      lang = ''
-      interimResults = false
-      continuous = true
-      onresult = (_e: unknown) => {}
-      onerror = (_e: unknown) => {}
-      onend = () => {}
-      start() {
-        this.onresult({ results: [{ isFinal: true, 0: { transcript: 'como pego?' } }] })
-        this.onend()
-      }
-      stop() {}
-    }
-    const onSend = mock(() => {})
-    show([], { onSend })
-    const box = screen.getByRole('combobox') as HTMLTextAreaElement
-    fireEvent.change(box, { target: { value: 'Digno:' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Falar a pergunta' }))
-    await screen.findByDisplayValue('Digno: como pego?')
-    expect(onSend).not.toHaveBeenCalled()
-    delete w.webkitSpeechRecognition
   })
 
   test('a recording is transcribed by the server and lands in the box after what was typed', async () => {
@@ -326,32 +299,5 @@ describe('mic', () => {
     answer({ text: 'onde fica a cripta?' })
     await screen.findByDisplayValue('No Plague Tale: onde fica a cripta?')
     recorder.restore()
-  })
-
-  test('while listening the box shows the wave, and the words come in only on stop', async () => {
-    let run: { onresult: (e: unknown) => void; onend: () => void } | undefined
-    w.webkitSpeechRecognition = class {
-      lang = ''
-      interimResults = false
-      continuous = true
-      onresult = (_e: unknown) => {}
-      onerror = (_e: unknown) => {}
-      onend = () => {}
-      start() {
-        run = this
-      }
-      stop() {
-        this.onend()
-      }
-    }
-    show([])
-    fireEvent.click(screen.getByRole('button', { name: 'Falar a pergunta' }))
-    await screen.findByRole('img', { name: 'Ouvindo. Toque em parar para virar texto.' })
-    run?.onresult({ results: [{ isFinal: true, 0: { transcript: 'onde fica a cripta' } }] })
-    expect(screen.queryByDisplayValue('onde fica a cripta')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Parar de ouvir' }))
-    await screen.findByDisplayValue('onde fica a cripta')
-    expect(screen.queryByRole('img', { name: /Ouvindo/ })).toBeNull()
-    delete w.webkitSpeechRecognition
   })
 })

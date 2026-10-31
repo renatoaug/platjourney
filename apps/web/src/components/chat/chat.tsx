@@ -13,15 +13,7 @@ import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type Translator, useMessages } from '../../i18n/i18n'
 import { api } from '../../lib/api'
 import type { Game, LibraryGame } from '../../lib/types'
-import {
-  base64,
-  canDictate,
-  canRecord,
-  type Dictation,
-  dictate,
-  type Recording,
-  record,
-} from '../../lib/voice'
+import { base64, canRecord, type Recording, record } from '../../lib/voice'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
 import { Markdown, UserText } from '../../ui/markdown'
@@ -882,19 +874,16 @@ function lastLineReaches(el: HTMLTextAreaElement, counterWidth: number): boolean
 const WAVE_MS = 70
 
 /** The mic in the message box, like a voice message: while it records, the box shows the voice as
- * a wave; on stop, the question is transcribed and becomes text after what was typed, to read and
- * fix before sending. The server transcribes the recording, told the names of the game; where the
- * page cannot record, the phone's or the browser's own recognizer dictates it. */
-function useDictation(text: string, onText: (text: string) => void) {
+ * a wave; on stop, the server transcribes it, told the names of the game, and the text goes after
+ * what was typed, to read and fix before sending. Where the page cannot record, there is no mic. */
+function useVoice(text: string, onText: (text: string) => void) {
   const t = useMessages(messages)
-  const [recorded] = useState(canRecord)
-  const [supported] = useState(() => recorded || canDictate())
+  const [supported] = useState(canRecord)
   const [listening, setListening] = useState(false)
   // Between stop and the text: the recording is being transcribed.
   const [busy, setBusy] = useState(false)
   const [levels, setLevels] = useState<number[]>([])
-  const session = useRef<Dictation | Recording | null>(null)
-  const heard = useRef('')
+  const session = useRef<Recording | null>(null)
   const sampled = useRef(0)
   useEffect(() => () => session.current?.stop(), [])
   const onLevel = (level: number) => {
@@ -925,27 +914,12 @@ function useDictation(text: string, onText: (text: string) => void) {
   }
   const start = async () => {
     const base = text.trim()
-    heard.current = ''
     setLevels([])
     setListening(true)
-    if (recorded) {
-      session.current = await record({
-        onLevel,
-        onAudio: (audio) => void transcribe(base, audio),
-        onEnd: ended,
-      })
-      return
-    }
-    session.current = await dictate(getLocale() === Language.En ? 'en-US' : 'pt-BR', {
-      onText: (words) => {
-        heard.current = words
-      },
+    session.current = await record({
       onLevel,
-      onEnd: (error) => {
-        const words = heard.current.trim()
-        onText(base && words ? `${base} ${words}` : base || words)
-        ended(error)
-      },
+      onAudio: (audio) => void transcribe(base, audio),
+      onEnd: ended,
     })
   }
   const stop = () => session.current?.stop()
@@ -953,13 +927,7 @@ function useDictation(text: string, onText: (text: string) => void) {
 }
 
 /** The mic next to Send, the stop square while it listens. */
-function MicButton({
-  voice,
-  disabled,
-}: {
-  voice: ReturnType<typeof useDictation>
-  disabled: boolean
-}) {
+function MicButton({ voice, disabled }: { voice: ReturnType<typeof useVoice>; disabled: boolean }) {
   const t = useMessages(messages)
   if (!voice.supported) return null
   const label = t(voice.listening ? 'micStop' : 'mic')
@@ -1009,7 +977,7 @@ function ChatForm({
   onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void
 }) {
   const t = useMessages(messages)
-  const voice = useDictation(text, onText)
+  const voice = useVoice(text, onText)
   // The send arrow during a recording stops it and sends once its words are in the box.
   const sendAfter = useRef(false)
   useEffect(() => {

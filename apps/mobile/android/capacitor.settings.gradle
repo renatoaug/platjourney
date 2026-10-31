@@ -7,6 +7,3 @@ project(':capacitor-haptics').projectDir = new File('../../../node_modules/.bun/
 
 include ':capacitor-splash-screen'
 project(':capacitor-splash-screen').projectDir = new File('../../../node_modules/.bun/@capacitor+splash-screen@8.0.2+9cf34ba37901b220/node_modules/@capacitor/splash-screen/android')
-
-include ':capgo-capacitor-speech-recognition'
-project(':capgo-capacitor-speech-recognition').projectDir = new File('../../../node_modules/.bun/@capgo+capacitor-speech-recognition@8.4.3+9cf34ba37901b220/node_modules/@capgo/capacitor-speech-recognition/android')

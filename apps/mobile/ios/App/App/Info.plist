@@ -68,7 +68,5 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>O microfone é usado para você falar a pergunta ao Nexo no chat.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>O reconhecimento de fala transforma o que você diz em texto no chat do Nexo.</string>
 </dict>
 </plist>

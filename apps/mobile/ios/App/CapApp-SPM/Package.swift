@@ -13,8 +13,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.5.3"),
         .package(name: "CapacitorHaptics", path: "../../../../../node_modules/.bun/@capacitor+haptics@8.0.2+9cf34ba37901b220/node_modules/@capacitor/haptics"),
-        .package(name: "CapacitorSplashScreen", path: "../../../../../node_modules/.bun/@capacitor+splash-screen@8.0.2+9cf34ba37901b220/node_modules/@capacitor/splash-screen"),
-        .package(name: "CapgoCapacitorSpeechRecognition", path: "../../../../../node_modules/.bun/@capgo+capacitor-speech-recognition@8.4.3+9cf34ba37901b220/node_modules/@capgo/capacitor-speech-recognition")
+        .package(name: "CapacitorSplashScreen", path: "../../../../../node_modules/.bun/@capacitor+splash-screen@8.0.2+9cf34ba37901b220/node_modules/@capacitor/splash-screen")
     ],
     targets: [
         .target(
@@ -23,8 +22,7 @@ let package = Package(
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
                 .product(name: "CapacitorHaptics", package: "CapacitorHaptics"),
-                .product(name: "CapacitorSplashScreen", package: "CapacitorSplashScreen"),
-                .product(name: "CapgoCapacitorSpeechRecognition", package: "CapgoCapacitorSpeechRecognition")
+                .product(name: "CapacitorSplashScreen", package: "CapacitorSplashScreen")
             ]
         )
     ]
