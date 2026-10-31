@@ -1,7 +1,6 @@
 /** The reads about the player: their PSN profile, the game they play, their trophies, library,
  * platinums and this year's interests. */
 import { isDemo, storedSummary, trophiesFor } from '../demo.ts'
-import { demoContext, getCurrent } from '../game-context.ts'
 import { yearProgress } from '../interests.ts'
 import { library } from '../library.ts'
 import type { GameContext } from '../nexo.ts'
@@ -11,6 +10,7 @@ import { profilePage } from '../profile.ts'
 import { catalogTrophies, profileSummary } from '../psn.ts'
 import { gamesForTitles } from '../repository/game.ts'
 import type { User } from '../repository/user.ts'
+import { currentOrCheck } from '../watcher.ts'
 import {
   baseProgress,
   gameArg,
@@ -69,7 +69,7 @@ export const getCurrentGame: Tool = {
   inputSchema: { type: 'object', properties: {} },
   next: 'If you plan a session for this game, start from where recentlyEarned puts the player, pick other trophies than currentPlan when they ask for another route, and save the plan with save_session_plan.',
   run: async (user) => {
-    const ctx = getCurrent(user) ?? (isDemo(user) ? await demoContext(user) : undefined)
+    const ctx = await currentOrCheck(user)
     if (!ctx) return { playing: null }
     const base = await baseProgress(ctx.title, user)
     return {

@@ -18,6 +18,7 @@ import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as recs from '../src/repository/recommendation.ts'
 import * as users from '../src/repository/user.ts'
+import * as watcher from '../src/watcher.ts'
 import { makeContext, makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
 import { connect, fakeOauthStore, send } from './oauth-store.ts'
 
@@ -168,7 +169,7 @@ test("the profile is the token owner's, never another player's", async () => {
 })
 
 test('the current game lists the trophies missing, the last earned and the plan on screen', async () => {
-  spyOn(gameContext, 'getCurrent').mockReturnValue(undefined)
+  const current = spyOn(watcher, 'currentOrCheck').mockResolvedValue(undefined)
   const empty = (await call('get_current_game')).data
   expect(empty.playing).toBeNull()
   expect(empty.next).toContain('recentlyEarned')
@@ -187,7 +188,7 @@ test('the current game lists the trophies missing, the last earned and the plan 
     makeTrophy({ id: 2, name: 'Faltando', nameEn: 'Missing', groupId: 'default', earned: false }),
     makeTrophy({ id: 3, name: 'DLC', groupId: '001', earned: false }),
   ]
-  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext({ trophies, hoursPlayed: 12 }))
+  current.mockResolvedValue(makeContext({ trophies, hoursPlayed: 12 }))
   spyOn(ranking, 'loadGroups').mockResolvedValue({ base: { earned: 5, total: 10 } } as never)
   const { data } = await call('get_current_game')
   expect(data.playing).toMatchObject({ hoursPlayed: 12, baseGame: { earned: 5, total: 10 } })

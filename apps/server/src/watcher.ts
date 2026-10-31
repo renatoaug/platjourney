@@ -49,7 +49,10 @@ async function notify(user: User, text: string): Promise<void> {
 // One check per player at a time: the sweep and a sign-in (watchNow) running together would both
 // see the same trophies as new, before either saves them, and send the notice twice.
 const checks = new Map<string, Promise<void>>()
+// When each player was last checked, by the sweep or before a chat message.
+const checkedAt = new Map<string, number>()
 export function checkUser(user: User): Promise<void> {
+  checkedAt.set(user.id, Date.now())
   const next = (checks.get(user.id) ?? Promise.resolve())
     .catch(() => {})
     .then(() => check(user))
@@ -280,13 +283,42 @@ async function sweep(each: (user: User) => Promise<void>, label: string): Promis
 }
 
 // Loads a user's context right after they sign in, without waiting for the next sweep.
-// The chat's game for a message: after a restart nothing is loaded until the next sweep, and a
-// message sent then would land in no game's conversation; one check picks the game being played.
-export async function chatOrCheck(user: User): Promise<GameContext | undefined> {
-  const ctx = getChat(user)
-  if (ctx || isDemo(user)) return ctx
-  await checkUser(user).catch((e) => console.error('check before chat failed:', e.message))
+// A check this recent is fresh enough for a reply; an older one runs again first.
+const FRESH_CHECK_MS = 10 * 60_000
+// How long a reply waits for that check before going with the trophies already loaded.
+const CHECK_WAIT_MS = 2_000
+
+// Trophies loaded can be a sweep old, and Nexo or an agent would suggest one earned minutes ago:
+// a check older than FRESH_CHECK_MS runs first, waited for up to `wait`. Past that, the answer goes
+// with what is loaded and the check finishes on its own. With nothing loaded (after a restart) the
+// check is waited for in full, since there is no game to answer about without it.
+async function freshen(user: User, loaded: GameContext | undefined, wait: number): Promise<void> {
+  if (loaded && Date.now() - (checkedAt.get(user.id) ?? 0) < FRESH_CHECK_MS) return
+  const check = checkUser(user).catch((e) =>
+    console.error('check before answer failed:', e.message),
+  )
+  if (!loaded) await check
+  else await Promise.race([check, new Promise((done) => setTimeout(done, wait))])
+}
+
+// The chat's game for a message, with its trophies fresh.
+export async function chatOrCheck(
+  user: User,
+  wait = CHECK_WAIT_MS,
+): Promise<GameContext | undefined> {
+  if (isDemo(user)) return getChat(user)
+  await freshen(user, getChat(user), wait)
   return getChat(user)
+}
+
+// The game being played, with its trophies fresh: what an agent reads through MCP.
+export async function currentOrCheck(
+  user: User,
+  wait = CHECK_WAIT_MS,
+): Promise<GameContext | undefined> {
+  if (isDemo(user)) return getCurrent(user) ?? (await demoContext(user))
+  await freshen(user, getCurrent(user), wait)
+  return getCurrent(user)
 }
 
 export function watchNow(user: User): void {
