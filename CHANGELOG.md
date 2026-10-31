@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.43.0](https://github.com/renatoaug/platjourney/compare/v0.42.0...v0.43.0) (2026-10-31)
+
+### Features
+
+* **web:** pages opened from a push notification carry from=push ([#123](https://github.com/renatoaug/platjourney/issues/123)) ([2aa5c31](https://github.com/renatoaug/platjourney/commit/2aa5c31c433ece252f6a7bf58920cb32a52e0a17))
+
 ## [0.42.0](https://github.com/renatoaug/platjourney/compare/v0.41.0...v0.42.0) (2026-10-31)
 
 ### Features
