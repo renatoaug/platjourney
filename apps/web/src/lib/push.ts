@@ -76,3 +76,21 @@ export async function disablePush(): Promise<PushState> {
   }
   return 'off'
 }
+
+// Set once the browser was asked on this device, whatever the answer.
+const ASKED = 'platjourney:push-asked'
+
+/** The first time the player opens the notifications, the browser asks to send them to this
+ * device: opening them is the tap the browser needs to ask, and the moment the question makes
+ * sense. Asked once per device and only while undecided; refused, the player turns it on later in
+ * Settings. Called straight from the tap, before anything else waits. */
+export function askPushOnce(key: string | null | undefined): void {
+  if (!key || support() || Notification.permission !== 'default') return
+  try {
+    if (localStorage.getItem(ASKED)) return
+    localStorage.setItem(ASKED, '1')
+  } catch {
+    return
+  }
+  enablePush(key).catch(() => {})
+}

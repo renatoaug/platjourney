@@ -178,7 +178,7 @@ Relative paths in both settings start at the repository's root, and absolute pat
 
 ## The contract
 
-`PLUGIN_API` (in `apps/server/src/plugins.ts`) is `3`. What a plugin gets on the server:
+`PLUGIN_API` (in `apps/server/src/plugins.ts`) is `4`. What a plugin gets on the server:
 
 | | |
 |---|---|
@@ -195,6 +195,7 @@ Relative paths in both settings start at the repository's root, and absolute pat
 | `ctx.beforeTool(hook)` | Runs before a connected assistant's tool call on `/mcp` with `{ user, tool }`. Throwing `Refused(code, message)` stops it; the assistant gets `message` to pass on (a rule of the instance, a limit). |
 | `ctx.on('user:created', listener)` | Runs after a new account signs up. |
 | `ctx.on('user:deleted', listener)` | Runs before an account is deleted. A listener that throws stops the deletion; one that takes longer than 10 seconds is logged and the next one runs. |
+| `ctx.notify(user, text)` | Sends the player a notice like the app's own (kind `server`): it lands in the notifications and the history, and goes to push and Telegram where the player turned them on. `text` is markdown in the player's language. Nothing goes to the demo or to an account that is gone. |
 
 And on the web (`@platjourney/web/plugins`):
 

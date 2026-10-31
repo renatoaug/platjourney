@@ -1,4 +1,5 @@
-import { afterEach, expect, mock, test } from 'bun:test'
+import { afterEach, expect, mock, spyOn, test } from 'bun:test'
+import * as notify from '../src/notify.ts'
 import type { Plugin, PluginContext } from '../src/plugins.ts'
 import {
   aroundModel,
@@ -9,10 +10,16 @@ import {
   registerPlugin,
   resetPlugins,
 } from '../src/plugins.ts'
+import * as activity from '../src/repository/activity.ts'
 import type { User } from '../src/repository/user.ts'
+import * as users from '../src/repository/user.ts'
+import { makeUser } from './fixtures.ts'
 
 const user = { id: 'user:u1', psn_online_id: 'jogador' } as User
-afterEach(() => resetPlugins())
+afterEach(() => {
+  resetPlugins()
+  mock.restore()
+})
 
 test('without plugins, model work just runs and nothing answers /api/ext/', async () => {
   expect(await aroundModel({ user, action: 'chat' }, async () => 'ok')).toBe('ok')
@@ -68,9 +75,32 @@ test("a plugin gets the app's helpers through its context, so it imports nothing
       seen = ctx
     },
   })
-  expect(seen?.api).toBe(3)
+  expect(seen?.api).toBe(4)
   expect(seen?.Refused).toBe(Refused)
   expect(typeof seen?.db.q).toBe('function')
   expect(typeof seen?.json).toBe('function')
   expect(typeof seen?.readBody).toBe('function')
+})
+
+test('a plugin can notify a player like the app does, never the demo or a gone account', async () => {
+  let ctx: Parameters<Plugin['register']>[0] | undefined
+  await registerPlugin({
+    name: 'notifier',
+    register(c) {
+      ctx = c
+    },
+  })
+  const player = makeUser({ id: 'user:n1' })
+  const get = spyOn(users, 'getUser').mockImplementation(async (id) =>
+    id === 'user:n1' ? player : id === 'user:demo' ? makeUser({ id, demo: true }) : undefined,
+  )
+  const log = spyOn(activity, 'logTip').mockResolvedValue(undefined)
+  const send = spyOn(notify, 'deliver').mockResolvedValue(undefined)
+  await ctx?.notify('user:n1', '🎁 Você ganhou **30 créditos**')
+  expect(log).toHaveBeenCalledWith('user:n1', 'server', '🎁 Você ganhou **30 créditos**')
+  expect(send).toHaveBeenCalledWith(player, '🎁 Você ganhou **30 créditos**')
+  await ctx?.notify('user:demo', 'oi')
+  await ctx?.notify('user:gone', 'oi')
+  expect(log).toHaveBeenCalledTimes(1)
+  expect(get).toHaveBeenCalledTimes(3)
 })

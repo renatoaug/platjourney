@@ -7,12 +7,15 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { openSession, sessionCookie } from './auth.ts'
 import { q } from './db.ts'
+import { isDemo } from './demo.ts'
 import { json, type PageDirective, pagePolicy, pageSourceProblem, readBody } from './http.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
-import type { User } from './repository/user.ts'
+import { deliver } from './notify.ts'
+import { logTip } from './repository/activity.ts'
+import { getUser, type User } from './repository/user.ts'
 
 /** @public part of the plugin API */
-export const PLUGIN_API = 3
+export const PLUGIN_API = 4
 
 /** How long a plugin's hook (beforeModel, an event listener, an interceptor) may take before the
  * app stops waiting for it: a hung plugin fails that one request instead of holding it forever. */
@@ -125,6 +128,10 @@ export interface PluginContext {
    * assistant gets the message to pass on (a rule of the instance, a limit). */
   beforeTool(hook: ToolHook): void
   on<E extends keyof Events>(event: E, listener: (payload: Events[E]) => Promise<void>): void
+  /** Sends the player (`user`, the record id) a notice, like the app's own: in the notifications
+   * and the history, and on push and Telegram where the player turned them on. `text` is markdown,
+   * already in the player's language. Nothing goes to the demo or to an account that is gone. */
+  notify(user: string, text: string): Promise<void>
 }
 
 export interface Plugin {
@@ -185,6 +192,12 @@ const context = (name: string): PluginContext => ({
   on(event, listener) {
     const list = listeners.get(event) ?? []
     listeners.set(event, [...list, { plugin: name, listener: listener as Listener }])
+  },
+  async notify(user, text) {
+    const player = await getUser(user)
+    if (!player || isDemo(player)) return
+    await logTip(player.id, 'server', text)
+    await deliver(player, text)
   },
 })
 

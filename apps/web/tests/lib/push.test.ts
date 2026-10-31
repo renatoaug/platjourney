@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, mock, test } from 'bun:test'
-import { disablePush, enablePush, pushState } from '../../src/lib/push'
+import { askPushOnce, disablePush, enablePush, pushState } from '../../src/lib/push'
 import { mockApi } from '../support/web'
 
 // A browser with push: a service worker registration, its push manager and the permission.
@@ -127,4 +127,25 @@ test('turning off drops the device on the server and in the browser', async () =
   expect(device.unsubscribe).toHaveBeenCalled()
   browser()
   expect(await disablePush()).toBe('off')
+})
+
+test('the first open of the notifications asks once per device, only while undecided', async () => {
+  localStorage.removeItem('platjourney:push-asked')
+  const calls = mockApi({ 'POST /api/push/subscription': { ok: true } })
+  askPushOnce('AQID')
+  await new Promise((done) => setTimeout(done, 0))
+  expect(fake.permission).toBe('granted')
+  expect(calls).toHaveLength(1)
+  // Asked already on this device: never again, even if the answer was a dismissal.
+  browser()
+  askPushOnce('AQID')
+  await new Promise((done) => setTimeout(done, 0))
+  expect(fake.permission).toBe('default')
+  // Without push on the instance, or once decided, nothing is asked.
+  localStorage.removeItem('platjourney:push-asked')
+  askPushOnce(null)
+  browser({ permission: 'denied' })
+  askPushOnce('AQID')
+  expect(localStorage.getItem('platjourney:push-asked')).toBeNull()
+  localStorage.removeItem('platjourney:push-asked')
 })
