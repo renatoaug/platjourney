@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.41.0](https://github.com/renatoaug/platjourney/compare/v0.40.0...v0.41.0) (2026-10-31)
+
+### Features
+
+* **web:** speak a chat question and transcribe it with the game's names ([#121](https://github.com/renatoaug/platjourney/issues/121)) ([8716185](https://github.com/renatoaug/platjourney/commit/8716185607bc9151079311915add1987100da39f))
+
 ## [0.40.0](https://github.com/renatoaug/platjourney/compare/v0.39.0...v0.40.0) (2026-10-31)
 
 ### Features
