@@ -317,3 +317,26 @@ async def embed(texts: list[str]) -> list[list[float]]:
         )
         out.extend(d.embedding for d in sorted(res.data, key=lambda d: d.index))
     return out
+
+
+async def transcribe(audio: bytes, filename: str, language: str, prompt: str) -> str:
+    """Speech to text. `prompt` lists the words the speech is likely to have (names of the game,
+    its places, its trophies), which a general model would otherwise spell by ear."""
+    started = time.monotonic()
+    res = await openai.audio.transcriptions.create(
+        model=settings.transcribe_model,
+        file=(filename, audio),
+        language=language,
+        prompt=prompt,
+    )
+    usage = res.usage
+    tokens = usage if usage is not None and usage.type == 'tokens' else None
+    await record_call(
+        settings.transcribe_model,
+        Usage(
+            input=tokens.input_tokens if tokens else 0,
+            output=tokens.output_tokens if tokens else 0,
+        ),
+        int((time.monotonic() - started) * 1000),
+    )
+    return res.text.strip()

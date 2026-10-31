@@ -40,6 +40,8 @@ PRICES: dict[str, tuple[float, float, float]] = {
     'gpt-5.4-mini': (0.75, 0.075, 4.5),
     'gpt-5.4-nano': (0.2, 0.02, 1.25),
     'text-embedding-3-small': (0.02, 0.02, 0),
+    # Audio input is $3 and the text prompt (the words to expect) $1.25; both counted at $3.
+    'gpt-4o-mini-transcribe': (3, 3, 5),
 }
 # Each web search call, on top of the tokens its results add to the input.
 WEB_SEARCH_USD = 10 / 1000

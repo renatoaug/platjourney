@@ -1,8 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { CHAT_MAX, type ChatLoad, ChatSkeleton, NexoChat } from '../../../src/components/chat/chat'
 import { Loaded, Pending } from '../../../src/components/chat/chat.stories'
+import { fakeRecorder } from '../../support/recorder'
+import { mockApi } from '../../support/web'
 
 const messages = Loaded.args?.chat as ChatLoad
 const pending = Pending.args?.chat as ChatLoad
@@ -269,5 +271,33 @@ describe('the game switch', () => {
     expect((screen.getByRole('button', { name: 'Enviar' }) as HTMLButtonElement).disabled).toBe(
       true,
     )
+  })
+})
+
+describe('mic', () => {
+  test('no mic where the page cannot record', () => {
+    show([])
+    expect(screen.queryByRole('button', { name: 'Falar a pergunta' })).toBeNull()
+  })
+
+  test('a recording is transcribed by the server and lands in the box after what was typed', async () => {
+    const recorder = fakeRecorder({ heard: 'abc' })
+    let answer = (_v: unknown) => {}
+    const calls = mockApi({
+      'POST /api/chat/transcribe': () => new Promise((done) => (answer = done)),
+    })
+    show([])
+    const box = screen.getByRole('combobox') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'No Plague Tale:' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Falar a pergunta' }))
+    await screen.findByRole('img', { name: 'Ouvindo. Toque em parar para virar texto.' })
+    fireEvent.click(screen.getByRole('button', { name: 'Parar de ouvir' }))
+    await screen.findByRole('img', { name: 'Transformando o áudio em texto…' })
+    await waitFor(() => expect(calls).toHaveLength(1))
+    expect(calls[0].body).toEqual({ audio: btoa('abc'), mime: 'audio/webm;codecs=opus' })
+    expect(recorder.track.stop).toHaveBeenCalled()
+    answer({ text: 'onde fica a cripta?' })
+    await screen.findByDisplayValue('No Plague Tale: onde fica a cripta?')
+    recorder.restore()
   })
 })

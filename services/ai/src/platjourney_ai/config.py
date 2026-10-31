@@ -53,6 +53,8 @@ class Settings(BaseSettings):
     openai_api_key: str = ''
     openai_model: str = 'gpt-5.5'
     embedding_model: str = 'text-embedding-3-small'
+    # Speech to text for the chat's mic: always OpenAI, whatever AI_PROVIDER says.
+    transcribe_model: str = 'gpt-4o-mini-transcribe'
 
     surreal_url: str = 'http://localhost:8000/rpc'
     surreal_user: str = 'root'

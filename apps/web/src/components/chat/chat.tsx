@@ -8,16 +8,21 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type Translator, useMessages } from '../../i18n/i18n'
+import { api } from '../../lib/api'
 import type { Game, LibraryGame } from '../../lib/types'
+import { base64, canRecord, type Recording, record } from '../../lib/voice'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
 import { Markdown, UserText } from '../../ui/markdown'
 import { Sk } from '../../ui/skeleton'
 import { SourceNote, splitSource } from '../../ui/source-note'
 import { ErrorState } from '../../ui/states'
+import { toast } from '../../ui/toast'
+import { VoiceWave, WAVE_SAMPLES } from '../../ui/voice-wave'
 import { DemoConnectButton } from '../demo'
 import { NexoHero } from '../nexo-hero'
 import { titleHref } from '../tip'
@@ -58,7 +63,8 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Texto colado cortado em {max} caracteres · ',
     placeholder: 'Nexo, qual é o próximo passo?',
-    placeholderShort: 'Pergunte ao Nexo…',
+    placeholderShort: 'Pergunte ao Nexo',
+    commandsHint: 'Digite / para comandos',
     trophy: {
       about: 'Sobre o troféu **{trophy}**: {text}',
       placeholder: 'Pergunte sobre o troféu…',
@@ -70,6 +76,13 @@ const messages = defineMessages({
     },
     placeholderCommands: 'Nexo, qual é o próximo passo? Digite / para ver os comandos',
     send: 'Enviar',
+    mic: 'Falar a pergunta',
+    micStop: 'Parar de ouvir',
+    listening: 'Ouvindo. Toque em parar para virar texto.',
+    transcribing: 'Transformando o áudio em texto…',
+    micDenied:
+      'Sem permissão para o microfone. Libere nas configurações do navegador ou do celular.',
+    micFailed: 'Não deu para ouvir agora. Tente de novo.',
     menu: {
       label: 'Comandos e jogos',
       game: 'Trocar o jogo da conversa',
@@ -134,7 +147,8 @@ const messages = defineMessages({
     count: '{count}/{max}',
     cut: 'Pasted text cut at {max} characters · ',
     placeholder: 'Nexo, what is the next step?',
-    placeholderShort: 'Ask Nexo…',
+    placeholderShort: 'Ask Nexo',
+    commandsHint: 'Type / for commands',
     trophy: {
       about: 'About the trophy **{trophy}**: {text}',
       placeholder: 'Ask about this trophy…',
@@ -146,6 +160,12 @@ const messages = defineMessages({
     },
     placeholderCommands: 'Nexo, what is the next step? Type / for commands',
     send: 'Send',
+    mic: 'Say your question',
+    micStop: 'Stop listening',
+    listening: 'Listening. Tap stop to turn it into text.',
+    transcribing: 'Turning the audio into text…',
+    micDenied: 'No microphone permission. Allow it in the browser or phone settings.',
+    micFailed: 'Could not listen now. Try again.',
     menu: {
       label: 'Commands and games',
       game: 'Switch the game we talk about',
@@ -853,6 +873,96 @@ function lastLineReaches(el: HTMLTextAreaElement, counterWidth: number): boolean
   return reach > el.clientWidth - counterWidth - 8
 }
 
+// How often the wave takes a sample of the voice: about one bar every 70 ms.
+const WAVE_MS = 70
+
+/** The mic in the message box, like a voice message: while it records, the box shows the voice as
+ * a wave; on stop, the server transcribes it, told the names of the game, and the text goes after
+ * what was typed, to read and fix before sending. Where the page cannot record, there is no mic. */
+function useVoice(text: string, onText: (text: string) => void) {
+  const t = useMessages(messages)
+  const [supported] = useState(canRecord)
+  const [listening, setListening] = useState(false)
+  // Between stop and the text: the recording is being transcribed.
+  const [busy, setBusy] = useState(false)
+  const [levels, setLevels] = useState<number[]>([])
+  const session = useRef<Recording | null>(null)
+  const sampled = useRef(0)
+  useEffect(() => () => session.current?.stop(), [])
+  const onLevel = (level: number) => {
+    const now = Date.now()
+    if (now - sampled.current < WAVE_MS) return
+    sampled.current = now
+    setLevels((l) => [...l.slice(1 - WAVE_SAMPLES), level])
+  }
+  const ended = (error?: string) => {
+    setListening(false)
+    session.current = null
+    if (error === 'denied') toast(t('micDenied'))
+    else if (error === 'failed') toast(t('micFailed'))
+  }
+  const transcribe = async (base: string, audio: Blob) => {
+    setBusy(true)
+    try {
+      const { text: words } = await api<{ text: string }>('/api/chat/transcribe', {
+        audio: await base64(audio),
+        mime: audio.type,
+      })
+      onText(base && words ? `${base} ${words}` : base || words)
+    } catch {
+      toast(t('micFailed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const start = async () => {
+    const base = text.trim()
+    setLevels([])
+    setListening(true)
+    session.current = await record({
+      onLevel,
+      onAudio: (audio) => void transcribe(base, audio),
+      onEnd: ended,
+    })
+  }
+  const stop = () => session.current?.stop()
+  return { supported, listening, busy, levels, start, stop }
+}
+
+// The phone layout of the message box, followed as the window is resized or turned.
+const PHONE = '(max-width: 760px)'
+function useNarrow(): boolean {
+  return useSyncExternalStore(
+    (changed) => {
+      const query = window.matchMedia?.(PHONE)
+      query?.addEventListener('change', changed)
+      return () => query?.removeEventListener('change', changed)
+    },
+    () => Boolean(window.matchMedia?.(PHONE).matches),
+    () => false,
+  )
+}
+
+/** The mic next to Send, the stop square while it listens. */
+function MicButton({ voice, disabled }: { voice: ReturnType<typeof useVoice>; disabled: boolean }) {
+  const t = useMessages(messages)
+  if (!voice.supported) return null
+  const label = t(voice.listening ? 'micStop' : 'mic')
+  return (
+    <button
+      type="button"
+      className={`chat-mic${voice.listening ? ' listening' : ''}`}
+      aria-label={label}
+      aria-pressed={voice.listening}
+      title={label}
+      disabled={disabled || voice.busy}
+      onClick={voice.listening ? voice.stop : voice.start}
+    >
+      <Icon name={voice.listening ? 'stop' : 'mic'} />
+    </button>
+  )
+}
+
 /** The message box under the conversation. */
 function ChatForm({
   formRef,
@@ -884,6 +994,14 @@ function ChatForm({
   onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void
 }) {
   const t = useMessages(messages)
+  const voice = useVoice(text, onText)
+  // The send arrow during a recording stops it and sends once its words are in the box.
+  const sendAfter = useRef(false)
+  useEffect(() => {
+    if (voice.listening || voice.busy || !sendAfter.current) return
+    sendAfter.current = false
+    formRef.current?.requestSubmit()
+  }, [voice.listening, voice.busy, formRef])
   // The field grows with what is typed and only scrolls past its tallest size; a trophy coming or
   // going changes its width, so it is measured again then too.
   const attached = Boolean(attachment)
@@ -915,7 +1033,7 @@ function ChatForm({
   }, [text])
   const near = text.length >= CHAT_MAX * 0.8
   // A phone has no keyboard shortcut to discover and its text is 16px: a short placeholder, on one line.
-  const narrow = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches
+  const narrow = useNarrow()
   return (
     <form ref={formRef} className="chatform" id="chat-form" onSubmit={onSubmit}>
       <div className="chat-field">
@@ -924,7 +1042,15 @@ function ChatForm({
           {menu}
           <div className="chat-line">
             {attachment}
+            {(voice.listening || voice.busy) && (
+              <VoiceWave
+                levels={voice.levels}
+                label={t(voice.busy ? 'transcribing' : 'listening')}
+                busy={voice.busy}
+              />
+            )}
             <textarea
+              hidden={voice.listening || voice.busy}
               // The box takes commands too: "/game" opens a list of games under it.
               role="combobox"
               aria-autocomplete="list"
@@ -959,12 +1085,20 @@ function ChatForm({
             />
           </div>
           {/* The count has its own line inside the box, under the text, so it never covers it. */}
-          <span
-            className={`chat-count${near ? ' near' : ''}${text.length >= CHAT_MAX ? ' full' : ''}`}
-            aria-live="polite"
-          >
-            {t('count', { count: text.length, max: CHAT_MAX })}
-          </span>
+          {/* A phone's placeholder is short; where the commands are, it says so on the empty box. */}
+          {narrow && commands && !text && !attachment && !voice.listening && !voice.busy && (
+            <span className="chat-hint" aria-hidden="true">
+              {t('commandsHint')}
+            </span>
+          )}
+          {!voice.listening && !voice.busy && (
+            <span
+              className={`chat-count${near ? ' near' : ''}${text.length >= CHAT_MAX ? ' full' : ''}`}
+              aria-live="polite"
+            >
+              {t('count', { count: text.length, max: CHAT_MAX })}
+            </span>
+          )}
         </div>
         {cut && (
           <span className="chat-cut" role="status">
@@ -972,8 +1106,21 @@ function ChatForm({
           </span>
         )}
       </div>
-      <button type="submit" disabled={sending}>
-        {t('send')}
+      <MicButton voice={voice} disabled={sending} />
+      <button
+        type="submit"
+        className="chat-send"
+        aria-label={t('send')}
+        disabled={sending}
+        onClick={(e) => {
+          if (!voice.listening && !voice.busy) return
+          e.preventDefault()
+          sendAfter.current = true
+          voice.stop()
+        }}
+      >
+        <Icon name="send" />
+        <span className="chat-send-label">{t('send')}</span>
       </button>
     </form>
   )

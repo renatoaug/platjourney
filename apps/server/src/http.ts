@@ -10,14 +10,14 @@ export class BadBody extends Error {
 
 const MAX_BODY = 100_000
 
-export function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+export function readBody(req: IncomingMessage, max = MAX_BODY): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     let raw = ''
     let done = false
     req.on('data', (chunk) => {
       if (done) return
       raw += chunk
-      if (raw.length > MAX_BODY) {
+      if (raw.length > max) {
         done = true
         reject(new BadBody(413))
         req.resume()

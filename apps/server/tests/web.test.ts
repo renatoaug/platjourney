@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:
 import * as fs from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { Readable } from 'node:stream'
+import * as aiModule from '../src/ai.ts'
 import * as auth from '../src/auth.ts'
 import { AuthError } from '../src/auth.ts'
 import * as browser from '../src/browse.ts'
@@ -318,6 +319,21 @@ test('a chat message with no game loaded first checks what the player is on', as
   await send('POST', '/api/chat', { text: 'oi' })
   expect(check).toHaveBeenCalledWith(me)
   expect(answer.mock.calls[0][2]).toEqual(makeContext())
+})
+
+test('a recorded question is transcribed with the game names, never for the demo', async () => {
+  const trophies = [
+    makeTrophy({ id: 1, name: 'Ganhou', earned: true }),
+    makeTrophy({ id: 2, name: 'Falta', earned: false }),
+  ]
+  spyOn(gameContext, 'getChat').mockReturnValue(makeContext({ trophies }))
+  const call = spyOn(aiModule, 'ai').mockResolvedValue({ text: 'onde fica a cripta' } as never)
+  const res = await send('POST', '/api/chat/transcribe', { audio: 'AAAA', mime: 'audio/webm' })
+  expect(res).toMatchObject({ status: 200, body: { text: 'onde fica a cripta' } })
+  const body = call.mock.calls[0][1] as { words: string[]; locale: string }
+  expect(body.words).toEqual(['Nexo', makeContext().game.name, 'Falta', 'Ganhou'])
+  expect(body.locale).toBe('pt-BR')
+  expect((await send('POST', '/api/chat/transcribe', { mime: 'audio/webm' })).status).toBe(400)
 })
 
 test('the conversations list comes from the repository', async () => {
