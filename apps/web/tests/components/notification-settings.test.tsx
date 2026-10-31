@@ -5,6 +5,7 @@ import {
   NotificationSettings,
   NotificationSettingsView,
 } from '../../src/components/notification-settings'
+import * as nativePush from '../../src/lib/native-push'
 import * as push from '../../src/lib/push'
 import type { Me } from '../../src/lib/types'
 import { ToastHost } from '../../src/ui/toast'
@@ -74,10 +75,17 @@ test('a browser that does not allow it says so instead of a success', async () =
   expect((device as HTMLInputElement).checked).toBe(false)
 })
 
-test('a device that cannot read its state counts as without push', async () => {
-  spyOn(push, 'pushState').mockRejectedValue(new Error('x'))
+test('a failed status lookup stays unconfirmed until retry succeeds', async () => {
+  const state = spyOn(push, 'pushState').mockRejectedValueOnce(new Error('offline'))
   show()
-  expect(await screen.findByText('Este navegador não recebe notificações.')).toBeTruthy()
+  expect(await screen.findByText(/Não foi possível confirmar/)).toBeTruthy()
+  expect(
+    (screen.getByRole('switch', { name: /Neste aparelho/ }) as HTMLInputElement).disabled,
+  ).toBe(true)
+  expect(screen.queryByText('Notificações desligadas neste aparelho.')).toBeNull()
+  state.mockResolvedValue('off')
+  fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }))
+  expect(await screen.findByText(/Ligue para receber/)).toBeTruthy()
 })
 
 test('Telegram notices turn off and on through the preferences', async () => {
@@ -100,6 +108,7 @@ test('each device state explains itself and only on and off can be switched', ()
     notifyTelegram: true,
     busy: false,
     onPush: () => {},
+    onRetry: () => {},
     onTest: () => {},
     onTelegram: () => {},
   }
@@ -114,4 +123,26 @@ test('each device state explains itself and only on and off can be switched', ()
   expect(screen.getByText(/O app ainda não recebe notificações/)).toBeTruthy()
   rerender(<NotificationSettingsView {...props} push="loading" demo />)
   expect(screen.queryByText(/Os avisos chegam como notificação/)).toBeNull()
+})
+
+test('failed iOS disable shows uncertainty, and retry confirms remote revocation', async () => {
+  spyOn(nativePush, 'isIosPush').mockReturnValue(true)
+  const state = spyOn(push, 'pushState').mockResolvedValue('on')
+  spyOn(push, 'disablePush').mockRejectedValue(new Error('DELETE failed'))
+  show({ ...me, nativePush: true })
+  await screen.findByRole('button', { name: 'Enviar um teste' })
+  fireEvent.click(screen.getByRole('switch', { name: /Neste aparelho/ }))
+  expect(await screen.findByText(/Não foi possível confirmar/)).toBeTruthy()
+  expect(screen.queryByText('Notificações desligadas neste aparelho.')).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Enviar um teste' })).toBeNull()
+  state.mockRejectedValueOnce(new Error('still offline'))
+  fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }))
+  await waitFor(() => {
+    if ((screen.getByRole('button', { name: 'Tentar novamente' }) as HTMLButtonElement).disabled)
+      throw new Error('still retrying')
+  })
+  expect(screen.getByText(/Não foi possível confirmar/)).toBeTruthy()
+  state.mockResolvedValue('off')
+  fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }))
+  expect(await screen.findByText(/Ligue para receber/)).toBeTruthy()
 })

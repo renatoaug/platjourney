@@ -19,3 +19,5 @@ Use the official Capacitor push plugin and a server-side HTTP/2 APNs transport. 
 - One UI and one delivery dispatcher serve browser and iOS, with independent transport failure handling.
 - A device renews registration on launch/resume; token and installation secrets must stay out of logs.
 - Development and distribution builds need matching, separate APNs instance environments. Real delivery and store readiness still require device testing and approved signing credentials.
+
+An opt-out persists a per-account pending revocation until both native cleanup and the server DELETE succeed. Cleanup is attempted even when the network fails; launch, resume, reconnect and the Settings retry action retry the pending DELETE without registering again. Failed status reads or revocations show an unconfirmed state rather than confirming that notifications are off. DELETE carries the expected account ID, checked against the authenticated owner, so a stale request cannot revoke a newly signed-in account's device.

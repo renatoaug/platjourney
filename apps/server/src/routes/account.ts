@@ -106,8 +106,8 @@ async function saveNativePush({ req, res, me }: Api) {
 }
 
 async function dropNativePush({ req, res, me }: Api) {
-  const { installation } = await readBody(req)
-  if (typeof installation !== 'string' || !/^[a-f0-9]{64}$/.test(installation))
+  const { installation, owner } = await readBody(req)
+  if (owner !== me.id || typeof installation !== 'string' || !/^[a-f0-9]{64}$/.test(installation))
     return json(res, 400, { error: 'invalid' })
   await deleteNativeDevice(me.id, installation)
   return json(res, 200, { ok: true })

@@ -31,7 +31,7 @@ let saving: Promise<unknown> = Promise.resolve()
 let registration:
   | { resolve: () => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }
   | undefined
-const preference = () => `platjourney:apns:${owner}`
+const preference = (user = owner) => `platjourney:apns:${user}`
 const enabled = () => !!owner && localStorage.getItem(preference()) === 'on'
 function installation(): string {
   const key = 'platjourney:apns-installation'
@@ -130,11 +130,11 @@ export async function nativePushState(): Promise<'off' | 'on' | 'denied'> {
   const permission = await plugin()?.checkPermissions()
   if (epoch !== generation) return 'off'
   if (permission?.receive !== 'granted') {
-    await del('/api/push/native', { installation: installation() })
+    await revokeDevice()
     return permission?.receive === 'denied' ? 'denied' : 'off'
   }
   if (!enabled()) {
-    await del('/api/push/native', { installation: installation() })
+    await revokeDevice()
     return 'off'
   }
   await register()
@@ -146,6 +146,9 @@ export async function enableNativePush(): Promise<'off' | 'on' | 'denied'> {
   const current = owner
   const epoch = ++generation
   const key = preference()
+  // Finish any queued revocation before a new opt-in can register this installation.
+  await saving
+  if (current !== owner || epoch !== generation) throw new Error('APNs session changed')
   const permission = await plugin()?.requestPermissions()
   if (current !== owner || epoch !== generation) return 'off'
   if (permission?.receive !== 'granted') return permission?.receive === 'denied' ? 'denied' : 'off'
@@ -159,14 +162,46 @@ export async function enableNativePush(): Promise<'off' | 'on' | 'denied'> {
   return 'on'
 }
 
+/** Keep the intent until BOTH native cleanup and server revocation succeed. A failed DELETE
+ * must never restore registration on launch/resume or make the UI confirm that push is off. */
+function revokeDevice(): Promise<void> {
+  const current = owner
+  const epoch = generation
+  const key = preference(current)
+  localStorage.setItem(key, 'revoking')
+  const previous = saving
+  const work = (async () => {
+    // Attempt both native operations even if either one or the network fails.
+    const cleanup = Promise.allSettled([
+      plugin()?.unregister(),
+      plugin()?.removeAllDeliveredNotifications(),
+    ])
+    const remote = (async () => {
+      await previous
+      if (current !== owner || epoch !== generation) throw new Error('APNs session changed')
+      await del('/api/push/native', { installation: installation(), owner: current })
+    })()
+    const results = await Promise.allSettled([cleanup, remote])
+    const local = results[0]
+    if (
+      results[1].status === 'rejected' ||
+      local.status === 'rejected' ||
+      local.value.some((result) => result.status === 'rejected')
+    )
+      throw new Error('APNs revocation pending')
+    if (current !== owner || epoch !== generation) throw new Error('APNs session changed')
+    if (localStorage.getItem(key) === 'revoking') localStorage.removeItem(key)
+  })()
+  // Registration and revocation share a queue; an error must not poison future retries.
+  saving = work.catch(() => {})
+  return work
+}
+
 export async function disableNativePush(): Promise<'off'> {
-  localStorage.removeItem(preference())
+  if (!owner) throw new Error('APNs session ended')
   generation++
-  await saving
-  await del('/api/push/native', { installation: installation() })
   settle(new Error('APNs disabled'))
-  await plugin()?.unregister()
-  await plugin()?.removeAllDeliveredNotifications()
+  await revokeDevice()
   return 'off'
 }
 
@@ -196,9 +231,11 @@ export function startNativePush(user: string | null, ready = false): () => void 
     .then(refresh)
     .catch(() => {})
   if (!user) signOut()
+  window.addEventListener('online', refresh)
   document.addEventListener('visibilitychange', refresh)
   document.addEventListener('api:signout', signOut)
   return () => {
+    window.removeEventListener('online', refresh)
     document.removeEventListener('visibilitychange', refresh)
     document.removeEventListener('api:signout', signOut)
     generation++

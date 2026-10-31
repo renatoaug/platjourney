@@ -11,6 +11,7 @@ const meta: Meta<typeof NotificationSettingsView> = {
     notifyTelegram: true,
     busy: false,
     onPush: () => {},
+    onRetry: () => {},
     onTest: () => {},
     onTelegram: () => {},
   },
@@ -44,3 +45,6 @@ export const PushOff: Story = { args: { pushAvailable: false } }
 
 /** The shared demo: nothing changes. */
 export const Demo: Story = { args: { demo: true } }
+
+/** Revocation or status lookup failed: retry without claiming notifications are off. */
+export const Unconfirmed: Story = { args: { push: 'error' } }

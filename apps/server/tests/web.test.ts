@@ -1503,9 +1503,15 @@ test('native device removal is account scoped, even when APNs is disabled', asyn
   const drop = spyOn(nativeSubs, 'deleteNativeDevice').mockResolvedValue()
   const installation = 'a'.repeat(64)
   expect(
-    (await send('DELETE', '/api/push/native', { installation, user: 'user:other' })).status,
+    (await send('DELETE', '/api/push/native', { installation, owner: me.id, user: 'user:other' }))
+      .status,
   ).toBe(200)
   expect(drop).toHaveBeenCalledWith(me.id, installation)
+  expect(
+    (await send('DELETE', '/api/push/native', { installation, owner: 'user:other' })).status,
+  ).toBe(400)
+  expect((await send('DELETE', '/api/push/native', { installation })).status).toBe(400)
+  expect(drop).toHaveBeenCalledTimes(1)
   expect((await send('DELETE', '/api/push/native', { installation: '' })).status).toBe(400)
 })
 
