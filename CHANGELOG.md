@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.42.0](https://github.com/renatoaug/platjourney/compare/v0.41.0...v0.42.0) (2026-10-31)
+
+### Features
+
+* **server:** plugins notify players, and the bell asks for push once ([#122](https://github.com/renatoaug/platjourney/issues/122)) ([bde1e7f](https://github.com/renatoaug/platjourney/commit/bde1e7f4bbcb5653b3b37d50d718e9c6e2459159))
+
 ## [0.41.0](https://github.com/renatoaug/platjourney/compare/v0.40.0...v0.41.0) (2026-10-31)
 
 ### Features
