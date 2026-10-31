@@ -271,3 +271,37 @@ describe('the game switch', () => {
     )
   })
 })
+
+describe('mic', () => {
+  const w = window as Window & { webkitSpeechRecognition?: unknown }
+
+  test('no mic where the device cannot dictate', () => {
+    delete w.webkitSpeechRecognition
+    show([])
+    expect(screen.queryByRole('button', { name: 'Falar a pergunta' })).toBeNull()
+  })
+
+  test('what is said goes into the box after what was typed, for the player to send', async () => {
+    w.webkitSpeechRecognition = class {
+      lang = ''
+      interimResults = false
+      continuous = true
+      onresult = (_e: unknown) => {}
+      onerror = (_e: unknown) => {}
+      onend = () => {}
+      start() {
+        this.onresult({ results: [{ isFinal: true, 0: { transcript: 'como pego?' } }] })
+        this.onend()
+      }
+      stop() {}
+    }
+    const onSend = mock(() => {})
+    show([], { onSend })
+    const box = screen.getByRole('combobox') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'Digno:' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Falar a pergunta' }))
+    await screen.findByDisplayValue('Digno: como pego?')
+    expect(onSend).not.toHaveBeenCalled()
+    delete w.webkitSpeechRecognition
+  })
+})

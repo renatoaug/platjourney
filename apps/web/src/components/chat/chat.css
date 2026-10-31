@@ -617,6 +617,48 @@
     align-self: center;
   }
 
+  /* The mic beside Send: a round outline that pulses in the accent while it listens. */
+  .chatform > .chat-mic {
+    align-self: center;
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-round);
+    background: transparent;
+    color: var(--color-fg-muted);
+  }
+
+  .chatform > .chat-mic:hover {
+    color: var(--color-fg);
+    border-color: var(--color-fg-subtle);
+  }
+
+  .chat-mic .icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .chatform > .chat-mic.listening {
+    color: var(--color-on-accent);
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    animation: mic-pulse 1.4s ease-out infinite;
+  }
+
+  @keyframes mic-pulse {
+    from {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    }
+
+    to {
+      box-shadow: 0 0 0 10px transparent;
+    }
+  }
+
   /* Phone header: Nexo a little smaller, its tagline beside the name, the game on one line. */
   @media (max-width: 760px) {
     .nexo-chat-heading {

@@ -135,6 +135,7 @@ export type Target =
   | 'Markdown'
   | 'MessageMeta'
   | 'Meta'
+  | 'MicButton'
   | 'Missable'
   | 'MissingGame'
   | 'MissionSkeleton'

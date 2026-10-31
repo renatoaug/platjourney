@@ -23,7 +23,11 @@
       "ignoreDependencies": ["tailwindcss"]
     },
     "apps/mobile": {
-      "ignoreDependencies": ["@capacitor/haptics", "@capacitor/splash-screen"]
+      "ignoreDependencies": [
+        "@capacitor/haptics",
+        "@capacitor/splash-screen",
+        "@capgo/capacitor-speech-recognition"
+      ]
     }
   },
   "ignoreUnresolved": ["./apps/server/tests/env.ts", "./apps/web/tests/setup.ts"]

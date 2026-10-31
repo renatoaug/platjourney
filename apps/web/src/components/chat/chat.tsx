@@ -12,12 +12,14 @@ import {
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type Translator, useMessages } from '../../i18n/i18n'
 import type { Game, LibraryGame } from '../../lib/types'
+import { canDictate, type Dictation, dictate } from '../../lib/voice'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
 import { Markdown, UserText } from '../../ui/markdown'
 import { Sk } from '../../ui/skeleton'
 import { SourceNote, splitSource } from '../../ui/source-note'
 import { ErrorState } from '../../ui/states'
+import { toast } from '../../ui/toast'
 import { DemoConnectButton } from '../demo'
 import { NexoHero } from '../nexo-hero'
 import { titleHref } from '../tip'
@@ -70,6 +72,11 @@ const messages = defineMessages({
     },
     placeholderCommands: 'Nexo, qual é o próximo passo? Digite / para ver os comandos',
     send: 'Enviar',
+    mic: 'Falar a pergunta',
+    micStop: 'Parar de ouvir',
+    micDenied:
+      'Sem permissão para o microfone. Libere nas configurações do navegador ou do celular.',
+    micFailed: 'Não deu para ouvir agora. Tente de novo.',
     menu: {
       label: 'Comandos e jogos',
       game: 'Trocar o jogo da conversa',
@@ -146,6 +153,10 @@ const messages = defineMessages({
     },
     placeholderCommands: 'Nexo, what is the next step? Type / for commands',
     send: 'Send',
+    mic: 'Say your question',
+    micStop: 'Stop listening',
+    micDenied: 'No microphone permission. Allow it in the browser or phone settings.',
+    micFailed: 'Could not listen now. Try again.',
     menu: {
       label: 'Commands and games',
       game: 'Switch the game we talk about',
@@ -853,6 +864,52 @@ function lastLineReaches(el: HTMLTextAreaElement, counterWidth: number): boolean
   return reach > el.clientWidth - counterWidth - 8
 }
 
+/** The mic next to Send: what the player says goes into the box, after what is already there, to
+ * read and fix before sending. Shown only where the phone or the browser can dictate. */
+function MicButton({
+  text,
+  onText,
+  disabled,
+}: {
+  text: string
+  onText: (text: string) => void
+  disabled: boolean
+}) {
+  const t = useMessages(messages)
+  const [listening, setListening] = useState(false)
+  const session = useRef<Dictation | null>(null)
+  const [supported] = useState(canDictate)
+  useEffect(() => () => session.current?.stop(), [])
+  if (!supported) return null
+  const toggle = async () => {
+    if (listening) return session.current?.stop()
+    const base = text.trim()
+    setListening(true)
+    session.current = await dictate(getLocale() === Language.En ? 'en-US' : 'pt-BR', {
+      onText: (heard) => onText(base && heard ? `${base} ${heard}` : base || heard),
+      onEnd: (error) => {
+        setListening(false)
+        session.current = null
+        if (error === 'denied') toast(t('micDenied'))
+        else if (error === 'failed') toast(t('micFailed'))
+      },
+    })
+  }
+  return (
+    <button
+      type="button"
+      className={`chat-mic${listening ? ' listening' : ''}`}
+      aria-label={t(listening ? 'micStop' : 'mic')}
+      aria-pressed={listening}
+      title={t(listening ? 'micStop' : 'mic')}
+      disabled={disabled}
+      onClick={toggle}
+    >
+      <Icon name="mic" />
+    </button>
+  )
+}
+
 /** The message box under the conversation. */
 function ChatForm({
   formRef,
@@ -972,6 +1029,7 @@ function ChatForm({
           </span>
         )}
       </div>
+      <MicButton text={text} onText={onText} disabled={sending} />
       <button type="submit" disabled={sending}>
         {t('send')}
       </button>
