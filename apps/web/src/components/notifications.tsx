@@ -12,6 +12,7 @@ import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { fmtDay, fmtTime } from '../lib/format'
+import { askPushOnce } from '../lib/push'
 import { md } from '../lib/text'
 import type { Tip } from '../lib/types'
 import { Icon } from '../ui/icon'
@@ -161,7 +162,7 @@ function NotifPages({
 
 export function Notifications() {
   const t = useMessages(messages)
-  const { data, setData } = useApp()
+  const { data, setData, me } = useApp()
   const unread = data?.unread ?? 0
   const [state, setState] = useState<'closed' | 'open' | 'closing'>('closed')
   const [page, setPage] = useState(1)
@@ -192,6 +193,7 @@ export function Notifications() {
   const open = () => {
     clearTimeout(closing.current)
     setState('open')
+    askPushOnce(me.demo ? null : me.pushKey)
     if (unread) setRing((r) => r + 1)
     // The list loads before the read mark, so new items still show highlighted.
     load(1).then(() => {
