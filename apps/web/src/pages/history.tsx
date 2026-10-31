@@ -1,6 +1,7 @@
 /** History page: everything Nexo said and the tips assistants saved, filterable by kind, as a
  * day-by-day timeline. */
 import { useEffect, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { PageTop } from '../components/page-top'
@@ -16,6 +17,9 @@ import './history.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
+    selected: 'Dica da notificação',
+    missing: 'Esta dica não está disponível para esta conta.',
+    retry: 'Tentar novamente',
     title: 'Histórico',
     lead: 'Tudo que o Nexo já te mandou, e as dicas que seus assistentes salvaram.',
     kinds: {
@@ -37,6 +41,9 @@ const messages = defineMessages({
       'Não conseguimos carregar o histórico. Use o botão de atualizar para tentar novamente.',
   },
   [Language.En]: {
+    selected: 'Tip from notification',
+    missing: 'This tip is not available for this account.',
+    retry: 'Try again',
     title: 'History',
     lead: 'Everything Nexo has sent you, and the tips your assistants saved.',
     kinds: {
@@ -159,9 +166,64 @@ function Timeline({ tips, kind, onAll }: { tips: Tip[]; kind: string; onAll: () 
   )
 }
 
+function SelectedTip({ id }: { id: string }) {
+  const [attempt, setAttempt] = useState(0)
+  const [loaded, setLoaded] = useState<{ id: string; tip: Tip | 'missing' | 'error' } | null>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt explicitly retries the same tip.
+  useEffect(() => {
+    let live = true
+    setLoaded(null)
+    api<Tip>(`/api/tip?id=${encodeURIComponent(id)}`)
+      .then((tip) => {
+        if (live) setLoaded({ id, tip })
+      })
+      .catch((e) => {
+        if (live) setLoaded({ id, tip: e.status === 404 ? 'missing' : 'error' })
+      })
+    return () => {
+      live = false
+    }
+  }, [id, attempt])
+  const tip = loaded?.id === id ? loaded.tip : null
+  return <SelectedTipView tip={tip} onRetry={() => setAttempt((n) => n + 1)} />
+}
+
+export function SelectedTipView({
+  tip,
+  onRetry,
+}: {
+  tip: Tip | 'missing' | 'error' | null
+  onRetry: () => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <section className="card" aria-label={t('selected')}>
+      <h2>{t('selected')}</h2>
+      {!tip ? (
+        <TipSkeleton />
+      ) : tip === 'missing' ? (
+        <EmptyState>{t('missing')}</EmptyState>
+      ) : tip === 'error' ? (
+        <ErrorState>
+          <button type="button" className="text-link" onClick={onRetry}>
+            {t('retry')}
+          </button>
+        </ErrorState>
+      ) : (
+        <TipItem tip={tip} />
+      )}
+      <Link className="text-link" to="/history">
+        {t('seeAll')}
+      </Link>
+    </section>
+  )
+}
+
 export function History() {
   const t = useMessages(messages)
   const { data, sync, cache } = useApp()
+  const [params] = useSearchParams()
+  const selected = params.get('tip')
   const older = useOlderTips(data?.tips)
   // The chosen filter survives navigation.
   const [kind, setKindState] = useState(() =>
@@ -183,35 +245,41 @@ export function History() {
         art={latest?.game?.art_url ?? latest?.game?.cover_url}
         tint={latest?.game?.tint}
       >
-        <div className="chips history-filters" id="tip-filters" ref={filtersRef}>
-          {FILTERS.map((f) => (
-            <button
-              key={f.kind}
-              type="button"
-              className={`chip${kind === f.kind ? ' active' : ''}`}
-              data-kind={f.kind}
-              onClick={() => setKind(f.kind)}
-            >
-              {t(f.label)}
-            </button>
-          ))}
-        </div>
+        {!selected && (
+          <div className="chips history-filters" id="tip-filters" ref={filtersRef}>
+            {FILTERS.map((f) => (
+              <button
+                key={f.kind}
+                type="button"
+                className={`chip${kind === f.kind ? ' active' : ''}`}
+                data-kind={f.kind}
+                onClick={() => setKind(f.kind)}
+              >
+                {t(f.label)}
+              </button>
+            ))}
+          </div>
+        )}
       </PageTop>
-      <div className="card">
-        <div id="tips">
-          {data ? (
-            <>
-              <Timeline tips={older.all} kind={kind} onAll={() => setKind('')} />
-              {older.loading && repeat(3, () => <TipSkeleton />)}
-              <div ref={older.end} aria-hidden="true" />
-            </>
-          ) : sync === 'failed' ? (
-            <ErrorState>{t('loadFailed')}</ErrorState>
-          ) : (
-            repeat(5, () => <TipSkeleton />)
-          )}
+      {selected ? (
+        <SelectedTip id={selected} />
+      ) : (
+        <div className="card">
+          <div id="tips">
+            {data ? (
+              <>
+                <Timeline tips={older.all} kind={kind} onAll={() => setKind('')} />
+                {older.loading && repeat(3, () => <TipSkeleton />)}
+                <div ref={older.end} aria-hidden="true" />
+              </>
+            ) : sync === 'failed' ? (
+              <ErrorState>{t('loadFailed')}</ErrorState>
+            ) : (
+              repeat(5, () => <TipSkeleton />)
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </Page>
   )
 }

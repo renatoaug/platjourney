@@ -181,3 +181,23 @@ test('conversations come one per game, the latest first, with the last question 
     },
   ])
 })
+
+test('a notification resolves only an exact saved message for its owner', async () => {
+  const query = spyOn(db, 'q').mockResolvedValue([{ id: 'tip:old' }])
+  const { deliveredTip } = await import('../../src/repository/activity.ts')
+  expect(await deliveredTip('user:u1', 'Exact notice')).toBe('tip:old')
+  expect(query.mock.calls[0][0]).toContain('user = $user AND content = $content')
+})
+
+test('focused tips enforce ownership and reject malformed ids before querying', async () => {
+  const query = spyOn(db, 'q').mockResolvedValue([])
+  const { tipById } = await import('../../src/repository/activity.ts')
+  expect(await tipById('user:u1', 'user:u2')).toBeUndefined()
+  expect(query).not.toHaveBeenCalled()
+  expect(await tipById('user:u1', 'tip:old')).toBeUndefined()
+  expect(query.mock.calls[0][0]).toContain('id = $id AND user = $user')
+  expect(query.mock.calls[0][1]).toEqual({
+    id: new db.RecordId('tip', 'old'),
+    user: new db.RecordId('user', 'u1'),
+  })
+})

@@ -13,6 +13,7 @@ import {
   useMessages,
 } from '../i18n/i18n'
 import { api } from '../lib/api'
+import { startNativePush } from '../lib/native-push'
 import type { Me } from '../lib/types'
 import { Connect, isConnectPage } from '../pages/connect'
 import { Login } from '../pages/login'
@@ -64,6 +65,9 @@ function useBoot(ready: boolean): 'shown' | 'leaving' | 'gone' {
 export function App() {
   const t = useMessages(messages)
   const [session, setSession] = useState<Session>({ kind: 'loading' })
+  const pushOwner = session.kind === 'in' && !session.me.demo ? session.me.id : null
+  const pushAvailable = session.kind === 'in' && !!session.me.nativePush
+  useEffect(() => startNativePush(pushOwner, pushAvailable), [pushOwner, pushAvailable])
   const [firstData, setFirstData] = useState(false)
   const markFirstData = useCallback(() => setFirstData(true), [])
   // The consent page loads nothing of the app's own data, so it does not wait for it.

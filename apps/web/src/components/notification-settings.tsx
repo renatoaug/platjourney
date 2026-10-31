@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
+import { isIosPush } from '../lib/native-push'
 import { disablePush, enablePush, type PushState, pushState } from '../lib/push'
 import type { Me } from '../lib/types'
 import { Sk } from '../ui/skeleton'
@@ -21,7 +22,7 @@ const messages = defineMessages({
       on: 'Os avisos chegam como notificação, mesmo com o PlatJourney fechado.',
       off: 'Ligue para receber os avisos como notificação, mesmo com o PlatJourney fechado.',
       denied:
-        'As notificações do PlatJourney estão bloqueadas neste navegador. Libere nas configurações do site e volte aqui.',
+        'As notificações do PlatJourney estão bloqueadas neste aparelho. Libere nas configurações de notificações e volte aqui.',
       install:
         'No iPhone, as notificações pedem o PlatJourney na tela de início: toque em Compartilhar, depois em "Adicionar à Tela de Início", e ligue aqui pelo ícone novo.',
       native: 'O app ainda não recebe notificações. Use o Telegram ou o PlatJourney no navegador.',
@@ -36,7 +37,7 @@ const messages = defineMessages({
     on: 'Notificações ligadas neste aparelho.',
     off: 'Notificações desligadas neste aparelho.',
     notAllowed:
-      'O navegador não liberou as notificações. Permita para o PlatJourney no aviso do navegador ou nas configurações do site.',
+      'As notificações não foram liberadas. Permita para o PlatJourney no aviso ou nas configurações do aparelho.',
     telegramOn: 'Os avisos voltam a chegar no Telegram.',
     telegramOff: 'Os avisos não vão mais para o Telegram.',
     failed: 'Não conseguimos mudar agora. Tente de novo.',
@@ -49,7 +50,7 @@ const messages = defineMessages({
       on: 'Notices arrive as notifications, even with PlatJourney closed.',
       off: 'Turn on to get notices as notifications, even with PlatJourney closed.',
       denied:
-        "PlatJourney's notifications are blocked in this browser. Allow them in the site settings and come back.",
+        "PlatJourney's notifications are blocked on this device. Allow them in notification settings and come back.",
       install:
         'On iPhone, notifications need PlatJourney on the home screen: tap Share, then "Add to Home Screen", and turn them on here from the new icon.',
       native: "The app doesn't get notifications yet. Use Telegram or PlatJourney in the browser.",
@@ -64,7 +65,7 @@ const messages = defineMessages({
     on: 'Notifications on for this device.',
     off: 'Notifications off for this device.',
     notAllowed:
-      "The browser didn't allow notifications. Allow them for PlatJourney in the browser's prompt or the site settings.",
+      'Notifications were not allowed. Allow them for PlatJourney in the prompt or device settings.',
     telegramOn: 'Notices go to Telegram again.',
     telegramOff: 'Notices no longer go to Telegram.',
     failed: "We couldn't change it now. Try again.",
@@ -182,13 +183,13 @@ export function NotificationSettings({ user }: { user: Me }) {
   const { setMe } = useApp()
   const [push, setPush] = useState<PushState | 'loading'>('loading')
   const [busy, setBusy] = useState(false)
-  const pushAvailable = !!user.pushKey
+  const pushAvailable = isIosPush() ? !!user.nativePush : !!user.pushKey
   useEffect(() => {
     if (!pushAvailable) return
     let live = true
     pushState()
       .then((state) => live && setPush(state))
-      .catch(() => live && setPush('unsupported'))
+      .catch(() => live && setPush(isIosPush() ? 'off' : 'unsupported'))
     return () => {
       live = false
     }

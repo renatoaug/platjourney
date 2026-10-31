@@ -33,7 +33,7 @@ export const NeedsInstall: Story = { args: { push: 'install' } }
 /** The player blocked notifications for the site. */
 export const Denied: Story = { args: { push: 'denied' } }
 
-/** The native app, which has no push yet. */
+/** An older native build without the push plugin (or Android). */
 export const NativeApp: Story = { args: { push: 'native' } }
 
 /** No Telegram linked: its switch waits for the link. */

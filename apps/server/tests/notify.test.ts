@@ -2,6 +2,7 @@ import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import { deliver, plainText } from '../src/notify.ts'
 import * as push from '../src/push.ts'
+import * as activity from '../src/repository/activity.ts'
 import * as telegram from '../src/telegram.ts'
 import { makeUser } from './fixtures.ts'
 
@@ -9,6 +10,7 @@ let send: ReturnType<typeof spyOn<typeof telegram, 'sendMessage'>>
 let pushed: ReturnType<typeof spyOn<typeof push, 'pushTo'>>
 
 beforeEach(() => {
+  spyOn(activity, 'deliveredTip').mockResolvedValue(undefined)
   send = spyOn(telegram, 'sendMessage').mockResolvedValue()
   pushed = spyOn(push, 'pushTo').mockResolvedValue(1)
   spyOn(console, 'warn').mockImplementation(() => {})
@@ -43,4 +45,12 @@ test('a long notice is cut for push, and a failing channel does not stop the oth
   const body = (pushed.mock.calls[0][1] as push.PushMessage).body
   expect(body.length).toBe(900)
   expect(body.endsWith('…')).toBe(true)
+})
+
+test('a saved notice opens its exact tip rather than the first page of history', async () => {
+  spyOn(activity, 'deliveredTip').mockResolvedValue('tip:old_notice')
+  const user = makeUser()
+  await deliver(user, 'Before the next chapter')
+  expect(activity.deliveredTip).toHaveBeenCalledWith(user.id, 'Before the next chapter')
+  expect(pushed.mock.calls[0][1].url).toBe('/history?tip=tip%3Aold_notice')
 })

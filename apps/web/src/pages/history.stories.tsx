@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MockAppState, SAMPLE_DATA } from '../app/app-state'
 import { Language } from '../i18n/i18n'
 import type { Tip } from '../lib/types'
-import { History } from './history'
+import { History, SelectedTipView } from './history'
 
 const meta: Meta<typeof History> = { title: 'Pages/History', component: History }
 export default meta
@@ -98,3 +98,16 @@ export const Failed: Story = {
 
 // The same screen in English (the toolbar switches any story).
 export const English: Story = { ...Loaded, globals: { locale: Language.En } }
+
+export const SelectedNotice: Story = {
+  render: () => <SelectedTipView tip={TIPS[2]} onRetry={() => {}} />,
+}
+export const SelectedLoading: Story = {
+  render: () => <SelectedTipView tip={null} onRetry={() => {}} />,
+}
+export const SelectedMissing: Story = {
+  render: () => <SelectedTipView tip="missing" onRetry={() => {}} />,
+}
+export const SelectedFailed: Story = {
+  render: () => <SelectedTipView tip="error" onRetry={() => {}} />,
+}

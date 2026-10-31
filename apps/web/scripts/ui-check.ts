@@ -61,6 +61,9 @@ async function checkRoute(page: Page, route: string, vpName: string, problems: s
   const url = route === 'login' ? `${BASE}/` : `${BASE}/#${route}`
   await page.goto(url)
   await settle(page)
+  // Capture the final page, not a compositor frame of its entrance animation. This also keeps
+  // axe's contrast sampling stable when a full-page screenshot resizes the viewport.
+  await page.addStyleTag({ content: '.page { animation: none !important; }' })
   const name = route === '/' ? 'home' : route.replace(/^\//, '').replace(/[/.]/g, '-')
   await page.screenshot({ path: `${OUT}/${name}-${vpName}.png`, fullPage: true })
   const overflow = await page.evaluate(

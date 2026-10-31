@@ -21,6 +21,7 @@ import * as psn from '../src/psn.ts'
 import * as accesses from '../src/repository/access.ts'
 import * as sessions from '../src/repository/auth.ts'
 import * as calls from '../src/repository/llm-call.ts'
+import * as nativeSubs from '../src/repository/native-push.ts'
 import * as oauth from '../src/repository/oauth.ts'
 import * as pushSubs from '../src/repository/push-subscription.ts'
 import * as users from '../src/repository/user.ts'
@@ -61,6 +62,7 @@ beforeEach(() => {
   spyOn(calls, 'detachCalls').mockResolvedValue()
   spyOn(accesses, 'deleteAccesses').mockResolvedValue()
   spyOn(pushSubs, 'deletePushSubscriptions').mockResolvedValue()
+  spyOn(nativeSubs, 'deleteNativeDevices').mockResolvedValue()
   createUser = spyOn(users, 'createUser').mockImplementation(async (u) =>
     makeUser({ id: 'user:new', ...u, password_hash: u.password_hash ?? null }),
   )

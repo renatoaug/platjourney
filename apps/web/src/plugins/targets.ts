@@ -236,6 +236,8 @@ export type Target =
   | 'SaveToInterests'
   | 'SavedFrom'
   | 'ScenesButton'
+  | 'SelectedTip'
+  | 'SelectedTipView'
   | 'Servers'
   | 'ServersSkeleton'
   | 'Settings'

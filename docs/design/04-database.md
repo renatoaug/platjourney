@@ -199,6 +199,17 @@ erDiagram
     game |o--o{ notification : "about"
     tip |o--o{ notification : "carries"
     user ||--o{ push_subscription : "is pushed to"
+    user ||--o{ native_push_subscription : "receives APNs"
+    native_push_subscription {
+        id record(native_push_subscription) PK
+        user record(user) FK
+        installation string "unique random device secret"
+        token string "unique with environment"
+        environment string "sandbox or production"
+        session_hash string "only live auth sessions deliver"
+        created_at datetime
+        updated_at datetime
+    }
     tip {
         id record(tip) PK
         user record(user) FK
@@ -479,6 +490,7 @@ erDiagram
 | `notification` | item in the bell | | `kind`: `start`, `unlock`, `session`, `route`, `server`, `deal`. Points at the `tip` it shows, when there is one |
 | `session_plan` | session plan | `user, status` | One row per plan, Nexo's or a connected assistant's (`assistant`: `claude`, `chatgpt`, `other`). `status`: `active` while on screen, `ended` (the player ended the session before its time), `dismissed` (closed once it was over), `replaced` (a new plan took its place) or `expired` (its time, the minutes asked plus an hour, ran out with no action; it still shows as a recap until the next day, and an hourly check marks it). The plan on screen is the player's latest `active` or `expired` one. Each step keeps its trophy and `trophy_id` on `np_communication_id`, and `done` (earned by `ended_at`; for an expired plan, checked against the trophies the last sync stored). `reason` is why the player closed a plan with no step done, when they answered the optional question: `not_useful`, `too_long`, `other_game` or `no_time`. Kept with the account and wiped with it |
 | `push_subscription` | browser or installed web app that turned push on | `endpoint` | Where its push service takes messages, and the device's keys (`p256dh`, `auth`) that encrypt each one. Saved again on the same endpoint moves the device to the account signed in; deleted when the player turns push off there, when the push service answers 404 or 410, and with the account |
+| `native_push_subscription` | iOS installation that enabled push for its signed-in account | `installation`; (`token`, `environment`) | APNs token and environment, a random installation secret, owning user and server-derived `session_hash`. Registration replaces the token/session for that installation. Delivery requires an unexpired `auth_session` for that user/hash, so logout, password revocation and account deletion stop delivery. Settings deletes only the owner's installation; APNs invalid-token cleanup compares installation, token and environment; account deletion removes all rows. Tokens and installation secrets never appear in public API responses or logs. |
 | `auth_session` | signed-in browser | `token_hash` | Only the hash of the cookie is stored |
 | `verification` | pending "About me" code | `psn_online_id_lower` | Expires; no account yet. `secret_hash` is the hash of the claim cookie: only its holder can finish the claim or get the same code again, and nobody else can replace the row until `expires_at` |
 | `access` | address an account is used from | `user, ip_hash` | An HMAC of the IP, only with `ACCESS_HASH_SECRET` |

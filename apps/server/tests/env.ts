@@ -22,3 +22,6 @@ process.env.AI_URL = 'http://127.0.0.1:9'
 // tests. A test that needs push sets its own keys on config.push.
 process.env.PUSH_VAPID_PUBLIC_KEY = ''
 process.env.PUSH_VAPID_PRIVATE_KEY = ''
+process.env.APNS_KEY_ID = ''
+process.env.APNS_TEAM_ID = ''
+process.env.APNS_PRIVATE_KEY = ''

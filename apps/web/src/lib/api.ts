@@ -28,15 +28,23 @@ export class ApiError extends Error {
 }
 
 // The server answers notices and errors in the language the page is showing.
-const send = (path: string, method: string, body: unknown) =>
-  fetch(path, {
+const send = (path: string, method: string, body: unknown) => {
+  return fetch(path, {
     method,
     headers: {
       'accept-language': getLocale(),
       ...(body === undefined ? {} : { 'content-type': 'application/json' }),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  }).then((response) => {
+    if (
+      response.ok &&
+      (path === '/api/auth/logout' || (path === '/api/account' && method === 'DELETE'))
+    )
+      document.dispatchEvent(new Event('api:signout'))
+    return response
   })
+}
 
 export const api = <T = unknown>(path: string, body?: unknown): Promise<T> =>
   send(path, body === undefined ? 'GET' : 'POST', body).then((r) => answer<T>(r))

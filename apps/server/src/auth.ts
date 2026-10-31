@@ -16,6 +16,7 @@ import {
   sessionUser,
 } from './repository/auth.ts'
 import { detachCalls } from './repository/llm-call.ts'
+import { deleteNativeDevices } from './repository/native-push.ts'
 import { deleteConnectionsOf } from './repository/oauth.ts'
 import { deletePushSubscriptions } from './repository/push-subscription.ts'
 import {
@@ -298,6 +299,8 @@ export const claimSecretFrom = (req: IncomingMessage) => cookieFrom(req, CLAIM_C
 
 const tokenFrom = (req: IncomingMessage) => cookieFrom(req, COOKIE)
 
+export const sessionHash = (req: IncomingMessage): string => hash(tokenFrom(req) ?? '')
+
 function cookieFrom(req: IncomingMessage, cookie: string): string | undefined {
   const header = req.headers.cookie ?? ''
   for (const part of header.split(';')) {
@@ -345,6 +348,7 @@ export async function deleteAccount(user: User, confirmOnlineId: string): Promis
   await emit('user:deleted', user)
   await deleteAccesses(user.id)
   await deletePushSubscriptions(user.id)
+  await deleteNativeDevices(user.id)
   await detachCalls(user.id)
   await deleteVerification(user.psn_online_id)
   await deleteSessionsOf(user.id)

@@ -5,9 +5,10 @@ import { chromium } from 'playwright'
 const root = new URL('../storybook-static/', import.meta.url).pathname
 const server = Bun.serve({
   port: 0,
-  fetch: (req) => {
+  fetch: async (req) => {
     const path = new URL(req.url).pathname
-    return new Response(Bun.file(root + (path === '/' ? 'index.html' : path.slice(1))))
+    const file = Bun.file(root + (path === '/' ? 'index.html' : path.slice(1)))
+    return (await file.exists()) ? new Response(file) : new Response(null, { status: 404 })
   },
 })
 const base = `http://localhost:${server.port}`

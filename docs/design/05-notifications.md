@@ -32,7 +32,7 @@ flowchart LR
 |---|---|---|
 | Web | Always | The notice under the bell and in the history |
 | Telegram | The chat is linked and "No Telegram" is on in the settings (`user.notify_telegram`, on by default) | The full notice; markdown is converted to Telegram's HTML. A message over 4,000 characters is sent in parts, cut between paragraphs so a checklist item is never split |
-| Push | The device turned "On this device" on in the settings (`push_subscription`), and the instance has VAPID keys | A notification titled Nexo with the notice as plain text, cut at 900 characters; a tap opens the history |
+| Push | The device turned "On this device" on in the settings (`push_subscription`), and the instance has VAPID keys | A notification titled Nexo with the notice as plain text, cut at 900 characters; a tap opens the saved tip in the history |
 
 A notice counts as read once the player opens the bell on any device, or writes anything to Nexo on Telegram (a bot never learns when a message is read, so writing is the closest sign).
 
@@ -142,3 +142,6 @@ Right under the 🏆 title, the notice opens with a line in PlatJourney's own vo
 - **The trophy name shows once**, as the 🏆 title; a heading Nexo repeats is dropped, and markdown headings reach Telegram as bold.
 - **The chat's game is not the game played**: `/game` and links into the chat change only the conversation; the notices follow the game PSN shows.
 - **Loading a game prepares the chat**: when the watcher loads a game for a player, it also asks for the game's deep guide to be indexed, so a question about it in the chat finds passages. The notice itself does not wait for it.
+
+
+Native iOS devices use APNs through the same delivery dispatcher, independently of VAPID. Registration, session binding, token revocation, notification routing and the beta checklist are described in [Mobile](09-mobile.md#ios-notifications). APNs is disabled without provider credentials; it never borrows the browser subscription or Telegram preference.

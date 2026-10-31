@@ -54,3 +54,5 @@ What this makes easier, what it makes harder, what to watch. (bullets)
 | [ADR-009](ADR-009-similar-games-graph.md) | Recommendations by similar games from a graph, the model's picks on demand | Accepted |
 | [ADR-010](ADR-010-web-push-without-library.md) | Send push notifications with Web Push, without a library | Accepted |
 | [ADR-011](ADR-011-mcp-server.md) | Assistants use the player's PlatJourney through an MCP server that never calls the model | Accepted |
+
+| [ADR-012](ADR-012-ios-native-push.md) | Session-bound APNs alongside Web Push | Accepted |
