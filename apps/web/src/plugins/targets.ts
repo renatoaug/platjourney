@@ -285,6 +285,7 @@ export type Target =
   | 'UserMessage'
   | 'UserText'
   | 'Username'
+  | 'VoiceWave'
   | 'WaitingForSignal'
   | 'Welcome'
   | 'YearPace'

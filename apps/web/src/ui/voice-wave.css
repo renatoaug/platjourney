@@ -1,0 +1,35 @@
+@layer ui {
+  .voice-wave {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+    min-width: 0;
+    height: 28px;
+    overflow: hidden;
+  }
+
+  .voice-wave span {
+    flex: none;
+    width: 3px;
+    min-height: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--color-fg-muted);
+    transition: height 80ms linear;
+  }
+
+  .voice-wave.busy {
+    animation: voice-wave-wait 1.2s ease-in-out infinite alternate;
+  }
+
+  @keyframes voice-wave-wait {
+    from {
+      opacity: 0.8;
+    }
+
+    to {
+      opacity: 0.3;
+    }
+  }
+}

@@ -8,6 +8,7 @@ import { Sk } from './skeleton'
 import { SourceNote } from './source-note'
 import { EmptyState, ErrorState, PendingState } from './states'
 import { toast } from './toast'
+import { VoiceWave } from './voice-wave'
 
 const meta: Meta = { title: 'UI/Primitives' }
 export default meta
@@ -158,5 +159,17 @@ export const Tooltip: Story = {
     >
       <Icon name="refresh" />
     </button>
+  ),
+}
+
+export const Voice: Story = {
+  render: () => (
+    <div className="card" style={{ display: 'grid', gap: 16 }}>
+      <VoiceWave levels={[]} label="Ouvindo" />
+      <VoiceWave
+        levels={[0, 0.1, 0.4, 0.7, 0.3, 0.9, 0.5, 0.2, 0, 0, 0.3, 0.6, 1, 0.8, 0.4, 0.1, 0]}
+        label="Ouvindo"
+      />
+    </div>
   ),
 }

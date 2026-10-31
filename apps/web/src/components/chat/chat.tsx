@@ -11,8 +11,17 @@ import {
 } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type Translator, useMessages } from '../../i18n/i18n'
+import { api } from '../../lib/api'
 import type { Game, LibraryGame } from '../../lib/types'
-import { canDictate, type Dictation, dictate } from '../../lib/voice'
+import {
+  base64,
+  canDictate,
+  canRecord,
+  type Dictation,
+  dictate,
+  type Recording,
+  record,
+} from '../../lib/voice'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
 import { Markdown, UserText } from '../../ui/markdown'
@@ -20,6 +29,7 @@ import { Sk } from '../../ui/skeleton'
 import { SourceNote, splitSource } from '../../ui/source-note'
 import { ErrorState } from '../../ui/states'
 import { toast } from '../../ui/toast'
+import { VoiceWave, WAVE_SAMPLES } from '../../ui/voice-wave'
 import { DemoConnectButton } from '../demo'
 import { NexoHero } from '../nexo-hero'
 import { titleHref } from '../tip'
@@ -74,6 +84,8 @@ const messages = defineMessages({
     send: 'Enviar',
     mic: 'Falar a pergunta',
     micStop: 'Parar de ouvir',
+    listening: 'Ouvindo. Toque em parar para virar texto.',
+    transcribing: 'Transformando o áudio em texto…',
     micDenied:
       'Sem permissão para o microfone. Libere nas configurações do navegador ou do celular.',
     micFailed: 'Não deu para ouvir agora. Tente de novo.',
@@ -155,6 +167,8 @@ const messages = defineMessages({
     send: 'Send',
     mic: 'Say your question',
     micStop: 'Stop listening',
+    listening: 'Listening. Tap stop to turn it into text.',
+    transcribing: 'Turning the audio into text…',
     micDenied: 'No microphone permission. Allow it in the browser or phone settings.',
     micFailed: 'Could not listen now. Try again.',
     menu: {
@@ -864,48 +878,102 @@ function lastLineReaches(el: HTMLTextAreaElement, counterWidth: number): boolean
   return reach > el.clientWidth - counterWidth - 8
 }
 
-/** The mic next to Send: what the player says goes into the box, after what is already there, to
- * read and fix before sending. Shown only where the phone or the browser can dictate. */
-function MicButton({
-  text,
-  onText,
-  disabled,
-}: {
-  text: string
-  onText: (text: string) => void
-  disabled: boolean
-}) {
+// How often the wave takes a sample of the voice: about one bar every 70 ms.
+const WAVE_MS = 70
+
+/** The mic in the message box, like a voice message: while it records, the box shows the voice as
+ * a wave; on stop, the question is transcribed and becomes text after what was typed, to read and
+ * fix before sending. The server transcribes the recording, told the names of the game; where the
+ * page cannot record, the phone's or the browser's own recognizer dictates it. */
+function useDictation(text: string, onText: (text: string) => void) {
   const t = useMessages(messages)
+  const [recorded] = useState(canRecord)
+  const [supported] = useState(() => recorded || canDictate())
   const [listening, setListening] = useState(false)
-  const session = useRef<Dictation | null>(null)
-  const [supported] = useState(canDictate)
+  // Between stop and the text: the recording is being transcribed.
+  const [busy, setBusy] = useState(false)
+  const [levels, setLevels] = useState<number[]>([])
+  const session = useRef<Dictation | Recording | null>(null)
+  const heard = useRef('')
+  const sampled = useRef(0)
   useEffect(() => () => session.current?.stop(), [])
-  if (!supported) return null
-  const toggle = async () => {
-    if (listening) return session.current?.stop()
+  const onLevel = (level: number) => {
+    const now = Date.now()
+    if (now - sampled.current < WAVE_MS) return
+    sampled.current = now
+    setLevels((l) => [...l.slice(1 - WAVE_SAMPLES), level])
+  }
+  const ended = (error?: string) => {
+    setListening(false)
+    session.current = null
+    if (error === 'denied') toast(t('micDenied'))
+    else if (error === 'failed') toast(t('micFailed'))
+  }
+  const transcribe = async (base: string, audio: Blob) => {
+    setBusy(true)
+    try {
+      const { text: words } = await api<{ text: string }>('/api/chat/transcribe', {
+        audio: await base64(audio),
+        mime: audio.type,
+      })
+      onText(base && words ? `${base} ${words}` : base || words)
+    } catch {
+      toast(t('micFailed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const start = async () => {
     const base = text.trim()
+    heard.current = ''
+    setLevels([])
     setListening(true)
+    if (recorded) {
+      session.current = await record({
+        onLevel,
+        onAudio: (audio) => void transcribe(base, audio),
+        onEnd: ended,
+      })
+      return
+    }
     session.current = await dictate(getLocale() === Language.En ? 'en-US' : 'pt-BR', {
-      onText: (heard) => onText(base && heard ? `${base} ${heard}` : base || heard),
+      onText: (words) => {
+        heard.current = words
+      },
+      onLevel,
       onEnd: (error) => {
-        setListening(false)
-        session.current = null
-        if (error === 'denied') toast(t('micDenied'))
-        else if (error === 'failed') toast(t('micFailed'))
+        const words = heard.current.trim()
+        onText(base && words ? `${base} ${words}` : base || words)
+        ended(error)
       },
     })
   }
+  const stop = () => session.current?.stop()
+  return { supported, listening, busy, levels, start, stop }
+}
+
+/** The mic next to Send, the stop square while it listens. */
+function MicButton({
+  voice,
+  disabled,
+}: {
+  voice: ReturnType<typeof useDictation>
+  disabled: boolean
+}) {
+  const t = useMessages(messages)
+  if (!voice.supported) return null
+  const label = t(voice.listening ? 'micStop' : 'mic')
   return (
     <button
       type="button"
-      className={`chat-mic${listening ? ' listening' : ''}`}
-      aria-label={t(listening ? 'micStop' : 'mic')}
-      aria-pressed={listening}
-      title={t(listening ? 'micStop' : 'mic')}
-      disabled={disabled}
-      onClick={toggle}
+      className={`chat-mic${voice.listening ? ' listening' : ''}`}
+      aria-label={label}
+      aria-pressed={voice.listening}
+      title={label}
+      disabled={disabled || voice.busy}
+      onClick={voice.listening ? voice.stop : voice.start}
     >
-      <Icon name="mic" />
+      <Icon name={voice.listening ? 'stop' : 'mic'} />
     </button>
   )
 }
@@ -941,6 +1009,14 @@ function ChatForm({
   onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void
 }) {
   const t = useMessages(messages)
+  const voice = useDictation(text, onText)
+  // The send arrow during a recording stops it and sends once its words are in the box.
+  const sendAfter = useRef(false)
+  useEffect(() => {
+    if (voice.listening || voice.busy || !sendAfter.current) return
+    sendAfter.current = false
+    formRef.current?.requestSubmit()
+  }, [voice.listening, voice.busy, formRef])
   // The field grows with what is typed and only scrolls past its tallest size; a trophy coming or
   // going changes its width, so it is measured again then too.
   const attached = Boolean(attachment)
@@ -981,7 +1057,15 @@ function ChatForm({
           {menu}
           <div className="chat-line">
             {attachment}
+            {(voice.listening || voice.busy) && (
+              <VoiceWave
+                levels={voice.levels}
+                label={t(voice.busy ? 'transcribing' : 'listening')}
+                busy={voice.busy}
+              />
+            )}
             <textarea
+              hidden={voice.listening || voice.busy}
               // The box takes commands too: "/game" opens a list of games under it.
               role="combobox"
               aria-autocomplete="list"
@@ -1016,12 +1100,14 @@ function ChatForm({
             />
           </div>
           {/* The count has its own line inside the box, under the text, so it never covers it. */}
-          <span
-            className={`chat-count${near ? ' near' : ''}${text.length >= CHAT_MAX ? ' full' : ''}`}
-            aria-live="polite"
-          >
-            {t('count', { count: text.length, max: CHAT_MAX })}
-          </span>
+          {!voice.listening && !voice.busy && (
+            <span
+              className={`chat-count${near ? ' near' : ''}${text.length >= CHAT_MAX ? ' full' : ''}`}
+              aria-live="polite"
+            >
+              {t('count', { count: text.length, max: CHAT_MAX })}
+            </span>
+          )}
         </div>
         {cut && (
           <span className="chat-cut" role="status">
@@ -1029,8 +1115,17 @@ function ChatForm({
           </span>
         )}
       </div>
-      <MicButton text={text} onText={onText} disabled={sending} />
-      <button type="submit" disabled={sending}>
+      <MicButton voice={voice} disabled={sending} />
+      <button
+        type="submit"
+        disabled={sending}
+        onClick={(e) => {
+          if (!voice.listening && !voice.busy) return
+          e.preventDefault()
+          sendAfter.current = true
+          voice.stop()
+        }}
+      >
         {t('send')}
       </button>
     </form>

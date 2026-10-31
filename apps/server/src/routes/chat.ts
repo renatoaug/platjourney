@@ -1,9 +1,12 @@
+import { ai } from '../ai.ts'
 import { config } from '../config.ts'
+import { tagged } from '../costs.ts'
 import { isDemo } from '../demo.ts'
 import { getChat, setChat, setChatFromCatalog } from '../game-context.ts'
 import { json, readBody } from '../http.ts'
 import type { library } from '../library.ts'
 import { reply } from '../nexo.ts'
+import { allow } from '../rate-limit.ts'
 import { chatThreads, recentMessages } from '../repository/activity.ts'
 import { getGame, searchCatalog } from '../repository/game.ts'
 import type { User } from '../repository/user.ts'
@@ -28,6 +31,38 @@ async function chatSend({ req, res, me }: Api) {
     text: response,
     messages: await recentMessages(me.id, 40, ctx?.game.id ?? null),
   })
+}
+
+// The chat's mic: the recorded question becomes text in the box, for the player to read and send.
+// The model is told the names it will hear (Nexo, the game, its trophies, missing ones first),
+// which a phone's or a browser's own recognizer spells by ear.
+const MAX_AUDIO_BODY = 2_000_000
+const VOICE_WORDS = 80
+const VOICE_PER_HOUR = 60
+
+async function transcribe({ req, res, me }: Api) {
+  if (isDemo(me)) return json(res, 403, { error: 'demo' })
+  if (!allow(`voice|${me.id}`, VOICE_PER_HOUR, 60 * 60_000))
+    return json(res, 429, { error: 'too many recordings' })
+  const { audio, mime } = await readBody(req, MAX_AUDIO_BODY)
+  if (typeof audio !== 'string' || !audio || typeof mime !== 'string')
+    return json(res, 400, { error: 'audio required' })
+  const ctx = getChat(me)
+  const trophies = [...(ctx?.trophies ?? [])].sort((a, b) => Number(a.earned) - Number(b.earned))
+  const words = [
+    'Nexo',
+    ...(ctx ? [ctx.game.name] : []),
+    ...trophies.map((t) => (me.locale === 'en' ? (t.nameEn ?? t.name) : t.name)),
+  ].slice(0, VOICE_WORDS)
+  const { text } = await tagged({ user: me.id, action: 'transcribe' }, () =>
+    ai<{ text: string }>('/voice/transcribe', {
+      audio,
+      mime,
+      locale: me.locale === 'en' ? 'en' : 'pt-BR',
+      words,
+    }),
+  )
+  return json(res, 200, { text })
 }
 
 // The chat's game, as /game in Telegram: the player's own titles, searched by name, and the
@@ -99,6 +134,7 @@ export const CHAT_ROUTES: Record<string, ApiHandler> = {
   'GET /api/chat': chatMessages,
   'GET /api/chat/threads': async ({ res, me }) => json(res, 200, await chatThreads(me.id)),
   'POST /api/chat': chatSend,
+  'POST /api/chat/transcribe': transcribe,
   'GET /api/library': librarySearch,
   'POST /api/current': switchCurrent,
 }

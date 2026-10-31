@@ -642,21 +642,10 @@
     height: 18px;
   }
 
+  /* Recording: the wave in the box shows the voice; the button is the stop square. */
   .chatform > .chat-mic.listening {
-    color: var(--color-on-accent);
-    border-color: var(--color-accent);
-    background: var(--color-accent);
-    animation: mic-pulse 1.4s ease-out infinite;
-  }
-
-  @keyframes mic-pulse {
-    from {
-      box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
-    }
-
-    to {
-      box-shadow: 0 0 0 10px transparent;
-    }
+    color: var(--color-fg);
+    border-color: var(--color-fg-subtle);
   }
 
   /* Phone header: Nexo a little smaller, its tagline beside the name, the game on one line. */

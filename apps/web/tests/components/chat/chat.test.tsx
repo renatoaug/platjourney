@@ -1,8 +1,10 @@
 import { describe, expect, mock, test } from 'bun:test'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { CHAT_MAX, type ChatLoad, ChatSkeleton, NexoChat } from '../../../src/components/chat/chat'
 import { Loaded, Pending } from '../../../src/components/chat/chat.stories'
+import { fakeRecorder } from '../../support/recorder'
+import { mockApi } from '../../support/web'
 
 const messages = Loaded.args?.chat as ChatLoad
 const pending = Pending.args?.chat as ChatLoad
@@ -302,6 +304,54 @@ describe('mic', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Falar a pergunta' }))
     await screen.findByDisplayValue('Digno: como pego?')
     expect(onSend).not.toHaveBeenCalled()
+    delete w.webkitSpeechRecognition
+  })
+
+  test('a recording is transcribed by the server and lands in the box after what was typed', async () => {
+    const recorder = fakeRecorder({ heard: 'abc' })
+    let answer = (_v: unknown) => {}
+    const calls = mockApi({
+      'POST /api/chat/transcribe': () => new Promise((done) => (answer = done)),
+    })
+    show([])
+    const box = screen.getByRole('combobox') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'No Plague Tale:' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Falar a pergunta' }))
+    await screen.findByRole('img', { name: 'Ouvindo. Toque em parar para virar texto.' })
+    fireEvent.click(screen.getByRole('button', { name: 'Parar de ouvir' }))
+    await screen.findByRole('img', { name: 'Transformando o áudio em texto…' })
+    await waitFor(() => expect(calls).toHaveLength(1))
+    expect(calls[0].body).toEqual({ audio: btoa('abc'), mime: 'audio/webm;codecs=opus' })
+    expect(recorder.track.stop).toHaveBeenCalled()
+    answer({ text: 'onde fica a cripta?' })
+    await screen.findByDisplayValue('No Plague Tale: onde fica a cripta?')
+    recorder.restore()
+  })
+
+  test('while listening the box shows the wave, and the words come in only on stop', async () => {
+    let run: { onresult: (e: unknown) => void; onend: () => void } | undefined
+    w.webkitSpeechRecognition = class {
+      lang = ''
+      interimResults = false
+      continuous = true
+      onresult = (_e: unknown) => {}
+      onerror = (_e: unknown) => {}
+      onend = () => {}
+      start() {
+        run = this
+      }
+      stop() {
+        this.onend()
+      }
+    }
+    show([])
+    fireEvent.click(screen.getByRole('button', { name: 'Falar a pergunta' }))
+    await screen.findByRole('img', { name: 'Ouvindo. Toque em parar para virar texto.' })
+    run?.onresult({ results: [{ isFinal: true, 0: { transcript: 'onde fica a cripta' } }] })
+    expect(screen.queryByDisplayValue('onde fica a cripta')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Parar de ouvir' }))
+    await screen.findByDisplayValue('onde fica a cripta')
+    expect(screen.queryByRole('img', { name: /Ouvindo/ })).toBeNull()
     delete w.webkitSpeechRecognition
   })
 })
