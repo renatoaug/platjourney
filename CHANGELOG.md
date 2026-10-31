@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.39.0](https://github.com/renatoaug/platjourney/compare/v0.38.9...v0.39.0) (2026-10-31)
+
+### Features
+
+* **ai:** nexo says why a suggested trophy fits now ([#119](https://github.com/renatoaug/platjourney/issues/119)) ([c72cbb0](https://github.com/renatoaug/platjourney/commit/c72cbb006dca75c84be90512a2ade5a9acdd8890))
+
 ## [0.38.9](https://github.com/renatoaug/platjourney/compare/v0.38.8...v0.38.9) (2026-10-31)
 
 ### Bug Fixes
