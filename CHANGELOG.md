@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.38.9](https://github.com/renatoaug/platjourney/compare/v0.38.8...v0.38.9) (2026-10-31)
+
+### Bug Fixes
+
+* **ai:** say a detail is missing from the guide only when the player asked for it ([#118](https://github.com/renatoaug/platjourney/issues/118)) ([d42883a](https://github.com/renatoaug/platjourney/commit/d42883a66c53dec9a317693da4ae00cd1c0ce04e))
+
 ## [0.38.8](https://github.com/renatoaug/platjourney/compare/v0.38.7...v0.38.8) (2026-10-30)
 
 ### Bug Fixes
