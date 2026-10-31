@@ -13,10 +13,13 @@ self.addEventListener('push', (event) => {
   )
 })
 
-// A tap brings an open PlatJourney tab to the front on the notice's screen, or opens one.
+// A tap brings an open PlatJourney tab to the front on the notice's screen, or opens one. The page
+// opens with ?from=push, so the app (or a plugin) can tell it came from a notification.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = new URL(event.notification.data?.url || '/', self.location.origin).href
+  const target = new URL(event.notification.data?.url || '/', self.location.origin)
+  target.searchParams.set('from', 'push')
+  const url = target.href
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((tabs) => {
       const tab = tabs.find((c) => new URL(c.url).origin === self.location.origin)
