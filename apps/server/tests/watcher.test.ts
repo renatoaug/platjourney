@@ -990,13 +990,31 @@ test('a game outside the library becomes the chat game with its list, nothing ea
   expect(await setChatFromCatalog({ id: 'user:y' } as never, game)).toBeNull()
 })
 
-test('a loaded game is used as is; the demo player is never checked', async () => {
-  const ctx = await setChatFromCatalogStub()
-  expect(await chatOrCheck({ id: 'user:cc' } as never)).toBe(ctx as never)
+test('a loaded game is checked again before a reply once its last check is stale; the demo never', async () => {
+  await setChatFromCatalogStub()
+  const user = makeUser({ id: 'user:cc' })
+  recent.mockClear()
+  expect(await chatOrCheck(user)).toBeDefined()
+  expect(recent).toHaveBeenCalledTimes(1)
+  // Checked a moment ago: the next message goes with what is loaded.
+  await chatOrCheck(user)
+  expect(recent).toHaveBeenCalledTimes(1)
   expect(await chatOrCheck({ id: 'user:none', demo: true } as never)).toBeUndefined()
+  expect(recent).toHaveBeenCalledTimes(1)
 })
 
-async function setChatFromCatalogStub() {
+test('a slow PSN never holds a reply past the wait: it goes with the trophies loaded', async () => {
+  const ctx = await setChatFromCatalogStub('user:slow')
+  let finish = () => {}
+  recent.mockImplementation(() => new Promise((done) => (finish = () => done([]))))
+  const started = Date.now()
+  expect(await chatOrCheck(makeUser({ id: 'user:slow' }), 20)).toBe(ctx as never)
+  expect(recent).toHaveBeenCalled()
+  expect(Date.now() - started).toBeLessThan(1_000)
+  finish()
+})
+
+async function setChatFromCatalogStub(id = 'user:cc') {
   spyOn(psn, 'catalogTrophies').mockResolvedValue({ np: 'NPWR8', platform: 'PS5', trophies: [] })
   spyOn(guides, 'getGuide').mockResolvedValue(undefined)
   spyOn(requests, 'requestGuide').mockResolvedValue(undefined)
@@ -1006,5 +1024,5 @@ async function setChatFromCatalogStub() {
     np_communication_ids: ['NPWR8'],
     cover_url: null,
   } as never
-  return setChatFromCatalog({ id: 'user:cc' } as never, game)
+  return setChatFromCatalog({ id } as never, game)
 }
