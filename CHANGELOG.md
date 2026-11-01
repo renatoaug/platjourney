@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.44.3](https://github.com/renatoaug/platjourney/compare/v0.44.2...v0.44.3) (2026-11-01)
+
+### Performance Improvements
+
+* **server:** find peer platinums through indexes ([#127](https://github.com/renatoaug/platjourney/issues/127)) ([d939362](https://github.com/renatoaug/platjourney/commit/d93936241116000697d33c33a1493ff795923212))
+
 ## [0.44.2](https://github.com/renatoaug/platjourney/compare/v0.44.1...v0.44.2) (2026-11-01)
 
 ### Performance Improvements
