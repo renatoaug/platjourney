@@ -1,4 +1,4 @@
-import { camelKeys, plain, q } from '../db.ts'
+import { camelKeys, plain, q, qEach, type RecordId } from '../db.ts'
 import type { Game } from './game.ts'
 import { gameRef } from './game.ts'
 import { userRef } from './user.ts'
@@ -19,11 +19,9 @@ export interface SimilarEdge {
 export async function similarEdges(seeds: string[]): Promise<SimilarEdge[]> {
   if (seeds.length === 0) return []
   return plain(
-    await q<SimilarEdge[]>(
-      'SELECT in AS seed, out AS game, rank FROM similar_to WHERE in IN $ids',
-      {
-        ids: refs(seeds),
-      },
+    await qEach<SimilarEdge>(
+      'SELECT in AS seed, out AS game, rank FROM similar_to WHERE in = $each',
+      refs(seeds),
     ),
   )
 }
@@ -63,13 +61,13 @@ export interface GuideFacts {
 export async function guideFacts(ids: string[]): Promise<GuideFacts[]> {
   if (ids.length === 0) return []
   return plain(
-    await q<GuideFacts[]>(
+    await qEach<GuideFacts>(
       `SELECT game, guide.difficulty AS difficulty, guide.hours AS hours,
          guide.playthroughs AS playthroughs, guide.has_missables AS has_missables,
          guide.has_online AS has_online, array::len(guide.online_trophies ?? []) AS online_trophies,
          guide.difficulty_trophy AS difficulty_trophy
-       FROM guide WHERE game IN $ids AND guide != NONE`,
-      { ids: refs(ids) },
+       FROM guide WHERE game = $each AND guide != NONE`,
+      refs(ids),
     ),
   ).map(camelKeys)
 }
@@ -96,12 +94,7 @@ export async function expansionLinks(
 export async function seriesOf(ids: string[]): Promise<{ id: string; series: number[] }[]> {
   if (ids.length === 0) return []
   return plain(
-    await q<{ id: string; series: number[] | null }[]>(
-      'SELECT id, series FROM game WHERE id IN $ids',
-      {
-        ids: refs(ids),
-      },
-    ),
+    await qEach<{ id: string; series: number[] | null }>('SELECT id, series FROM $each', refs(ids)),
   ).filter((r): r is { id: string; series: number[] } => Boolean(r.series?.length))
 }
 
@@ -110,10 +103,13 @@ export async function guidedInSeries(
   series: number[],
 ): Promise<{ id: string; series: number[] }[]> {
   if (series.length === 0) return []
+  // The series' games first, through game_series, then which of them have a guide: joining every
+  // guide to its game read the whole guide table.
+  const games = await qEach<RecordId>('SELECT VALUE id FROM game WHERE series = $each', series)
   return plain(
-    await q<{ id: string; series: number[] }[]>(
-      'SELECT game AS id, game.series AS series FROM guide WHERE guide != NONE AND game.series CONTAINSANY $series',
-      { series },
+    await qEach<{ id: string; series: number[] }>(
+      'SELECT game AS id, game.series AS series FROM guide WHERE game = $each AND guide != NONE',
+      games,
     ),
   )
 }

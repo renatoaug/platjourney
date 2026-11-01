@@ -1,4 +1,4 @@
-import { gameId, one, plain, q, type RecordId } from '../db.ts'
+import { gameId, one, plain, q, qEach, type RecordId } from '../db.ts'
 import { type CatalogEntry, normalizeName, resolveGame } from '../igdb.ts'
 import type { TitleProgress } from '../psn.ts'
 
@@ -223,9 +223,9 @@ export async function gamesForTitles(
   const out = new Map<string, Game>()
   if (titles.length === 0) return out
   const rows = plain(
-    await q<Game[]>(
-      'SELECT * OMIT embedding FROM game WHERE np_communication_ids CONTAINSANY $nps',
-      { nps: titles.map((t) => t.npCommunicationId) },
+    await qEach<Game>(
+      'SELECT * OMIT embedding FROM game WHERE np_communication_ids = $each',
+      titles.map((t) => t.npCommunicationId),
     ),
   )
   for (const g of rows) for (const np of g.np_communication_ids) out.set(np, g)
@@ -329,9 +329,9 @@ export async function releasesBetween(
     .sort((a, b) => day(a.released_at).localeCompare(day(b.released_at)) || awaited(a, b))
     .map(({ hypes: _hypes, ...g }) => g)
   const guides = plain(
-    await q<{ game: string; difficulty: number | null; hours: number | null }[]>(
-      'SELECT game, guide.difficulty AS difficulty, guide.hours AS hours FROM guide WHERE game IN $ids AND guide != NONE',
-      { ids: games.map((g) => gameRef(String(g.id))) },
+    await qEach<{ game: string; difficulty: number | null; hours: number | null }>(
+      'SELECT game, guide.difficulty AS difficulty, guide.hours AS hours FROM guide WHERE game = $each AND guide != NONE',
+      games.map((g) => gameRef(String(g.id))),
     ),
   )
   const byGame = new Map(guides.map((g) => [String(g.game), g]))

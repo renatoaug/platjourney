@@ -69,31 +69,40 @@ function rankingRow(
   }
 }
 
+// Every screen waits for this answer, so the parts that do not need each other are asked at once.
 async function state({ res, me, titles }: Api) {
-  const list = await titles()
-  const played = await playtimes(me)
+  const [list, played] = await Promise.all([titles(), playtimes(me)])
   // The demo's context comes from the database at once; a real player's waits for PSN.
   const ctx = getCurrent(me) ?? (isDemo(me) ? await demoContext(me) : undefined)
   if (!ctx) watchNow(me)
-  const ranked = await rankNextPlatinum(list, me, 20, ctx ? [ctx.title.npCommunicationId] : [])
-  const facts = new Map(
-    (await guideFacts(ranked.map((r) => r.game.id))).map((f) => [String(f.game), f]),
-  )
-  const tinted = await tints(ranked.map((r) => r.game))
+  const chatCtx = getChat(me)
+  const [ranked, summary, current, chat, tips, unread, goals] = await Promise.all([
+    rankNextPlatinum(list, me, 20, ctx ? [ctx.title.npCommunicationId] : []),
+    profile(me),
+    currentView(me, ctx),
+    chatCtx && chatCtx !== ctx ? currentView(me, chatCtx) : undefined,
+    recentTips(me.id, 50),
+    unreadNotifications(me.id),
+    yearProgress(me, list, undefined, played),
+  ])
+  const ids = ranked.map((r) => r.game.id)
+  const [guides, tinted, servers] = await Promise.all([
+    guideFacts(ids),
+    tints(ranked.map((r) => r.game)),
+    listServerStatuses(ids),
+  ])
+  const facts = new Map(guides.map((f) => [String(f.game), f]))
   return json(res, 200, {
-    profile: await profile(me),
+    profile: summary,
     // null, not missing: the web app reads a missing game as still loading.
-    current: (await currentView(me, ctx)) ?? null,
+    current: current ?? null,
     // The chat's own game when the player picked another one there; null when it is the game played.
-    chat:
-      getChat(me) && getChat(me) !== ctx ? ((await currentView(me, getChat(me))) ?? null) : null,
-    tips: await recentTips(me.id, 50),
-    unread: await unreadNotifications(me.id),
+    chat: chat ?? null,
+    tips,
+    unread,
     ranking: ranked.map((r) => rankingRow(r, played, facts, tinted)),
-    goals: await yearProgress(me, list, undefined, played),
-    servers: (await listServerStatuses(ranked.map((r) => r.game.id))).filter(
-      (s) => s.status !== 'unknown',
-    ),
+    goals,
+    servers: servers.filter((s) => s.status !== 'unknown'),
   })
 }
 

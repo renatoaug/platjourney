@@ -20,7 +20,7 @@ import {
   UnobtainableBanner,
 } from '../components/hero'
 import { NextTrophy } from '../components/next-trophy'
-import { SimilarGamesSection } from '../components/similar-games'
+import { SimilarGamesSection, similarGames } from '../components/similar-games'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
@@ -462,6 +462,9 @@ export function Title() {
       }
     }
     fetchTitle()
+    // A catalog game's similar games need only its id: asked now, beside the title, not after it.
+    const game = new URLSearchParams(query).get('game')
+    if (game) similarGames(cache, game).catch(() => {})
     return () => {
       live = false
       clearTimeout(timer)

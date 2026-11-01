@@ -12,6 +12,7 @@ import {
   one,
   plain,
   q,
+  qEach,
   RecordId,
   reset,
   rid,
@@ -57,6 +58,24 @@ test('a query answers with its last statement', async () => {
   query.mockResolvedValue([[1], [2, 3]] as never)
   expect(await q<number[]>('SELECT 1; SELECT 2', { a: 1 })).toEqual([2, 3])
   expect(query).toHaveBeenLastCalledWith('SELECT 1; SELECT 2', { a: 1 })
+})
+
+test('a lookup by many values asks one = subquery per distinct value, in one round trip', async () => {
+  await db()
+  query.mockResolvedValue([[{ id: 1 }, { id: 2 }]] as never)
+  const a = gameId('1')
+  expect(
+    await qEach('SELECT id FROM guide WHERE game = $each AND kind = $kind', [a, gameId('2'), a], {
+      kind: 'x',
+    }),
+  ).toEqual([{ id: 1 }, { id: 2 }])
+  expect(query).toHaveBeenLastCalledWith(
+    'RETURN array::flatten([(SELECT id FROM guide WHERE game = $each0 AND kind = $kind), (SELECT id FROM guide WHERE game = $each1 AND kind = $kind)])',
+    { kind: 'x', each0: a, each1: gameId('2') },
+  )
+  const asked = query.mock.calls.length
+  expect(await qEach('SELECT id FROM guide WHERE game = $each', [])).toEqual([])
+  expect(query.mock.calls.length).toBe(asked)
 })
 
 test('a write conflict is retried once', async () => {
