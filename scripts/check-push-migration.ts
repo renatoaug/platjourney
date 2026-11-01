@@ -139,15 +139,7 @@ try {
     "CREATE push_subscription:oldwriter SET user = user:one, endpoint = 'https://push.example/direct', p256dh = 'key', auth = 'secret'",
   )
   await q('DELETE push_subscription:oldwriter')
-  // Rollback removes only APNs; exercise the old repository's actual SQL shape afterward.
-  const webBeforeRollback = await q("SELECT * FROM push_subscription WHERE transport = 'webpush'")
-  const rollback = readFileSync(
-    new URL('../db/rollback/028_push_transport.surql', import.meta.url),
-    'utf8',
-  )
-  await q(rollback)
-  await q(rollback)
-  assert.deepEqual(await q('SELECT * FROM push_subscription'), webBeforeRollback)
+  // Legacy Web Push writes still work after the in-place upgrade.
   await q(
     'UPSERT push_subscription SET user = user:one, endpoint = $endpoint, p256dh = $p256dh, auth = $secret WHERE endpoint = $endpoint',
     { endpoint: browser.endpoint, p256dh: browser.p256dh, secret: browser.auth },
@@ -156,7 +148,7 @@ try {
   await migrate()
   assert.equal((await web.pushSubscriptions(one)).length, 2)
   console.log(
-    'PASS: legacy upgrade, repeat/mixed migration, discriminated validation, unique indexes, rotation, account/session isolation, scoped deletes and old-writer rollback',
+    'PASS: legacy upgrade, repeat/mixed migration, discriminated validation, unique indexes, rotation, account/session isolation, scoped deletes and legacy writes',
   )
 } finally {
   await closeDb()

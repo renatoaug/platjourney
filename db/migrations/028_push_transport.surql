@@ -1,5 +1,5 @@
 -- Upgrade existing Web Push rows in place; old web clients can still write flat fields.
--- DEFAULT keeps older server writers compatible after APNs rows are removed for rollback.
+-- DEFAULT classifies Web Push writers that omit the transport discriminator.
 BEGIN TRANSACTION;
 DEFINE FIELD OVERWRITE transport ON push_subscription TYPE string DEFAULT 'webpush' ASSERT IF $value = 'webpush' THEN $this.endpoint != NONE AND $this.p256dh != NONE AND $this.auth != NONE AND $this.installation = NONE AND $this.token = NONE AND $this.environment = NONE AND $this.session_hash = NONE ELSE $value = 'apns' AND $this.installation != NONE AND $this.token != NONE AND $this.environment IN ['sandbox', 'production'] AND $this.session_hash != NONE AND $this.endpoint = NONE AND $this.p256dh = NONE AND $this.auth = NONE END;
 UPDATE push_subscription SET transport = 'webpush' WHERE transport = NONE;

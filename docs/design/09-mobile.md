@@ -87,4 +87,4 @@ The checked-in entitlements use `development` for Debug and `production` for Rel
 
 References: [Capacitor push plugin](https://capacitorjs.com/docs/apis/push-notifications), [APNs requests](https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns), [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/), [TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/).
 
-Database upgrades and the required APNs-only cleanup before rolling back to an older server are documented in [ADR-012](../decisions/ADR-012-ios-native-push.md#migration-and-rollback). The unified schema is migration `028_push_transport.surql`.
+The in-place database upgrade and the incompatibility with older senders are documented in [ADR-012](../decisions/ADR-012-ios-native-push.md#migration). The unified schema is migration `028_push_transport.surql`.
