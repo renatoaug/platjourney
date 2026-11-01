@@ -2,6 +2,7 @@
 
 - **Status**: Accepted
 - **Date**: 2026-10-16
+- **Scope update**: This records the original Web Push implementation. [ADR-012](ADR-012-ios-native-push.md) adds native iOS APNs without Firebase; statements below about native push being unavailable describe the earlier state.
 
 ## Context
 

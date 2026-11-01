@@ -32,11 +32,12 @@ flowchart LR
 |---|---|---|
 | Web | Always | The notice under the bell and in the history |
 | Telegram | The chat is linked and "No Telegram" is on in the settings (`user.notify_telegram`, on by default) | The full notice; markdown is converted to Telegram's HTML. A message over 4,000 characters is sent in parts, cut between paragraphs so a checklist item is never split |
-| Push | The device turned "On this device" on in the settings (`push_subscription`), and the instance has VAPID keys | A notification titled Nexo with the notice as plain text, cut at 900 characters; a tap opens the saved tip in the history |
+| Web Push | The device turned "On this device" on in the settings (`push_subscription`), and the instance has VAPID keys | A notification titled Nexo with the notice as plain text, cut at 900 characters; a tap opens the saved tip in the history |
+| Native iOS push | The device enabled notifications, its registration has a live owner session, and APNs credentials are configured | The same Nexo notice and saved-tip route, delivered through APNs |
 
 A notice counts as read once the player opens the bell on any device, or writes anything to Nexo on Telegram (a bot never learns when a message is read, so writing is the closest sign).
 
-Push is Web Push: each message is encrypted for the device and signed with the instance's key, with no third-party service. It works in desktop browsers, on Android and, on iPhone, only with PlatJourney added to the home screen (iOS 16.4 or later); in a Safari tab the settings explain how to add it. The native app has no push yet and says so. A channel that fails never stops the others, nor the sweep.
+Web Push encrypts each message for the browser and signs it with the instance's VAPID key. It works in desktop browsers, on Android and, on iPhone, with PlatJourney added to the home screen (iOS 16.4 or later); in a Safari tab the settings explain how to add it. The native iOS app uses APNs independently of VAPID. Both transports share `push_subscription` and the delivery dispatcher. A channel that fails never stops the others, nor the sweep.
 
 ## Kinds of notice
 
@@ -142,6 +143,5 @@ Right under the 🏆 title, the notice opens with a line in PlatJourney's own vo
 - **The trophy name shows once**, as the 🏆 title; a heading Nexo repeats is dropped, and markdown headings reach Telegram as bold.
 - **The chat's game is not the game played**: `/game` and links into the chat change only the conversation; the notices follow the game PSN shows.
 - **Loading a game prepares the chat**: when the watcher loads a game for a player, it also asks for the game's deep guide to be indexed, so a question about it in the chat finds passages. The notice itself does not wait for it.
-
 
 Native iOS devices use APNs through the same delivery dispatcher, independently of VAPID. Registration, session binding, token revocation, notification routing and the beta checklist are described in [Mobile](09-mobile.md#ios-notifications). APNs is disabled without provider credentials; it never borrows the browser subscription or Telegram preference.

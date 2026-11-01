@@ -30,4 +30,4 @@ Migration `028_push_transport.surql` upgrades existing Web Push rows in place, r
 
 Returning to an older server is not a supported automatic rollback: its sender does not filter by transport and would read APNs rows as Web Push subscriptions. This PR supplies no down migration or database rollback procedure.
 
-`bun scripts/check-push-migration.ts` checks the actual migrations, legacy writers, repeated mixed-table migration, indexes, atomic token transfer, session revocation against a disposable local SurrealDB 3.0.5 instance. It never uses production configuration. The prior archive built from `eb7b518` predates this schema revision and is historical, not a validated archive of this revision.
+`bun scripts/check-push-migration.ts` checks the actual migrations, legacy writers, repeated mixed-table migration, indexes, atomic token transfer and session revocation against a disposable local SurrealDB 3.0.5 instance. It never uses production configuration. The prior archive built from `eb7b518` predates this schema revision and is historical, not a validated archive of this revision.
