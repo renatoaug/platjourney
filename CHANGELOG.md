@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.44.1](https://github.com/renatoaug/platjourney/compare/v0.44.0...v0.44.1) (2026-11-01)
+
+### Bug Fixes
+
+* **server:** find a game by trophy list through its index ([#125](https://github.com/renatoaug/platjourney/issues/125)) ([11006db](https://github.com/renatoaug/platjourney/commit/11006db478bade25568ae22a9f55d976fd8e1243))
+
 ## [0.44.0](https://github.com/renatoaug/platjourney/compare/v0.43.0...v0.44.0) (2026-11-01)
 
 ### Features
