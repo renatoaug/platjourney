@@ -50,7 +50,7 @@
     grid-template-rows: auto minmax(0, 1fr) auto;
     height: calc(100dvh - 145px);
     min-height: 460px;
-    padding: 28px;
+    padding: 0;
   }
 
   .chat-page .page-head {
@@ -58,11 +58,11 @@
   }
 
   .msg {
-    max-width: 82%;
+    max-width: 88%;
     white-space: pre-wrap;
-    padding: 17px 20px;
+    padding: 14px 18px;
     border-radius: var(--radius-control);
-    font-size: var(--text-base);
+    font-size: var(--text-lg);
     line-height: var(--leading-loose);
   }
 
@@ -70,14 +70,12 @@
     align-self: flex-end;
     background: var(--color-accent);
     color: var(--color-on-accent);
-    border-bottom-right-radius: 3px;
   }
 
   .msg.assistant {
     align-self: flex-start;
     background: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
-    border-bottom-left-radius: 3px;
+    border: 0;
   }
 
   .chatform {
@@ -129,12 +127,12 @@
     .chat-page {
       height: calc(
         100dvh -
-        172px -
+        124px -
         var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) -
         var(--bottom-bar)
       );
       min-height: 400px;
-      padding: 20px;
+      padding: 0;
     }
 
     .chat-page .chips {
@@ -269,21 +267,24 @@
 
   .nexo-chat-top {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
+    gap: 8px;
     flex-wrap: wrap;
   }
 
   .nexo-chat-top > .page-head {
-    flex: 0 1 auto;
+    flex: none;
+    width: 100%;
   }
 
   #chat-chips {
-    margin: 0 0 0 auto;
-    justify-content: flex-end;
+    margin: 0;
+    justify-content: center;
     gap: 6px;
-    flex: 1 1 340px;
+    flex: none;
+    width: 100%;
   }
 
   #chat-chips .chip {
@@ -363,26 +364,27 @@
 
   .nexo-chat-heading {
     display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
     align-items: center;
-    gap: 17px;
+    gap: 4px;
+    order: -1;
+    text-align: right;
+    width: 100%;
+  }
+
+  .nexo-chat-heading > .nexo-avatar {
+    width: 56px;
+    height: 56px;
   }
 
   .nexo-chat-heading h1 {
-    font-size: var(--text-5xl);
+    font-size: var(--text-lg);
+    line-height: var(--leading-tight);
   }
 
   .nexo-chat-heading p {
     margin-top: 4px;
-  }
-
-  @media (max-width: 480px) {
-    .nexo-chat-heading {
-      gap: 12px;
-    }
-
-    .nexo-chat-heading h1 {
-      font-size: var(--text-4xl);
-    }
   }
 
   .message-game {
@@ -424,7 +426,7 @@
 
   /* The game switch: the subtitle opens the same list as "/game". */
   /* Same look as the subtitle it replaces (.page-head p, .nexo-chat-heading p). */
-  .page-head .nexo-sub-switch {
+  .nexo-chat-tools .nexo-sub-switch {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -439,7 +441,7 @@
     cursor: pointer;
   }
 
-  .page-head .nexo-sub-switch:hover {
+  .nexo-chat-tools .nexo-sub-switch:hover {
     color: var(--color-fg);
   }
 
@@ -703,112 +705,25 @@
     }
   }
 
-  /* Phone header: Nexo a little smaller, its tagline beside the name, the game on one line. */
-  @media (max-width: 760px) {
-    .nexo-chat-heading {
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .nexo-chat-heading > div {
-      min-width: 0;
-    }
-
-    /* "Nexo" and its tagline on one line, the game under them. */
-    .nexo-chat-heading > div {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      column-gap: 8px;
-    }
-
-    .nexo-chat-heading h1 {
-      order: -1;
-    }
-
-    .nexo-chat-heading .eyebrow {
-      margin: 0;
-      font-size: 9px;
-      white-space: nowrap;
-    }
-
-    .nexo-chat-heading > div > :not(h1, .eyebrow) {
-      flex-basis: 100%;
-    }
-
-    /* Nexo keeps its animated controller buttons, just a little smaller. */
-    .nexo-chat-heading .nexo-hero {
-      padding: 2px 6px;
-    }
-
-    .nexo-chat-heading .nexo-hero > .nexo-avatar {
-      width: 52px;
-      height: 52px;
-    }
-
-    .nexo-chat-heading h1 {
-      font-size: var(--text-2xl);
-      line-height: var(--leading-snug);
-    }
-
-    .page-head .nexo-sub-switch {
-      justify-content: flex-start;
-      max-width: 100%;
-      margin-top: 2px;
-      font-size: var(--text-sm);
-    }
-
-    .nexo-sub-switch > :not(.icon, .chat-switching) {
-      min-width: 0;
-    }
-
-    .nexo-sub-switch {
-      overflow: hidden;
-      white-space: nowrap;
-    }
-
-    .nexo-chat-top > .page-head {
-      min-width: 0;
-    }
-  }
-
   .nexo-sub-text {
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  /* Room on both sides of the log so the bubbles' tails are not cut off. */
   .chat-page .chat {
-    padding-inline: 10px;
+    padding: 16px 8px;
+    margin: 0;
+    border: 0;
+    min-height: 0;
+    overscroll-behavior: contain;
   }
 
-  /* A small notch on each bubble, near its bottom, on the side the message came from: a square
-     turned 45°, half outside the bubble. Nexo's keeps the bubble's border on its two outer sides. */
-  .msg.user,
-  .msg.assistant {
-    position: relative;
+  .msg.assistant > .message-meta:empty {
+    display: none;
   }
 
-  .msg.user::after,
-  .msg.assistant::after {
-    content: "";
-    position: absolute;
-    bottom: 14px;
-    width: 10px;
-    height: 10px;
-    transform: rotate(45deg);
-  }
-
-  .msg.user::after {
-    right: -5px;
-    background: var(--color-accent);
-  }
-
-  .msg.assistant::after {
-    left: -6px;
-    border-bottom: 1px solid var(--color-border);
-    border-left: 1px solid var(--color-border);
-    background: var(--color-surface-raised);
+  .msg.assistant > .message-meta {
+    margin-bottom: 8px;
   }
 
   /* The message box is one field: the trophy tag and the text on top, the counter on its own line at
@@ -920,29 +835,155 @@
     }
   }
 
-  /* On the scene of the game being played: the chat is a glass card, its top a HUD band. */
-  .chat-page {
-    background: color-mix(in srgb, var(--color-surface) var(--alpha-heavy), transparent);
-    backdrop-filter: blur(18px);
-    box-shadow: var(--shadow-popover);
+  .chat-page #chat-chips {
+    flex: none;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .chat-page .nexo-chat-top {
-    margin: -28px -28px 0;
-    padding: 20px 28px;
-    border-bottom: 1px solid var(--color-border);
-    background: color-mix(in srgb, var(--color-bg-subtle) var(--alpha-dim), transparent);
+    padding: 8px 12px 12px;
   }
 
-  .chat-page .nexo-chat-heading h1 {
-    font-size: clamp(32px, 3vw, 44px);
-    line-height: 1;
+  .chat-page .nexo-chat-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
   }
 
-  @media (max-width: 760px) {
-    .chat-page .nexo-chat-top {
-      margin: -20px -20px 0;
-      padding: 16px 20px;
-    }
+  .chat-page .nexo-chat-tools > :first-child {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chat-page .nexo-chat-tools .nexo-sub-switch {
+    justify-content: flex-start;
+    font-size: var(--text-sm);
+    min-height: 44px;
+  }
+
+  .chat-page .nexo-chat-tools .nexo-threads-toggle {
+    flex: none;
+  }
+
+  .chat-page .nexo-chat-heading .nexo-hero > .nexo-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .chat-page .nexo-chat-heading .nexo-keys {
+    display: none;
+  }
+
+  .chat-page .chat-composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface-raised);
+  }
+
+  .chat-page .chat-composer:focus-within {
+    border-color: var(--color-border-strong);
+  }
+
+  .chat-composer .chat-field,
+  .chat-composer .chat-box {
+    min-width: 0;
+  }
+
+  .chat-composer .chat-field {
+    flex: 1;
+  }
+
+  .chat-composer .chat-box,
+  .chat-composer .chat-box:focus-within {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .chat-composer .chat-box .chat-line {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .chat-composer .chat-box .chat-line textarea,
+  .chat-composer .chat-box .chat-line:has(.chat-trophy) textarea {
+    flex: none;
+    padding: 4px;
+    margin: 0;
+    min-height: 32px;
+    max-height: min(160px, 25dvh);
+    font-size: var(--text-lg);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    width: 100%;
+  }
+
+  .chat-composer .chat-trophy {
+    align-self: flex-start;
+    max-width: 100%;
+  }
+
+  .chat-composer .chat-trophy button {
+    min-height: 32px;
+    min-width: 32px;
+  }
+
+  .chat-composer .chat-composer-actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .chat-composer-actions > :is(.chat-mic, .chat-send) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 10px;
+    border-radius: var(--radius-round);
+  }
+
+  .chat-composer-actions > .chat-mic {
+    background: transparent;
+    color: var(--color-fg-muted);
+    border: 0;
+  }
+
+  .chat-composer-actions > .chat-mic.listening {
+    color: var(--color-danger);
+    background: var(--color-surface);
+  }
+
+  .chat-composer-actions .chat-send-label {
+    display: none;
+  }
+
+  .chat-composer .chat-count:not(.near),
+  .chat-composer .chat-hint {
+    display: none;
   }
 }

@@ -88,3 +88,16 @@ The checked-in entitlements use `development` for Debug and `production` for Rel
 References: [Capacitor push plugin](https://capacitorjs.com/docs/apis/push-notifications), [APNs requests](https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns), [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/), [TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/).
 
 The in-place database upgrade and the incompatibility with older senders are documented in [ADR-012](../decisions/ADR-012-ios-native-push.md#migration). The unified schema is migration `028_push_transport.surql`.
+
+
+## Local journey preview
+
+The current game and owned title detail share a personal journey: base-game progress, the server-selected next trophy, relevant warning, session route, trophies and complete guide. Primary navigation is Journey, Games and Discover; the account menu retains conversations, history, overview, guides and settings. Contextual Nexo links keep the journey mounted underneath a dialog so returning preserves the player's place. Safari, desktop and the native wrapper use this responsive product flow; it does not depend on native platform detection.
+
+`GET /api/plan?np=…`, `POST /api/plan` with `np`, and `DELETE /api/plan?np=…` scope the session route to an owned PSN list. The server validates against the authenticated account's library and does not change PSN presence or chat selection. Omitting `np` preserves the current-game API. One active plan remains account-wide; a new plan replaces it. No schema migration is required.
+
+`focus` in current-game and owned-title responses comes from the same `todaysFocus` policy used by proactive notices. The conversation context carries that pending trophy as `journeyFocus`; it guides next-step questions while an explicit question about another trophy takes precedence. Roadmap phases do not prove the player's current location. Prompt behavior requires evaluation before release; mocked tests establish the context contract only.
+
+These changes need a coordinated web/server/service release. They add no native plugin or entitlement and do not require a new iOS binary when the existing wrapper loads the released HTTPS web app. Local simulator previews must use isolated synthetic APIs, never production sessions, PSN writes, real notifications or paid model calls.
+
+Nexo uses a compact header: the journey return action on the left and its subtly animated mascot and name on the right. Game context and conversation history share the next row, without a reserved central hero area. The message log scrolls independently from the composer. Conversation history opens on demand; suggestions only appear before the first message. The contextual dialog keeps the underlying journey mounted, locks its scroll, and follows the visual viewport when the keyboard opens. The composer starts at one line, grows with its content up to a viewport-aware limit, then scrolls internally; clearing or sending shrinks it again. Its compact keyboard header preserves Nexo's identity while making room for messages and input. These are shared responsive web components, not a native glass API.

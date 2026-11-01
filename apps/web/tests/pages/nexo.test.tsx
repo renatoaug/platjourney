@@ -37,7 +37,7 @@ test('the subtitle names the current game', () => {
   const { unmount } = renderApp(<Nexo />, {
     value: { data: { ...SAMPLE_DATA, current: current as unknown as CurrentGame } },
   })
-  expect(screen.getByText('Falando sobre DAYS GONE (13%).')).toBeTruthy()
+  expect(screen.getByText('DAYS GONE · 26%')).toBeTruthy()
   unmount()
   const second = renderApp(<Nexo />)
   expect(screen.getByText('Escolha um jogo para começar a conversa.')).toBeTruthy()
@@ -152,7 +152,9 @@ test('a trophy tip link attaches the trophy to the box', async () => {
   })
   await waitFor(() => expect(calls.some((c) => c.path === '/api/current')).toBe(true))
   expect(await screen.findByText('Mestre')).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Como pegar?' })).toBeTruthy()
+  expect(screen.getByLabelText('Mensagem para Nexo').getAttribute('placeholder')).toBe(
+    'Pergunte sobre o troféu…',
+  )
 })
 
 test('when the chat talks about another game, the game still being played is a line away', async () => {

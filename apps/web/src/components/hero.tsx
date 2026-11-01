@@ -171,7 +171,7 @@ export function HeroProgress({ game: c }: { game: HeroGame }) {
   )
 }
 
-function HeroMeta({ c }: { c: CurrentGame }) {
+export function HeroMeta({ c }: { c: CurrentGame }) {
   const t = useMessages(messages)
   const g = c.guide
   const played = c.hoursPlayed

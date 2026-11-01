@@ -348,3 +348,12 @@ test('a trophy that lands after a plan expired still ticks its step off', async 
   expect(set.mock.calls[0][0]).toBe('session_plan:e')
   expect(set.mock.calls[0][1].map((s) => s.done)).toEqual([true, false])
 })
+
+test('discarding a selected journey never closes another game’s active plan', async () => {
+  spyOn(plans, 'activePlan').mockResolvedValue(
+    plan({ id: 'session_plan:other', game: 'game:other' }),
+  )
+  const close = spyOn(plans, 'closePlan').mockResolvedValue()
+  expect(await discardPlan(user, ctx)).toBeNull()
+  expect(close).not.toHaveBeenCalled()
+})

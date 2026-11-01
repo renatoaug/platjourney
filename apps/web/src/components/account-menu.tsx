@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
-import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { number } from '../lib/format'
+import { pluginPages } from '../plugins'
 import { Icon } from '../ui/icon'
 import { connectAccount } from './demo'
 import './account-menu.css'
@@ -15,6 +16,10 @@ const messages = defineMessages({
     open: 'Abrir o menu da conta',
     line: 'Nível {level} · {platinums} platinas',
     profile: 'Meu perfil',
+    history: 'Histórico',
+    nexo: 'Conversas com Nexo',
+    overview: 'Resumo de conquistas',
+    guides: 'Buscar guias',
     settings: 'Configurações',
     logout: 'Sair',
     leaveDemo: 'Sair da demo',
@@ -25,6 +30,10 @@ const messages = defineMessages({
     open: 'Open the account menu',
     line: 'Level {level} · {platinums} platinums',
     profile: 'My profile',
+    history: 'History',
+    nexo: 'Nexo conversations',
+    overview: 'Achievement overview',
+    guides: 'Find guides',
     settings: 'Settings',
     logout: 'Sign out',
     leaveDemo: 'Leave the demo',
@@ -50,6 +59,7 @@ export function AccountMenu({
   initiallyOpen?: boolean
 }) {
   const t = useMessages(messages)
+  const locale = useLocale()
   const { me, data } = useApp()
   const p = data?.profile
   const [state, setState] = useState<'closed' | 'open' | 'closing'>(
@@ -130,6 +140,28 @@ export function AccountMenu({
             <Icon name="dashboard" />
             {t('profile')}
           </Link>
+          {(['nexo', 'history', 'overview', 'guides'] as const).map((key) => (
+            <Link
+              key={key}
+              to={`/${key}`}
+              role="menuitem"
+              className="account-menu-item"
+              onClick={close}
+            >
+              {t(key)}
+            </Link>
+          ))}
+          {pluginPages.map((p) => (
+            <Link
+              key={p.path}
+              to={p.path}
+              role="menuitem"
+              className="account-menu-item"
+              onClick={close}
+            >
+              {p.label[locale]}
+            </Link>
+          ))}
           <Link to="/settings" role="menuitem" className="account-menu-item" onClick={close}>
             <Icon name="settings" />
             {t('settings')}

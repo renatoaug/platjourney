@@ -337,7 +337,7 @@ export async function discardPlan(
   ctx?: GameContext,
 ): Promise<{ id: string; askReason: boolean } | null> {
   const current = await activePlan(user.id)
-  if (!current?.id) return null
+  if (!current?.id || (ctx && current.game !== ctx.game.id)) return null
   const steps = await ticked(user, current, ctx)
   const end = endsAt(
     current,

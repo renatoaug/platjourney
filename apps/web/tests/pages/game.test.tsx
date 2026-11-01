@@ -1,5 +1,5 @@
 import { afterEach, expect, mock, test } from 'bun:test'
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { samplePlan } from '../../src/components/plan.stories'
 import { current } from '../../src/fixtures'
@@ -8,46 +8,50 @@ import { Game, GameScreen } from '../../src/pages/game'
 import { mockApi, never, renderApp } from '../support/web'
 
 afterEach(() => mock.restore())
+const game: CurrentGame = {
+  ...current,
+  focus: { phases: [], trophy: current.trophies.find((t) => !t.earned && t.type !== 'platinum') },
+}
 
-const game = current as unknown as CurrentGame
-
-test('the current game: hero with the next trophy, trophies and guide', () => {
-  mockApi({ '/api/plan': { plan: null } })
+test('journey prioritizes progress and server focus; plan and guide remain available', () => {
+  mockApi({})
   renderApp(<GameScreen current={game} plan={<p>plano</p>} />)
-  expect(screen.getByRole('heading', { level: 1, name: 'Jogo atual' })).toBeTruthy()
-  expect(screen.getByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
+  expect(screen.getByRole('heading', { level: 1, name: 'DAYS GONE' })).toBeTruthy()
+  expect(screen.getByRole('progressbar', { name: 'Progresso do jogo' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Me ajuda com isso' }).getAttribute('href')).toContain(
+    'trophy=',
+  )
+  expect(document.getElementById('journey-session')?.hasAttribute('open')).toBe(false)
+  fireEvent.click(screen.getByText('Planejar minha sessão'))
   expect(screen.getByText('plano')).toBeTruthy()
-  expect(document.getElementById('trophies-card')?.textContent).toContain('De raspão')
-  expect(document.getElementById('guide-card')?.textContent).toContain('Burnout Apocalipse')
-  // The way to Nexo is the next trophy's tip, not a second button off on its own.
-  expect(screen.queryByRole('link', { name: /Conversar com o Nexo/ })).toBeNull()
-  const card = screen.getByRole('complementary', { name: 'Próximo troféu' })
-  expect(within(card).getByRole('link', { name: /Pedir dica/ })).toBeTruthy()
+  expect(document.getElementById('journey-trophies')?.textContent).toContain('De raspão')
+  fireEvent.click(screen.getByText('Consultar o guia completo'))
+  expect(document.querySelector('.journey-guide')?.textContent).toContain('Burnout Apocalipse')
 })
 
-test('no game yet: only the hero, with how to start', () => {
+test('no game offers the library without inventing progress', () => {
   renderApp(<GameScreen current={null} plan={<p>plano</p>} />)
-  expect(screen.getByRole('heading', { name: 'O próximo desafio é seu.' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Ver meus jogos' }).getAttribute('href')).toBe('/games')
   expect(screen.queryByText('plano')).toBeNull()
-  expect(document.getElementById('trophies-card')).toBeNull()
 })
 
-test('loading: skeletons for the hero and the guide', () => {
+test('loading shows skeletons, not an empty or invented journey', () => {
   const { container } = renderApp(<GameScreen current={undefined} plan={null} />)
-  expect(screen.getByRole('heading', { name: 'Troféus' })).toBeTruthy()
-  expect(container.querySelector('#game-hero .sk')).toBeTruthy()
-  expect(container.querySelector('#guide-card .sk')).toBeTruthy()
+  expect(container.querySelector('.sk')).toBeTruthy()
+  expect(screen.queryByText('Qual vai ser sua próxima platina?')).toBeNull()
 })
 
-test('the screen reads the app state and loads the session plan', async () => {
+test('a selected game scopes the plan request', async () => {
   const calls = mockApi({ '/api/plan': { plan: samplePlan } })
   renderApp(<Game />, { value: { data: { ...SAMPLE_DATA, current: game } } })
-  expect(screen.getByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
-  await waitFor(() => expect(calls.some((c) => c.path === '/api/plan')).toBe(true))
+  await waitFor(() => expect(calls.some((c) => c.path === `/api/plan?np=${game.np}`)).toBe(true))
 })
 
-test('before the first state the screen is loading', () => {
+test('before first state skeletons remain; a sync failure is explicit', () => {
   mockApi({ '/api/plan': never })
-  const { container } = renderApp(<Game />, { value: { data: null } })
-  expect(container.querySelector('#game-hero .sk')).toBeTruthy()
+  const { container, unmount } = renderApp(<Game />, { value: { data: null } })
+  expect(container.querySelector('.sk')).toBeTruthy()
+  unmount()
+  renderApp(<Game />, { value: { data: null, sync: 'failed' } })
+  expect(screen.getByRole('alert').textContent).toContain('sincronizar')
 })

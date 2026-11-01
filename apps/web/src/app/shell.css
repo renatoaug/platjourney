@@ -737,3 +737,35 @@
     }
   }
 }
+
+@layer screens {
+  .journey-nav a {
+    min-height: 48px;
+    font-size: var(--text-body);
+  }
+
+  @media (max-width: 760px) {
+    .nav.journey-nav a {
+      flex: 1;
+      min-width: 0;
+      min-height: 56px;
+      font-size: var(--text-base);
+      white-space: nowrap;
+    }
+
+    .nav.journey-nav .icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .topbar .breadcrumb {
+      font-size: var(--text-body);
+    }
+
+    .topbar .icon-button,
+    .topbar-avatar {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+}

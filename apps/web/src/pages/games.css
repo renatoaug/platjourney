@@ -1,0 +1,104 @@
+@layer screens {
+  .games-page {
+    display: grid;
+    gap: 24px;
+  }
+
+  .games-page header h1 {
+    font-size: var(--text-4xl);
+    margin: 0 0 8px;
+  }
+
+  .games-page header p {
+    color: var(--color-fg-muted);
+    font-size: var(--text-lg);
+  }
+
+  .games-page .segmented button {
+    min-height: 44px;
+    font-size: var(--text-body);
+  }
+
+  .games-page .game-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .games-page .band-card {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    min-height: 152px;
+  }
+
+  .games-page .band-art {
+    align-self: stretch;
+  }
+
+  .games-page .band-cover {
+    width: 88px;
+    height: 100%;
+    aspect-ratio: auto;
+    object-fit: contain;
+  }
+
+  .games-page .band-body {
+    padding: 16px;
+    min-width: 0;
+  }
+
+  .games-page .band-name {
+    padding-right: 32px;
+    font-size: var(--text-lg);
+  }
+
+  .games-page .band-tag {
+    display: none;
+  }
+
+  .games-page .band-actions button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  @media (max-width: 760px) {
+    .games-page .game-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .games-controls label {
+      flex-basis: 100%;
+    }
+  }
+
+  .games-page .band-actions {
+    opacity: 1;
+  }
+
+  .games-page .band-meta,
+  .games-page .library-progress {
+    font-size: var(--text-base);
+  }
+
+  .games-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    justify-content: space-between;
+  }
+
+  .games-controls label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 280px;
+  }
+
+  .games-controls input {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    font-size: var(--text-lg);
+  }
+}

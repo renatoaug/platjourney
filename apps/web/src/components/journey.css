@@ -1,0 +1,177 @@
+@layer screens {
+  .journey {
+    max-width: 960px;
+    margin: 0 auto;
+    display: grid;
+    gap: 24px;
+  }
+
+  .journey-heading {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .journey-heading .cover {
+    width: 72px;
+    height: 96px;
+    flex: none;
+    object-fit: cover;
+    border-radius: var(--radius-control);
+  }
+
+  .journey-heading .journey-icon {
+    object-fit: contain;
+  }
+
+  .journey-heading > div {
+    min-width: 0;
+  }
+
+  .journey-heading h1 {
+    margin: 6px 0;
+    font-size: var(--text-4xl);
+    line-height: var(--leading-tight);
+  }
+
+  .journey-heading p,
+  .journey-trophies header span {
+    color: var(--color-fg-muted);
+    font-size: var(--text-base);
+    margin: 0;
+  }
+
+  .journey .hero-progress {
+    width: 100%;
+  }
+
+  .journey-focus.card {
+    padding: 28px;
+    border-color: var(--color-border-strong);
+    background: var(--color-surface);
+    display: grid;
+    gap: 14px;
+  }
+
+  .journey-focus .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-accent);
+  }
+
+  .journey-focus h2 {
+    font-size: var(--text-3xl);
+    margin: 0;
+    line-height: var(--leading-tight);
+  }
+
+  .journey-focus p,
+  .journey-warning p {
+    margin: 0;
+    font-size: var(--text-lg);
+    line-height: var(--leading-body);
+    color: var(--color-fg-soft);
+  }
+
+  .journey-focus .journey-basis {
+    font-size: var(--text-md);
+    color: var(--color-fg-muted);
+  }
+
+  .journey-focus small {
+    color: var(--color-fg-muted);
+  }
+
+  .journey-focus .button {
+    justify-self: start;
+    min-height: 48px;
+    font-size: var(--text-body);
+  }
+
+  .journey-warning {
+    display: flex;
+    gap: 12px;
+    padding: 20px;
+    border-left: 3px solid var(--color-trophy-gold);
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+    font-size: var(--text-body);
+  }
+
+  .journey-warning > .icon {
+    flex: none;
+    color: var(--color-trophy-gold);
+  }
+
+  .journey-warning p {
+    font-size: var(--text-body);
+    margin-top: 6px;
+  }
+
+  .journey summary {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+    min-height: 56px;
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    list-style: none;
+  }
+
+  .journey summary > .icon:last-child {
+    margin-left: auto;
+  }
+
+  .journey details {
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    padding: 4px 0;
+  }
+
+  .journey-trophies header {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .journey-trophies h2 {
+    margin: 0;
+    font-size: var(--text-2xl);
+  }
+
+  .journey :is(button, .button, input, select) {
+    min-height: 44px;
+  }
+
+  @media (max-width: 760px) {
+    .journey {
+      gap: 20px;
+    }
+
+    .journey-heading {
+      gap: 14px;
+    }
+
+    .journey-heading h1 {
+      font-size: var(--text-3xl);
+    }
+
+    .journey-focus.card {
+      padding: 22px;
+    }
+
+    .journey-focus .button {
+      justify-self: stretch;
+    }
+
+    .journey input,
+    .journey select {
+      font-size: var(--text-lg);
+    }
+  }
+}

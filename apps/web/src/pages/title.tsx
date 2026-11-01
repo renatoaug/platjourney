@@ -1,3 +1,5 @@
+import { Journey } from '../components/journey'
+import { PlanCard } from '../components/plan'
 /** Game detail for a title outside the current game (owned or recommended). */
 
 import { type ReactNode, useEffect, useState } from 'react'
@@ -23,7 +25,7 @@ import { NextTrophy } from '../components/next-trophy'
 import { SimilarGamesSection, similarGames } from '../components/similar-games'
 import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { ApiError, api } from '../lib/api'
+import { api } from '../lib/api'
 import { fmtHours } from '../lib/format'
 import { tintStyle } from '../lib/tint'
 import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../lib/types'
@@ -94,6 +96,7 @@ const messages = defineMessages({
 /** What /api/title sends. Games not owned have no progress, and their trophies come from the catalog. */
 export interface TitleDetail {
   owned: boolean
+  focus?: CurrentGame['focus']
   np?: string
   game: Game
   name: string
@@ -288,6 +291,19 @@ const TITLE_SECTIONS: [GameSection, string][] = [
 
 /** A loaded title: its art across the top under the hero (and the next trophy, when it is in the
  * library), the bar of its sections, the platinum map, trophies and guide, then the similar games. */
+function OwnedJourney({ d }: { d: TitleDetail }) {
+  const game: CurrentGame = {
+    ...d,
+    np: d.np ?? '',
+    progress: d.progress ?? 0,
+    earned: d.earned ?? 0,
+    total: d.total ?? 0,
+    trophies: d.trophies ?? [],
+    icon: d.icon ?? undefined,
+  }
+  return <Journey game={game} plan={<PlanCard key={d.np} np={d.np} />} />
+}
+
 function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
   const t = useMessages(messages)
   const g = d.guide
@@ -423,7 +439,15 @@ export function TitleScreen({
       <div id="title-page">
         {load.kind === 'loading' && <TitleSkeleton owned={owned} />}
         {load.kind === 'error' && <ErrorState>{t('notFound')}</ErrorState>}
-        {load.kind === 'ready' && <TitleView d={load.d} similar={similar} />}
+        {load.kind === 'ready' &&
+          (load.d.owned && load.d.np ? (
+            <>
+              <OwnedJourney d={load.d} />
+              {similar}
+            </>
+          ) : (
+            <TitleView d={load.d} similar={similar} />
+          ))}
       </div>
     </Page>
   )

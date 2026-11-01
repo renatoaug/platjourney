@@ -1,6 +1,5 @@
 /** Trophy list with search, filters, sorting, pagination and the per-trophy Nexo help. */
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import {
   defineMessages,
@@ -16,6 +15,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState } from '../ui/states'
 import { TrophyArt } from '../ui/trophy-art'
 import { useSlide } from '../ui/use-slide'
+import { JourneyLink as Link } from './journey-link'
 import { nexoHref } from './tip'
 import './trophy-list.css'
 

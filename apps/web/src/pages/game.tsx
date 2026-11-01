@@ -1,40 +1,33 @@
-/** The game being played now: its scenes across the top under the hero and the next trophy, a bar of
- * its sections, the platinum map, the session plan and the guide beside the trophies. */
+/** The current PSN game opens the same personal journey as an owned library title. */
 import type { ReactNode } from 'react'
+import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
-import { GameBackdrop, ScenesButton, useScene } from '../components/game-backdrop'
-import { GameColumns } from '../components/game-columns'
-import { GameNav, type GameSection } from '../components/game-nav'
-import { GameAbout } from '../components/game-showcase'
-import { Guide, GuideSkeleton } from '../components/guide'
-import { Hero, HeroSkeleton } from '../components/hero'
-import { NextTrophy } from '../components/next-trophy'
+import { HeroSkeleton } from '../components/hero'
+import { Journey } from '../components/journey'
 import { PlanCard } from '../components/plan'
-import { TrophyList } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { tintStyle } from '../lib/tint'
 import type { CurrentGame } from '../lib/types'
+import { EmptyState, ErrorState } from '../ui/states'
 import './game.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    title: 'Jogo atual',
-    trophies: 'Troféus',
+    title: 'Sua jornada',
+    empty: 'Qual vai ser sua próxima platina?',
+    lead: 'Inicie um jogo na PSN para acompanhar seu progresso aqui, ou explore seus jogos.',
+    games: 'Ver meus jogos',
+    error: 'Não conseguimos atualizar sua jornada. Tente sincronizar novamente.',
   },
   [Language.En]: {
-    title: 'Current game',
-    trophies: 'Trophies',
+    title: 'Your journey',
+    empty: 'What is your next platinum?',
+    lead: 'Start a game on PSN to track your progress here, or explore your games.',
+    games: 'See my games',
+    error: 'Could not update your journey. Try syncing again.',
   },
 })
 
-const SECTIONS: [GameSection, string][] = [
-  ['plan', 'plan-card'],
-  ['guide', 'guide-card'],
-  ['trophies', 'trophies-card'],
-]
-
-/** The screen for a given state: `current` undefined is still loading, null is no game yet. `plan` is the plan card. */
 export function GameScreen({
   current,
   plan,
@@ -43,92 +36,45 @@ export function GameScreen({
   plan: ReactNode
 }) {
   const t = useMessages(messages)
-  const loading = current === undefined
-  const shots = current?.game.screenshot_ids ?? []
-  const [scene, setScene] = useScene(shots.length)
   return (
     <Page path="/game">
-      <h1 className="sr-only">{t('title')}</h1>
-      {current && (
-        <GameBackdrop src={current.icon} shots={shots} at={scene} tint={current.game.tint} />
-      )}
-      <div className="hero immersive tinted" id="game-hero" style={tintStyle(current?.game.tint)}>
-        {loading ? (
-          <HeroSkeleton cta={false} />
-        ) : (
-          <Hero
-            game={current}
-            // The next trophy's card carries the way to Nexo: no second button off on its own.
-            cta={current ? false : undefined}
-            tools={
-              current && (
-                <ScenesButton shots={shots} at={scene} name={current.name} onGo={setScene} />
-              )
-            }
-            aside={
-              current && (
-                <NextTrophy
-                  trophies={current.trophies}
-                  guide={current.guide}
-                  game={current.game.id}
-                  np={current.np}
-                  fallback={<GameAbout game={current.game} name={current.name} />}
-                />
-              )
-            }
-          />
-        )}
-      </div>
-      {/* Without a game the hero says how to start one; there is nothing to plan or list yet. */}
-      {current !== null && (
+      {current ? (
+        <Journey game={current} plan={plan} />
+      ) : current === undefined ? (
         <>
-          {current && (
-            <GameNav
-              sections={SECTIONS}
-              hero="game-hero"
-              name={current.name}
-              progress={current.progress}
-            />
-          )}
-          {plan}
-          <GameColumns
-            id="game-columns"
-            style={{ marginTop: 16 }}
-            trophies={
-              <div className="card" id="trophies-card">
-                {loading ? <h2>{t('trophies')}</h2> : null}
-                <TrophyList trophies={current?.trophies ?? null} prefix="t" np={current?.np} />
-              </div>
-            }
-            guide={
-              <div className="stack">
-                <div className="card" id="guide-card">
-                  {current ? (
-                    <Guide
-                      key={current.name}
-                      id="guide-card"
-                      game={{
-                        name: current.name,
-                        guide: current.guide ?? null,
-                        trophies: current.trophies,
-                        deepGuide: current.deepGuide,
-                        queued: current.queued === true,
-                      }}
-                    />
-                  ) : (
-                    <GuideSkeleton />
-                  )}
-                </div>
-              </div>
-            }
-          />
+          <h1 className="sr-only">{t('title')}</h1>
+          <HeroSkeleton cta={false} />
         </>
+      ) : (
+        <EmptyState
+          title={t('empty')}
+          icon="gamepad"
+          action={
+            <Link className="button" to="/games">
+              {t('games')}
+            </Link>
+          }
+        >
+          {t('lead')}
+        </EmptyState>
       )}
     </Page>
   )
 }
 
 export function Game() {
-  const { data } = useApp()
-  return <GameScreen current={data ? data.current : undefined} plan={<PlanCard />} />
+  const { data, sync } = useApp()
+  const t = useMessages(messages)
+  if (!data && sync === 'failed')
+    return (
+      <Page path="/game">
+        <ErrorState>{t('error')}</ErrorState>
+      </Page>
+    )
+  return (
+    <GameScreen
+      current={data ? data.current : undefined}
+      plan={<PlanCard key={data?.current?.np} np={data?.current?.np} />}
+    />
+  )
 }

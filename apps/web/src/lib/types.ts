@@ -146,7 +146,17 @@ export interface DeepGuideStats {
 }
 
 /** The game being played now, as /api/state and /api/title send it. */
+interface JourneyFocus {
+  phases: { phase: string; short: string; left: number }[]
+  trophy?: Trophy
+  trick?: string
+  phase?: string
+  behind?: boolean
+  missable?: { trophy: string; when: string }
+}
+
 export interface CurrentGame {
+  focus?: JourneyFocus | null
   game: Game
   name: string
   platform: string

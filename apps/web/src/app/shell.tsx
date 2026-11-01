@@ -1,9 +1,9 @@
 /** The signed-in layout: sidebar, top bar and the screen for the current route. */
 
-import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useRef, useState } from 'react'
 import {
   Link,
+  type Location,
   Navigate,
   NavLink,
   Route,
@@ -14,6 +14,7 @@ import {
 import { AccountMenu } from '../components/account-menu'
 import { CommandPalette } from '../components/command-palette'
 import { DemoBanner } from '../components/demo'
+import { JourneyChat } from '../components/journey-chat'
 import { Notifications } from '../components/notifications'
 import { Onboarding } from '../components/onboarding'
 import { PrivateNotice } from '../components/private-notice'
@@ -29,6 +30,7 @@ import {
 import { number } from '../lib/format'
 import { Discover } from '../pages/discover'
 import { Game } from '../pages/game'
+import { Games } from '../pages/games'
 import { Goals } from '../pages/goals'
 import { Guides } from '../pages/guides'
 import { History } from '../pages/history'
@@ -46,7 +48,8 @@ import './shell.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     nav: {
-      home: 'Visão geral',
+      home: 'Jornada',
+      games: 'Jogos',
       game: 'Jogo atual',
       nexo: 'Nexo',
       goals: 'Interesses',
@@ -87,7 +90,8 @@ const messages = defineMessages({
   },
   [Language.En]: {
     nav: {
-      home: 'Overview',
+      home: 'Journey',
+      games: 'Games',
       game: 'Current game',
       nexo: 'Nexo',
       goals: 'Interests',
@@ -128,22 +132,17 @@ const messages = defineMessages({
   },
 })
 
-const NAV: { to: string; label: MessageKey<typeof messages>; icon: string; ai?: boolean }[] = [
-  { to: '/', label: 'nav.home', icon: 'dashboard' },
-  { to: '/game', label: 'nav.game', icon: 'gamepad' },
-  { to: '/nexo', label: 'nav.nexo', icon: 'nexo', ai: true },
-  { to: '/goals', label: 'nav.goals', icon: 'bookmark' },
-  { to: '/discover', label: 'nav.discover', icon: 'compass' },
-  { to: '/guides', label: 'nav.guides', icon: 'search' },
-  { to: '/history', label: 'nav.history', icon: 'history' },
+const NAV: { to: string; label: MessageKey<typeof messages>; icon: string }[] = [
+  { to: '/', label: 'nav.home', icon: 'compass' },
+  { to: '/games', label: 'nav.games', icon: 'gamepad' },
+  { to: '/discover', label: 'nav.discover', icon: 'search' },
 ]
-
-// Links in the phone's bottom bar before "Mais".
-const BAR_ITEMS = 4
 
 const LABELS: Record<string, MessageKey<typeof messages>> = {
   '/': 'nav.home',
-  '/game': 'nav.game',
+  '/game': 'nav.home',
+  '/games': 'nav.games',
+  '/overview': 'nav.home',
   '/nexo': 'nav.nexo',
   '/goals': 'nav.goals',
   '/discover': 'nav.discover',
@@ -170,158 +169,29 @@ function useArrival(pathname: string): Arrival {
   return arrival.current
 }
 
-// On a phone a page from the "Mais" sheet has no visible link: the pill sits on "Mais".
-function activeNavItem(nav: HTMLElement | null) {
-  const link = nav?.querySelector<HTMLElement>('a.active')
-  return link?.offsetWidth ? link : nav?.querySelector<HTMLElement>('.nav-more.active')
-}
-
-/** Puts the pill over `active`; `instant` skips the slide (first placement, resize). */
-function moveIndicator(el: HTMLElement, active: HTMLElement, instant: boolean) {
-  el.style.transition = instant ? 'none' : ''
-  el.style.width = `${active.offsetWidth}px`
-  el.style.height = `${active.offsetHeight}px`
-  el.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`
-  el.style.opacity = '1'
-  if (instant)
-    requestAnimationFrame(() => {
-      el.style.transition = ''
-    })
-}
-
 function Nav() {
-  const t = useMessages(messages)
-  const locale = useLocale()
-  const nav = useRef<HTMLElement>(null)
-  const indicator = useRef<HTMLSpanElement>(null)
   const { pathname } = useLocation()
-  const animated = useRef(false)
-  const [more, setMore] = useState(false)
-  const { data } = useApp()
-
-  // A pill slides behind the active link.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the active link changes with the route
-  useLayoutEffect(() => {
-    const place = (animate: boolean) => {
-      const el = indicator.current
-      const active = activeNavItem(nav.current)
-      if (!el) return
-      if (!active?.offsetWidth) {
-        el.style.opacity = '0'
-        return
-      }
-      moveIndicator(el, active, !animated.current || !animate)
-      animated.current = true
-      nav.current?.classList.add('nav-animated')
-    }
-    place(true)
-    const observer = new ResizeObserver(() => place(false))
-    if (nav.current) observer.observe(nav.current)
-    return () => observer.disconnect()
-  }, [pathname, more])
-
-  // On a phone the bar holds the first BAR_ITEMS links and "Mais"; the rest open in a sheet above it.
-  const extras = [
-    ...NAV.slice(BAR_ITEMS).map((n) => ({ to: n.to, icon: n.icon, label: t(n.label) })),
-    ...pluginPages.map((p) => ({
-      to: p.path,
-      icon: p.icon,
-      label: p.label[locale],
-    })),
-    { to: '/settings', icon: 'settings', label: t('nav.settings') },
-  ] as { to: string; icon: string; label: string }[]
-  const profile = data?.profile
-  const inExtras = pathname === '/profile' || extras.some((e) => pathname === e.to)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: a new route closes the sheet
-  useEffect(() => setMore(false), [pathname])
+  const active =
+    pathname === '/game'
+      ? '/'
+      : pathname.startsWith('/title/') || pathname === '/goals'
+        ? '/games'
+        : pathname
+  const t = useMessages(messages)
   return (
-    <>
-      <nav className="nav" aria-label={t('mainNav')} ref={nav}>
-        <span className="nav-indicator" aria-hidden="true" ref={indicator} />
-        {NAV.map((n, i) => (
-          <NavLink
-            key={n.to}
-            to={n.to}
-            end={n.to === '/'}
-            className={i >= BAR_ITEMS ? 'nav-extra' : undefined}
-          >
-            <Icon name={n.icon} />
-            {t(n.label)}
-            {n.ai && <span className="nav-ai">{t('ai')}</span>}
-          </NavLink>
-        ))}
-        {pluginPages.map((p) => (
-          <NavLink key={p.path} to={p.path} className="nav-extra">
-            <Icon name={p.icon} />
-            {p.label[locale]}
-          </NavLink>
-        ))}
-        {/* Settings close the list, after the plugins' pages. */}
-        <NavLink to="/settings" className="nav-extra">
-          <Icon name="settings" />
-          {t('nav.settings')}
-        </NavLink>
-        <button
-          type="button"
-          className={`nav-more${more || inExtras ? ' active' : ''}`}
-          aria-expanded={more}
-          aria-controls="nav-sheet"
-          onClick={() => setMore((m) => !m)}
+    <nav className="nav journey-nav" aria-label={t('mainNav')}>
+      {NAV.map((n) => (
+        <NavLink
+          key={n.to}
+          to={n.to}
+          end={n.to === '/'}
+          className={active === n.to ? 'active' : ''}
         >
-          <Icon name={more ? 'close' : 'more'} />
-          {t('nav.more')}
-        </button>
-      </nav>
-      {/* On the body: the bar's backdrop filter would make it the box the sheet is fixed to. */}
-      {more &&
-        createPortal(
-          <>
-            <button
-              type="button"
-              className="nav-sheet-scrim"
-              aria-label={t('nav.more')}
-              onClick={() => setMore(false)}
-            />
-            <div className="nav-sheet" id="nav-sheet">
-              <span className="nav-sheet-handle" aria-hidden="true" />
-              {/* The player's card first: who they are and the way to their profile. */}
-              <NavLink to="/profile" className="nav-sheet-profile">
-                {profile?.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt="" />
-                ) : (
-                  <span className="nav-sheet-icon">
-                    <Icon name="circle" />
-                  </span>
-                )}
-                <span>
-                  <b>{profile?.onlineId ?? t('nav.profile')}</b>
-                  {profile && (
-                    <small>
-                      {t('profileLine', {
-                        level: profile.level,
-                        platinums: number(profile.earned.platinum),
-                      })}
-                    </small>
-                  )}
-                </span>
-                <Icon name="chevron-right" />
-              </NavLink>
-              <div className="nav-sheet-grid">
-                {extras.map((e, i) => (
-                  <NavLink key={e.to} to={e.to} style={{ '--i': i } as CSSProperties}>
-                    <span className="nav-sheet-icon">
-                      <Icon name={e.icon} />
-                    </span>
-                    {e.label}
-                  </NavLink>
-                ))}
-              </div>
-              <span className="app-version">v{__APP_VERSION__}</span>
-            </div>
-          </>,
-          document.body,
-        )}
-    </>
+          <Icon name={n.icon} />
+          {t(n.label)}
+        </NavLink>
+      ))}
+    </nav>
   )
 }
 
@@ -397,7 +267,10 @@ function SyncButton() {
 
 export function Shell() {
   const t = useMessages(messages)
-  const { pathname } = useLocation()
+  const location = useLocation()
+  const background = (location.state as { journey?: Location } | null)?.journey
+  const modal = location.pathname === '/nexo' && background
+  const pathname = modal ? background.pathname : location.pathname
   const { me, loadState } = useApp()
   const [privateProfile, setPrivateProfile] = useState(false)
   // Pulling down refreshes the app's data and mounts the screen again, so it fetches its own too
@@ -474,8 +347,10 @@ export function Shell() {
         <Onboarding />
         {privateProfile && <PrivateNotice />}
         <PullRefresh onRefresh={pullRefresh} />
-        <Routes key={refreshes}>
-          <Route path="/" element={<Home />} />
+        <Routes key={refreshes} location={modal ? background : location}>
+          <Route path="/" element={<Game />} />
+          <Route path="/overview" element={<Home />} />
+          <Route path="/games" element={<Games />} />
           <Route path="/game" element={<Game />} />
           <Route path="/nexo" element={<Nexo />} />
           <Route path="/goals" element={<Goals />} />
@@ -490,6 +365,7 @@ export function Shell() {
           ))}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        {modal && <JourneyChat />}
       </main>
     </div>
   )

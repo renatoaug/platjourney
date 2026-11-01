@@ -11,13 +11,30 @@ import { getGuide } from '../repository/guide.ts'
 import { setPlanReason } from '../repository/session-plan.ts'
 import type { Api, ApiHandler } from './api.ts'
 
-async function newPlan({ req, res, me }: Api) {
-  const { minutes } = await readBody(req)
-  const ctx = getCurrent(me)
-  if (!ctx) return json(res, 409, { error: 'no current game yet' })
-  if (typeof minutes !== 'number' || minutes < 15 || minutes > 600)
-    return json(res, 400, { error: 'minutes must be between 15 and 600' })
-  return json(res, 200, { plan: await planSession(me, ctx, minutes) })
+// Explicitly choosing a game never changes PSN presence or the chat's selected game.
+async function planContext(a: Api, np: unknown) {
+  if (np === undefined || np === null) return getCurrent(a.me)
+  if (typeof np !== 'string' || !np) return null
+  const title = (await a.titles()).find((t) => t.npCommunicationId === np)
+  if (!title) return null
+  const playing = getCurrent(a.me)
+  if (playing?.title.npCommunicationId === np) return playing
+  const game = await gameForTitle(title)
+  const [trophies, groups, guide] = await Promise.all([
+    titleTrophies(title, a.me.psn_account_id),
+    loadGroups(title, a.me),
+    getGuide<Guide>(game.id),
+  ])
+  return { game, title, trophies, groups, guide }
+}
+
+async function newPlan(a: Api) {
+  const { minutes, np } = await readBody(a.req)
+  if (typeof minutes !== 'number' || !Number.isFinite(minutes) || minutes < 15 || minutes > 600)
+    return json(a.res, 400, { error: 'minutes must be between 15 and 600' })
+  const ctx = await planContext(a, np)
+  if (!ctx) return json(a.res, np == null ? 409 : 404, { error: 'game not available' })
+  return json(a.res, 200, { plan: await planSession(a.me, ctx, minutes) })
 }
 
 async function trophyTip({ req, res, me, titles }: Api) {
@@ -48,11 +65,19 @@ async function trophyTip({ req, res, me, titles }: Api) {
 
 // The session plan and the help for one trophy, both for the game being played.
 export const PLAN_ROUTES: Record<string, ApiHandler> = {
-  'GET /api/plan': async ({ res, me }) =>
-    json(res, 200, { plan: await currentPlan(me, getCurrent(me)) }),
+  'GET /api/plan': async (a) => {
+    const ctx = await planContext(a, a.url.searchParams.get('np'))
+    if (!ctx && a.url.searchParams.has('np'))
+      return json(a.res, 404, { error: 'game not available' })
+    return json(a.res, 200, { plan: await currentPlan(a.me, ctx ?? undefined) })
+  },
   // The answer says which plan closed and whether to ask why (no step was done).
-  'DELETE /api/plan': async ({ res, me }) => {
-    const closed = await discardPlan(me, getCurrent(me))
+  'DELETE /api/plan': async (a) => {
+    const { res, me } = a
+    const ctx = await planContext(a, a.url.searchParams.get('np'))
+    if (!ctx && a.url.searchParams.has('np')) return json(res, 404, { error: 'game not available' })
+    if (!(await currentPlan(me, ctx ?? undefined))) return json(res, 409, { error: 'plan changed' })
+    const closed = await discardPlan(me, ctx ?? undefined)
     return json(res, 200, {
       plan: null,
       closed: closed?.id ?? null,

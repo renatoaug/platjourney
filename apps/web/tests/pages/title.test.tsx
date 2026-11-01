@@ -17,7 +17,7 @@ afterEach(() => {
 
 const guide = ownedData.guide as GuideDetail
 const hero = () => document.querySelector('.hero') as HTMLElement
-const meta = () => hero().querySelector('.meta')?.textContent
+const meta = () => document.querySelector('.meta')?.textContent
 // Only the title's own requests; the similar games ask once the title is in.
 const titleCalls = (calls: { path: string }[]) =>
   calls.filter((c) => c.path.startsWith('/api/title'))
@@ -31,25 +31,28 @@ function open(path: string, detail: TitleDetail | ReturnType<typeof reply>) {
 
 test('a game from the library: progress, the guide numbers and the trophies', async () => {
   const { calls } = open('/title/game/game%3A19561', ownedData)
-  expect(await screen.findByText('NA SUA BIBLIOTECA')).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
   expect(calls[0].path).toBe('/api/title?game=game%3A19561')
   expect(screen.getByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
+  fireEvent.click(screen.getByText('Consultar o guia completo'))
   expect(screen.getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(meta()).toContain('18h jogadas de ~70h')
   expect(meta()).toContain('1 jornada')
   expect(meta()).toContain('Sem perdíveis')
   expect(meta()).not.toContain('Troféus online')
   expect(screen.getByRole('progressbar', { name: 'Progresso do jogo' })).toBeTruthy()
-  expect(screen.getByRole('link', { name: /Conversar com o Nexo/ }).getAttribute('href')).toBe(
+  expect(screen.getByRole('link', { name: /Conversar com Nexo/ }).getAttribute('href')).toBe(
     '/nexo?game=NPWR17130_00&name=DAYS+GONE',
   )
-  expect(document.getElementById('title-trophies')?.textContent).toContain('De raspão')
+  expect(document.querySelector('.journey-trophies, #title-trophies')?.textContent).toContain(
+    'De raspão',
+  )
   expect(screen.getByRole('link', { name: /Voltar/ }).getAttribute('href')).toBe('/discover')
 })
 
 test('a PSN list id asks by id', async () => {
   const { calls } = open('/title/id/NPWR17130_00', ownedData)
-  await screen.findByText('NA SUA BIBLIOTECA')
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
   expect(calls[0].path).toBe('/api/title?id=NPWR17130_00')
 })
 
@@ -93,9 +96,11 @@ test('a game the player does not own: its list by tier, its facts and saving it'
   // Nothing of the player's to show: no library label, but what there is to earn.
   expect(hero().querySelector('.live-label')).toBeNull()
   expect(hero().querySelector('.trophy-breakdown')?.textContent).toMatch(/\d+ troféus/)
-  expect(meta()).toContain('~70 horas')
+  expect(meta()).toMatch(/~70(?: horas|h)/)
   // The catalog trophies still list, beside the guide.
-  expect(document.getElementById('title-trophies')?.textContent).toContain('De raspão')
+  expect(document.querySelector('.journey-trophies, #title-trophies')?.textContent).toContain(
+    'De raspão',
+  )
   // Nexo can talk about it before the player buys it.
   expect(
     screen.getByRole('link', { name: /Perguntar ao Nexo sobre ele/ }).getAttribute('href'),
@@ -125,11 +130,11 @@ test('a guide with missables, online trophies and several runs', async () => {
     hoursPlayed: null,
     guide: { ...guide, hasMissables: true, hasOnline: true, playthroughs: 2 },
   })
-  await screen.findByText('NA SUA BIBLIOTECA')
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
   expect(meta()).toContain('Troféus perdíveis')
   expect(meta()).toContain('Troféus online')
   expect(meta()).toContain('2 jornadas')
-  expect(meta()).toContain('~70 horas')
+  expect(meta()).toMatch(/~70(?: horas|h)/)
 })
 
 test('a platinum no longer possible gets the banner', async () => {
@@ -149,12 +154,13 @@ test('a guide being researched: polls until it lands', async () => {
   jest.useFakeTimers()
   renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
   await act(async () => {})
-  expect(meta()).toBe('Guia sendo preparado…')
+  expect(meta()).toContain('Seu guia está sendo preparado')
   building = false
   await act(async () => {
     jest.advanceTimersByTime(6000)
   })
   expect(titleCalls(calls)).toHaveLength(2)
+  fireEvent.click(screen.getByText('Consultar o guia completo'))
   expect(screen.getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   await act(async () => {
     jest.advanceTimersByTime(12_000)
@@ -243,14 +249,14 @@ test('similar games under the showcase: the expansion and the series first, with
 
 test('no similar game leaves the section out', async () => {
   open('/title/game/game%3A19561', ownedData)
-  await screen.findByText('NA SUA BIBLIOTECA')
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
   await gone(() => document.querySelector('.game-band'))
 })
 
 test('a failed similar games request leaves the section out', async () => {
   mockApi({ '/api/title': ownedData, '/api/games/similar': reply(500) })
   renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
-  await screen.findByText('NA SUA BIBLIOTECA')
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
   await gone(() => document.querySelector('.game-band'))
 })
 

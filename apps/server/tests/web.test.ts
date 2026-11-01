@@ -755,15 +755,13 @@ test('the profile page adds the account', async () => {
 })
 
 test('plans are read, discarded and made for 15 to 600 minutes', async () => {
-  spyOn(planner, 'currentPlan').mockResolvedValue(null)
+  const read = spyOn(planner, 'currentPlan').mockResolvedValue(null)
   const discard = spyOn(planner, 'discardPlan').mockResolvedValue(null)
   const make = spyOn(planner, 'planSession').mockResolvedValue({ minutes: 60 } as never)
   expect((await send('GET', '/api/plan')).body).toEqual({ plan: null })
-  expect((await send('DELETE', '/api/plan')).body).toEqual({
-    plan: null,
-    closed: null,
-    askReason: false,
-  })
+  expect((await send('DELETE', '/api/plan')).status).toBe(409)
+  expect(discard).not.toHaveBeenCalled()
+  read.mockResolvedValue({ minutes: 60 } as never)
   discard.mockResolvedValueOnce({ id: 'session_plan:p', askReason: true })
   expect((await send('DELETE', '/api/plan')).body).toEqual({
     plan: null,
@@ -1521,4 +1519,35 @@ test('the focused tip route reads only the signed-in account and returns 404 for
   expect(get).toHaveBeenCalledWith(me.id, 'tip:old')
   spyOn(auth, 'authenticate').mockResolvedValue(undefined)
   expect((await send('GET', '/api/tip?id=tip%3Aold')).status).toBe(401)
+})
+
+test('a selected journey plan validates ownership and keeps the playing game unchanged', async () => {
+  const playing = makeContext({
+    game: makeGame({ id: 'game:other' }),
+    title: makeTitle({ npCommunicationId: 'other' }),
+  })
+  spyOn(gameContext, 'getCurrent').mockReturnValue(playing)
+  const make = spyOn(planner, 'planSession').mockResolvedValue({ minutes: 30 } as never)
+  const read = spyOn(planner, 'currentPlan').mockResolvedValue(null)
+  const discard = spyOn(planner, 'discardPlan').mockResolvedValue(null)
+  for (const method of ['GET', 'DELETE']) {
+    expect((await send(method, '/api/plan?np=not-owned')).status).toBe(404)
+  }
+  expect((await send('POST', '/api/plan', { np: 'not-owned', minutes: 30 })).status).toBe(404)
+  expect(make).not.toHaveBeenCalled()
+  expect(read).not.toHaveBeenCalled()
+  expect(discard).not.toHaveBeenCalled()
+  expect(
+    (await send('POST', '/api/plan', { np: title.npCommunicationId, minutes: 30 })).status,
+  ).toBe(200)
+  expect(make.mock.calls[0][0]).toBe(me)
+  expect(make.mock.calls[0][1].game.id).toBe(game.id)
+  expect(make.mock.calls[0][1].title.npCommunicationId).toBe(title.npCommunicationId)
+  expect(gameContext.getCurrent(me)).toBe(playing)
+  expect((await send('DELETE', `/api/plan?np=${title.npCommunicationId}`)).status).toBe(409)
+  expect(discard).not.toHaveBeenCalled()
+  expect((await send('GET', `/api/plan?np=${title.npCommunicationId}`)).body).toEqual({
+    plan: null,
+  })
+  expect(read.mock.calls.at(-1)?.[1]?.game.id).toBe(game.id)
 })

@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtPlayTime, fmtRate } from '../lib/format'
 import { nameText } from '../lib/text'
@@ -20,6 +19,7 @@ import { SourceNote } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
 import { TrophyArt } from '../ui/trophy-art'
 import { bandOf } from './difficulty-meter'
+import { JourneyLink as Link } from './journey-link'
 import { NexoHero } from './nexo-hero'
 import { nexoHref } from './tip'
 import './guide.css'

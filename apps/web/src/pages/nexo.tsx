@@ -1,6 +1,6 @@
 /** Chat with Nexo, one conversation per game. Each conversation is fetched once and kept in the app cache, so navigating away and back keeps it (and an answer still in flight). */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useLocation, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { type ChatLoad, type ChatMessage, NexoChat } from '../components/chat/chat'
@@ -11,19 +11,19 @@ import {
   threadKey,
 } from '../components/chat/threads'
 import { connectAccount, useDemo } from '../components/demo'
-import { GameBackdrop } from '../components/game-backdrop'
-import { image } from '../components/game-showcase'
 import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
+import { shownProgress } from '../lib/progress'
 import type { AppStateData, CurrentGame, LibraryGame } from '../lib/types'
 import { modelWorkDone } from '../plugins'
 import { toast } from '../ui/toast'
+import './nexo.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
     sendFailed: 'Não conseguimos falar com o Nexo. Tenta de novo.',
     subtitleLoading: 'Um passo mais perto da platina.',
-    subtitleGame: 'Falando sobre {name} ({progress}%).',
+    subtitleGame: '{name} · {progress}%',
     subtitleNoGame: 'Escolha um jogo para começar a conversa.',
     subtitleNotOwned: 'Falando sobre {name}, antes de você comprar.',
     switchFailed: 'Não consegui trocar o jogo. Tenta de novo.',
@@ -36,7 +36,7 @@ const messages = defineMessages({
   [Language.En]: {
     sendFailed: 'Could not reach Nexo. Try again.',
     subtitleLoading: 'One step closer to the platinum.',
-    subtitleGame: 'Talking about {name} ({progress}%).',
+    subtitleGame: '{name} · {progress}%',
     subtitleNoGame: 'Pick a game to start the conversation.',
     subtitleNotOwned: 'Talking about {name}, before you buy it.',
     switchFailed: 'Could not switch the game. Try again.',
@@ -53,21 +53,7 @@ type ChatReply = { text?: string; error?: string; messages?: ChatMessage[] }
 export function Nexo() {
   // The demo's chat is closed: it shows sample exchanges and asks nothing of the server.
   const demo = useDemo()
-  return (
-    <>
-      <PlayingBackdrop />
-      {demo ? <DemoNexo /> : <LiveNexo />}
-    </>
-  )
-}
-
-/** The scene of the game being played behind the chat, like the other screens' tops. */
-function PlayingBackdrop() {
-  const { data } = useApp()
-  const game = data?.current?.game
-  const shot = game?.screenshot_ids?.[0]
-  if (!shot) return null
-  return <GameBackdrop src={image(shot, 't_1080p')} tint={game?.tint} />
+  return demo ? <DemoNexo /> : <LiveNexo />
 }
 
 function DemoNexo() {
@@ -91,7 +77,12 @@ function subtitleOf(t: Translate, loaded: boolean, current: CurrentGame | null |
   if (!loaded) return t('subtitleLoading')
   if (!current) return t('subtitleNoGame')
   if (current.owned === false) return t('subtitleNotOwned', { name: current.name })
-  return t('subtitleGame', { name: current.name, progress: current.progress })
+  return t('subtitleGame', {
+    name: current.name,
+    progress: current.groups
+      ? shownProgress(current.groups.base, null, false).progress
+      : current.progress,
+  })
 }
 
 function playingElsewhere(data: AppStateData | null) {
@@ -199,6 +190,7 @@ function PlayingNote({
 
 function LiveNexo() {
   const t = useMessages(messages)
+  const location = useLocation()
   const { data, cache, loadState } = useApp()
   // Each game is its own conversation, kept by its key (the game's id, or "none" without a game).
   if (!cache.chats) cache.chats = {}
@@ -334,7 +326,7 @@ function LiveNexo() {
     if (!wanted || asked.current || !data) return
     asked.current = true
     setTrophy(params.get('trophy'))
-    setParams({}, { replace: true })
+    setParams({}, { replace: true, state: location.state })
     // A PSN list id for a game in the library, a game id for one outside it.
     const byGame = wanted.startsWith('game:')
     if (byGame ? chatGame?.game.id === wanted : chatGame?.np === wanted) return
@@ -376,11 +368,10 @@ function LiveNexo() {
 
   return (
     <Page path="/nexo">
-      <div className="nexo-layout">
+      <div className="nexo-layout nexo-conversation">
         {/* The list shows once there is a conversation, or the chat's game waits for its first. */}
         {listed?.length ? (
           <>
-            <ChatThreadsToggle onOpen={() => setSheet(true)} />
             <ChatThreads
               threads={listed}
               active={marked}
@@ -391,6 +382,9 @@ function LiveNexo() {
           </>
         ) : null}
         <NexoChat
+          historyControl={
+            listed?.length ? <ChatThreadsToggle onOpen={() => setSheet(true)} /> : undefined
+          }
           readOnly={readOnly}
           chat={chat}
           sending={sending}
