@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.44.0](https://github.com/renatoaug/platjourney/compare/v0.43.0...v0.44.0) (2026-11-01)
+
+### Features
+
+* **server:** prepare ios push and focused notification tips ([#124](https://github.com/renatoaug/platjourney/issues/124)) ([fcc6ec8](https://github.com/renatoaug/platjourney/commit/fcc6ec869d986a2a4952ab40c469fc3d3d1e8b17))
+
 ## [0.43.0](https://github.com/renatoaug/platjourney/compare/v0.42.0...v0.43.0) (2026-10-31)
 
 ### Features
