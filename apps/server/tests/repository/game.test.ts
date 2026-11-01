@@ -24,7 +24,7 @@ function fakeDb(catalog: Game[]) {
   const byId = (id: db.RecordId) => catalog.find((g) => g.id === `game:${id.id}`)
   spyOn(db, 'one').mockImplementation((async (sql: string, vars: Vars) => {
     if (sql === 'SELECT * OMIT embedding FROM $id') return byId(vars.id as db.RecordId)
-    if (sql.includes('$np IN np_communication_ids'))
+    if (sql.includes('np_communication_ids = $np'))
       return catalog.find((g) => g.np_communication_ids.includes(vars.np as string))
     if (sql.includes('slug = $slug')) return catalog.find((g) => g.slug === vars.slug)
     throw new Error(`unexpected one: ${sql}`)
