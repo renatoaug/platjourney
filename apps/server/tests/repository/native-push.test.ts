@@ -19,7 +19,9 @@ afterEach(() => mock.restore())
 test('rotation updates one installation and binds it to the server session', async () => {
   const query = spyOn(db, 'q').mockResolvedValue(undefined)
   await saveNativeDevice('user:one', 'hashed-session', device)
-  expect(query.mock.calls[0][0]).toContain('WHERE installation = $installation')
+  expect(query.mock.calls[0][0]).toContain(
+    "WHERE transport = 'apns' AND installation = $installation",
+  )
   expect(query.mock.calls[0][1]).toEqual({
     user: new db.RecordId('user', 'one'),
     sessionHash: 'hashed-session',
@@ -46,5 +48,20 @@ test('revocation is owner scoped and invalid-token cleanup cannot remove a renew
   await deleteNativeDevices('user:one')
   expect(query.mock.calls[0][0]).toContain('user = $user AND installation = $installation')
   expect(query.mock.calls[1][0]).toContain('token = $deviceToken AND environment = $environment')
-  expect(query.mock.calls[2][0]).toBe('DELETE native_push_subscription WHERE user = $user')
+  expect(query.mock.calls[2][0]).toBe(
+    "DELETE push_subscription WHERE transport = 'apns' AND user = $user",
+  )
+})
+
+test('invalid transfers are rejected before touching an existing destination', async () => {
+  const query = spyOn(db, 'q').mockResolvedValue(undefined)
+  await expect(saveNativeDevice('user:one', '', device)).rejects.toThrow('Invalid APNs')
+  for (const invalid of [
+    { ...device, token: 'not-a-token' },
+    { ...device, token: 'b'.repeat(33) },
+    { ...device, installation: 'bad' },
+    { ...device, environment: 'unknown' as 'production' },
+  ])
+    await expect(saveNativeDevice('user:one', 'session', invalid)).rejects.toThrow('Invalid APNs')
+  expect(query).not.toHaveBeenCalled()
 })

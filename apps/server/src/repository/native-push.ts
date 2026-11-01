@@ -13,9 +13,21 @@ export async function saveNativeDevice(
   session: string,
   device: NativeDevice,
 ): Promise<void> {
+  if (
+    !session ||
+    !/^[a-f0-9]{64}$/.test(device.installation) ||
+    !/^[a-f0-9]{32,512}$/.test(device.token) ||
+    device.token.length % 2 ||
+    !['sandbox', 'production'].includes(device.environment)
+  )
+    throw new Error('Invalid APNs registration')
   await q(
-    `UPSERT native_push_subscription SET user = $user, session_hash = $sessionHash,
-       installation = $installation, token = $deviceToken, environment = $environment WHERE installation = $installation`,
+    `BEGIN TRANSACTION;
+     DELETE push_subscription WHERE transport = 'apns' AND token = $deviceToken
+       AND environment = $environment AND installation != $installation;
+     UPSERT push_subscription SET transport = 'apns', user = $user, session_hash = $sessionHash,
+       installation = $installation, token = $deviceToken, environment = $environment WHERE transport = 'apns' AND installation = $installation;
+     COMMIT TRANSACTION;`,
     {
       user: userRef(user),
       sessionHash: session,
@@ -30,7 +42,7 @@ export async function saveNativeDevice(
 export async function nativeDevices(user: string): Promise<NativeDevice[]> {
   return (
     (await q<NativeDevice[]>(
-      `SELECT installation, token, environment FROM native_push_subscription WHERE user = $user
+      `SELECT installation, token, environment FROM push_subscription WHERE transport = 'apns' AND user = $user
        AND session_hash IN (SELECT VALUE token_hash FROM auth_session WHERE user = $user AND expires_at > time::now())`,
       { user: userRef(user) },
     )) ?? []
@@ -40,7 +52,7 @@ export async function nativeDevices(user: string): Promise<NativeDevice[]> {
 /** Recheck immediately before each send: a previous device may have taken time to answer. */
 export async function nativeDeviceActive(user: string, device: NativeDevice): Promise<boolean> {
   const rows = await q<{ installation: string }[]>(
-    `SELECT installation FROM native_push_subscription WHERE user = $user
+    `SELECT installation FROM push_subscription WHERE transport = 'apns' AND user = $user
       AND installation = $installation AND token = $deviceToken AND environment = $environment
       AND session_hash IN (SELECT VALUE token_hash FROM auth_session WHERE user = $user AND expires_at > time::now()) LIMIT 1`,
     {
@@ -54,16 +66,19 @@ export async function nativeDeviceActive(user: string, device: NativeDevice): Pr
 }
 
 export async function deleteNativeDevice(user: string, installation: string): Promise<void> {
-  await q('DELETE native_push_subscription WHERE user = $user AND installation = $installation', {
-    user: userRef(user),
-    installation,
-  })
+  await q(
+    "DELETE push_subscription WHERE transport = 'apns' AND user = $user AND installation = $installation",
+    {
+      user: userRef(user),
+      installation,
+    },
+  )
 }
 
 // Match the token too: an APNs response for an old token must not remove a concurrent renewal.
 export async function expireNativeDevice(device: NativeDevice): Promise<void> {
   await q(
-    'DELETE native_push_subscription WHERE installation = $installation AND token = $deviceToken AND environment = $environment',
+    "DELETE push_subscription WHERE transport = 'apns' AND installation = $installation AND token = $deviceToken AND environment = $environment",
     {
       installation: device.installation,
       deviceToken: device.token,
@@ -73,5 +88,7 @@ export async function expireNativeDevice(device: NativeDevice): Promise<void> {
 }
 
 export async function deleteNativeDevices(user: string): Promise<void> {
-  await q('DELETE native_push_subscription WHERE user = $user', { user: userRef(user) })
+  await q("DELETE push_subscription WHERE transport = 'apns' AND user = $user", {
+    user: userRef(user),
+  })
 }

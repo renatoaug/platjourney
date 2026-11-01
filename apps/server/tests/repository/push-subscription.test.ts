@@ -16,7 +16,7 @@ afterEach(() => mock.restore())
 test('a device is saved once per endpoint, under the account that turned it on', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   await savePushSubscription('user:u1', sub)
-  expect(q.mock.calls[0][0]).toContain('WHERE endpoint = $endpoint')
+  expect(q.mock.calls[0][0]).toContain("WHERE transport = 'webpush' AND endpoint = $endpoint")
   expect(q.mock.calls[0][1]).toEqual({ user, endpoint: sub.endpoint, p256dh: 'k', secret: 's' })
 })
 
@@ -32,9 +32,12 @@ test('a device is dropped by endpoint, only from its own account when the player
   await deletePushSubscription('https://push.example/a', 'user:u1')
   await deletePushSubscriptions('user:u1')
   expect(q.mock.calls[0]).toEqual([
-    'DELETE push_subscription WHERE endpoint = $endpoint',
+    "DELETE push_subscription WHERE transport = 'webpush' AND endpoint = $endpoint",
     { endpoint: 'https://push.example/a' },
   ])
   expect(q.mock.calls[1][1]).toEqual({ endpoint: 'https://push.example/a', user })
-  expect(q.mock.calls[2]).toEqual(['DELETE push_subscription WHERE user = $user', { user }])
+  expect(q.mock.calls[2]).toEqual([
+    "DELETE push_subscription WHERE transport = 'webpush' AND user = $user",
+    { user },
+  ])
 })
