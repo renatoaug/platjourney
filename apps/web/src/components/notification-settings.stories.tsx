@@ -11,6 +11,7 @@ const meta: Meta<typeof NotificationSettingsView> = {
     notifyTelegram: true,
     busy: false,
     onPush: () => {},
+    onRetry: () => {},
     onTest: () => {},
     onTelegram: () => {},
   },
@@ -33,7 +34,7 @@ export const NeedsInstall: Story = { args: { push: 'install' } }
 /** The player blocked notifications for the site. */
 export const Denied: Story = { args: { push: 'denied' } }
 
-/** The native app, which has no push yet. */
+/** An older native build without the push plugin (or Android). */
 export const NativeApp: Story = { args: { push: 'native' } }
 
 /** No Telegram linked: its switch waits for the link. */
@@ -44,3 +45,6 @@ export const PushOff: Story = { args: { pushAvailable: false } }
 
 /** The shared demo: nothing changes. */
 export const Demo: Story = { args: { demo: true } }
+
+/** Revocation or status lookup failed: retry without claiming notifications are off. */
+export const Unconfirmed: Story = { args: { push: 'error' } }

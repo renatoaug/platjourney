@@ -4,9 +4,11 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './app/app'
 import { hideLaunchScreen, isNative, tickOnChoices } from './lib/native'
+import { listenNativePush } from './lib/native-push'
 
 // The native app goes back with the iPhone's own swipe, which already animates (page.css).
 if (isNative()) document.documentElement.dataset.native = ''
+listenNativePush().catch(() => {})
 tickOnChoices()
 // The stylesheets are in by now, so index.html's boot screen shows: the launch screen can go.
 hideLaunchScreen()

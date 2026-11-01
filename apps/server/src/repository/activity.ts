@@ -1,4 +1,4 @@
-import { plain, q } from '../db.ts'
+import { plain, q, RecordId } from '../db.ts'
 import type { Game } from './game.ts'
 import { gameRef } from './game.ts'
 import { userRef } from './user.ts'
@@ -86,6 +86,29 @@ export async function recentTips(user: string, limit = 30): Promise<Tip[]> {
       { user: userRef(user), limit },
     ),
   )
+}
+
+/** Resolve the persisted notice emitted by legacy producers that return text. */
+export async function deliveredTip(user: string, content: string): Promise<string | undefined> {
+  const rows = plain(
+    await q<{ id: string }[]>(
+      'SELECT id, created_at FROM tip WHERE user = $user AND content = $content ORDER BY created_at DESC LIMIT 1',
+      { user: userRef(user), content },
+    ),
+  )
+  return rows?.[0]?.id
+}
+
+/** A notification opens its own tip, including older items outside the first history page. */
+export async function tipById(user: string, id: string): Promise<Tip | undefined> {
+  if (!/^tip:[a-zA-Z0-9_-]+$/.test(id)) return undefined
+  const rows = plain(
+    await q<Tip[]>(
+      `SELECT *, game.* AS game, ${GAMES} FROM tip WHERE id = $id AND user = $user LIMIT 1`,
+      { id: new RecordId('tip', id.slice(4)), user: userRef(user) },
+    ),
+  )
+  return rows?.[0]
 }
 
 /** The newest tip of one kind, for a notice that should not repeat the one before it. */

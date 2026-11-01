@@ -3,7 +3,7 @@ import { fireEvent, screen } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import type { Tip } from '../../src/lib/types'
 import { History } from '../../src/pages/history'
-import { renderApp } from '../support/web'
+import { mockApi, never, renderApp, reply } from '../support/web'
 
 const game = { id: 'game:19561', name: 'Days Gone' }
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString()
@@ -138,4 +138,37 @@ test('past four games, the last cover of the mosaic says how many more', () => {
   }
   renderApp(<History />, { value: { data: { ...SAMPLE_DATA, tips: [tip] } } })
   expect(document.querySelector('.entry-covers-more')?.textContent).toBe('+3')
+})
+
+test('a push opens the selected old tip even when it is absent from the loaded history and filter', async () => {
+  const calls = mockApi({
+    '/api/tip': { ...TIPS[0], id: 'tip:old', content: 'Take the missable before chapter three' },
+  })
+  renderApp(<History />, {
+    path: '/history?tip=tip%3Aold',
+    value: { data: { ...SAMPLE_DATA, tips: [] }, cache: { tipKind: 'chat' } },
+  })
+  expect(await screen.findByText('Take the missable before chapter three')).toBeTruthy()
+  expect(calls[0].path).toBe('/api/tip?id=tip%3Aold')
+  expect(screen.getByRole('link', { name: 'Ver todos' })).toBeTruthy()
+})
+
+test('a deleted tip or a tip of another account has a safe empty state', async () => {
+  mockApi({ '/api/tip': reply(404) })
+  renderApp(<History />, { path: '/history?tip=tip%3Aother' })
+  expect(await screen.findByText('Esta dica não está disponível para esta conta.')).toBeTruthy()
+})
+
+test('the selected tip has a skeleton and a retryable failure', async () => {
+  mockApi({ '/api/tip': never })
+  const first = renderApp(<History />, { path: '/history?tip=tip%3Aold' })
+  expect(first.container.querySelector('.sk')).toBeTruthy()
+  first.unmount()
+  let failed = true
+  mockApi({ '/api/tip': () => (failed ? reply(500) : { ...TIPS[0], content: 'Recovered tip' }) })
+  renderApp(<History />, { path: '/history?tip=tip%3Aold' })
+  const retry = await screen.findByRole('button', { name: 'Tentar novamente' })
+  failed = false
+  fireEvent.click(retry)
+  expect(await screen.findByText('Recovered tip')).toBeTruthy()
 })

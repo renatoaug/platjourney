@@ -1,4 +1,13 @@
-import { AuthError, changePassword, deleteAccount, newLinkCode, sessionCookie } from '../auth.ts'
+import { apnsEnabled } from '../apns.ts'
+import {
+  AuthError,
+  changePassword,
+  deleteAccount,
+  newLinkCode,
+  sessionCookie,
+  sessionHash,
+} from '../auth.ts'
+import { config } from '../config.ts'
 import { isDemo } from '../demo.ts'
 import { forgetUser } from '../game-context.ts'
 import { json, readBody } from '../http.ts'
@@ -6,6 +15,7 @@ import { defineMessages, isLocale, Language, translator } from '../i18n.ts'
 import { consentClient, decide } from '../oauth.ts'
 import { profilePage } from '../profile.ts'
 import { pushEnabled, pushTo } from '../push.ts'
+import { deleteNativeDevice, saveNativeDevice } from '../repository/native-push.ts'
 import { connectionsOf, deleteConnection } from '../repository/oauth.ts'
 import { deletePushSubscription, savePushSubscription } from '../repository/push-subscription.ts'
 import { setLinkCode, type User, updateUser } from '../repository/user.ts'
@@ -72,6 +82,34 @@ async function dropPush({ req, res, me }: Api) {
   const { endpoint } = await readBody(req)
   if (typeof endpoint !== 'string') return json(res, 400, { error: 'invalid' })
   await deletePushSubscription(endpoint, me.id)
+  return json(res, 200, { ok: true })
+}
+
+async function saveNativePush({ req, res, me }: Api) {
+  if (!apnsEnabled()) return json(res, 404, { error: 'push_off' })
+  const { installation, token, owner } = await readBody(req)
+  if (
+    owner !== me.id ||
+    typeof installation !== 'string' ||
+    !/^[a-f0-9]{64}$/.test(installation) ||
+    typeof token !== 'string' ||
+    !/^[a-fA-F0-9]{32,512}$/.test(token) ||
+    token.length % 2
+  )
+    return json(res, 400, { error: 'invalid' })
+  await saveNativeDevice(me.id, sessionHash(req), {
+    installation,
+    token: token.toLowerCase(),
+    environment: config.apns.environment,
+  })
+  return json(res, 200, { ok: true })
+}
+
+async function dropNativePush({ req, res, me }: Api) {
+  const { installation, owner } = await readBody(req)
+  if (owner !== me.id || typeof installation !== 'string' || !/^[a-f0-9]{64}$/.test(installation))
+    return json(res, 400, { error: 'invalid' })
+  await deleteNativeDevice(me.id, installation)
   return json(res, 200, { ok: true })
 }
 
@@ -183,6 +221,8 @@ export const ACCOUNT_ROUTES: Record<string, ApiHandler> = {
   'POST /api/oauth/authorize': consent,
   'GET /api/connections': connections,
   'DELETE /api/connections': disconnect,
+  'POST /api/push/native': saveNativePush,
+  'DELETE /api/push/native': dropNativePush,
   'POST /api/push/subscription': savePush,
   'DELETE /api/push/subscription': dropPush,
   'POST /api/push/test': testPush,

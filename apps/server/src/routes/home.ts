@@ -10,6 +10,7 @@ import {
   markNotificationsRead,
   notificationsPage,
   recentTips,
+  tipById,
   tipsBefore,
   unreadNotifications,
 } from '../repository/activity.ts'
@@ -99,6 +100,10 @@ async function state({ res, me, titles }: Api) {
 // The home screen and the notices: what the player has, and what Nexo said.
 export const HOME_ROUTES: Record<string, ApiHandler> = {
   'GET /api/state': state,
+  'GET /api/tip': async ({ res, url, me }) => {
+    const tip = await tipById(me.id, url.searchParams.get('id') ?? '')
+    return json(res, tip ? 200 : 404, tip ?? { error: 'not_found' })
+  },
   'GET /api/tips': async ({ res, url, me }) => {
     const before = new Date(url.searchParams.get('before') ?? '')
     if (Number.isNaN(before.getTime())) return json(res, 400, { error: 'before' })

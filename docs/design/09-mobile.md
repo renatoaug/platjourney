@@ -54,3 +54,37 @@ Building for a store needs Xcode (iOS) or Android Studio (Android), a developer 
 ### Plugins
 
 Plugins are part of the web build (`PLUGINS_WEB`, see [plugins](06-plugins.md)), so the native app gets the ones of the instance it opens. With `MOBILE_URL` set, that is the live instance: whatever plugins it was built with show in the app too, and changing them needs no new app. Without `MOBILE_URL`, the app carries the plugins of the web build made before `cap sync`.
+
+
+### iOS notifications
+
+The iOS shell includes `@capacitor/push-notifications`. Settings > Notifications requests permission only when the player enables this device. Its preference is local to the account on this installation. Both transports use `push_subscription`, distinguished by `transport=webpush|apns`; Web Push's existing registrations are preserved. The app registers on launch and foreground resume, receives a fresh APNs token from the OS and saves it through the authenticated `/api/push/native` route. A random installation secret lets token renewal update one row; the server supplies the account, session hash and APNs environment. Android remains on its existing behavior; no FCM configuration is included.
+
+Delivery requires the registering session to still exist and be unexpired. Logout stops new delivery even if the browser cleanup fails; changing the password revokes devices on the other sessions. Turning off push removes the device, unregisters with iOS and clears delivered notifications. The app also clears delivered notifications on logout. An already delivered notification or an APNs request already in flight cannot be recalled; APNs expiration is zero to avoid storing new private notices for later delivery. APNs failures are isolated from Web Push and Telegram, without logging tokens or content. Invalid tokens are removed, temporary failures retained for future notices; there is no retry queue. A stable collapse id merges repeats of the same tip.
+
+Each notice links to `/history?tip=tip%3A...`. Existing producers return text; delivery resolves the latest persisted tip with that exact content and owner. If lookup fails it safely opens the history. The selected tip is fetched separately, so it works beyond the first history page and ignores a remembered filter. The API always checks ownership; a deleted or other-account tip has a safe empty state. A native tap accepts only this internal route, stays at it through login, and adds `from=push` for the existing usage plugin.
+
+### Local iOS check
+
+Use `bun run --cwd apps/mobile sync:ios` to build and sync only iOS. For a real signed build, set `MOBILE_URL` to the reviewed HTTPS instance **before** syncing. The default offline bundle has no API and is not a beta release configuration. Do not commit an instance URL or generated `capacitor.config.json`.
+
+```sh
+xcodebuild -project apps/mobile/ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath /tmp/platjourney-ios-build CODE_SIGNING_ALLOWED=NO build
+```
+
+The checked-in entitlements use `development` for Debug and `production` for Release. The server's `APNS_ENVIRONMENT=sandbox` is for a development-signed build; `production` is for TestFlight/distribution. Use separate instances for the two environments. The server pins the environment, rather than trusting a body field from the client. Set `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` (PEM, actual newlines or escaped `\n`) and `APNS_TOPIC=com.platjourney.app` only through the operator's secret configuration. Without all key fields, APNs stays off. The native app contains no APNs provider key.
+
+### Before a beta can ship
+
+- Active Apple Developer membership and App Store Connect access; confirm the Team ID.
+- Confirm the bundle id `com.platjourney.app` is available and register the explicit App ID with Push Notifications. Creating identifiers, keys, certificates or provisioning profiles is a separately approved operator action.
+- Obtain an APNs token-auth key authorized for this app/environment; keep its `.p8`, Key ID and Team ID in the private secret store. No credentials are created by sync or the unsigned build above.
+- Select the correct signing team, certificate and provisioning profile. A device build requires its device registration/profile; TestFlight requires distribution signing. Do not enable automatic signing to generate credentials without approval.
+- Recheck the 1024 px app icon, launch images, version/build number, privacy policy, app privacy declarations, encryption/export answers, support and beta feedback details. Supply a review account and working backend. The existing assets are retained.
+- On an iPhone, verify allow/deny, foreground/background/terminated taps, token renewal, two accounts, logout, password revocation, disabled preferences, offline behavior and an old/missing tip. An unsigned simulator build and mocks do not verify APNs delivery.
+- Billing is a separate release decision: review digital subscriptions/credits and external purchase links against the target storefront rules before submission. No prices, plans, checkout or purchase implementation changes are included here. Native push alone does not establish compliance with minimum-functionality review.
+- Uploading to TestFlight, inviting testers and publishing require their own release approval. External testing may require beta review.
+
+References: [Capacitor push plugin](https://capacitorjs.com/docs/apis/push-notifications), [APNs requests](https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns), [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/), [TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/).
+
+The in-place database upgrade and the incompatibility with older senders are documented in [ADR-012](../decisions/ADR-012-ios-native-push.md#migration). The unified schema is migration `028_push_transport.surql`.

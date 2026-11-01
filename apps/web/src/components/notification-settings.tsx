@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
+import { isIosPush } from '../lib/native-push'
 import { disablePush, enablePush, type PushState, pushState } from '../lib/push'
 import type { Me } from '../lib/types'
 import { Sk } from '../ui/skeleton'
@@ -18,15 +19,18 @@ const messages = defineMessages({
     lead: 'Escolha onde os avisos do Nexo chegam. Todos ficam no histórico, de qualquer jeito.',
     device: 'Neste aparelho',
     deviceHint: {
+      error:
+        'Não foi possível confirmar as notificações. Os avisos ainda podem chegar. Tente novamente.',
       on: 'Os avisos chegam como notificação, mesmo com o PlatJourney fechado.',
       off: 'Ligue para receber os avisos como notificação, mesmo com o PlatJourney fechado.',
       denied:
-        'As notificações do PlatJourney estão bloqueadas neste navegador. Libere nas configurações do site e volte aqui.',
+        'As notificações do PlatJourney estão bloqueadas neste aparelho. Libere nas configurações de notificações e volte aqui.',
       install:
         'No iPhone, as notificações pedem o PlatJourney na tela de início: toque em Compartilhar, depois em "Adicionar à Tela de Início", e ligue aqui pelo ícone novo.',
       native: 'O app ainda não recebe notificações. Use o Telegram ou o PlatJourney no navegador.',
       unsupported: 'Este navegador não recebe notificações.',
     },
+    retry: 'Tentar novamente',
     test: 'Enviar um teste',
     testSent: 'Teste enviado. Deve chegar em alguns segundos.',
     testNone: 'Nenhum aparelho recebeu o teste. Desligue e ligue de novo.',
@@ -36,7 +40,7 @@ const messages = defineMessages({
     on: 'Notificações ligadas neste aparelho.',
     off: 'Notificações desligadas neste aparelho.',
     notAllowed:
-      'O navegador não liberou as notificações. Permita para o PlatJourney no aviso do navegador ou nas configurações do site.',
+      'As notificações não foram liberadas. Permita para o PlatJourney no aviso ou nas configurações do aparelho.',
     telegramOn: 'Os avisos voltam a chegar no Telegram.',
     telegramOff: 'Os avisos não vão mais para o Telegram.',
     failed: 'Não conseguimos mudar agora. Tente de novo.',
@@ -46,15 +50,17 @@ const messages = defineMessages({
     lead: "Pick where Nexo's notices reach you. They all stay in the history either way.",
     device: 'On this device',
     deviceHint: {
+      error: 'Notification status could not be confirmed. Notices may still arrive. Try again.',
       on: 'Notices arrive as notifications, even with PlatJourney closed.',
       off: 'Turn on to get notices as notifications, even with PlatJourney closed.',
       denied:
-        "PlatJourney's notifications are blocked in this browser. Allow them in the site settings and come back.",
+        "PlatJourney's notifications are blocked on this device. Allow them in notification settings and come back.",
       install:
         'On iPhone, notifications need PlatJourney on the home screen: tap Share, then "Add to Home Screen", and turn them on here from the new icon.',
       native: "The app doesn't get notifications yet. Use Telegram or PlatJourney in the browser.",
       unsupported: "This browser doesn't get notifications.",
     },
+    retry: 'Try again',
     test: 'Send a test',
     testSent: 'Test sent. It should arrive in a few seconds.',
     testNone: 'No device got the test. Turn it off and on again.',
@@ -64,7 +70,7 @@ const messages = defineMessages({
     on: 'Notifications on for this device.',
     off: 'Notifications off for this device.',
     notAllowed:
-      "The browser didn't allow notifications. Allow them for PlatJourney in the browser's prompt or the site settings.",
+      'Notifications were not allowed. Allow them for PlatJourney in the prompt or device settings.',
     telegramOn: 'Notices go to Telegram again.',
     telegramOff: 'Notices no longer go to Telegram.',
     failed: "We couldn't change it now. Try again.",
@@ -74,7 +80,7 @@ const messages = defineMessages({
 const handled = (e: unknown) => e instanceof ApiError && e.handled
 
 interface ViewProps {
-  push: PushState | 'loading'
+  push: PushState | 'loading' | 'error'
   /** The instance sends push at all; without it the device row is left out. */
   pushAvailable: boolean
   telegramLinked: boolean
@@ -82,6 +88,7 @@ interface ViewProps {
   busy: boolean
   demo?: boolean
   onPush: (on: boolean) => void
+  onRetry: () => void
   onTest: () => void
   onTelegram: (on: boolean) => void
 }
@@ -95,6 +102,7 @@ export function NotificationSettingsView({
   busy,
   demo,
   onPush,
+  onRetry,
   onTest,
   onTelegram,
 }: ViewProps) {
@@ -121,6 +129,13 @@ export function NotificationSettingsView({
             onChange={(e) => onPush(e.target.checked)}
           />
         </label>
+      )}
+      {pushAvailable && push === 'error' && (
+        <p className="push-test">
+          <button type="button" className="text-link" disabled={busy} onClick={onRetry}>
+            {t('retry')}
+          </button>
+        </p>
       )}
       {/* Outside the row's label: a button inside it would take the label's clicks from the switch. */}
       {pushAvailable && push === 'on' && (
@@ -180,15 +195,15 @@ export function NotificationSettingsSkeleton() {
 export function NotificationSettings({ user }: { user: Me }) {
   const t = useMessages(messages)
   const { setMe } = useApp()
-  const [push, setPush] = useState<PushState | 'loading'>('loading')
+  const [push, setPush] = useState<PushState | 'loading' | 'error'>('loading')
   const [busy, setBusy] = useState(false)
-  const pushAvailable = !!user.pushKey
+  const pushAvailable = isIosPush() ? !!user.nativePush : !!user.pushKey
   useEffect(() => {
     if (!pushAvailable) return
     let live = true
     pushState()
       .then((state) => live && setPush(state))
-      .catch(() => live && setPush('unsupported'))
+      .catch(() => live && setPush('error'))
     return () => {
       live = false
     }
@@ -205,7 +220,10 @@ export function NotificationSettings({ user }: { user: Me }) {
   }
   const changePush = (on: boolean) =>
     run(async () => {
-      const state = on ? await enablePush(user.pushKey ?? '') : await disablePush()
+      const state = await (on ? enablePush(user.pushKey ?? '') : disablePush()).catch((error) => {
+        if (isIosPush()) setPush('error')
+        throw error
+      })
       setPush(state)
       // Turning on can end without a subscription: the browser blocked or the player dismissed it.
       if (!on) toast(t('off'), 'success')
@@ -233,6 +251,7 @@ export function NotificationSettings({ user }: { user: Me }) {
       busy={busy}
       demo={user.demo}
       onPush={changePush}
+      onRetry={() => run(async () => setPush(await pushState()))}
       onTest={test}
       onTelegram={changeTelegram}
     />

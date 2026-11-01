@@ -140,8 +140,11 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 
 | Setting | Default | What it is |
 |---|---|---|
-| `PUSH_VAPID_PUBLIC_KEY`, `PUSH_VAPID_PRIVATE_KEY` | empty | The instance's key pair for Web Push; `bun run --cwd apps/server push:keys` makes one. Empty turns push off and the profile shows only Telegram. A new pair makes every device turn push on again |
+| `PUSH_VAPID_PUBLIC_KEY`, `PUSH_VAPID_PRIVATE_KEY` | empty | The instance's key pair for Web Push; `bun run --cwd apps/server push:keys` makes one. Empty disables Web Push independently of APNs. A new pair requires browsers to subscribe again |
 | `PUSH_CONTACT` | mailto:admin@localhost | A `mailto:` or `https:` address sent to the push services with every message, so they can reach whoever runs the instance |
+| `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` | empty | Native iOS provider credentials; missing fields disable APNs independently of Web Push. Keep the private key in operator secret configuration |
+| `APNS_TOPIC` | com.platjourney.app | Explicit iOS bundle identifier authorized by the provider key |
+| `APNS_ENVIRONMENT` | production | `sandbox` for development-signed builds, `production` for TestFlight/distribution. The server selects the environment; see [mobile](09-mobile.md#ios-notifications) |
 
 ## Optional
 

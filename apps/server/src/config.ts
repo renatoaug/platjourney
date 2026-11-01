@@ -63,6 +63,15 @@ export const config = {
     privateKey: process.env.PUSH_VAPID_PRIVATE_KEY || null,
     contact: process.env.PUSH_CONTACT || 'mailto:admin@localhost',
   },
+  // APNs is off until an operator supplies an existing key; no credentials are generated here.
+  apns: {
+    keyId: process.env.APNS_KEY_ID || '',
+    teamId: process.env.APNS_TEAM_ID || '',
+    privateKey: (process.env.APNS_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+    topic: process.env.APNS_TOPIC || 'com.platjourney.app',
+    environment:
+      process.env.APNS_ENVIRONMENT === 'sandbox' ? ('sandbox' as const) : ('production' as const),
+  },
   // The longest chat message passed to the model, on the web and on Telegram (the web app
   // stops typing at the same length).
   chat: { maxChars: 1000 },

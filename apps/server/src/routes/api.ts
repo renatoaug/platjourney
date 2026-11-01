@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { apnsEnabled } from '../apns.ts'
 import { config } from '../config.ts'
 import { deepGuideStats } from '../deepguide.ts'
 import { isDemo } from '../demo.ts'
@@ -53,6 +54,7 @@ export const publicUser = (u: User) => ({
   notifyTelegram: u.notify_telegram !== false,
   // The key a browser subscribes to push with; null when the instance has push off.
   pushKey: pushEnabled() ? config.push.publicKey : null,
+  nativePush: apnsEnabled(),
   // Whether this instance lets Nexo write notices at all; the profile's switch only shows then.
   aiNoticesAvailable: config.automatic.notices,
   locale: u.locale ?? null,

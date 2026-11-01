@@ -4,6 +4,7 @@ import * as fs from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { Readable } from 'node:stream'
 import * as aiModule from '../src/ai.ts'
+import * as apns from '../src/apns.ts'
 import * as auth from '../src/auth.ts'
 import { AuthError } from '../src/auth.ts'
 import * as browser from '../src/browse.ts'
@@ -33,6 +34,7 @@ import * as games from '../src/repository/game.ts'
 import * as missing from '../src/repository/game-request.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
+import * as nativeSubs from '../src/repository/native-push.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
 import * as pushSubs from '../src/repository/push-subscription.ts'
 import * as statuses from '../src/repository/server-status.ts'
@@ -188,6 +190,7 @@ test('register and login sign in, start watching and set the cookie', async () =
       aiNoticesAvailable: config.automatic.notices,
       notifyTelegram: true,
       pushKey: null,
+      nativePush: false,
       locale: 'pt-BR',
       demo: false,
       onboarded: false,
@@ -1462,4 +1465,60 @@ test('the PS Plus tier is a preference, and an unknown one is refused', async ()
   expect((await send('POST', '/api/account/preferences', { psPlus: 'extra' })).status).toBe(200)
   expect(update).toHaveBeenLastCalledWith(expect.any(String), { ps_plus: 'extra' })
   expect((await send('POST', '/api/account/preferences', { psPlus: 'gold' })).status).toBe(400)
+})
+
+test('native push validates the device, pins environment and uses the authenticated owner and session', async () => {
+  spyOn(apns, 'apnsEnabled').mockReturnValue(true)
+  spyOn(auth, 'sessionHash').mockReturnValue('server-session')
+  const save = spyOn(nativeSubs, 'saveNativeDevice').mockResolvedValue()
+  const installation = 'a'.repeat(64)
+  const token = 'B'.repeat(64)
+  const valid = {
+    installation,
+    token,
+    owner: me.id,
+    user: 'user:other',
+    session: 'forged',
+    environment: 'sandbox',
+  }
+  expect((await send('POST', '/api/push/native', valid)).status).toBe(200)
+  expect(save).toHaveBeenCalledWith(me.id, 'server-session', {
+    installation,
+    token: token.toLowerCase(),
+    environment: config.apns.environment,
+  })
+  for (const invalid of [
+    { ...valid, owner: 'user:other' },
+    { ...valid, token: 'https://evil.test' },
+    { ...valid, installation: '' },
+    { ...valid, token: 'a'.repeat(33) },
+  ])
+    expect((await send('POST', '/api/push/native', invalid)).status).toBe(400)
+  expect(save).toHaveBeenCalledTimes(1)
+  spyOn(apns, 'apnsEnabled').mockReturnValue(false)
+  expect((await send('POST', '/api/push/native', valid)).status).toBe(404)
+})
+
+test('native device removal is account scoped, even when APNs is disabled', async () => {
+  const drop = spyOn(nativeSubs, 'deleteNativeDevice').mockResolvedValue()
+  const installation = 'a'.repeat(64)
+  expect(
+    (await send('DELETE', '/api/push/native', { installation, owner: me.id, user: 'user:other' }))
+      .status,
+  ).toBe(200)
+  expect(drop).toHaveBeenCalledWith(me.id, installation)
+  expect(
+    (await send('DELETE', '/api/push/native', { installation, owner: 'user:other' })).status,
+  ).toBe(400)
+  expect((await send('DELETE', '/api/push/native', { installation })).status).toBe(400)
+  expect(drop).toHaveBeenCalledTimes(1)
+  expect((await send('DELETE', '/api/push/native', { installation: '' })).status).toBe(400)
+})
+
+test('the focused tip route reads only the signed-in account and returns 404 for a missing tip', async () => {
+  const get = spyOn(activity, 'tipById').mockResolvedValue(undefined)
+  expect((await send('GET', '/api/tip?id=tip%3Aold')).status).toBe(404)
+  expect(get).toHaveBeenCalledWith(me.id, 'tip:old')
+  spyOn(auth, 'authenticate').mockResolvedValue(undefined)
+  expect((await send('GET', '/api/tip?id=tip%3Aold')).status).toBe(401)
 })

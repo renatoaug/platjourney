@@ -9,6 +9,7 @@ import {
   randomBytes,
   sign,
 } from 'node:crypto'
+import { nativePushTo } from './apns.ts'
 import { config } from './config.ts'
 import {
   deletePushSubscription,
@@ -118,8 +119,11 @@ export async function sendPush(sub: PushSubscription, message: PushMessage): Pro
  * 410) is forgotten; any other failure is logged and the rest still get it.
  */
 export async function pushTo(user: { id: string }, message: PushMessage): Promise<number> {
-  if (!pushEnabled()) return 0
-  let sent = 0
+  let sent = await nativePushTo(user, message).catch(() => {
+    console.warn('APNs delivery failed')
+    return 0
+  })
+  if (!pushEnabled()) return sent
   for (const sub of await pushSubscriptions(user.id)) {
     const status = await sendPush(sub, message).catch((e) => {
       console.warn('push failed:', (e as Error).message.slice(0, 80))

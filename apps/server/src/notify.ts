@@ -1,6 +1,8 @@
 // Where a notice goes once it is written: the linked Telegram chat, when the player kept it on, and
 // every device that turned push on. The web history already has it (logTip) before this runs.
+
 import { pushTo } from './push.ts'
+import { deliveredTip } from './repository/activity.ts'
 import type { User } from './repository/user.ts'
 import { sendMessage } from './telegram.ts'
 
@@ -38,11 +40,12 @@ export async function deliver(
         (e as Error).message.slice(0, 80),
       ),
     )
+  const tip = await deliveredTip(user.id, text).catch(() => undefined)
   const body = plainText(text)
   await pushTo(user, {
     title: 'Nexo',
     body: body.length > PUSH_CHARS ? `${body.slice(0, PUSH_CHARS - 1)}…` : body,
-    url: HISTORY,
+    url: tip ? `${HISTORY}?tip=${encodeURIComponent(tip)}` : HISTORY,
   }).catch((e) =>
     console.warn(`${user.psn_online_id}: push failed:`, (e as Error).message.slice(0, 80)),
   )

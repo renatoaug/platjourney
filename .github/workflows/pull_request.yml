@@ -47,3 +47,28 @@ jobs:
 
       - name: Tests with coverage
         run: bun run test:coverage
+
+  push-migration:
+    name: Push migration on SurrealDB 3.0.5
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - name: Start disposable database
+        run: |
+          docker run -d --rm --name push-migration -p 127.0.0.1:18183:8000 surrealdb/surrealdb:v3.0.5 start --user test --pass local-test-only memory
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:18183/health && exit 0
+            sleep 1
+          done
+          exit 1
+      - run: bun scripts/check-push-migration.ts
+      - name: Stop disposable database
+        if: always()
+        run: docker rm -f push-migration || true

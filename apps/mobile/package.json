@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "sync": "bun run --cwd ../web build && cap sync",
+    "sync:ios": "bun run --cwd ../web build && cap sync ios",
     "ios": "cap open ios",
     "android": "cap open android"
   },
@@ -12,6 +13,7 @@
     "@capacitor/core": "^8.5.3",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.5.3",
+    "@capacitor/push-notifications": "^8.0.2",
     "@capacitor/splash-screen": "^8.0.2"
   },
   "devDependencies": {
