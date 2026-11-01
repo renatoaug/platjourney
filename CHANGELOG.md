@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.44.2](https://github.com/renatoaug/platjourney/compare/v0.44.1...v0.44.2) (2026-11-01)
+
+### Performance Improvements
+
+* **server:** read list lookups and the home state through indexes ([#126](https://github.com/renatoaug/platjourney/issues/126)) ([fb96225](https://github.com/renatoaug/platjourney/commit/fb962256564a49110852621713a90cab7b66ce91))
+
 ## [0.44.1](https://github.com/renatoaug/platjourney/compare/v0.44.0...v0.44.1) (2026-11-01)
 
 ### Bug Fixes
