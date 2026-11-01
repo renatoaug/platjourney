@@ -43,9 +43,12 @@ export async function getGame(id: string): Promise<Game | undefined> {
   return plain(await one<Game>('SELECT * OMIT embedding FROM $id', { id: gameRef(id) }))
 }
 
+// `= $np` reads game_np_ids, where each list id is an entry of its own, so it matches a game holding
+// $np among others. It relies on that index: without it, `=` compares the whole array. `$np IN`
+// reads the whole catalog instead, and the ranking asks this for 40 titles at once.
 async function gameByNp(np: string): Promise<Game | undefined> {
   return plain(
-    await one<Game>('SELECT * OMIT embedding FROM game WHERE $np IN np_communication_ids LIMIT 1', {
+    await one<Game>('SELECT * OMIT embedding FROM game WHERE np_communication_ids = $np LIMIT 1', {
       np,
     }),
   )
