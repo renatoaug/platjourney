@@ -33,3 +33,6 @@ DEFINE FIELD IF NOT EXISTS updated_at ON game TYPE datetime DEFAULT time::now() 
 DEFINE INDEX IF NOT EXISTS game_slug ON game FIELDS slug UNIQUE;
 DEFINE INDEX IF NOT EXISTS game_igdb ON game FIELDS igdb_id UNIQUE;
 DEFINE INDEX IF NOT EXISTS game_np_ids ON game FIELDS np_communication_ids;
+-- The releases calendar reads a date range, and similar games look up a series' games.
+DEFINE INDEX IF NOT EXISTS game_released ON game FIELDS released_at;
+DEFINE INDEX IF NOT EXISTS game_series ON game FIELDS series;

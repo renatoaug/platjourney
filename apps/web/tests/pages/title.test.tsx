@@ -235,7 +235,10 @@ test('similar games under the showcase: the expansion and the series first, with
   expect(tag(1)?.textContent).toBe('Mesma série')
   expect(tag(2)).toBeNull()
   expect(cards[0].getAttribute('href')).toBe('/title/game/game%3A41')
-  expect(calls.at(-1)?.path).toBe('/api/games/similar?game=game%3A19561')
+  // Asked beside the title, not after it, and once: the band reuses the request already made.
+  const similar = calls.filter((c) => c.path === '/api/games/similar?game=game%3A19561')
+  expect(similar).toHaveLength(1)
+  expect(calls.indexOf(similar[0])).toBe(1)
 })
 
 test('no similar game leaves the section out', async () => {

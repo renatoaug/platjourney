@@ -79,6 +79,21 @@ export async function q<T = unknown>(sql: string, vars?: Record<string, unknown>
   }
 }
 
+// SurrealDB 3 reads an index for `field = $value` but scans the whole table for `field IN $list`
+// and CONTAINSANY. This asks one indexed subquery per value, all in one round trip, and joins
+// their rows; `select` names the value `$each`. Repeated values are asked once.
+export async function qEach<T = unknown>(
+  select: string,
+  values: unknown[],
+  vars: Record<string, unknown> = {},
+): Promise<T[]> {
+  const unique = [...new Map(values.map((v) => [String(v), v])).values()]
+  if (unique.length === 0) return []
+  const parts = unique.map((_, i) => `(${select.replaceAll('$each', `$each${i}`)})`)
+  const bound = Object.fromEntries(unique.map((v, i) => [`each${i}`, v]))
+  return (await q<T[]>(`RETURN array::flatten([${parts.join(', ')}])`, { ...vars, ...bound })) ?? []
+}
+
 export async function one<T = unknown>(
   sql: string,
   vars?: Record<string, unknown>,

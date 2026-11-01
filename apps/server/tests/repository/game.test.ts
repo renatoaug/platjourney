@@ -31,8 +31,10 @@ function fakeDb(catalog: Game[]) {
   }) as never)
   return spyOn(db, 'q').mockImplementation((async (sql: string, vars: Vars) => {
     if (sql === 'SELECT id, name, aliases FROM game') return catalog
-    if (sql.includes('CONTAINSANY'))
-      return catalog.filter((g) => g.np_communication_ids.some((n) => vars.nps?.includes(n)))
+    if (sql.startsWith('RETURN array::flatten') && sql.includes('np_communication_ids = $each')) {
+      const nps = Object.entries(vars).flatMap(([k, v]) => (k.startsWith('each') ? [v] : []))
+      return catalog.filter((g) => g.np_communication_ids.some((n) => nps.includes(n)))
+    }
     if (sql.startsWith('UPSERT $id MERGE')) {
       const id = `game:${(vars.id as db.RecordId).id}`
       const current = catalog.find((g) => g.id === id)
@@ -224,8 +226,8 @@ test('many titles are read in one query and the rest resolved one by one', async
     makeTitle({ npCommunicationId: 'NPNEW', name: 'Brand New' }),
   ])
   expect(q.mock.calls[0]).toEqual([
-    'SELECT * OMIT embedding FROM game WHERE np_communication_ids CONTAINSANY $nps',
-    { nps: ['NPA1', 'NPNEW'] },
+    'RETURN array::flatten([(SELECT * OMIT embedding FROM game WHERE np_communication_ids = $each0), (SELECT * OMIT embedding FROM game WHERE np_communication_ids = $each1)])',
+    { each0: 'NPA1', each1: 'NPNEW' },
   ])
   expect(out.get('NPA1')).toEqual(a)
   expect(out.get('NPA2')).toEqual(a)

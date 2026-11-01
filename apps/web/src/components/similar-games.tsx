@@ -60,6 +60,32 @@ export function SimilarGames({ state }: { state: SimilarGamesState }) {
   )
 }
 
+/** The similar games of `gameId`, asked once per game: the answer and the request in flight both
+ * stay in the app cache, so the game page can start it before the game itself has loaded. */
+export function similarGames(
+  cache: Record<string, unknown>,
+  gameId: string,
+): Promise<SimilarGame[]> {
+  const key = `similar-games:${gameId}`
+  const seen = cache[key] as SimilarGame[] | undefined
+  if (seen) return Promise.resolve(seen)
+  const pending = `${key}:pending`
+  const asked = cache[pending] as Promise<SimilarGame[]> | undefined
+  if (asked) return asked
+  const request = api<{ items: SimilarGame[] }>(
+    `/api/games/similar?game=${encodeURIComponent(gameId)}`,
+  )
+    .then(({ items }) => {
+      cache[key] = items
+      return items
+    })
+    .finally(() => {
+      delete cache[pending]
+    })
+  cache[pending] = request
+  return request
+}
+
 /** Fetches the similar games of `gameId` once per game (kept in the app cache) and shows them. */
 export function SimilarGamesSection({ gameId }: { gameId: string }) {
   const { cache } = useApp()
@@ -76,9 +102,8 @@ export function SimilarGamesSection({ gameId }: { gameId: string }) {
     }
     let live = true
     setState({ status: 'loading' })
-    api<{ items: SimilarGame[] }>(`/api/games/similar?game=${encodeURIComponent(gameId)}`)
-      .then(({ items }) => {
-        cache[key] = items
+    similarGames(cache, gameId)
+      .then((items) => {
         if (live) setState({ status: 'ok', items })
       })
       .catch(() => {

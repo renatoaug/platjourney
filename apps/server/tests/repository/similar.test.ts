@@ -34,8 +34,8 @@ test('edges, peers and links are read by game record', async () => {
   const q = spyOn(db, 'q').mockResolvedValue([])
   await similarEdges(['game:1'])
   expect(q.mock.calls[0]).toEqual([
-    'SELECT in AS seed, out AS game, rank FROM similar_to WHERE in IN $ids',
-    { ids: [g(1)] },
+    'RETURN array::flatten([(SELECT in AS seed, out AS game, rank FROM similar_to WHERE in = $each0)])',
+    { each0: g(1) },
   ])
   await peerPlatinums('user:1', ['game:1'], ['game:2'])
   expect(q.mock.calls[1][0]).toContain('user != $user')
@@ -54,7 +54,19 @@ test('edges, peers and links are read by game record', async () => {
   await gamesByIds(['game:5'])
   expect(q.mock.calls[4]).toEqual(['SELECT * OMIT embedding FROM $ids', { ids: [g(5)] }])
   await guidedInSeries([7])
-  expect(q.mock.calls[5][1]).toEqual({ series: [7] })
+  expect(q.mock.calls[5]).toEqual([
+    'RETURN array::flatten([(SELECT VALUE id FROM game WHERE series = $each0)])',
+    { each0: 7 },
+  ])
+})
+
+test("a series' guided games: its games through the series index, then which have a guide", async () => {
+  const q = spyOn(db, 'q')
+    .mockResolvedValueOnce([g(8), g(9)])
+    .mockResolvedValueOnce([{ id: g(9), series: [7] }])
+  expect(await guidedInSeries([7])).toEqual([{ id: 'game:9', series: [7] }])
+  expect(q.mock.calls[1][0]).toContain('FROM guide WHERE game = $each0 AND guide != NONE')
+  expect(q.mock.calls[1][1]).toEqual({ each0: g(8), each1: g(9) })
 })
 
 test('guide facts come back in camelCase', async () => {
