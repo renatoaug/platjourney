@@ -337,9 +337,12 @@ export async function similarPicks(
 ): Promise<SimilarPicks> {
   if (library.length === 0) return { items: [], quick: [], series: [], reason: 'no-library' }
   const seeds = seedWeights(library, await gamesForTitles(library, false))
-  const exclude = await excluded(user, accountGames, seeds)
+  const [exclude, graph] = await Promise.all([
+    excluded(user, accountGames, seeds),
+    graphScores(user.id, seeds),
+  ])
   const rules = (readPrefs(user.taste_prefs) ?? emptyPrefs()).filters
-  const scored = (await graphScores(user.id, seeds)).filter((c) => !exclude.has(c.game))
+  const scored = graph.filter((c) => !exclude.has(c.game))
   const [ok, series] = await Promise.all([
     factsMap(scored.map((c) => c.game)).then((facts) => eligible(scored, facts, rules)),
     seriesPicks(seeds, exclude, rules),

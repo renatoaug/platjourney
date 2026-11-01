@@ -88,8 +88,10 @@ export const INTEREST_ROUTES: Record<string, ApiHandler> = {
   'POST /api/recommendations/dismiss': dismissPick,
   'POST /api/recommendations/preferences': tastePreferences,
   // Recommendations by similar games: graph reads only, no model, so the demo has them too.
-  'GET /api/recommendations/similar': async ({ res, me, titles }) =>
-    json(res, 200, await similarPicks(me, await titles(), await ownedGames(me.psn_account_id))),
+  'GET /api/recommendations/similar': async ({ res, me, titles }) => {
+    const [library, owned] = await Promise.all([titles(), ownedGames(me.psn_account_id)])
+    return json(res, 200, await similarPicks(me, library, owned))
+  },
   'GET /api/recommendations': async ({ res, url, me, titles }) => {
     const force = url.searchParams.get('refresh') === '1'
     // stored=1 answers the batch already saved, never a new one: the page shows it on every visit

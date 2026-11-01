@@ -33,13 +33,20 @@ export async function peerPlatinums(
   candidates: string[],
 ): Promise<{ user: string; game: string }[]> {
   if (seeds.length === 0 || candidates.length === 0) return []
-  return plain(
-    await q<{ user: string; game: string }[]>(
-      `LET $peers = array::distinct((SELECT VALUE user FROM platinum WHERE game IN $seeds AND user != $user));
-       SELECT user, game FROM platinum WHERE game IN $candidates AND user IN $peers`,
-      { user: userRef(user), seeds: refs(seeds), candidates: refs(candidates) },
-    ),
+  // The peers through platinum_game, then each peer's platinums through platinum_user_np: two `IN`
+  // lists over the whole table took seconds with a library of a few dozen games.
+  const peers = await qEach<RecordId>(
+    'SELECT VALUE user FROM platinum WHERE game = $each AND user != $user',
+    refs(seeds),
+    { user: userRef(user) },
   )
+  const wanted = new Set(candidates)
+  return plain(
+    await qEach<{ user: string; game: string }>(
+      'SELECT user, game FROM platinum WHERE user = $each',
+      peers,
+    ),
+  ).filter((p) => wanted.has(String(p.game)))
 }
 
 /** What a guide says that the recommendations show and the player's rules look at. */

@@ -39,11 +39,7 @@ test('edges, peers and links are read by game record', async () => {
   ])
   await peerPlatinums('user:1', ['game:1'], ['game:2'])
   expect(q.mock.calls[1][0]).toContain('user != $user')
-  expect(q.mock.calls[1][1]).toEqual({
-    user: new db.RecordId('user', '1'),
-    seeds: [g(1)],
-    candidates: [g(2)],
-  })
+  expect(q.mock.calls[1][1]).toEqual({ user: new db.RecordId('user', '1'), each0: g(1) })
   await expansionLinks(['game:3'])
   expect(q.mock.calls[2][0]).toContain('WHERE in IN $ids OR out IN $ids')
   await similarOf('game:4')
@@ -67,6 +63,23 @@ test("a series' guided games: its games through the series index, then which hav
   expect(await guidedInSeries([7])).toEqual([{ id: 'game:9', series: [7] }])
   expect(q.mock.calls[1][0]).toContain('FROM guide WHERE game = $each0 AND guide != NONE')
   expect(q.mock.calls[1][1]).toEqual({ each0: g(8), each1: g(9) })
+})
+
+test("peers' platinums: who platinumed a seed, then their platinums among the candidates", async () => {
+  const peer = new db.RecordId('user', '2')
+  const q = spyOn(db, 'q')
+    .mockResolvedValueOnce([peer, peer])
+    .mockResolvedValueOnce([
+      { user: peer, game: g(2) },
+      { user: peer, game: g(9) },
+    ])
+  expect(await peerPlatinums('user:1', ['game:1'], ['game:2'])).toEqual([
+    { user: 'user:2', game: 'game:2' },
+  ])
+  expect(q.mock.calls[1]).toEqual([
+    'RETURN array::flatten([(SELECT user, game FROM platinum WHERE user = $each0)])',
+    { each0: peer },
+  ])
 })
 
 test('guide facts come back in camelCase', async () => {
