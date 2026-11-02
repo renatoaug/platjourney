@@ -1189,20 +1189,25 @@
   /* Facts read as a compact field guide, without a matrix of boxed cells. */
   .quick-facts {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px 24px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px 0;
     margin: 0 0 24px;
     padding: 8px 0;
   }
 
   .quick-fact {
     display: grid;
-    grid-template-columns: 18px minmax(0, 1fr);
-    grid-template-areas: "icon label" ". value";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "icon" "label" "value";
     align-content: start;
     align-items: start;
-    gap: 5px 8px;
+    gap: 5px;
     min-width: 0;
+    padding-inline: 6px;
+  }
+
+  .quick-fact:not(:nth-child(3n + 1)) {
+    border-left: 1px solid var(--color-border);
   }
 
   .quick-fact .icon {
@@ -1216,6 +1221,7 @@
   .quick-fact dt {
     grid-area: label;
     min-width: 0;
+    min-height: 2lh;
     color: var(--color-fg-muted);
     font-size: var(--text-sm);
     line-height: var(--leading-snug);

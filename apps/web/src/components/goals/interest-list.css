@@ -12,9 +12,9 @@
   .drag-ghost.drag-ghost {
     isolation: isolate;
     display: grid;
-    grid-template-columns: 80px minmax(0, 1fr) 44px;
-    grid-template-areas: "cover name name" "cover state state" "cover grip remove";
-    gap: 8px 14px;
+    grid-template-columns: 80px minmax(0, 1fr) 44px 44px;
+    grid-template-areas: "cover name name name" "cover state grip remove";
+    gap: 6px 8px;
     padding: 14px;
     margin-bottom: 10px;
     border: 1px solid var(--color-border);

@@ -365,7 +365,7 @@
   .nexo-chat-heading {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
     gap: 4px;
     order: -1;
