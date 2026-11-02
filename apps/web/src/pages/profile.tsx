@@ -628,7 +628,21 @@ export function ProfileSkeleton() {
           </div>
         </div>
         <div className="card platinum-collection">
-          <h2 className="goal-section-title">{t('collection.title')}</h2>
+          <div className="collection-heading">
+            <div>
+              <span className="eyebrow">{t('collection.eyebrow')}</span>
+              <h2 className="goal-section-title">{t('collection.title')}</h2>
+            </div>
+            <Icon name="trophy" />
+          </div>
+          <label className="trophy-search">
+            <Icon name="search" />
+            <input
+              disabled
+              aria-label={t('collection.searchLabel')}
+              placeholder={t('collection.placeholder')}
+            />
+          </label>
           <div className="collection-grid">
             {repeat(10, () => (
               <div className="collection-tile">

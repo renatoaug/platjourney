@@ -5,13 +5,14 @@ import { shownProgress } from '../lib/progress'
 import { tintStyle } from '../lib/tint'
 import type { CurrentGame } from '../lib/types'
 import { Icon } from '../ui/icon'
+import { Sk } from '../ui/skeleton'
 import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
 import { GameNav, type GameSection } from './game-nav'
 import { Guide } from './guide'
-import { Hero } from './hero'
+import { Hero, HeroSkeleton } from './hero'
 import { JourneyLink } from './journey-link'
 import { nexoHref } from './tip'
-import { TrophyList } from './trophy-list'
+import { TrophyList, TrophyListSkeleton } from './trophy-list'
 import './journey.css'
 
 const messages = defineMessages({
@@ -177,6 +178,56 @@ export function Journey({
         />
       </details>
       {similar}
+    </div>
+  )
+}
+
+/** The same owned-game hierarchy while progress is being loaded. */
+export function JourneySkeleton() {
+  const t = useMessages(messages)
+  return (
+    <div className="journey" aria-busy="true">
+      <div className="hero immersive tinted">
+        <HeroSkeleton cta={false} aside={false} />
+      </div>
+      <div className="game-nav" aria-hidden="true">
+        <Sk w="186px" h={52} style={{ borderRadius: 'var(--radius-pill)' }} />
+      </div>
+      <div className="journey-focus card" aria-hidden="true">
+        <span className="eyebrow">
+          <Sk w="140px" h={12} />
+        </span>
+        <h2>
+          <Sk w="65%" h={30} />
+        </h2>
+        <p>
+          <Sk w="95%" h={18} />
+        </p>
+        <p>
+          <Sk w="75%" h={18} />
+        </p>
+        <Sk w="180px" h={48} />
+      </div>
+      <details className="journey-session">
+        <summary>
+          <Icon name="clock" />
+          {t('plan')}
+          <Icon name="chevron-down" />
+        </summary>
+      </details>
+      <section className="journey-trophies">
+        <div className="trophy-section-heading">
+          <h2>{t('trophies')}</h2>
+        </div>
+        <TrophyListSkeleton />
+      </section>
+      <details className="journey-guide">
+        <summary>
+          <Icon name="search" />
+          {t('guide')}
+          <Icon name="chevron-down" />
+        </summary>
+      </details>
     </div>
   )
 }

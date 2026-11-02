@@ -67,13 +67,13 @@ test('a game by name asks with its platform, PS5 by default', async () => {
   expect(second.calls[0].path).toBe('/api/title?name=Days%20Gone&platform=PS5')
 })
 
-test('loading: the two columns for a library game, the wide guide for one by name', () => {
+test('loading: the journey for a library game, the wide guide for one by name', () => {
   mockApi({ '/api/title': never })
   const { container, unmount } = renderApp(<Title />, {
     path: '/title/game/game%3A1',
     route: '/title/*',
   })
-  expect(screen.getByRole('heading', { name: 'Troféus' })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Seus troféus' })).toBeTruthy()
   expect(container.querySelector('.guide-wide')).toBeNull()
   unmount()
   const second = renderApp(<Title />, { path: '/title/name/Hades', route: '/title/*' })

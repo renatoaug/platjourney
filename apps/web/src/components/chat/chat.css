@@ -626,9 +626,11 @@
     align-self: center;
   }
 
-  /* Send: its word on a wide screen; on a phone, a round arrow beside the mic (below). */
+  /* The compact composer uses the same visible arrow on every screen size. */
   .chat-send .icon {
-    display: none;
+    display: block;
+    width: 20px;
+    height: 20px;
   }
 
   /* The mic beside Send: a round outline; while it records, the stop square. */
@@ -870,9 +872,17 @@
   }
 
   .chat-page .nexo-chat-tools .nexo-sub-switch {
-    justify-content: flex-start;
+    display: block;
+    justify-self: start;
+    max-width: 100%;
     font-size: var(--text-sm);
     min-height: 44px;
+  }
+
+  .chat-page .nexo-sub-switch .icon {
+    display: inline-block;
+    vertical-align: -2px;
+    margin-inline-start: 6px;
   }
 
   .chat-page .nexo-chat-tools .nexo-threads-toggle {
@@ -935,6 +945,7 @@
   }
 
   .chat-page .chat-composer {
+    position: relative;
     display: flex;
     align-items: flex-end;
     gap: 8px;
@@ -942,6 +953,41 @@
     border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-soft), transparent);
     border-radius: var(--radius-card);
     background: color-mix(in srgb, var(--color-overlay) var(--alpha-tint), transparent);
+  }
+
+  .chat-composer > .chat-menu {
+    bottom: calc(100% + 6px);
+    max-height: min(292px, 40dvh);
+    padding: 4px;
+    border-radius: var(--radius-card);
+    background: var(--color-bg-subtle);
+  }
+
+  .chat-composer > .chat-menu [role="option"] {
+    min-height: 52px;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 0;
+  }
+
+  .chat-composer > .chat-menu [aria-selected="true"] {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-tint), transparent);
+  }
+
+  .chat-composer > .chat-menu b {
+    font-size: var(--text-md);
+    line-height: var(--leading-snug);
+    overflow-wrap: anywhere;
+  }
+
+  .chat-composer > .chat-menu small {
+    font-size: var(--text-xs);
+  }
+
+  .chat-composer > .chat-menu .chat-menu-badge {
+    flex: none;
+    max-width: 28%;
+    text-align: right;
   }
 
   .chat-page .chat-composer:focus-within {

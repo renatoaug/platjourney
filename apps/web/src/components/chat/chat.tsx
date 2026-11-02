@@ -1038,10 +1038,10 @@ function ChatForm({
   const narrow = useNarrow()
   return (
     <form ref={formRef} className="chatform chat-composer" id="chat-form" onSubmit={onSubmit}>
+      {menu}
       <div className="chat-field">
         {/* The counter sits on the text box itself, not on the field with the note below it. */}
         <div className="chat-box">
-          {menu}
           <div className="chat-line">
             {attachment}
             {(voice.listening || voice.busy) && (

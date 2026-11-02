@@ -376,6 +376,10 @@
     text-align: left;
   }
 
+  .console-loading .console-shelf button {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .console-cover {
     width: 100%;
     aspect-ratio: 3 / 4;

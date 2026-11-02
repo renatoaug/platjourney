@@ -118,13 +118,31 @@ export function StatTiles({
 }
 
 export function StatTilesSkeleton() {
-  return repeat(4, () => (
-    <div className="tile stat-tile">
+  return repeat(4, (i) => (
+    <div className={`tile stat-tile${i === 0 ? ' plat' : ''}`} aria-hidden="true">
       <div className="tile-label">
-        <Sk w="55%" h={10} />
+        <Sk w="22px" h={22} />
+        <Sk w="55%" h={12} />
       </div>
-      <Sk w="40%" h={30} style={{ marginTop: 10 }} />
-      <Sk w="70%" h={9} style={{ marginTop: 10 }} />
+      <b>
+        <Sk w="55%" h={40} />
+      </b>
+      {(i === 1 || i === 3) && (
+        <div className="bar stat-bar">
+          <Sk h={4} />
+        </div>
+      )}
+      {i === 2 ? (
+        <div className="stat-tiers">
+          {repeat(3, () => (
+            <Sk w="72px" h={14} />
+          ))}
+        </div>
+      ) : (
+        <div className="sub">
+          <Sk w="80%" h={14} />
+        </div>
+      )}
     </div>
   ))
 }

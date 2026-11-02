@@ -234,7 +234,7 @@
   /* Save and dismiss over the cover's corner. */
   .band-actions {
     position: absolute;
-    top: 8px;
+    top: 16px;
     right: 8px;
     display: flex;
     gap: 4px;

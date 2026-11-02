@@ -3,8 +3,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
-import { HeroSkeleton } from '../components/hero'
-import { Journey } from '../components/journey'
+import { Journey, JourneySkeleton } from '../components/journey'
 import { PlanCard } from '../components/plan'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import type { CurrentGame } from '../lib/types'
@@ -43,7 +42,7 @@ export function GameScreen({
       ) : current === undefined ? (
         <>
           <h1 className="sr-only">{t('title')}</h1>
-          <HeroSkeleton cta={false} />
+          <JourneySkeleton />
         </>
       ) : (
         <EmptyState

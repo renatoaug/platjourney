@@ -321,6 +321,7 @@ export function Hero({
             <DifficultyMeter value={c.guide.difficulty} look="compact" />
           )}
           <span className="hero-tools">{tools}</span>
+          {tools && <HeroMeta c={c} difficulty={false} />}
         </div>
         <div className="hero-headline">
           <div className="hero-title-row">
@@ -336,7 +337,7 @@ export function Hero({
                   : t('captionTrophies')}
             </p>
           )}
-          <HeroMeta c={c} difficulty={!tools} />
+          {!tools && <HeroMeta c={c} />}
         </div>
         <div className="hero-bottom">
           <HeroProgress game={c} />
@@ -361,25 +362,46 @@ export function HeroSkeleton({ cta = true, aside = true }: { cta?: boolean; asid
   return (
     <div className="inner">
       <div className="hero-top">
+        <Sk w="110px" h={36} style={pill} />
         <span className="hero-tools">
-          <Sk w="128px" h={32} style={pill} />
+          <Sk w="110px" h={32} style={pill} />
         </span>
+        <div className="meta">
+          {[90, 76, 110].map((w) => (
+            <span key={w}>
+              <Sk w={`${w}px`} h={16} />
+            </span>
+          ))}
+        </div>
       </div>
       <div className="hero-headline">
         <div className="hero-title-row">
           <Sk w="min(520px, 80%)" h={56} />
           <Sk w="38px" h={22} />
         </div>
-        <div className="meta">
-          {[64, 150, 96, 130].map((w) => (
-            <Sk key={w} w={`${w}px`} h={30} style={pill} />
-          ))}
-        </div>
+        <Sk w="min(380px, 100%)" h={18} />
       </div>
       <div className="hero-bottom">
         <div className="hero-progress">
-          <Sk w="60%" h={24} />
-          <Sk w="100%" h={9} style={{ marginTop: 12 }} />
+          <div className="barlabel">
+            <span>
+              <Sk w="110px" h={20} />
+            </span>
+            <b className="pct">
+              <Sk w="36px" h={20} />
+            </b>
+          </div>
+          <div className="bar-row">
+            <span className="bar">
+              <Sk h={8} />
+            </span>
+            <span className="plat-mark">
+              <Sk w="18px" h={18} />
+            </span>
+          </div>
+          <div className="remaining">
+            <Sk w="180px" h={14} />
+          </div>
         </div>
         {cta && (
           <div className="cta">

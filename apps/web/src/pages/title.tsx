@@ -1,4 +1,4 @@
-import { Journey } from '../components/journey'
+import { Journey, JourneySkeleton } from '../components/journey'
 import { PlanCard } from '../components/plan'
 /** Game detail for a title outside the current game (owned or recommended). */
 
@@ -23,7 +23,7 @@ import {
 } from '../components/hero'
 import { NextTrophy } from '../components/next-trophy'
 import { SimilarGamesSection, similarGames } from '../components/similar-games'
-import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
+import { TrophyList } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { fmtHours } from '../lib/format'
@@ -209,36 +209,17 @@ function SaveButton({ d }: { d: TitleDetail }) {
   )
 }
 
-/** The skeleton of a title page: the two columns when the game is likely owned, the wide guide otherwise. */
+/** Owned titles load into the same journey as the current game. */
 function TitleSkeleton({ owned = true }: { owned?: boolean }) {
-  const t = useMessages(messages)
+  if (owned) return <JourneySkeleton />
   return (
     <>
       <div className="hero immersive">
-        <HeroSkeleton />
+        <HeroSkeleton aside={false} />
       </div>
-      {owned ? (
-        <GameColumns
-          style={{ marginTop: 20 }}
-          trophies={
-            <div className="card">
-              <h2>{t('trophies')}</h2>
-              <TrophyListSkeleton rows={6} />
-            </div>
-          }
-          guide={
-            <div className="stack">
-              <div className="card">
-                <GuideSkeleton />
-              </div>
-            </div>
-          }
-        />
-      ) : (
-        <div className="card guide-wide" style={{ marginTop: 20 }}>
-          <GuideSkeleton />
-        </div>
-      )}
+      <div className="card guide-wide" style={{ marginTop: 20 }}>
+        <GuideSkeleton />
+      </div>
     </>
   )
 }

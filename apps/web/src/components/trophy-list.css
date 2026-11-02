@@ -683,6 +683,12 @@
     border: 2px solid color-mix(in srgb, var(--tier) var(--alpha-glow), transparent);
   }
 
+  /* The image sits inside the tier frame: its inner curve follows the border, not the outer edge.
+     Keep the earned marker outside the frame instead of clipping the entire container. */
+  .trophy-row .trophy-art > :is(img, .sk) {
+    border-radius: calc(var(--radius-control) - 2px);
+  }
+
   .trophy-row.is-earned .trophy-art {
     border-color: var(--tier);
   }

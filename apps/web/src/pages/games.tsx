@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
+import { image } from '../components/game-showcase'
+import { nextUp } from '../components/goals/next-up'
 import { useKept } from '../components/goals/use-kept'
+import { PageTop } from '../components/page-top'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { pct } from '../lib/format'
@@ -17,6 +20,7 @@ import './games.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
+    eyebrow: 'Sua coleção de platinas',
     title: 'Seus jogos',
     lead: 'Escolha um jogo para acompanhar a platina.',
     library: 'Biblioteca PSN',
@@ -54,6 +58,7 @@ const messages = defineMessages({
     savedGame: 'Interesse salvo',
   },
   [Language.En]: {
+    eyebrow: 'Your platinum collection',
     title: 'Your games',
     lead: 'Choose a game to follow your platinum journey.',
     library: 'PSN library',
@@ -184,13 +189,23 @@ export function GamesView({
   interestsFailed?: boolean
 }) {
   const t = useMessages(messages)
+  const featured = nextUp(goals?.interests ?? [])?.game ?? goals?.platinumed[0]?.game
+  const shot = featured?.screenshot_ids?.[0]
+  const art =
+    featured?.art_url ??
+    (shot ? image(shot, 't_1080p') : featured?.cover_url) ??
+    library?.items[0]?.art ??
+    library?.items[0]?.cover
   return (
     <Page path="/games">
       <div className="games-page">
-        <header>
-          <h1>{t('title')}</h1>
-          <p>{t('lead')}</p>
-        </header>
+        <PageTop
+          eyebrow={t('eyebrow')}
+          title={t('title')}
+          lead={t('lead')}
+          art={art}
+          tint={featured?.tint}
+        />
         <fieldset className="segmented" aria-label={t('tabs')}>
           {(['library', 'interests', 'goals'] as const).map((key) => (
             <button key={key} type="button" aria-pressed={side === key} onClick={() => onSide(key)}>
@@ -222,21 +237,44 @@ export function GamesView({
 
 function GamesSkeleton() {
   return (
-    <div className="games-list">
-      {repeat(3, () => (
-        <article className="games-item">
-          <div className="games-art">
-            <Sk w="100%" h={180} />
-          </div>
-          <div className="games-item-info">
-            <Sk w="40%" h={12} />
-            <Sk w="80%" h={22} />
-            <Sk w="100%" h={8} />
-            <Sk w="130px" h={20} />
-          </div>
-        </article>
-      ))}
-    </div>
+    <>
+      <p className="games-result" aria-hidden="true">
+        <Sk w="120px" h={16} />
+        <span>
+          <Sk w="220px" h={14} />
+        </span>
+      </p>
+      <div className="games-list" aria-hidden="true">
+        {repeat(3, () => (
+          <article className="games-item">
+            <div className="games-art">
+              <Sk w="100%" h={240} />
+            </div>
+            <div className="games-item-info">
+              <span className="games-platform">
+                <Sk w="40%" h={16} />
+              </span>
+              <h2>
+                <Sk w="80%" h={28} />
+              </h2>
+              <p>
+                <Sk w="60%" h={16} />
+              </p>
+              <small className="games-progress-scope">
+                <Sk w="35%" h={14} />
+              </small>
+              <div className="games-progress">
+                <Sk w="100%" h={8} />
+                <Sk w="40px" h={20} />
+              </div>
+              <span className="games-open">
+                <Sk w="130px" h={18} />
+              </span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </>
   )
 }
 
@@ -399,7 +437,7 @@ function InterestsSection({
       {failed ? (
         <ErrorState>{t('error')}</ErrorState>
       ) : !goals ? (
-        <GoalsSkeleton />
+        <GoalsSkeleton section={side} />
       ) : (
         <GoalsView goals={goals} compact section={side} readOnly={readOnly} />
       )}

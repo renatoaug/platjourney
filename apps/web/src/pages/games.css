@@ -2,17 +2,17 @@
   .games-page {
     display: grid;
     gap: 16px;
-    max-width: 960px;
+    min-width: 0;
   }
 
-  .games-page > header h1 {
-    font-size: var(--text-4xl);
-    margin-bottom: 8px;
+  .games-page .page-top {
+    min-height: clamp(260px, 34vh, 380px);
   }
 
-  .games-page > header p {
-    color: var(--color-fg-muted);
-    font-size: var(--text-lg);
+  @media (max-width: 760px) {
+    .games-page .page-top {
+      min-height: 0;
+    }
   }
 
   .games-page .segmented {

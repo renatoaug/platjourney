@@ -861,9 +861,9 @@ export function GuideSkeleton() {
         {(
           [
             'tabs.summary',
+            'tabs.roadmap',
             'tabs.key',
             'tabs.missablesSkeleton',
-            'tabs.roadmap',
             'tabs.glossary',
           ] as const
         ).map((key, i) => (
@@ -873,6 +873,19 @@ export function GuideSkeleton() {
         ))}
       </div>
       <div data-panel="0">
+        <dl className="quick-facts">
+          {repeat(8, () => (
+            <div className="quick-fact">
+              <Icon name="circle" />
+              <dt>
+                <Sk w="80%" h={12} />
+              </dt>
+              <dd>
+                <Sk w="60%" h={18} />
+              </dd>
+            </div>
+          ))}
+        </dl>
         <Sk w="100%" h={13} />
         <Sk w="96%" h={13} style={{ marginTop: 8 }} />
         <Sk w="72%" h={13} style={{ marginTop: 8 }} />

@@ -132,6 +132,7 @@ export type Target =
   | 'Journey'
   | 'JourneyChat'
   | 'JourneyLink'
+  | 'JourneySkeleton'
   | 'KeyArt'
   | 'KeyTrophies'
   | 'KindMark'
@@ -307,3 +308,4 @@ export type Target =
   | 'Welcome'
   | 'YearPace'
   | 'YearPlatinums'
+  | 'YearPlatinumsSkeleton'

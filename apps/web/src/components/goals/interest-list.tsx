@@ -501,28 +501,33 @@ export function InterestList({
 
 export function InterestListSkeleton() {
   return (
-    <>
+    <div aria-hidden="true">
       <div className="chips goal-filters">
-        <Sk w="70px" h={30} />
-        <Sk w="110px" h={30} />
-        <Sk w="120px" h={30} />
-        <Sk w="100px" h={30} />
+        {[70, 110, 120, 100].map((width) => (
+          <Sk key={width} w={width} h={30} />
+        ))}
       </div>
       <ul className="goal-list">
         {Array.from({ length: 6 }, (_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: fixed placeholder rows
           <li key={i}>
-            <Sk w="22px" h={28} />
-            <Sk w="29px" h={29} style={{ borderRadius: '50%' }} />
-            <Sk w="34px" h={46} style={{ borderRadius: 'var(--radius-tag)' }} />
-            <span className="name">
-              <Sk w="55%" h={12} />
+            <span className="goal-cover sk" />
+            <span className="name" style={{ gridArea: 'name', minWidth: 0 }}>
+              <Sk w="85%" h={20} />
+              <Sk w="60%" h={14} style={{ marginTop: 8 }} />
             </span>
-            <Sk w="60px" h={10} />
-            <Sk w="30px" h={30} />
+            <span className="st">
+              <Sk w="90px" h={12} />
+            </span>
+            <span className="goal-grip">
+              <Sk w="20px" h={20} />
+            </span>
+            <span className="goal-remove">
+              <Sk w="20px" h={20} />
+            </span>
           </li>
         ))}
       </ul>
-    </>
+    </div>
   )
 }

@@ -374,28 +374,106 @@ export function GoalsView({
   )
 }
 
-export function GoalsSkeleton() {
+function YearPlatinumsSkeleton() {
   const t = useMessages(messages)
   return (
-    <>
-      <GoalSeasonSkeleton />
-      <div className="grid cols-2" style={{ marginTop: 20 }}>
-        <div className="card">
-          <h2 className="goal-section-title">{t('page.mine')}</h2>
-          <InterestListSkeleton />
-        </div>
-        <div className="card">
-          <h2 className="goal-section-title">{t('page.yearAchievements')}</h2>
-          <ul className="timeline">
-            {Array.from({ length: 5 }, (_, i) => (
+    <div className="card year-card">
+      <div className="year-heading">
+        <h2>{t('page.yearAchievements')}</h2>
+        <Sk w="28px" h={20} />
+      </div>
+      <div className="year-months">
+        {Array.from({ length: 12 }, (_, month) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed calendar placeholders
+          <span key={month} className="year-month">
+            <Sk w="14px" h={16} />
+            <span className="year-month-bar">
+              <Sk w="12px" h={24} />
+            </span>
+            <Sk w="22px" h={10} />
+          </span>
+        ))}
+      </div>
+      <div className="year-list-label">
+        <Sk w="150px" h={12} />
+      </div>
+      <div className="year-timeline">
+        <section className="year-month-group">
+          <h3>
+            <Sk w="100px" h={16} />
+          </h3>
+          <ul>
+            {Array.from({ length: 3 }, (_, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: fixed placeholder rows
               <li key={i}>
-                <Sk w="55%" h={12} />
-                <Sk w="70px" h={9} style={{ marginTop: 6 }} />
+                <div className="year-platinum">
+                  <span className="year-cover sk" />
+                  <span className="year-game">
+                    <b>
+                      <Sk w="70%" h={16} />
+                    </b>
+                    <span>
+                      <Sk w="90px" h={12} />
+                    </span>
+                  </span>
+                  <span className="year-order">
+                    <Sk w="28px" h={16} />
+                  </span>
+                </div>
               </li>
             ))}
           </ul>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+export function GoalsSkeleton({ section = 'all' }: { section?: 'all' | 'interests' | 'goals' }) {
+  const t = useMessages(messages)
+  if (section === 'goals')
+    return (
+      <>
+        <GoalSeasonSkeleton />
+        <YearPlatinumsSkeleton />
+      </>
+    )
+  return (
+    <>
+      {section === 'all' ? (
+        <GoalSeasonSkeleton />
+      ) : (
+        <div className="games-next" aria-hidden="true">
+          <aside className="next-up">
+            <span className="next-up-cover sk" />
+            <div className="next-up-body">
+              <span className="eyebrow">
+                <Sk w="180px" h={10} />
+              </span>
+              <div className="next-up-head">
+                <Sk w="65%" h={20} />
+                <Sk w="110px" h={44} />
+              </div>
+              <span className="next-up-sub">
+                <Sk w="100px" h={12} />
+              </span>
+            </div>
+          </aside>
         </div>
+      )}
+      <div className="grid cols-2 goals-columns" style={{ marginTop: section === 'all' ? 20 : 0 }}>
+        <div className="card">
+          <div className="goal-list-heading">
+            <h2 className="goal-section-title">{t('page.mine')}</h2>
+            <Sk w="130px" h={44} />
+          </div>
+          <InterestListSkeleton />
+        </div>
+        {section === 'all' && (
+          <div className="goals-side">
+            <YearPlatinumsSkeleton />
+          </div>
+        )}
       </div>
     </>
   )

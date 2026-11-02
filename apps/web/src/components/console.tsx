@@ -15,7 +15,7 @@ import type { Platinum } from '../pages/profile'
 import { BoldText } from '../ui/bold-text'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
-import { Sk } from '../ui/skeleton'
+import { repeat, Sk } from '../ui/skeleton'
 import { DifficultyMeter } from './difficulty-meter'
 import { JourneyLink } from './journey-link'
 import { nexoHref, titleHref } from './tip'
@@ -436,13 +436,49 @@ export function Console({ data }: { data: AppStateData }) {
 
 export function ConsoleSkeleton() {
   return (
-    <div className="console tinted">
+    <div className="console tinted console-loading" aria-hidden="true">
       <div className="console-focus">
-        <Sk w="120px" h={10} />
-        <Sk w="60%" h={56} />
-        <Sk w="40%" h={12} />
-        <Sk w="420px" h={9} />
+        <div className="console-top">
+          <Sk w="120px" h={12} />
+          <Sk w="32px" h={12} />
+        </div>
+        <h2 className="console-title">
+          <Sk w="80%" h={0} style={{ height: '1em' }} />
+        </h2>
+        <div className="console-meta">
+          {repeat(3, () => (
+            <span>
+              <Sk w="70px" h={12} />
+            </span>
+          ))}
+        </div>
+        <div className="console-progress">
+          <div className="console-progress-label">
+            <Sk w="130px" h={12} />
+            <Sk w="35px" h={12} />
+          </div>
+          <div className="bar-row">
+            <Sk w="100%" h={6} />
+          </div>
+        </div>
+        <p className="console-nexo">
+          <Sk w="90%" h={16} />
+        </p>
+        <div className="console-actions">
+          <Sk w="120px" h={44} />
+          <Sk w="150px" h={44} />
+        </div>
       </div>
+      <section className="console-shelf">
+        {repeat(6, () => (
+          <div className="console-slot">
+            <button type="button" disabled tabIndex={-1}>
+              <span className="console-cover sk" style={{ height: 'auto' }} />
+              <Sk w="80%" h={10} />
+            </button>
+          </div>
+        ))}
+      </section>
     </div>
   )
 }

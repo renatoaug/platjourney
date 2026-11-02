@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { current } from '../fixtures'
-import { Journey } from './journey'
+import { Journey, JourneySkeleton } from './journey'
 
 const meta: Meta<typeof Journey> = {
   title: 'Components/Journey',
@@ -59,3 +59,5 @@ export const LongTitle: Story = {
     },
   },
 }
+
+export const Loading: Story = { render: () => <JourneySkeleton /> }

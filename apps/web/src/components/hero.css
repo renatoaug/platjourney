@@ -476,6 +476,7 @@
     grid-column: 1;
     grid-row: 2;
     justify-content: flex-end;
+    flex-wrap: wrap;
   }
 
   .hero.immersive .hero-top > .dm {
@@ -700,6 +701,24 @@
 
   .hero.immersive .meta > span + span::before {
     display: none;
+  }
+
+  /* In a journey, difficulty and gallery lead; the supporting facts read as one quiet line. */
+  .hero.immersive .hero-top > .meta {
+    flex-basis: 100%;
+    margin-top: 0;
+    gap: 8px 16px;
+  }
+
+  .hero.immersive .hero-top > .meta > span {
+    height: auto;
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    backdrop-filter: none;
+    white-space: normal;
   }
 
   /* A chip keeps its whole text: the row wraps instead of squeezing one. */

@@ -44,7 +44,8 @@ test('interests keeps game management without annual goals', () => {
   expect(screen.queryByRole('link', { name: /Organizar interesses/ })).toBeNull()
   expect(container.querySelector('.games-goal-details')).toBeNull()
   expect(container.querySelector('.goal-season')).toBeNull()
-  expect(container.querySelector('.page-top')).toBeNull()
+  expect(container.querySelectorAll('.page-top')).toHaveLength(1)
+  expect(screen.getByRole('heading', { level: 1, name: 'Seus jogos' })).toBeTruthy()
 })
 
 test('explicit interests URL opens the integrated section and tab history is navigable', async () => {
