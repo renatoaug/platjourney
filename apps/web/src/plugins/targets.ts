@@ -84,6 +84,7 @@ export type Target =
   | 'GameShowcase'
   | 'GameShowcaseSkeleton'
   | 'Games'
+  | 'GamesArt'
   | 'GamesSkeleton'
   | 'GamesView'
   | 'Glossary'

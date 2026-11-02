@@ -129,6 +129,7 @@ beforeEach(() => {
   spyOn(activity, 'unreadNotifications').mockResolvedValue(0)
   spyOn(activity, 'recentMessages').mockResolvedValue([])
   spyOn(games, 'getGame').mockResolvedValue(game)
+  spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
   spyOn(games, 'catalogGameForName').mockResolvedValue(undefined as never)
   spyOn(games, 'gameForTitle').mockResolvedValue(game)
   spyOn(guides, 'getGuide').mockResolvedValue(freshGuide)
@@ -1564,11 +1565,18 @@ test('personal library paginates all owned PSN titles without searching catalog 
   spyOn(lib, 'library').mockResolvedValue(own)
   spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext({ title: own[0] }))
   const catalog = spyOn(games, 'searchCatalog').mockResolvedValue([])
+  const art = spyOn(games, 'gamesForTitles').mockResolvedValue(
+    new Map([['OWN0', makeGame({ cover_url: '/cover.jpg', art_url: '/art.jpg' })]]),
+  )
   const first = await send('GET', '/api/library?scope=owned')
   expect(first.body).toMatchObject({ total: 14, page: 1, size: 12 })
   expect(first.body.items).toHaveLength(12)
+  expect(art).toHaveBeenCalledWith(own.slice(0, 12), false)
+  expect(first.body.items[1].cover).toBeNull()
   expect(first.body.items[0]).toMatchObject({
     np: 'OWN0',
+    cover: '/cover.jpg',
+    art: '/art.jpg',
     progress: 0,
     platinum: false,
     current: true,

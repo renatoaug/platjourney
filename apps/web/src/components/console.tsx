@@ -8,14 +8,15 @@ import { useProfile } from '../app/use-profile'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtPlayTime, fmtRate, pct } from '../lib/format'
 import { tintStyle } from '../lib/tint'
-import type { AppStateData } from '../lib/types'
+import type { AppStateData, CurrentGame } from '../lib/types'
 import type { Platinum } from '../pages/profile'
 import { BoldText } from '../ui/bold-text'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { DifficultyMeter } from './difficulty-meter'
-import { titleHref } from './tip'
+import { JourneyLink } from './journey-link'
+import { nexoHref, titleHref } from './tip'
 import './console.css'
 
 const messages = defineMessages({
@@ -101,6 +102,8 @@ interface Item {
   earnedAt?: string
   ordinal?: number
   tip?: string
+  context: string
+  target?: string
 }
 
 const bigCover = (url?: string | null) => url?.replace('/t_cover_big/', '/t_1080p/') ?? null
@@ -108,6 +111,11 @@ const bigCover = (url?: string | null) => url?.replace('/t_cover_big/', '/t_1080
 // The catalog's wide pictures are screenshots or artwork; a cover blown up is not one.
 const isCover = (art?: string | null, cover?: string | null) =>
   !art || (!!cover && art === bigCover(cover)) || art.includes('/t_cover')
+
+function focusLine(c: CurrentGame, note?: string) {
+  const next = c.focus?.trophy
+  return next ? `${next.name}: ${next.detail}` : note?.split(/\n\s*\n/)[0]
+}
 
 function items(data: AppStateData, platinums: Platinum[] | null): Item[] {
   const list: Item[] = []
@@ -123,8 +131,8 @@ function items(data: AppStateData, platinums: Platinum[] | null): Item[] {
       kind: 'current',
       name: c.name,
       cover: c.game.cover_url,
-      art: c.icon,
-      blur: isCover(c.icon, c.game.cover_url),
+      art: c.game.art_url ?? c.icon,
+      blur: isCover(c.game.art_url ?? c.icon, c.game.cover_url),
       tint: c.game.tint,
       to: '/game',
       earned: base?.earned ?? c.earned,
@@ -135,13 +143,16 @@ function items(data: AppStateData, platinums: Platinum[] | null): Item[] {
       hours: c.hoursPlayed,
       guideHours: c.guide?.hours,
       platform: c.platform,
-      tip: tip?.content.split(/\n\s*\n/)[0],
+      tip: focusLine(c, tip?.content),
+      context: c.np,
+      target: c.focus?.trophy?.name,
     })
   }
   for (const r of data.ranking) {
     if (c && r.game === c.game.id) continue
     list.push({
       key: `r:${r.game}`,
+      context: r.game,
       kind: 'radar',
       name: r.name,
       cover: r.cover,
@@ -164,6 +175,7 @@ function items(data: AppStateData, platinums: Platinum[] | null): Item[] {
     const art = p.game.art_url ?? bigCover(p.game.cover_url)
     list.push({
       key: `p:${p.game.id}`,
+      context: p.game.id,
       kind: 'platinum',
       name: p.game.name,
       cover: p.game.cover_url,
@@ -213,7 +225,6 @@ function Meta({ item }: { item: Item }) {
           })}
         </span>
       )}
-      {item.platform && <span>{item.platform.replaceAll(',', '/')}</span>}
     </div>
   )
 }
@@ -250,7 +261,12 @@ function Focus({ item, platinums, onOpen }: { item: Item; platinums: number; onO
   const t = useMessages(messages)
   return (
     <div className="console-focus">
-      <span className="eyebrow">{t(`label.${item.kind}`)}</span>
+      <div className="console-top">
+        <span className="eyebrow">{t(`label.${item.kind}`)}</span>
+        {item.platform && (
+          <span className="console-platform">{item.platform.replaceAll(',', '/')}</span>
+        )}
+      </div>
       <h2 className="console-title" style={{ '--title-chars': item.name.length } as CSSProperties}>
         {item.name}
       </h2>
@@ -279,9 +295,12 @@ function Focus({ item, platinums, onOpen }: { item: Item; platinums: number; onO
           {t('open')} <Icon name="arrow" />
         </button>
         {item.kind !== 'platinum' && (
-          <Link className="button secondary" to="/nexo">
+          <JourneyLink
+            className="button secondary"
+            to={nexoHref(item.context, item.name, item.target)}
+          >
             {t('askNexo')}
-          </Link>
+          </JourneyLink>
         )}
       </div>
     </div>

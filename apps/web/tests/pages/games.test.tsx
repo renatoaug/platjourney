@@ -93,3 +93,15 @@ test('pagination preserves scope and opens later library entries', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }))
   await waitFor(() => expect(calls.at(-1)?.path).toContain('scope=owned&page=2'))
 })
+
+test('game art loads lazily and falls back when the image fails', () => {
+  renderApp(
+    <GamesView {...handlers} library={{ ...sampleLibrary, items: [sampleLibrary.items[0]] }} />,
+  )
+  const art = document.querySelector('.games-art') as HTMLImageElement
+  expect(art.loading).toBe('lazy')
+  expect(art.getAttribute('src')).toBe(sampleLibrary.items[0].art ?? null)
+  fireEvent.error(art)
+  expect(document.querySelector('.games-art-placeholder')?.textContent).toBe('D')
+  expect(screen.getByRole('link', { name: 'Abrir jornada de DAYS GONE' })).toBeTruthy()
+})

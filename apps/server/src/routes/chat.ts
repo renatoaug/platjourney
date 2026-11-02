@@ -8,7 +8,7 @@ import type { library } from '../library.ts'
 import { reply } from '../nexo.ts'
 import { allow } from '../rate-limit.ts'
 import { chatThreads, recentMessages } from '../repository/activity.ts'
-import { getGame, searchCatalog } from '../repository/game.ts'
+import { gamesForTitles, getGame, searchCatalog } from '../repository/game.ts'
 import type { User } from '../repository/user.ts'
 import { chatOrCheck } from '../watcher.ts'
 import { type Api, type ApiHandler, currentView } from './api.ts'
@@ -81,13 +81,17 @@ async function librarySearch({ res, url, me, titles }: Api) {
       Number.isSafeInteger(requested) && requested > 0 ? requested : 1,
       Math.max(1, Math.ceil(hits.length / size)),
     )
+    const visible = hits.slice((page - 1) * size, page * size)
+    const art = await gamesForTitles(visible, false)
     const playing = getCurrent(me)?.title.npCommunicationId
     return json(res, 200, {
-      items: hits.slice((page - 1) * size, page * size).map((ti) => ({
+      items: visible.map((ti) => ({
         np: ti.npCommunicationId,
         name: ti.name,
         platform: ti.platform,
         icon: ti.iconUrl,
+        cover: art.get(ti.npCommunicationId)?.cover_url ?? null,
+        art: art.get(ti.npCommunicationId)?.art_url ?? null,
         progress: ti.progress,
         earned: ti.earned,
         total: ti.total,

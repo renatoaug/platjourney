@@ -15,14 +15,14 @@ afterEach(() => mock.restore())
 
 const where = () => screen.getByTestId('location').textContent
 
-test('primary navigation has only the three product destinations', () => {
+test('primary navigation has the five product destinations', () => {
   renderApp(<Shell />, { path: '/games' })
   const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
   expect(
     within(nav)
       .getAllByRole('link')
       .map((l) => l.textContent),
-  ).toEqual(['Jornada', 'Jogos', 'Descobrir'])
+  ).toEqual(['Home', 'Jornada', 'Guias', 'Descobrir', 'Jogos'])
   expect(within(nav).getByRole('link', { name: 'Jogos' }).className).toContain('active')
   fireEvent.click(screen.getByRole('button', { name: 'Abrir o menu da conta' }))
   for (const name of ['Histórico', 'Conversas com Nexo', 'Configurações', 'Buscar guias'])
@@ -51,7 +51,7 @@ test('primary navigation opens the games screen', () => {
 test('an unknown route goes home', () => {
   renderApp(<Shell />, { path: '/nada' })
   expect(where()).toBe('/')
-  expect(screen.getByText('Jornada', { selector: '#route-label' })).toBeTruthy()
+  expect(screen.getByText('Home', { selector: '#route-label' })).toBeTruthy()
 })
 
 test('the sidebar profile: skeleton, the player, or waiting for PSN', () => {
@@ -136,7 +136,7 @@ test('contextual Nexo returns to the mounted journey with its open session intac
   mockApi({ '/api/plan': { plan: null }, '/api/chat': [], '/api/chat/threads': [] })
   const current = journeyFixture
   if (!current) throw new Error('fixture requires a game')
-  renderApp(<Shell />, { value: { data: { ...SAMPLE_DATA, current } } })
+  renderApp(<Shell />, { path: '/game', value: { data: { ...SAMPLE_DATA, current } } })
   const session = document.getElementById('journey-session') as HTMLDetailsElement
   session.open = true
   fireEvent.click(screen.getByRole('link', { name: 'Conversar com Nexo' }))
@@ -146,7 +146,7 @@ test('contextual Nexo returns to the mounted journey with its open session intac
   await waitFor(() => expect(document.querySelector('.journey-chat')).toBeNull())
   expect(document.getElementById('journey-session')).toBe(session)
   expect(session.open).toBe(true)
-  expect(screen.getByTestId('location').textContent).toBe('/')
+  expect(screen.getByTestId('location').textContent).toBe('/game')
 })
 
 test('contextual chat follows the keyboard viewport and restores page scroll styles', async () => {
@@ -156,7 +156,10 @@ test('contextual chat follows the keyboard viewport and restores page scroll sty
   mockApi({ '/api/plan': { plan: null }, '/api/chat': [], '/api/chat/threads': [] })
   document.body.style.position = 'relative'
   try {
-    renderApp(<Shell />, { value: { data: { ...SAMPLE_DATA, current: journeyFixture } } })
+    renderApp(<Shell />, {
+      path: '/game',
+      value: { data: { ...SAMPLE_DATA, current: journeyFixture } },
+    })
     fireEvent.click(screen.getByRole('link', { name: 'Conversar com Nexo' }))
     await screen.findByRole('button', { name: 'Voltar à jornada' })
     const dialog = document.querySelector('.journey-chat') as HTMLElement

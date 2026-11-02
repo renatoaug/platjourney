@@ -273,6 +273,7 @@ export function Hero({
   aside,
   tools,
   line,
+  heading = 2,
 }: {
   game: CurrentGame | null
   compact?: boolean
@@ -282,8 +283,10 @@ export function Hero({
   tools?: ReactNode
   /** Under the name, in place of the caption: what the game is. */
   line?: ReactNode
+  heading?: 1 | 2
 }) {
   const t = useMessages(messages)
+  const Heading = heading === 1 ? 'h1' : 'h2'
   if (!c)
     return (
       <div className="inner">
@@ -310,7 +313,7 @@ export function Hero({
           </span>
         </div>
         <div className="hero-headline">
-          <h2 className="hero-title">{c.name}</h2>
+          <Heading className="hero-title">{c.name}</Heading>
           {line ?? (
             <p className="hero-caption">
               {c.progress >= 100 ? t('captionDone') : t('captionOngoing')}

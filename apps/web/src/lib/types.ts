@@ -332,7 +332,14 @@ export interface SimilarGame {
 
 /** Paginated personal PSN library. Progress includes the title's DLC, as reported by PSN. */
 export interface OwnedLibrary {
-  items: (LibraryGame & { np: string; earned: number; total: number; platinum: boolean })[]
+  items: (LibraryGame & {
+    np: string
+    earned: number
+    total: number
+    platinum: boolean
+    cover?: string | null
+    art?: string | null
+  })[]
   total: number
   page: number
   size: number

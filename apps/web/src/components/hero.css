@@ -523,7 +523,7 @@
   @media (max-width: 760px) {
     .hero.immersive .inner {
       min-height: 0;
-      padding: 40px 0 24px;
+      padding: 8px 0 24px;
     }
 
     .hero.immersive .hero-title {

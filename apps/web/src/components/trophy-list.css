@@ -186,7 +186,7 @@
     list-style: none;
     color: var(--color-fg-muted);
     font-size: var(--text-sm);
-    min-height: 36px;
+    min-height: 44px;
   }
 
   .trophy-options summary .icon {
@@ -253,12 +253,15 @@
 
   @container (max-width: 380px) {
     .trophy-status {
-      flex: 1;
+      flex: 1 0 100%;
+      width: 100%;
     }
 
     .trophy-status button {
       flex: 1;
       padding: 8px;
+      min-height: 44px;
+      white-space: nowrap;
     }
 
     .trophy-options {

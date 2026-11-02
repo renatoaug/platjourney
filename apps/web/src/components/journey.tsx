@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { tintStyle } from '../lib/tint'
 import type { CurrentGame } from '../lib/types'
-import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
+import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
 import { Guide } from './guide'
-import { HeroMeta, HeroProgress, UnobtainableBanner } from './hero'
+import { Hero } from './hero'
 import { JourneyLink } from './journey-link'
 import { nexoHref } from './tip'
 import { TrophyList } from './trophy-list'
@@ -63,6 +64,8 @@ const messages = defineMessages({
 /** One owned-game surface, regardless of whether it was opened from PSN presence or the library. */
 export function Journey({ game: c, plan }: { game: CurrentGame; plan: ReactNode }) {
   const t = useMessages(messages)
+  const shots = c.game.screenshot_ids ?? []
+  const [scene, setScene] = useScene(shots.length)
   const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
   const focus = done || c.guide?.unobtainable ? null : c.focus
   const next = focus?.trophy
@@ -71,22 +74,15 @@ export function Journey({ game: c, plan }: { game: CurrentGame; plan: ReactNode 
   ).length
   return (
     <div className="journey">
-      <header className="journey-heading">
-        <Cover
-          className={`cover${c.game.cover_url ? '' : ' journey-icon'}`}
-          url={c.game.cover_url ?? c.icon}
-          name={c.name}
+      <GameBackdrop src={c.game.art_url ?? c.icon} shots={shots} at={scene} tint={c.game.tint} />
+      <div className="hero immersive tinted" style={tintStyle(c.game.tint)}>
+        <Hero
+          game={c}
+          heading={1}
+          cta={false}
+          tools={<ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />}
         />
-        <div>
-          <span className="eyebrow">
-            {t('label')} · {c.platform}
-          </span>
-          <h1>{c.name}</h1>
-          <p>{t('sync')}</p>
-        </div>
-      </header>
-      <HeroProgress game={c} />
-      <UnobtainableBanner guide={{ unobtainable: c.guide?.unobtainable }} />
+      </div>
       <div className="journey-focus card">
         <span className="eyebrow">
           <Icon name="nexo" /> {t('next')}
@@ -139,7 +135,6 @@ export function Journey({ game: c, plan }: { game: CurrentGame; plan: ReactNode 
           {t('guide')}
           <Icon name="chevron-down" />
         </summary>
-        <HeroMeta c={c} />
         <Guide
           id="journey-guide"
           game={{

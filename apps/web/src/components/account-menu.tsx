@@ -18,7 +18,6 @@ const messages = defineMessages({
     profile: 'Meu perfil',
     history: 'Histórico',
     nexo: 'Conversas com Nexo',
-    overview: 'Resumo de conquistas',
     guides: 'Buscar guias',
     settings: 'Configurações',
     logout: 'Sair',
@@ -32,7 +31,6 @@ const messages = defineMessages({
     profile: 'My profile',
     history: 'History',
     nexo: 'Nexo conversations',
-    overview: 'Achievement overview',
     guides: 'Find guides',
     settings: 'Settings',
     logout: 'Sign out',
@@ -44,6 +42,7 @@ const messages = defineMessages({
 
 // How long the menu takes to close (account-menu.css).
 const CLOSE_MS = 140
+const MENU_ICONS = { nexo: 'nexo', history: 'history', guides: 'book-open' }
 
 /** Ends the session when the server confirms it, then starts over from the sign-in screen. */
 async function signOut(): Promise<void> {
@@ -140,7 +139,7 @@ export function AccountMenu({
             <Icon name="dashboard" />
             {t('profile')}
           </Link>
-          {(['nexo', 'history', 'overview', 'guides'] as const).map((key) => (
+          {(['nexo', 'history', 'guides'] as const).map((key) => (
             <Link
               key={key}
               to={`/${key}`}
@@ -148,6 +147,7 @@ export function AccountMenu({
               className="account-menu-item"
               onClick={close}
             >
+              <Icon name={MENU_ICONS[key]} />
               {t(key)}
             </Link>
           ))}
@@ -159,6 +159,7 @@ export function AccountMenu({
               className="account-menu-item"
               onClick={close}
             >
+              <Icon name={p.icon} />
               {p.label[locale]}
             </Link>
           ))}

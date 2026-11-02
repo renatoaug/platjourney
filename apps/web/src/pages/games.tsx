@@ -195,7 +195,9 @@ function GamesSkeleton() {
     <div className="games-list">
       {repeat(3, () => (
         <article className="games-item">
-          <Sk w="64px" h={80} />
+          <div className="games-art">
+            <Sk w="100%" h={180} />
+          </div>
           <div className="games-item-info">
             <Sk w="40%" h={12} />
             <Sk w="80%" h={22} />
@@ -283,11 +285,28 @@ function LibrarySection({
   )
 }
 
+/** Decorative art stays lazy; missing or failed images keep a lettered surface. */
+function GamesArt({ src, name }: { src?: string | null; name: string }) {
+  const [failed, setFailed] = useState<string | null>(null)
+  return src && failed !== src ? (
+    <img
+      className="games-art"
+      src={src}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(src)}
+    />
+  ) : (
+    <Cover name={name} className="games-art games-art-placeholder" />
+  )
+}
+
 function LibraryRow({ item: g }: { item: OwnedLibrary['items'][number] }) {
   const t = useMessages(messages)
   return (
     <article className="games-item">
-      <Cover url={g.icon} name={g.name} className="games-cover" />
+      <GamesArt src={g.art ?? g.cover ?? g.icon} name={g.name} />
       <div className="games-item-info">
         <span className="games-platform">
           {g.platform}
@@ -356,7 +375,7 @@ function InterestsSection({ interests, failed }: { interests?: Interest[]; faile
         <div className="games-list">
           {interests.map((i) => (
             <article className="games-item" key={i.id}>
-              <Cover url={i.game.cover_url} name={i.game.name} className="games-cover" />
+              <GamesArt src={i.game.art_url ?? i.game.cover_url} name={i.game.name} />
               <div className="games-item-info">
                 <span className="games-platform">{t('savedGame')}</span>
                 <h2>{i.game.name}</h2>

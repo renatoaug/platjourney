@@ -5,11 +5,11 @@ description: Game detail and personal journey screens, including progress, troph
 
 # Game detail and journey
 
-Owned games share `Journey` in `src/components/journey.tsx`, whether opened from `/` (current PSN game), `/game` or `/title/*`. A game not owned keeps the discovery anatomy in `src/pages/title.tsx` (`example.tsx`).
+Owned games share `Journey` in `src/components/journey.tsx`, whether opened from `/game` (current PSN game) or `/title/*`. A game not owned keeps the discovery anatomy in `src/pages/title.tsx` (`example.tsx`).
 
 ## Owned game: top to bottom
 
-1. Compact cover, name, platform and personal `HeroProgress`. `UnobtainableBanner` remains visible when appropriate.
+1. Existing immersive hero, catalog backdrop/scenes, name, platform and personal `HeroProgress`. `UnobtainableBanner` remains visible when appropriate.
 2. Next step from the server's `todaysFocus`, with relevant warning and one contextual Nexo action. A roadmap phase is not the player's confirmed location. With no reliable target, ask for context instead of guessing.
 3. Collapsible session route (`PlanCard` scoped by PSN list id). One active route per account; making another replaces the previous route and the UI states this.
 4. `TrophyList` with its existing filters, sorting and help. No invented trophy completion.
@@ -23,7 +23,7 @@ Preserve the scene backdrop, immersive hero with catalog facts, interest action 
 
 ## Navigation
 
-Primary destinations are Jornada, Jogos and Descobrir. Jogos contains in-progress games and interests. Full library and achievements remain in Profile; guides are available through search, game detail and the account menu. General Nexo, history, overview and settings remain accessible from the account menu.
+Primary destinations are Home, Jornada, Guias, Descobrir and Jogos. Home retains its console and artwork at `/`; `/overview` redirects there. Jogos contains the synced PSN library and interests. Profile and guide search remain available. General Nexo, history, overview and settings remain accessible from the account menu.
 
 ## States and validation
 

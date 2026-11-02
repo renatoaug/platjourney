@@ -14,6 +14,8 @@ export const sampleLibrary: OwnedLibrary = {
       name: current.name,
       platform: 'PS4',
       icon: current.icon ?? null,
+      cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co94bn.jpg',
+      art: 'https://images.igdb.com/igdb/image/upload/t_screenshot_big/r5mn9rt7aqvf5nrn8dqq.jpg',
       progress: 38,
       earned: 23,
       total: 61,
@@ -24,6 +26,7 @@ export const sampleLibrary: OwnedLibrary = {
     {
       np: 'fixture-ghost',
       name: 'Ghost of Tsushima',
+      cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co2crj.jpg',
       platform: 'PS5',
       icon: null,
       progress: 64,
@@ -60,6 +63,7 @@ export const sampleLibrary: OwnedLibrary = {
   ],
 }
 const meta = {
+  excludeStories: ['sampleLibrary'],
   title: 'Pages/Games',
   component: GamesView,
   parameters: { layout: 'fullscreen' },
@@ -74,6 +78,22 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 export const Loaded: Story = {}
+export const MissingArt: Story = {
+  args: {
+    library: {
+      ...sampleLibrary,
+      items: sampleLibrary.items.map((g) => ({ ...g, icon: null, art: null, cover: null })),
+    },
+  },
+}
+export const BrokenArt: Story = {
+  args: {
+    library: {
+      ...sampleLibrary,
+      items: [{ ...sampleLibrary.items[0], art: '/missing-game-art.jpg' }],
+    },
+  },
+}
 export const Empty: Story = { args: { library: { ...sampleLibrary, total: 0, items: [] } } }
 export const NoMatches: Story = {
   args: { library: { ...sampleLibrary, total: 0, items: [] }, query: 'unknown' },

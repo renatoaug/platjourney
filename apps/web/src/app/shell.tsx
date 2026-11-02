@@ -48,9 +48,9 @@ import './shell.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     nav: {
-      home: 'Jornada',
+      home: 'Home',
       games: 'Jogos',
-      game: 'Jogo atual',
+      game: 'Jornada',
       nexo: 'Nexo',
       goals: 'Interesses',
       discover: 'Descobrir',
@@ -90,9 +90,9 @@ const messages = defineMessages({
   },
   [Language.En]: {
     nav: {
-      home: 'Journey',
+      home: 'Home',
       games: 'Games',
-      game: 'Current game',
+      game: 'Journey',
       nexo: 'Nexo',
       goals: 'Interests',
       discover: 'Discover',
@@ -133,14 +133,16 @@ const messages = defineMessages({
 })
 
 const NAV: { to: string; label: MessageKey<typeof messages>; icon: string }[] = [
-  { to: '/', label: 'nav.home', icon: 'compass' },
-  { to: '/games', label: 'nav.games', icon: 'gamepad' },
+  { to: '/', label: 'nav.home', icon: 'dashboard' },
+  { to: '/game', label: 'nav.game', icon: 'compass' },
+  { to: '/guides', label: 'nav.guides', icon: 'book-open' },
   { to: '/discover', label: 'nav.discover', icon: 'search' },
+  { to: '/games', label: 'nav.games', icon: 'gamepad' },
 ]
 
 const LABELS: Record<string, MessageKey<typeof messages>> = {
   '/': 'nav.home',
-  '/game': 'nav.home',
+  '/game': 'nav.game',
   '/games': 'nav.games',
   '/overview': 'nav.home',
   '/nexo': 'nav.nexo',
@@ -169,14 +171,9 @@ function useArrival(pathname: string): Arrival {
   return arrival.current
 }
 
-function Nav() {
+export function Nav() {
   const { pathname } = useLocation()
-  const active =
-    pathname === '/game'
-      ? '/'
-      : pathname.startsWith('/title/') || pathname === '/goals'
-        ? '/games'
-        : pathname
+  const active = pathname.startsWith('/title/') || pathname === '/goals' ? '/games' : pathname
   const t = useMessages(messages)
   return (
     <nav className="nav journey-nav" aria-label={t('mainNav')}>
@@ -348,8 +345,8 @@ export function Shell() {
         {privateProfile && <PrivateNotice />}
         <PullRefresh onRefresh={pullRefresh} />
         <Routes key={refreshes} location={modal ? background : location}>
-          <Route path="/" element={<Game />} />
-          <Route path="/overview" element={<Home />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/overview" element={<Navigate to="/" replace />} />
           <Route path="/games" element={<Games />} />
           <Route path="/game" element={<Game />} />
           <Route path="/nexo" element={<Nexo />} />
