@@ -320,9 +320,19 @@
   }
 
   .console-actions {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(max-content, 1.2fr);
     gap: 8px;
+  }
+
+  .console-actions > .button {
+    min-width: 0;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  .console-actions > :only-child {
+    grid-column: 1 / -1;
   }
 
   .console .button.secondary {
@@ -520,6 +530,12 @@
       border: 0;
       background: none;
       backdrop-filter: none;
+    }
+
+    .console-meta > .dm {
+      height: auto;
+      min-height: 28px;
+      padding: 4px 8px;
     }
 
     .console-progress {

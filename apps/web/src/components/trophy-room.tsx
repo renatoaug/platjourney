@@ -1,10 +1,12 @@
 /** The trophy room: the player's records among their platinums, each a large glass card on its game's
  * art (the rarest, the fastest, the longest and the first). The whole collection is listed further
  * down the profile; this is the showcase. */
+import { useId } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtRate } from '../lib/format'
 import type { Platinum } from '../pages/profile'
+import { Sk } from '../ui/skeleton'
 import { image } from './game-showcase'
 import { titleHref } from './tip'
 import './trophy-room.css'
@@ -115,6 +117,35 @@ export function TrophyRoom({ platinums }: { platinums: Platinum[] }) {
       <div className="room-records">
         {records.map((r) => (
           <RecordCard key={r.key} record={r} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/** Reserve the showcase while records are unknown; never fabricate game names or statistics. */
+export function TrophyRoomSkeleton() {
+  const t = useMessages(messages)
+  const titleId = useId()
+  return (
+    <section className="trophy-room" aria-labelledby={titleId} aria-busy="true">
+      <header>
+        <span className="eyebrow">{t('eyebrow')}</span>
+        <h2 id={titleId}>{t('title')}</h2>
+      </header>
+      <div className="room-records">
+        {(['rarest', 'fastest', 'longest', 'first'] as const).map((key) => (
+          <div key={key} className={`room-record ${key}`}>
+            <span className="room-record-body">
+              <span className="eyebrow">{t(key)}</span>
+              <b aria-hidden="true">
+                <Sk w="85%" style={{ height: '1lh' }} />
+              </b>
+              <span className="room-record-stat" aria-hidden="true">
+                <Sk w="90px" style={{ height: '1lh', maxWidth: '100%' }} />
+              </span>
+            </span>
+          </div>
         ))}
       </div>
     </section>

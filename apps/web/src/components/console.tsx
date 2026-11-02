@@ -302,7 +302,7 @@ function Focus({ item, platinums, onOpen }: { item: Item; platinums: number; onO
             className="button secondary"
             to={nexoHref(item.context, item.name, item.target)}
           >
-            {t('askNexo')}
+            <img className="icon" src="/nexo-avatar.svg" alt="" /> {t('askNexo')}
           </JourneyLink>
         )}
       </div>
@@ -465,8 +465,8 @@ export function ConsoleSkeleton() {
           <Sk w="90%" h={16} />
         </p>
         <div className="console-actions">
-          <Sk w="120px" h={44} />
-          <Sk w="150px" h={44} />
+          <Sk w="100%" h={44} />
+          <Sk w="100%" h={44} />
         </div>
       </div>
       <section className="console-shelf">

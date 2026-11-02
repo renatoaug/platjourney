@@ -284,6 +284,7 @@ export function Hero({
   tools,
   line,
   heading = 2,
+  hideTools = false,
 }: {
   game: CurrentGame | null
   compact?: boolean
@@ -294,6 +295,8 @@ export function Hero({
   /** Under the name, in place of the caption: what the game is. */
   line?: ReactNode
   heading?: 1 | 2
+  /** The same gallery is rendered beside Back on title pages. */
+  hideTools?: boolean
 }) {
   const t = useMessages(messages)
   const Heading = heading === 1 ? 'h1' : 'h2'
@@ -345,7 +348,7 @@ export function Hero({
             </div>
           )}
         </div>
-        {tools && <div className="hero-gallery">{tools}</div>}
+        {tools && !hideTools && <div className="hero-gallery">{tools}</div>}
         {aside && <div className="hero-aside">{aside}</div>}
       </div>
     </>
@@ -354,7 +357,15 @@ export function Hero({
 
 /** The game page's hero while it loads, in the same places: the scenes button and platform on the
  * right, the name, the chips of facts, the progress and, beside them, the card on the right. */
-export function HeroSkeleton({ cta = true, aside = true }: { cta?: boolean; aside?: boolean }) {
+export function HeroSkeleton({
+  cta = true,
+  aside = true,
+  gallery = true,
+}: {
+  cta?: ReactNode
+  aside?: boolean
+  gallery?: boolean
+}) {
   const pill = { borderRadius: 'var(--radius-pill)' }
   return (
     <div className="inner">
@@ -397,15 +408,13 @@ export function HeroSkeleton({ cta = true, aside = true }: { cta?: boolean; asid
             <Sk w="180px" h={14} />
           </div>
         </div>
-        {cta && (
-          <div className="cta">
-            <Sk w="180px" h={40} />
-          </div>
-        )}
+        {cta && <div className="cta">{cta === true ? <Sk w="180px" h={40} /> : cta}</div>}
       </div>
-      <div className="hero-gallery">
-        <Sk w="130px" h={32} style={pill} />
-      </div>
+      {gallery && (
+        <div className="hero-gallery">
+          <Sk w="130px" h={32} style={pill} />
+        </div>
+      )}
       {aside && (
         <div className="hero-aside">
           <div className="hero-aside-sk">

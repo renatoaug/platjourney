@@ -1,4 +1,26 @@
 @layer screens {
+  .game-page-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    margin-bottom: 16px;
+  }
+
+  .game-page-actions .back-link {
+    margin: 0;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+  }
+
+  .game-page-actions .scenes-button {
+    min-height: 44px;
+    white-space: nowrap;
+  }
+
   .hero {
     /* The game's own near-black (a .tinted hero), else the brand's. */
     --hero-shade: var(--game-tint-deep, var(--color-on-accent));

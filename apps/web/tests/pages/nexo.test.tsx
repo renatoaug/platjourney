@@ -421,3 +421,72 @@ test('a reply arriving while reading another conversation does not react there o
   await within(log()).findByText('Uma resposta nova para o jogo.')
   expect(reacted()).toBeNull()
 })
+
+test('the Home shortcut resumes the first conversation in canonical recency order', async () => {
+  const game = current as unknown as CurrentGame
+  const calls = mockApi({
+    '/api/chat/threads': [thread({ game: game.game.id, np: game.np, name: game.name }), thread({})],
+    '/api/chat': messages,
+  })
+  renderApp(<Nexo />, {
+    path: '/nexo?resume=latest',
+    route: '/nexo',
+    value: { data: { ...SAMPLE_DATA, current: game }, cache: { chatThreads: [thread({})] } },
+  })
+  expect(await screen.findByText('E depois disso?')).toBeTruthy()
+  expect(calls.find((c) => c.path.startsWith('/api/chat?'))?.path).toBe(
+    `/api/chat?game=${encodeURIComponent(game.game.id)}`,
+  )
+  expect(calls.some((c) => c.method === 'POST')).toBe(false)
+})
+
+test('resuming waits for history and never flashes the current conversation', async () => {
+  mockApi({ '/api/chat/threads': never })
+  renderApp(<Nexo />, { path: '/nexo?resume=latest', route: '/nexo' })
+  expect(document.querySelector('.chat .sk')).toBeTruthy()
+  expect(screen.queryByRole('combobox', { name: 'Mensagem para Nexo' })).toBeNull()
+})
+
+test('a resume history error is explicit instead of silently starting a chat', async () => {
+  const calls = mockApi({ '/api/chat/threads': reply(500) })
+  renderApp(<Nexo />, { path: '/nexo?resume=latest', route: '/nexo' })
+  expect(await screen.findByRole('alert')).toBeTruthy()
+  expect(calls.some((c) => c.path.startsWith('/api/chat?') || c.method === 'POST')).toBe(false)
+})
+
+test('resuming without history keeps the empty conversation without creating messages', async () => {
+  const calls = mockApi({ '/api/chat/threads': [], '/api/chat': [] })
+  renderApp(<Nexo />, { path: '/nexo?resume=latest', route: '/nexo' })
+  await gone(() => document.querySelector('.chat .sk'))
+  expect(screen.getByRole('combobox', { name: 'Mensagem para Nexo' })).toBeTruthy()
+  expect(calls.some((c) => c.method === 'POST')).toBe(false)
+})
+
+test('explicit game context takes precedence over resuming another conversation', async () => {
+  const game = current as unknown as CurrentGame
+  const calls = mockApi({ '/api/chat/threads': [thread({})], '/api/chat': messages })
+  renderApp(<Nexo />, {
+    path: `/nexo?resume=latest&game=${game.np}`,
+    route: '/nexo',
+    value: { data: { ...SAMPLE_DATA, current: game } },
+  })
+  expect(await screen.findByText('E depois disso?')).toBeTruthy()
+  expect(calls.some((c) => c.method === 'POST')).toBe(false)
+})
+
+test('the latest general conversation remains readable without changing game context', async () => {
+  const game = current as unknown as CurrentGame
+  const calls = mockApi({
+    '/api/chat/threads': [thread({ game: null, np: null })],
+    '/api/chat': messages,
+  })
+  renderApp(<Nexo />, {
+    path: '/nexo?resume=latest',
+    route: '/nexo',
+    value: { data: { ...SAMPLE_DATA, current: game } },
+  })
+  expect(await screen.findByText('Conversas de antes de o Nexo separar por jogo.')).toBeTruthy()
+  expect(await screen.findByText('E depois disso?')).toBeTruthy()
+  expect(calls.some((c) => c.path === '/api/chat?game=none')).toBe(true)
+  expect(calls.some((c) => c.method === 'POST')).toBe(false)
+})

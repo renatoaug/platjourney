@@ -81,7 +81,7 @@ export function NexoBrief({ current, tips }: { current: CurrentGame | null; tips
       <p>
         <UserText text={content} />
       </p>
-      <Link className="text-link" to={latest ? '/history' : '/nexo'}>
+      <Link className="text-link" to={latest ? '/history' : '/nexo?resume=latest'}>
         {latest ? t('readFull') : t('talk')} <Icon name="arrow" />
       </Link>
     </>

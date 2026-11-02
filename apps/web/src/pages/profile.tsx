@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { titleHref } from '../components/tip'
-import { TrophyRoom } from '../components/trophy-room'
+import { TrophyRoom, TrophyRoomSkeleton } from '../components/trophy-room'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import { compact, fmtHours, fmtLong, fmtRate, number, pct } from '../lib/format'
@@ -549,81 +549,122 @@ function PlatinumCollection({
   )
 }
 
-// The same three parts as a number in the header (label, number, caption), so a phone lays it out
-// the same way: number over label, caption hidden. The fifth is the level, hidden on a phone.
-const tileSkeleton = (i: number) => (
-  <div key={i} className={`tile${i === 4 ? ' profile-level' : ''}`}>
-    <div className="tile-label">
-      <Sk w="55%" h={10} />
-    </div>
-    <b>
-      <Sk w="48px" h={22} />
-    </b>
-    <div className="sub">
-      <Sk w="70%" h={9} />
-    </div>
-  </div>
-)
-
+// Reuse the loaded profile's wrappers so responsive tiles, covers and type keep their footprint.
 export function ProfileSkeleton() {
   const t = useMessages(messages)
+  const tiles = [
+    { label: t('tiles.platinums'), icon: 'trophy', className: 'plat' },
+    { label: t('tiles.trophies'), icon: 'trophy', className: '' },
+    { label: t('tiles.hours'), icon: 'clock', className: '' },
+    { label: t('tiles.bestMonth'), icon: 'clock', className: '' },
+    { label: t('levelLabel'), icon: 'bolt', className: 'profile-level' },
+  ] as const
   return (
-    <>
+    <div className="profile-skeleton" aria-busy="true">
       <div className="card profile-hero profile-identity">
-        <Sk w="64px" h={64} style={{ borderRadius: '50%', flex: 'none' }} />
+        <span className="profile-avatar sk" aria-hidden="true" />
         <div className="profile-name">
-          <Sk w="180px" h={28} />
-          <p className="profile-level-line">
-            <Sk w="140px" h={10} />
+          <div className="profile-name-skeleton" aria-hidden="true">
+            <Sk w="min(180px, 100%)" style={{ height: '1lh' }} />
+          </div>
+          <p className="profile-level-line" aria-hidden="true">
+            <b>
+              <Sk w="58px" style={{ height: '1lh' }} />
+            </b>
+            <span className="bar small sk" />
+            <Sk w="80px" style={{ height: '1lh' }} />
           </p>
-          <Sk w="150px" h={11} style={{ marginTop: 8 }} />
+          <p className="profile-platforms" aria-hidden="true">
+            <Sk w="min(150px, 100%)" style={{ height: '1lh' }} />
+          </p>
         </div>
-        {/* Five numbers, the level last, as a full profile shows in its header. */}
         <section className="profile-tiles">
-          {Array.from({ length: 5 }, (_, i) => tileSkeleton(i))}
+          {tiles.map(({ label, icon, className }, i) => (
+            <div key={label} className={`tile ${className}`}>
+              <div className="tile-label">
+                <Icon name={icon} className="stat-icon" />
+                {i === 2 ? (
+                  <>
+                    <span className="stat-full">{label}</span>
+                    <span className="stat-short">{t('tiles.hoursShort')}</span>
+                  </>
+                ) : (
+                  label
+                )}
+              </div>
+              <b aria-hidden="true">
+                <Sk w="min(64px, 100%)" style={{ height: '1lh' }} />
+              </b>
+              {i === 1 ? (
+                <div className="sub trophy-counts" aria-hidden="true">
+                  {(['gold', 'silver', 'bronze'] as const).map((tier) => (
+                    <span key={tier} className={tier}>
+                      <Icon name="trophy" />
+                      <Sk w="24px" style={{ height: '1lh' }} />
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="sub" aria-hidden="true">
+                  {i === 4 && <span className="bar small sk" />}
+                  <Sk w="70%" style={{ height: '1lh' }} />
+                </div>
+              )}
+            </div>
+          ))}
         </section>
       </div>
+      <TrophyRoomSkeleton />
       <div className="profile-layout">
         <div className="profile-band">
           <div className="card">
+            <span className="eyebrow">{t('pace')}</span>
             <h2>{t('byYear')}</h2>
-            <div className="years">
-              {repeat(8, (i) => (
+            <div className="years" aria-hidden="true">
+              {repeat(5, () => (
                 <div className="year">
-                  <Sk
-                    w="100%"
-                    h={12 + ((i * 37) % 60)}
-                    style={{
-                      maxWidth: 28,
-                      borderRadius: 'var(--radius-tag) var(--radius-tag) 0 0',
-                    }}
-                  />
-                  <Sk w="28px" h={9} />
+                  <b>
+                    <Sk w="20px" style={{ height: '1lh' }} />
+                  </b>
+                  <i className="sk" style={{ '--share': 0.75 } as CSSProperties} />
+                  <small>
+                    <Sk w="28px" style={{ height: '1lh' }} />
+                  </small>
                 </div>
               ))}
             </div>
           </div>
           <div className="card profile-most">
+            <span className="eyebrow">{t('most.eyebrow')}</span>
             <h2>{t('most.title')}</h2>
-            <ol>
+            <ol aria-hidden="true">
               {repeat(3, () => (
                 <li>
-                  <span className="profile-most-row">
-                    <Sk
-                      w="28px"
-                      h={36}
-                      style={{ borderRadius: 'var(--radius-tag)', flex: 'none' }}
-                    />
-                    <Sk w="60%" h={12} />
-                  </span>
+                  <div className="profile-most-row">
+                    <span className="plat-cover sk" />
+                    <span>
+                      <Sk w="90%" style={{ height: '1lh' }} />
+                    </span>
+                    <b>
+                      <Sk w="30px" style={{ height: '1lh' }} />
+                    </b>
+                  </div>
                 </li>
               ))}
             </ol>
           </div>
           <div className="profile-band-side">
-            <div className="card">
-              <Sk w="60%" h={12} />
-              <Sk w="40%" h={10} style={{ marginTop: 10 }} />
+            <div className="card profile-rarest">
+              <span className="plat-cover sk" aria-hidden="true" />
+              <span>
+                <span className="eyebrow">{t('tiles.rarest')}</span>
+                <b aria-hidden="true">
+                  <Sk w="120px" style={{ height: '1lh', maxWidth: '100%' }} />
+                </b>
+                <small className="muted" aria-hidden="true">
+                  <Sk w="85%" style={{ height: '1lh' }} />
+                </small>
+              </span>
             </div>
           </div>
         </div>
@@ -643,17 +684,29 @@ export function ProfileSkeleton() {
               placeholder={t('collection.placeholder')}
             />
           </label>
-          <div className="collection-grid">
+          <div className="trophy-results" aria-hidden="true">
+            <Sk w="140px" style={{ height: '1lh' }} />
+          </div>
+          <div className="collection-grid" aria-hidden="true">
             {repeat(10, () => (
               <div className="collection-tile">
-                <Sk w="100%" h={0} style={{ aspectRatio: '3 / 4', height: 'auto' }} />
-                <Sk w="80%" h={11} />
-                <Sk w="60%" h={9} />
+                <span className="plat-cover sk" />
+                <div>
+                  <h3>
+                    <Sk w="80%" style={{ height: '1lh' }} />
+                  </h3>
+                  <p>
+                    <Sk w="90%" style={{ height: '1lh' }} />
+                  </p>
+                  <time>
+                    <Sk w="60%" style={{ height: '1lh' }} />
+                  </time>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

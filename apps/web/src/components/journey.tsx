@@ -79,15 +79,26 @@ function scopedProgress(c: CurrentGame, includeDlc: boolean) {
     : c.progress
 }
 
+function JourneyActions({ back, children }: { back?: ReactNode; children: ReactNode }) {
+  return back ? (
+    <div className="game-page-actions">
+      {back}
+      {children}
+    </div>
+  ) : null
+}
+
 /** One owned-game surface, regardless of whether it was opened from PSN presence or the library. */
 export function Journey({
   game: c,
   plan,
   similar,
+  back,
 }: {
   game: CurrentGame
   plan: ReactNode
   similar?: ReactNode
+  back?: ReactNode
 }) {
   const t = useMessages(messages)
   const includeDlc = useApp().me.includeDlcProgress
@@ -103,12 +114,16 @@ export function Journey({
   return (
     <div className="journey">
       <GameBackdrop src={c.game.art_url ?? c.icon} shots={shots} at={scene} tint={c.game.tint} />
+      <JourneyActions back={back}>
+        <ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />
+      </JourneyActions>
       <div id="journey-hero" className="hero immersive tinted" style={tintStyle(c.game.tint)}>
         <Hero
           game={c}
           heading={1}
           cta={false}
           tools={<ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />}
+          hideTools={!!back}
         />
       </div>
       <GameNav sections={SECTIONS} hero="journey-hero" name={c.name} progress={progress} />
@@ -186,12 +201,12 @@ export function Journey({
 }
 
 /** The same owned-game hierarchy while progress is being loaded. */
-export function JourneySkeleton() {
+export function JourneySkeleton({ gallery = true }: { gallery?: boolean }) {
   const t = useMessages(messages)
   return (
     <div className="journey" aria-busy="true">
       <div className="hero immersive tinted">
-        <HeroSkeleton cta={false} aside={false} />
+        <HeroSkeleton cta={false} aside={false} gallery={gallery} />
       </div>
       <div className="game-nav" aria-hidden="true">
         <Sk w="186px" h={52} style={{ borderRadius: 'var(--radius-pill)' }} />

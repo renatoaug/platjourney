@@ -59,7 +59,42 @@ function hasReply({ error, text, messages }: ChatReply) {
 export function Nexo() {
   // The demo's chat is closed: it shows sample exchanges and asks nothing of the server.
   const demo = useDemo()
-  return demo ? <DemoNexo /> : <LiveNexo />
+  const [params] = useSearchParams()
+  if (demo) return <DemoNexo />
+  return params.get('resume') === 'latest' && !params.has('game') ? <LatestNexo /> : <LiveNexo />
+}
+
+/** The Home shortcut resumes the server's most recent conversation, not a new current-game draft. */
+function LatestNexo() {
+  const { cache } = useApp()
+  const location = useLocation()
+  const [, setParams] = useSearchParams()
+  const [chat, setChat] = useState<ChatLoad>('loading')
+  useEffect(() => {
+    let active = true
+    api<ChatThread[]>('/api/chat/threads')
+      .then((list) => {
+        if (!active) return
+        cache.chatThreads = list
+        // The authenticated endpoint already orders by last_at descending.
+        const latest = list[0]
+        const next = new URLSearchParams()
+        if (latest?.game) {
+          next.set('game', latest.np ?? latest.game)
+          next.set('name', latest.name ?? '')
+        } else if (latest) next.set('history', 'none')
+        setParams(next, { replace: true, state: location.state })
+      })
+      .catch(() => active && setChat('error'))
+    return () => {
+      active = false
+    }
+  }, [cache, location.state, setParams])
+  return (
+    <Page path="/nexo">
+      <NexoChat chat={chat} sending={false} subtitle="" onSend={() => {}} readOnly={<span />} />
+    </Page>
+  )
 }
 
 function DemoNexo() {
@@ -210,11 +245,13 @@ function LiveNexo() {
   const chatGame = data?.chat ?? data?.current
   const currentKey = chatGame?.game.id ?? 'none'
   // Another conversation being read, from the list; null is the chat's own game.
-  const [viewing, setViewing] = useState<string | null>(null)
+  const [params, setParams] = useSearchParams()
+  const [viewing, setViewing] = useState<string | null>(() =>
+    params.get('history') === 'none' ? 'none' : null,
+  )
   const [replyVersion, setReplyVersion] = useState(0)
   // A game page's link names the game to open on (?game=…): until the switch lands, the old game's
   // conversation must not flash on screen.
-  const [params, setParams] = useSearchParams()
   const incoming = params.get('game')
   const arriving = incoming !== null && incoming !== chatGame?.np && incoming !== chatGame?.game.id
   const key = viewing ?? currentKey

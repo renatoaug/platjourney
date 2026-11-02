@@ -53,13 +53,14 @@
     width: 100%;
     max-width: 100%;
     margin-bottom: 20px;
-    padding: 4px;
+    padding: 0;
     border: 1px solid var(--color-border);
     background: var(--color-bg-subtle);
   }
 
   .game-columns-tabs .game-switch button {
     min-height: 44px;
+    padding-block: 8px;
     flex: 1;
     min-width: 0;
     border: 0;

@@ -852,7 +852,7 @@
   }
 
   .chat-page .nexo-chat-top {
-    padding: 0 12px 12px;
+    padding: 0 20px 12px;
   }
 
   .chat-page .nexo-chat-top > .nexo-chat-heading {
@@ -909,8 +909,8 @@
 
   .chat-page:not(.journey-chat .chat-page) .nexo-chat-tools button {
     display: flex;
-    align-items: flex-start;
-    padding-block: 0 20px;
+    align-items: center;
+    padding-block: 6px;
   }
 
   .chat-page .nexo-chat-tools .nexo-sub-text {

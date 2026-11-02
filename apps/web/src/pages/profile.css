@@ -1,4 +1,32 @@
 @layer screens {
+  .profile-skeleton .year i.sk {
+    background: var(--color-border-strong);
+    box-shadow: none;
+  }
+
+  .profile-skeleton .profile-avatar {
+    flex: none;
+  }
+
+  .profile-skeleton .profile-level-line > .sk,
+  .profile-skeleton .profile-level .sub > .sk {
+    margin: 0;
+  }
+
+  .profile-skeleton .profile-name-skeleton {
+    font: var(--weight-medium) var(--text-4xl) / var(--leading-tight) var(--font-display);
+  }
+
+  @media (max-width: 760px) {
+    .profile-skeleton .profile-name-skeleton {
+      font-size: var(--text-3xl);
+    }
+
+    .profile-skeleton .profile-tiles .tile > b > .sk {
+      margin-inline: auto;
+    }
+  }
+
   .profile-hero .profile-name {
     flex: 1;
     min-width: 200px;
