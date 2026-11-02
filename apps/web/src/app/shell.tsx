@@ -136,7 +136,7 @@ const NAV: { to: string; label: MessageKey<typeof messages>; icon: string }[] = 
   { to: '/game', label: 'nav.game', icon: 'compass' },
   { to: '/guides', label: 'nav.guides', icon: 'book-open' },
   { to: '/discover', label: 'nav.discover', icon: 'search' },
-  { to: '/games', label: 'nav.games', icon: 'gamepad' },
+  { to: '/games?tab=interests', label: 'nav.games', icon: 'gamepad' },
 ]
 
 const LABELS: Record<string, MessageKey<typeof messages>> = {
@@ -181,7 +181,7 @@ export function Nav() {
           key={n.to}
           to={n.to}
           end={n.to === '/'}
-          className={active === n.to ? 'active' : ''}
+          className={active === n.to.split('?')[0] ? 'active' : ''}
         >
           <Icon name={n.icon} />
           {t(n.label)}

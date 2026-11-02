@@ -49,15 +49,28 @@
     gap: 8px;
     min-height: 44px;
     padding: 8px 10px;
-    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    position: relative;
+    isolation: isolate;
+    border: 0;
     border-radius: var(--radius-control);
-    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    background: transparent;
     color: var(--color-fg);
     font-size: var(--text-sm);
+  }
+
+  /* A compact 32px surface inside the unchanged 44px touch target. */
+  .scenes-button::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 6px 0;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
     backdrop-filter: blur(10px);
   }
 
-  .scenes-button:hover {
+  .scenes-button:hover::before {
     border-color: var(--color-accent);
     background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
   }

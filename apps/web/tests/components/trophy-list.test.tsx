@@ -116,6 +116,26 @@ describe('TrophyList', () => {
     expect(screen.getByText(/Tente outro termo/)).toBeTruthy()
   })
 
+  test('collapsing the options preserves filters and leaves the same trigger available', () => {
+    show(many)
+    const trigger = screen.getByRole('button', { name: 'Filtros' })
+    const panel = document.getElementById(trigger.getAttribute('aria-controls')!)!
+    expect(panel.hidden).toBe(true)
+    fireEvent.click(trigger)
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    const group = screen.getByLabelText('Conteúdo') as HTMLSelectElement
+    fireEvent.change(group, { target: { value: 'dlc' } })
+    for (let i = 0; i < 2; i++) {
+      fireEvent.click(trigger)
+      expect(panel.hidden).toBe(true)
+      expect(trigger.getAttribute('aria-expanded')).toBe('false')
+      fireEvent.click(trigger)
+      expect(panel.hidden).toBe(false)
+      expect(group.value).toBe('dlc')
+      expect(results()).toBe('1–8 de 8 troféus · DLC')
+    }
+  })
+
   test('the content select shows DLC, all and progress only', () => {
     show(many)
     const group = screen.getByLabelText('Conteúdo')

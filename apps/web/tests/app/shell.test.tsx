@@ -25,8 +25,10 @@ test('primary navigation has the five product destinations', () => {
   ).toEqual(['Home', 'Jornada', 'Guias', 'Descobrir', 'Jogos'])
   expect(within(nav).getByRole('link', { name: 'Jogos' }).className).toContain('active')
   fireEvent.click(screen.getByRole('button', { name: 'Abrir o menu da conta' }))
-  for (const name of ['Histórico', 'Conversas com Nexo', 'Configurações', 'Buscar guias'])
+  for (const name of ['Histórico', 'Conversas com Nexo', 'Configurações'])
     expect(screen.getByRole('menuitem', { name })).toBeTruthy()
+  expect(screen.queryByRole('menuitem', { name: 'Buscar guias' })).toBeNull()
+  expect(within(nav).getByRole('link', { name: 'Guias' }).getAttribute('href')).toBe('/guides')
 })
 
 test('the breadcrumb and the tab title follow the route', async () => {
@@ -44,8 +46,24 @@ test('primary navigation opens the games screen', () => {
   mockApi({ '/api/library': never })
   renderApp(<Shell />, { path: '/' })
   fireEvent.click(screen.getByRole('link', { name: 'Jogos' }))
-  expect(where()).toBe('/games')
+  expect(where()).toBe('/games?tab=interests')
   expect(screen.getByRole('heading', { level: 1, name: 'Seus jogos' })).toBeTruthy()
+})
+
+test('a fresh Games navigation always opens interests, including from another inner tab', () => {
+  mockApi({ '/api/library': never })
+  renderApp(<Shell />, { path: '/games?tab=library' })
+  expect(screen.getByRole('button', { name: 'Biblioteca PSN' }).getAttribute('aria-pressed')).toBe(
+    'true',
+  )
+  for (const tab of ['Metas e conquistas', 'Biblioteca PSN']) {
+    fireEvent.click(screen.getByRole('button', { name: tab }))
+    fireEvent.click(screen.getByRole('link', { name: 'Jogos' }))
+    expect(where()).toBe('/games?tab=interests')
+    expect(screen.getByRole('button', { name: 'Interesses' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    )
+  }
 })
 
 test('an unknown route goes home', () => {

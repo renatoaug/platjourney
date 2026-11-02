@@ -336,11 +336,13 @@ function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
             {owned && <span className="live-label">{t('inLibrary')}</span>}
             <span className="hero-tools">
               <ScenesButton shots={shots} at={scene} name={d.name} onGo={setScene} />
-              <span className="platform">{d.platform}</span>
             </span>
           </div>
           <div className="hero-headline">
-            <h2 className="hero-title">{d.name}</h2>
+            <div className="hero-title-row">
+              <h2 className="hero-title">{d.name}</h2>
+              <span className="platform">{d.platform}</span>
+            </div>
             <TitleMeta d={d} />
           </div>
           <HeroBottom d={d} />

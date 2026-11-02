@@ -289,7 +289,7 @@ export function Hero({
   compact?: boolean
   cta?: ReactNode
   aside?: ReactNode
-  /** Beside the platform in the top row (the button that opens the scenes). */
+  /** Secondary tools below the headline (the button that opens the scenes). */
   tools?: ReactNode
   /** Under the name, in place of the caption: what the game is. */
   line?: ReactNode
@@ -317,13 +317,13 @@ export function Hero({
       <div className="inner">
         <div className="hero-top">
           <span className="live-label">{t('currentLabel')}</span>
-          <span className="hero-tools">
-            {tools}
-            <span className="platform">{c.platform}</span>
-          </span>
+          <span className="hero-tools">{tools}</span>
         </div>
         <div className="hero-headline">
-          <Heading className="hero-title">{c.name}</Heading>
+          <div className="hero-title-row">
+            <Heading className="hero-title">{c.name}</Heading>
+            <span className="platform">{c.platform}</span>
+          </div>
           {line ?? (
             <p className="hero-caption">
               {c.trophies?.some((trophy) => trophy.type === 'platinum' && trophy.earned)
@@ -359,12 +359,14 @@ export function HeroSkeleton({ cta = true, aside = true }: { cta?: boolean; asid
     <div className="inner">
       <div className="hero-top">
         <span className="hero-tools">
-          <Sk w="128px" h={34} style={pill} />
-          <Sk w="38px" h={22} />
+          <Sk w="128px" h={32} style={pill} />
         </span>
       </div>
       <div className="hero-headline">
-        <Sk w="min(520px, 80%)" h={56} />
+        <div className="hero-title-row">
+          <Sk w="min(520px, 80%)" h={56} />
+          <Sk w="38px" h={22} />
+        </div>
         <div className="meta">
           {[64, 150, 96, 130].map((w) => (
             <Sk key={w} w={`${w}px`} h={30} style={pill} />

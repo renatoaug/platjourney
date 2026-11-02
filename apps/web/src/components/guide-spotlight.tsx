@@ -55,28 +55,28 @@ export function GuideSpotlight({ game }: { game: SpotlightGame }) {
         <span className="eyebrow">{t('eyebrow')}</span>
         <div className="guide-spotlight-head">
           <b>{game.name}</b>
-          <Link className="button sm" to={titleHref(game.id)}>
-            {t('open')} <Icon name="arrow" />
-          </Link>
         </div>
         <span className="guide-spotlight-sub">
           {[game.platforms.join(' · '), game.release_year].filter(Boolean).join(' · ')}
         </span>
-        {g && (
-          <span className="guide-spotlight-chips">
-            {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
-            {g.hours > 0 && (
-              <span title={t('hours', { hours: g.hours })}>
-                <Icon name="clock" /> {t('hoursShort', { hours: g.hours })}
-              </span>
-            )}
-            <span className={g.hasMissables ? 'warn' : 'ok'}>
-              <Icon name={g.hasMissables ? 'warning' : 'shield'} />{' '}
-              {t(g.hasMissables ? 'missables' : 'noMissables')}
-            </span>
-          </span>
-        )}
       </div>
+      {g && (
+        <span className="guide-spotlight-chips">
+          {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
+          {g.hours > 0 && (
+            <span title={t('hours', { hours: g.hours })}>
+              <Icon name="clock" /> {t('hoursShort', { hours: g.hours })}
+            </span>
+          )}
+          <span className={g.hasMissables ? 'warn' : 'ok'}>
+            <Icon name={g.hasMissables ? 'warning' : 'shield'} />{' '}
+            {t(g.hasMissables ? 'missables' : 'noMissables')}
+          </span>
+        </span>
+      )}
+      <Link className="guide-spotlight-open" to={titleHref(game.id)}>
+        {t('open')} <Icon name="arrow" />
+      </Link>
     </aside>
   )
 }

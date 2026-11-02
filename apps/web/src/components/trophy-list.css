@@ -182,7 +182,7 @@
     color: var(--color-fg);
   }
 
-  .trophy-options summary {
+  .trophy-options {
     display: flex;
     align-items: center;
     gap: 7px;
@@ -193,12 +193,12 @@
     min-height: 44px;
   }
 
-  .trophy-options summary .icon {
+  .trophy-options .icon {
     width: 14px;
     height: 14px;
   }
 
-  .trophy-options[open] summary > .icon:last-child {
+  .trophy-options[aria-expanded="true"] > .icon:last-child {
     transform: rotate(180deg);
   }
 
@@ -288,7 +288,7 @@
 
   .trophy-controls input:disabled,
   .trophy-status button:disabled,
-  .trophy-options summary {
+  .trophy-options:disabled {
     cursor: default;
   }
 
@@ -331,26 +331,28 @@
   }
 
   .trophy-options {
+    flex: none;
     margin-left: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
 
-  .trophy-options summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .trophy-options summary > span:not(:empty) {
+  .trophy-options > span:not(:empty) {
     color: var(--color-accent);
   }
 
-  .trophy-options[open] {
-    width: 100%;
-  }
-
-  .trophy-options[open] summary {
+  .trophy-options[aria-expanded="true"] {
     color: var(--color-fg);
   }
 
+  .trophy-options-body[hidden] {
+    display: none;
+  }
+
   .trophy-options-body {
+    flex-basis: 100%;
+    min-width: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: end;
@@ -360,7 +362,7 @@
 
   .trophy-options-body > label {
     display: grid;
-    flex: 1 1 150px;
+    flex: 1 1 240px;
     gap: 6px;
     color: var(--color-fg-muted);
     font-size: var(--text-sm);

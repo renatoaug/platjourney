@@ -3,7 +3,21 @@
     max-width: 960px;
     margin: 0 auto;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
+  }
+
+  .journey > * {
+    min-width: 0;
+  }
+
+  .journey-guide > .guide-heading {
+    margin: 8px 0 18px;
+    padding: 0;
+    height: auto;
+    min-height: 44px;
+    border: 0;
+    background: none;
   }
 
   .journey-focus.card {

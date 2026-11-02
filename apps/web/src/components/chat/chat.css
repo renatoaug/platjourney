@@ -365,11 +365,11 @@
   .nexo-chat-heading {
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: center;
     gap: 4px;
     order: -1;
-    text-align: right;
+    text-align: left;
     width: 100%;
   }
 

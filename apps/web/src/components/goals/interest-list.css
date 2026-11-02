@@ -13,7 +13,7 @@
     isolation: isolate;
     display: grid;
     grid-template-columns: 80px minmax(0, 1fr) 44px;
-    grid-template-areas: "cover name name" "cover state remove";
+    grid-template-areas: "cover name name" "cover state state" "cover grip remove";
     gap: 8px 14px;
     padding: 14px;
     margin-bottom: 10px;
@@ -93,13 +93,14 @@
 
   ul.goal-list > li .goal-grip,
   .drag-ghost.drag-ghost .goal-grip {
-    position: absolute;
-    left: 32px;
-    top: 78px;
+    position: static;
+    grid-area: grip;
+    align-self: center;
+    justify-self: end;
     width: 44px;
     height: 44px;
     color: var(--color-fg);
-    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+    background: transparent;
   }
 
   ul.goal-list > li .goal-grip.placeholder,

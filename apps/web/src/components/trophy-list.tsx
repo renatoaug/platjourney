@@ -376,11 +376,9 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
             <Icon name="search" />
             <input disabled aria-label={t('search')} placeholder={t('searchPlaceholder')} />
           </label>
-          <details className="trophy-options">
-            <summary>
-              <Icon name="layers" /> {t('filters')} <Icon name="chevron-down" />
-            </summary>
-          </details>
+          <button type="button" className="trophy-options" disabled aria-expanded={false}>
+            <Icon name="layers" /> {t('filters')} <Icon name="chevron-down" />
+          </button>
         </div>
       </div>
       <div className="trophy-results">
@@ -439,6 +437,7 @@ export function TrophyList({
   // A sort picked by hand sticks, here and on the next games; until then it follows the game.
   const [chosenSort, setChosenSort] = useState<string | null>(null)
   const [q, setQ] = useState('')
+  const [optionsOpen, setOptionsOpen] = useState(false)
   const [page, setPage] = useState(1)
   const statusRef = useSlide<HTMLDivElement>(status)
   const controlsRef = useRef<HTMLDivElement>(null)
@@ -537,54 +536,56 @@ export function TrophyList({
                   onChange={(e) => refilter(setQ)(e.target.value)}
                 />
               </label>
-              <details className="trophy-options">
-                <summary>
-                  <Icon name="layers" /> {t('filters')}{' '}
-                  <span id={`${prefix}-filter-count`}>
-                    {filterCount ? String(filterCount) : ''}
-                  </span>
-                  <Icon name="chevron-down" />
-                </summary>
-                <div className="trophy-options-body">
-                  <label>
-                    {t('sortBy')}
-                    <select
-                      id={`${prefix}-sort`}
-                      value={sort}
-                      onChange={(e) => refilter(setChosenSort)(e.target.value)}
-                    >
-                      {(
-                        ['psn', 'pending', 'progress', 'date', 'rarity', 'common', 'type'] as const
-                      ).map((value) => (
-                        <option key={value} value={value}>
-                          {t(`sort.${value}`)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label id={`${prefix}-group-label`} hidden={!hasDlc}>
-                    {t('content')}
-                    <select
-                      id={`${prefix}-group`}
-                      value={group}
-                      onChange={(e) => refilter(setGroup)(e.target.value as Group)}
-                    >
-                      <option value="base">{t('group.base')}</option>
-                      <option value="all">{t('group.all')}</option>
-                      <option value="dlc">{t('group.dlc')}</option>
-                    </select>
-                  </label>
-                  <label className="trophy-progress-filter">
-                    <input
-                      type="checkbox"
-                      id={`${prefix}-only-progress`}
-                      checked={onlyProgress}
-                      onChange={(e) => refilter(setOnlyProgress)(e.target.checked)}
-                    />{' '}
-                    {t('onlyProgress')}
-                  </label>
-                </div>
-              </details>
+              <button
+                type="button"
+                className="trophy-options"
+                aria-expanded={optionsOpen}
+                aria-controls={`${prefix}-options`}
+                onClick={() => setOptionsOpen((open) => !open)}
+              >
+                <Icon name="layers" /> {t('filters')}{' '}
+                <span id={`${prefix}-filter-count`}>{filterCount ? String(filterCount) : ''}</span>
+                <Icon name="chevron-down" />
+              </button>
+              <div className="trophy-options-body" id={`${prefix}-options`} hidden={!optionsOpen}>
+                <label>
+                  {t('sortBy')}
+                  <select
+                    id={`${prefix}-sort`}
+                    value={sort}
+                    onChange={(e) => refilter(setChosenSort)(e.target.value)}
+                  >
+                    {(
+                      ['psn', 'pending', 'progress', 'date', 'rarity', 'common', 'type'] as const
+                    ).map((value) => (
+                      <option key={value} value={value}>
+                        {t(`sort.${value}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label id={`${prefix}-group-label`} hidden={!hasDlc}>
+                  {t('content')}
+                  <select
+                    id={`${prefix}-group`}
+                    value={group}
+                    onChange={(e) => refilter(setGroup)(e.target.value as Group)}
+                  >
+                    <option value="base">{t('group.base')}</option>
+                    <option value="all">{t('group.all')}</option>
+                    <option value="dlc">{t('group.dlc')}</option>
+                  </select>
+                </label>
+                <label className="trophy-progress-filter">
+                  <input
+                    type="checkbox"
+                    id={`${prefix}-only-progress`}
+                    checked={onlyProgress}
+                    onChange={(e) => refilter(setOnlyProgress)(e.target.checked)}
+                  />{' '}
+                  {t('onlyProgress')}
+                </label>
+              </div>
             </div>
           </div>
           <div className="trophy-results" id={`${prefix}-results`} role="status">
