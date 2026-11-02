@@ -564,7 +564,7 @@ function ChatTrophy({ trophy, onClear }: { trophy: string; onClear: () => void }
   return (
     <span className="chat-trophy">
       <Icon name="trophy" />
-      <b title={t('trophy.label')}>{trophy}</b>
+      <b title={`${t('trophy.label')}: ${trophy}`}>{trophy}</b>
       <button type="button" aria-label={t('trophy.remove', { trophy })} onClick={onClear}>
         <Icon name="close" />
       </button>

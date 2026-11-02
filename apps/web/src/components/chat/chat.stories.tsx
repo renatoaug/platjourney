@@ -43,6 +43,17 @@ export const Loaded: Story = { args: { ...base, chat: MESSAGES } }
 export const Demo: Story = { args: { ...base, chat: [], demo: true } }
 export const DemoEnglish: Story = { ...Demo, globals: { locale: Language.En } }
 export const Empty: Story = { args: { ...base, chat: [] } }
+export const TrophyContext: Story = {
+  args: { ...base, chat: [], trophy: 'Laboratório de bolso' },
+  render: function Context(args) {
+    const [trophy, setTrophy] = useState(args.trophy)
+    return <NexoChat {...args} trophy={trophy} onClearTrophy={() => setTrophy(null)} />
+  },
+}
+export const LongTrophyContext: Story = {
+  ...TrophyContext,
+  args: { ...TrophyContext.args, trophy: 'Uma jornada muito longa até a última conquista' },
+}
 export const Loading: Story = { args: { ...base, chat: 'loading' } }
 export const Failed: Story = { args: { ...base, chat: 'error' } }
 export const Pending: Story = {

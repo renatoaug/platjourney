@@ -836,6 +836,10 @@
   }
 
   .chat-page #chat-chips {
+    justify-content: center;
+    flex-wrap: wrap;
+    overflow: visible;
+    mask-image: none;
     flex: none;
     max-width: 100%;
     min-width: 0;
@@ -886,13 +890,13 @@
     align-items: flex-end;
     gap: 8px;
     padding: 8px;
-    border: 1px solid var(--color-border);
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-soft), transparent);
     border-radius: var(--radius-card);
-    background: var(--color-surface-raised);
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-tint), transparent);
   }
 
   .chat-page .chat-composer:focus-within {
-    border-color: var(--color-border-strong);
+    border-color: color-mix(in srgb, var(--color-overlay) var(--alpha-glow), transparent);
   }
 
   .chat-composer .chat-field,
@@ -918,7 +922,7 @@
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
-    gap: 6px;
+    gap: 8px;
   }
 
   .chat-composer .chat-box .chat-line textarea,
@@ -940,11 +944,29 @@
   .chat-composer .chat-trophy {
     align-self: flex-start;
     max-width: 100%;
+    min-height: 28px;
+    gap: 6px;
+    padding: 0 0 0 4px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-fg-soft);
+    font-size: var(--text-sm);
+  }
+
+  .chat-composer .chat-trophy > .icon {
+    width: 14px;
+    height: 14px;
+    color: var(--color-fg-muted);
   }
 
   .chat-composer .chat-trophy button {
-    min-height: 32px;
-    min-width: 32px;
+    /* The icon is quiet; its touch area fills the surrounding gap without enlarging the row. */
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    min-width: 44px;
+    margin-block: -8px;
   }
 
   .chat-composer .chat-composer-actions {
