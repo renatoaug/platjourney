@@ -14,7 +14,7 @@ const meta: Meta<typeof Journey> = {
         phase: 'Fase 1',
         missable: {
           trophy: 'Objetivo de exemplo',
-          when: 'Confira antes de avançar no capítulo indicado pelo guia.',
+          when: 'Nos **Capítulos 2, 3 e 4**, confira antes de avançar além do capítulo indicado pelo guia.',
         },
       },
     },

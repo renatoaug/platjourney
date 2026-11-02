@@ -14,7 +14,7 @@ import { connectAccount, useDemo } from '../components/demo'
 import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import { shownProgress } from '../lib/progress'
-import type { AppStateData, CurrentGame, LibraryGame } from '../lib/types'
+import type { CurrentGame, LibraryGame } from '../lib/types'
 import { modelWorkDone } from '../plugins'
 import { toast } from '../ui/toast'
 import './nexo.css'
@@ -27,8 +27,6 @@ const messages = defineMessages({
     subtitleNoGame: 'Escolha um jogo para começar a conversa.',
     subtitleNotOwned: 'Falando sobre {name}, antes de você comprar.',
     switchFailed: 'Não consegui trocar o jogo. Tenta de novo.',
-    playing: 'Seu jogo atual continua {name}.',
-    backTo: 'Falar dele',
     readOnlyGeneral: 'Conversas de antes de o Nexo separar por jogo.',
     backToCurrent: 'Voltar para {name}',
     backToChat: 'Voltar para a conversa',
@@ -40,8 +38,6 @@ const messages = defineMessages({
     subtitleNoGame: 'Pick a game to start the conversation.',
     subtitleNotOwned: 'Talking about {name}, before you buy it.',
     switchFailed: 'Could not switch the game. Try again.',
-    playing: 'Your current game is still {name}.',
-    backTo: 'Talk about it',
     readOnlyGeneral: 'Conversations from before Nexo kept one per game.',
     backToCurrent: 'Back to {name}',
     backToChat: 'Back to the conversation',
@@ -131,10 +127,6 @@ function subtitleOf(
   })
 }
 
-function playingElsewhere(data: AppStateData | null) {
-  return data?.chat && data.current ? data.current : null
-}
-
 /** The list's conversation for the game a switch is heading to, when it already has one. */
 function threadFor(target: LibraryGame, threads: ChatThread[] | null) {
   return threads?.find((x) => (target.np ? x.np === target.np : x.game === target.game)) ?? null
@@ -202,33 +194,6 @@ function ReadOnlyBar({
       <span>{t('readOnlyGeneral')}</span>
       <button type="button" className="button ghost sm" onClick={onBack}>
         {current ? t('backToCurrent', { name: current.name }) : t('backToChat')}
-      </button>
-    </>
-  )
-}
-
-/** The game being played, a line away, while the chat talks about another one. */
-function PlayingNote({
-  playing,
-  onPick,
-}: {
-  playing: CurrentGame
-  onPick: (game: LibraryGame) => void
-}) {
-  const t = useMessages(messages)
-  return (
-    <>
-      {t('playing', { name: playing.name })}{' '}
-      <button
-        type="button"
-        onClick={() =>
-          onPick({
-            ...(playing.np ? { np: playing.np } : { game: playing.game.id }),
-            name: playing.name,
-          } as LibraryGame)
-        }
-      >
-        {t('backTo')}
       </button>
     </>
   )
@@ -347,8 +312,6 @@ function LiveNexo() {
   )
   // The trophy the player came to ask about.
   const [trophy, setTrophy] = useState<string | null>(null)
-  // The game being played, when the chat talks about another one: a line away, to go back to.
-  const playing = playingElsewhere(data)
   const pickGame = async (game: LibraryGame) => {
     setSwitching(game.name)
     setTarget(game)
@@ -448,11 +411,6 @@ function LiveNexo() {
           switching={switching}
           trophy={trophy}
           onClearTrophy={() => setTrophy(null)}
-          note={
-            playing && !switching ? (
-              <PlayingNote playing={playing} onPick={chooseGame} />
-            ) : undefined
-          }
         />
       </div>
     </Page>

@@ -244,14 +244,24 @@ export function TrophyBreakdown({ trophies }: { trophies: Trophy[] }) {
   const platinum = trophies.find((tr) => tr.type === 'platinum')
   return (
     <div className="trophy-breakdown">
-      <b>{t('breakdown', { count: trophies.length })}</b>
-      {(['platinum', 'gold', 'silver', 'bronze'] as const).map((type) =>
-        count(type) ? (
-          <span key={type} className={`tier ${type}`}>
-            <Icon name="trophy" /> {count(type)} {t(`tiers.${type}`)}
-          </span>
-        ) : null,
-      )}
+      <div className="trophy-counts-row">
+        <b>{t('breakdown', { count: trophies.length })}</b>
+        {(['platinum', 'gold', 'silver', 'bronze'] as const).map((type) =>
+          count(type) ? (
+            <span
+              key={type}
+              className={`tier ${type}`}
+              role="img"
+              aria-label={`${count(type)} ${t(`tiers.${type}`)}`}
+              data-tip={`${count(type)} ${t(`tiers.${type}`)}`}
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: keyboard focus reveals the tier name hidden from the compact row
+              tabIndex={0}
+            >
+              <Icon name="trophy" /> <span aria-hidden="true">{count(type)}</span>
+            </span>
+          ) : null,
+        )}
+      </div>
       {!!platinum?.earnedRate && (
         <span className="plat-rate">
           {t('platinumRate', { rate: fmtRate(platinum.earnedRate) })}
@@ -361,10 +371,12 @@ export function HeroSkeleton({
   cta = true,
   aside = true,
   gallery = true,
+  breakdown = false,
 }: {
   cta?: ReactNode
   aside?: boolean
   gallery?: boolean
+  breakdown?: boolean
 }) {
   const pill = { borderRadius: 'var(--radius-pill)' }
   return (
@@ -387,27 +399,38 @@ export function HeroSkeleton({
         <Sk w="min(380px, 100%)" h={18} />
       </div>
       <div className="hero-bottom">
-        <div className="hero-progress">
-          <div className="barlabel">
-            <span>
-              <Sk w="110px" h={20} />
-            </span>
-            <b className="pct">
-              <Sk w="36px" h={20} />
-            </b>
+        {breakdown ? (
+          <div className="trophy-breakdown" aria-hidden="true">
+            <div className="trophy-counts-row">
+              <Sk w="85px" h={30} />
+              {[0, 1, 2, 3].map((tier) => (
+                <Sk key={tier} w="32px" h={18} />
+              ))}
+            </div>
           </div>
-          <div className="bar-row">
-            <span className="bar">
-              <Sk h={8} />
-            </span>
-            <span className="plat-mark">
-              <Sk w="18px" h={18} />
-            </span>
+        ) : (
+          <div className="hero-progress">
+            <div className="barlabel">
+              <span>
+                <Sk w="110px" h={20} />
+              </span>
+              <b className="pct">
+                <Sk w="36px" h={20} />
+              </b>
+            </div>
+            <div className="bar-row">
+              <span className="bar">
+                <Sk h={8} />
+              </span>
+              <span className="plat-mark">
+                <Sk w="18px" h={18} />
+              </span>
+            </div>
+            <div className="remaining">
+              <Sk w="180px" h={14} />
+            </div>
           </div>
-          <div className="remaining">
-            <Sk w="180px" h={14} />
-          </div>
-        </div>
+        )}
         {cta && <div className="cta">{cta === true ? <Sk w="180px" h={40} /> : cta}</div>}
       </div>
       {gallery && (

@@ -103,3 +103,24 @@ export const GalleryBesideBack: Story = {
     />
   ),
 }
+
+export const CompactTrophyCounts: Story = {
+  render: () => (
+    <TitleScreen
+      owned={false}
+      load={{
+        kind: 'ready',
+        d: {
+          ...recommendedData,
+          trophies: Array.from({ length: 142 }, (_, i) => ({
+            ...trophies[0],
+            id: i,
+            type: i === 0 ? 'platinum' : i < 4 ? 'gold' : i < 18 ? 'silver' : 'bronze',
+            earned: false,
+            earnedRate: 0,
+          })),
+        },
+      }}
+    />
+  ),
+}

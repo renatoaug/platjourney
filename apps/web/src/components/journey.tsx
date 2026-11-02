@@ -5,6 +5,7 @@ import { shownProgress } from '../lib/progress'
 import { tintStyle } from '../lib/tint'
 import type { CurrentGame } from '../lib/types'
 import { Icon } from '../ui/icon'
+import { GuideText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
 import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
 import { GameColumns } from './game-columns'
@@ -88,6 +89,22 @@ function JourneyActions({ back, children }: { back?: ReactNode; children: ReactN
   ) : null
 }
 
+function JourneyWarning({ warning }: { warning: NonNullable<CurrentGame['focus']>['missable'] }) {
+  const t = useMessages(messages)
+  if (!warning) return null
+  return (
+    <aside className="journey-warning" aria-label={t('attention')}>
+      <div className="journey-warning-heading">
+        <Icon name="warning" /> <span>{t('attention')}</span>
+      </div>
+      <b>{warning.trophy}</b>
+      <p>
+        <GuideText text={warning.when} />
+      </p>
+    </aside>
+  )
+}
+
 /** One owned-game surface, regardless of whether it was opened from PSN presence or the library. */
 export function Journey({
   game: c,
@@ -118,15 +135,17 @@ export function Journey({
         <ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />
       </JourneyActions>
       <div id="journey-hero" className="hero immersive tinted" style={tintStyle(c.game.tint)}>
-        <Hero
-          game={c}
-          heading={1}
-          cta={false}
-          tools={<ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />}
-          hideTools={!!back}
-        />
+        <Hero game={c} heading={1} cta={false} hideTools />
       </div>
-      <GameNav sections={SECTIONS} hero="journey-hero" name={c.name} progress={progress} />
+      <GameNav
+        sections={SECTIONS}
+        hero="journey-hero"
+        name={c.name}
+        progress={progress}
+        tools={
+          !back && <ScenesButton compact shots={shots} at={scene} name={c.name} onGo={setScene} />
+        }
+      />
       <div className="journey-focus card">
         <span className="eyebrow">
           <Icon name="nexo" /> {t('next')}
@@ -146,17 +165,7 @@ export function Journey({
         </JourneyLink>
         {next && <p className="journey-basis">{t('basis')}</p>}
       </div>
-      {focus?.missable && (
-        <aside className="journey-warning" aria-label={t('attention')}>
-          <Icon name="warning" />
-          <div>
-            <b>
-              {t('attention')} · {focus.missable.trophy}
-            </b>
-            <p>{focus.missable.when}</p>
-          </div>
-        </aside>
-      )}
+      <JourneyWarning warning={focus?.missable} />
       <details className="journey-session" id="journey-session">
         <summary>
           <Icon name="clock" />
@@ -206,10 +215,15 @@ export function JourneySkeleton({ gallery = true }: { gallery?: boolean }) {
   return (
     <div className="journey" aria-busy="true">
       <div className="hero immersive tinted">
-        <HeroSkeleton cta={false} aside={false} gallery={gallery} />
+        <HeroSkeleton cta={false} aside={false} gallery={false} />
       </div>
       <div className="game-nav" aria-hidden="true">
         <Sk w="186px" h={52} style={{ borderRadius: 'var(--radius-pill)' }} />
+        {gallery && (
+          <span className="game-nav-tools">
+            <Sk w="48px" h={44} />
+          </span>
+        )}
       </div>
       <div className="journey-focus card" aria-hidden="true">
         <span className="eyebrow">

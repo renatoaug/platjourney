@@ -59,6 +59,24 @@
   }
 
   /* A compact 32px surface inside the unchanged 44px touch target. */
+  .scenes-count {
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    .scenes-button.compact {
+      padding-inline: 10px;
+    }
+
+    .scenes-button.compact .scenes-label {
+      display: none;
+    }
+
+    .scenes-button.compact .scenes-count {
+      display: inline;
+    }
+  }
+
   .scenes-button::before {
     content: "";
     position: absolute;

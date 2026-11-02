@@ -598,6 +598,18 @@
     font-size: var(--text-xs);
   }
 
+  .trophy-counts-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .trophy-counts-row > * {
+    flex-shrink: 0;
+  }
+
   .trophy-breakdown b {
     color: var(--color-fg);
     font-weight: var(--weight-semibold);
@@ -691,7 +703,7 @@
   }
 
   .hero.immersive .meta > span,
-  .hero.immersive .trophy-breakdown > * {
+  .hero.immersive .trophy-counts-row > * {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -872,7 +884,7 @@
   }
 
   /* Only the total is a chip; the tiers after it are plain text split by thin dividers. */
-  .hero.immersive .trophy-breakdown > :not(b) {
+  .hero.immersive .trophy-counts-row > :not(b) {
     height: auto;
     padding: 0;
     border: 0;
@@ -880,11 +892,11 @@
     backdrop-filter: none;
   }
 
-  .hero.immersive .trophy-breakdown > :not(b) + :not(b)::before {
+  .hero.immersive .trophy-counts-row > :not(b) + :not(b)::before {
     content: "";
     width: 1px;
     height: 12px;
-    margin-right: 6px;
+    margin-right: 0;
     background: var(--color-border-strong);
   }
 

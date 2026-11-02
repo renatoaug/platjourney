@@ -1,7 +1,7 @@
 /** The game page's sections in a bar that sticks to the top while scrolling: the part in view is lit,
  * and once the hero is gone the bar carries the game's name and progress, so the page never loses
  * what it is about. Only sections on the page get a link. */
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { pct } from '../lib/format'
 import { useSlide } from '../ui/use-slide'
@@ -45,6 +45,7 @@ export function GameNav({
   hero,
   name,
   progress,
+  tools,
 }: {
   /** Each section and the id of the element it scrolls to. */
   sections: [GameSection, string][]
@@ -52,6 +53,7 @@ export function GameNav({
   hero: string
   name: string
   progress?: number | null
+  tools?: ReactNode
 }) {
   const t = useMessages(messages)
   const [present, setPresent] = useState<string[]>([])
@@ -158,6 +160,7 @@ export function GameNav({
           </li>
         ))}
       </ul>
+      {tools && <div className="game-nav-tools">{tools}</div>}
     </nav>
   )
 }

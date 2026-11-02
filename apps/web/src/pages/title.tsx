@@ -57,7 +57,7 @@ const messages = defineMessages({
     trophies: 'Troféus',
     inLibrary: 'NA SUA BIBLIOTECA',
     talkToNexo: 'Conversar com o Nexo',
-    askNexo: 'Perguntar ao Nexo sobre ele',
+    askNexo: 'Perguntar ao Nexo sobre',
     trophiesPendingTitle: 'Buscando a lista de troféus',
     trophiesPending:
       'A lista deste jogo ainda está chegando da PSN. Volte em breve para ver cada troféu.',
@@ -220,6 +220,7 @@ function TitleSkeleton({ owned = true }: { owned?: boolean }) {
         <HeroSkeleton
           aside={false}
           gallery={false}
+          breakdown
           cta={
             <>
               <Sk w="100%" h={44} />

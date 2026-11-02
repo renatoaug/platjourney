@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test'
 import { screen } from '@testing-library/react'
 import { SAMPLE_ME } from '../../src/app/app-state'
-import { Hero, HeroProgress, HeroSkeleton } from '../../src/components/hero'
+import { Hero, HeroProgress, HeroSkeleton, TrophyBreakdown } from '../../src/components/hero'
 import { currentData } from '../../src/components/nexo-brief.stories'
 import type { CurrentGame } from '../../src/lib/types'
 import { renderApp } from '../support/web'
@@ -107,3 +107,24 @@ for (const includeDlcProgress of [false, true]) {
     expect(screen.getByText('Mais uma conquista para a sua história.')).toBeTruthy()
   })
 }
+
+test('catalog tiers show exact compact counts with accessible names and keyboard tooltips', () => {
+  const trophies = currentData.trophies.slice(0, 4).map((trophy, i) => ({
+    ...trophy,
+    type: (['platinum', 'gold', 'silver', 'bronze'] as const)[i],
+  }))
+  renderApp(<TrophyBreakdown trophies={trophies} />)
+  expect(screen.getByText('4 troféus')).toBeTruthy()
+  for (const tier of ['platina', 'ouro', 'prata', 'bronze']) {
+    const el = screen.getByRole('img', { name: `1 ${tier}` })
+    expect(el.textContent?.trim()).toBe('1')
+    expect(el.getAttribute('data-tip')).toBe(`1 ${tier}`)
+    expect(el.getAttribute('tabindex')).toBe('0')
+  }
+})
+
+test('catalog skeleton reserves the compact count row rather than personal progress', () => {
+  const { container } = renderApp(<HeroSkeleton breakdown />)
+  expect(container.querySelector('.trophy-counts-row')).toBeTruthy()
+  expect(container.querySelector('.hero-progress')).toBeNull()
+})

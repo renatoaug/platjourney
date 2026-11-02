@@ -13,6 +13,16 @@
       border-color 0.25s;
   }
 
+  .game-nav-tools {
+    flex: none;
+    margin-left: auto;
+    padding-left: 8px;
+  }
+
+  .game-nav ul {
+    min-width: 0;
+  }
+
   /* Past the hero the bar gets a floor of its own and the game's name slides in. */
   .game-nav.stuck {
     border-bottom-color: var(--color-border);

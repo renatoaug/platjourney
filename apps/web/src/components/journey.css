@@ -11,6 +11,14 @@
     min-width: 0;
   }
 
+  .journey > .hero.immersive .inner {
+    padding-bottom: 0;
+  }
+
+  .journey > .game-nav {
+    margin-bottom: 0;
+  }
+
   .journey-guide > .guide-heading {
     margin: 8px 0 18px;
     padding: 0;
@@ -65,23 +73,33 @@
   }
 
   .journey-warning {
-    display: flex;
-    gap: 12px;
-    padding: 20px;
-    border-left: 3px solid var(--color-trophy-gold);
+    display: grid;
+    gap: 8px;
+    padding: 16px 18px;
+    border: 1px solid color-mix(in srgb, var(--color-trophy-gold) 24%, transparent);
     border-radius: var(--radius-control);
-    background: var(--color-bg-subtle);
+    background: color-mix(in srgb, var(--color-trophy-gold) 5%, var(--color-bg));
     font-size: var(--text-body);
   }
 
-  .journey-warning > .icon {
-    flex: none;
+  .journey-warning-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--color-trophy-gold);
+    font-size: var(--text-sm);
+  }
+
+  .journey-warning-heading > .icon {
+    flex: none;
+  }
+
+  .journey-warning > b {
+    line-height: var(--leading-tight);
   }
 
   .journey-warning p {
     font-size: var(--text-body);
-    margin-top: 6px;
   }
 
   .journey > details > summary {

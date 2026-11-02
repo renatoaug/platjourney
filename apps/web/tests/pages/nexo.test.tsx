@@ -158,7 +158,7 @@ test('a trophy tip link attaches the trophy to the box', async () => {
   )
 })
 
-test('when the chat talks about another game, the game still being played is a line away', async () => {
+test('another game keeps its selector without the removed current-game notice', async () => {
   mockApi({ '/api/chat': messages })
   const game = current as unknown as CurrentGame
   const other = {
@@ -172,8 +172,9 @@ test('when the chat talks about another game, the game still being played is a l
     route: '/nexo',
     value: { data: { ...SAMPLE_DATA, current: game, chat: other } },
   })
-  expect(await screen.findByText(new RegExp(`Seu jogo atual continua ${game.name}`))).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Falar dele' })).toBeTruthy()
+  expect(await screen.findByText('E depois disso?')).toBeTruthy()
+  expect(screen.queryByText(new RegExp(`Seu jogo atual continua ${game.name}`))).toBeNull()
+  expect(screen.getByRole('button', { name: /Far Cry 3.*Trocar o jogo da conversa/ })).toBeTruthy()
 })
 
 test('a link naming the game already in the chat does not switch', async () => {
