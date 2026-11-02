@@ -1,9 +1,20 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useState } from 'react'
+import { type CSSProperties, useState } from 'react'
 import { Language } from '../../i18n/i18n'
 import { type ChatLoad, type ChatMessage, NexoChat } from './chat'
 
-const meta: Meta<typeof NexoChat> = { title: 'Nexo/Chat', component: NexoChat }
+const meta: Meta<typeof NexoChat> = {
+  title: 'Nexo/Chat',
+  component: NexoChat,
+  // Standalone stories have no shell bottom bar; keep the same viewport calculation as the app.
+  decorators: [
+    (Story) => (
+      <div style={{ '--bottom-bar': '0px' } as CSSProperties}>
+        <Story />
+      </div>
+    ),
+  ],
+}
 export default meta
 type Story = StoryObj<typeof NexoChat>
 
@@ -64,10 +75,11 @@ export const Pending: Story = {
   },
 }
 
-// Sends for real in the story: the answer arrives after a moment.
+// Local synthetic exchange only: no API or model is called.
 function Interactive() {
   const [chat, setChat] = useState<ChatLoad>(MESSAGES)
   const [sending, setSending] = useState(false)
+  const [replyVersion, setReplyVersion] = useState(0)
   const send = (text: string) => {
     setSending(true)
     setChat((c) => [
@@ -79,10 +91,19 @@ function Interactive() {
         ...(Array.isArray(c) ? c : []),
         { role: 'assistant', content: `Anotado: "${text}". Vamos por partes.` },
       ])
+      setReplyVersion((version) => version + 1)
       setSending(false)
     }, 1200)
   }
-  return <NexoChat chat={chat} sending={sending} subtitle={base.subtitle} onSend={send} />
+  return (
+    <NexoChat
+      chat={chat}
+      sending={sending}
+      replyVersion={replyVersion}
+      subtitle={base.subtitle}
+      onSend={send}
+    />
+  )
 }
 
 export const Conversation: Story = { render: () => <Interactive /> }

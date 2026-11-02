@@ -50,6 +50,12 @@ const messages = defineMessages({
 
 type ChatReply = { text?: string; error?: string; messages?: ChatMessage[] }
 
+function hasReply({ error, text, messages }: ChatReply) {
+  if (error) return false
+  const last = messages?.at(-1)
+  return Boolean(text?.trim() || (last?.role === 'assistant' && last.content.trim()))
+}
+
 export function Nexo() {
   // The demo's chat is closed: it shows sample exchanges and asks nothing of the server.
   const demo = useDemo()
@@ -205,6 +211,7 @@ function LiveNexo() {
   const currentKey = chatGame?.game.id ?? 'none'
   // Another conversation being read, from the list; null is the chat's own game.
   const [viewing, setViewing] = useState<string | null>(null)
+  const [replyVersion, setReplyVersion] = useState(0)
   // A game page's link names the game to open on (?game=…): until the switch lands, the old game's
   // conversation must not flash on screen.
   const [params, setParams] = useSearchParams()
@@ -267,6 +274,9 @@ function LiveNexo() {
       const messages = r.messages
       if (messages) write(k, messages)
       else write(k, [...(chats[k] ?? []), { role: 'assistant', content: r.text ?? r.error ?? '' }])
+      if (hasReply(r) && shown.current === k && leaving.current !== k) {
+        setReplyVersion((version) => version + 1)
+      }
       modelWorkDone()
       loadThreads()
     } catch (e) {
@@ -387,6 +397,7 @@ function LiveNexo() {
           </>
         ) : null}
         <NexoChat
+          replyVersion={replyVersion}
           historyControl={
             listed?.length ? <ChatThreadsToggle onOpen={() => setSheet(true)} /> : undefined
           }

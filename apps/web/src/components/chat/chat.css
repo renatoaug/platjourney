@@ -364,10 +364,10 @@
 
   .nexo-chat-heading {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 4px;
+    gap: 0;
     order: -1;
     text-align: left;
     width: 100%;
@@ -379,6 +379,11 @@
   }
 
   .nexo-chat-heading h1 {
+    margin: -10px 0 0;
+    padding: 5px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-raised);
     font-size: var(--text-lg);
     line-height: var(--leading-tight);
   }
@@ -876,9 +881,45 @@
     flex: none;
   }
 
+  .chat-page .nexo-chat-heading .nexo-hero {
+    z-index: 1;
+    padding: 0;
+  }
+
   .chat-page .nexo-chat-heading .nexo-hero > .nexo-avatar {
-    width: 40px;
-    height: 40px;
+    width: 52px;
+    height: 52px;
+    transform-origin: center bottom;
+    animation: none;
+  }
+
+  .chat-page .nexo-chat-heading .nexo-hero.received > .nexo-avatar {
+    animation: nexo-reply 780ms ease-out;
+  }
+
+  @keyframes nexo-reply {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0);
+    }
+
+    25% {
+      transform: translateY(-6px) rotate(-6deg);
+    }
+
+    55% {
+      transform: translateY(0) rotate(4deg);
+    }
+
+    75% {
+      transform: translateY(-2px) rotate(-2deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chat-page .nexo-chat-heading .nexo-hero.received > .nexo-avatar {
+      animation: none;
+    }
   }
 
   .chat-page .nexo-chat-heading .nexo-keys {

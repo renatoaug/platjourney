@@ -1,5 +1,5 @@
 import { afterEach, expect, mock, test } from 'bun:test'
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
 import type { ChatMessage } from '../../src/components/chat/chat'
 import { Loaded } from '../../src/components/chat/chat.stories'
@@ -70,6 +70,7 @@ test('sending shows the message at once and then the whole conversation back', a
   expect(within(log()).getByText('E agora?')).toBeTruthy()
   expect(await within(log()).findByText('Siga com as hordas.')).toBeTruthy()
   expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ text: 'E agora?' })
+  expect(document.querySelector('.nexo-chat-heading .nexo-hero.received')).toBeTruthy()
   expect(done).toHaveBeenCalled()
   window.removeEventListener(MODEL_WORK_DONE, done)
 })
@@ -349,4 +350,73 @@ test('contextual chat subtitle follows the saved DLC preference', () => {
     },
   })
   expect(screen.getByText('DAYS GONE · 20%')).toBeTruthy()
+})
+
+const mascot = () => document.querySelector('.nexo-chat-heading .nexo-avatar')
+const reacted = () => document.querySelector('.nexo-chat-heading .nexo-hero.received')
+
+test('new replies react once, while typing and rerenders keep the same mascot instance', async () => {
+  mockApi({
+    'GET /api/chat': messages,
+    'POST /api/chat': { text: 'Continue pelo caminho seguro.' },
+  })
+  renderApp(<Nexo />)
+  await within(log()).findByText('E depois disso?')
+  expect(reacted()).toBeNull()
+  const initial = mascot()
+  type('Qual caminho?')
+  await within(log()).findByText('Continue pelo caminho seguro.')
+  expect(reacted()).toBeTruthy()
+  await gone(() => screen.queryByLabelText('Nexo está preparando uma resposta'))
+  const firstReply = mascot()
+  expect(firstReply).not.toBe(initial)
+  fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Outra pergunta' } })
+  expect(mascot()).toBe(firstReply)
+  type('E depois?')
+  await waitFor(() => expect(mascot() !== firstReply).toBe(true))
+  expect(within(log()).getAllByText('Continue pelo caminho seguro.')).toHaveLength(2)
+})
+
+test('history and cached remounts do not replay a reply reaction', async () => {
+  const cache: Record<string, unknown> = {}
+  mockApi({ 'GET /api/chat': messages })
+  const { unmount } = renderApp(<Nexo />, { value: { cache } })
+  await within(log()).findByText('E depois disso?')
+  expect(reacted()).toBeNull()
+  unmount()
+  renderApp(<Nexo />, { value: { cache } })
+  expect(within(log()).getByText('E depois disso?')).toBeTruthy()
+  expect(reacted()).toBeNull()
+})
+
+test.each([reply(500), { error: 'Não foi possível responder.' }, { text: '' }])(
+  'failed or empty responses do not celebrate',
+  async (response) => {
+    mockApi({ 'GET /api/chat': [], 'POST /api/chat': response })
+    renderApp(<Nexo />)
+    await settle()
+    type('Uma pergunta')
+    await gone(() => screen.queryByLabelText('Nexo está preparando uma resposta'))
+    expect(reacted()).toBeNull()
+  },
+)
+
+test('a reply arriving while reading another conversation does not react there or on return', async () => {
+  let answer = (_value: { text: string }) => {}
+  mockApi({
+    'GET /api/chat': messages,
+    '/api/chat/threads': [thread({ game: null, np: null, name: null })],
+    'POST /api/chat': () => new Promise((resolve) => (answer = resolve)),
+  })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, { value: { data: { ...SAMPLE_DATA, current: game } } })
+  await within(log()).findByText('E depois disso?')
+  type('O que vem depois?')
+  fireEvent.click(await screen.findByRole('button', { name: /Geral/ }))
+  await screen.findByText('Conversas de antes de o Nexo separar por jogo.')
+  await act(async () => answer({ text: 'Uma resposta nova para o jogo.' }))
+  expect(reacted()).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: `Voltar para ${game.name}` }))
+  await within(log()).findByText('Uma resposta nova para o jogo.')
+  expect(reacted()).toBeNull()
 })

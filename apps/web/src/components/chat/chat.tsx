@@ -646,6 +646,7 @@ export function NexoChat({
   onClearTrophy,
   note,
   historyControl,
+  replyVersion = 0,
 }: {
   chat: ChatLoad
   /** A question is out: the pending bubble shows and the send controls are disabled. */
@@ -669,6 +670,8 @@ export function NexoChat({
   /** A discreet line under the subtitle (the game the player was on before a link switched it). */
   note?: ReactNode
   historyControl?: ReactNode
+  /** Increment only when a new reply arrives in the visible conversation, never on history loads. */
+  replyVersion?: number
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
@@ -783,7 +786,7 @@ export function NexoChat({
           {historyControl}
         </div>
         <div className="nexo-chat-heading">
-          <NexoHero />
+          <NexoHero reaction={replyVersion} />
           <h1>Nexo</h1>
         </div>
         {note && <p className="nexo-note">{note}</p>}

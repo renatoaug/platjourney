@@ -2,10 +2,19 @@
 import { Icon } from '../ui/icon'
 import './nexo-hero.css'
 
-export function NexoHero({ working = false }: { working?: boolean }) {
+export function NexoHero({
+  working = false,
+  reaction = 0,
+}: {
+  working?: boolean
+  reaction?: number
+}) {
   return (
-    <span className={`nexo-hero${working ? ' working' : ''}`} aria-hidden="true">
-      <img className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
+    <span
+      className={`nexo-hero${working ? ' working' : ''}${reaction > 0 ? ' received' : ''}`}
+      aria-hidden="true"
+    >
+      <img key={reaction} className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
       {working && (
         <span className="nexo-processing">
           <span className="nexo-orbit" />
