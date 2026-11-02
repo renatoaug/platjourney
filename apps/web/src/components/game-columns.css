@@ -50,7 +50,7 @@
 
   .game-columns-tabs .game-switch {
     display: flex;
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
     margin-bottom: 20px;
     padding: 4px;
@@ -60,7 +60,8 @@
 
   .game-columns-tabs .game-switch button {
     min-height: 44px;
-    min-width: 110px;
+    flex: 1;
+    min-width: 0;
     border: 0;
     border-radius: var(--radius-control);
     font-size: var(--text-sm);

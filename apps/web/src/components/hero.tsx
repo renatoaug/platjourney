@@ -360,7 +360,7 @@ export function HeroSkeleton({ cta = true, aside = true }: { cta?: boolean; asid
     <div className="inner">
       <div className="hero-top">
         <div className="meta">
-          <Sk w="110px" h={24} />
+          <Sk w="164px" h={46} />
           {[90, 76, 110].map((w) => (
             <span key={w}>
               <Sk w={`${w}px`} h={16} />

@@ -852,7 +852,7 @@
   }
 
   .chat-page .nexo-chat-top {
-    padding: 8px 12px 12px;
+    padding: 0 12px 12px;
   }
 
   .chat-page .nexo-chat-top > .nexo-chat-heading {
@@ -868,9 +868,9 @@
     min-width: 0;
   }
 
-  /* The direct chat keeps its mascot in place; utility controls sit by the page divider. */
+  /* Direct-chat controls sit just below the divider, clear of the toolbar touch targets. */
   .chat-page:not(.journey-chat .chat-page) .nexo-chat-top {
-    margin-top: -44px;
+    margin-top: -24px;
     gap: 0;
   }
 
@@ -905,6 +905,12 @@
     min-height: 44px;
     margin-top: 0;
     padding-inline: 8px;
+  }
+
+  .chat-page:not(.journey-chat .chat-page) .nexo-chat-tools button {
+    display: flex;
+    align-items: flex-start;
+    padding-block: 0 20px;
   }
 
   .chat-page .nexo-chat-tools .nexo-sub-text {

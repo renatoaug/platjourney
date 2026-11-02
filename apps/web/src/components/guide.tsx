@@ -22,6 +22,7 @@ import { bandOf } from './difficulty-meter'
 import { JourneyLink as Link } from './journey-link'
 import { NexoHero } from './nexo-hero'
 import { nexoHref } from './tip'
+import '../ui/section-tabs.css'
 import './guide.css'
 
 const messages = defineMessages({
@@ -857,7 +858,7 @@ export function GuideSkeleton() {
         <Icon name="book-open" />
         <span>{t('title')}</span>
       </h2>
-      <div className="tabs">
+      <div className="guide-tabs section-tabs">
         {(
           [
             'tabs.summary',
@@ -1118,7 +1119,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
             requestAnimationFrame(checkTabs)
           }
         }}
-        className={`tabs guide-tabs${moreTabs ? ' has-more' : ''}`}
+        className={`guide-tabs section-tabs${moreTabs ? ' has-more' : ''}`}
         role="tablist"
         aria-label={tr('tabs.label')}
         onScroll={checkTabs}

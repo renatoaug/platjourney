@@ -14,9 +14,9 @@ import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState } from '../ui/states'
 import { TrophyArt } from '../ui/trophy-art'
-import { useSlide } from '../ui/use-slide'
 import { JourneyLink as Link } from './journey-link'
 import { nexoHref } from './tip'
+import '../ui/section-tabs.css'
 import './trophy-list.css'
 
 const messages = defineMessages({
@@ -361,7 +361,7 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
       <div className="trophy-controls">
         <div className="trophy-toolbar">
           {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control */}
-          <div className="trophy-status" role="group">
+          <div className="trophy-status section-tabs" role="group">
             <button type="button" disabled aria-pressed="true">
               {t('status.all')}
             </button>
@@ -469,7 +469,6 @@ export function TrophyList({
   const [q, setQ] = useState('')
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [page, setPage] = useState(1)
-  const statusRef = useSlide<HTMLDivElement>(status)
   const controlsRef = useRef<HTMLDivElement>(null)
   const pagerRef = useRef<HTMLElement>(null)
   const paged = useRef(false)
@@ -538,10 +537,9 @@ export function TrophyList({
             <div className="trophy-toolbar">
               {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
               <div
-                className="trophy-status"
+                className="trophy-status section-tabs"
                 role="group"
                 aria-label={t('statusLabel')}
-                ref={statusRef}
               >
                 {(['all', 'pending', 'earned'] as const).map((value) => (
                   <button

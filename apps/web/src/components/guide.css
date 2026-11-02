@@ -993,7 +993,7 @@
   }
 
   .guide-research-preview h2,
-  .guide-research-preview .tabs {
+  .guide-research-preview .guide-tabs {
     display: none;
   }
 
@@ -1282,56 +1282,35 @@
     color: var(--tone);
   }
 
-  /* Every section remains visible; wrapping avoids a clipped strip on phones. */
-  .guide-tabs {
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 0;
-    border: 0;
-    overflow: visible;
+  /* One scrollable row; secondary navigation shares the trophy filter style. */
+  .guide-tabs.section-tabs {
+    flex-wrap: nowrap;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
     mask-image: none;
+    scrollbar-width: thin;
   }
 
-  .guide-tabs.has-more {
-    mask-image: none;
+  .guide-tabs.section-tabs::-webkit-scrollbar {
+    display: block;
+    height: 3px;
   }
 
-  .guide-tabs::after {
+  .guide-tabs.section-tabs::after {
     display: none;
   }
 
-  .guide-tabs button {
-    flex: 0 1 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+  .guide-tabs.section-tabs button {
+    flex: 0 0 auto;
     min-height: 44px;
-    max-width: 100%;
-    padding: 8px 12px;
-    border: 0;
-    border-radius: var(--radius-control);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    white-space: normal;
-    overflow-wrap: anywhere;
+    padding: 10px 12px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
   }
 
-  .guide-tabs button:hover {
-    background: color-mix(in srgb, var(--color-overlay) var(--alpha-wash), transparent);
-    color: var(--color-fg);
-  }
-
-  .guide-tabs button.active,
-  .guide-tabs button.active:hover {
-    background: var(--color-accent);
-    color: var(--color-on-accent);
-  }
-
-  .guide-tabs button.active .guide-tab-count {
-    color: inherit;
-    opacity: 0.7;
+  .guide-tabs.section-tabs button.active {
+    border-bottom-color: var(--color-accent);
+    color: var(--color-accent);
   }
 }

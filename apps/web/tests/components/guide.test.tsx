@@ -239,7 +239,7 @@ describe('Guide', () => {
     expect(screen.getByText('O guia aparece aqui assim que estiver pronto.')).toBeTruthy()
     const preview = container.querySelector('.guide-research-preview')
     expect(preview?.getAttribute('aria-hidden')).toBe('true')
-    expect(preview?.querySelector('.tabs')).toBeTruthy()
+    expect(preview?.querySelector('.guide-tabs')).toBeTruthy()
   })
 
   test('the skeleton alone has the heading and disabled tabs', () => {
