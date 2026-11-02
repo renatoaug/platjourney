@@ -146,7 +146,6 @@ function TitleMeta({ d }: { d: TitleDetail }) {
   return (
     <div className="meta">
       {/* 0 means the sources do not say yet: the fact is left out, never shown as 0. */}
-      {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
       {g.hours > 0 && (
         <span>
           <Icon name="clock" />{' '}
@@ -287,11 +286,12 @@ function HeroBottom({ d }: { d: TitleDetail }) {
 const TITLE_SECTIONS: [GameSection, string][] = [
   ['guide', 'title-guide'],
   ['trophies', 'title-trophies'],
+  ['similar', 'similar-games'],
 ]
 
 /** A loaded title: its art across the top under the hero (and the next trophy, when it is in the
  * library), the bar of its sections, the platinum map, trophies and guide, then the similar games. */
-function OwnedJourney({ d }: { d: TitleDetail }) {
+function OwnedJourney({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
   const game: CurrentGame = {
     ...d,
     np: d.np ?? '',
@@ -301,7 +301,7 @@ function OwnedJourney({ d }: { d: TitleDetail }) {
     trophies: d.trophies ?? [],
     icon: d.icon ?? undefined,
   }
-  return <Journey game={game} plan={<PlanCard key={d.np} np={d.np} />} />
+  return <Journey game={game} plan={<PlanCard key={d.np} np={d.np} />} similar={similar} />
 }
 
 function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
@@ -334,6 +334,7 @@ function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
           <div className="hero-top">
             {/* Outside the library there is nothing of the player's to show: no label, no progress. */}
             {owned && <span className="live-label">{t('inLibrary')}</span>}
+            {g && g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
             <span className="hero-tools">
               <ScenesButton shots={shots} at={scene} name={d.name} onGo={setScene} />
             </span>
@@ -443,10 +444,7 @@ export function TitleScreen({
         {load.kind === 'error' && <ErrorState>{t('notFound')}</ErrorState>}
         {load.kind === 'ready' &&
           (load.d.owned && load.d.np ? (
-            <>
-              <OwnedJourney d={load.d} />
-              {similar}
-            </>
+            <OwnedJourney d={load.d} similar={similar} />
           ) : (
             <TitleView d={load.d} similar={similar} />
           ))}

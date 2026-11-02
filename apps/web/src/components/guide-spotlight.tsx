@@ -50,9 +50,14 @@ export function GuideSpotlight({ game }: { game: SpotlightGame }) {
   const g = game.guide
   return (
     <aside className="guide-spotlight" aria-label={t('eyebrow')}>
+      <header className="guide-spotlight-heading">
+        <span className="eyebrow">{t('eyebrow')}</span>
+        <Link className="guide-spotlight-open" to={titleHref(game.id)}>
+          {t('open')} <Icon name="arrow" />
+        </Link>
+      </header>
       <Cover url={game.cover_url} name={game.name} className="guide-spotlight-cover" />
       <div className="guide-spotlight-body">
-        <span className="eyebrow">{t('eyebrow')}</span>
         <div className="guide-spotlight-head">
           <b>{game.name}</b>
         </div>
@@ -74,9 +79,6 @@ export function GuideSpotlight({ game }: { game: SpotlightGame }) {
           </span>
         </span>
       )}
-      <Link className="guide-spotlight-open" to={titleHref(game.id)}>
-        {t('open')} <Icon name="arrow" />
-      </Link>
     </aside>
   )
 }

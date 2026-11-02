@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { type CSSProperties, useState } from 'react'
 import { Language } from '../../i18n/i18n'
 import { type ChatLoad, type ChatMessage, NexoChat } from './chat'
+import { ChatThreadsToggle } from './threads'
+import '../../pages/nexo.css'
 
 const meta: Meta<typeof NexoChat> = {
   title: 'Nexo/Chat',
@@ -129,5 +131,23 @@ export const GameSwitch: Story = {
     searchGames: async (q: string) =>
       library.filter((g) => g.name.toLowerCase().includes(q.toLowerCase())),
     onPickGame: () => {},
+  },
+}
+
+/** Long game name plus the real header control footprint at phone widths. */
+export const Header: Story = {
+  decorators: [
+    (Story) => (
+      <div className="nexo-layout nexo-conversation">
+        <Story />
+      </div>
+    ),
+  ],
+  args: {
+    ...base,
+    subtitle: 'A Plague Tale: Requiem · 42%',
+    chat: [],
+    historyControl: <ChatThreadsToggle onOpen={() => {}} />,
+    searchGames: async () => library,
   },
 }

@@ -5,16 +5,23 @@ import './nexo-hero.css'
 export function NexoHero({
   working = false,
   reaction = 0,
+  blink = false,
 }: {
   working?: boolean
   reaction?: number
+  blink?: boolean
 }) {
   return (
     <span
       className={`nexo-hero${working ? ' working' : ''}${reaction > 0 ? ' received' : ''}`}
       aria-hidden="true"
     >
-      <img key={reaction} className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
+      <img
+        key={reaction}
+        className="nexo-avatar"
+        src={blink ? '/nexo-avatar.svg#blink' : '/nexo-avatar.svg'}
+        alt=""
+      />
       {working && (
         <span className="nexo-processing">
           <span className="nexo-orbit" />

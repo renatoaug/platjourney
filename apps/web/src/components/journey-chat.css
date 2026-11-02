@@ -72,6 +72,10 @@
     display: none;
   }
 
+  .journey-chat .chat-page .nexo-chat-tools {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
   .journey-chat-brand {
     display: flex;
     align-items: center;

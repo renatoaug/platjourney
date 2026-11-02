@@ -419,14 +419,44 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
  * `trophies` null is still loading. `prefix` keeps the control ids apart (`t` on the game screen,
  * `title-t` on a title page); `np` turns on "Pedir dica", which needs the player's progress.
  */
+function TrophyHeading({
+  heading,
+  note,
+  prefix,
+  count,
+}: {
+  heading?: string
+  note?: string
+  prefix: string
+  count: string | number
+}) {
+  const t = useMessages(messages)
+  return (
+    <header className={heading ? 'trophy-section-heading' : undefined}>
+      <h2 className="trophy-heading">
+        <Icon name="trophy" />
+        {heading ?? t('heading')}{' '}
+        <span id={`${prefix}-count`} className="heading-count">
+          {count}
+        </span>
+      </h2>
+      {note && <p>{note}</p>}
+    </header>
+  )
+}
+
 export function TrophyList({
   trophies,
   prefix = 't',
   np,
+  heading,
+  note,
 }: {
   trophies: Trophy[] | null
   prefix?: string
   np?: string | null
+  heading?: string
+  note?: string
 }) {
   const t = useMessages(messages)
   const { me } = useApp()
@@ -494,13 +524,12 @@ export function TrophyList({
 
   return (
     <>
-      <h2 className="trophy-heading">
-        <Icon name="trophy" />
-        {t('heading')}{' '}
-        <span id={`${prefix}-count`} className="heading-count">
-          {catalogOnly ? scope.length : `${earned}/${scope.length}`}
-        </span>
-      </h2>
+      <TrophyHeading
+        heading={heading}
+        note={note}
+        prefix={prefix}
+        count={catalogOnly ? scope.length : `${earned}/${scope.length}`}
+      />
       {list.length === 0 ? (
         <EmptyState>{t('empty')}</EmptyState>
       ) : (

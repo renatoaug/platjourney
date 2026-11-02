@@ -135,7 +135,7 @@ const NAV: { to: string; label: MessageKey<typeof messages>; icon: string }[] = 
   { to: '/', label: 'nav.home', icon: 'dashboard' },
   { to: '/game', label: 'nav.game', icon: 'compass' },
   { to: '/guides', label: 'nav.guides', icon: 'book-open' },
-  { to: '/discover', label: 'nav.discover', icon: 'search' },
+  { to: '/discover', label: 'nav.discover', icon: 'globe' },
   { to: '/games?tab=interests', label: 'nav.games', icon: 'gamepad' },
 ]
 

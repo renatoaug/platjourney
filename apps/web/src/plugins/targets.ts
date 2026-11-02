@@ -292,6 +292,7 @@ export type Target =
   | 'TrophyArt'
   | 'TrophyBreakdown'
   | 'TrophyCard'
+  | 'TrophyHeading'
   | 'TrophyList'
   | 'TrophyListSkeleton'
   | 'TrophyPager'

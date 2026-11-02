@@ -363,6 +363,7 @@ test('new replies react once, while typing and rerenders keep the same mascot in
   renderApp(<Nexo />)
   await within(log()).findByText('E depois disso?')
   expect(reacted()).toBeNull()
+  expect(mascot()?.getAttribute('src')).toBe('/nexo-avatar.svg#blink')
   const initial = mascot()
   type('Qual caminho?')
   await within(log()).findByText('Continue pelo caminho seguro.')

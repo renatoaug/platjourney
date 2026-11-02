@@ -478,6 +478,28 @@
     justify-content: flex-end;
   }
 
+  .hero.immersive .hero-top > .dm {
+    gap: 8px;
+    margin-right: auto;
+    padding: 8px 10px;
+    border: 1px solid color-mix(in srgb, var(--dm-color) var(--alpha-line), transparent);
+    border-radius: var(--radius-control);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--dm-color) var(--alpha-wash), var(--color-surface)),
+      var(--color-bg)
+    );
+  }
+
+  .hero.immersive .hero-top > .dm .dm-body {
+    width: 78px;
+  }
+
+  .hero.immersive .hero-top > .dm .dm-name {
+    white-space: normal;
+    overflow: visible;
+  }
+
   .hero.immersive .hero-tools {
     margin-left: auto;
   }

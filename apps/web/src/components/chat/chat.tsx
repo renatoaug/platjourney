@@ -783,11 +783,11 @@ export function NexoChat({
               input.current?.focus()
             }}
           />
+          <div className="nexo-chat-heading">
+            <NexoHero reaction={replyVersion} blink />
+            <h1>Nexo</h1>
+          </div>
           {historyControl}
-        </div>
-        <div className="nexo-chat-heading">
-          <NexoHero reaction={replyVersion} />
-          <h1>Nexo</h1>
         </div>
         {note && <p className="nexo-note">{note}</p>}
         {!demo && Array.isArray(chat) && !chat.length && !sending && (

@@ -368,7 +368,6 @@
     justify-content: center;
     align-items: center;
     gap: 0;
-    order: -1;
     text-align: left;
     width: 100%;
   }
@@ -855,20 +854,19 @@
   }
 
   .chat-page .nexo-chat-tools {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 68px minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
     width: 100%;
     min-width: 0;
   }
 
   .chat-page .nexo-chat-tools > :first-child {
     min-width: 0;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    margin: 4px 0 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .chat-page .nexo-chat-tools .nexo-sub-switch {
@@ -878,7 +876,17 @@
   }
 
   .chat-page .nexo-chat-tools .nexo-threads-toggle {
-    flex: none;
+    display: inline-flex;
+    justify-self: end;
+    min-height: 44px;
+    margin-top: 4px;
+    padding-inline: 0;
+  }
+
+  .chat-page .nexo-chat-tools .nexo-sub-text {
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
   }
 
   .chat-page .nexo-chat-heading .nexo-hero {

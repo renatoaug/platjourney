@@ -13,23 +13,31 @@ const messages = defineMessages({
     plan: 'Sessão',
     guide: 'Guia',
     trophies: 'Troféus',
+    similar: 'Parecidos',
   },
   [Language.En]: {
     label: 'Game sections',
     plan: 'Session',
     guide: 'Guide',
     trophies: 'Trophies',
+    similar: 'Similar',
   },
 })
 
-export type GameSection = 'plan' | 'guide' | 'trophies'
+export type GameSection = 'plan' | 'guide' | 'trophies' | 'similar'
 
 // On a phone the guide and the trophies take turns behind a switch: a hidden one scrolls to the pair.
 const scrollTo = (id: string) => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
   const el = document.getElementById(id)
-  const target = el && !el.offsetParent ? el.closest('.game-columns-wrap') : el
-  target?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  if (!el) return
+  if (el instanceof HTMLDetailsElement) el.open = true
+  el.closest('details')?.setAttribute('open', '')
+  window.dispatchEvent(new CustomEvent('game-section', { detail: id }))
+  requestAnimationFrame(() => {
+    const target = !el.offsetParent ? el.closest('.game-columns-wrap') : el
+    target?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  })
 }
 
 export function GameNav({
@@ -54,7 +62,10 @@ export function GameNav({
   // Sections come and go as their data loads: the links follow the page.
   useEffect(() => {
     const list = ids.split(' ')
-    const check = () => setPresent(list.filter((id) => document.getElementById(id)))
+    const check = () => {
+      const next = list.filter((id) => document.getElementById(id))
+      setPresent((before) => (before.join(' ') === next.join(' ') ? before : next))
+    }
     check()
     const page = document.querySelector('.page.active') ?? document.body
     const observer = new MutationObserver(check)

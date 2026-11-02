@@ -181,7 +181,7 @@ export function HeroProgress({ game: c }: { game: HeroGame }) {
   )
 }
 
-export function HeroMeta({ c }: { c: CurrentGame }) {
+export function HeroMeta({ c, difficulty = true }: { c: CurrentGame; difficulty?: boolean }) {
   const t = useMessages(messages)
   const g = c.guide
   const played = c.hoursPlayed
@@ -199,7 +199,7 @@ export function HeroMeta({ c }: { c: CurrentGame }) {
   return (
     <div className="meta">
       {/* 0 means the sources do not say yet: the fact is left out, never shown as 0. */}
-      {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
+      {difficulty && g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
       {(g.hours > 0 || played != null) && (
         <span>
           <Icon name="clock" />{' '}
@@ -317,6 +317,9 @@ export function Hero({
       <div className="inner">
         <div className="hero-top">
           <span className="live-label">{t('currentLabel')}</span>
+          {tools && c.guide && c.guide.difficulty > 0 && (
+            <DifficultyMeter value={c.guide.difficulty} look="compact" />
+          )}
           <span className="hero-tools">{tools}</span>
         </div>
         <div className="hero-headline">
@@ -333,7 +336,7 @@ export function Hero({
                   : t('captionTrophies')}
             </p>
           )}
-          <HeroMeta c={c} />
+          <HeroMeta c={c} difficulty={!tools} />
         </div>
         <div className="hero-bottom">
           <HeroProgress game={c} />

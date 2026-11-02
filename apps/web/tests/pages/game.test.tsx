@@ -1,6 +1,6 @@
 import { afterEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen, waitFor } from '@testing-library/react'
-import { SAMPLE_DATA } from '../../src/app/app-state'
+import { SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
 import { samplePlan } from '../../src/components/plan.stories'
 import { current } from '../../src/fixtures'
 import type { CurrentGame } from '../../src/lib/types'
@@ -11,6 +11,27 @@ afterEach(() => mock.restore())
 const game: CurrentGame = {
   ...current,
   focus: { phases: [], trophy: current.trophies.find((t) => !t.earned && t.type !== 'platinum') },
+}
+
+for (const includeDlcProgress of [false, true]) {
+  test(`journey navigation and hero share the saved DLC scope: ${includeDlcProgress}`, async () => {
+    mockApi({})
+    const completed: CurrentGame = {
+      ...game,
+      progress: 50,
+      groups: { base: { earned: 40, total: 40 }, dlc: { earned: 0, total: 10 } },
+    }
+    renderApp(<GameScreen current={completed} plan={null} />, {
+      value: { me: { ...SAMPLE_ME, includeDlcProgress } },
+    })
+    await screen.findByRole('navigation', { name: 'Seções do jogo' })
+    expect(document.querySelector('.game-nav-pct')?.textContent).toBe(
+      includeDlcProgress ? '80%' : '100%',
+    )
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe(
+      includeDlcProgress ? '80' : '100',
+    )
+  })
 }
 
 test('journey prioritizes progress and server focus; plan and guide remain available', () => {
@@ -25,6 +46,8 @@ test('journey prioritizes progress and server focus; plan and guide remain avail
   fireEvent.click(screen.getByText('Planejar minha sessão'))
   expect(screen.getByText('plano')).toBeTruthy()
   expect(document.getElementById('journey-trophies')?.textContent).toContain('De raspão')
+  expect(screen.getByRole('heading', { name: /Seus troféus/ })).toBeTruthy()
+  expect(screen.queryByRole('heading', { name: /^Troféus/ })).toBeNull()
   fireEvent.click(screen.getByText('Consultar o guia completo'))
   expect(document.querySelector('.journey-guide')?.textContent).toContain('Burnout Apocalipse')
 })

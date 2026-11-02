@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react'
+import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { shownProgress } from '../lib/progress'
 import { tintStyle } from '../lib/tint'
 import type { CurrentGame } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
+import { GameNav, type GameSection } from './game-nav'
 import { Guide } from './guide'
 import { Hero } from './hero'
 import { JourneyLink } from './journey-link'
@@ -61,9 +64,32 @@ const messages = defineMessages({
   },
 })
 
+const SECTIONS: [GameSection, string][] = [
+  ['plan', 'journey-session'],
+  ['trophies', 'journey-trophies'],
+  ['guide', 'journey-guide-section'],
+  ['similar', 'similar-games'],
+]
+
+function scopedProgress(c: CurrentGame, includeDlc: boolean) {
+  return c.groups?.base
+    ? shownProgress(c.groups.base, c.groups.dlc, includeDlc).progress
+    : c.progress
+}
+
 /** One owned-game surface, regardless of whether it was opened from PSN presence or the library. */
-export function Journey({ game: c, plan }: { game: CurrentGame; plan: ReactNode }) {
+export function Journey({
+  game: c,
+  plan,
+  similar,
+}: {
+  game: CurrentGame
+  plan: ReactNode
+  similar?: ReactNode
+}) {
   const t = useMessages(messages)
+  const includeDlc = useApp().me.includeDlcProgress
+  const progress = scopedProgress(c, includeDlc)
   const shots = c.game.screenshot_ids ?? []
   const [scene, setScene] = useScene(shots.length)
   const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
@@ -75,7 +101,7 @@ export function Journey({ game: c, plan }: { game: CurrentGame; plan: ReactNode 
   return (
     <div className="journey">
       <GameBackdrop src={c.game.art_url ?? c.icon} shots={shots} at={scene} tint={c.game.tint} />
-      <div className="hero immersive tinted" style={tintStyle(c.game.tint)}>
+      <div id="journey-hero" className="hero immersive tinted" style={tintStyle(c.game.tint)}>
         <Hero
           game={c}
           heading={1}
@@ -83,6 +109,7 @@ export function Journey({ game: c, plan }: { game: CurrentGame; plan: ReactNode 
           tools={<ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />}
         />
       </div>
+      <GameNav sections={SECTIONS} hero="journey-hero" name={c.name} progress={progress} />
       <div className="journey-focus card">
         <span className="eyebrow">
           <Icon name="nexo" /> {t('next')}
@@ -123,13 +150,15 @@ export function Journey({ game: c, plan }: { game: CurrentGame; plan: ReactNode 
         {plan}
       </details>
       <section className="journey-trophies" id="journey-trophies">
-        <header>
-          <h2>{t('trophies')}</h2>
-          <span>{t('remaining', { count: missing })}</span>
-        </header>
-        <TrophyList trophies={c.trophies} np={c.np} prefix="journey-t" />
+        <TrophyList
+          trophies={c.trophies}
+          np={c.np}
+          prefix="journey-t"
+          heading={t('trophies')}
+          note={t('remaining', { count: missing })}
+        />
       </section>
-      <details className="journey-guide">
+      <details className="journey-guide" id="journey-guide-section">
         <summary>
           <Icon name="search" />
           {t('guide')}
@@ -147,6 +176,7 @@ export function Journey({ game: c, plan }: { game: CurrentGame; plan: ReactNode 
           }}
         />
       </details>
+      {similar}
     </div>
   )
 }
