@@ -41,10 +41,11 @@ test('the breadcrumb and the tab title follow the route', async () => {
 })
 
 test('primary navigation opens the games screen', () => {
+  mockApi({ '/api/library': never })
   renderApp(<Shell />, { path: '/' })
   fireEvent.click(screen.getByRole('link', { name: 'Jogos' }))
   expect(where()).toBe('/games')
-  expect(screen.getByRole('heading', { level: 1, name: 'Jogos' })).toBeTruthy()
+  expect(screen.getByRole('heading', { level: 1, name: 'Seus jogos' })).toBeTruthy()
 })
 
 test('an unknown route goes home', () => {

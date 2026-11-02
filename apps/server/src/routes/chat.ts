@@ -2,7 +2,7 @@ import { ai } from '../ai.ts'
 import { config } from '../config.ts'
 import { tagged } from '../costs.ts'
 import { isDemo } from '../demo.ts'
-import { getChat, setChat, setChatFromCatalog } from '../game-context.ts'
+import { getChat, getCurrent, setChat, setChatFromCatalog } from '../game-context.ts'
 import { json, readBody } from '../http.ts'
 import type { library } from '../library.ts'
 import { reply } from '../nexo.ts'
@@ -68,10 +68,38 @@ async function transcribe({ req, res, me }: Api) {
 // The chat's game, as /game in Telegram: the player's own titles, searched by name, and the
 // switch, which loads that game's context for the chat and the notices alike.
 async function librarySearch({ res, url, me, titles }: Api) {
-  if (isDemo(me)) return json(res, 200, [])
+  if (isDemo(me) && url.searchParams.get('scope') !== 'owned') return json(res, 200, [])
   const q = (url.searchParams.get('q') ?? '').trim().toLowerCase()
   const current = getChat(me)?.title.npCommunicationId
   const own = await titles()
+  // The Games page is the personal PSN library, not the chat's mixed catalog search.
+  if (url.searchParams.get('scope') === 'owned') {
+    const size = 12
+    const hits = own.filter((ti) => ti.name.toLowerCase().includes(q))
+    const requested = Number(url.searchParams.get('page') ?? 1)
+    const page = Math.min(
+      Number.isSafeInteger(requested) && requested > 0 ? requested : 1,
+      Math.max(1, Math.ceil(hits.length / size)),
+    )
+    const playing = getCurrent(me)?.title.npCommunicationId
+    return json(res, 200, {
+      items: hits.slice((page - 1) * size, page * size).map((ti) => ({
+        np: ti.npCommunicationId,
+        name: ti.name,
+        platform: ti.platform,
+        icon: ti.iconUrl,
+        progress: ti.progress,
+        earned: ti.earned,
+        total: ti.total,
+        platinum: ti.earnedByType.platinum > 0,
+        current: ti.npCommunicationId === playing,
+        owned: true,
+      })),
+      total: hits.length,
+      page,
+      size,
+    })
+  }
   const hits = own.filter((ti) => ti.name.toLowerCase().includes(q)).slice(0, 8)
   const mine = hits.map((ti) => ({
     np: ti.npCommunicationId,

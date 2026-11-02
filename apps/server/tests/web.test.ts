@@ -1551,3 +1551,37 @@ test('a selected journey plan validates ownership and keeps the playing game unc
   })
   expect(read.mock.calls.at(-1)?.[1]?.game.id).toBe(game.id)
 })
+
+test('personal library paginates all owned PSN titles without searching catalog or filtering completed games', async () => {
+  const own = Array.from({ length: 14 }, (_, i) =>
+    makeTitle({
+      npCommunicationId: `OWN${i}`,
+      name: `Owned ${i}`,
+      progress: i === 0 ? 0 : 100,
+      earnedByType: { bronze: 0, silver: 0, gold: 0, platinum: i === 0 ? 0 : 1 },
+    }),
+  )
+  spyOn(lib, 'library').mockResolvedValue(own)
+  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext({ title: own[0] }))
+  const catalog = spyOn(games, 'searchCatalog').mockResolvedValue([])
+  const first = await send('GET', '/api/library?scope=owned')
+  expect(first.body).toMatchObject({ total: 14, page: 1, size: 12 })
+  expect(first.body.items).toHaveLength(12)
+  expect(first.body.items[0]).toMatchObject({
+    np: 'OWN0',
+    progress: 0,
+    platinum: false,
+    current: true,
+    owned: true,
+  })
+  expect(first.body.items[1].platinum).toBe(true)
+  expect((await send('GET', '/api/library?scope=owned&page=2')).body.items).toHaveLength(2)
+  expect((await send('GET', '/api/library?scope=owned&page=999')).body.page).toBe(2)
+  expect((await send('GET', '/api/library?scope=owned&page=NaN')).body.page).toBe(1)
+  expect((await send('GET', '/api/library?scope=owned&q=missing')).body).toMatchObject({
+    items: [],
+    total: 0,
+    page: 1,
+  })
+  expect(catalog).not.toHaveBeenCalled()
+})
