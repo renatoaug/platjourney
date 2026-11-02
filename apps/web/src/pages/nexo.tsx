@@ -73,14 +73,19 @@ function DemoNexo() {
 
 type Translate = Translator<typeof messages>
 
-function subtitleOf(t: Translate, loaded: boolean, current: CurrentGame | null | undefined) {
+function subtitleOf(
+  t: Translate,
+  loaded: boolean,
+  current: CurrentGame | null | undefined,
+  includeDlc: boolean,
+) {
   if (!loaded) return t('subtitleLoading')
   if (!current) return t('subtitleNoGame')
   if (current.owned === false) return t('subtitleNotOwned', { name: current.name })
   return t('subtitleGame', {
     name: current.name,
     progress: current.groups
-      ? shownProgress(current.groups.base, null, false).progress
+      ? shownProgress(current.groups.base, current.groups.dlc, includeDlc).progress
       : current.progress,
   })
 }
@@ -191,7 +196,7 @@ function PlayingNote({
 function LiveNexo() {
   const t = useMessages(messages)
   const location = useLocation()
-  const { data, cache, loadState } = useApp()
+  const { data, cache, loadState, me } = useApp()
   // Each game is its own conversation, kept by its key (the game's id, or "none" without a game).
   if (!cache.chats) cache.chats = {}
   const chats = cache.chats as Record<string, ChatMessage[]>
@@ -272,7 +277,7 @@ function LiveNexo() {
   }
 
   const current = chatGame
-  const subtitle = subtitleOf(t, !!data, current)
+  const subtitle = subtitleOf(t, !!data, current, me.includeDlcProgress)
 
   // The chat's game, as /game in Telegram: the server loads that game's context, then the screen
   // reloads its state so the subtitle and the next answers follow it.

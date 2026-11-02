@@ -23,7 +23,7 @@ Preserve the scene backdrop, immersive hero with catalog facts, interest action 
 
 ## Navigation
 
-Primary destinations are Home, Jornada, Guias, Descobrir and Jogos. Home retains its console and artwork at `/`; `/overview` redirects there. Jogos contains the synced PSN library and interests. Profile and guide search remain available. General Nexo, history, overview and settings remain accessible from the account menu.
+Primary destinations are Home, Jornada, Guias, Descobrir and Jogos. Home retains its console and artwork at `/`; `/overview` redirects there. Jogos contains the synced PSN library and the ordered interests, deals and collapsible yearly goal. `/goals` redirects to `/games?tab=interests`. Profile and guide search remain available. General Nexo, history and settings remain accessible from the account menu.
 
 ## States and validation
 

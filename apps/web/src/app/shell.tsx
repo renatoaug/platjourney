@@ -31,7 +31,6 @@ import { number } from '../lib/format'
 import { Discover } from '../pages/discover'
 import { Game } from '../pages/game'
 import { Games } from '../pages/games'
-import { Goals } from '../pages/goals'
 import { Guides } from '../pages/guides'
 import { History } from '../pages/history'
 import { Home } from '../pages/home'
@@ -350,7 +349,7 @@ export function Shell() {
           <Route path="/games" element={<Games />} />
           <Route path="/game" element={<Game />} />
           <Route path="/nexo" element={<Nexo />} />
-          <Route path="/goals" element={<Goals />} />
+          <Route path="/goals" element={<Navigate to="/games?tab=interests" replace />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/guides" element={<Guides />} />
           <Route path="/history" element={<History />} />

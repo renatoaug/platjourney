@@ -18,6 +18,8 @@ const messages = defineMessages({
     ofTotal: 'de {total} troféus',
     ofTotalWithDlc: 'de {total} troféus com DLC',
     progressLabel: 'Progresso do jogo',
+    trophiesLeft: { one: '{count} troféu pendente', other: '{count} troféus pendentes' },
+    captionTrophies: 'Acompanhe suas conquistas, um troféu de cada vez.',
     platinumEarned: 'Platina conquistada',
     platinumAhead: 'Platina no fim da barra',
     remaining: {
@@ -56,6 +58,8 @@ const messages = defineMessages({
     ofTotal: 'of {total} trophies',
     ofTotalWithDlc: 'of {total} trophies with DLC',
     progressLabel: 'Game progress',
+    trophiesLeft: { one: '{count} trophy left', other: '{count} trophies left' },
+    captionTrophies: 'Follow your achievements, one trophy at a time.',
     platinumEarned: 'Platinum earned',
     platinumAhead: 'Platinum at the end of the bar',
     remaining: {
@@ -114,7 +118,7 @@ type HeroGame = Pick<CurrentGame, 'earned' | 'total' | 'progress' | 'groups'> & 
   trophies?: Trophy[] | null
 }
 
-/** The platinum only needs the base game, so the hero counts that; DLC is a footnote. */
+/** Count the saved DLC scope; platinum status always comes from its actual trophy. */
 export function HeroProgress({ game: c }: { game: HeroGame }) {
   const t = useMessages(messages)
   const includeDlc = useApp().me.includeDlcProgress
@@ -158,7 +162,13 @@ export function HeroProgress({ game: c }: { game: HeroGame }) {
           <span className="plat-done">{t('platinumEarned')}</span>
         ) : (
           <span>
-            <b>{remaining}</b> {t('remaining', { count: remaining })}
+            {platinum ? (
+              <>
+                <b>{remaining}</b> {t('remaining', { count: remaining })}
+              </>
+            ) : (
+              t('trophiesLeft', { count: Math.max(0, total - earned) })
+            )}
           </span>
         )}
         {dlc && !withDlc && (
@@ -316,7 +326,11 @@ export function Hero({
           <Heading className="hero-title">{c.name}</Heading>
           {line ?? (
             <p className="hero-caption">
-              {c.progress >= 100 ? t('captionDone') : t('captionOngoing')}
+              {c.trophies?.some((trophy) => trophy.type === 'platinum' && trophy.earned)
+                ? t('captionDone')
+                : c.trophies?.some((trophy) => trophy.type === 'platinum')
+                  ? t('captionOngoing')
+                  : t('captionTrophies')}
             </p>
           )}
           <HeroMeta c={c} />

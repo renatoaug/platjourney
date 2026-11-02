@@ -4,9 +4,11 @@
  * opens the game, the art and the title carried over to its page. */
 import { type CSSProperties, type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { useApp } from '../app/app-state'
 import { useProfile } from '../app/use-profile'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtPlayTime, fmtRate, pct } from '../lib/format'
+import { shownProgress } from '../lib/progress'
 import { tintStyle } from '../lib/tint'
 import type { AppStateData, CurrentGame } from '../lib/types'
 import type { Platinum } from '../pages/profile'
@@ -117,11 +119,12 @@ function focusLine(c: CurrentGame, note?: string) {
   return next ? `${next.name}: ${next.detail}` : note?.split(/\n\s*\n/)[0]
 }
 
-function items(data: AppStateData, platinums: Platinum[] | null): Item[] {
+function items(data: AppStateData, platinums: Platinum[] | null, includeDlc: boolean): Item[] {
   const list: Item[] = []
   const c = data.current
   if (c && c.owned !== false) {
     const base = c.groups?.base
+    const progress = base ? shownProgress(base, c.groups?.dlc, includeDlc) : c
     const tip = data.tips.find(
       (tip) =>
         tip.game?.id === c.game.id && ['start', 'unlock', 'session', 'route'].includes(tip.kind),
@@ -135,9 +138,9 @@ function items(data: AppStateData, platinums: Platinum[] | null): Item[] {
       blur: isCover(c.game.art_url ?? c.icon, c.game.cover_url),
       tint: c.game.tint,
       to: '/game',
-      earned: base?.earned ?? c.earned,
-      total: base?.total ?? c.total,
-      progress: base ? Math.round((base.earned / base.total) * 100) : c.progress,
+      earned: progress.earned,
+      total: progress.total,
+      progress: progress.progress,
       remaining: base?.remaining ?? Math.max(0, c.total - c.earned - 1),
       difficulty: c.guide?.difficulty,
       hours: c.hoursPlayed,
@@ -311,7 +314,11 @@ export function Console({ data }: { data: AppStateData }) {
   const t = useMessages(messages)
   const navigate = useNavigate()
   const profile = useProfile()
-  const list = useMemo(() => items(data, profile?.platinums ?? null), [data, profile])
+  const { includeDlcProgress } = useApp().me
+  const list = useMemo(
+    () => items(data, profile?.platinums ?? null, includeDlcProgress),
+    [data, profile, includeDlcProgress],
+  )
   const [focusKey, setFocusKey] = useState<string | null>(null)
   const index = Math.max(
     0,

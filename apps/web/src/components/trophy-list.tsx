@@ -225,10 +225,12 @@ function savedStatus(saved: SavedFilters): Status {
   return saved.hideEarned ? 'pending' : 'all'
 }
 
-function savedGroup(saved: SavedFilters): Group {
+function savedGroup(saved: SavedFilters, includeDlc: boolean): Group {
   return saved.group === 'base' || saved.group === 'all' || saved.group === 'dlc'
     ? saved.group
-    : 'base'
+    : includeDlc
+      ? 'all'
+      : 'base'
 }
 
 // A platinumed game opens in the game's own order, like the PSN; otherwise the
@@ -319,6 +321,7 @@ function TrophyCard({
             <Icon name="trophy" />
             {TYPES[t.type] ? tr(TYPES[t.type]) : t.type}
           </span>
+          <TrophyRarity t={t} />
           {t.earned && (
             <span className="trophy-earned-date">
               {t.earnedAt ? tr('earnedOn', { date: fmtDate(t.earnedAt) }) : tr('earned')}
@@ -336,7 +339,6 @@ function TrophyCard({
           </div>
         ) : null}
       </div>
-      <TrophyRarity t={t} />
       {help && t.type !== 'platinum' && (
         <Link
           className="trophy-help-btn"
@@ -357,10 +359,6 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <>
       <div className="trophy-controls">
-        <label className="trophy-search">
-          <Icon name="search" />
-          <input disabled aria-label={t('search')} placeholder={t('searchPlaceholder')} />
-        </label>
         <div className="trophy-toolbar">
           {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control */}
           <div className="trophy-status" role="group">
@@ -374,6 +372,10 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
               {t('status.earned')}
             </button>
           </div>
+          <label className="trophy-search">
+            <Icon name="search" />
+            <input disabled aria-label={t('search')} placeholder={t('searchPlaceholder')} />
+          </label>
           <details className="trophy-options">
             <summary>
               <Icon name="layers" /> {t('filters')} <Icon name="chevron-down" />
@@ -432,7 +434,7 @@ export function TrophyList({
   const { me } = useApp()
   const [saved] = useState(savedFilters)
   const [status, setStatus] = useState<Status>(() => savedStatus(saved))
-  const [group, setGroup] = useState<Group>(() => savedGroup(saved))
+  const [group, setGroup] = useState<Group>(() => savedGroup(saved, me.includeDlcProgress))
   const [onlyProgress, setOnlyProgress] = useState(!!saved.onlyProgress)
   // A sort picked by hand sticks, here and on the next games; until then it follows the game.
   const [chosenSort, setChosenSort] = useState<string | null>(null)
@@ -505,16 +507,6 @@ export function TrophyList({
       ) : (
         <>
           <div className="trophy-controls" ref={controlsRef}>
-            <label className="trophy-search">
-              <Icon name="search" />
-              <input
-                aria-label={t('search')}
-                id={`${prefix}-search`}
-                placeholder={t('searchPlaceholder')}
-                value={q}
-                onChange={(e) => refilter(setQ)(e.target.value)}
-              />
-            </label>
             <div className="trophy-toolbar">
               {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
               <div
@@ -535,6 +527,16 @@ export function TrophyList({
                   </button>
                 ))}
               </div>
+              <label className="trophy-search">
+                <Icon name="search" />
+                <input
+                  aria-label={t('search')}
+                  id={`${prefix}-search`}
+                  placeholder={t('searchPlaceholder')}
+                  value={q}
+                  onChange={(e) => refilter(setQ)(e.target.value)}
+                />
+              </label>
               <details className="trophy-options">
                 <summary>
                   <Icon name="layers" /> {t('filters')}{' '}

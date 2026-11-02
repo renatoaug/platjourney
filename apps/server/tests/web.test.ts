@@ -49,7 +49,7 @@ import * as telegram from '../src/telegram.ts'
 import * as watcher from '../src/watcher.ts'
 import { handle } from '../src/web.ts'
 import { makeContext, makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
-import { counts } from './fixtures.ts'
+import { counts, makeGroups } from './fixtures.ts'
 
 class FakeResponse {
   status = 0
@@ -1593,3 +1593,43 @@ test('personal library paginates all owned PSN titles without searching catalog 
   })
   expect(catalog).not.toHaveBeenCalled()
 })
+
+for (const includeDlc of [false, true]) {
+  test(`owned library respects DLC preference ${includeDlc} without redefining platinum`, async () => {
+    spyOn(auth, 'authenticate').mockResolvedValue({ ...me, include_dlc_progress: includeDlc })
+    const earnedByType = { bronze: 28, silver: 15, gold: 2, platinum: 1 as const }
+    const completed = makeTitle({ earned: 46, total: 61, progress: 70, earnedByType })
+    const noPlatinum = makeTitle({
+      npCommunicationId: 'NO_PLAT',
+      progress: 100,
+      earnedByType: { ...earnedByType, platinum: 0 },
+    })
+    spyOn(lib, 'library').mockResolvedValue([completed, noPlatinum])
+    spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
+    const groups = makeGroups()
+    groups.base = { ...groups.base, earned: 46, total: 46, remaining: 0, earnedByType }
+    groups.dlc = {
+      ...groups.base,
+      earned: 0,
+      total: 15,
+      remaining: 15,
+      earnedByType: { bronze: 0, silver: 0, gold: 0, platinum: 0 },
+    }
+    spyOn(ranking, 'loadGroups').mockResolvedValue(groups)
+    const { body } = await send('GET', '/api/library?scope=owned')
+    expect(body.items[0]).toMatchObject({
+      earned: 46,
+      total: includeDlc ? 61 : 46,
+      progress: includeDlc ? 75 : 100,
+      progressScope: includeDlc ? 'all' : 'base',
+      platinum: true,
+    })
+    expect(body.items[1].platinum).toBe(false)
+    const chatSearch = await send('GET', '/api/library')
+    expect(chatSearch.body[0].progress).toBe(includeDlc ? 75 : 100)
+    expect(ranking.loadGroups).toHaveBeenCalledWith(
+      completed,
+      expect.objectContaining({ include_dlc_progress: includeDlc }),
+    )
+  })
+}

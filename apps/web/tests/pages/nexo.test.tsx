@@ -1,6 +1,6 @@
 import { afterEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { SAMPLE_DATA } from '../../src/app/app-state'
+import { SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
 import type { ChatMessage } from '../../src/components/chat/chat'
 import { Loaded } from '../../src/components/chat/chat.stories'
 import { current } from '../../src/fixtures'
@@ -338,4 +338,15 @@ test('switching away from a draft drops it at once and marks the game being open
       .getByRole('button', { name: /Outro Jogo/ })
       .getAttribute('aria-current'),
   ).toBe('true')
+})
+
+test('contextual chat subtitle follows the saved DLC preference', () => {
+  mockApi({ '/api/chat': [], '/api/chat/threads': [] })
+  renderApp(<Nexo />, {
+    value: {
+      data: { ...SAMPLE_DATA, current: current as unknown as CurrentGame },
+      me: { ...SAMPLE_ME, includeDlcProgress: true },
+    },
+  })
+  expect(screen.getByText('DAYS GONE · 20%')).toBeTruthy()
 })

@@ -330,13 +330,14 @@ export interface SimilarGame {
   relation: SimilarRelation
 }
 
-/** Paginated personal PSN library. Progress includes the title's DLC, as reported by PSN. */
+/** Personal library progress follows the saved DLC preference; missing groups remain explicit. */
 export interface OwnedLibrary {
   items: (LibraryGame & {
     np: string
     earned: number
     total: number
     platinum: boolean
+    progressScope?: 'base' | 'all' | 'psn'
     cover?: string | null
     art?: string | null
   })[]

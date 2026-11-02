@@ -1,6 +1,7 @@
 import { afterEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
+import { emptyGoals, sampleGoals } from '../../src/components/goals/fixtures'
 import { Games, GamesView } from '../../src/pages/games'
 import { sampleLibrary } from '../../src/pages/games.stories'
 import { mockApi, renderApp } from '../support/web'
@@ -34,31 +35,29 @@ test('search requests only owned games; no matches can be cleared', async () => 
   await screen.findByText('ASTRO BOT')
 })
 
-test('interests do not claim ownership or invented progress and keep management accessible', () => {
-  renderApp(
-    <GamesView
-      {...handlers}
-      library={null}
-      side="interests"
-      interests={[
-        {
-          id: 'saved:1',
-          game: { id: 'game:1', name: 'Saved game' },
-          position: 1,
-          progress: null,
-          done: false,
-        },
-      ]}
-    />,
+test('interests integrates existing management and keeps the annual goal collapsed', () => {
+  const { container } = renderApp(
+    <GamesView {...handlers} library={null} side="interests" goals={sampleGoals} />,
   )
-  expect(screen.queryByRole('progressbar')).toBeNull()
-  expect(screen.queryByRole('link', { name: /Abrir jornada/ })).toBeNull()
-  expect(screen.getByRole('link', { name: 'Ver Saved game' }).getAttribute('href')).toBe(
-    '/title/game/game%3A1',
-  )
-  expect(screen.getByRole('link', { name: /Organizar interesses/ }).getAttribute('href')).toBe(
-    '/goals',
-  )
+  expect(screen.getByRole('heading', { name: /^Meus interesses/ })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Adicionar jogo' })).toBeTruthy()
+  expect(screen.queryByRole('link', { name: /Organizar interesses/ })).toBeNull()
+  expect(container.querySelector('.games-goal-details')?.hasAttribute('open')).toBe(false)
+  expect(container.querySelector('.page-top')).toBeNull()
+})
+
+test('explicit interests URL opens the integrated section and tab history is navigable', async () => {
+  mockApi({ '/api/library': sampleLibrary })
+  renderApp(<Games />, {
+    path: '/games?tab=interests',
+    value: { data: { ...SAMPLE_DATA, goals: emptyGoals } },
+  })
+  expect(screen.getByText('Salve o primeiro jogo que você quer platinar.')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Biblioteca PSN' }))
+  await screen.findByText('ASTRO BOT')
+  expect(screen.getByTestId('location').textContent).toBe('/games?tab=library')
+  fireEvent.click(screen.getByRole('button', { name: 'Interesses' }))
+  expect(screen.getByTestId('location').textContent).toBe('/games?tab=interests')
 })
 
 test('loading and failure are separate and retry works', () => {

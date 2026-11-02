@@ -40,6 +40,9 @@ const messages = defineMessages({
       addShort: 'Adicionar',
       empty: 'Salve o primeiro jogo que você quer platinar.',
       yearAchievements: 'Conquistas do ano',
+      annual: 'Meta {year}: {done} de {target} platinas',
+      noTarget: '{year}: {done} platinas · definir meta',
+      details: 'Meta e calendário',
     },
   },
   [Language.En]: {
@@ -56,6 +59,9 @@ const messages = defineMessages({
       addShort: 'Add',
       empty: 'Save the first game you want to platinum.',
       yearAchievements: "This year's platinums",
+      annual: '{year} goal: {done} of {target} platinums',
+      noTarget: '{year}: {done} platinums · set a goal',
+      details: 'Goal and calendar',
     },
   },
 })
@@ -79,7 +85,14 @@ function GoalsTop({ interests }: { interests: Interest[] }) {
       lead={t('page.lead')}
       art={next && (shot ? image(shot, 't_1080p') : next.game.cover_url)}
       tint={next?.game.tint}
-      aside={next && <NextUp interest={next} />}
+      aside={
+        next && (
+          <div className="games-next">
+            {next.game.art_url && <img src={next.game.art_url} alt="" loading="lazy" />}
+            <NextUp interest={next} />
+          </div>
+        )
+      }
     />
   )
 }
@@ -104,6 +117,24 @@ export function Goals() {
   )
 }
 
+function CompactNext({ interests }: { interests: Interest[] }) {
+  const next = nextUp(interests)
+  if (!next) return null
+  return (
+    <div className="games-next">
+      {next.game.art_url && <img src={next.game.art_url} alt="" loading="lazy" />}
+      <NextUp interest={next} />
+    </div>
+  )
+}
+
+function AnnualSummary({ goals: p }: { goals: YearGoals }) {
+  const t = useMessages(messages)
+  return p.target
+    ? t('page.annual', { year: p.year, done: p.done, target: p.target })
+    : t('page.noTarget', { year: p.year, done: p.done })
+}
+
 /**
  * Everything below the page head. Open editors, the add panel and its draft live in state kept
  * across navigation, so the periodic /api/state refresh never discards them.
@@ -113,8 +144,10 @@ export function GoalsView({
   search,
   command: fake,
   readOnly = false,
+  compact = false,
 }: {
   goals: YearGoals
+  compact?: boolean
   /** The catalog search; stories pass a fake one. */
   search?: (query: string) => Promise<Game[]>
   /** Stories pass a fake /api/goals; the screen uses the shared one, which updates the app state. */
@@ -188,17 +221,35 @@ export function GoalsView({
     }
   }
 
+  const seasonView = (
+    <GoalSeason
+      goals={p}
+      editing={editing && !readOnly}
+      onEditing={setEditing}
+      busy={busy || readOnly}
+      feedback={feedback}
+      onFeedback={setFeedback}
+      onSet={(target) => save(`set ${target}`)}
+    />
+  )
   return (
     <>
-      <GoalSeason
-        goals={p}
-        editing={editing && !readOnly}
-        onEditing={setEditing}
-        busy={busy || readOnly}
-        feedback={feedback}
-        onFeedback={setFeedback}
-        onSet={(target) => save(`set ${target}`)}
-      />
+      {compact ? (
+        <>
+          <CompactNext interests={p.interests} />
+          <details className="games-goal-details">
+            <summary>
+              <span>
+                <AnnualSummary goals={p} />
+              </span>
+              <small>{t('page.details')}</small>
+            </summary>
+            {seasonView}
+          </details>
+        </>
+      ) : (
+        seasonView
+      )}
       {/* The saved games on sale, in a band across the page (only when there is one). */}
       <DealsSpotlight
         interests={p.interests}
@@ -207,7 +258,7 @@ export function GoalsView({
       {/* Two empty cards side by side keep one height; with content each takes its own. */}
       <div
         className={`grid cols-2 goals-columns${p.interests.length || p.platinumed.length ? '' : ' empty'}`}
-        style={{ marginTop: 20 }}
+        style={{ marginTop: compact ? 0 : 20 }}
       >
         <div className="card">
           <div className="goal-list-heading">
@@ -272,14 +323,23 @@ export function GoalsView({
           {readOnly && <DemoNote />}
         </div>
         <div className="goals-side">
-          <YearPlatinums goals={p} busy={busy} />
+          {compact ? (
+            <details className="games-goal-details">
+              <summary>
+                {t('page.yearAchievements')} · {p.done}
+              </summary>
+              <YearPlatinums goals={p} busy={busy} />
+            </details>
+          ) : (
+            <YearPlatinums goals={p} busy={busy} />
+          )}
         </div>
       </div>
     </>
   )
 }
 
-function GoalsSkeleton() {
+export function GoalsSkeleton() {
   const t = useMessages(messages)
   return (
     <>

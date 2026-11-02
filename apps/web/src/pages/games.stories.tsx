@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { emptyGoals, sampleGoals } from '../components/goals/fixtures'
 import { current } from '../fixtures'
 import type { OwnedLibrary } from '../lib/types'
 import { GamesView } from './games'
@@ -103,18 +104,13 @@ export const Failed: Story = { args: { library: null, failed: true } }
 export const Interests: Story = {
   args: {
     side: 'interests',
-    interests: [
-      {
-        id: 'interest:fixture',
-        game: { id: 'game:fixture', name: 'Clair Obscur: Expedition 33' },
-        position: 0,
-        progress: null,
-        done: false,
-      },
-    ],
+    goals: sampleGoals,
   },
 }
-export const EmptyInterests: Story = { args: { side: 'interests', interests: [] } }
+export const EmptyInterests: Story = { args: { side: 'interests', goals: emptyGoals } }
+export const LoadingInterests: Story = { args: { side: 'interests' } }
+export const FailedInterests: Story = { args: { side: 'interests', interestsFailed: true } }
+
 export const Search: Story = {
   render: (args) => {
     const [query, setQuery] = useState('')

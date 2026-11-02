@@ -6,6 +6,8 @@ import { getChat, getCurrent, setChat, setChatFromCatalog } from '../game-contex
 import { json, readBody } from '../http.ts'
 import type { library } from '../library.ts'
 import { reply } from '../nexo.ts'
+import { shownProgress } from '../progress.ts'
+import { loadGroups } from '../ranking.ts'
 import { allow } from '../rate-limit.ts'
 import { chatThreads, recentMessages } from '../repository/activity.ts'
 import { gamesForTitles, getGame, searchCatalog } from '../repository/game.ts'
@@ -85,35 +87,44 @@ async function librarySearch({ res, url, me, titles }: Api) {
     const art = await gamesForTitles(visible, false)
     const playing = getCurrent(me)?.title.npCommunicationId
     return json(res, 200, {
-      items: visible.map((ti) => ({
-        np: ti.npCommunicationId,
-        name: ti.name,
-        platform: ti.platform,
-        icon: ti.iconUrl,
-        cover: art.get(ti.npCommunicationId)?.cover_url ?? null,
-        art: art.get(ti.npCommunicationId)?.art_url ?? null,
-        progress: ti.progress,
-        earned: ti.earned,
-        total: ti.total,
-        platinum: ti.earnedByType.platinum > 0,
-        current: ti.npCommunicationId === playing,
-        owned: true,
-      })),
+      items: await Promise.all(
+        visible.map(async (ti) => {
+          const groups = await loadGroups(ti, me)
+          const { earned, total, progress } = shownProgress(me, ti, groups)
+          return {
+            np: ti.npCommunicationId,
+            name: ti.name,
+            platform: ti.platform,
+            icon: ti.iconUrl,
+            cover: art.get(ti.npCommunicationId)?.cover_url ?? null,
+            art: art.get(ti.npCommunicationId)?.art_url ?? null,
+            progress,
+            earned,
+            total,
+            progressScope: !groups ? 'psn' : me.include_dlc_progress && groups.dlc ? 'all' : 'base',
+            platinum: ti.earnedByType.platinum > 0,
+            current: ti.npCommunicationId === playing,
+            owned: true,
+          }
+        }),
+      ),
       total: hits.length,
       page,
       size,
     })
   }
   const hits = own.filter((ti) => ti.name.toLowerCase().includes(q)).slice(0, 8)
-  const mine = hits.map((ti) => ({
-    np: ti.npCommunicationId,
-    name: ti.name,
-    platform: ti.platform,
-    icon: ti.iconUrl,
-    progress: ti.progress,
-    current: ti.npCommunicationId === current,
-    owned: true,
-  }))
+  const mine = await Promise.all(
+    hits.map(async (ti) => ({
+      np: ti.npCommunicationId,
+      name: ti.name,
+      platform: ti.platform,
+      icon: ti.iconUrl,
+      progress: shownProgress(me, ti, await loadGroups(ti, me)).progress,
+      current: ti.npCommunicationId === current,
+      owned: true,
+    })),
+  )
   const others = q.length < 2 || mine.length >= 8 ? [] : await notOwned(me, q, own, 8 - mine.length)
   return json(res, 200, [...mine, ...others])
 }

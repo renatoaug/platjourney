@@ -81,8 +81,10 @@
     border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
     border-radius: var(--radius-tag);
     padding: 2px 9px;
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
     color: var(--color-fg);
     font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
   }
 
   .hero-title {

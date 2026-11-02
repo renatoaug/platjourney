@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { useKept } from '../components/goals/use-kept'
-import { titleHref } from '../components/tip'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { pct } from '../lib/format'
-import type { Interest, OwnedLibrary } from '../lib/types'
+import type { OwnedLibrary, YearGoals } from '../lib/types'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Pager } from '../ui/pager'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
+import { GoalsSkeleton, GoalsView } from './goals'
 import './games.css'
 
 const messages = defineMessages({
@@ -22,7 +22,10 @@ const messages = defineMessages({
     library: 'Biblioteca PSN',
     interests: 'Interesses',
     tabs: 'Seus jogos',
-    source: 'Progresso da PSN, incluindo DLCs.',
+    source: 'Progresso conforme sua preferência de DLC.',
+    base: 'Jogo base',
+    all: 'Jogo base + DLC',
+    psn: 'Progresso PSN · divisão de DLC indisponível',
     search: 'Buscar na biblioteca PSN',
     count: { one: '{count} jogo na biblioteca', other: '{count} jogos na biblioteca' },
     empty: 'Sua biblioteca PSN ainda está vazia.',
@@ -55,7 +58,10 @@ const messages = defineMessages({
     library: 'PSN library',
     interests: 'Interests',
     tabs: 'Your games',
-    source: 'PSN progress, including DLC.',
+    source: 'Progress follows your DLC preference.',
+    base: 'Base game',
+    all: 'Base game + DLC',
+    psn: 'PSN progress · DLC breakdown unavailable',
     search: 'Search your PSN library',
     count: { one: '{count} game in your library', other: '{count} games in your library' },
     empty: 'Your PSN library is empty.',
@@ -84,8 +90,23 @@ const messages = defineMessages({
 })
 
 export function Games() {
-  const { data, sync } = useApp()
-  const [side, setSide] = useKept<'library' | 'interests'>('games.side', 'library')
+  const { data, sync, me } = useApp()
+  const [params, setParams] = useSearchParams()
+  const [keptSide, setKeptSide] = useKept<'library' | 'interests'>('games.side', 'library')
+  const side =
+    params.get('tab') === 'interests'
+      ? 'interests'
+      : params.get('tab') === 'library'
+        ? 'library'
+        : keptSide
+  const setSide = (value: 'library' | 'interests') => {
+    setKeptSide(value)
+    setParams((before) => {
+      const next = new URLSearchParams(before)
+      next.set('tab', value)
+      return next
+    })
+  }
   const [query, setQuery] = useKept('games.query', '')
   const [page, setPage] = useKept('games.page', 1)
   const [library, setLibrary] = useState<OwnedLibrary | null>(null)
@@ -115,7 +136,7 @@ export function Games() {
       active = false
       clearTimeout(timer)
     }
-  }, [side, query, page, attempt])
+  }, [side, query, page, attempt, me.includeDlcProgress])
   return (
     <GamesView
       library={library}
@@ -129,7 +150,8 @@ export function Games() {
       }}
       onPage={setPage}
       onRetry={() => setAttempt((v) => v + 1)}
-      interests={data?.goals.interests}
+      goals={data?.goals}
+      readOnly={me.demo === true}
       interestsFailed={!data && sync === 'failed'}
     />
   )
@@ -144,7 +166,8 @@ export function GamesView({
   onQuery,
   onPage,
   onRetry,
-  interests,
+  goals,
+  readOnly = false,
   interestsFailed = false,
 }: {
   library: OwnedLibrary | null
@@ -155,7 +178,8 @@ export function GamesView({
   onQuery: (query: string) => void
   onPage: (page: number) => void
   onRetry: () => void
-  interests?: Interest[]
+  goals?: YearGoals
+  readOnly?: boolean
   interestsFailed?: boolean
 }) {
   const t = useMessages(messages)
@@ -183,7 +207,7 @@ export function GamesView({
             onPage={onPage}
           />
         ) : (
-          <InterestsSection interests={interests} failed={interestsFailed} />
+          <InterestsSection goals={goals} failed={interestsFailed} readOnly={readOnly} />
         )}
       </div>
     </Page>
@@ -320,6 +344,7 @@ function LibraryRow({ item: g }: { item: OwnedLibrary['items'][number] }) {
               ? t('zero')
               : t('trophies', { earned: g.earned, total: g.total })}
         </p>
+        {g.progressScope && <small className="games-progress-scope">{t(g.progressScope)}</small>}
         <div className="games-progress">
           <span
             className="bar"
@@ -346,51 +371,25 @@ function LibraryRow({ item: g }: { item: OwnedLibrary['items'][number] }) {
   )
 }
 
-function InterestsSection({ interests, failed }: { interests?: Interest[]; failed: boolean }) {
+function InterestsSection({
+  goals,
+  failed,
+  readOnly,
+}: {
+  goals?: YearGoals
+  failed: boolean
+  readOnly: boolean
+}) {
   const t = useMessages(messages)
   return (
-    <section className="games-library" aria-label={t('interests')}>
+    <section className="games-interests" aria-label={t('interests')} id="goals">
       <p className="games-description">{t('saved')}</p>
-      <Link className="games-manage" to="/goals">
-        {t('manage')}
-        <Icon name="chevron-right" />
-      </Link>
       {failed ? (
         <ErrorState>{t('error')}</ErrorState>
-      ) : !interests ? (
-        <GamesSkeleton />
-      ) : !interests.length ? (
-        <EmptyState
-          icon="bookmark"
-          title={t('noInterests')}
-          action={
-            <Link className="button" to="/discover">
-              {t('find')}
-            </Link>
-          }
-        >
-          {null}
-        </EmptyState>
+      ) : !goals ? (
+        <GoalsSkeleton />
       ) : (
-        <div className="games-list">
-          {interests.map((i) => (
-            <article className="games-item" key={i.id}>
-              <GamesArt src={i.game.art_url ?? i.game.cover_url} name={i.game.name} />
-              <div className="games-item-info">
-                <span className="games-platform">{t('savedGame')}</span>
-                <h2>{i.game.name}</h2>
-                <Link
-                  className="games-open"
-                  aria-label={t('viewLabel', { name: i.game.name })}
-                  to={titleHref(i.game.id)}
-                >
-                  {t('view')}
-                  <Icon name="chevron-right" />
-                </Link>
-              </div>
-            </article>
-          ))}
-        </div>
+        <GoalsView goals={goals} compact readOnly={readOnly} />
       )}
     </section>
   )

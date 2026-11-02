@@ -47,7 +47,12 @@ test('with DLC counted, the numbers include it and the footnote goes', () => {
 })
 
 test('a platinum earned, and a guide still being written', () => {
-  const done: CurrentGame = { ...currentData, progress: 100, guide: null }
+  const done: CurrentGame = {
+    ...currentData,
+    progress: 70,
+    guide: null,
+    trophies: currentData.trophies?.map((trophy) => ({ ...trophy, earned: true })) ?? [],
+  }
   renderApp(<Hero game={done} />)
   expect(screen.getByText('Mais uma conquista para a sua história.')).toBeTruthy()
   expect(meta()).toBe(' 18h jogadasSeu guia está sendo preparado')
@@ -58,10 +63,11 @@ test('without hours played, the guide estimate alone', () => {
   expect(meta()).toBe('Seu guia está sendo preparado')
 })
 
-test('a list without groups counts the whole list, one trophy short of the platinum', () => {
+test('a list without a confirmed platinum does not invent one', () => {
   renderApp(<HeroProgress game={{ earned: 9, total: 11, progress: 82, groups: undefined }} />)
   expect(progress()).toContain('9 de 11 troféus')
-  expect(progress()).toContain('1 troféu falta para a platina')
+  expect(progress()).toContain('2 troféus pendentes')
+  expect(progress()).not.toContain('para a platina')
 })
 
 test('no game: how to start one', () => {
@@ -78,3 +84,26 @@ test('the skeleton, with or without the call to action', () => {
   rerender(<HeroSkeleton cta={false} />)
   expect(container.querySelector('.cta')).toBeNull()
 })
+
+for (const includeDlcProgress of [false, true]) {
+  test(`earned platinum and incomplete DLC in the hero with preference ${includeDlcProgress}`, () => {
+    if (!currentData.groups) throw new Error('Fixture requires groups')
+    const game: CurrentGame = {
+      ...currentData,
+      progress: 70,
+      earned: 46,
+      total: 61,
+      trophies: currentData.trophies?.map((trophy) => ({ ...trophy, earned: true })) ?? [],
+      groups: {
+        ...currentData.groups,
+        base: { ...currentData.groups.base, earned: 46, total: 46, remaining: 0 },
+      },
+    }
+    renderApp(<Hero game={game} />, { value: { me: { ...SAMPLE_ME, includeDlcProgress } } })
+    expect(progress()).toContain('Platina conquistada')
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe(
+      includeDlcProgress ? '75' : '100',
+    )
+    expect(screen.getByText('Mais uma conquista para a sua história.')).toBeTruthy()
+  })
+}

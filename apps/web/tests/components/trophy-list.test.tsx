@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { MockAppState } from '../../src/app/app-state'
+import { MockAppState, SAMPLE_ME } from '../../src/app/app-state'
 import { TrophyList, TrophyListSkeleton } from '../../src/components/trophy-list'
 import { current } from '../../src/fixtures'
 import type { Trophy } from '../../src/lib/types'
@@ -181,4 +181,22 @@ describe('TrophyList', () => {
     const link = screen.getByRole('link', { name: 'Pedir dica sobre Irmãos de armas' })
     expect(link.getAttribute('href')).toBe('/nexo?game=NPWR1&trophy=Irm%C3%A3os+de+armas')
   })
+})
+
+test('DLC preference chooses the initial group, but an explicit saved filter wins', () => {
+  const showWithDlc = () =>
+    render(
+      <MemoryRouter>
+        <MockAppState value={{ me: { ...SAMPLE_ME, includeDlcProgress: true } }}>
+          <TrophyList trophies={many} />
+        </MockAppState>
+      </MemoryRouter>,
+    )
+  const { unmount } = showWithDlc()
+  expect(results()).toContain('24 troféus')
+  fireEvent.change(screen.getByLabelText('Conteúdo'), { target: { value: 'base' } })
+  expect(results()).toContain('16 troféus')
+  unmount()
+  showWithDlc()
+  expect(results()).toContain('16 troféus')
 })
