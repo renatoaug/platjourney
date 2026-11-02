@@ -152,7 +152,11 @@ export function Journey({
         </span>
         <h2>{done ? t('done') : (next?.name ?? t('unknown'))}</h2>
         <p>{done ? t('doneBody') : (next?.detail ?? t('unknownBody'))}</p>
-        {focus?.trick && <p className="journey-trick">{focus.trick}</p>}
+        {focus?.trick && (
+          <p className="journey-trick">
+            <GuideText text={focus.trick} />
+          </p>
+        )}
         {next && (
           <small>
             {t('source')} · {focus?.phase}

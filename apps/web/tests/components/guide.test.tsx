@@ -270,3 +270,12 @@ test('a time under an hour shows in minutes', () => {
   show({ ...game, guide: { ...guide, hours: 0.5833 } })
   expect(screen.getByText('~35 min')).toBeTruthy()
 })
+
+test('an unknown playthrough count stays textual instead of a large numeric metric', () => {
+  show({ ...game, guide: { ...guide, playthroughs: 0, hours: 130 } })
+  const value = screen.getByText('Sem dado ainda')
+  expect(value.closest('.quick-fact')?.classList.contains('unknown')).toBe(true)
+  expect(screen.getByText('~130h').closest('.quick-fact')?.classList.contains('unknown')).toBe(
+    false,
+  )
+})

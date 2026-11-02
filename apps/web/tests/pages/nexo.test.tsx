@@ -216,6 +216,31 @@ test('each game is its own conversation, listed beside the chat with its last qu
   expect(calls.find((c) => c.path.startsWith('/api/chat?'))?.path).toBe('/api/chat?game=none')
 })
 
+test('the conversations sheet dismisses outside and on Escape without losing a draft', async () => {
+  const calls = mockApi({ '/api/chat/threads': [thread({})], '/api/chat': [] })
+  renderApp(<Nexo />)
+  const toggle = await screen.findByRole('button', { name: 'Conversas' })
+  const input = await screen.findByRole('combobox', { name: 'Mensagem para Nexo' })
+  fireEvent.change(input, { target: { value: 'Rascunho de teste' } })
+  const panel = screen.getByRole('complementary', { name: 'Conversas' })
+  toggle.focus()
+  fireEvent.click(toggle)
+  expect(panel.classList.contains('open')).toBe(true)
+  fireEvent.pointerDown(within(panel).getByText('Jogo Exemplo'))
+  expect(panel.classList.contains('open')).toBe(true)
+  fireEvent.pointerDown(input)
+  expect(panel.classList.contains('open')).toBe(false)
+  expect((input as HTMLTextAreaElement).value).toBe('Rascunho de teste')
+  toggle.focus()
+  fireEvent.click(toggle)
+  expect(panel.classList.contains('open')).toBe(true)
+  fireEvent.keyDown(document.activeElement ?? document, { key: 'Escape' })
+  expect(panel.classList.contains('open')).toBe(false)
+  expect(document.activeElement).toBe(toggle)
+  expect((input as HTMLTextAreaElement).value).toBe('Rascunho de teste')
+  expect(calls.some((call) => call.method === 'POST')).toBe(false)
+})
+
 test('a conversation of another game in the library switches the chat to that game', async () => {
   const calls = mockApi({
     '/api/chat/threads': [thread({})],

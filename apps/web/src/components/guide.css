@@ -1255,9 +1255,15 @@
     overflow-wrap: anywhere;
   }
 
-  .quick-fact:nth-child(-n + 3) dd {
+  .quick-fact:nth-child(-n + 3):not(.unknown) dd {
     font-size: var(--text-2xl);
     letter-spacing: var(--tracking-snug);
+  }
+
+  .quick-fact.unknown dd {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
   }
 
   /* A cell in the color of what it says: the difficulty by band, missables as a warning. */

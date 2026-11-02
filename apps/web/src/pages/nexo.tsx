@@ -60,7 +60,7 @@ export function Nexo() {
   return params.get('resume') === 'latest' && !params.has('game') ? <LatestNexo /> : <LiveNexo />
 }
 
-/** The Home shortcut resumes the server's most recent conversation, not a new current-game draft. */
+/** General entries resume the server's most recent conversation; explicit game entries keep theirs. */
 function LatestNexo() {
   const { cache } = useApp()
   const location = useLocation()
@@ -232,6 +232,7 @@ function LiveNexo() {
     () => (cache.chatThreads as ChatThread[] | undefined) ?? null,
   )
   const [sheet, setSheet] = useState(false)
+  const closeThreads = useCallback(() => setSheet(false), [])
 
   // Writes go to the cache first: a reply that lands after the player left is still there on return.
   const write = useCallback(
@@ -392,7 +393,7 @@ function LiveNexo() {
               active={marked}
               onPick={pickThread}
               open={sheet}
-              onClose={() => setSheet(false)}
+              onClose={closeThreads}
             />
           </>
         ) : null}

@@ -31,6 +31,41 @@ test('primary navigation has the five product destinations', () => {
   expect(within(nav).getByRole('link', { name: 'Guias' }).getAttribute('href')).toBe('/guides')
 })
 
+for (const entry of ['sidebar', 'account'] as const) {
+  test(`the mounted ${entry} general Nexo entry resumes the latest conversation`, async () => {
+    const current = journeyFixture
+    if (!current) throw new Error('fixture requires a game')
+    const calls = mockApi({
+      '/api/chat/threads': [
+        {
+          game: current.game.id,
+          np: current.np,
+          name: current.name,
+          messages: 1,
+          last_at: '2026-01-01T12:00:00Z',
+          last_question: 'Pergunta de teste',
+          cover_url: null,
+        },
+      ],
+      '/api/chat': [{ role: 'assistant', content: 'Conversa recente de teste.' }],
+    })
+    renderApp(<Shell />, { path: '/', value: { data: { ...SAMPLE_DATA, current } } })
+    if (entry === 'account') {
+      fireEvent.click(screen.getByRole('button', { name: 'Abrir o menu da conta' }))
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Conversas com Nexo' }))
+    } else fireEvent.click(screen.getByRole('link', { name: /Conte com o Nexo/ }))
+    expect(await screen.findByText('Conversa recente de teste.')).toBeTruthy()
+    expect(calls.some((call) => call.path === '/api/chat/threads')).toBe(true)
+    expect(
+      calls.some((call) => call.path === `/api/chat?game=${encodeURIComponent(current.game.id)}`),
+    ).toBe(true)
+    expect(calls.some((call) => call.method === 'POST')).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Conversas' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+    expect(screen.getByText('Conversa recente de teste.')).toBeTruthy()
+  })
+}
+
 test('the breadcrumb and the tab title follow the route', async () => {
   mockApi({ '/api/title': never })
   const { unmount } = renderApp(<Shell />, { path: '/discover' })

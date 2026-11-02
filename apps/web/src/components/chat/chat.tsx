@@ -605,6 +605,25 @@ function useChatScroll(
   }, [chat, sending])
 }
 
+/** The log scrolls behind the header; reserve its actual height only before the first message. */
+function useChatHeader() {
+  const ref = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const header = ref.current
+    if (!header) return
+    const measure = () => {
+      const height =
+        header.offsetHeight + (Number.parseFloat(getComputedStyle(header).marginTop) || 0)
+      header.parentElement?.style.setProperty('--chat-header-height', `${Math.max(0, height)}px`)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [])
+  return ref
+}
+
 /** The player's games matching "/game <query>", a moment after typing stops; null while it is not
  * asked for (no `searchGames`) or still loading. */
 function useGameSearch(
@@ -679,6 +698,7 @@ export function NexoChat({
   const log = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const form = useRef<HTMLFormElement>(null)
+  const header = useChatHeader()
 
   useAutoGrow(input, text)
   useChatScroll(log, demo, chat, sending)
@@ -771,7 +791,7 @@ export function NexoChat({
 
   return (
     <div className="chat-page">
-      <div className="nexo-chat-top">
+      <div className="nexo-chat-top" ref={header}>
         <div className="nexo-chat-tools">
           <ChatSubtitle
             subtitle={subtitle}

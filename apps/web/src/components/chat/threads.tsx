@@ -1,5 +1,5 @@
 /** The player's conversations with Nexo, one per game, the latest first; the open one is marked. */
-import { type CSSProperties, useState } from 'react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 import { defineMessages, getLocale, Language, useMessages } from '../../i18n/i18n'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
@@ -138,6 +138,30 @@ export function ChatThreads({
 }) {
   const t = useMessages(messages)
   // Collapsed, the list keeps only the covers; the choice is remembered on this browser.
+  const panel = useRef<HTMLElement>(null)
+  useEffect(() => {
+    if (!open || !onClose) return
+    const element = panel.current
+    const opener = document.activeElement as HTMLElement | null
+    const outside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !element?.contains(event.target)) onClose()
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      event.stopPropagation()
+      onClose()
+      opener?.focus()
+    }
+    element?.querySelector<HTMLButtonElement>('.nexo-threads-close')?.focus()
+    document.addEventListener('pointerdown', outside, true)
+    document.addEventListener('keydown', onKey, true)
+    return () => {
+      document.removeEventListener('pointerdown', outside, true)
+      document.removeEventListener('keydown', onKey, true)
+      if (element?.contains(document.activeElement)) opener?.focus()
+    }
+  }, [open, onClose])
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(COLLAPSED) === '1'
@@ -154,6 +178,7 @@ export function ChatThreads({
   }
   return (
     <aside
+      ref={panel}
       className={`nexo-threads${open ? ' open' : ''}${collapsed && !open ? ' collapsed' : ''}`}
       aria-label={t('title')}
     >

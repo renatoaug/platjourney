@@ -628,7 +628,7 @@ function QuickFacts({ g }: { g: GuideDetail }) {
       {facts.map(([symbol, label, value, detail]) => (
         <div
           key={label}
-          className={`quick-fact ${tone.get(label) ?? ''}`.trim()}
+          className={`quick-fact ${tone.get(label) ?? ''}${value === t('facts.unknown') ? ' unknown' : ''}`.trim()}
           data-tip={detail || undefined}
         >
           <Icon name={symbol} />

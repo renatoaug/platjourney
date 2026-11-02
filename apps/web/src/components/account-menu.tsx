@@ -140,7 +140,7 @@ export function AccountMenu({
           {(['nexo', 'history'] as const).map((key) => (
             <Link
               key={key}
-              to={`/${key}`}
+              to={key === 'nexo' ? '/nexo?resume=latest' : `/${key}`}
               role="menuitem"
               className="account-menu-item"
               onClick={close}

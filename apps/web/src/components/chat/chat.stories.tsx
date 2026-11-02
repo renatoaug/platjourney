@@ -151,3 +151,19 @@ export const Header: Story = {
     searchGames: async () => library,
   },
 }
+
+export const LongConversation: Story = {
+  args: {
+    ...base,
+    historyControl: <ChatThreadsToggle onOpen={() => {}} />,
+    chat: Array.from({ length: 8 }, (_, i) => ({
+      id: `long-${i}`,
+      role: i % 2 ? 'assistant' : 'user',
+      content:
+        i % 2
+          ? 'Confira **o objetivo** e siga os passos:\n\n- Leia a descrição.\n- Confira o requisito.\n- Continue sua jornada quando estiver pronto.'
+          : 'Pode explicar o próximo passo?',
+      game,
+    })),
+  },
+}

@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, expect, mock, setSystemTime, test } from 'bun:test'
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { Route, Routes } from 'react-router'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { rankingData } from '../../src/components/game-cards.stories'
 import { currentData, tipsData } from '../../src/components/nexo-brief.stories'
 import type { ProfileSummary } from '../../src/lib/types'
 import { Home } from '../../src/pages/home'
+import { Nexo } from '../../src/pages/nexo'
 import { mockApi, renderApp } from '../support/web'
 
 // The home's release calendar asks for its own list; these tests are about the rest of the page.
@@ -75,3 +77,44 @@ test('loading: skeletons everywhere', () => {
   expect(container.querySelectorAll('.sk').length).toBeGreaterThan(15)
   expect(screen.queryByText('nada em andamento')).toBeNull()
 })
+
+for (const hasHistory of [true, false]) {
+  test(`the mounted Home game link opens that game's ${hasHistory ? 'history' : 'draft'}, never the newest other game`, async () => {
+    const calls = mockApi({
+      '/api/releases': [],
+      '/api/chat/threads': [
+        {
+          game: 'game:unrelated',
+          np: 'NPWR99999_00',
+          name: 'Outro jogo',
+          messages: 2,
+          last_at: '2026-11-01T00:00:00Z',
+          last_question: 'Outra conversa',
+        },
+      ],
+      [`/api/chat?game=${encodeURIComponent(currentData.game.id)}`]: hasHistory
+        ? [{ role: 'assistant', content: 'Histórico do jogo escolhido' }]
+        : [],
+    })
+    renderApp(
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/nexo" element={<Nexo />} />
+      </Routes>,
+      { value: { data: loaded } },
+    )
+    fireEvent.click(screen.getByRole('link', { name: 'Perguntar ao Nexo' }))
+    await waitFor(() =>
+      expect(
+        calls.some((c) => c.path === `/api/chat?game=${encodeURIComponent(currentData.game.id)}`),
+      ).toBe(true),
+    )
+    if (hasHistory) expect(await screen.findByText('Histórico do jogo escolhido')).toBeTruthy()
+    else
+      await waitFor(() =>
+        expect(screen.getByRole('combobox', { name: 'Mensagem para Nexo' })).toBeTruthy(),
+      )
+    expect(calls.some((c) => c.path.includes('game%3Aunrelated'))).toBe(false)
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+  })
+}

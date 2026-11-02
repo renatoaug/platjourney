@@ -309,7 +309,7 @@ export function Shell() {
         <div className="sidebar-scroll">
           <div className="nav-label">{t('yourSpace')}</div>
           <Nav />
-          <Link className="sidebar-note" to="/nexo">
+          <Link className="sidebar-note" to="/nexo?resume=latest">
             <span className="eyebrow">{t('noteEyebrow')}</span>
             <strong>
               {t('noteLine1')}

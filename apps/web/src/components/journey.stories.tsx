@@ -12,6 +12,7 @@ const meta: Meta<typeof Journey> = {
         phases: [],
         trophy: current.trophies.find((t) => !t.earned && t.type !== 'platinum'),
         phase: 'Fase 1',
+        trick: 'Confira **o objetivo** antes de avançar. O texto mantém a formatação do guia.',
         missable: {
           trophy: 'Objetivo de exemplo',
           when: 'Nos **Capítulos 2, 3 e 4**, confira antes de avançar além do capítulo indicado pelo guia.',

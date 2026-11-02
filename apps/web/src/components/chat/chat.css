@@ -47,7 +47,7 @@
   .chat-page {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     height: calc(100dvh - 145px);
     min-height: 460px;
     padding: 0;
@@ -717,7 +717,9 @@
   }
 
   .chat-page .chat {
-    padding: 16px 8px;
+    grid-area: 1 / 1;
+    padding: calc(var(--chat-header-height, 160px) + 16px) 8px 16px;
+    scroll-padding-top: calc(var(--chat-header-height, 160px) + 16px);
     margin: 0;
     border: 0;
     min-height: 0;
@@ -852,7 +854,39 @@
   }
 
   .chat-page .nexo-chat-top {
+    grid-area: 1 / 1;
+    align-self: start;
+    position: relative;
+    z-index: 2;
+    isolation: isolate;
+    pointer-events: none;
     padding: 0 20px 12px;
+  }
+
+  .chat-page .nexo-chat-top::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: -8px -8px 0;
+    background: linear-gradient(
+      var(--color-bg),
+      color-mix(in srgb, var(--color-bg) 72%, transparent) 70%,
+      transparent
+    );
+    backdrop-filter: blur(8px);
+    mask-image: linear-gradient(var(--color-fg) 75%, transparent);
+  }
+
+  .chat-page .nexo-chat-top :is(button, a, input) {
+    pointer-events: auto;
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .chat-page .nexo-chat-top::before {
+      background: var(--color-bg);
+      backdrop-filter: none;
+      mask-image: none;
+    }
   }
 
   .chat-page .nexo-chat-top > .nexo-chat-heading {
