@@ -349,7 +349,7 @@ export function Shell() {
           <Route path="/games" element={<Games />} />
           <Route path="/game" element={<Game />} />
           <Route path="/nexo" element={<Nexo />} />
-          <Route path="/goals" element={<Navigate to="/games?tab=interests" replace />} />
+          <Route path="/goals" element={<Navigate to="/games?tab=goals" replace />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/guides" element={<Guides />} />
           <Route path="/history" element={<History />} />

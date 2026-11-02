@@ -21,6 +21,7 @@ const messages = defineMessages({
     lead: 'Escolha um jogo para acompanhar a platina.',
     library: 'Biblioteca PSN',
     interests: 'Interesses',
+    goals: 'Metas e conquistas',
     tabs: 'Seus jogos',
     source: 'Progresso conforme sua preferência de DLC.',
     base: 'Jogo base',
@@ -57,6 +58,7 @@ const messages = defineMessages({
     lead: 'Choose a game to follow your platinum journey.',
     library: 'PSN library',
     interests: 'Interests',
+    goals: 'Goals and achievements',
     tabs: 'Your games',
     source: 'Progress follows your DLC preference.',
     base: 'Base game',
@@ -92,14 +94,13 @@ const messages = defineMessages({
 export function Games() {
   const { data, sync, me } = useApp()
   const [params, setParams] = useSearchParams()
-  const [keptSide, setKeptSide] = useKept<'library' | 'interests'>('games.side', 'library')
-  const side =
-    params.get('tab') === 'interests'
-      ? 'interests'
-      : params.get('tab') === 'library'
-        ? 'library'
-        : keptSide
-  const setSide = (value: 'library' | 'interests') => {
+  const [keptSide, setKeptSide] = useKept<'library' | 'interests' | 'goals'>(
+    'games.side',
+    'library',
+  )
+  const tab = params.get('tab')
+  const side = tab === 'library' || tab === 'interests' || tab === 'goals' ? tab : keptSide
+  const setSide = (value: 'library' | 'interests' | 'goals') => {
     setKeptSide(value)
     setParams((before) => {
       const next = new URLSearchParams(before)
@@ -172,8 +173,8 @@ export function GamesView({
 }: {
   library: OwnedLibrary | null
   failed?: boolean
-  side?: 'library' | 'interests'
-  onSide: (side: 'library' | 'interests') => void
+  side?: 'library' | 'interests' | 'goals'
+  onSide: (side: 'library' | 'interests' | 'goals') => void
   query?: string
   onQuery: (query: string) => void
   onPage: (page: number) => void
@@ -191,7 +192,7 @@ export function GamesView({
           <p>{t('lead')}</p>
         </header>
         <fieldset className="segmented" aria-label={t('tabs')}>
-          {(['library', 'interests'] as const).map((key) => (
+          {(['library', 'interests', 'goals'] as const).map((key) => (
             <button key={key} type="button" aria-pressed={side === key} onClick={() => onSide(key)}>
               {t(key)}
             </button>
@@ -207,7 +208,12 @@ export function GamesView({
             onPage={onPage}
           />
         ) : (
-          <InterestsSection goals={goals} failed={interestsFailed} readOnly={readOnly} />
+          <InterestsSection
+            side={side}
+            goals={goals}
+            failed={interestsFailed}
+            readOnly={readOnly}
+          />
         )}
       </div>
     </Page>
@@ -372,24 +378,30 @@ function LibraryRow({ item: g }: { item: OwnedLibrary['items'][number] }) {
 }
 
 function InterestsSection({
+  side,
   goals,
   failed,
   readOnly,
 }: {
+  side: 'interests' | 'goals'
   goals?: YearGoals
   failed: boolean
   readOnly: boolean
 }) {
   const t = useMessages(messages)
   return (
-    <section className="games-interests" aria-label={t('interests')} id="goals">
-      <p className="games-description">{t('saved')}</p>
+    <section
+      className={side === 'goals' ? 'games-goals' : 'games-interests'}
+      aria-label={t(side)}
+      id="goals"
+    >
+      {side === 'interests' && <p className="games-description">{t('saved')}</p>}
       {failed ? (
         <ErrorState>{t('error')}</ErrorState>
       ) : !goals ? (
         <GoalsSkeleton />
       ) : (
-        <GoalsView goals={goals} compact readOnly={readOnly} />
+        <GoalsView goals={goals} compact section={side} readOnly={readOnly} />
       )}
     </section>
   )

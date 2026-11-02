@@ -1,5 +1,5 @@
 /** Interests screen: the season and yearly target, the ordered list of games to platinum with the add panel, and the year's platinums. */
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { messages as interestMessages, useInterests } from '../app/use-interests'
@@ -135,6 +135,43 @@ function AnnualSummary({ goals: p }: { goals: YearGoals }) {
     : t('page.noTarget', { year: p.year, done: p.done })
 }
 
+function SeasonHeader({
+  compact,
+  section,
+  goals,
+  children,
+}: {
+  compact: boolean
+  section: 'all' | 'interests'
+  goals: YearGoals
+  children: ReactNode
+}) {
+  const t = useMessages(messages)
+  return (
+    <>
+      {' '}
+      {compact ? (
+        <>
+          <CompactNext interests={goals.interests} />
+          {section === 'all' && (
+            <details className="games-goal-details">
+              <summary>
+                <span>
+                  <AnnualSummary goals={goals} />
+                </span>
+                <small>{t('page.details')}</small>
+              </summary>
+              {children}
+            </details>
+          )}
+        </>
+      ) : (
+        children
+      )}
+    </>
+  )
+}
+
 /**
  * Everything below the page head. Open editors, the add panel and its draft live in state kept
  * across navigation, so the periodic /api/state refresh never discards them.
@@ -145,9 +182,11 @@ export function GoalsView({
   command: fake,
   readOnly = false,
   compact = false,
+  section = 'all',
 }: {
   goals: YearGoals
   compact?: boolean
+  section?: 'all' | 'interests' | 'goals'
   /** The catalog search; stories pass a fake one. */
   search?: (query: string) => Promise<Game[]>
   /** Stories pass a fake /api/goals; the screen uses the shared one, which updates the app state. */
@@ -232,24 +271,18 @@ export function GoalsView({
       onSet={(target) => save(`set ${target}`)}
     />
   )
+  if (section === 'goals')
+    return (
+      <>
+        {seasonView}
+        <YearPlatinums goals={p} busy={busy} />
+      </>
+    )
   return (
     <>
-      {compact ? (
-        <>
-          <CompactNext interests={p.interests} />
-          <details className="games-goal-details">
-            <summary>
-              <span>
-                <AnnualSummary goals={p} />
-              </span>
-              <small>{t('page.details')}</small>
-            </summary>
-            {seasonView}
-          </details>
-        </>
-      ) : (
-        seasonView
-      )}
+      <SeasonHeader compact={compact} section={section} goals={p}>
+        {seasonView}
+      </SeasonHeader>
       {/* The saved games on sale, in a band across the page (only when there is one). */}
       <DealsSpotlight
         interests={p.interests}
@@ -322,18 +355,20 @@ export function GoalsView({
           )}
           {readOnly && <DemoNote />}
         </div>
-        <div className="goals-side">
-          {compact ? (
-            <details className="games-goal-details">
-              <summary>
-                {t('page.yearAchievements')} · {p.done}
-              </summary>
+        {section === 'all' && (
+          <div className="goals-side">
+            {compact ? (
+              <details className="games-goal-details">
+                <summary>
+                  {t('page.yearAchievements')} · {p.done}
+                </summary>
+                <YearPlatinums goals={p} busy={busy} />
+              </details>
+            ) : (
               <YearPlatinums goals={p} busy={busy} />
-            </details>
-          ) : (
-            <YearPlatinums goals={p} busy={busy} />
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   )

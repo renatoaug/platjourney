@@ -37,3 +37,21 @@ export const Loading: Story = {
     </section>
   ),
 }
+
+// Invented totals exercise wrapping and progress bars without using account data.
+export const LargeTotals: Story = {
+  render: () => (
+    <section className="tiles" aria-label="Suas conquistas">
+      <StatTiles
+        profile={{
+          ...SAMPLE_DATA.profile,
+          onlineId: 'Player',
+          level: 325,
+          levelProgress: 42,
+          earned: { platinum: 48, gold: 256, silver: 512, bronze: 2048 },
+        }}
+        goals={{ ...SAMPLE_DATA.goals, done: 12, target: 18 }}
+      />
+    </section>
+  ),
+}

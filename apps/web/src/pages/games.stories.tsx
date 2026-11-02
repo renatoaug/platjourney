@@ -127,3 +127,8 @@ export const Search: Story = {
     )
   },
 }
+
+export const GoalsAndAchievements: Story = { args: { side: 'goals', goals: sampleGoals } }
+export const EmptyGoals: Story = { args: { side: 'goals', goals: emptyGoals } }
+export const LoadingGoals: Story = { args: { side: 'goals' } }
+export const FailedGoals: Story = { args: { side: 'goals', interestsFailed: true } }

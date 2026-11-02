@@ -49,3 +49,13 @@ export const PlatinumEarned: Story = {
     },
   },
 }
+
+export const LongTitle: Story = {
+  args: {
+    game: {
+      ...current,
+      name: 'A Plague Tale: Requiem — Uma longa jornada de conquistas',
+      game: { ...current.game, screenshot_ids: ['r5mn9rt7aqvf5nrn8dqq'] },
+    },
+  },
+}

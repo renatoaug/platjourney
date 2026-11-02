@@ -164,10 +164,10 @@
 
   .lightbox-close {
     position: absolute;
-    top: 16px;
+    top: calc(16px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
     right: 16px;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     display: grid;
     place-items: center;
@@ -184,7 +184,7 @@
 
   .lightbox-count {
     position: absolute;
-    bottom: 16px;
+    bottom: calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
     left: 50%;
     translate: -50% 0;
     color: var(--color-fg-muted);

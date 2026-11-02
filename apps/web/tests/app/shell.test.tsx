@@ -181,7 +181,7 @@ test('contextual chat follows the keyboard viewport and restores page scroll sty
 
 test('legacy interests links open the integrated Games tab without hiding Home', () => {
   renderApp(<Shell />, { path: '/goals' })
-  expect(where()).toBe('/games?tab=interests')
+  expect(where()).toBe('/games?tab=goals')
   expect(screen.getByRole('heading', { level: 1, name: 'Seus jogos' })).toBeTruthy()
   const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
   expect(within(nav).getByRole('link', { name: 'Jogos' }).className).toContain('active')

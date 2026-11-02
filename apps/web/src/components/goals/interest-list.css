@@ -1,4 +1,112 @@
 @layer screens {
+  .drag-ghost.drag-ghost {
+    position: absolute;
+  }
+
+  ul.goal-list > li {
+    position: relative;
+  }
+
+  /* The cover anchors each saved game; title and provenance keep the available width. */
+  ul.goal-list > li,
+  .drag-ghost.drag-ghost {
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr) 44px;
+    grid-template-areas: "cover name name" "cover state remove";
+    gap: 8px 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: linear-gradient(120deg, var(--color-surface-raised), var(--color-surface));
+  }
+
+  ul.goal-list > li .goal-art,
+  .drag-ghost.drag-ghost .goal-art {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+    opacity: 0.12;
+    pointer-events: none;
+    mask-image: linear-gradient(90deg, transparent 20%, var(--color-shadow));
+  }
+
+  ul.goal-list > li .goal-cover,
+  .drag-ghost.drag-ghost .goal-cover {
+    grid-area: cover;
+    align-self: start;
+    width: 80px;
+    height: 108px;
+    border: 1px solid var(--color-border-strong);
+  }
+
+  ul.goal-list > li a.name,
+  .drag-ghost.drag-ghost a.name {
+    grid-area: name;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    line-height: var(--leading-snug);
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  ul.goal-list > li .name small {
+    font-family: var(--font-body);
+    font-size: var(--text-md);
+    line-height: var(--leading-snug);
+    margin-top: 5px;
+  }
+
+  ul.goal-list > li .st,
+  .drag-ghost.drag-ghost .st {
+    grid-area: state;
+    justify-self: start;
+    align-self: center;
+    white-space: normal;
+    line-height: var(--leading-snug);
+  }
+
+  ul.goal-list > li .goal-remove,
+  .drag-ghost.drag-ghost .goal-remove {
+    grid-area: remove;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    align-self: center;
+  }
+
+  ul.goal-list > li .goal-game-status,
+  .drag-ghost.drag-ghost .goal-game-status {
+    position: absolute;
+    display: grid;
+    left: 18px;
+    top: 18px;
+    width: 24px;
+    height: 24px;
+    background: var(--color-bg);
+  }
+
+  ul.goal-list > li .goal-grip,
+  .drag-ghost.drag-ghost .goal-grip {
+    position: absolute;
+    left: 32px;
+    top: 78px;
+    width: 44px;
+    height: 44px;
+    color: var(--color-fg);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+  }
+
+  ul.goal-list > li .goal-grip.placeholder,
+  .drag-ghost.drag-ghost .goal-grip.placeholder {
+    display: none;
+  }
+
   .drag-ghost .st {
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;

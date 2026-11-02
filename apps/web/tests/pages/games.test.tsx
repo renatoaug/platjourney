@@ -35,14 +35,15 @@ test('search requests only owned games; no matches can be cleared', async () => 
   await screen.findByText('ASTRO BOT')
 })
 
-test('interests integrates existing management and keeps the annual goal collapsed', () => {
+test('interests keeps game management without annual goals', () => {
   const { container } = renderApp(
     <GamesView {...handlers} library={null} side="interests" goals={sampleGoals} />,
   )
   expect(screen.getByRole('heading', { name: /^Meus interesses/ })).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Adicionar jogo' })).toBeTruthy()
   expect(screen.queryByRole('link', { name: /Organizar interesses/ })).toBeNull()
-  expect(container.querySelector('.games-goal-details')?.hasAttribute('open')).toBe(false)
+  expect(container.querySelector('.games-goal-details')).toBeNull()
+  expect(container.querySelector('.goal-season')).toBeNull()
   expect(container.querySelector('.page-top')).toBeNull()
 })
 
@@ -103,4 +104,22 @@ test('game art loads lazily and falls back when the image fails', () => {
   fireEvent.error(art)
   expect(document.querySelector('.games-art-placeholder')?.textContent).toBe('D')
   expect(screen.getByRole('link', { name: 'Abrir jornada de DAYS GONE' })).toBeTruthy()
+})
+
+test('goals and achievements have their own URL without losing interests', async () => {
+  mockApi({ '/api/library': sampleLibrary })
+  renderApp(<Games />, {
+    path: '/games?tab=goals',
+    value: { data: { ...SAMPLE_DATA, goals: sampleGoals } },
+  })
+  expect(
+    screen.getByRole('button', { name: 'Metas e conquistas' }).getAttribute('aria-pressed'),
+  ).toBe('true')
+  expect(screen.queryByRole('heading', { name: /^Meus interesses/ })).toBeNull()
+  expect(document.querySelector('.goal-season')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Interesses' }))
+  expect(screen.getByTestId('location').textContent).toBe('/games?tab=interests')
+  expect(screen.getByRole('heading', { name: /^Meus interesses/ })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Metas e conquistas' }))
+  expect(screen.getByTestId('location').textContent).toBe('/games?tab=goals')
 })

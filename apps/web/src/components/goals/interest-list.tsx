@@ -167,6 +167,10 @@ function SavedFrom({ g }: { g: Interest }) {
   )
 }
 
+function InterestArt({ src }: { src?: string | null }) {
+  return src ? <img className="goal-art" src={src} alt="" loading="lazy" decoding="async" /> : null
+}
+
 function Row({
   g,
   rank,
@@ -192,6 +196,7 @@ function Row({
           <Icon name="grip" />
         </span>
       )}
+      <InterestArt src={g.game.art_url} />
       {/* Its place in the list, or a check once platinumed. */}
       <span className={`goal-game-status${g.done ? ' complete' : ''}${rank === 1 ? ' first' : ''}`}>
         {g.done || !rank ? <Icon name={g.done ? 'check' : 'circle'} /> : <b>{rank}</b>}

@@ -17,6 +17,8 @@
 
   .games-page .segmented {
     width: fit-content;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     min-inline-size: 0;
     margin: 0;
     border: 1px solid var(--color-border);
@@ -26,6 +28,10 @@
   .games-page .segmented button {
     min-height: 44px;
     font-size: var(--text-body);
+    white-space: normal;
+    min-width: 0;
+    line-height: var(--leading-tight);
+    padding-inline: 10px;
   }
 
   .games-library {
@@ -193,6 +199,7 @@
     color: var(--color-accent);
   }
 
+  .games-goals,
   .games-interests {
     display: grid;
     gap: 16px;
@@ -222,6 +229,26 @@
 
   .games-interests .next-up .button,
   .games-interests #goal-add-toggle {
+    min-height: 44px;
+  }
+
+  .games-interests .goals-columns > .card {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .games-interests .goals-columns .goal-list-heading {
+    margin: 0 0 14px;
+    padding: 0;
+    height: auto;
+    min-height: 44px;
+    border: 0;
+    background: none;
+  }
+
+  .games-interests .goals-columns #goal-add-toggle {
+    height: 44px;
     min-height: 44px;
   }
 

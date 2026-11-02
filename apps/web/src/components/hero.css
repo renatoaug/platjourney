@@ -447,14 +447,21 @@
   .hero.immersive .inner {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto 1fr auto;
-    gap: 22px 40px;
-    min-height: clamp(300px, 40vh, 420px);
+    grid-template-rows: auto auto auto;
+    gap: 16px 40px;
+    min-height: 0;
     padding: 4px 0 28px;
   }
 
   .hero.immersive .hero-top {
-    grid-column: 1 / -1;
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+
+  .hero.immersive .hero-tools {
+    margin-left: 0;
+    flex-direction: row-reverse;
   }
 
   .hero-tools {
@@ -474,12 +481,14 @@
   }
 
   .hero.immersive .hero-headline {
-    align-self: end;
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
   }
 
   /* The page says what it is already; the name and the platform are enough. */
   .hero.immersive .live-label {
-    visibility: hidden;
+    display: none;
   }
 
   .hero.immersive .hero-title {
@@ -506,7 +515,7 @@
 
   .hero-aside {
     grid-column: 2;
-    grid-row: 2 / 4;
+    grid-row: 1 / 4;
     align-self: end;
   }
 

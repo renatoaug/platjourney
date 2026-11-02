@@ -1,0 +1,111 @@
+@layer screens {
+  .tiles:has(> .stat-tile) {
+    gap: 10px;
+    border: 0;
+    background: none;
+  }
+
+  .tile.stat-tile {
+    --stat-accent: var(--color-accent);
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background:
+      radial-gradient(
+        ellipse at top right,
+        color-mix(in srgb, var(--stat-accent) var(--alpha-tint), transparent),
+        transparent 70%
+      ),
+      linear-gradient(145deg, var(--color-surface-raised), var(--color-surface));
+  }
+
+  .tile.stat-tile.plat {
+    --stat-accent: var(--color-trophy-platinum);
+    border-color: color-mix(in srgb, var(--stat-accent) var(--alpha-line), var(--color-border));
+  }
+
+  .stat-tile .tile-label {
+    min-height: 28px;
+    gap: 7px;
+    font-size: var(--text-sm);
+    line-height: var(--leading-tight);
+    color: var(--color-fg-soft);
+  }
+
+  .stat-tile .stat-icon {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    color: var(--stat-accent);
+  }
+
+  .tile.stat-tile b {
+    margin: 6px 0;
+    font-size: var(--text-6xl);
+    line-height: var(--leading-none);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tile.stat-tile.plat b {
+    color: var(--stat-accent);
+  }
+
+  .tile.stat-tile .sub {
+    overflow: visible;
+    white-space: normal;
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+  }
+
+  .stat-tile .stat-bar {
+    height: 4px;
+    margin: 10px 0 6px;
+  }
+
+  .stat-tile .stat-tiers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: 8px;
+    font-size: var(--text-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .stat-tiers > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .stat-tiers .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .stat-tiers .gold .icon {
+    color: var(--color-trophy-gold);
+  }
+
+  .stat-tiers .silver .icon {
+    color: var(--color-trophy-silver);
+  }
+
+  .stat-tiers .bronze .icon {
+    color: var(--color-trophy-bronze);
+  }
+
+  @media (max-width: 760px) {
+    .tiles:has(> .stat-tile) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tile.stat-tile {
+      padding: 12px;
+    }
+
+    .tile.stat-tile b {
+      font-size: var(--text-5xl);
+    }
+  }
+}
