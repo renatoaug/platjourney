@@ -146,6 +146,7 @@ function TitleMeta({ d }: { d: TitleDetail }) {
   return (
     <div className="meta">
       {/* 0 means the sources do not say yet: the fact is left out, never shown as 0. */}
+      {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
       {g.hours > 0 && (
         <span>
           <Icon name="clock" />{' '}
@@ -313,21 +314,18 @@ function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
         <UnobtainableBanner guide={{ unobtainable: g?.unobtainable }} />
         <div className="inner">
           <div className="hero-top">
-            {/* Outside the library there is nothing of the player's to show: no label, no progress. */}
-            {owned && <span className="live-label">{t('inLibrary')}</span>}
-            {g && g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
-            <span className="hero-tools">
-              <ScenesButton shots={shots} at={scene} name={d.name} onGo={setScene} />
-            </span>
+            <TitleMeta d={d} />
           </div>
           <div className="hero-headline">
             <div className="hero-title-row">
               <h2 className="hero-title">{d.name}</h2>
               <span className="platform">{d.platform}</span>
             </div>
-            <TitleMeta d={d} />
           </div>
           <HeroBottom d={d} />
+          <div className="hero-gallery">
+            <ScenesButton shots={shots} at={scene} name={d.name} onGo={setScene} />
+          </div>
           {/* The next trophy to go for; with nothing left to push, or outside the library, the facts. */}
           <div className="hero-aside">
             {owned && d.trophies ? (

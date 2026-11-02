@@ -92,18 +92,37 @@ export function GameNav({
         }, 160)
         return
       }
-      const line = 120
       const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4
-      const under = els.filter((e) => placed(e).getBoundingClientRect().top <= line)
-      setActive(atEnd && els.length ? els[els.length - 1].id : (under.at(-1)?.id ?? null))
+      const visible = els.filter((e) => !e.closest('[role="tabpanel"][hidden]'))
+      const under = visible.filter((e) => {
+        const target = placed(e)
+        // Match the anchor's actual clearance, including the iPhone's safe area.
+        const line = Math.max(
+          120,
+          (Number.parseFloat(getComputedStyle(target).scrollMarginTop) || 0) + 1,
+        )
+        return target.getBoundingClientRect().top <= line
+      })
+      setActive(
+        atEnd && visible.length ? visible[visible.length - 1].id : (under.at(-1)?.id ?? null),
+      )
     }
     update()
+    const panelChanged = () => {
+      // Selecting a tab may precede its smooth scroll, including the native safe-area offset.
+      const selected = els.find((e) => e.closest('[role="tabpanel"]:not([hidden])'))
+      if (!selected) return
+      picked.current = selected.id
+      setActive(selected.id)
+    }
+    window.addEventListener('game-panel-change', panelChanged)
     window.addEventListener('scroll', update, { passive: true })
     window.addEventListener('resize', update)
     return () => {
       clearTimeout(settle)
       window.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
+      window.removeEventListener('game-panel-change', panelChanged)
     }
   }, [present, hero])
 

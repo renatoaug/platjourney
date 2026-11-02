@@ -48,7 +48,7 @@ test('journey prioritizes progress and server focus; plan and guide remain avail
   expect(document.getElementById('journey-trophies')?.textContent).toContain('De raspão')
   expect(screen.getByRole('heading', { name: /Seus troféus/ })).toBeTruthy()
   expect(screen.queryByRole('heading', { name: /^Troféus/ })).toBeNull()
-  fireEvent.click(screen.getByText('Consultar o guia completo'))
+  fireEvent.click(screen.getByRole('tab', { name: /^Guia$/ }))
   expect(document.querySelector('.journey-guide')?.textContent).toContain('Burnout Apocalipse')
 })
 

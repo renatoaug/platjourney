@@ -61,7 +61,7 @@ export const Recommended: Story = {
 }
 
 export const EmptyFilter: Story = {
-  render: () => <Demo interests={sampleGoals.interests.filter((g) => !g.done)} filter="done" />,
+  render: () => <Demo interests={sampleGoals.interests.filter((g) => g.done)} filter="pending" />,
 }
 
 export const JustAdded: Story = {
@@ -86,5 +86,18 @@ export const Loading: Story = {
     <div className="card" style={{ maxWidth: 640 }}>
       <InterestListSkeleton />
     </div>
+  ),
+}
+
+/** Synthetic totals exercise complete counts at narrow widths; only one page is rendered. */
+export const LargeCounts: Story = {
+  render: () => (
+    <Demo
+      interests={Array.from({ length: 1234 }, (_, i) => ({
+        ...sampleGoals.interests[0],
+        id: `interest:synthetic-${i}`,
+        game: { ...sampleGoals.interests[0].game, id: `synthetic-${i}` },
+      }))}
+    />
   ),
 }

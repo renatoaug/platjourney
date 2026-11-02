@@ -7,8 +7,9 @@ import type { CurrentGame } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
+import { GameColumns } from './game-columns'
 import { GameNav, type GameSection } from './game-nav'
-import { Guide } from './guide'
+import { Guide, GuideSkeleton } from './guide'
 import { Hero, HeroSkeleton } from './hero'
 import { JourneyLink } from './journey-link'
 import { nexoHref } from './tip'
@@ -150,33 +151,35 @@ export function Journey({
         <p>{t('onePlan')}</p>
         {plan}
       </details>
-      <section className="journey-trophies" id="journey-trophies">
-        <TrophyList
-          trophies={c.trophies}
-          np={c.np}
-          prefix="journey-t"
-          heading={t('trophies')}
-          note={t('remaining', { count: missing })}
-        />
-      </section>
-      <details className="journey-guide" id="journey-guide-section">
-        <summary>
-          <Icon name="search" />
-          {t('guide')}
-          <Icon name="chevron-down" />
-        </summary>
-        <Guide
-          id="journey-guide"
-          game={{
-            name: c.name,
-            guide: c.guide ?? null,
-            trophies: c.trophies,
-            np: c.np,
-            deepGuide: c.deepGuide,
-            queued: c.queued,
-          }}
-        />
-      </details>
+      <GameColumns
+        tabs
+        trophies={
+          <section className="journey-trophies" id="journey-trophies">
+            <TrophyList
+              trophies={c.trophies}
+              np={c.np}
+              prefix="journey-t"
+              heading={t('trophies')}
+              note={t('remaining', { count: missing })}
+            />
+          </section>
+        }
+        guide={
+          <section className="journey-guide" id="journey-guide-section">
+            <Guide
+              id="journey-guide"
+              game={{
+                name: c.name,
+                guide: c.guide ?? null,
+                trophies: c.trophies,
+                np: c.np,
+                deepGuide: c.deepGuide,
+                queued: c.queued,
+              }}
+            />
+          </section>
+        }
+      />
       {similar}
     </div>
   )
@@ -215,19 +218,22 @@ export function JourneySkeleton() {
           <Icon name="chevron-down" />
         </summary>
       </details>
-      <section className="journey-trophies">
-        <div className="trophy-section-heading">
-          <h2>{t('trophies')}</h2>
-        </div>
-        <TrophyListSkeleton />
-      </section>
-      <details className="journey-guide">
-        <summary>
-          <Icon name="search" />
-          {t('guide')}
-          <Icon name="chevron-down" />
-        </summary>
-      </details>
+      <GameColumns
+        tabs
+        trophies={
+          <section className="journey-trophies">
+            <div className="trophy-section-heading">
+              <h2>{t('trophies')}</h2>
+            </div>
+            <TrophyListSkeleton />
+          </section>
+        }
+        guide={
+          <section className="journey-guide">
+            <GuideSkeleton />
+          </section>
+        }
+      />
     </div>
   )
 }

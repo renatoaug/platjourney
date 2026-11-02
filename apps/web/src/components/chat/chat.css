@@ -855,18 +855,32 @@
     padding: 8px 12px 12px;
   }
 
+  .chat-page .nexo-chat-top > .nexo-chat-heading {
+    margin-bottom: 8px;
+  }
+
   .chat-page .nexo-chat-tools {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 68px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
     gap: 8px;
     width: 100%;
     min-width: 0;
   }
 
+  /* The direct chat keeps its mascot in place; utility controls sit by the page divider. */
+  .chat-page:not(.journey-chat .chat-page) .nexo-chat-top {
+    margin-top: -44px;
+    gap: 0;
+  }
+
+  .chat-page:not(.journey-chat .chat-page) .nexo-chat-heading {
+    margin-bottom: 16px;
+  }
+
   .chat-page .nexo-chat-tools > :first-child {
     min-width: 0;
-    margin: 4px 0 0;
+    margin: 0;
     white-space: normal;
     overflow-wrap: anywhere;
   }
@@ -889,8 +903,8 @@
     display: inline-flex;
     justify-self: end;
     min-height: 44px;
-    margin-top: 4px;
-    padding-inline: 0;
+    margin-top: 0;
+    padding-inline: 8px;
   }
 
   .chat-page .nexo-chat-tools .nexo-sub-text {

@@ -317,11 +317,7 @@ export function Hero({
       <div className="inner">
         <div className="hero-top">
           <span className="live-label">{t('currentLabel')}</span>
-          {tools && c.guide && c.guide.difficulty > 0 && (
-            <DifficultyMeter value={c.guide.difficulty} look="compact" />
-          )}
-          <span className="hero-tools">{tools}</span>
-          {tools && <HeroMeta c={c} difficulty={false} />}
+          {tools && <HeroMeta c={c} />}
         </div>
         <div className="hero-headline">
           <div className="hero-title-row">
@@ -349,6 +345,7 @@ export function Hero({
             </div>
           )}
         </div>
+        {tools && <div className="hero-gallery">{tools}</div>}
         {aside && <div className="hero-aside">{aside}</div>}
       </div>
     </>
@@ -362,11 +359,8 @@ export function HeroSkeleton({ cta = true, aside = true }: { cta?: boolean; asid
   return (
     <div className="inner">
       <div className="hero-top">
-        <Sk w="110px" h={36} style={pill} />
-        <span className="hero-tools">
-          <Sk w="110px" h={32} style={pill} />
-        </span>
         <div className="meta">
+          <Sk w="110px" h={24} />
           {[90, 76, 110].map((w) => (
             <span key={w}>
               <Sk w={`${w}px`} h={16} />
@@ -408,6 +402,9 @@ export function HeroSkeleton({ cta = true, aside = true }: { cta?: boolean; asid
             <Sk w="180px" h={40} />
           </div>
         )}
+      </div>
+      <div className="hero-gallery">
+        <Sk w="130px" h={32} style={pill} />
       </div>
       {aside && (
         <div className="hero-aside">

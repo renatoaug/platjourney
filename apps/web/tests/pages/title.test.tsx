@@ -34,7 +34,7 @@ test('a game from the library: progress, the guide numbers and the trophies', as
   expect(await screen.findByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
   expect(calls[0].path).toBe('/api/title?game=game%3A19561')
   expect(screen.getByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
-  fireEvent.click(screen.getByText('Consultar o guia completo'))
+  fireEvent.click(screen.getByRole('tab', { name: /^Guia$/ }))
   expect(screen.getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(meta()).toContain('18h jogadas de ~70h')
   expect(meta()).toContain('1 jornada')
@@ -160,7 +160,7 @@ test('a guide being researched: polls until it lands', async () => {
     jest.advanceTimersByTime(6000)
   })
   expect(titleCalls(calls)).toHaveLength(2)
-  fireEvent.click(screen.getByText('Consultar o guia completo'))
+  fireEvent.click(screen.getByRole('tab', { name: /^Guia$/ }))
   expect(screen.getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   await act(async () => {
     jest.advanceTimersByTime(12_000)

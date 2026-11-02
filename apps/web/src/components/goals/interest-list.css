@@ -447,6 +447,8 @@
   }
 
   .goal-filters .chip {
+    display: flex;
+    align-items: center;
     flex: 1;
     justify-content: center;
     white-space: nowrap;
@@ -548,22 +550,29 @@
     }
   }
 
-  /* On a phone the filters keep one line and scroll sideways, each cell whole. */
+  /* Keep every label and full count in view instead of hiding the next cell offscreen. */
   @media (max-width: 560px) {
     .goal-filters {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      overflow-y: hidden;
-      contain: inline-size;
-      scrollbar-width: none;
-    }
-
-    .goal-filters::-webkit-scrollbar {
-      display: none;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .goal-filters .chip {
+      min-width: 0;
+      min-height: 54px;
+      white-space: normal;
+      flex-direction: column;
+      text-align: center;
+      justify-content: center;
+      letter-spacing: normal;
+      padding: 8px 4px;
+    }
+
+    .goal-filters .chip-count {
       flex: none;
+      margin-left: 0;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
   }
 }

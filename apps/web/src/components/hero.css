@@ -479,26 +479,9 @@
     flex-wrap: wrap;
   }
 
-  .hero.immersive .hero-top > .dm {
-    gap: 8px;
-    margin-right: auto;
-    padding: 8px 10px;
-    border: 1px solid color-mix(in srgb, var(--dm-color) var(--alpha-line), transparent);
-    border-radius: var(--radius-control);
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--dm-color) var(--alpha-wash), var(--color-surface)),
-      var(--color-bg)
-    );
-  }
-
-  .hero.immersive .hero-top > .dm .dm-body {
-    width: 78px;
-  }
-
-  .hero.immersive .hero-top > .dm .dm-name {
-    white-space: normal;
-    overflow: visible;
+  .hero.immersive .hero-gallery {
+    grid-column: 1;
+    justify-self: end;
   }
 
   .hero.immersive .hero-tools {
@@ -703,7 +686,7 @@
     display: none;
   }
 
-  /* In a journey, difficulty and gallery lead; the supporting facts read as one quiet line. */
+  /* Facts stay together below the title; gallery is a secondary action after the progress. */
   .hero.immersive .hero-top > .meta {
     flex-basis: 100%;
     margin-top: 0;
@@ -822,11 +805,16 @@
     display: none;
   }
 
-  /* The difficulty chip in its band's color: border, wash and name. */
   .hero.immersive .meta > .dm {
-    border-color: color-mix(in srgb, var(--dm-color) var(--alpha-glow), transparent);
-    background: color-mix(in srgb, var(--dm-color) var(--alpha-wash), transparent);
+    gap: 6px;
     color: var(--dm-color);
+    border: 0;
+    background: none;
+    padding: 0;
+  }
+
+  .hero.immersive .meta > .dm .dm-number {
+    font-size: var(--text-xl);
   }
 
   .hero.immersive .meta > .dm .dm-name {

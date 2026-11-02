@@ -22,6 +22,7 @@
   }
 
   .trophy-section-heading p {
+    margin: 0;
     color: var(--color-fg-muted);
     font-size: var(--text-sm);
   }
@@ -167,7 +168,9 @@
   /* HUD look, like the guide's tabs: joined cells in one border, the chosen one filled. */
   .trophy-status {
     display: flex;
-    flex-basis: 100%;
+    flex-basis: auto;
+    width: fit-content;
+    max-width: 100%;
     align-items: stretch;
     overflow: hidden;
     border: 1px solid var(--color-border);

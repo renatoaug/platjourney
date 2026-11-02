@@ -26,7 +26,6 @@ const messages = defineMessages({
       all: 'Todos',
       playing: 'Em andamento',
       pending: 'Não começados',
-      done: 'Platinados',
     },
     list: {
       platinumed: 'platinado',
@@ -54,7 +53,6 @@ const messages = defineMessages({
       all: 'All',
       playing: 'In progress',
       pending: 'Not started',
-      done: 'Platinumed',
     },
     list: {
       platinumed: 'platinumed',
@@ -81,7 +79,7 @@ const messages = defineMessages({
 
 const GOAL_PAGE_SIZE = 10
 
-const FILTERS: GoalFilter[] = ['all', 'playing', 'pending', 'done']
+const FILTERS = ['all', 'playing', 'pending'] as const
 
 interface Ghost {
   id: string
@@ -238,7 +236,7 @@ function Row({
 
 export function InterestList({
   interests,
-  filter,
+  filter: savedFilter,
   page: wanted,
   onFilter,
   onPage,
@@ -263,6 +261,8 @@ export function InterestList({
   onReorder: (ids: string[]) => Promise<unknown>
 }) {
   const t = useMessages(messages)
+  // Old kept views may still carry the removed platinum-only filter.
+  const filter = savedFilter === 'done' ? 'all' : savedFilter
   const filtersRef = useSlide<HTMLDivElement>(filter)
   // Manual order for what is still to do; platinumed ones sink to the bottom.
   const open = interests.filter((g) => !g.done)
@@ -419,7 +419,7 @@ export function InterestList({
             disabled={busy}
             onClick={() => onFilter(key)}
           >
-            {t(`filters.${key}`)}
+            <span>{t(`filters.${key}`)}</span>
             <span className="chip-count">
               {key === 'all'
                 ? interests.length
@@ -503,8 +503,11 @@ export function InterestListSkeleton() {
   return (
     <div aria-hidden="true">
       <div className="chips goal-filters">
-        {[70, 110, 120, 100].map((width) => (
-          <Sk key={width} w={width} h={30} />
+        {[70, 110, 120].map((width) => (
+          <span className="chip" key={width}>
+            <Sk w="70%" h={14} />
+            <Sk w={24} h={14} />
+          </span>
         ))}
       </div>
       <ul className="goal-list">
