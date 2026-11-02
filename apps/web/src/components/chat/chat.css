@@ -863,18 +863,20 @@
     padding: 0 20px 12px;
   }
 
-  .chat-page .nexo-chat-top::before {
+  /* Feather the backdrop around Nexo only; messages stay visible on both sides. */
+  .chat-page .nexo-chat-heading::before {
     content: "";
     position: absolute;
     z-index: -1;
-    inset: -8px -8px 0;
-    background: linear-gradient(
-      var(--color-bg),
-      color-mix(in srgb, var(--color-bg) 72%, transparent) 70%,
-      transparent
-    );
+    pointer-events: none;
+    width: 164px;
+    height: calc(100% + 40px);
+    top: -20px;
+    left: 50%;
+    translate: -50% 0;
+    background: color-mix(in srgb, var(--color-bg) 72%, transparent);
     backdrop-filter: blur(8px);
-    mask-image: linear-gradient(var(--color-fg) 75%, transparent);
+    mask-image: radial-gradient(ellipse, var(--color-fg) 25%, transparent 72%);
   }
 
   .chat-page .nexo-chat-top :is(button, a, input) {
@@ -882,14 +884,15 @@
   }
 
   @media (prefers-reduced-transparency: reduce) {
-    .chat-page .nexo-chat-top::before {
+    .chat-page .nexo-chat-heading::before {
       background: var(--color-bg);
       backdrop-filter: none;
-      mask-image: none;
     }
   }
 
   .chat-page .nexo-chat-top > .nexo-chat-heading {
+    position: relative;
+    isolation: isolate;
     margin-bottom: 8px;
   }
 
