@@ -16,7 +16,7 @@ test('full route exposes confirmed past without resetting progress; pending view
   const data = requiemGame(['chapter-1', 'perfect-shot'])
   const before = structuredClone(data.trophies)
   renderApp(<TrophyRoadmap game={data} />)
-  expect(screen.getByRole('region', { name: 'Seu próximo movimento' })).toBeTruthy()
+  expect(screen.getByRole('region', { name: 'Outras oportunidades' })).toBeTruthy()
   const pendingRoute = screen.getByRole('list', { name: 'Caminho à frente' })
   expect(within(pendingRoute).queryByRole('button', { name: /Sob um Novo Sol/ })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Rota completa · 36' }))
@@ -286,7 +286,8 @@ test('route artwork and missable signals use exact guide facts, with no hidden t
   )
   const stops = container.querySelectorAll('.roadmap-route li')
   expect(stops).toHaveLength(3)
-  expect(container.querySelectorAll('.roadmap-route-risk')).toHaveLength(1)
+  expect(container.querySelectorAll('.roadmap-route .roadmap-route-risk')).toHaveLength(1)
+  expect(container.querySelector('.roadmap-destination .roadmap-route-risk')).toBeTruthy()
   expect(stops[0]?.getAttribute('data-missable')).toBe('true')
   expect(stops[0]?.querySelector('img')?.getAttribute('src')).toBe('/synthetic-trophy-1.png')
   expect(stops[1]?.querySelector('img')).toBeNull()
@@ -532,7 +533,7 @@ test('start comparison uses the real list but never mutates account progress or 
   const { container } = renderApp(<TrophyRoadmap game={{ ...game, trophies: items }} />)
   expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(1)
   fireEvent.click(screen.getByRole('button', { name: 'Ver desde o início' }))
-  expect(container.querySelector('.roadmap-preview-controls [role=status]')?.textContent).toContain(
+  expect(container.querySelector('.roadmap-preview-notice[role=status]')?.textContent).toContain(
     'PRÉVIA DO INÍCIO',
   )
   expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
@@ -705,4 +706,26 @@ test('Odyssey preparation removes only earned base objectives, protecting hidden
   expect(within(panel).queryByRole('button', { name: 'DLC illustration' })).toBeNull()
   expect(within(panel).getByRole('button', { name: 'Senhor dos Mares' })).toBeTruthy()
   expect(container.textContent).not.toContain('Capítulo 17')
+})
+
+test('first visit puts the chosen action before navigation and progressively reveals the full route', () => {
+  const data = requiemGame(['chapter-1', 'perfect-shot'])
+  const before = structuredClone(data.trophies)
+  const { container } = renderApp(<TrophyRoadmap game={data} />)
+  const expedition = container.querySelector('.roadmap-expedition')!
+  expect(expedition.firstElementChild?.className).toBe('roadmap-focus')
+  const focus = container.querySelector('.roadmap-focus')!
+  expect(focus.querySelector('.roadmap-advice > p')?.textContent?.length).toBeGreaterThan(20)
+  const map = container.querySelector<HTMLDetailsElement>('.roadmap-explore')!
+  expect(map.open).toBe(false)
+  const options = container.querySelector<HTMLDetailsElement>('.roadmap-options')!
+  expect(options.open).toBe(false)
+  fireEvent.click(within(map).getByText('Explorar o caminho'))
+  expect(map.open).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: 'Rota completa · 36' }))
+  expect(screen.getByRole('combobox', { name: 'Explorar objetivo' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Ler dica deste objetivo' }).getAttribute('href')).toBe(
+    '#roadmap-focus',
+  )
+  expect(data.trophies).toEqual(before)
 })

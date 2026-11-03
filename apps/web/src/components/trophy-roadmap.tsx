@@ -37,7 +37,12 @@ const messages = defineMessages({
     routeReference:
       'Ordem de referência do roteiro, não a sequência em que você conquistou os troféus.',
     routeEarned: 'Conquistado',
-    quickRead: 'Seu próximo movimento',
+    quickRead: 'Outras oportunidades',
+    exploreRoute: 'Explorar o caminho',
+    exploreRouteNote: 'Veja o que já conquistou e o que ainda falta.',
+    readAdvice: 'Ler dica deste objetivo',
+    routeOptions: 'Prévia e troféus ocultos',
+    progressContext: 'Seu progresso e objetivos paralelos',
     nextObjective: 'Prioridade sugerida',
     upcomingObjectives: 'Depois, avalie',
     viewObjective: 'Ver objetivo: {name}',
@@ -70,6 +75,7 @@ const messages = defineMessages({
     skill: 'Habilidades que ainda faltam',
     counterGroup: 'Ações que acumulam progresso',
     sources: 'Fontes e recuperação',
+    adviceDetails: 'Como fazer e cuidados',
     completeState: 'Conquista confirmada pela PSN.',
     availableState:
       'Oportunidade para planejar agora; confira se esse trecho corresponde ao seu save.',
@@ -79,7 +85,7 @@ const messages = defineMessages({
     recoverState: 'Há um marco posterior confirmado. Confira se precisa recuperar este objetivo.',
     verifyState:
       'Confira a sincronização e o save antes de repetir um trecho. Não presumimos conquista nem perda.',
-    title: 'O caminho à frente',
+    title: 'Sua jornada da platina',
     ongoing: 'Ao longo da jornada',
     ongoingNote:
       'Cuide destes objetivos enquanto avança. A seleção da trilha não indica sua posição real no jogo.',
@@ -124,7 +130,7 @@ const messages = defineMessages({
       'Troféus adicionais, separados da rota da platina. Sua preferência de progresso continua valendo no resumo do jogo.',
     earned: 'Conquistado',
     pending: 'Pendente',
-    suggestion: 'Sugestão atual do guia',
+    suggestion: 'Sugestão para agora',
     jump: 'Ir à sugestão',
     first: 'Ir ao primeiro pendente',
     note: 'Orientação do Nexo',
@@ -160,7 +166,12 @@ const messages = defineMessages({
     routeComplete: 'Full route',
     routeReference: 'Roadmap reference order, not the sequence in which you earned trophies.',
     routeEarned: 'Earned',
-    quickRead: 'Your next move',
+    quickRead: 'Other opportunities',
+    exploreRoute: 'Explore the path',
+    exploreRouteNote: 'See what you have earned and what remains.',
+    readAdvice: 'Read this objective’s advice',
+    routeOptions: 'Preview and hidden trophies',
+    progressContext: 'Your progress and parallel objectives',
     nextObjective: 'Suggested priority',
     upcomingObjectives: 'Then consider',
     viewObjective: 'View objective: {name}',
@@ -192,6 +203,7 @@ const messages = defineMessages({
     skill: 'Remaining skills',
     counterGroup: 'Actions that accumulate progress',
     sources: 'Sources and recovery',
+    adviceDetails: 'How to do it and what to watch for',
     completeState: 'Achievement confirmed by PSN.',
     availableState: 'An opportunity to plan now; check whether this section matches your save.',
     prepareState: 'Prepare during the campaign; the unlock may come later.',
@@ -200,7 +212,7 @@ const messages = defineMessages({
       'A later milestone is confirmed. Check whether you need to recover this objective.',
     verifyState:
       'Check synchronization and your save before replaying a section. We presume neither completion nor loss.',
-    title: 'The path ahead',
+    title: 'Your platinum journey',
     ongoing: 'Throughout the journey',
     ongoingNote:
       'Keep these objectives in mind as you play. Selecting a milestone does not indicate your actual location in the game.',
@@ -245,7 +257,7 @@ const messages = defineMessages({
       'Additional trophies, separate from the platinum route. Your progress preference still applies to the game summary.',
     earned: 'Earned',
     pending: 'Pending',
-    suggestion: 'Current guide suggestion',
+    suggestion: 'Suggested for now',
     jump: 'Go to suggestion',
     first: 'Go to first pending',
     note: 'Nexo guidance',
@@ -283,24 +295,27 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           <Icon name="nexo" />
           {t('note')}
         </span>
-        <p className="roadmap-context-note">{t(`${reviewed.state}State`)}</p>
         <p>{reviewed.objective.action[language]}</p>
-        {reviewed.objective.approach && <p>{reviewed.objective.approach[language]}</p>}
-        {reviewed.objective.availability && <p>{reviewed.objective.availability[language]}</p>}
-        {reviewed.objective.recovery && reviewed.state !== 'complete' && (
-          <p>{reviewed.objective.recovery[language]}</p>
-        )}
-        <details className="roadmap-basis">
-          <summary>{t('sources')}</summary>
-          <ul>
-            {reviewed.objective.sources.map((url) => (
-              <li key={url}>
-                <a href={url} target="_blank" rel="noreferrer">
-                  {new URL(url).hostname}
-                </a>
-              </li>
-            ))}
-          </ul>
+        <details className="roadmap-advice-details" key={reviewed.objective.key}>
+          <summary>{t('adviceDetails')}</summary>
+          <p className="roadmap-context-note">{t(`${reviewed.state}State`)}</p>
+          {reviewed.objective.approach && <p>{reviewed.objective.approach[language]}</p>}
+          {reviewed.objective.availability && <p>{reviewed.objective.availability[language]}</p>}
+          {reviewed.objective.recovery && reviewed.state !== 'complete' && (
+            <p>{reviewed.objective.recovery[language]}</p>
+          )}
+          <details className="roadmap-basis">
+            <summary>{t('sources')}</summary>
+            <ul>
+              {reviewed.objective.sources.map((url) => (
+                <li key={url}>
+                  <a href={url} target="_blank" rel="noreferrer">
+                    {new URL(url).hostname}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </details>
         </details>
         <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
           <Icon name="nexo" />
@@ -374,7 +389,7 @@ function TrophyStep({
     >
       <header className="roadmap-trophy-heading">
         <Icon name="target" />
-        <h4>{trophy.hidden && !hidden ? trophy.name : t('guidance')}</h4>
+        <h4>{t('guidance')}</h4>
       </header>
       <p className="roadmap-objective">{hidden ? t('secretNote') : trophy.detail}</p>
       {!hidden && (
@@ -426,8 +441,50 @@ function RoadmapLandscape({
           <span className="roadmap-destination-type">
             {t(selected.type === 'platinum' ? 'platinumType' : selected.type)}
           </span>
+          {!hidden && !selected.earned && (
+            <RoadmapSignal
+              missable={
+                game.journey
+                  ? game.journey.items.find((item) => item.trophy === selected)?.objective.risk ===
+                    'opportunity'
+                  : !!trophyAdvice(selected, game.guide).warning
+              }
+              final={selected.type === 'platinum'}
+            />
+          )}
         </span>
       </div>
+    </div>
+  )
+}
+
+function RoadmapFocus({
+  game,
+  selected,
+  target,
+  choose,
+}: {
+  game: RoadmapGame
+  selected: Trophy
+  target?: Trophy
+  choose: (trophy: Trophy) => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <div id="roadmap-focus" className="roadmap-focus">
+      <RoadmapLandscape game={game} selected={selected} suggested={target === selected} />
+      <TrophyStep
+        key={anchor(selected)}
+        trophy={selected}
+        game={game}
+        suggested={target === selected}
+      />
+      {target && selected !== target && (
+        <button type="button" className="roadmap-resume quiet" onClick={() => choose(target)}>
+          <Icon name="target" />
+          {t('resume')}
+        </button>
+      )}
     </div>
   )
 }
@@ -453,15 +510,19 @@ function RoadmapSignal({ missable, final }: { missable: boolean; final: boolean 
 
 function RoadmapOverview({
   game,
+  selected,
   choose,
 }: {
   game: RoadmapGame
+  selected: Trophy
   choose: (trophy: Trophy) => void
 }) {
   const t = useMessages(messages)
   const plan = game.journey
   if (!plan || plan.covered !== plan.expected || plan.unmatched.length) return null
-  const candidates = plan.candidates.filter((x) => !x.trophy.hidden).slice(0, 4)
+  const candidates = plan.candidates
+    .filter((x) => !x.trophy.hidden && x.trophy !== selected)
+    .slice(0, 3)
   if (!candidates.length) return null
   const when = (item: (typeof candidates)[number]) => {
     const o = item.objective
@@ -475,7 +536,7 @@ function RoadmapOverview({
     <section className="roadmap-overview" aria-label={t('quickRead')}>
       <h3>{t('quickRead')}</h3>
       <ol>
-        {candidates.map((item, index) => (
+        {candidates.map((item) => (
           <li key={item.objective.key}>
             <button
               type="button"
@@ -486,7 +547,6 @@ function RoadmapOverview({
                 <TrophyArt url={item.trophy.iconUrl} />
               </span>
               <span>
-                <small>{t(index === 0 ? 'nextObjective' : 'upcomingObjectives')}</small>
                 <strong>{item.trophy.name}</strong>
                 <span>{when(item)}</span>
               </span>
@@ -495,7 +555,6 @@ function RoadmapOverview({
           </li>
         ))}
       </ol>
-      <p>{t('quickNote')}</p>
     </section>
   )
 }
@@ -515,6 +574,7 @@ function RoadmapNavigation({
   target?: Trophy
   choose: (trophy: Trophy) => void
 }) {
+  const t = useMessages(messages)
   const [complete, setComplete] = useState(false)
   return (
     <>
@@ -538,6 +598,10 @@ function RoadmapNavigation({
           if (target) choose(target)
         }}
       />
+      <a className="roadmap-read-advice" href="#roadmap-focus">
+        <Icon name="chevron-up" />
+        {t('readAdvice')}
+      </a>
       <RoadmapForward
         key={String(complete)}
         game={game}
@@ -599,7 +663,6 @@ function RoadmapJump({
         )}
         {target && selected !== target && (
           <button type="button" className="ghost" onClick={resume}>
-            <Icon name="target" />
             {t('routeNow')}
           </button>
         )}
@@ -1092,6 +1155,13 @@ export function TrophyRoadmap({
   const choose = useCallback((trophy: Trophy) => {
     setSelection(anchor(trophy))
   }, [])
+  const inspect = useCallback(
+    (trophy: Trophy) => {
+      choose(trophy)
+      document.getElementById('roadmap-focus')?.scrollIntoView({ block: 'start' })
+    },
+    [choose],
+  )
   return (
     <section className="trophy-roadmap" id="journey-roadmap" aria-labelledby="roadmap-heading">
       <header className="roadmap-intro">
@@ -1106,107 +1176,116 @@ export function TrophyRoadmap({
             : t('count', { earned: base.filter((x) => x.earned).length, total: base.length })}
         </span>
       </header>
-      <div className="roadmap-preview-controls">
-        {source.trophies.some((trophy) => trophy.hidden) && (
-          <RoadmapVisibility revealed={revealed} setRevealed={setRevealed} saving={saving} />
-        )}
-        {!preview && (
-          <button
-            type="button"
-            className="quiet"
-            aria-pressed={fromStart}
-            onClick={() => {
-              setFromStart(!fromStart)
-              setSelection(null)
-            }}
-          >
-            {t(fromStart ? 'previewBack' : 'previewStart')}
-          </button>
-        )}
-        {inspecting && (
-          <p role="status">
-            <strong>{t('previewLabel')}</strong> {t('previewNote')}
-          </p>
-        )}
-      </div>
+      {inspecting && (
+        <p className="roadmap-preview-notice" role="status">
+          <strong>{t('previewLabel')}</strong> {t('previewNote')}
+        </p>
+      )}
       {!selected || !stage ? (
         <p>{t('empty')}</p>
       ) : (
         <>
           <div className="roadmap-expedition">
-            <RoadmapOverview game={game} choose={choose} />
-            <RoadmapLandscape game={game} selected={selected} suggested={suggested === selected} />
-            {game.journey ? (
-              <ReviewedPreparation game={game} choose={choose} />
-            ) : (
-              <RoadmapOngoing game={game} choose={choose} />
-            )}
-            <RoadmapNavigation
-              game={game}
-              ordered={ordered}
-              pending={pending}
-              selected={selected}
-              target={target}
-              choose={choose}
-            />
-            <TrophyStep
-              key={anchor(selected)}
-              trophy={selected}
-              game={game}
-              suggested={suggested === selected}
-            />
-            {!!past.length && (
-              <details className="roadmap-past">
-                <summary>
-                  <Icon name="check" />
-                  {t('past', { count: past.length })}
-                  <Icon name="chevron-down" />
-                </summary>
-                <ul>
-                  {past.map((trophy) => (
-                    <li key={anchor(trophy)}>
-                      <button
-                        type="button"
-                        aria-pressed={selected === trophy}
-                        aria-label={trophy.name}
-                        aria-describedby={
-                          trophy.detail ? `${anchor(trophy)}-earned-detail` : undefined
-                        }
-                        onClick={() => choose(trophy)}
-                      >
-                        <span className="roadmap-earned-art">
-                          <TrophyArt url={trophy.iconUrl} />
-                          <span className="roadmap-earned-check">
-                            <Icon name="check" />
+            <RoadmapFocus game={game} selected={selected} target={target} choose={choose} />
+            <RoadmapOverview game={game} selected={selected} choose={inspect} />
+            <details className="roadmap-explore">
+              <summary>
+                <Icon name="compass" />
+                <span>
+                  <strong>{t('exploreRoute')}</strong>
+                  <small>{t('exploreRouteNote')}</small>
+                </span>
+                <Icon name="chevron-down" />
+              </summary>
+              <RoadmapNavigation
+                game={game}
+                ordered={ordered}
+                pending={pending}
+                selected={selected}
+                target={target}
+                choose={choose}
+              />
+              {!!past.length && (
+                <details className="roadmap-past">
+                  <summary>
+                    <Icon name="check" />
+                    {t('past', { count: past.length })}
+                    <Icon name="chevron-down" />
+                  </summary>
+                  <ul>
+                    {past.map((trophy) => (
+                      <li key={anchor(trophy)}>
+                        <button
+                          type="button"
+                          aria-pressed={selected === trophy}
+                          aria-label={trophy.name}
+                          aria-describedby={
+                            trophy.detail ? `${anchor(trophy)}-earned-detail` : undefined
+                          }
+                          onClick={() => choose(trophy)}
+                        >
+                          <span className="roadmap-earned-art">
+                            <TrophyArt url={trophy.iconUrl} />
+                            <span className="roadmap-earned-check">
+                              <Icon name="check" />
+                            </span>
                           </span>
-                        </span>
-                        <span className="roadmap-earned-copy">
-                          <strong>{trophy.name}</strong>
-                          {trophy.detail && (
-                            <span id={`${anchor(trophy)}-earned-detail`}>{trophy.detail}</span>
-                          )}
-                        </span>
-                        <Icon name="chevron-right" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
+                          <span className="roadmap-earned-copy">
+                            <strong>{trophy.name}</strong>
+                            {trophy.detail && (
+                              <span id={`${anchor(trophy)}-earned-detail`}>{trophy.detail}</span>
+                            )}
+                          </span>
+                          <Icon name="chevron-right" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </details>
+            <details className="roadmap-context-details">
+              <summary>{t('progressContext')}</summary>
+              {game.journey ? (
+                <ReviewedPreparation game={game} choose={inspect} />
+              ) : (
+                <RoadmapOngoing game={game} choose={inspect} />
+              )}
+            </details>
           </div>
           {stage.kind !== 'phase' && (
             <p className="roadmap-context-note">{t(`${stage.kind}Note`)}</p>
           )}
           <footer className="roadmap-footer">
-            {target && selected !== target && (
-              <button type="button" className="quiet" onClick={() => choose(target)}>
-                {t('resume')}
-              </button>
-            )}
             <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name)}>
               <Icon name="nexo" />
               {t('talk')}
             </JourneyLink>
+            <details className="roadmap-options">
+              <summary>{t('routeOptions')}</summary>
+              <div className="roadmap-preview-controls">
+                {source.trophies.some((trophy) => trophy.hidden) && (
+                  <RoadmapVisibility
+                    revealed={revealed}
+                    setRevealed={setRevealed}
+                    saving={saving}
+                  />
+                )}
+                {!preview && (
+                  <button
+                    type="button"
+                    className="quiet"
+                    aria-pressed={fromStart}
+                    onClick={() => {
+                      setFromStart(!fromStart)
+                      setSelection(null)
+                    }}
+                  >
+                    {t(fromStart ? 'previewBack' : 'previewStart')}
+                  </button>
+                )}
+              </div>
+            </details>
             <details className="roadmap-basis">
               <summary>{t('order')}</summary>
               <p>{t(roadmapBasis(game))}</p>
@@ -1228,74 +1307,35 @@ export function TrophyRoadmapSkeleton() {
         </div>
         <Sk w="150px" h={14} />
       </header>
-      <div className="roadmap-preview-controls">
-        <Sk w="180px" h={44} />
-      </div>
       <div className="roadmap-expedition">
+        <div className="roadmap-focus">
+          <div className="roadmap-landscape">
+            <div className="roadmap-destination">
+              <Sk w="64px" h={64} />
+              <span className="roadmap-destination-copy">
+                <Sk w="60%" h={12} />
+                <Sk w="90%" h={32} />
+                <Sk w="30%" h={12} />
+              </span>
+            </div>
+          </div>
+          <div className="roadmap-content">
+            <Sk w="65%" h={24} />
+            <Sk w="100%" h={16} />
+            <Sk w="90%" h={16} />
+            <Sk w="75%" h={16} />
+            <Sk w="180px" h={44} />
+          </div>
+        </div>
         <div className="roadmap-overview">
           <Sk w="190px" h={24} />
-          {[0, 1, 2].map((i) => (
+          {[0, 1].map((i) => (
             <Sk key={i} w="100%" h={64} />
           ))}
         </div>
-        <div className="roadmap-landscape">
-          <div className="roadmap-destination">
-            <Sk w="64px" h={64} />
-            <span className="roadmap-destination-copy">
-              <Sk w="60%" h={12} />
-              <Sk w="90%" h={32} />
-              <Sk w="30%" h={12} />
-            </span>
-          </div>
-        </div>
-        <div className="roadmap-reviewed">
-          <Sk w="190px" h={18} />
-          <p>
-            <Sk w="95%" h={16} />
-          </p>
-          <p>
-            <Sk w="75%" h={16} />
-          </p>
-          <Sk w="190px" h={44} />
-        </div>
-        <div className="roadmap-forward">
-          <div className="roadmap-view-controls">
-            <Sk w="240px" h={44} />
-          </div>
-          <div className="roadmap-jump">
-            <Sk w="40%" h={14} />
-            <Sk w="100%" h={44} />
-            <Sk w="35%" h={14} />
-          </div>
-          <div className="roadmap-forward-heading roadmap-loading-heading">
-            <div>
-              <Sk w="65%" h={18} />
-              <p>
-                <Sk w="90%" h={14} />
-              </p>
-            </div>
-            <span className="roadmap-route-controls">
-              <Sk w="44px" h={44} />
-              <Sk w="44px" h={44} />
-            </span>
-          </div>
-          <div className="roadmap-route roadmap-route-loading">
-            {[0, 1, 2].map((step) => (
-              <div key={step} className="roadmap-loading-stop">
-                <span className="roadmap-loading-art">
-                  <Sk w="80px" h={80} style={{ borderRadius: 'var(--radius-round)' }} />
-                </span>
-                <Sk w="85%" h={18} />
-                <Sk w="55%" h={14} />
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="roadmap-content">
-          <Sk w="65%" h={24} />
-          <Sk w="100%" h={16} />
-          <Sk w="90%" h={16} />
-          <Sk w="75%" h={16} />
+        <div className="roadmap-loading-disclosures">
+          <Sk w="100%" h={64} />
+          <Sk w="70%" h={44} />
         </div>
       </div>
     </section>

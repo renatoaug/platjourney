@@ -249,6 +249,7 @@ export type Target =
   | 'ReleasesView'
   | 'ReviewedPreparation'
   | 'Rich'
+  | 'RoadmapFocus'
   | 'RoadmapForward'
   | 'RoadmapJump'
   | 'RoadmapLandscape'
