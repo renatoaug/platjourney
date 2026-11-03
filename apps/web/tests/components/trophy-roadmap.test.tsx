@@ -90,3 +90,14 @@ test('zero counter remains visible, unavailable counters are not invented and em
   renderApp(<TrophyRoadmap game={{ ...game, trophies: [] }} />)
   expect(screen.getByText(/Os troféus ainda não estão disponíveis/)).toBeTruthy()
 })
+
+test('the map keeps advice collapsed until explored and jumping opens the pending milestone', () => {
+  const { container } = renderApp(<TrophyRoadmap game={game} />)
+  const milestones = [...container.querySelectorAll<HTMLDetailsElement>('.roadmap-milestone')]
+  expect(milestones.every((x) => !x.open)).toBe(true)
+  expect(container.querySelectorAll('svg.roadmap-path').length).toBe(3)
+  fireEvent.click(screen.getByRole('button', { name: 'Ir ao primeiro pendente' }))
+  expect(milestones[1].open).toBe(true)
+  expect(milestones[0].open).toBe(false)
+  expect(game.trophies[2].earned).toBe(false)
+})

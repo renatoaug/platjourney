@@ -12,7 +12,12 @@ import './trophy-roadmap.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    title: 'Seu caminho até a platina',
+    title: 'Cada conquista abre um caminho.',
+    map: 'MAPA DA JORNADA',
+    open: 'Explorar marco',
+    close: 'Recolher dica',
+    challenge: 'Atenção no caminho',
+    order: 'Como este caminho é definido',
     subtitle:
       'Todos os troféus conectados ao roteiro. Cada conquista acompanha seu progresso na PSN.',
     basis:
@@ -53,7 +58,12 @@ const messages = defineMessages({
     platinumType: 'Platina',
   },
   [Language.En]: {
-    title: 'Your path to platinum',
+    title: 'Every achievement opens a path.',
+    map: 'JOURNEY MAP',
+    open: 'Explore milestone',
+    close: 'Collapse advice',
+    challenge: 'Watch your step',
+    order: 'How this path is defined',
     subtitle: 'Every trophy connected to the roadmap. Each achievement follows your PSN progress.',
     basis:
       'Suggested guide order, not a guaranteed sequence. Objectives can run in parallel; trophies do not confirm your location in the game.',
@@ -147,6 +157,56 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: CurrentGame }) {
   )
 }
 
+function RoadmapPath() {
+  return (
+    <svg
+      className="roadmap-path"
+      viewBox="0 0 100 200"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path className="roadmap-path-bed" d="M50 0 C50 40 25 45 25 100 S50 160 50 200" />
+      <path className="roadmap-path-trace" d="M50 0 C50 40 25 45 25 100 S50 160 50 200" />
+    </svg>
+  )
+}
+
+function TrophyMarker({
+  trophy,
+  hidden,
+  suggested,
+  obstacle,
+}: {
+  trophy: Trophy
+  hidden: boolean
+  suggested: boolean
+  obstacle: boolean
+}) {
+  const t = useMessages(messages)
+  return (
+    <summary className="roadmap-leg">
+      <RoadmapPath />
+      <span className={`roadmap-node ${trophy.type}`}>
+        <TrophyArt url={hidden ? undefined : trophy.iconUrl} />
+        <span className="roadmap-node-status">
+          <Icon name={trophy.earned ? 'check' : obstacle ? 'warning' : 'trophy'} />
+        </span>
+      </span>
+      <span className="roadmap-node-label">
+        <span className="roadmap-state">
+          {trophy.earned ? t('earned') : suggested ? t('suggestion') : t('pending')}
+        </span>
+        <span className="roadmap-node-name">{hidden ? t('secret') : trophy.name}</span>
+        <span className="roadmap-node-hint">
+          {!hidden && !trophy.earned && obstacle ? t('challenge') : t('open')}
+          <Icon name="chevron-down" />
+        </span>
+      </span>
+    </summary>
+  )
+}
+
 function TrophyStep({
   trophy,
   game,
@@ -159,50 +219,53 @@ function TrophyStep({
   const t = useMessages(messages)
   const [revealed, setRevealed] = useState(false)
   const hidden = trophy.hidden && !trophy.earned && !revealed
+  const obstacle = Boolean(
+    trophyAdvice(trophy, game.guide).warning || trophyAdvice(trophy, game.guide).bug,
+  )
   return (
     <li
       id={anchor(trophy)}
-      className={`roadmap-step${trophy.earned ? ' is-earned' : ''}${suggested ? ' is-suggested' : ''}`}
+      className={`roadmap-step${trophy.earned ? ' is-earned' : ''}${suggested ? ' is-suggested' : ''}${trophy.type === 'platinum' ? ' is-platinum' : ''}`}
     >
-      <span className="roadmap-node" aria-hidden="true">
-        <Icon name={trophy.earned ? 'check' : 'trophy'} />
-      </span>
-      <article className="roadmap-content">
-        <header className="roadmap-trophy-heading">
-          <div className={`roadmap-art ${trophy.type}`}>
-            <TrophyArt url={hidden ? undefined : trophy.iconUrl} />
-          </div>
-          <div>
-            <div className="roadmap-state">
-              <span>{trophy.earned ? t('earned') : t('pending')}</span>
-              <span>·</span>
-              <span>{t(trophy.type === 'platinum' ? 'platinumType' : trophy.type)}</span>
+      <details className="roadmap-milestone" open={suggested || undefined}>
+        <TrophyMarker
+          trophy={trophy}
+          hidden={Boolean(hidden)}
+          suggested={suggested}
+          obstacle={obstacle}
+        />
+        <article className="roadmap-content">
+          <header className="roadmap-trophy-heading">
+            <Icon name="nexo" />
+            <div>
+              <span className="roadmap-state">
+                {t(trophy.type === 'platinum' ? 'platinumType' : trophy.type)}
+              </span>
+              <h4>{hidden ? t('secret') : trophy.name}</h4>
             </div>
-            <h4>{hidden ? t('secret') : trophy.name}</h4>
-          </div>
-        </header>
-        {suggested && <span className="roadmap-suggestion">{t('suggestion')}</span>}
-        <p className="roadmap-objective">{hidden ? t('secretNote') : trophy.detail}</p>
-        {hidden ? (
-          <button type="button" className="quiet" onClick={() => setRevealed(true)}>
-            {t('reveal')}
-          </button>
-        ) : (
-          <>
-            {trophy.progressValue != null && trophy.progressTarget != null && (
-              <p className="roadmap-progress">
-                {t('progress', { value: trophy.progressValue, target: trophy.progressTarget })}
-              </p>
-            )}
-            <TrophyAdvice trophy={trophy} game={game} />
-            {trophy.hidden && !trophy.earned && (
-              <button type="button" className="quiet" onClick={() => setRevealed(false)}>
-                {t('hide')}
-              </button>
-            )}
-          </>
-        )}
-      </article>
+          </header>
+          <p className="roadmap-objective">{hidden ? t('secretNote') : trophy.detail}</p>
+          {hidden ? (
+            <button type="button" className="quiet" onClick={() => setRevealed(true)}>
+              {t('reveal')}
+            </button>
+          ) : (
+            <>
+              {trophy.progressValue != null && trophy.progressTarget != null && (
+                <p className="roadmap-progress">
+                  {t('progress', { value: trophy.progressValue, target: trophy.progressTarget })}
+                </p>
+              )}
+              <TrophyAdvice trophy={trophy} game={game} />
+              {trophy.hidden && !trophy.earned && (
+                <button type="button" className="quiet" onClick={() => setRevealed(false)}>
+                  {t('hide')}
+                </button>
+              )}
+            </>
+          )}
+        </article>
+      </details>
     </li>
   )
 }
@@ -221,6 +284,8 @@ export function TrophyRoadmap({ game }: { game: CurrentGame }) {
   const jump = () => {
     if (!target) return
     const node = document.getElementById(anchor(target))
+    const details = node?.querySelector('details')
+    if (details) details.open = true
     node?.scrollIntoView({
       behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       block: 'start',
@@ -233,9 +298,13 @@ export function TrophyRoadmap({ game }: { game: CurrentGame }) {
           <Icon name="trophy" />
           {t('count', { earned: base.filter((x) => x.earned).length, total: base.length })}
         </span>
+        <span className="roadmap-map-label">{t('map')}</span>
         <h2 id="roadmap-heading">{t('title')}</h2>
         <p>{t('subtitle')}</p>
-        <small>{t('basis')}</small>
+        <details className="roadmap-basis">
+          <summary>{t('order')}</summary>
+          <p>{t('basis')}</p>
+        </details>
         {target && (
           <button type="button" className="button" onClick={jump}>
             {suggested ? t('jump') : t('first')}
@@ -249,7 +318,10 @@ export function TrophyRoadmap({ game }: { game: CurrentGame }) {
       </header>
       {!stages.length && <p>{t('empty')}</p>}
       {stages.map((stage, i) => (
-        <section className="roadmap-stage" key={`${stage.kind}-${anchor(stage.trophies[0])}`}>
+        <section
+          className={`roadmap-stage roadmap-stage-${stage.kind}`}
+          key={`${stage.kind}-${anchor(stage.trophies[0])}`}
+        >
           <header className="roadmap-stage-heading">
             <span className="roadmap-stage-marker" aria-hidden="true">
               {stage.kind === 'platinum' ? <Icon name="trophy" /> : i + 1}
@@ -284,29 +356,28 @@ export function TrophyRoadmapSkeleton() {
     <section className="trophy-roadmap" aria-hidden="true">
       <header className="roadmap-intro">
         <Sk w="45%" h={12} />
-        <Sk w="75%" h={32} />
+        <Sk w="75%" h={40} />
         <Sk w="90%" h={18} />
         <Sk w="60%" h={18} />
       </header>
       <div className="roadmap-stage">
         <div className="roadmap-stage-heading">
           <Sk w="40px" h={40} />
-          <Sk w="50%" h={28} />
+          <Sk w="60%" h={28} />
         </div>
         <ol className="roadmap-trail">
           {[0, 1, 2].map((id) => (
             <li className="roadmap-step" key={id}>
-              <span className="roadmap-node">
-                <Sk w="20px" h={20} />
-              </span>
-              <div className="roadmap-content">
-                <Sk w="60%" h={24} />
-                <Sk w="95%" h={16} />
-                <div className="roadmap-advice">
-                  <Sk w="40%" h={16} />
-                  <Sk w="90%" h={16} />
-                  <Sk w="75%" h={16} />
-                </div>
+              <div className="roadmap-leg">
+                <RoadmapPath />
+                <span className="roadmap-node">
+                  <Sk w="44px" h={44} />
+                </span>
+                <span className="roadmap-node-label">
+                  <Sk w="70%" h={12} />
+                  <Sk w="95%" h={20} />
+                  <Sk w="50%" h={12} />
+                </span>
               </div>
             </li>
           ))}
