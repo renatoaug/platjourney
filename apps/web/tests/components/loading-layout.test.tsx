@@ -43,6 +43,8 @@ test('home loading reserves its actions and cover shelf without clickable fake g
 test('guide loading reserves quick facts before its summary and matches tab order', () => {
   const { container } = renderApp(<GuideSkeleton />)
   expect(container.querySelectorAll('.quick-fact')).toHaveLength(8)
+  expect(container.querySelectorAll('.quick-facts-primary .quick-fact')).toHaveLength(3)
+  expect(container.querySelectorAll('.quick-facts-conditions .quick-fact')).toHaveLength(5)
   expect(
     [...container.querySelectorAll('.guide-tabs.section-tabs button')].map(
       (tab) => tab.textContent,

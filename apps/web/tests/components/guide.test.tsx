@@ -38,6 +38,12 @@ describe('Guide', () => {
     const summary = panel()
     expect(within(summary).getByText('3/10')).toBeTruthy()
     expect(within(summary).getByText('~70h')).toBeTruthy()
+    expect(
+      [...summary.querySelectorAll('.quick-facts-primary dt')].map((e) => e.textContent),
+    ).toEqual(['Dificuldade', 'Tempo estimado', 'Jogadas mínimas'])
+    expect(summary.querySelector('.quick-facts-conditions')?.textContent).toContain(
+      'Dá para continuar',
+    )
     expect(within(summary).getByText('Antes de começar')).toBeTruthy()
     expect(within(summary).queryByText('Ponto sem retorno')).toBeNull()
     expect(within(summary).getByText('Durante a história')).toBeTruthy()

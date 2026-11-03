@@ -623,20 +623,22 @@ function QuickFacts({ g }: { g: GuideDetail }) {
     [t('facts.difficulty'), g.difficulty ? `tone-${bandOf(g.difficulty)}` : ''],
     [t('facts.missables'), missables ? 'tone-warn' : ''],
   ])
+  const fact = ([symbol, label, value, detail]: [string, string, string, string]) => (
+    <div
+      key={label}
+      className={`quick-fact ${tone.get(label) ?? ''}${value === t('facts.unknown') ? ' unknown' : ''}`.trim()}
+      data-tip={detail || undefined}
+    >
+      <Icon name={symbol} />
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  )
   return (
-    <dl className="quick-facts">
-      {facts.map(([symbol, label, value, detail]) => (
-        <div
-          key={label}
-          className={`quick-fact ${tone.get(label) ?? ''}${value === t('facts.unknown') ? ' unknown' : ''}`.trim()}
-          data-tip={detail || undefined}
-        >
-          <Icon name={symbol} />
-          <dt>{label}</dt>
-          <dd>{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <div className="quick-facts">
+      <dl className="quick-facts-primary">{facts.slice(0, 3).map(fact)}</dl>
+      <dl className="quick-facts-conditions">{facts.slice(3).map(fact)}</dl>
+    </div>
   )
 }
 
@@ -874,19 +876,34 @@ export function GuideSkeleton() {
         ))}
       </div>
       <div data-panel="0">
-        <dl className="quick-facts">
-          {repeat(8, () => (
-            <div className="quick-fact">
-              <Icon name="circle" />
-              <dt>
-                <Sk w="80%" h={12} />
-              </dt>
-              <dd>
-                <Sk w="60%" h={18} />
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <div className="quick-facts">
+          <dl className="quick-facts-primary">
+            {repeat(3, () => (
+              <div className="quick-fact">
+                <Icon name="circle" />
+                <dt>
+                  <Sk w="80%" h={13} />
+                </dt>
+                <dd>
+                  <Sk w="75%" h={24} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <dl className="quick-facts-conditions">
+            {repeat(5, () => (
+              <div className="quick-fact">
+                <Icon name="circle" />
+                <dt>
+                  <Sk w={90} h={13} />
+                </dt>
+                <dd>
+                  <Sk w={40} h={14} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
         <Sk w="100%" h={13} />
         <Sk w="96%" h={13} style={{ marginTop: 8 }} />
         <Sk w="72%" h={13} style={{ marginTop: 8 }} />

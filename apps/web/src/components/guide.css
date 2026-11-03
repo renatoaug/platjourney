@@ -628,14 +628,6 @@
     }
   }
 
-  .quick-fact .icon {
-    width: 14px;
-    height: 14px;
-    flex: none;
-    margin-right: 2px;
-    color: var(--color-accent);
-  }
-
   .missable-body {
     min-width: 0;
   }
@@ -1186,51 +1178,45 @@
     height: 14px;
   }
 
-  /* A compact HUD: values lead, labels follow, and separators stay short. */
+  /* Three investment metrics share a panel; conditions read as compact inline facts. */
   .quick-facts {
+    container-type: inline-size;
+    margin: 0 0 24px;
+  }
+
+  .quick-facts-primary {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px 0;
-    margin: 0 0 24px;
-    padding: 16px 0;
+    margin: 0;
+    padding: 18px 0;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-control);
-    background: radial-gradient(
-      ellipse at top left,
-      color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent),
-      transparent 70%
-    );
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), var(--color-surface));
   }
 
   .quick-fact {
-    position: relative;
+    min-width: 0;
+  }
+
+  .quick-facts-primary .quick-fact {
     display: grid;
-    grid-template-columns: 16px minmax(0, 1fr);
+    grid-template-columns: 18px minmax(0, 1fr);
     grid-template-areas: "icon value" "label label";
     align-content: start;
     align-items: center;
-    gap: 6px;
-    min-width: 0;
-    padding-inline: 10px;
+    gap: 7px 6px;
+    padding-inline: 14px;
   }
 
-  .quick-fact:not(:nth-child(3n + 1))::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 3px;
-    width: 1px;
-    height: 32px;
-    background: linear-gradient(var(--color-border-strong), transparent);
-  }
-
-  .quick-fact:last-child:nth-child(3n + 2) {
-    grid-column: span 2;
+  .quick-facts-primary .quick-fact + .quick-fact {
+    border-left: 1px solid var(--color-border-strong);
   }
 
   .quick-fact .icon {
     grid-area: icon;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
+    flex: none;
     color: var(--color-accent);
   }
 
@@ -1238,7 +1224,7 @@
     grid-area: label;
     min-width: 0;
     color: var(--color-fg-muted);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     line-height: var(--leading-snug);
     overflow-wrap: anywhere;
   }
@@ -1247,23 +1233,70 @@
     grid-area: value;
     min-width: 0;
     margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--text-base);
+    font-size: var(--text-body);
     font-weight: var(--weight-semibold);
     line-height: var(--leading-snug);
     color: var(--color-fg);
     overflow-wrap: anywhere;
   }
 
-  .quick-fact:nth-child(-n + 3):not(.unknown) dd {
-    font-size: var(--text-2xl);
+  .quick-facts-primary .quick-fact:not(.unknown) dd {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
     letter-spacing: var(--tracking-snug);
+  }
+
+  .quick-facts-conditions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px 22px;
+    margin: 18px 0 0;
+  }
+
+  .quick-facts-conditions .quick-fact {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .quick-facts-conditions .icon {
+    align-self: center;
+    width: 16px;
+    height: 16px;
+    margin-right: 3px;
+  }
+
+  .quick-facts-conditions dt::after {
+    content: ":";
   }
 
   .quick-fact.unknown dd {
     color: var(--color-fg-muted);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: var(--weight-medium);
+  }
+
+  @container (max-width: 380px) {
+    .quick-facts-primary .quick-fact {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "value" "label";
+      gap: 7px;
+      padding-inline: 4px;
+    }
+
+    .quick-facts-primary .icon {
+      display: none;
+    }
+
+    .quick-facts-primary .quick-fact:not(.unknown) dd {
+      font-size: var(--text-2xl);
+    }
+
+    .quick-facts-conditions {
+      gap: 12px 18px;
+    }
   }
 
   /* A cell in the color of what it says: the difficulty by band, missables as a warning. */
