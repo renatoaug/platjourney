@@ -46,6 +46,22 @@ export function pickOfTheDay<T extends SpotlightGame>(items: T[], now = new Date
   return pool[day % pool.length]
 }
 
+/** Discovery rotates through the same catalog, starting after today's guide and skipping its scene. */
+export function pickDiscoveryOfTheDay<T extends SpotlightGame>(
+  items: T[],
+  now = new Date(),
+): T | null {
+  const pool = items.filter((i) => i.guide && i.shot)
+  if (!pool.length) return null
+  const day = Math.floor(now.getTime() / 86_400_000)
+  const guide = pool[day % pool.length]
+  for (let offset = 1; offset < pool.length; offset++) {
+    const candidate = pool[(day + offset) % pool.length]
+    if (candidate.shot !== guide.shot) return candidate
+  }
+  return guide
+}
+
 export function GuideSpotlight({ game }: { game: SpotlightGame }) {
   const t = useMessages(messages)
   const g = game.guide

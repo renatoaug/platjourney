@@ -4,13 +4,13 @@
     isolation: isolate;
     overflow: hidden;
     display: grid;
-    grid-template-columns: 96px minmax(0, 1fr);
+    grid-template-columns: 64px minmax(0, 1fr);
     grid-template-areas: "heading heading" "cover body" "chips chips";
     align-content: start;
     align-self: start;
-    gap: 12px 18px;
+    gap: 8px 12px;
     width: min(500px, 100%);
-    padding: 16px;
+    padding: 12px;
     border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
     border-radius: var(--radius-card);
     background: var(--color-surface);
@@ -54,7 +54,7 @@
 
   .guide-spotlight-cover {
     grid-area: cover;
-    width: 96px;
+    width: 64px;
     aspect-ratio: 3 / 4;
     object-fit: cover;
     border-radius: var(--radius-control);
@@ -108,7 +108,7 @@
     flex-wrap: wrap;
     gap: 8px 18px;
     margin: 0;
-    padding-top: 12px;
+    padding-top: 8px;
     border-top: 1px solid var(--color-border-strong);
   }
 
@@ -181,12 +181,11 @@
 
   @media (max-width: 480px) {
     .guide-spotlight {
-      grid-template-columns: 64px minmax(0, 1fr);
-      gap: 12px 14px;
+      grid-template-columns: 52px minmax(0, 1fr);
     }
 
     .guide-spotlight-cover {
-      width: 64px;
+      width: 52px;
     }
 
     .guide-spotlight-head > b {

@@ -9,7 +9,7 @@ import { DemoNote } from '../components/demo'
 import { GameCard, GameShelf } from '../components/game-band'
 import { LibraryCard } from '../components/game-cards'
 import { image } from '../components/game-showcase'
-import { pickOfTheDay, type SpotlightGame } from '../components/guide-spotlight'
+import { pickDiscoveryOfTheDay, type SpotlightGame } from '../components/guide-spotlight'
 import { NexoPickBox } from '../components/nexo-pick'
 import { PageTop } from '../components/page-top'
 import {
@@ -223,7 +223,7 @@ function Ranking() {
 }
 
 const fetchDailyGuide = () =>
-  api<{ items: SpotlightGame[] }>('/api/guides?').then(({ items }) => pickOfTheDay(items))
+  api<{ items: SpotlightGame[] }>('/api/guides?').then(({ items }) => pickDiscoveryOfTheDay(items))
 
 /** `releases` replaces the calendar's own request (stories and tests pass it in a fixed state). */
 export function Discover({

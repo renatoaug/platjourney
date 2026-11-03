@@ -2,7 +2,7 @@ import { afterEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { rankingData } from '../../src/components/game-cards.stories'
-import { pickOfTheDay } from '../../src/components/guide-spotlight'
+import { pickDiscoveryOfTheDay } from '../../src/components/guide-spotlight'
 import { recsData } from '../../src/components/recommendations.stories'
 import { ReleasesView } from '../../src/components/releases'
 import { serversData } from '../../src/components/servers.stories'
@@ -451,7 +451,7 @@ test('the release calendar closes the page, as on the overview', () => {
   expect(page.lastElementChild?.classList.contains('releases')).toBe(true)
 })
 
-test('discovery uses the same daily guide selection as Guides, not recommendation art', async () => {
+test('discovery uses its independent daily scene, not recommendation art', async () => {
   const items = [
     {
       id: 'game:101',
@@ -480,7 +480,7 @@ test('discovery uses the same daily guide selection as Guides, not recommendatio
     renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
     await waitFor(() =>
       expect(frame.querySelector('img.now')?.getAttribute('src')).toContain(
-        pickOfTheDay(items)?.shot ?? 'missing',
+        pickDiscoveryOfTheDay(items)?.shot ?? 'missing',
       ),
     )
   } finally {
