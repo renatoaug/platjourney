@@ -12,8 +12,8 @@ Owned games share `Journey` in `src/components/journey.tsx`, whether opened from
 1. Existing immersive hero, catalog backdrop/scenes, name, platform and personal `HeroProgress`. `UnobtainableBanner` remains visible when appropriate.
 2. Next step from the server's `todaysFocus`, with relevant warning and one contextual Nexo action. A roadmap phase is not the player's confirmed location. With no reliable target, ask for context instead of guessing.
 3. Collapsible session route (`PlanCard` scoped by PSN list id). One active route per account; making another replaces the previous route and the UI states this.
-4. `TrophyList` with its existing filters, sorting and help. No invented trophy completion.
-5. Collapsible full `Guide` and `HeroMeta`; preserve guide numbers, sources, tabs and pending states.
+4. `GameColumns` switches between `TrophyList` and the full `Guide` on the journey, preserving filters, sorting, help, guide numbers, sources, nested tabs and pending states. No invented trophy completion.
+5. Similar games remain reachable through the sticky section navigation when available.
 
 Nexo links open a dialog above the mounted journey, preserving scroll, filters and expanded sections. Mobile uses the available viewport with safe areas. Returning closes the dialog. Direct `/nexo` still opens the general conversation page and history.
 
