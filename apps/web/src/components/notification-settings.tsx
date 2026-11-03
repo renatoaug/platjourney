@@ -32,8 +32,9 @@ const messages = defineMessages({
     },
     retry: 'Tentar novamente',
     test: 'Enviar um teste',
-    testSent: 'Teste enviado. Deve chegar em alguns segundos.',
-    testNone: 'Nenhum aparelho recebeu o teste. Desligue e ligue de novo.',
+    testSent: 'Envio aceito pelo serviço de notificações. Recebimento ainda não confirmado.',
+    testNone: 'O serviço de notificações não aceitou nenhum envio. Tente novamente.',
+    testFailed: 'Não foi possível enviar o teste. Tente novamente.',
     telegram: 'No Telegram',
     telegramHint: 'Os avisos chegam na conversa com o Nexo.',
     telegramLinkFirst: 'Conecte o Telegram acima para receber por lá.',
@@ -62,8 +63,9 @@ const messages = defineMessages({
     },
     retry: 'Try again',
     test: 'Send a test',
-    testSent: 'Test sent. It should arrive in a few seconds.',
-    testNone: 'No device got the test. Turn it off and on again.',
+    testSent: 'Sending accepted by the notification service. Receipt is not yet confirmed.',
+    testNone: 'The notification service accepted no sends. Try again.',
+    testFailed: 'The test could not be sent. Try again.',
     telegram: 'On Telegram',
     telegramHint: 'Notices arrive in the chat with Nexo.',
     telegramLinkFirst: 'Link Telegram above to get them there.',
@@ -209,12 +211,12 @@ export function NotificationSettings({ user }: { user: Me }) {
     }
   }, [pushAvailable])
 
-  const run = async (work: () => Promise<void>) => {
+  const run = async (work: () => Promise<void>, failure = t('failed')) => {
     setBusy(true)
     try {
       await work()
     } catch (e) {
-      if (!handled(e)) toast(t('failed'))
+      if (!handled(e)) toast(failure)
     }
     setBusy(false)
   }
@@ -233,8 +235,9 @@ export function NotificationSettings({ user }: { user: Me }) {
   const test = () =>
     run(async () => {
       const { sent } = await api<{ sent: number }>('/api/push/test', {})
-      toast(sent ? t('testSent') : t('testNone'), sent ? 'success' : 'info')
-    })
+      // The response counts provider acceptance across devices, never device receipt.
+      toast(sent ? t('testSent') : t('testNone'), 'info')
+    }, t('testFailed'))
   const changeTelegram = (on: boolean) =>
     run(async () => {
       const saved = await api<{ user: Me }>('/api/account/preferences', { notifyTelegram: on })

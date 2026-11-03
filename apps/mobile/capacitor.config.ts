@@ -15,6 +15,10 @@ const config: CapacitorConfig = {
   // The launch screen (Nexo) stays until the page's own boot screen is drawn (lib/native.ts hides
   // it), then fades into it; the long duration only covers a page that never loads.
   plugins: {
+    // iOS otherwise receives foreground pushes silently, including Settings' test.
+    PushNotifications: {
+      presentationOptions: ['banner', 'list', 'sound'],
+    },
     SplashScreen: {
       launchShowDuration: 6000,
       launchFadeOutDuration: 200,
