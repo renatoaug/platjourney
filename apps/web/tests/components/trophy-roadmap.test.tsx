@@ -93,22 +93,30 @@ test('zero counter remains visible, unavailable counters are not invented and em
     />,
   )
   expect(screen.getByText('Progresso informado pela PSN: 0 / 10')).toBeTruthy()
-  expect(container.textContent).toContain('Ainda sem posição')
+  expect(container.textContent).toContain('não têm uma correspondência única')
   unmount()
   renderApp(<TrophyRoadmap game={{ ...game, trophies: [] }} />)
   expect(screen.getByText(/Os troféus ainda não estão disponíveis/)).toBeTruthy()
 })
 
-test('all guide stages remain reachable without changing earned state', () => {
-  const { container } = renderApp(<TrophyRoadmap game={game} />)
-  const chapters = container.querySelector<HTMLDetailsElement>('.roadmap-chapters')
-  if (!chapters) throw new Error('chapter selector missing')
-  chapters.open = true
-  fireEvent.click(screen.getByRole('button', { name: /A conquista final/ }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Complete')
-  expect(screen.getByText(/A platina só aparece concluída/)).toBeTruthy()
+test('the journey is continuous and every previous achievement stays accessible', () => {
+  const completed = { ...game.trophies[2], hidden: false, earned: true }
+  const { container } = renderApp(
+    <TrophyRoadmap game={{ ...game, trophies: [game.trophies[0], game.trophies[1], completed] }} />,
+  )
+  expect(container.querySelector('.roadmap-chapters')).toBeNull()
+  expect(container.querySelector('.roadmap-chapter-caption')).toBeNull()
+  expect(screen.queryByText(/ETAPA/)).toBeNull()
+  const history = container.querySelector<HTMLDetailsElement>('.roadmap-past')
+  if (!history) throw new Error('earned history missing')
+  expect(history.textContent).toContain('Conquistas anteriores (2)')
+  history.open = true
+  fireEvent.click(screen.getByRole('button', { name: 'First step' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('First step')
+  fireEvent.click(screen.getByRole('button', { name: 'Secret scene' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Secret scene')
   fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Complete')
   expect(game.trophies[0].earned).toBe(false)
 })
 
@@ -126,7 +134,7 @@ test('next and previous select pending milestones while completion opens the ear
     <TrophyRoadmap game={{ ...game, trophies: items.map((x) => ({ ...x, earned: true })) }} />,
   )
   expect(screen.getByRole('heading', { name: 'Complete' })).toBeTruthy()
-  expect(screen.getByText('Etapa concluída')).toBeTruthy()
+  expect(screen.getByText('Caminho concluído')).toBeTruthy()
   expect(document.querySelectorAll('.roadmap-route li')).toHaveLength(0)
 })
 
@@ -147,9 +155,7 @@ test('the pending path crosses stages without traversing earned history', () => 
   const { container } = renderApp(<TrophyRoadmap game={game} />)
   fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Complete')
-  expect(container.querySelector('.roadmap-chapter-caption')?.textContent).toContain(
-    'A conquista final',
-  )
+  expect(container.querySelector('.roadmap-chapter-caption')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
   expect(container.querySelector('.roadmap-past')?.hasAttribute('open')).toBe(false)
@@ -233,4 +239,27 @@ test('arrow navigation keeps only the selected milestone tabbable and clamps the
   } finally {
     globalThis.ResizeObserver = previous
   }
+})
+
+test('objective and stored guidance have distinct icons, while missing advice adds no filler', () => {
+  const { container, unmount } = renderApp(
+    <TrophyRoadmap game={{ ...game, trophies: [{ ...game.trophies[1], earned: false }] }} />,
+  )
+  expect(container.querySelector('.roadmap-trophy-heading use')?.getAttribute('href')).toBe(
+    '/icons.svg#target',
+  )
+  expect(screen.getByText('Orientação do Nexo')).toBeTruthy()
+  expect(container.querySelector('.roadmap-advice-label use')?.getAttribute('href')).toBe(
+    '/icons.svg#nexo',
+  )
+  expect(container.querySelector('.roadmap-advice strong')?.textContent).toBe('the path')
+  unmount()
+  renderApp(
+    <TrophyRoadmap
+      game={{ ...game, guide: null, trophies: [{ ...game.trophies[1], earned: false }] }}
+    />,
+  )
+  expect(screen.queryByText('Orientação do Nexo')).toBeNull()
+  expect(screen.queryByText('Sem dica específica no guia.')).toBeNull()
+  expect(screen.getByRole('link', { name: 'Perguntar ao Nexo' })).toBeTruthy()
 })

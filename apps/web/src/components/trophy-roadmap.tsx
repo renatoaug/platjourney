@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { type TrophyStage, trophyAdvice, trophyRoadmap } from '../lib/trophy-roadmap'
+import { trophyAdvice, trophyRoadmap } from '../lib/trophy-roadmap'
 import type { CurrentGame, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { GuideText } from '../ui/markdown'
@@ -14,10 +14,9 @@ import './trophy-roadmap.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     title: 'O caminho à frente',
-    chapters: 'Percurso completo',
     ahead: 'Caminho à frente',
-    past: '{count} conquistas nesta etapa',
-    stageDone: 'Etapa concluída',
+    past: 'Conquistas anteriores ({count})',
+    stageDone: 'Caminho concluído',
     previous: 'Marco anterior',
     next: 'Próximo marco',
     explore: 'Selecione um marco para ver a orientação.',
@@ -36,8 +35,6 @@ const messages = defineMessages({
     basis:
       'Ordem sugerida pelo guia, não uma sequência garantida. Objetivos podem ser feitos em paralelo; sua posição no jogo não é confirmada pelos troféus.',
     count: '{earned} de {total} conquistados no jogo base',
-    phase: 'ETAPA {number}',
-    phaseName: 'Etapa do guia',
     unplaced: 'Ainda sem posição no roteiro',
     unplacedNote:
       'Estes troféus não têm uma correspondência única nas fases do guia. Esses marcos seguem a lista PSN, não uma recomendação.',
@@ -51,8 +48,7 @@ const messages = defineMessages({
     suggestion: 'Sugestão atual do guia',
     jump: 'Ir à sugestão',
     first: 'Ir ao primeiro pendente',
-    note: 'Orientação do guia',
-    gap: 'Sem dica específica no guia.',
+    note: 'Orientação do Nexo',
     talk: 'Conversar com Nexo',
     ask: 'Perguntar ao Nexo',
     warning: 'Atenção antes de avançar',
@@ -72,10 +68,9 @@ const messages = defineMessages({
   },
   [Language.En]: {
     title: 'The path ahead',
-    chapters: 'Complete route',
     ahead: 'The road ahead',
-    past: '{count} achievements in this stage',
-    stageDone: 'Stage complete',
+    past: 'Previous achievements ({count})',
+    stageDone: 'Path complete',
     previous: 'Previous milestone',
     next: 'Next milestone',
     explore: 'Select a milestone to read its guidance.',
@@ -93,8 +88,6 @@ const messages = defineMessages({
     basis:
       'Suggested guide order, not a guaranteed sequence. Objectives can run in parallel; trophies do not confirm your location in the game.',
     count: '{earned} of {total} earned in the base game',
-    phase: 'STAGE {number}',
-    phaseName: 'Guide stage',
     unplaced: 'Not yet placed on the roadmap',
     unplacedNote:
       'These trophies do not have a unique match in the guide phases. These milestones follow the PSN list, not a recommendation.',
@@ -108,8 +101,7 @@ const messages = defineMessages({
     suggestion: 'Current guide suggestion',
     jump: 'Go to suggestion',
     first: 'Go to first pending',
-    note: 'Guide advice',
-    gap: 'No specific tip in the guide yet.',
+    note: 'Nexo guidance',
     talk: 'Talk to Nexo',
     ask: 'Ask Nexo',
     warning: 'Before moving on',
@@ -175,7 +167,6 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: CurrentGame }) {
           <GuideText text={[advice.bug.issue, advice.bug.workaround].filter(Boolean).join('\n')} />
         </p>
       )}
-      {!hasAdvice && <p className="roadmap-gap">{t('gap')}</p>}
       <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
         <Icon name="nexo" />
         {t('ask')}
@@ -202,7 +193,7 @@ function TrophyStep({
       id="roadmap-advice"
     >
       <header className="roadmap-trophy-heading">
-        <Icon name="nexo" />
+        <Icon name="target" />
         <h4>{trophy.hidden && !hidden ? trophy.name : t('guidance')}</h4>
       </header>
       <p className="roadmap-objective">{hidden ? t('secretNote') : trophy.detail}</p>
@@ -232,19 +223,14 @@ function TrophyStep({
 function RoadmapLandscape({
   game,
   selected,
-  stage,
-  stageIndex,
   suggested,
 }: {
   game: CurrentGame
   selected: Trophy
-  stage: TrophyStage
-  stageIndex: number
   suggested: boolean
 }) {
   const t = useMessages(messages)
   const hidden = selected.hidden && !selected.earned
-  const stageName = (s: TrophyStage) => (s.kind === 'phase' ? s.name || t('phaseName') : t(s.kind))
   const art =
     game.game.art_url ??
     (game.game.screenshot_ids?.[0]
@@ -257,10 +243,6 @@ function RoadmapLandscape({
         <img className="roadmap-scene" src={art} alt="" onError={() => setFailedArt(art)} />
       )}
       <div className="roadmap-horizon" aria-hidden="true" />
-      <div className="roadmap-chapter-caption">
-        <span>{t('phase', { number: String(stageIndex + 1).padStart(2, '0') })}</span>
-        <span>{stageName(stage)}</span>
-      </div>
       <div className="roadmap-destination" key={anchor(selected)}>
         <span className="roadmap-destination-art">
           <TrophyArt url={hidden ? undefined : selected.iconUrl} />
@@ -431,10 +413,8 @@ export function TrophyRoadmap({ game }: { game: CurrentGame }) {
   const stageIndex = stages.findIndex((s) => selected && s.trophies.includes(selected))
   const stage = stages[stageIndex]
   const pending = ordered.filter((x) => !x.earned)
-  const past = stage?.trophies.filter((x) => x.earned) ?? []
+  const past = ordered.filter((x) => x.earned)
   const choose = (trophy: Trophy) => setSelection(anchor(trophy))
-  const stageName = (s: (typeof stages)[number]) =>
-    s.kind === 'phase' ? s.name || t('phaseName') : t(s.kind)
   return (
     <section className="trophy-roadmap" id="journey-roadmap" aria-labelledby="roadmap-heading">
       <header className="roadmap-intro">
@@ -451,40 +431,8 @@ export function TrophyRoadmap({ game }: { game: CurrentGame }) {
         <p>{t('empty')}</p>
       ) : (
         <>
-          <details className="roadmap-chapters">
-            <summary>
-              <span>{t('chapters')}</span>
-              <span>
-                {stageIndex + 1} / {stages.length}
-                <Icon name="chevron-down" />
-              </span>
-            </summary>
-            <ol>
-              {stages.map((s, i) => (
-                <li key={`${s.kind}-${anchor(s.trophies[0])}`}>
-                  <button
-                    type="button"
-                    aria-pressed={i === stageIndex}
-                    onClick={() => choose(s.trophies.find((x) => !x.earned) ?? s.trophies[0])}
-                  >
-                    <span className="roadmap-chapter-number">{String(i + 1).padStart(2, '0')}</span>
-                    <span>{stageName(s)}</span>
-                    <small>
-                      {s.trophies.filter((x) => x.earned).length}/{s.trophies.length}
-                    </small>
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </details>
           <div className="roadmap-expedition">
-            <RoadmapLandscape
-              game={game}
-              selected={selected}
-              stage={stage}
-              stageIndex={stageIndex}
-              suggested={suggested === selected}
-            />
+            <RoadmapLandscape game={game} selected={selected} suggested={suggested === selected} />
             <RoadmapForward game={game} pending={pending} selected={selected} choose={choose} />
             <TrophyStep
               key={anchor(selected)}
@@ -551,14 +499,8 @@ export function TrophyRoadmapSkeleton() {
         </div>
         <Sk w="150px" h={14} />
       </header>
-      <div className="roadmap-chapters">
-        <Sk w="60%" h={24} />
-      </div>
       <div className="roadmap-expedition">
         <div className="roadmap-landscape">
-          <div className="roadmap-chapter-caption">
-            <Sk w="80%" h={16} />
-          </div>
           <div className="roadmap-destination">
             <Sk w="64px" h={64} />
             <span className="roadmap-destination-copy">
