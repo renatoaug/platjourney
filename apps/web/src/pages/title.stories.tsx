@@ -9,6 +9,13 @@ import { type TitleDetail, TitleScreen } from './title'
 const meta: Meta = {
   title: 'Pages/Title',
   parameters: { layout: 'fullscreen' },
+  decorators: [
+    (Story) => (
+      <main className="content">
+        <Story />
+      </main>
+    ),
+  ],
   excludeStories: /Data$/,
 }
 export default meta
@@ -39,6 +46,9 @@ export const recommendedData: TitleDetail = {
   owned: false,
   np: undefined,
   hoursPlayed: null,
+  progress: undefined,
+  earned: undefined,
+  total: undefined,
   trophies: trophies.map(({ rarity, earnedRate, earnedAt, ...t }) => ({ ...t, earned: false })),
 }
 

@@ -99,3 +99,37 @@ export const EarnedDetails: Story = {
     },
   },
 }
+
+export const OngoingObjectives: Story = {
+  args: {
+    game: {
+      ...current,
+      name: 'Demonstração de objetivos contínuos',
+      focus: null,
+      trophies: current.trophies.map((t, i) => ({
+        ...t,
+        earned: false,
+        hidden: false,
+        progressTarget: i === 1 ? 10 : undefined,
+        progressValue: i === 1 ? 0 : undefined,
+      })),
+      guide: current.guide
+        ? {
+            ...current.guide,
+            missables: [
+              {
+                trophy: current.trophies[0].name,
+                when: 'Durante a campanha.',
+                how: 'Orientação ilustrativa para validar a apresentação; não é uma dica deste jogo.',
+              },
+            ],
+          }
+        : null,
+    },
+  },
+}
+
+export const StartComparison: Story = {
+  ...OngoingObjectives,
+  args: { ...OngoingObjectives.args, preview: true },
+}

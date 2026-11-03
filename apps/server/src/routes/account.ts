@@ -18,7 +18,7 @@ import { pushEnabled, pushTo } from '../push.ts'
 import { deleteNativeDevice, saveNativeDevice } from '../repository/native-push.ts'
 import { connectionsOf, deleteConnection } from '../repository/oauth.ts'
 import { deletePushSubscription, savePushSubscription } from '../repository/push-subscription.ts'
-import { setLinkCode, type User, updateUser } from '../repository/user.ts'
+import { setLinkCode, setTrophyVisibility, type User, updateUser } from '../repository/user.ts'
 import { botUsername } from '../telegram.ts'
 import { type Api, type ApiHandler, accountUser } from './api.ts'
 import { forgetSummary } from './home.ts'
@@ -60,6 +60,19 @@ async function savePreferences({ req, res, me, locale: language }: Api) {
   if (!Object.keys(fields).length) return json(res, 400, { error: 'invalid' })
   await updateUser(me.id, fields)
   return json(res, 200, { user: await accountUser({ ...me, ...fields }) })
+}
+
+async function saveTrophyVisibility({ req, res, me }: Api) {
+  const { game, revealed, owner } = await readBody(req)
+  if (owner !== me.id) return json(res, 409, { error: 'account_changed' })
+  if (
+    typeof game !== 'string' ||
+    !/^game:[a-zA-Z0-9_-]{1,100}$/.test(game) ||
+    typeof revealed !== 'boolean'
+  )
+    return json(res, 400, { error: 'invalid' })
+  const revealedTrophyGames = await setTrophyVisibility(me.id, game, revealed)
+  return json(res, 200, { revealedTrophyGames })
 }
 
 // A device turns push on: the browser's subscription, with the keys that encrypt for it.
@@ -200,6 +213,7 @@ async function disconnect({ req, res, me }: Api) {
 export const ACCOUNT_ROUTES: Record<string, ApiHandler> = {
   'GET /api/me': async ({ res, me }) => json(res, 200, { user: await accountUser(me) }),
   'POST /api/account/preferences': savePreferences,
+  'POST /api/account/trophy-visibility': saveTrophyVisibility,
   'POST /api/account/onboarded': async ({ res, me }) => {
     await updateUser(me.id, { onboarded_at: new Date() })
     return json(res, 200, { ok: true })

@@ -186,6 +186,7 @@ test('register and login sign in, start watching and set the cookie', async () =
       avatarUrl: null,
       telegramLinked: true,
       includeDlcProgress: false,
+      revealedTrophyGames: [],
       psPlus: 'none',
       aiNotices: true,
       aiNoticesAvailable: config.automatic.notices,
@@ -1132,6 +1133,11 @@ describe('the demo', () => {
     ['POST', '/api/goals', { command: 'set 12' }],
     ['POST', '/api/account/preferences', { includeDlcProgress: true }],
     ['POST', '/api/account/preferences', { includeDlcProgress: true, locale: 'en' }],
+    [
+      'POST',
+      '/api/account/trophy-visibility',
+      { game: 'game:1', revealed: true, owner: 'user:demo' },
+    ],
     ['POST', '/api/account/password', { current: 'a', next: 'b' }],
     ['DELETE', '/api/account', { onlineId: 'PlatJourneyDemo' }],
     ['POST', '/api/telegram/link', {}],
@@ -1633,3 +1639,26 @@ for (const includeDlc of [false, true]) {
     )
   })
 }
+
+test('trophy visibility persists per authenticated owner and rejects stale account and malformed requests', async () => {
+  const save = spyOn(users, 'setTrophyVisibility').mockResolvedValue(['game:1'])
+  const body = { game: 'game:1', revealed: true, owner: me.id }
+  expect(await send('POST', '/api/account/trophy-visibility', body)).toMatchObject({
+    status: 200,
+    body: { revealedTrophyGames: ['game:1'] },
+  })
+  expect(save).toHaveBeenCalledWith(me.id, 'game:1', true)
+  for (const invalid of [
+    { ...body, game: 'user:other' },
+    { ...body, game: 1 },
+    { ...body, revealed: 'yes' },
+  ])
+    expect((await send('POST', '/api/account/trophy-visibility', invalid)).status).toBe(400)
+  expect(
+    (await send('POST', '/api/account/trophy-visibility', { ...body, owner: 'user:other' })).status,
+  ).toBe(409)
+  expect(save).toHaveBeenCalledTimes(1)
+  spyOn(auth, 'authenticate').mockResolvedValue(undefined as never)
+  expect((await send('POST', '/api/account/trophy-visibility', body)).status).toBe(401)
+  expect(save).toHaveBeenCalledTimes(1)
+})

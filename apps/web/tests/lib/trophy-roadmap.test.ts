@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test'
 import { current } from '../../src/fixtures'
-import { trophyAdvice, trophyRoadmap } from '../../src/lib/trophy-roadmap'
+import { ongoingObjectives, trophyAdvice, trophyRoadmap } from '../../src/lib/trophy-roadmap'
 import type { GuideDetail, Trophy } from '../../src/lib/types'
 
 const trophy = (id: number, name: string, extra: Partial<Trophy> = {}): Trophy => ({
@@ -51,4 +51,83 @@ test('advice only uses an exact localized match and keeps absent advice absent',
   expect(trophyAdvice(trophy(1, 'Início', { nameEn: 'Start' }), g).trick).toBe('Actual guide tip')
   expect(trophyAdvice(trophy(1, 'Início'), g).warning?.how).toBe('Do this')
   expect(trophyAdvice(trophy(1, 'Start again'), g).trick).toBeUndefined()
+})
+
+test('ongoing objectives require explicit evidence and preserve unknown progress', () => {
+  const items = [
+    trophy(1, 'Stealth'),
+    trophy(2, 'Collect'),
+    trophy(3, 'Count', { progressTarget: 10, progressValue: 0 }),
+    trophy(4, 'Ordinary'),
+  ]
+  const g = guide([
+    { phase: 'A', goal: '', trophies: ['Collect'] },
+    { phase: 'B', goal: '', trophies: ['Collect'] },
+  ])
+  g.missables = [
+    { trophy: 'Stealth', when: 'Durante a campanha e New Game+.', how: 'Keep the habit.' },
+    { trophy: 'Ordinary', when: 'Before chapter 2.', how: 'One event.' },
+  ]
+  expect(ongoingObjectives(items, g).map((x) => [x.trophy.id, x.basis])).toEqual([
+    [1, 'duration'],
+    [2, 'repeated'],
+    [3, 'counter'],
+  ])
+  expect(ongoingObjectives(items, g)[0]?.trophy.progressValue).toBeUndefined()
+  expect(
+    ongoingObjectives(
+      items.map((t) => ({ ...t, earned: true })),
+      g,
+    ),
+  ).toEqual([])
+  expect(
+    ongoingObjectives(
+      items.map((t) => ({ ...t, hidden: true })),
+      g,
+    ),
+  ).toEqual([])
+  expect(
+    ongoingObjectives(
+      items.map((t) => ({ ...t, groupId: '001' })),
+      g,
+    ),
+  ).toEqual([])
+  expect(ongoingObjectives(items, null).map((x) => x.trophy.id)).toEqual([3])
+  expect(items.every((t) => !t.earned)).toBe(true)
+})
+
+test('ambiguous matches and incidental campaign text do not create ongoing objectives', () => {
+  const g = guide([{ phase: 'A', goal: '', trophies: ['Same', 'Same'] }])
+  g.missables = [
+    { trophy: 'Same', when: 'Durante a campanha.', how: 'Tip' },
+    { trophy: 'Other', when: 'Não é necessário durante a campanha.', how: 'Tip' },
+  ]
+  expect(ongoingObjectives([trophy(1, 'Same'), trophy(2, 'Same'), trophy(3, 'Other')], g)).toEqual(
+    [],
+  )
+})
+
+test('start guidance links explicit unique trophy names without matching parts of other names', () => {
+  const g = {
+    ...guide([]),
+    earlyTips: [
+      'Aceite contratos enquanto explora para adiantar **Contratos em dia**.',
+      'Explore every island for Island Explorer.',
+      'A generic exploration tip without a trophy name.',
+    ],
+    missables: [],
+  }
+  const items = [
+    trophy(1, 'Contratos em dia'),
+    trophy(2, 'Ilhas', { nameEn: 'Island Explorer' }),
+    trophy(3, 'Dia'),
+    trophy(4, 'Contratos em dias extras'),
+  ]
+  const result = ongoingObjectives(items, g)
+  expect(result.map((entry) => [entry.trophy.id, entry.basis])).toEqual([
+    [1, 'early'],
+    [2, 'early'],
+  ])
+  expect(result[0].early).toBe(g.earlyTips[0])
+  expect(ongoingObjectives([items[0], { ...items[0], id: 9 }], g)).toEqual([])
 })

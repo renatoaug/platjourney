@@ -24,6 +24,7 @@ import {
 import { NextTrophy } from '../components/next-trophy'
 import { SimilarGamesSection, similarGames } from '../components/similar-games'
 import { TrophyList } from '../components/trophy-list'
+import { TrophyRoadmap } from '../components/trophy-roadmap'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { fmtHours } from '../lib/format'
@@ -282,6 +283,7 @@ function HeroBottom({ d }: { d: TitleDetail }) {
 }
 
 const TITLE_SECTIONS: [GameSection, string][] = [
+  ['route', 'journey-roadmap'],
   ['guide', 'title-guide'],
   ['trophies', 'title-trophies'],
   ['similar', 'similar-games'],
@@ -370,6 +372,13 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
         </div>
       </div>
       <GameNav sections={TITLE_SECTIONS} hero="title-hero" name={d.name} progress={d.progress} />
+      {!owned && !!d.trophies?.length && (
+        <TrophyRoadmap
+          key={d.game.id}
+          preview
+          game={{ game: d.game, name: d.name, np: d.game.id, trophies: d.trophies, guide: d.guide }}
+        />
+      )}
       {/* Every game gets the same two columns as the current game: the guide on the left,
           the trophies beside it. A game whose PSN list is not known yet says so where the list goes. */}
       <GameColumns

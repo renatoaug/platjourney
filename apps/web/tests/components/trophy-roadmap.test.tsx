@@ -1,10 +1,27 @@
-import { expect, mock, test } from 'bun:test'
+import { beforeEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen } from '@testing-library/react'
+import { SAMPLE_ME } from '../../src/app/app-state'
 import { Journey } from '../../src/components/journey'
 import { TrophyRoadmap } from '../../src/components/trophy-roadmap'
 import { current } from '../../src/fixtures'
 import type { CurrentGame, GuideDetail } from '../../src/lib/types'
-import { renderApp } from '../support/web'
+import { mockApi, renderApp, reply } from '../support/web'
+
+const savedVisibility = new Map<string, string[]>()
+beforeEach(() => {
+  savedVisibility.clear()
+  mockApi({
+    '/api/account/trophy-visibility': ({ body }) => {
+      const { owner, game, revealed } = body as { owner: string; game: string; revealed: boolean }
+      const saved = new Set(savedVisibility.get(owner) ?? [])
+      if (revealed) saved.add(game)
+      else saved.delete(game)
+      const values = [...saved]
+      savedVisibility.set(owner, values)
+      return { revealedTrophyGames: values }
+    },
+  })
+})
 
 const game: CurrentGame = {
   ...current,
@@ -58,18 +75,20 @@ test('mounted journey starts at a pending challenge and keeps completed trophies
   expect(screen.getByText('1 de 3 conquistados no jogo base')).toBeTruthy()
 })
 
-test('hidden advice is opt in, guide markup is sanitized and links retain exact trophy context', () => {
+test('hidden advice is opt in, guide markup is sanitized and links retain exact trophy context', async () => {
   const { container } = renderApp(<TrophyRoadmap game={game} />, { path: '/game' })
   expect(screen.queryByText('Secret plot')).toBeNull()
   expect(screen.queryByText('Secret advice')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Revelar este troféu' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Revelar ocultos' }))
+  await screen.findByRole('button', { name: 'Ocultar segredos' })
   expect(screen.getByText('Secret advice')).toBeTruthy()
   expect(screen.getByRole('heading', { name: 'Secret scene' })).toBeTruthy()
   const link = [...container.querySelectorAll<HTMLAnchorElement>('.roadmap-ask')].find((a) =>
     a.href.includes('Secret'),
   )
   expect(new URL(link?.href ?? 'http://localhost/').searchParams.get('trophy')).toBe('Secret scene')
-  fireEvent.click(screen.getByRole('button', { name: 'Ocultar detalhes' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Ocultar segredos' }))
+  await screen.findByRole('button', { name: 'Revelar ocultos' })
   expect(screen.queryByText('Secret advice')).toBeNull()
   const past = container.querySelector<HTMLDetailsElement>('.roadmap-past')
   if (!past) throw new Error('earned history missing')
@@ -219,13 +238,14 @@ test('arrow navigation keeps only the selected milestone tabbable and clamps the
     const { container, unmount } = renderApp(<TrophyRoadmap game={game} />)
     const track = container.querySelector<HTMLOListElement>('.roadmap-route')
     if (!track) throw new Error('route missing')
-    const stops = track.querySelectorAll<HTMLElement>('li')
+    const stops = track.querySelectorAll<HTMLLIElement>('li')
     const scroll = mock(() => {})
     track.scrollTo = scroll
     Object.defineProperties(track, {
       clientWidth: { value: 320, configurable: true },
       scrollWidth: { value: 640 },
     })
+    Object.defineProperty(stops[0], 'offsetWidth', { value: 320 })
     Object.defineProperty(stops[1], 'offsetLeft', { value: 320 })
     fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
     expect(scroll).toHaveBeenLastCalledWith({ left: 320, behavior: 'auto' })
@@ -264,6 +284,112 @@ test('objective and stored guidance have distinct icons, while missing advice ad
   expect(screen.getByRole('link', { name: 'Perguntar ao Nexo' })).toBeTruthy()
 })
 
+test('selection stays on the visible page, crosses its boundary symmetrically and keeps order', () => {
+  const previous = globalThis.ResizeObserver
+  let resize = () => {}
+  globalThis.ResizeObserver = class {
+    constructor(callback: () => void) {
+      resize = callback
+    }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver
+  try {
+    const trophies = Array.from({ length: 7 }, (_, id) => ({
+      ...game.trophies[1],
+      id,
+      name: `Stop ${id}`,
+      earned: false,
+    }))
+    const { container } = renderApp(
+      <TrophyRoadmap game={{ ...game, focus: null, guide: null, trophies }} />,
+    )
+    const track = container.querySelector<HTMLOListElement>('.roadmap-route')
+    if (!track) throw new Error('route missing')
+    const stops = [...track.querySelectorAll<HTMLLIElement>('li')]
+    const scroll = mock(() => {})
+    track.scrollTo = scroll
+    Object.defineProperty(track, 'clientWidth', { value: 300, configurable: true })
+    stops.forEach((node, index) => {
+      Object.defineProperties(node, {
+        offsetWidth: { value: 100 },
+        offsetLeft: { value: index * 100 },
+      })
+    })
+    resize()
+    expect(track.style.getPropertyValue('--roadmap-tail')).toBe('200px')
+    const next = () => fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+    next()
+    next()
+    expect(scroll).toHaveBeenLastCalledWith({ left: 0, behavior: 'smooth' })
+    expect(stops[2].querySelector('button')?.getAttribute('aria-pressed')).toBe('true')
+    next()
+    expect(scroll).toHaveBeenLastCalledWith({ left: 300, behavior: 'smooth' })
+    fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
+    expect(scroll).toHaveBeenLastCalledWith({ left: 0, behavior: 'smooth' })
+    next()
+    next()
+    next()
+    next()
+    expect(scroll).toHaveBeenLastCalledWith({ left: 600, behavior: 'smooth' })
+    expect(
+      (screen.getByRole('button', { name: 'Próximo marco' }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+    expect([...track.querySelectorAll('li')]).toEqual(stops)
+    Object.defineProperty(track, 'clientWidth', { value: 700 })
+    resize()
+    expect(scroll).toHaveBeenLastCalledWith({ left: 0, behavior: 'auto' })
+  } finally {
+    globalThis.ResizeObserver = previous
+  }
+})
+
+test('reveal applies to the whole game, reloads from the account and isolates other games and accounts', async () => {
+  const hiddenGame = {
+    ...game,
+    trophies: game.trophies.map((trophy) => ({ ...trophy, hidden: true, earned: false })),
+  }
+  let view = renderApp(<TrophyRoadmap game={hiddenGame} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Revelar ocultos' }))
+  await screen.findByRole('button', { name: 'Ocultar segredos' })
+  expect(view.container.querySelector('.roadmap-route')?.textContent).not.toContain('Troféu oculto')
+  expect(screen.queryByRole('button', { name: 'Revelar este troféu' })).toBeNull()
+  expect(localStorage.length).toBe(0)
+  view.unmount()
+  const account = { ...SAMPLE_ME, revealedTrophyGames: savedVisibility.get(SAMPLE_ME.id) }
+  view = renderApp(<TrophyRoadmap game={hiddenGame} />, { value: { me: account } })
+  expect(
+    screen.getByRole('button', { name: 'Ocultar segredos' }).getAttribute('aria-pressed'),
+  ).toBe('true')
+  view.unmount()
+  view = renderApp(
+    <TrophyRoadmap game={{ ...hiddenGame, game: { ...hiddenGame.game, id: 'game:another' } }} />,
+    { value: { me: account } },
+  )
+  expect(screen.getByRole('button', { name: 'Revelar ocultos' }).getAttribute('aria-pressed')).toBe(
+    'false',
+  )
+  view.unmount()
+  view = renderApp(<TrophyRoadmap game={hiddenGame} />, {
+    value: { me: { ...SAMPLE_ME, id: 'user:another' } },
+  })
+  expect(screen.getByRole('button', { name: 'Revelar ocultos' }).getAttribute('aria-pressed')).toBe(
+    'false',
+  )
+  expect(hiddenGame.trophies.every((trophy) => trophy.hidden)).toBe(true)
+})
+
+test('failed save keeps trophies hidden and reports the failure', async () => {
+  mockApi({ '/api/account/trophy-visibility': reply(500, { message: 'Unavailable' }) })
+  const { container } = renderApp(<TrophyRoadmap game={game} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Revelar ocultos' }))
+  expect(
+    await screen.findByText('Não foi possível salvar a preferência. Tente novamente.'),
+  ).toBeTruthy()
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
+})
+
 test('earned history shows trophy art and full descriptions without changing progress', () => {
   const earned = {
     ...game.trophies[1],
@@ -291,4 +417,41 @@ test('earned history shows trophy art and full descriptions without changing pro
   fireEvent.click(button)
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(earned.name)
   expect(earned.earned).toBe(true)
+})
+
+test('ongoing objectives stay present while browsing and never complete from a full counter alone', () => {
+  const items = [
+    { ...game.trophies[1], earned: false, hidden: false, progressValue: 10, progressTarget: 10 },
+    game.trophies[0],
+  ]
+  const { container, unmount } = renderApp(<TrophyRoadmap game={{ ...game, trophies: items }} />)
+  const ongoing = screen.getByRole('complementary', { name: 'Ao longo da jornada' })
+  expect(ongoing.textContent).toContain('PSN: 10 / 10')
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+  expect(ongoing.textContent).toContain('First step')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Complete')
+  unmount()
+  renderApp(
+    <TrophyRoadmap game={{ ...game, trophies: items.map((t) => ({ ...t, earned: true })) }} />,
+  )
+  expect(screen.queryByRole('complementary', { name: 'Ao longo da jornada' })).toBeNull()
+})
+
+test('start comparison uses the real list but never mutates account progress or counters', () => {
+  const items = [{ ...game.trophies[1], progressValue: 8, progressTarget: 10 }, game.trophies[0]]
+  const { container } = renderApp(<TrophyRoadmap game={{ ...game, trophies: items }} />)
+  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(1)
+  fireEvent.click(screen.getByRole('button', { name: 'Ver desde o início' }))
+  expect(container.querySelector('.roadmap-preview-controls [role=status]')?.textContent).toContain(
+    'PRÉVIA DO INÍCIO',
+  )
+  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
+  expect(screen.getByText('Progresso não informado pela PSN')).toBeTruthy()
+  expect(screen.queryByText('PSN: 8 / 10')).toBeNull()
+  expect(container.querySelector('.roadmap-past')).toBeNull()
+  expect(items[0].earned).toBe(true)
+  expect(items[0].progressValue).toBe(8)
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar ao meu progresso' }))
+  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(1)
+  expect(container.querySelector('.roadmap-past')).toBeTruthy()
 })

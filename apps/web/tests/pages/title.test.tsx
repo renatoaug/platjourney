@@ -269,3 +269,14 @@ test('the tab shows the game’s name while the page is open', async () => {
   unmount()
   expect(document.title).toBe('Jogo')
 })
+
+test('a catalog game offers a roadmap preview without asserting ownership or personal progress', async () => {
+  open('/title/game/game%3A19561', recommendedData)
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
+  expect(document.querySelector('.roadmap-preview-controls [role=status]')?.textContent).toContain(
+    'PRÉVIA DO INÍCIO',
+  )
+  expect(document.querySelector('.roadmap-total')?.textContent).toContain('sem progresso pessoal')
+  expect(screen.queryByRole('button', { name: 'Voltar ao meu progresso' })).toBeNull()
+  expect(document.querySelector('.roadmap-past')).toBeNull()
+})

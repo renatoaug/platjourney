@@ -11,6 +11,8 @@ export interface Me {
   avatarUrl?: string
   telegramLinked: boolean
   includeDlcProgress: boolean
+  /** Catalog game ids whose hidden trophies this account chose to reveal. */
+  revealedTrophyGames?: string[]
   /** The PS Plus tier the player says they have. */
   psPlus?: 'none' | 'essential' | 'extra' | 'deluxe'
   /** Nexo writes this player's automatic notices; off, they are plain and free. */

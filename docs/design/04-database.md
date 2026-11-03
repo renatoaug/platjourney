@@ -46,6 +46,7 @@ erDiagram
         telegram_link_code option(string)
         telegram_link_expires_at option(datetime)
         goal_targets object
+        revealed_trophy_games array
         taste_profile option(object)
         taste_prefs option(object)
         include_dlc_progress bool
@@ -476,7 +477,7 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `user` | account | `psn_online_id_lower`, `psn_account_id`, `telegram_chat_id` (when set) | The PSN account id is the identity; `telegram_chat_id` is the linked Telegram chat, on one account at most (linking it takes it off any other), set from a `telegram_link_code` that works until `telegram_link_expires_at`. `session_notice_at` is when the last session-start notice went out. settings, goals and the current session live here as objects. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell. `notify_telegram` (on by default) sends notices to the linked chat; off, they reach only the web and push |
+| `user` | account | `psn_online_id_lower`, `psn_account_id`, `telegram_chat_id` (when set) | The PSN account id is the identity; `telegram_chat_id` is the linked Telegram chat, on one account at most (linking it takes it off any other), set from a `telegram_link_code` that works until `telegram_link_expires_at`. `session_notice_at` is when the last session-start notice went out. settings, goals and the current session live here as objects. `revealed_trophy_games` is an optional list of catalog game IDs whose hidden trophies the account explicitly reveals; absent means hidden. The authenticated account endpoint atomically adds/removes one game, preserving other games and accounts; `/api/me` restores the choice on other devices. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell. `notify_telegram` (on by default) sends notices to the linked chat; off, they reach only the web and push |
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN, matched to a catalog game by the store name without its console and edition tags; a name neither the player's trophy lists, the catalog nor IGDB knows is left out, never added as a game |

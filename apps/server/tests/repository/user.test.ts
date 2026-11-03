@@ -8,6 +8,7 @@ import {
   linkChat,
   listUsers,
   setLinkCode,
+  setTrophyVisibility,
   touchUser,
   updateUser,
   userByAccount,
@@ -197,4 +198,19 @@ test('a rename moves the lowercase id with it', async () => {
   const [sql, vars] = q.mock.calls[0]
   expect(sql).toContain('psn_online_id_lower = $psn_online_id_lower')
   expect(vars).toMatchObject({ psn_online_id: 'NewName', psn_online_id_lower: 'newname' })
+})
+
+test('trophy visibility updates only the authenticated account and one game atomically', async () => {
+  const one = spyOn(db, 'one').mockResolvedValue({ revealed_trophy_games: ['game:1', 'game:2'] })
+  expect(await setTrophyVisibility('user:u1', 'game:2', true)).toEqual(['game:1', 'game:2'])
+  expect(one.mock.calls[0]).toEqual([
+    'UPDATE $id SET revealed_trophy_games = array::union(revealed_trophy_games ?? [], [$game]) RETURN revealed_trophy_games',
+    { id: user, game: 'game:2' },
+  ])
+  await setTrophyVisibility('user:u1', 'game:2', false)
+  expect(one.mock.calls[1][0]).toContain('array::complement')
+  one.mockResolvedValue(undefined)
+  await expect(setTrophyVisibility('missing', 'game:2', true)).rejects.toThrow(
+    'Account unavailable',
+  )
 })

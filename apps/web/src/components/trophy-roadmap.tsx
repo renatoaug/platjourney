@@ -1,19 +1,37 @@
 import { useEffect, useRef, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { trophyAdvice, trophyRoadmap } from '../lib/trophy-roadmap'
+import { ongoingObjectives, trophyAdvice, trophyRoadmap } from '../lib/trophy-roadmap'
 import type { CurrentGame, Trophy } from '../lib/types'
+import { useGameSpoilers } from '../lib/use-game-spoilers'
 import { Icon } from '../ui/icon'
 import { GuideText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
+import { toast } from '../ui/toast'
 import { TrophyArt } from '../ui/trophy-art'
 import { image } from './game-showcase'
 import { JourneyLink } from './journey-link'
 import { nexoHref } from './tip'
 import './trophy-roadmap.css'
 
+type RoadmapGame = Pick<CurrentGame, 'game' | 'name' | 'np' | 'trophies' | 'guide' | 'focus'>
+
 const messages = defineMessages({
   [Language.PtBR]: {
     title: 'O caminho à frente',
+    ongoing: 'Ao longo da jornada',
+    ongoingNote:
+      'Cuide destes objetivos enquanto avança. A seleção da trilha não indica sua posição real no jogo.',
+    repeated: 'Citado em vários pontos do roteiro',
+    counter: 'Objetivo com contador da PSN',
+    duration: 'Acompanhamento durante a campanha',
+    early: 'Orientação para o início',
+    unknownProgress: 'Progresso não informado pela PSN',
+    counterProgress: 'PSN: {value} / {target}',
+    previewStart: 'Ver desde o início',
+    previewBack: 'Voltar ao meu progresso',
+    previewLabel: 'PRÉVIA DO INÍCIO',
+    previewNote: 'Comparação sem progresso pessoal. Nenhuma conquista ou dado da conta é alterado.',
+    catalogCount: '{total} troféus no jogo base · sem progresso pessoal',
     ahead: 'Caminho à frente',
     past: 'Conquistas anteriores ({count})',
     stageDone: 'Caminho concluído',
@@ -56,8 +74,10 @@ const messages = defineMessages({
     bug: 'Problema relatado no guia',
     secret: 'Troféu oculto',
     secretNote: 'Nome, descrição e dicas protegidos para evitar spoilers.',
-    reveal: 'Revelar este troféu',
-    hide: 'Ocultar detalhes',
+    reveal: 'Revelar ocultos',
+    hide: 'Ocultar segredos',
+    revealScope: 'Preferência deste jogo salva na sua conta.',
+    revealFailed: 'Não foi possível salvar a preferência. Tente novamente.',
     progress: 'Progresso informado pela PSN: {value} / {target}',
     empty:
       'Os troféus ainda não estão disponíveis. O roteiro aparece quando a sincronização os trouxer.',
@@ -68,6 +88,21 @@ const messages = defineMessages({
   },
   [Language.En]: {
     title: 'The path ahead',
+    ongoing: 'Throughout the journey',
+    ongoingNote:
+      'Keep these objectives in mind as you play. Selecting a milestone does not indicate your actual location in the game.',
+    repeated: 'Mentioned at several points in the roadmap',
+    counter: 'Objective with a PSN counter',
+    duration: 'Follow throughout the campaign',
+    early: 'Guidance for the start',
+    unknownProgress: 'Progress not reported by PSN',
+    counterProgress: 'PSN: {value} / {target}',
+    previewStart: 'Preview from the start',
+    previewBack: 'Return to my progress',
+    previewLabel: 'START PREVIEW',
+    previewNote:
+      'Comparison without personal progress. No achievements or account data are changed.',
+    catalogCount: '{total} base-game trophies · no personal progress',
     ahead: 'The road ahead',
     past: 'Previous achievements ({count})',
     stageDone: 'Path complete',
@@ -109,8 +144,10 @@ const messages = defineMessages({
     bug: 'Issue reported in the guide',
     secret: 'Hidden trophy',
     secretNote: 'Name, description and advice are protected to avoid spoilers.',
-    reveal: 'Reveal this trophy',
-    hide: 'Hide details',
+    reveal: 'Reveal hidden trophies',
+    hide: 'Hide secrets',
+    revealScope: 'This game’s preference saved to your account.',
+    revealFailed: 'Could not save this preference. Try again.',
     progress: 'Progress reported by PSN: {value} / {target}',
     empty: 'Trophies are not available yet. The roadmap appears once they have been synced.',
     bronze: 'Bronze',
@@ -124,7 +161,7 @@ const roadCurves = ['M48 96 C110 96 166 56 228 56', 'M48 56 C110 56 166 96 228 9
 
 const anchor = (trophy: Trophy) => `roadmap-${encodeURIComponent(trophy.groupId)}-${trophy.id}`
 
-function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: CurrentGame }) {
+function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const t = useMessages(messages)
   const advice = trophyAdvice(trophy, game.guide)
   const hasAdvice = advice.trick || advice.warning || advice.online || advice.bug
@@ -181,12 +218,11 @@ function TrophyStep({
   suggested,
 }: {
   trophy: Trophy
-  game: CurrentGame
+  game: RoadmapGame
   suggested: boolean
 }) {
   const t = useMessages(messages)
-  const [revealed, setRevealed] = useState(false)
-  const hidden = trophy.hidden && !trophy.earned && !revealed
+  const hidden = trophy.hidden && !trophy.earned
   return (
     <article
       className={`roadmap-content roadmap-step${suggested ? ' is-suggested' : ''}`}
@@ -197,11 +233,7 @@ function TrophyStep({
         <h4>{trophy.hidden && !hidden ? trophy.name : t('guidance')}</h4>
       </header>
       <p className="roadmap-objective">{hidden ? t('secretNote') : trophy.detail}</p>
-      {hidden ? (
-        <button type="button" className="quiet" onClick={() => setRevealed(true)}>
-          {t('reveal')}
-        </button>
-      ) : (
+      {!hidden && (
         <>
           {trophy.progressValue != null && trophy.progressTarget != null && (
             <p className="roadmap-progress">
@@ -209,11 +241,6 @@ function TrophyStep({
             </p>
           )}
           <TrophyAdvice trophy={trophy} game={game} />
-          {trophy.hidden && !trophy.earned && (
-            <button type="button" className="quiet" onClick={() => setRevealed(false)}>
-              {t('hide')}
-            </button>
-          )}
         </>
       )}
     </article>
@@ -225,7 +252,7 @@ function RoadmapLandscape({
   selected,
   suggested,
 }: {
-  game: CurrentGame
+  game: RoadmapGame
   selected: Trophy
   suggested: boolean
 }) {
@@ -286,31 +313,61 @@ function RoadmapForward({
   choose,
   game,
 }: {
-  game: CurrentGame
+  game: RoadmapGame
   pending: Trophy[]
   selected: Trophy
   choose: (trophy: Trophy) => void
 }) {
   const t = useMessages(messages)
   const rail = useRef<HTMLOListElement>(null)
+  const placed = useRef(false)
   const at = pending.indexOf(selected)
   const activeId = selected ? anchor(selected) : null
   useEffect(() => {
     const track = rail.current
     if (!track) return
-    const place = () => {
+    const place = (resizing = false) => {
       const node = track.querySelector<HTMLElement>(`[data-trophy="${activeId}"]`)
-      if (node)
-        track.scrollTo?.({
-          left: Math.min(node.offsetLeft, Math.max(0, track.scrollWidth - track.clientWidth)),
-          behavior: 'auto',
-        })
+      const width = track.querySelector<HTMLElement>('li')?.offsetWidth ?? 0
+      if (!node || !width || !track.clientWidth) return
+      const columns = Math.max(1, Math.round(track.clientWidth / width))
+      const page = Math.floor(Math.max(0, at) / columns)
+      const tail = (columns - (pending.length % columns)) % columns
+      track.style.setProperty('--roadmap-tail', `${tail * width}px`)
+      const pin = node.querySelector<HTMLElement>('.roadmap-route-pin')
+      if (pin) {
+        track.style.setProperty(
+          '--roadmap-cursor-x',
+          `${node.offsetLeft + pin.offsetLeft + pin.offsetWidth / 2 - 6}px`,
+        )
+        track.style.setProperty(
+          '--roadmap-cursor-y',
+          `${pin.offsetTop + pin.offsetHeight / 2 - 6}px`,
+        )
+      }
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      track.scrollTo?.({
+        left: page * columns * width,
+        behavior: placed.current && !resizing && !reduced ? 'smooth' : 'auto',
+      })
+      placed.current = true
+      track.dataset.positioned = 'true'
     }
     place()
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place)
+    let measured = `${track.clientWidth}:${track.querySelector<HTMLElement>('li')?.offsetWidth}`
+    const observer =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            const size = `${track.clientWidth}:${track.querySelector<HTMLElement>('li')?.offsetWidth}`
+            if (size === measured) return
+            measured = size
+            place(true)
+          })
     observer?.observe(track)
+    if (track.firstElementChild) observer?.observe(track.firstElementChild)
     return () => observer?.disconnect()
-  }, [activeId])
+  }, [activeId, at, pending.length])
   return (
     <div className="roadmap-forward">
       <div className="roadmap-forward-heading">
@@ -393,8 +450,127 @@ function RoadmapForward({
   )
 }
 
-export function TrophyRoadmap({ game }: { game: CurrentGame }) {
+function RoadmapOngoing({ game, choose }: { game: RoadmapGame; choose: (trophy: Trophy) => void }) {
   const t = useMessages(messages)
+  const objectives = ongoingObjectives(game.trophies, game.guide)
+  if (!objectives.length) return null
+  return (
+    <aside className="roadmap-ongoing" aria-label={t('ongoing')}>
+      <header>
+        <Icon name="target" />
+        <h4>{t('ongoing')}</h4>
+      </header>
+      <p>{t('ongoingNote')}</p>
+      <ul>
+        {objectives.map(({ trophy, basis, warning, early }) => (
+          <li key={anchor(trophy)}>
+            <button
+              type="button"
+              className="roadmap-ongoing-select"
+              onClick={() => choose(trophy)}
+              aria-label={trophy.name}
+            >
+              <span className="roadmap-ongoing-art">
+                <TrophyArt url={trophy.iconUrl} />
+              </span>
+              <span>
+                <strong>{trophy.name}</strong>
+                <small>{t(basis)}</small>
+              </span>
+              <Icon name="chevron-right" />
+            </button>
+            {early && (
+              <p>
+                <GuideText text={early} />
+              </p>
+            )}
+            {warning && (
+              <p className="roadmap-ongoing-warning">
+                <Icon name="warning" />
+                <GuideText text={warning.when} />
+              </p>
+            )}
+            <p className="roadmap-ongoing-progress">
+              {trophy.progressValue != null &&
+              trophy.progressTarget != null &&
+              trophy.progressValue >= 0 &&
+              trophy.progressValue <= trophy.progressTarget
+                ? t('counterProgress', {
+                    value: trophy.progressValue,
+                    target: trophy.progressTarget,
+                  })
+                : t('unknownProgress')}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  )
+}
+
+function RoadmapVisibility({
+  revealed,
+  setRevealed,
+  saving,
+}: {
+  revealed: boolean
+  setRevealed: (value: boolean) => Promise<void>
+  saving: boolean
+}) {
+  const t = useMessages(messages)
+  return (
+    <button
+      type="button"
+      className="quiet"
+      aria-pressed={revealed}
+      disabled={saving}
+      aria-busy={saving}
+      title={t('revealScope')}
+      onClick={async () => {
+        try {
+          await setRevealed(!revealed)
+        } catch {
+          toast(t('revealFailed'))
+        }
+      }}
+    >
+      <Icon name="eye" />
+      {t(revealed ? 'hide' : 'reveal')}
+    </button>
+  )
+}
+
+function roadmapView(source: RoadmapGame, inspecting: boolean, revealed: boolean): RoadmapGame {
+  const projected = inspecting
+    ? {
+        ...source,
+        focus: null,
+        trophies: source.trophies.map((trophy) => ({
+          ...trophy,
+          earned: false,
+          earnedAt: undefined,
+          progressValue: undefined,
+          progressRate: undefined,
+        })),
+      }
+    : source
+  return revealed
+    ? { ...projected, trophies: projected.trophies.map((trophy) => ({ ...trophy, hidden: false })) }
+    : projected
+}
+
+export function TrophyRoadmap({
+  game: source,
+  preview = false,
+}: {
+  game: RoadmapGame
+  preview?: boolean
+}) {
+  const t = useMessages(messages)
+  const [fromStart, setFromStart] = useState(false)
+  const { revealed, setRevealed, saving } = useGameSpoilers(source.game.id)
+  const inspecting = preview || fromStart
+  const game = roadmapView(source, inspecting, revealed)
   const stages = trophyRoadmap(game.trophies, game.guide)
   const base = game.trophies.filter((x) => x.groupId === 'default')
   const done = base.some((x) => x.type === 'platinum' && x.earned)
@@ -424,15 +600,41 @@ export function TrophyRoadmap({ game }: { game: CurrentGame }) {
         </div>
         <span className="roadmap-total">
           <Icon name="trophy" />
-          {t('count', { earned: base.filter((x) => x.earned).length, total: base.length })}
+          {inspecting
+            ? t('catalogCount', { total: base.length })
+            : t('count', { earned: base.filter((x) => x.earned).length, total: base.length })}
         </span>
       </header>
+      <div className="roadmap-preview-controls">
+        {source.trophies.some((trophy) => trophy.hidden) && (
+          <RoadmapVisibility revealed={revealed} setRevealed={setRevealed} saving={saving} />
+        )}
+        {!preview && (
+          <button
+            type="button"
+            className="quiet"
+            aria-pressed={fromStart}
+            onClick={() => {
+              setFromStart(!fromStart)
+              setSelection(null)
+            }}
+          >
+            {t(fromStart ? 'previewBack' : 'previewStart')}
+          </button>
+        )}
+        {inspecting && (
+          <p role="status">
+            <strong>{t('previewLabel')}</strong> {t('previewNote')}
+          </p>
+        )}
+      </div>
       {!selected || !stage ? (
         <p>{t('empty')}</p>
       ) : (
         <>
           <div className="roadmap-expedition">
             <RoadmapLandscape game={game} selected={selected} suggested={suggested === selected} />
+            <RoadmapOngoing game={game} choose={choose} />
             <RoadmapForward game={game} pending={pending} selected={selected} choose={choose} />
             <TrophyStep
               key={anchor(selected)}
@@ -513,6 +715,9 @@ export function TrophyRoadmapSkeleton() {
         </div>
         <Sk w="150px" h={14} />
       </header>
+      <div className="roadmap-preview-controls">
+        <Sk w="180px" h={44} />
+      </div>
       <div className="roadmap-expedition">
         <div className="roadmap-landscape">
           <div className="roadmap-destination">

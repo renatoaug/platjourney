@@ -15,6 +15,7 @@ export interface User {
   // The player's own changes to the taste profile and their recommendation rules.
   taste_prefs?: unknown | null
   include_dlc_progress?: boolean
+  revealed_trophy_games?: string[]
   ps_plus?: 'none' | 'essential' | 'extra' | 'deluxe' | null
   // Nexo's words in automatic notices; off, plain templates (no model).
   ai_notices?: boolean
@@ -139,6 +140,21 @@ export async function updateUser(id: string, fields: Partial<Omit<User, 'id'>>):
 
 export async function touchUser(id: string): Promise<void> {
   await q('UPDATE $id SET last_seen_at = time::now()', { id: userRef(id) })
+}
+
+/** Change one game's display preference atomically, preserving the account's other games. */
+export async function setTrophyVisibility(
+  id: string,
+  game: string,
+  revealed: boolean,
+): Promise<string[]> {
+  const operation = revealed ? 'union' : 'complement'
+  const row = await one<{ revealed_trophy_games: string[] }>(
+    `UPDATE $id SET revealed_trophy_games = array::${operation}(revealed_trophy_games ?? [], [$game]) RETURN revealed_trophy_games`,
+    { id: userRef(id), game },
+  )
+  if (!row) throw new Error('Account unavailable')
+  return row.revealed_trophy_games
 }
 
 // Everything personal the account has gathered. Used when the owner of the PSN
