@@ -400,7 +400,7 @@ function GameFacts({
         </div>
       )}
       {modes.length > 0 && (
-        <div>
+        <div className="game-about-modes">
           <dt>{t('modes')}</dt>
           <dd>{modes.join(', ')}</dd>
         </div>

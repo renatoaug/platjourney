@@ -333,6 +333,21 @@
     overflow-wrap: anywhere;
   }
 
+  .game-about-facts > .game-about-modes {
+    display: grid;
+    gap: 4px;
+  }
+
+  .game-about-modes dt::after {
+    display: none;
+  }
+
+  .game-about-modes dd {
+    text-align: left;
+    text-wrap: pretty;
+    overflow-wrap: normal;
+  }
+
   .game-about-facts a {
     display: inline-flex;
     align-items: center;

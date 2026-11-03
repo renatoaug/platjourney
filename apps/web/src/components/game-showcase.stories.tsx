@@ -117,3 +117,18 @@ export const FullScreen: Story = {
     />
   ),
 }
+
+/** Long modes use the fact row's full width instead of squeezing beside its label. */
+export const MultipleModes: Story = {
+  render: () => (
+    <div style={{ maxWidth: 380 }}>
+      <GameAbout
+        game={{
+          ...daysGone,
+          modes: ['Single player', 'Multiplayer', 'Co-operative'],
+        }}
+        name="Days Gone"
+      />
+    </div>
+  ),
+}
