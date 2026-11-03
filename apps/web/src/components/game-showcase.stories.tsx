@@ -118,7 +118,7 @@ export const FullScreen: Story = {
   ),
 }
 
-/** Long modes use the fact row's full width instead of squeezing beside its label. */
+/** Long modes stay beside their label and scroll within the available width. */
 export const MultipleModes: Story = {
   render: () => (
     <div style={{ maxWidth: 380 }}>

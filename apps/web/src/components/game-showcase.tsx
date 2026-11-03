@@ -371,6 +371,116 @@ export function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
 }
 
 /** The facts list: developer, release, modes, rating, platforms and site, each only when known. */
+/** Only the modes value moves; manual reading always takes priority. */
+function GameModes({ modes }: { modes: string[] }) {
+  const ref = useRef<HTMLElement>(null)
+  const [overflow, setOverflow] = useState(false)
+  const text = modes.join(', ')
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !text) return
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let frame = 0
+    let max = 0
+    let position = 0
+    let previous = 0
+    let pauseUntil = performance.now() + 1800
+    let returning = false
+    let hovered = false
+    let focused = false
+
+    const pauseAtEnd = (now: number) => {
+      if (!returning && position >= max) {
+        returning = true
+        pauseUntil = now + 1800
+      } else if (returning && position <= 0) {
+        returning = false
+        pauseUntil = now + 1800
+      }
+    }
+    const paused = (now: number) => hovered || focused || document.hidden || now < pauseUntil
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick)
+      const elapsed = previous ? Math.min(now - previous, 48) : 0
+      previous = now
+      if (paused(now)) {
+        position = el.scrollLeft
+        return
+      }
+      position = Math.max(0, Math.min(max, position + elapsed * (returning ? -0.12 : 0.024)))
+      el.scrollLeft = position
+      pauseAtEnd(now)
+    }
+    const measure = () => {
+      cancelAnimationFrame(frame)
+      max = Math.max(0, el.scrollWidth - el.clientWidth)
+      setOverflow(max > 1)
+      el.scrollLeft = 0
+      position = 0
+      previous = 0
+      returning = false
+      pauseUntil = performance.now() + 1800
+      if (max > 1 && !motion.matches) frame = requestAnimationFrame(tick)
+    }
+    const pause = () => {
+      pauseUntil = performance.now() + 6000
+      returning = false
+    }
+    const enter = (event: globalThis.PointerEvent) => {
+      if (event.pointerType === 'mouse') hovered = true
+    }
+    const leave = () => {
+      hovered = false
+      pause()
+    }
+    const focus = () => {
+      focused = true
+    }
+    const blur = () => {
+      focused = false
+      pause()
+    }
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    observer?.observe(el)
+    if (el.firstElementChild) observer?.observe(el.firstElementChild)
+    window.addEventListener('resize', measure)
+    motion.addEventListener('change', measure)
+    el.addEventListener('pointerenter', enter)
+    el.addEventListener('pointerleave', leave)
+    el.addEventListener('pointerdown', pause)
+    el.addEventListener('wheel', pause, { passive: true })
+    el.addEventListener('keydown', pause)
+    el.addEventListener('focus', focus)
+    el.addEventListener('blur', blur)
+    measure()
+    return () => {
+      cancelAnimationFrame(frame)
+      observer?.disconnect()
+      window.removeEventListener('resize', measure)
+      motion.removeEventListener('change', measure)
+      el.removeEventListener('pointerenter', enter)
+      el.removeEventListener('pointerleave', leave)
+      el.removeEventListener('pointerdown', pause)
+      el.removeEventListener('wheel', pause)
+      el.removeEventListener('keydown', pause)
+      el.removeEventListener('focus', focus)
+      el.removeEventListener('blur', blur)
+    }
+  }, [text])
+
+  return (
+    <section
+      ref={ref}
+      className="game-modes-scroll"
+      tabIndex={overflow ? 0 : undefined}
+      aria-label={text}
+    >
+      <span>{text}</span>
+    </section>
+  )
+}
+
 function GameFacts({
   game,
   developers,
@@ -402,7 +512,9 @@ function GameFacts({
       {modes.length > 0 && (
         <div className="game-about-modes">
           <dt>{t('modes')}</dt>
-          <dd>{modes.join(', ')}</dd>
+          <dd>
+            <GameModes modes={modes} />
+          </dd>
         </div>
       )}
       {game.rating != null && game.rating > 0 && (

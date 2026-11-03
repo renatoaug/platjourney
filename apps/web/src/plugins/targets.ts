@@ -80,6 +80,7 @@ export type Target =
   | 'GameColumns'
   | 'GameFacts'
   | 'GameGallery'
+  | 'GameModes'
   | 'GameNav'
   | 'GameScreen'
   | 'GameShelf'
