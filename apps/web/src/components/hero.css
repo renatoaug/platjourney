@@ -1,4 +1,26 @@
 @layer screens {
+  .game-page-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    margin-bottom: 16px;
+  }
+
+  .game-page-actions .back-link {
+    margin: 0;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+  }
+
+  .game-page-actions .scenes-button {
+    min-height: 44px;
+    white-space: nowrap;
+  }
+
   .hero {
     /* The game's own near-black (a .tinted hero), else the brand's. */
     --hero-shade: var(--game-tint-deep, var(--color-on-accent));
@@ -81,8 +103,29 @@
     border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
     border-radius: var(--radius-tag);
     padding: 2px 9px;
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
     color: var(--color-fg);
     font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+  }
+
+  .hero-title-row {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .hero-title-row > .hero-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .hero-title-row > .platform {
+    flex: none;
+    margin-top: 4px;
   }
 
   .hero-title {
@@ -445,14 +488,26 @@
   .hero.immersive .inner {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto 1fr auto;
-    gap: 22px 40px;
-    min-height: clamp(300px, 40vh, 420px);
+    grid-template-rows: auto auto auto;
+    gap: 16px 40px;
+    min-height: 0;
     padding: 4px 0 28px;
   }
 
   .hero.immersive .hero-top {
-    grid-column: 1 / -1;
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .hero.immersive .hero-gallery {
+    grid-column: 1;
+    justify-self: end;
+  }
+
+  .hero.immersive .hero-tools {
+    margin-left: auto;
   }
 
   .hero-tools {
@@ -472,12 +527,14 @@
   }
 
   .hero.immersive .hero-headline {
-    align-self: end;
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
   }
 
   /* The page says what it is already; the name and the platform are enough. */
   .hero.immersive .live-label {
-    visibility: hidden;
+    display: none;
   }
 
   .hero.immersive .hero-title {
@@ -504,7 +561,7 @@
 
   .hero-aside {
     grid-column: 2;
-    grid-row: 2 / 4;
+    grid-row: 1 / 4;
     align-self: end;
   }
 
@@ -523,7 +580,7 @@
   @media (max-width: 760px) {
     .hero.immersive .inner {
       min-height: 0;
-      padding: 40px 0 24px;
+      padding: 8px 0 24px;
     }
 
     .hero.immersive .hero-title {
@@ -539,6 +596,18 @@
     gap: 6px 14px;
     color: var(--color-fg-soft);
     font-size: var(--text-xs);
+  }
+
+  .trophy-counts-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .trophy-counts-row > * {
+    flex-shrink: 0;
   }
 
   .trophy-breakdown b {
@@ -634,7 +703,7 @@
   }
 
   .hero.immersive .meta > span,
-  .hero.immersive .trophy-breakdown > * {
+  .hero.immersive .trophy-counts-row > * {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -649,6 +718,24 @@
 
   .hero.immersive .meta > span + span::before {
     display: none;
+  }
+
+  /* Facts stay together below the title; gallery is a secondary action after the progress. */
+  .hero.immersive .hero-top > .meta {
+    flex-basis: 100%;
+    margin-top: 0;
+    gap: 8px 16px;
+  }
+
+  .hero.immersive .hero-top > .meta > span {
+    height: auto;
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    backdrop-filter: none;
+    white-space: normal;
   }
 
   /* A chip keeps its whole text: the row wraps instead of squeezing one. */
@@ -752,19 +839,34 @@
     display: none;
   }
 
-  /* The difficulty chip in its band's color: border, wash and name. */
-  .hero.immersive .meta > .dm {
-    border-color: color-mix(in srgb, var(--dm-color) var(--alpha-glow), transparent);
-    background: color-mix(in srgb, var(--dm-color) var(--alpha-wash), transparent);
+  .hero.immersive .hero-top .meta > .dm {
+    display: inline-flex;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid color-mix(in srgb, var(--dm-color) var(--alpha-line), transparent);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
     color: var(--dm-color);
   }
 
-  .hero.immersive .meta > .dm .dm-name {
-    color: var(--dm-color);
+  .hero.immersive .hero-top .meta > .dm .dm-number {
+    font-size: var(--text-3xl);
   }
 
-  .hero.immersive .meta .dm-name {
+  .hero.immersive .hero-top .meta > .dm .dm-body {
+    display: grid;
+    gap: 5px;
+    width: auto;
+    min-width: 96px;
+  }
+
+  .hero.immersive .hero-top .meta > .dm .dm-segments {
+    display: flex;
+  }
+
+  .hero.immersive .hero-top .meta > .dm .dm-name {
     overflow: visible;
+    color: var(--color-fg);
   }
 
   .hero.immersive .meta > .ok {
@@ -782,7 +884,7 @@
   }
 
   /* Only the total is a chip; the tiers after it are plain text split by thin dividers. */
-  .hero.immersive .trophy-breakdown > :not(b) {
+  .hero.immersive .trophy-counts-row > :not(b) {
     height: auto;
     padding: 0;
     border: 0;
@@ -790,11 +892,11 @@
     backdrop-filter: none;
   }
 
-  .hero.immersive .trophy-breakdown > :not(b) + :not(b)::before {
+  .hero.immersive .trophy-counts-row > :not(b) + :not(b)::before {
     content: "";
     width: 1px;
     height: 12px;
-    margin-right: 6px;
+    margin-right: 0;
     background: var(--color-border-strong);
   }
 

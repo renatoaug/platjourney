@@ -3,6 +3,7 @@ import { apnsEnabled } from '../apns.ts'
 import { config } from '../config.ts'
 import { deepGuideStats } from '../deepguide.ts'
 import { isDemo } from '../demo.ts'
+import { todaysFocus } from '../focus.ts'
 import { getCurrent } from '../game-context.ts'
 import { defineMessages, fromAcceptLanguage, Language, type Locale, userLocale } from '../i18n.ts'
 import type { library } from '../library.ts'
@@ -106,6 +107,7 @@ export async function currentView(user: User, ctx = getCurrent(user)) {
       // No guide and nothing researching it: it waits in guide_request.
       queued: !ctx.guide && !config.automatic.research,
       trophies: ctx.trophies,
+      focus: ctx.owned === false ? null : todaysFocus(ctx),
     }
   )
 }

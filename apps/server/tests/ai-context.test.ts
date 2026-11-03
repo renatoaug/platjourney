@@ -9,6 +9,7 @@ test('missing facts go to the service as null', () => {
     title: ctx.title,
     trophies: ctx.trophies,
     guide: null,
+    journeyFocus: null,
     groups: null,
     hoursPlayed: null,
     includeDlcProgress: false,

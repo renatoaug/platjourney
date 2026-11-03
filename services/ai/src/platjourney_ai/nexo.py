@@ -115,6 +115,13 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
         f'Jogo: {title.name} ({title.platform}) — {shown.progress}% — '
         f'{shown.earned}/{shown.total} troféus{shown.label}{dlc_line}'
     ]
+    if ctx.owned and ctx.journey_focus and any(t.name == ctx.journey_focus for t in missing):
+        parts.append(
+            f'Próximo foco exibido na jornada: {ctx.journey_focus}. '
+            'Mantenha este foco quando a pergunta for sobre o próximo passo; '
+            'uma pergunta explícita sobre outro troféu tem prioridade. '
+            'Isto não confirma onde a pessoa está no jogo.'
+        )
     if not ctx.owned:
         parts.append(
             'O jogador ainda não tem este jogo: ajude a decidir e a planejar a platina antes de '

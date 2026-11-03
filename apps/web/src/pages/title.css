@@ -3,6 +3,37 @@
     transform: rotate(-135deg);
   }
 
+  .hero.immersive .cta .title-secondary-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .title-secondary-actions > :only-child {
+    grid-column: 1 / -1;
+  }
+
+  .hero .title-secondary-actions .button {
+    min-width: 0;
+    min-height: 44px;
+    height: auto;
+    padding: 8px;
+    font-size: var(--text-base);
+    gap: 6px;
+  }
+
+  .hero .title-secondary-actions .game-about-store {
+    min-width: 0;
+    margin: 0;
+    align-items: stretch;
+  }
+
+  .hero .title-secondary-actions .game-about-buy {
+    width: 100%;
+    margin: 0;
+  }
+
   /* Guide as a full-width block on the detail page: tabs in a row, columns for long panels */
   .guide-wide [data-panel] ul.clean {
     columns: 2;

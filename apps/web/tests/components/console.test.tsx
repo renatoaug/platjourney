@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen } from '@testing-library/react'
-import { SAMPLE_DATA } from '../../src/app/app-state'
+import { SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
 import { Console } from '../../src/components/console'
 import { rankingData } from '../../src/components/game-cards.stories'
 import { currentData } from '../../src/components/nexo-brief.stories'
@@ -46,3 +46,26 @@ test('nothing played and nothing in progress: how to start', () => {
   renderApp(<Console data={{ ...SAMPLE_DATA, current: null, ranking: [] }} />)
   expect(screen.getByText('Jogue algo na PSN e ele aparece aqui, com a arte do jogo.')).toBeTruthy()
 })
+
+for (const includeDlcProgress of [false, true]) {
+  test(`current console follows saved DLC preference ${includeDlcProgress}`, () => {
+    if (!currentData.groups) throw new Error('Fixture requires trophy groups')
+    const base = { ...currentData.groups.base, earned: 46, total: 46, remaining: 0 }
+    const current = {
+      ...currentData,
+      progress: 70,
+      earned: 46,
+      total: 61,
+      groups: { base, dlc: { ...base, earned: 0, total: 15, remaining: 15 } },
+    }
+    const { container } = renderApp(<Console data={{ ...data, current }} />, {
+      value: { me: { ...SAMPLE_ME, includeDlcProgress } },
+    })
+    expect(container.querySelector('.console-progress-label')?.textContent).toContain(
+      includeDlcProgress ? '75%' : '100%',
+    )
+    expect(container.querySelector('.console-progress-label')?.textContent).toContain(
+      includeDlcProgress ? '61' : '46',
+    )
+  })
+}

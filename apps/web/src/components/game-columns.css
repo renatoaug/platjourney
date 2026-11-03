@@ -47,4 +47,43 @@
       display: none;
     }
   }
+
+  .game-columns-tabs .game-switch {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 20px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-subtle);
+  }
+
+  .game-columns-tabs .game-switch button {
+    min-height: 44px;
+    padding-block: 8px;
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    border-radius: var(--radius-control);
+    font-size: var(--text-sm);
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .game-columns-tabs .game-switch button[aria-selected="true"] {
+    color: var(--color-on-accent);
+    background: var(--color-accent);
+  }
+
+  .game-columns-tabs .game-switch[data-slide] button[aria-selected="true"] {
+    background: transparent;
+  }
+
+  .game-columns-tabs .game-columns {
+    display: block;
+  }
+
+  .game-columns-tabs [role="tabpanel"] {
+    min-width: 0;
+  }
 }

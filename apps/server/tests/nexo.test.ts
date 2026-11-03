@@ -17,6 +17,7 @@ const context = {
   guide: null,
   groups: null,
   hoursPlayed: null,
+  journeyFocus: null,
   includeDlcProgress: false,
   owned: true,
   locale: 'pt-BR',

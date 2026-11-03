@@ -1,9 +1,11 @@
+import { todaysFocus } from './focus.ts'
 import type { GameContext } from './nexo.ts'
 import type { User } from './repository/user.ts'
 
 // The facts about the game a player is on, as the AI service reads them.
 export const aiContext = (ctx: GameContext, user: User) => ({
   game: ctx.game,
+  journeyFocus: ctx.owned === false ? null : (todaysFocus(ctx).trophy?.name ?? null),
   title: ctx.title,
   trophies: ctx.trophies,
   guide: ctx.guide ?? null,

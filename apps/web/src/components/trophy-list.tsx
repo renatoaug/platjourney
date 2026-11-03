@@ -1,6 +1,5 @@
 /** Trophy list with search, filters, sorting, pagination and the per-trophy Nexo help. */
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import {
   defineMessages,
@@ -15,8 +14,9 @@ import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState } from '../ui/states'
 import { TrophyArt } from '../ui/trophy-art'
-import { useSlide } from '../ui/use-slide'
+import { JourneyLink as Link } from './journey-link'
 import { nexoHref } from './tip'
+import '../ui/section-tabs.css'
 import './trophy-list.css'
 
 const messages = defineMessages({
@@ -225,10 +225,12 @@ function savedStatus(saved: SavedFilters): Status {
   return saved.hideEarned ? 'pending' : 'all'
 }
 
-function savedGroup(saved: SavedFilters): Group {
+function savedGroup(saved: SavedFilters, includeDlc: boolean): Group {
   return saved.group === 'base' || saved.group === 'all' || saved.group === 'dlc'
     ? saved.group
-    : 'base'
+    : includeDlc
+      ? 'all'
+      : 'base'
 }
 
 // A platinumed game opens in the game's own order, like the PSN; otherwise the
@@ -319,6 +321,7 @@ function TrophyCard({
             <Icon name="trophy" />
             {TYPES[t.type] ? tr(TYPES[t.type]) : t.type}
           </span>
+          <TrophyRarity t={t} />
           {t.earned && (
             <span className="trophy-earned-date">
               {t.earnedAt ? tr('earnedOn', { date: fmtDate(t.earnedAt) }) : tr('earned')}
@@ -336,7 +339,6 @@ function TrophyCard({
           </div>
         ) : null}
       </div>
-      <TrophyRarity t={t} />
       {help && t.type !== 'platinum' && (
         <Link
           className="trophy-help-btn"
@@ -357,13 +359,9 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <>
       <div className="trophy-controls">
-        <label className="trophy-search">
-          <Icon name="search" />
-          <input disabled aria-label={t('search')} placeholder={t('searchPlaceholder')} />
-        </label>
         <div className="trophy-toolbar">
           {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control */}
-          <div className="trophy-status" role="group">
+          <div className="trophy-status section-tabs" role="group">
             <button type="button" disabled aria-pressed="true">
               {t('status.all')}
             </button>
@@ -374,11 +372,13 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
               {t('status.earned')}
             </button>
           </div>
-          <details className="trophy-options">
-            <summary>
-              <Icon name="layers" /> {t('filters')} <Icon name="chevron-down" />
-            </summary>
-          </details>
+          <label className="trophy-search">
+            <Icon name="search" />
+            <input disabled aria-label={t('search')} placeholder={t('searchPlaceholder')} />
+          </label>
+          <button type="button" className="trophy-options" disabled aria-expanded={false}>
+            <Icon name="layers" /> {t('filters')} <Icon name="chevron-down" />
+          </button>
         </div>
       </div>
       <div className="trophy-results">
@@ -419,26 +419,56 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
  * `trophies` null is still loading. `prefix` keeps the control ids apart (`t` on the game screen,
  * `title-t` on a title page); `np` turns on "Pedir dica", which needs the player's progress.
  */
+function TrophyHeading({
+  heading,
+  note,
+  prefix,
+  count,
+}: {
+  heading?: string
+  note?: string
+  prefix: string
+  count: string | number
+}) {
+  const t = useMessages(messages)
+  return (
+    <header className={heading ? 'trophy-section-heading' : undefined}>
+      <h2 className="trophy-heading">
+        <Icon name="trophy" />
+        {heading ?? t('heading')}{' '}
+        <span id={`${prefix}-count`} className="heading-count">
+          {count}
+        </span>
+      </h2>
+      {note && <p>{note}</p>}
+    </header>
+  )
+}
+
 export function TrophyList({
   trophies,
   prefix = 't',
   np,
+  heading,
+  note,
 }: {
   trophies: Trophy[] | null
   prefix?: string
   np?: string | null
+  heading?: string
+  note?: string
 }) {
   const t = useMessages(messages)
   const { me } = useApp()
   const [saved] = useState(savedFilters)
   const [status, setStatus] = useState<Status>(() => savedStatus(saved))
-  const [group, setGroup] = useState<Group>(() => savedGroup(saved))
+  const [group, setGroup] = useState<Group>(() => savedGroup(saved, me.includeDlcProgress))
   const [onlyProgress, setOnlyProgress] = useState(!!saved.onlyProgress)
   // A sort picked by hand sticks, here and on the next games; until then it follows the game.
   const [chosenSort, setChosenSort] = useState<string | null>(null)
   const [q, setQ] = useState('')
+  const [optionsOpen, setOptionsOpen] = useState(false)
   const [page, setPage] = useState(1)
-  const statusRef = useSlide<HTMLDivElement>(status)
   const controlsRef = useRef<HTMLDivElement>(null)
   const pagerRef = useRef<HTMLElement>(null)
   const paged = useRef(false)
@@ -493,35 +523,23 @@ export function TrophyList({
 
   return (
     <>
-      <h2 className="trophy-heading">
-        <Icon name="trophy" />
-        {t('heading')}{' '}
-        <span id={`${prefix}-count`} className="heading-count">
-          {catalogOnly ? scope.length : `${earned}/${scope.length}`}
-        </span>
-      </h2>
+      <TrophyHeading
+        heading={heading}
+        note={note}
+        prefix={prefix}
+        count={catalogOnly ? scope.length : `${earned}/${scope.length}`}
+      />
       {list.length === 0 ? (
         <EmptyState>{t('empty')}</EmptyState>
       ) : (
         <>
           <div className="trophy-controls" ref={controlsRef}>
-            <label className="trophy-search">
-              <Icon name="search" />
-              <input
-                aria-label={t('search')}
-                id={`${prefix}-search`}
-                placeholder={t('searchPlaceholder')}
-                value={q}
-                onChange={(e) => refilter(setQ)(e.target.value)}
-              />
-            </label>
             <div className="trophy-toolbar">
               {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
               <div
-                className="trophy-status"
+                className="trophy-status section-tabs"
                 role="group"
                 aria-label={t('statusLabel')}
-                ref={statusRef}
               >
                 {(['all', 'pending', 'earned'] as const).map((value) => (
                   <button
@@ -535,54 +553,66 @@ export function TrophyList({
                   </button>
                 ))}
               </div>
-              <details className="trophy-options">
-                <summary>
-                  <Icon name="layers" /> {t('filters')}{' '}
-                  <span id={`${prefix}-filter-count`}>
-                    {filterCount ? String(filterCount) : ''}
-                  </span>
-                  <Icon name="chevron-down" />
-                </summary>
-                <div className="trophy-options-body">
-                  <label>
-                    {t('sortBy')}
-                    <select
-                      id={`${prefix}-sort`}
-                      value={sort}
-                      onChange={(e) => refilter(setChosenSort)(e.target.value)}
-                    >
-                      {(
-                        ['psn', 'pending', 'progress', 'date', 'rarity', 'common', 'type'] as const
-                      ).map((value) => (
-                        <option key={value} value={value}>
-                          {t(`sort.${value}`)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label id={`${prefix}-group-label`} hidden={!hasDlc}>
-                    {t('content')}
-                    <select
-                      id={`${prefix}-group`}
-                      value={group}
-                      onChange={(e) => refilter(setGroup)(e.target.value as Group)}
-                    >
-                      <option value="base">{t('group.base')}</option>
-                      <option value="all">{t('group.all')}</option>
-                      <option value="dlc">{t('group.dlc')}</option>
-                    </select>
-                  </label>
-                  <label className="trophy-progress-filter">
-                    <input
-                      type="checkbox"
-                      id={`${prefix}-only-progress`}
-                      checked={onlyProgress}
-                      onChange={(e) => refilter(setOnlyProgress)(e.target.checked)}
-                    />{' '}
-                    {t('onlyProgress')}
-                  </label>
-                </div>
-              </details>
+              <label className="trophy-search">
+                <Icon name="search" />
+                <input
+                  aria-label={t('search')}
+                  id={`${prefix}-search`}
+                  placeholder={t('searchPlaceholder')}
+                  value={q}
+                  onChange={(e) => refilter(setQ)(e.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="trophy-options"
+                aria-expanded={optionsOpen}
+                aria-controls={`${prefix}-options`}
+                onClick={() => setOptionsOpen((open) => !open)}
+              >
+                <Icon name="layers" /> {t('filters')}{' '}
+                <span id={`${prefix}-filter-count`}>{filterCount ? String(filterCount) : ''}</span>
+                <Icon name="chevron-down" />
+              </button>
+              <div className="trophy-options-body" id={`${prefix}-options`} hidden={!optionsOpen}>
+                <label>
+                  {t('sortBy')}
+                  <select
+                    id={`${prefix}-sort`}
+                    value={sort}
+                    onChange={(e) => refilter(setChosenSort)(e.target.value)}
+                  >
+                    {(
+                      ['psn', 'pending', 'progress', 'date', 'rarity', 'common', 'type'] as const
+                    ).map((value) => (
+                      <option key={value} value={value}>
+                        {t(`sort.${value}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label id={`${prefix}-group-label`} hidden={!hasDlc}>
+                  {t('content')}
+                  <select
+                    id={`${prefix}-group`}
+                    value={group}
+                    onChange={(e) => refilter(setGroup)(e.target.value as Group)}
+                  >
+                    <option value="base">{t('group.base')}</option>
+                    <option value="all">{t('group.all')}</option>
+                    <option value="dlc">{t('group.dlc')}</option>
+                  </select>
+                </label>
+                <label className="trophy-progress-filter">
+                  <input
+                    type="checkbox"
+                    id={`${prefix}-only-progress`}
+                    checked={onlyProgress}
+                    onChange={(e) => refilter(setOnlyProgress)(e.target.checked)}
+                  />{' '}
+                  {t('onlyProgress')}
+                </label>
+              </div>
             </div>
           </div>
           <div className="trophy-results" id={`${prefix}-results`} role="status">

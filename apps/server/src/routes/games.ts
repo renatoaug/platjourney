@@ -2,6 +2,7 @@ import { browseGuides } from '../browse.ts'
 import { config } from '../config.ts'
 import { ensureDeepGuide } from '../deepguide.ts'
 import { isDemo, trophiesFor } from '../demo.ts'
+import { todaysFocus } from '../focus.ts'
 import { ensureGuide, GUIDE_VERSION, type Guide } from '../guide.ts'
 import { json, readBody } from '../http.ts'
 import { translator } from '../i18n.ts'
@@ -118,6 +119,7 @@ async function ownedDetail(
     )
   return {
     owned: true,
+    focus: todaysFocus({ trophies, guide: guide ?? undefined }),
     np: title.npCommunicationId,
     deepGuide: await deepGuideOf(user, found),
     hoursPlayed: hours((await playtimes(user)).get(found.id)),

@@ -1,4 +1,4 @@
-/** The Nexo chat card: suggestion chips, the conversation log and the message box. Presentational; the /nexo screen fetches and sends. */
+/** Nexo: a quiet header, the conversation log and the message box. Presentational; the /nexo screen fetches and sends. */
 import {
   type FormEvent,
   type KeyboardEvent,
@@ -272,13 +272,7 @@ function AssistantMessage({
       className={`msg assistant${pending ? ' pending' : ''}`}
       id={pending ? 'pending' : undefined}
     >
-      <div className="message-author">
-        <img className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
-        <span>
-          Nexo<small>{t('partner')}</small>
-        </span>
-        {!pending && message && <MessageMeta message={message} />}
-      </div>
+      {!pending && message && <MessageMeta message={message} />}
       {pending ? (
         <div className="message-content">
           <span className="typing" role="img" aria-label={t('typing')}>
@@ -321,8 +315,6 @@ function ChatWelcome() {
   const t = useMessages(messages)
   return (
     <div className="empty chat-welcome">
-      <img className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
-      <span className="eyebrow">{t('welcomeEyebrow')}</span>
       <h2>{t('welcomeTitle')}</h2>
       <p>{t('welcomeBody')}</p>
     </div>
@@ -572,7 +564,7 @@ function ChatTrophy({ trophy, onClear }: { trophy: string; onClear: () => void }
   return (
     <span className="chat-trophy">
       <Icon name="trophy" />
-      <b title={t('trophy.label')}>{trophy}</b>
+      <b title={`${t('trophy.label')}: ${trophy}`}>{trophy}</b>
       <button type="button" aria-label={t('trophy.remove', { trophy })} onClick={onClear}>
         <Icon name="close" />
       </button>
@@ -611,6 +603,25 @@ function useChatScroll(
     })
     return () => cancelAnimationFrame(raf)
   }, [chat, sending])
+}
+
+/** The log scrolls behind the header; reserve its actual height only before the first message. */
+function useChatHeader() {
+  const ref = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const header = ref.current
+    if (!header) return
+    const measure = () => {
+      const height =
+        header.offsetHeight + (Number.parseFloat(getComputedStyle(header).marginTop) || 0)
+      header.parentElement?.style.setProperty('--chat-header-height', `${Math.max(0, height)}px`)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [])
+  return ref
 }
 
 /** The player's games matching "/game <query>", a moment after typing stops; null while it is not
@@ -653,6 +664,8 @@ export function NexoChat({
   trophy = null,
   onClearTrophy,
   note,
+  historyControl,
+  replyVersion = 0,
 }: {
   chat: ChatLoad
   /** A question is out: the pending bubble shows and the send controls are disabled. */
@@ -675,6 +688,9 @@ export function NexoChat({
   onClearTrophy?: () => void
   /** A discreet line under the subtitle (the game the player was on before a link switched it). */
   note?: ReactNode
+  historyControl?: ReactNode
+  /** Increment only when a new reply arrives in the visible conversation, never on history loads. */
+  replyVersion?: number
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
@@ -682,6 +698,7 @@ export function NexoChat({
   const log = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const form = useRef<HTMLFormElement>(null)
+  const header = useChatHeader()
 
   useAutoGrow(input, text)
   useChatScroll(log, demo, chat, sending)
@@ -773,29 +790,29 @@ export function NexoChat({
   ) : null
 
   return (
-    <div className="card chat-page">
-      <div className="nexo-chat-top">
-        <div className="page-head" style={{ marginBottom: 0 }}>
-          <div className="nexo-chat-heading">
-            <NexoHero />
-            <div>
-              <span className="eyebrow">{t('eyebrow')}</span>
-              <h1>Nexo</h1>
-              <ChatSubtitle
-                subtitle={subtitle}
-                demo={demo}
-                canSwitch={Boolean(searchGames)}
-                switching={switching}
-                onSwitch={() => {
-                  setText('/game ')
-                  input.current?.focus()
-                }}
-              />
-              {note && <p className="nexo-note">{note}</p>}
-            </div>
-          </div>
+    <div className="chat-page">
+      <div className="nexo-chat-top" ref={header}>
+        <div className="nexo-chat-tools">
+          <ChatSubtitle
+            subtitle={subtitle}
+            demo={demo}
+            canSwitch={Boolean(searchGames)}
+            switching={switching}
+            onSwitch={() => {
+              setText('/game ')
+              input.current?.focus()
+            }}
+          />
+          {historyControl}
         </div>
-        {!demo && <ChatChips trophy={trophy} sending={sending} onSend={send} />}
+        <div className="nexo-chat-heading">
+          <NexoHero reaction={replyVersion} blink />
+          <h1>Nexo</h1>
+        </div>
+        {note && <p className="nexo-note">{note}</p>}
+        {!demo && Array.isArray(chat) && !chat.length && !sending && (
+          <ChatChips trophy={trophy} sending={sending} onSend={send} />
+        )}
       </div>
       <div
         ref={log}
@@ -963,6 +980,11 @@ function MicButton({ voice, disabled }: { voice: ReturnType<typeof useVoice>; di
   )
 }
 
+/** Recording can be sent after transcription; an idle composer requires nonblank text. */
+function canSubmitMessage(text: string, sending: boolean, voice: ReturnType<typeof useVoice>) {
+  return !sending && !voice.busy && (voice.listening || Boolean(text.trim()))
+}
+
 /** The message box under the conversation. */
 function ChatForm({
   formRef,
@@ -1035,11 +1057,11 @@ function ChatForm({
   // A phone has no keyboard shortcut to discover and its text is 16px: a short placeholder, on one line.
   const narrow = useNarrow()
   return (
-    <form ref={formRef} className="chatform" id="chat-form" onSubmit={onSubmit}>
+    <form ref={formRef} className="chatform chat-composer" id="chat-form" onSubmit={onSubmit}>
+      {menu}
       <div className="chat-field">
         {/* The counter sits on the text box itself, not on the field with the note below it. */}
         <div className="chat-box">
-          {menu}
           <div className="chat-line">
             {attachment}
             {(voice.listening || voice.busy) && (
@@ -1106,22 +1128,24 @@ function ChatForm({
           </span>
         )}
       </div>
-      <MicButton voice={voice} disabled={sending} />
-      <button
-        type="submit"
-        className="chat-send"
-        aria-label={t('send')}
-        disabled={sending}
-        onClick={(e) => {
-          if (!voice.listening && !voice.busy) return
-          e.preventDefault()
-          sendAfter.current = true
-          voice.stop()
-        }}
-      >
-        <Icon name="send" />
-        <span className="chat-send-label">{t('send')}</span>
-      </button>
+      <div className="chat-composer-actions">
+        <MicButton voice={voice} disabled={sending} />
+        <button
+          type="submit"
+          className="chat-send"
+          aria-label={t('send')}
+          disabled={!canSubmitMessage(text, sending, voice)}
+          onClick={(e) => {
+            if (!voice.listening && !voice.busy) return
+            e.preventDefault()
+            sendAfter.current = true
+            voice.stop()
+          }}
+        >
+          <Icon name="send" />
+          <span className="chat-send-label">{t('send')}</span>
+        </button>
+      </div>
     </form>
   )
 }

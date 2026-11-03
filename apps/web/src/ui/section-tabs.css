@@ -1,0 +1,49 @@
+@layer ui {
+  .section-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 4px;
+    max-width: 100%;
+    min-width: 0;
+    padding: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: none;
+    scrollbar-width: thin;
+  }
+
+  .section-tabs > button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: none;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  .section-tabs > button:hover {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-faint), transparent);
+    color: var(--color-fg);
+  }
+
+  .section-tabs > button:is([aria-pressed="true"], [aria-selected="true"], .active) {
+    border-bottom-color: var(--color-accent);
+    background: none;
+    color: var(--color-accent);
+  }
+
+  .section-tabs > button:focus-visible {
+    box-shadow: inset var(--shadow-focus);
+  }
+}

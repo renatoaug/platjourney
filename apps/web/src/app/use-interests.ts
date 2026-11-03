@@ -55,7 +55,7 @@ export function useInterests() {
         if (existing) toast(t('interestRemoved', { name }), 'success')
         else
           toast(t('interestSaved', { name }), 'success', {
-            href: '/goals',
+            href: '/games?tab=interests',
             label: t('interestSee'),
           })
       } catch (e) {

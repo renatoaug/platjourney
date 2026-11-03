@@ -2,12 +2,13 @@
   .page-top {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
+    align-items: start;
     gap: 28px 40px;
-    padding: 8px 0 32px;
+    padding: 40px 0 32px;
   }
 
-  /* On a picture the top takes room for it; without one it stays as tall as its text. */
+  /* Titles start at the same inset, regardless of controls or a taller card beside them.
+     A picture keeps its breathing room below; it never changes the title baseline. */
   .page-top.on-art {
     min-height: clamp(260px, 34vh, 380px);
   }
@@ -55,7 +56,6 @@
   @media (max-width: 760px) {
     .page-top.on-art {
       min-height: 0;
-      padding-top: 40px;
     }
 
     .page-top-aside {

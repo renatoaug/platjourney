@@ -52,6 +52,7 @@ export function SimilarGames({ state }: { state: SimilarGamesState }) {
   return (
     <GameShelf
       id="similar-games-title"
+      bodyId="similar-games"
       title={t('title')}
       size="compact"
       loading={state.status === 'loading'}

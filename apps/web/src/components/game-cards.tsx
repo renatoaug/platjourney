@@ -164,16 +164,19 @@ export function GameCardsSkeleton({ n = 3 }: { n?: number }) {
   return repeat(n, () => (
     <article className="game-card">
       <div className="game-art">
-        <Sk w="100%" h={114} style={{ borderRadius: 0 }} />
+        <Sk w="100%" h={0} style={{ height: '100%', borderRadius: 0 }} />
       </div>
       <div className="game-info">
-        <Sk w="80%" h={12} />
-        <Sk w="55%" h={12} style={{ marginTop: 6 }} />
-        <div className="barlabel" style={{ marginTop: 14 }}>
+        <h3>
+          <Sk w="85%" h={20} />
+        </h3>
+        <div className="barlabel">
           <Sk w="40%" h={9} />
           <Sk w="12%" h={9} />
         </div>
-        <Sk w="100%" h={5} />
+        <div className="bar">
+          <Sk h={5} />
+        </div>
         <Sk w="60%" h={9} style={{ marginTop: 12 }} />
       </div>
     </article>

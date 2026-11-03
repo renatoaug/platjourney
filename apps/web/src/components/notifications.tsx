@@ -16,6 +16,7 @@ import { askPushOnce } from '../lib/push'
 import { md } from '../lib/text'
 import type { Tip } from '../lib/types'
 import { Icon } from '../ui/icon'
+import { pageItems } from '../ui/pager'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { KIND_ICON, kindLabel, messages as tipMessages, titleHref } from './tip'
@@ -32,7 +33,7 @@ const messages = defineMessages({
     loadFailed: 'Não conseguimos carregar as notificações.',
     empty:
       'Nenhuma notificação ainda. O Nexo avisa aqui quando você começa um jogo ou pega um troféu.',
-    seeHistory: 'Ver histórico completo',
+    seeHistory: 'Ver tudo',
     pages: 'Páginas de notificações',
     page: 'Página {page}',
   },
@@ -45,7 +46,7 @@ const messages = defineMessages({
     readAll: 'Read all',
     loadFailed: 'Could not load notifications.',
     empty: 'No notifications yet. Nexo lets you know here when you start a game or earn a trophy.',
-    seeHistory: 'See full history',
+    seeHistory: 'See all',
     pages: 'Notification pages',
     page: 'Page {page}',
   },
@@ -145,18 +146,47 @@ function NotifPages({
   const t = useMessages(messages)
   return (
     <nav className="notif-pages" aria-label={t('pages')}>
-      {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
-        <button
-          key={n}
-          type="button"
-          aria-current={n === page ? 'page' : undefined}
-          aria-label={t('page', { page: n })}
-          onClick={() => n !== page && onPage(n)}
-        >
-          {n}
-        </button>
-      ))}
+      {pageItems(page, pages).map((n, index) =>
+        n === null ? (
+          // biome-ignore lint/suspicious/noArrayIndexKey: a gap has no identity or state
+          <span key={`gap-${index}`} aria-hidden="true">
+            …
+          </span>
+        ) : (
+          <button
+            key={n}
+            type="button"
+            aria-current={n === page ? 'page' : undefined}
+            aria-label={t('page', { page: n })}
+            onClick={() => n !== page && onPage(n)}
+          >
+            {n}
+          </button>
+        ),
+      )}
     </nav>
+  )
+}
+
+export function NotificationsFooter({
+  pages,
+  page,
+  onPage,
+  onNavigate,
+}: {
+  pages: number
+  page: number
+  onPage: (page: number) => void
+  onNavigate: () => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <footer className="notif-bottom">
+      <Link className="text-link notif-all" to="/history" onClick={onNavigate}>
+        {t('seeHistory')} <Icon name="arrow" />
+      </Link>
+      {pages > 1 && <NotifPages pages={pages} page={page} onPage={onPage} />}
+    </footer>
   )
 }
 
@@ -273,12 +303,7 @@ export function Notifications() {
             <NotifListBody loaded={loaded} onNavigate={close} />
           </div>
           {typeof loaded === 'object' && (
-            <footer className="notif-bottom">
-              <Link className="text-link notif-all" to="/history" onClick={close}>
-                {t('seeHistory')} <Icon name="arrow" />
-              </Link>
-              {pages > 1 && <NotifPages pages={pages} page={page} onPage={load} />}
-            </footer>
+            <NotificationsFooter pages={pages} page={page} onPage={load} onNavigate={close} />
           )}
         </section>
       </div>

@@ -28,6 +28,8 @@ describe('NexoChat', () => {
   test('shows the conversation with games, dates and sources', () => {
     show(messages)
     expect(screen.getByText('Falando sobre DAYS GONE (13%).')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Travei aqui' })).toBeNull()
+    expect(screen.getByRole('heading', { name: /^Nexo$/ })).toBeTruthy()
     expect(within(log()).getByText('Tem algum missable perto de onde estou?')).toBeTruthy()
     expect(within(log()).getAllByRole('link', { name: /Days Gone/ })).toHaveLength(4)
     expect(
@@ -37,6 +39,16 @@ describe('NexoChat', () => {
     ).toBe('/title/game/game%3A19561')
     expect(log().querySelectorAll('time')).toHaveLength(4)
     expect(within(log()).getByText(/Trophy Guides e Platinum Forum/)).toBeTruthy()
+  })
+
+  test('the composer only enables sending nonblank text', () => {
+    show([])
+    const send = screen.getByRole('button', { name: 'Enviar' }) as HTMLButtonElement
+    expect(send.disabled).toBe(true)
+    fireEvent.change(box(), { target: { value: '   ' } })
+    expect(send.disabled).toBe(true)
+    fireEvent.change(box(), { target: { value: 'Como continuo?' } })
+    expect(send.disabled).toBe(false)
   })
 
   test('an empty conversation welcomes the player', () => {
@@ -102,9 +114,9 @@ describe('NexoChat', () => {
     expect(onClearTrophy).toHaveBeenCalled()
   })
 
-  test('a suggestion sends its full question', () => {
+  test('an empty conversation suggestion sends its full question', () => {
     const onSend = mock()
-    show(messages, { onSend })
+    show([], { onSend })
     fireEvent.click(screen.getByRole('button', { name: 'Travei aqui' }))
     expect(onSend).toHaveBeenCalledWith('Travei. Me explica o que fazer nessa parte sem spoiler.')
   })

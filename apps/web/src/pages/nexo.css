@@ -1,0 +1,50 @@
+@layer screens {
+  .nexo-conversation.nexo-layout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .nexo-conversation .nexo-threads-toggle {
+    display: inline-flex;
+    align-self: start;
+    border: 0;
+    min-height: 44px;
+  }
+
+  .nexo-conversation .nexo-threads {
+    display: none;
+  }
+
+  .nexo-conversation .nexo-threads.open {
+    display: flex;
+    position: fixed;
+    inset: auto 12px 12px;
+    width: auto;
+    max-width: 480px;
+    max-height: 70dvh;
+    margin: auto;
+    z-index: 50;
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .nexo-conversation .nexo-threads-collapse {
+    display: none;
+  }
+
+  .nexo-conversation .nexo-threads.open .nexo-threads-close {
+    display: inline-flex;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .nexo-conversation > .chat-page {
+    flex: none;
+    width: 100%;
+    max-width: 860px;
+    margin-inline: auto;
+  }
+}

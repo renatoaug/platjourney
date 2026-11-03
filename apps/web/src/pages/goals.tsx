@@ -1,5 +1,5 @@
 /** Interests screen: the season and yearly target, the ordered list of games to platinum with the add panel, and the year's platinums. */
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { messages as interestMessages, useInterests } from '../app/use-interests'
@@ -40,6 +40,9 @@ const messages = defineMessages({
       addShort: 'Adicionar',
       empty: 'Salve o primeiro jogo que você quer platinar.',
       yearAchievements: 'Conquistas do ano',
+      annual: 'Meta {year}: {done} de {target} platinas',
+      noTarget: '{year}: {done} platinas · definir meta',
+      details: 'Meta e calendário',
     },
   },
   [Language.En]: {
@@ -56,6 +59,9 @@ const messages = defineMessages({
       addShort: 'Add',
       empty: 'Save the first game you want to platinum.',
       yearAchievements: "This year's platinums",
+      annual: '{year} goal: {done} of {target} platinums',
+      noTarget: '{year}: {done} platinums · set a goal',
+      details: 'Goal and calendar',
     },
   },
 })
@@ -79,7 +85,14 @@ function GoalsTop({ interests }: { interests: Interest[] }) {
       lead={t('page.lead')}
       art={next && (shot ? image(shot, 't_1080p') : next.game.cover_url)}
       tint={next?.game.tint}
-      aside={next && <NextUp interest={next} />}
+      aside={
+        next && (
+          <div className="games-next">
+            {next.game.art_url && <img src={next.game.art_url} alt="" loading="lazy" />}
+            <NextUp interest={next} />
+          </div>
+        )
+      }
     />
   )
 }
@@ -104,6 +117,61 @@ export function Goals() {
   )
 }
 
+function CompactNext({ interests }: { interests: Interest[] }) {
+  const next = nextUp(interests)
+  if (!next) return null
+  return (
+    <div className="games-next">
+      {next.game.art_url && <img src={next.game.art_url} alt="" loading="lazy" />}
+      <NextUp interest={next} />
+    </div>
+  )
+}
+
+function AnnualSummary({ goals: p }: { goals: YearGoals }) {
+  const t = useMessages(messages)
+  return p.target
+    ? t('page.annual', { year: p.year, done: p.done, target: p.target })
+    : t('page.noTarget', { year: p.year, done: p.done })
+}
+
+function SeasonHeader({
+  compact,
+  section,
+  goals,
+  children,
+}: {
+  compact: boolean
+  section: 'all' | 'interests'
+  goals: YearGoals
+  children: ReactNode
+}) {
+  const t = useMessages(messages)
+  return (
+    <>
+      {' '}
+      {compact ? (
+        <>
+          <CompactNext interests={goals.interests} />
+          {section === 'all' && (
+            <details className="games-goal-details">
+              <summary>
+                <span>
+                  <AnnualSummary goals={goals} />
+                </span>
+                <small>{t('page.details')}</small>
+              </summary>
+              {children}
+            </details>
+          )}
+        </>
+      ) : (
+        children
+      )}
+    </>
+  )
+}
+
 /**
  * Everything below the page head. Open editors, the add panel and its draft live in state kept
  * across navigation, so the periodic /api/state refresh never discards them.
@@ -113,8 +181,12 @@ export function GoalsView({
   search,
   command: fake,
   readOnly = false,
+  compact = false,
+  section = 'all',
 }: {
   goals: YearGoals
+  compact?: boolean
+  section?: 'all' | 'interests' | 'goals'
   /** The catalog search; stories pass a fake one. */
   search?: (query: string) => Promise<Game[]>
   /** Stories pass a fake /api/goals; the screen uses the shared one, which updates the app state. */
@@ -188,17 +260,29 @@ export function GoalsView({
     }
   }
 
+  const seasonView = (
+    <GoalSeason
+      goals={p}
+      editing={editing && !readOnly}
+      onEditing={setEditing}
+      busy={busy || readOnly}
+      feedback={feedback}
+      onFeedback={setFeedback}
+      onSet={(target) => save(`set ${target}`)}
+    />
+  )
+  if (section === 'goals')
+    return (
+      <>
+        {seasonView}
+        <YearPlatinums goals={p} busy={busy} />
+      </>
+    )
   return (
     <>
-      <GoalSeason
-        goals={p}
-        editing={editing && !readOnly}
-        onEditing={setEditing}
-        busy={busy || readOnly}
-        feedback={feedback}
-        onFeedback={setFeedback}
-        onSet={(target) => save(`set ${target}`)}
-      />
+      <SeasonHeader compact={compact} section={section} goals={p}>
+        {seasonView}
+      </SeasonHeader>
       {/* The saved games on sale, in a band across the page (only when there is one). */}
       <DealsSpotlight
         interests={p.interests}
@@ -207,7 +291,7 @@ export function GoalsView({
       {/* Two empty cards side by side keep one height; with content each takes its own. */}
       <div
         className={`grid cols-2 goals-columns${p.interests.length || p.platinumed.length ? '' : ' empty'}`}
-        style={{ marginTop: 20 }}
+        style={{ marginTop: compact ? 0 : 20 }}
       >
         <div className="card">
           <div className="goal-list-heading">
@@ -271,36 +355,125 @@ export function GoalsView({
           )}
           {readOnly && <DemoNote />}
         </div>
-        <div className="goals-side">
-          <YearPlatinums goals={p} busy={busy} />
-        </div>
+        {section === 'all' && (
+          <div className="goals-side">
+            {compact ? (
+              <details className="games-goal-details">
+                <summary>
+                  {t('page.yearAchievements')} · {p.done}
+                </summary>
+                <YearPlatinums goals={p} busy={busy} />
+              </details>
+            ) : (
+              <YearPlatinums goals={p} busy={busy} />
+            )}
+          </div>
+        )}
       </div>
     </>
   )
 }
 
-function GoalsSkeleton() {
+function YearPlatinumsSkeleton() {
   const t = useMessages(messages)
   return (
-    <>
-      <GoalSeasonSkeleton />
-      <div className="grid cols-2" style={{ marginTop: 20 }}>
-        <div className="card">
-          <h2 className="goal-section-title">{t('page.mine')}</h2>
-          <InterestListSkeleton />
-        </div>
-        <div className="card">
-          <h2 className="goal-section-title">{t('page.yearAchievements')}</h2>
-          <ul className="timeline">
-            {Array.from({ length: 5 }, (_, i) => (
+    <div className="card year-card">
+      <div className="year-heading">
+        <h2>{t('page.yearAchievements')}</h2>
+        <Sk w="28px" h={20} />
+      </div>
+      <div className="year-months">
+        {Array.from({ length: 12 }, (_, month) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed calendar placeholders
+          <span key={month} className="year-month">
+            <Sk w="14px" h={16} />
+            <span className="year-month-bar">
+              <Sk w="12px" h={24} />
+            </span>
+            <Sk w="22px" h={10} />
+          </span>
+        ))}
+      </div>
+      <div className="year-list-label">
+        <Sk w="150px" h={12} />
+      </div>
+      <div className="year-timeline">
+        <section className="year-month-group">
+          <h3>
+            <Sk w="100px" h={16} />
+          </h3>
+          <ul>
+            {Array.from({ length: 3 }, (_, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: fixed placeholder rows
               <li key={i}>
-                <Sk w="55%" h={12} />
-                <Sk w="70px" h={9} style={{ marginTop: 6 }} />
+                <div className="year-platinum">
+                  <span className="year-cover sk" />
+                  <span className="year-game">
+                    <b>
+                      <Sk w="70%" h={16} />
+                    </b>
+                    <span>
+                      <Sk w="90px" h={12} />
+                    </span>
+                  </span>
+                  <span className="year-order">
+                    <Sk w="28px" h={16} />
+                  </span>
+                </div>
               </li>
             ))}
           </ul>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+export function GoalsSkeleton({ section = 'all' }: { section?: 'all' | 'interests' | 'goals' }) {
+  const t = useMessages(messages)
+  if (section === 'goals')
+    return (
+      <>
+        <GoalSeasonSkeleton />
+        <YearPlatinumsSkeleton />
+      </>
+    )
+  return (
+    <>
+      {section === 'all' ? (
+        <GoalSeasonSkeleton />
+      ) : (
+        <div className="games-next" aria-hidden="true">
+          <aside className="next-up">
+            <span className="next-up-cover sk" />
+            <div className="next-up-body">
+              <span className="eyebrow">
+                <Sk w="180px" h={10} />
+              </span>
+              <div className="next-up-head">
+                <Sk w="65%" h={20} />
+                <Sk w="110px" h={44} />
+              </div>
+              <span className="next-up-sub">
+                <Sk w="100px" h={12} />
+              </span>
+            </div>
+          </aside>
         </div>
+      )}
+      <div className="grid cols-2 goals-columns" style={{ marginTop: section === 'all' ? 20 : 0 }}>
+        <div className="card">
+          <div className="goal-list-heading">
+            <h2 className="goal-section-title">{t('page.mine')}</h2>
+            <Sk w="130px" h={44} />
+          </div>
+          <InterestListSkeleton />
+        </div>
+        {section === 'all' && (
+          <div className="goals-side">
+            <YearPlatinumsSkeleton />
+          </div>
+        )}
       </div>
     </>
   )

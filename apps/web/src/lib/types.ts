@@ -146,7 +146,17 @@ export interface DeepGuideStats {
 }
 
 /** The game being played now, as /api/state and /api/title send it. */
+interface JourneyFocus {
+  phases: { phase: string; short: string; left: number }[]
+  trophy?: Trophy
+  trick?: string
+  phase?: string
+  behind?: boolean
+  missable?: { trophy: string; when: string }
+}
+
 export interface CurrentGame {
+  focus?: JourneyFocus | null
   game: Game
   name: string
   platform: string
@@ -318,4 +328,20 @@ export interface SimilarGame {
   difficulty: number
   hours: number
   relation: SimilarRelation
+}
+
+/** Personal library progress follows the saved DLC preference; missing groups remain explicit. */
+export interface OwnedLibrary {
+  items: (LibraryGame & {
+    np: string
+    earned: number
+    total: number
+    platinum: boolean
+    progressScope?: 'base' | 'all' | 'psn'
+    cover?: string | null
+    art?: string | null
+  })[]
+  total: number
+  page: number
+  size: number
 }

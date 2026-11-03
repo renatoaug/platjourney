@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, mock, test } from 'bun:test'
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { Shell } from '../../src/app/shell'
+import { current as journeyFixture } from '../../src/fixtures'
 import type { ProfileSummary } from '../../src/lib/types'
 import { pluginPages } from '../../src/plugins'
 import { mockApi, never, renderApp } from '../support/web'
@@ -14,23 +15,56 @@ afterEach(() => mock.restore())
 
 const where = () => screen.getByTestId('location').textContent
 
-test('the sidebar lists every screen and marks the current one', () => {
-  renderApp(<Shell />, { path: '/history' })
+test('primary navigation has the five product destinations', () => {
+  renderApp(<Shell />, { path: '/games' })
   const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
-  const links = within(nav).getAllByRole('link')
-  expect(links.map((l) => l.textContent)).toEqual([
-    'Visão geral',
-    'Jogo atual',
-    'NexoIA',
-    'Interesses',
-    'Descobrir',
-    'Guias',
-    'Histórico',
-    'Configurações',
-  ])
-  expect(within(nav).getByRole('link', { name: 'Histórico' }).className).toContain('active')
-  expect(within(nav).getByRole('link', { name: 'Visão geral' }).className).not.toContain('active')
+  expect(
+    within(nav)
+      .getAllByRole('link')
+      .map((l) => l.textContent),
+  ).toEqual(['Home', 'Jornada', 'Guias', 'Descobrir', 'Jogos'])
+  expect(within(nav).getByRole('link', { name: 'Jogos' }).className).toContain('active')
+  fireEvent.click(screen.getByRole('button', { name: 'Abrir o menu da conta' }))
+  for (const name of ['Histórico', 'Conversas com Nexo', 'Configurações'])
+    expect(screen.getByRole('menuitem', { name })).toBeTruthy()
+  expect(screen.queryByRole('menuitem', { name: 'Buscar guias' })).toBeNull()
+  expect(within(nav).getByRole('link', { name: 'Guias' }).getAttribute('href')).toBe('/guides')
 })
+
+for (const entry of ['sidebar', 'account'] as const) {
+  test(`the mounted ${entry} general Nexo entry resumes the latest conversation`, async () => {
+    const current = journeyFixture
+    if (!current) throw new Error('fixture requires a game')
+    const calls = mockApi({
+      '/api/chat/threads': [
+        {
+          game: current.game.id,
+          np: current.np,
+          name: current.name,
+          messages: 1,
+          last_at: '2026-01-01T12:00:00Z',
+          last_question: 'Pergunta de teste',
+          cover_url: null,
+        },
+      ],
+      '/api/chat': [{ role: 'assistant', content: 'Conversa recente de teste.' }],
+    })
+    renderApp(<Shell />, { path: '/', value: { data: { ...SAMPLE_DATA, current } } })
+    if (entry === 'account') {
+      fireEvent.click(screen.getByRole('button', { name: 'Abrir o menu da conta' }))
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Conversas com Nexo' }))
+    } else fireEvent.click(screen.getByRole('link', { name: /Conte com o Nexo/ }))
+    expect(await screen.findByText('Conversa recente de teste.')).toBeTruthy()
+    expect(calls.some((call) => call.path === '/api/chat/threads')).toBe(true)
+    expect(
+      calls.some((call) => call.path === `/api/chat?game=${encodeURIComponent(current.game.id)}`),
+    ).toBe(true)
+    expect(calls.some((call) => call.method === 'POST')).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Conversas' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+    expect(screen.getByText('Conversa recente de teste.')).toBeTruthy()
+  })
+}
 
 test('the breadcrumb and the tab title follow the route', async () => {
   mockApi({ '/api/title': never })
@@ -43,18 +77,34 @@ test('the breadcrumb and the tab title follow the route', async () => {
   expect(screen.getByRole('link', { name: 'Voltar' })).toBeTruthy()
 })
 
-test('navigating from the sidebar changes the screen', () => {
+test('primary navigation opens the games screen', () => {
+  mockApi({ '/api/library': never })
   renderApp(<Shell />, { path: '/' })
-  expect(screen.getByRole('heading', { level: 1, name: /, jogador\.$/ })).toBeTruthy()
-  fireEvent.click(screen.getByRole('link', { name: 'Histórico' }))
-  expect(where()).toBe('/history')
-  expect(screen.getByRole('heading', { level: 1, name: 'Histórico' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('link', { name: 'Jogos' }))
+  expect(where()).toBe('/games?tab=interests')
+  expect(screen.getByRole('heading', { level: 1, name: 'Seus jogos' })).toBeTruthy()
+})
+
+test('a fresh Games navigation always opens interests, including from another inner tab', () => {
+  mockApi({ '/api/library': never })
+  renderApp(<Shell />, { path: '/games?tab=library' })
+  expect(screen.getByRole('button', { name: 'Biblioteca PSN' }).getAttribute('aria-pressed')).toBe(
+    'true',
+  )
+  for (const tab of ['Metas e conquistas', 'Biblioteca PSN']) {
+    fireEvent.click(screen.getByRole('button', { name: tab }))
+    fireEvent.click(screen.getByRole('link', { name: 'Jogos' }))
+    expect(where()).toBe('/games?tab=interests')
+    expect(screen.getByRole('button', { name: 'Interesses' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    )
+  }
 })
 
 test('an unknown route goes home', () => {
   renderApp(<Shell />, { path: '/nada' })
   expect(where()).toBe('/')
-  expect(screen.getByText('Visão geral', { selector: '#route-label' })).toBeTruthy()
+  expect(screen.getByText('Home', { selector: '#route-label' })).toBeTruthy()
 })
 
 test('the sidebar profile: skeleton, the player, or waiting for PSN', () => {
@@ -117,39 +167,6 @@ test('private trophies anywhere bring up the notice', () => {
   expect(screen.getByRole('heading', { name: 'Não conseguimos ver seus troféus' })).toBeTruthy()
 })
 
-test('the nav pill sits behind the active link once it has a size', () => {
-  const proto = HTMLElement.prototype
-  const saved = Object.getOwnPropertyDescriptors(proto)
-  const size = (value: number) => ({ configurable: true, get: () => value })
-  Object.defineProperties(proto, {
-    offsetWidth: size(120),
-    offsetHeight: size(36),
-    offsetLeft: size(0),
-    offsetTop: size(48),
-  })
-  try {
-    const { container } = renderApp(<Shell />, { path: '/game' })
-    const pill = container.querySelector('.nav-indicator') as HTMLElement
-    expect(pill.style.width).toBe('120px')
-    expect(pill.style.transform).toBe('translate(0px, 48px)')
-    expect(pill.style.opacity).toBe('1')
-    expect(container.querySelector('.nav')?.classList.contains('nav-animated')).toBe(true)
-    fireEvent.click(screen.getByRole('link', { name: 'Interesses' }))
-    expect(pill.style.transition).toBe('')
-  } finally {
-    for (const key of ['offsetWidth', 'offsetHeight', 'offsetLeft', 'offsetTop'] as const) {
-      const d = saved[key]
-      if (d) Object.defineProperty(proto, key, d)
-      else delete (proto as unknown as Record<string, unknown>)[key]
-    }
-  }
-})
-
-test('without layout the pill stays hidden', () => {
-  const { container } = renderApp(<Shell />)
-  expect((container.querySelector('.nav-indicator') as HTMLElement).style.opacity).toBe('0')
-})
-
 test("a plugin's page gets an item in the menu, its route and its title", async () => {
   pluginPages.push({
     path: '/hello',
@@ -159,11 +176,68 @@ test("a plugin's page gets an item in the menu, its route and its title", async 
   })
   try {
     renderApp(<Shell />, { path: '/hello' })
-    const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
-    expect(within(nav).getByRole('link', { name: 'Olá' }).className).toContain('active')
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir o menu da conta' }))
+    expect(screen.getByRole('menuitem', { name: 'Olá' }).getAttribute('href')).toBe('/hello')
     expect(screen.getByRole('heading', { name: 'Página do plugin' })).toBeTruthy()
     await waitFor(() => expect(document.title).toBe('Olá'))
   } finally {
     pluginPages.length = 0
   }
+})
+
+test('contextual Nexo returns to the mounted journey with its open session intact', async () => {
+  mockApi({ '/api/plan': { plan: null }, '/api/chat': [], '/api/chat/threads': [] })
+  const current = journeyFixture
+  if (!current) throw new Error('fixture requires a game')
+  renderApp(<Shell />, { path: '/game', value: { data: { ...SAMPLE_DATA, current } } })
+  const session = document.getElementById('journey-session') as HTMLDetailsElement
+  session.open = true
+  fireEvent.click(screen.getByRole('link', { name: 'Conversar com Nexo' }))
+  await screen.findByRole('button', { name: 'Voltar à jornada' })
+  expect(document.getElementById('journey-session')).toBe(session)
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar à jornada' }))
+  await waitFor(() => expect(document.querySelector('.journey-chat')).toBeNull())
+  expect(document.getElementById('journey-session')).toBe(session)
+  expect(session.open).toBe(true)
+  expect(screen.getByTestId('location').textContent).toBe('/game')
+})
+
+test('contextual chat follows the keyboard viewport and restores page scroll styles', async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(window, 'visualViewport')
+  const viewport = Object.assign(new EventTarget(), { height: window.innerHeight, offsetTop: 0 })
+  Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport })
+  mockApi({ '/api/plan': { plan: null }, '/api/chat': [], '/api/chat/threads': [] })
+  document.body.style.position = 'relative'
+  try {
+    renderApp(<Shell />, {
+      path: '/game',
+      value: { data: { ...SAMPLE_DATA, current: journeyFixture } },
+    })
+    fireEvent.click(screen.getByRole('link', { name: 'Conversar com Nexo' }))
+    await screen.findByRole('button', { name: 'Voltar à jornada' })
+    const dialog = document.querySelector('.journey-chat') as HTMLElement
+    expect(dialog.dataset.keyboard).toBe('false')
+    viewport.height = 300
+    act(() => viewport.dispatchEvent(new Event('resize')))
+    expect(dialog.dataset.keyboard).toBe('true')
+    expect(dialog.style.getPropertyValue('--journey-viewport-height')).toBe('300px')
+    expect(document.body.style.position).toBe('fixed')
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar à jornada' }))
+    await waitFor(() => expect(document.querySelector('.journey-chat')).toBeNull())
+    expect(document.body.style.position).toBe('relative')
+  } finally {
+    document.body.style.position = ''
+    if (descriptor) Object.defineProperty(window, 'visualViewport', descriptor)
+    else Reflect.deleteProperty(window, 'visualViewport')
+  }
+})
+
+test('legacy interests links open the integrated Games tab without hiding Home', () => {
+  renderApp(<Shell />, { path: '/goals' })
+  expect(where()).toBe('/games?tab=goals')
+  expect(screen.getByRole('heading', { level: 1, name: 'Seus jogos' })).toBeTruthy()
+  const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
+  expect(within(nav).getByRole('link', { name: 'Jogos' }).className).toContain('active')
+  fireEvent.click(within(nav).getByRole('link', { name: 'Home' }))
+  expect(where()).toBe('/')
 })

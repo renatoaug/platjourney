@@ -1,7 +1,7 @@
 /** The game page's sections in a bar that sticks to the top while scrolling: the part in view is lit,
  * and once the hero is gone the bar carries the game's name and progress, so the page never loses
  * what it is about. Only sections on the page get a link. */
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { pct } from '../lib/format'
 import { useSlide } from '../ui/use-slide'
@@ -13,23 +13,31 @@ const messages = defineMessages({
     plan: 'Sessão',
     guide: 'Guia',
     trophies: 'Troféus',
+    similar: 'Parecidos',
   },
   [Language.En]: {
     label: 'Game sections',
     plan: 'Session',
     guide: 'Guide',
     trophies: 'Trophies',
+    similar: 'Similar',
   },
 })
 
-export type GameSection = 'plan' | 'guide' | 'trophies'
+export type GameSection = 'plan' | 'guide' | 'trophies' | 'similar'
 
 // On a phone the guide and the trophies take turns behind a switch: a hidden one scrolls to the pair.
 const scrollTo = (id: string) => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
   const el = document.getElementById(id)
-  const target = el && !el.offsetParent ? el.closest('.game-columns-wrap') : el
-  target?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  if (!el) return
+  if (el instanceof HTMLDetailsElement) el.open = true
+  el.closest('details')?.setAttribute('open', '')
+  window.dispatchEvent(new CustomEvent('game-section', { detail: id }))
+  requestAnimationFrame(() => {
+    const target = !el.offsetParent ? el.closest('.game-columns-wrap') : el
+    target?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  })
 }
 
 export function GameNav({
@@ -37,6 +45,7 @@ export function GameNav({
   hero,
   name,
   progress,
+  tools,
 }: {
   /** Each section and the id of the element it scrolls to. */
   sections: [GameSection, string][]
@@ -44,6 +53,7 @@ export function GameNav({
   hero: string
   name: string
   progress?: number | null
+  tools?: ReactNode
 }) {
   const t = useMessages(messages)
   const [present, setPresent] = useState<string[]>([])
@@ -54,7 +64,10 @@ export function GameNav({
   // Sections come and go as their data loads: the links follow the page.
   useEffect(() => {
     const list = ids.split(' ')
-    const check = () => setPresent(list.filter((id) => document.getElementById(id)))
+    const check = () => {
+      const next = list.filter((id) => document.getElementById(id))
+      setPresent((before) => (before.join(' ') === next.join(' ') ? before : next))
+    }
     check()
     const page = document.querySelector('.page.active') ?? document.body
     const observer = new MutationObserver(check)
@@ -81,18 +94,37 @@ export function GameNav({
         }, 160)
         return
       }
-      const line = 120
       const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4
-      const under = els.filter((e) => placed(e).getBoundingClientRect().top <= line)
-      setActive(atEnd && els.length ? els[els.length - 1].id : (under.at(-1)?.id ?? null))
+      const visible = els.filter((e) => !e.closest('[role="tabpanel"][hidden]'))
+      const under = visible.filter((e) => {
+        const target = placed(e)
+        // Match the anchor's actual clearance, including the iPhone's safe area.
+        const line = Math.max(
+          120,
+          (Number.parseFloat(getComputedStyle(target).scrollMarginTop) || 0) + 1,
+        )
+        return target.getBoundingClientRect().top <= line
+      })
+      setActive(
+        atEnd && visible.length ? visible[visible.length - 1].id : (under.at(-1)?.id ?? null),
+      )
     }
     update()
+    const panelChanged = () => {
+      // Selecting a tab may precede its smooth scroll, including the native safe-area offset.
+      const selected = els.find((e) => e.closest('[role="tabpanel"]:not([hidden])'))
+      if (!selected) return
+      picked.current = selected.id
+      setActive(selected.id)
+    }
+    window.addEventListener('game-panel-change', panelChanged)
     window.addEventListener('scroll', update, { passive: true })
     window.addEventListener('resize', update)
     return () => {
       clearTimeout(settle)
       window.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
+      window.removeEventListener('game-panel-change', panelChanged)
     }
   }, [present, hero])
 
@@ -128,6 +160,7 @@ export function GameNav({
           </li>
         ))}
       </ul>
+      {tools && <div className="game-nav-tools">{tools}</div>}
     </nav>
   )
 }

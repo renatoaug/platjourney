@@ -578,3 +578,15 @@ def test_a_missing_detail_is_only_said_when_the_player_asked_for_it():
 def test_a_suggested_trophy_comes_with_why_now():
     assert 'diga em uma frase por que esse, agora' in nexo.SYSTEM
     assert 'sem dado, não invente o motivo' in nexo.SYSTEM
+
+
+def test_journey_focus_matches_pending_owned_trophy_without_claiming_location() -> None:
+    text = nexo.lean_context(context(journeyFocus='Sobrevivente'))
+    assert 'Próximo foco exibido na jornada: Sobrevivente' in text
+    assert 'não confirma' in text
+    for ctx in [
+        context(journeyFocus='Primeiro Passo'),
+        context(journeyFocus='inventado'),
+        context(journeyFocus='Sobrevivente', owned=False),
+    ]:
+        assert 'Próximo foco exibido na jornada:' not in nexo.lean_context(ctx)

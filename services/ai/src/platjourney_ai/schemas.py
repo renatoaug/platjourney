@@ -72,6 +72,8 @@ class GameContext(Wire):
     trophies: list[Trophy] = Field(max_length=3000)
     guide: dict[str, Any] | None = None
     groups: TitleGroups | None = None
+    # The same pending target used by the journey and proactive notices, not a location.
+    journey_focus: str | None = None
     # Hours played so far, from PSN (may lag a session behind).
     hours_played: float | None = None
     # Account preference: count DLC trophies in the progress shown.

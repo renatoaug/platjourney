@@ -51,7 +51,7 @@ describe('InterestList', () => {
     expect(chip(/^Todos/).textContent).toBe('Todos13')
     expect(chip(/^Em andamento/).textContent).toBe('Em andamento8')
     expect(chip(/^Não começados/).textContent).toBe('Não começados4')
-    expect(chip(/^Platinados/).textContent).toBe('Platinados1')
+    expect(screen.queryByRole('button', { name: /^Platinados/ })).toBeNull()
     expect(names()).toHaveLength(10)
     expect(screen.getAllByText('não começou')[0]).toBeTruthy()
     expect(screen.getByText('17% · 7,5h')).toBeTruthy()
@@ -67,8 +67,6 @@ describe('InterestList', () => {
 
   test('the filters narrow the list; an empty filter says so', () => {
     render(<Demo />)
-    fireEvent.click(chip(/^Platinados/))
-    expect(names()).toEqual(['DAYS GONE'])
     fireEvent.click(chip(/^Não começados/))
     expect(names()).toEqual([
       'Ghost of Tsushima',
@@ -76,7 +74,7 @@ describe('InterestList', () => {
       'God of War Ragnarök',
       'Celeste',
     ])
-    render(<Demo interests={sampleGoals.interests.filter((g) => !g.done)} filter="done" />)
+    render(<Demo interests={sampleGoals.interests.filter((g) => g.done)} filter="pending" />)
     expect(screen.getByText('Nada por aqui com esse filtro.')).toBeTruthy()
   })
 
@@ -134,6 +132,7 @@ describe('InterestList', () => {
   test('the skeleton shows placeholder rows', () => {
     const { container } = render(<InterestListSkeleton />)
     expect(container.querySelectorAll('li')).toHaveLength(6)
+    expect(container.querySelectorAll('.goal-filters .chip')).toHaveLength(3)
   })
 })
 
@@ -216,4 +215,12 @@ test('a game saved from the release calendar says so, with the day it was saved'
     </MemoryRouter>,
   )
   expect(screen.getByText(/Salvo dos lançamentos em/)).toBeTruthy()
+})
+
+test('a previously kept platinum filter falls back to all without losing completed interests', () => {
+  render(<Demo filter="done" />)
+  expect(chip(/^Todos/).className).toContain('active')
+  expect(names()).toHaveLength(10)
+  fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }))
+  expect(screen.getByText('platinado · 61h')).toBeTruthy()
 })

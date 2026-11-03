@@ -15,6 +15,7 @@ const OUT = '.ui-check'
 const ROUTES = [
   '/',
   '/game',
+  '/games',
   '/nexo',
   '/goals',
   '/discover',

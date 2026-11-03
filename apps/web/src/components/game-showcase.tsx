@@ -23,6 +23,8 @@ const messages = defineMessages({
     released: 'Lançamento',
     platforms: 'Plataformas',
     site: 'Site oficial',
+    openSite: 'Abrir site',
+    siteLink: 'Abrir site: {host}',
     modes: 'Modos',
     rating: 'Nota da crítica',
     ratingValue: '{value}/100',
@@ -46,6 +48,8 @@ const messages = defineMessages({
     released: 'Release',
     platforms: 'Platforms',
     site: 'Official site',
+    openSite: 'Open site',
+    siteLink: 'Open site: {host}',
     modes: 'Modes',
     rating: 'Critic score',
     ratingValue: '{value}/100',
@@ -366,7 +370,140 @@ export function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
   )
 }
 
+/** Only the modes value moves; manual reading always takes priority. */
+function GameModes({ modes }: { modes: string[] }) {
+  const ref = useRef<HTMLElement>(null)
+  const [overflow, setOverflow] = useState(false)
+  const [atStart, setAtStart] = useState(true)
+  const text = modes.join(', ')
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !text) return
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let frame = 0
+    let max = 0
+    let position = 0
+    let previous = 0
+    let pauseUntil = performance.now() + 1800
+    let returning = false
+    let hovered = false
+    let focused = false
+    let wasAtStart = true
+    const updateStart = () => {
+      const start = el.scrollLeft < 0.5
+      if (start !== wasAtStart) {
+        wasAtStart = start
+        setAtStart(start)
+      }
+    }
+
+    const pauseAtEnd = (now: number) => {
+      if (!returning && position >= max) {
+        returning = true
+        pauseUntil = now + 1800
+      } else if (returning && position <= 0) {
+        returning = false
+        pauseUntil = now + 1800
+      }
+    }
+    const paused = (now: number) => hovered || focused || document.hidden || now < pauseUntil
+    const tick = (now: number) => {
+      frame = requestAnimationFrame(tick)
+      const elapsed = previous ? Math.min(now - previous, 48) : 0
+      previous = now
+      if (paused(now)) {
+        position = el.scrollLeft
+        return
+      }
+      position = Math.max(0, Math.min(max, position + elapsed * (returning ? -0.12 : 0.024)))
+      el.scrollLeft = position
+      updateStart()
+      pauseAtEnd(now)
+    }
+    const measure = () => {
+      cancelAnimationFrame(frame)
+      max = Math.max(0, el.scrollWidth - el.clientWidth)
+      setOverflow(max > 1)
+      el.scrollLeft = 0
+      wasAtStart = true
+      setAtStart(true)
+      position = 0
+      previous = 0
+      returning = false
+      pauseUntil = performance.now() + 1800
+      if (max > 1 && !motion.matches) frame = requestAnimationFrame(tick)
+    }
+    const pause = () => {
+      pauseUntil = performance.now() + 6000
+      returning = false
+    }
+    const enter = (event: globalThis.PointerEvent) => {
+      if (event.pointerType === 'mouse') hovered = true
+    }
+    const leave = () => {
+      hovered = false
+      pause()
+    }
+    const focus = () => {
+      focused = true
+    }
+    const blur = () => {
+      focused = false
+      pause()
+    }
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    observer?.observe(el)
+    if (el.firstElementChild) observer?.observe(el.firstElementChild)
+    window.addEventListener('resize', measure)
+    motion.addEventListener('change', measure)
+    el.addEventListener('scroll', updateStart, { passive: true })
+    el.addEventListener('pointerenter', enter)
+    el.addEventListener('pointerleave', leave)
+    el.addEventListener('pointerdown', pause)
+    el.addEventListener('wheel', pause, { passive: true })
+    el.addEventListener('keydown', pause)
+    el.addEventListener('focus', focus)
+    el.addEventListener('blur', blur)
+    measure()
+    return () => {
+      cancelAnimationFrame(frame)
+      observer?.disconnect()
+      window.removeEventListener('resize', measure)
+      motion.removeEventListener('change', measure)
+      el.removeEventListener('scroll', updateStart)
+      el.removeEventListener('pointerenter', enter)
+      el.removeEventListener('pointerleave', leave)
+      el.removeEventListener('pointerdown', pause)
+      el.removeEventListener('wheel', pause)
+      el.removeEventListener('keydown', pause)
+      el.removeEventListener('focus', focus)
+      el.removeEventListener('blur', blur)
+    }
+  }, [text])
+
+  return (
+    <div className="game-modes-window" data-preview={overflow && atStart}>
+      <section
+        ref={ref}
+        className="game-modes-scroll"
+        tabIndex={overflow ? 0 : undefined}
+        aria-label={text}
+        title={text}
+      >
+        <span>{text}</span>
+      </section>
+      {overflow && (
+        <span className="game-modes-preview" aria-hidden="true">
+          {text}
+        </span>
+      )}
+    </div>
+  )
+}
+
 /** The facts list: developer, release, modes, rating, platforms and site, each only when known. */
+
 function GameFacts({
   game,
   developers,
@@ -396,9 +533,11 @@ function GameFacts({
         </div>
       )}
       {modes.length > 0 && (
-        <div>
+        <div className="game-about-modes">
           <dt>{t('modes')}</dt>
-          <dd>{modes.join(', ')}</dd>
+          <dd>
+            <GameModes modes={modes} />
+          </dd>
         </div>
       )}
       {game.rating != null && game.rating > 0 && (
@@ -423,8 +562,15 @@ function GameFacts({
         <div>
           <dt>{t('site')}</dt>
           <dd>
-            <a href={site.href} target="_blank" rel="noopener noreferrer">
-              {site.host} <Icon name="arrow" />
+            <a
+              className="game-about-site"
+              href={site.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t('siteLink', { host: site.host })}
+              title={site.host}
+            >
+              {t('openSite')} <Icon name="arrow" />
             </a>
           </dd>
         </div>
@@ -526,7 +672,7 @@ export function GameShowcaseSkeleton() {
   )
 }
 
-/** Only http(s) links from the catalog are shown, with the host as their text. */
+/** Only http(s) links from the catalog are shown, with the host retained for accessible descriptions. */
 function safeUrl(raw: string): { href: string; host: string } | null {
   try {
     const u = new URL(raw)

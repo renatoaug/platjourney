@@ -49,7 +49,7 @@ import * as telegram from '../src/telegram.ts'
 import * as watcher from '../src/watcher.ts'
 import { handle } from '../src/web.ts'
 import { makeContext, makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
-import { counts } from './fixtures.ts'
+import { counts, makeGroups } from './fixtures.ts'
 
 class FakeResponse {
   status = 0
@@ -129,6 +129,7 @@ beforeEach(() => {
   spyOn(activity, 'unreadNotifications').mockResolvedValue(0)
   spyOn(activity, 'recentMessages').mockResolvedValue([])
   spyOn(games, 'getGame').mockResolvedValue(game)
+  spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
   spyOn(games, 'catalogGameForName').mockResolvedValue(undefined as never)
   spyOn(games, 'gameForTitle').mockResolvedValue(game)
   spyOn(guides, 'getGuide').mockResolvedValue(freshGuide)
@@ -755,15 +756,13 @@ test('the profile page adds the account', async () => {
 })
 
 test('plans are read, discarded and made for 15 to 600 minutes', async () => {
-  spyOn(planner, 'currentPlan').mockResolvedValue(null)
+  const read = spyOn(planner, 'currentPlan').mockResolvedValue(null)
   const discard = spyOn(planner, 'discardPlan').mockResolvedValue(null)
   const make = spyOn(planner, 'planSession').mockResolvedValue({ minutes: 60 } as never)
   expect((await send('GET', '/api/plan')).body).toEqual({ plan: null })
-  expect((await send('DELETE', '/api/plan')).body).toEqual({
-    plan: null,
-    closed: null,
-    askReason: false,
-  })
+  expect((await send('DELETE', '/api/plan')).status).toBe(409)
+  expect(discard).not.toHaveBeenCalled()
+  read.mockResolvedValue({ minutes: 60 } as never)
   discard.mockResolvedValueOnce({ id: 'session_plan:p', askReason: true })
   expect((await send('DELETE', '/api/plan')).body).toEqual({
     plan: null,
@@ -1522,3 +1521,115 @@ test('the focused tip route reads only the signed-in account and returns 404 for
   spyOn(auth, 'authenticate').mockResolvedValue(undefined)
   expect((await send('GET', '/api/tip?id=tip%3Aold')).status).toBe(401)
 })
+
+test('a selected journey plan validates ownership and keeps the playing game unchanged', async () => {
+  const playing = makeContext({
+    game: makeGame({ id: 'game:other' }),
+    title: makeTitle({ npCommunicationId: 'other' }),
+  })
+  spyOn(gameContext, 'getCurrent').mockReturnValue(playing)
+  const make = spyOn(planner, 'planSession').mockResolvedValue({ minutes: 30 } as never)
+  const read = spyOn(planner, 'currentPlan').mockResolvedValue(null)
+  const discard = spyOn(planner, 'discardPlan').mockResolvedValue(null)
+  for (const method of ['GET', 'DELETE']) {
+    expect((await send(method, '/api/plan?np=not-owned')).status).toBe(404)
+  }
+  expect((await send('POST', '/api/plan', { np: 'not-owned', minutes: 30 })).status).toBe(404)
+  expect(make).not.toHaveBeenCalled()
+  expect(read).not.toHaveBeenCalled()
+  expect(discard).not.toHaveBeenCalled()
+  expect(
+    (await send('POST', '/api/plan', { np: title.npCommunicationId, minutes: 30 })).status,
+  ).toBe(200)
+  expect(make.mock.calls[0][0]).toBe(me)
+  expect(make.mock.calls[0][1].game.id).toBe(game.id)
+  expect(make.mock.calls[0][1].title.npCommunicationId).toBe(title.npCommunicationId)
+  expect(gameContext.getCurrent(me)).toBe(playing)
+  expect((await send('DELETE', `/api/plan?np=${title.npCommunicationId}`)).status).toBe(409)
+  expect(discard).not.toHaveBeenCalled()
+  expect((await send('GET', `/api/plan?np=${title.npCommunicationId}`)).body).toEqual({
+    plan: null,
+  })
+  expect(read.mock.calls.at(-1)?.[1]?.game.id).toBe(game.id)
+})
+
+test('personal library paginates all owned PSN titles without searching catalog or filtering completed games', async () => {
+  const own = Array.from({ length: 14 }, (_, i) =>
+    makeTitle({
+      npCommunicationId: `OWN${i}`,
+      name: `Owned ${i}`,
+      progress: i === 0 ? 0 : 100,
+      earnedByType: { bronze: 0, silver: 0, gold: 0, platinum: i === 0 ? 0 : 1 },
+    }),
+  )
+  spyOn(lib, 'library').mockResolvedValue(own)
+  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext({ title: own[0] }))
+  const catalog = spyOn(games, 'searchCatalog').mockResolvedValue([])
+  const art = spyOn(games, 'gamesForTitles').mockResolvedValue(
+    new Map([['OWN0', makeGame({ cover_url: '/cover.jpg', art_url: '/art.jpg' })]]),
+  )
+  const first = await send('GET', '/api/library?scope=owned')
+  expect(first.body).toMatchObject({ total: 14, page: 1, size: 12 })
+  expect(first.body.items).toHaveLength(12)
+  expect(art).toHaveBeenCalledWith(own.slice(0, 12), false)
+  expect(first.body.items[1].cover).toBeNull()
+  expect(first.body.items[0]).toMatchObject({
+    np: 'OWN0',
+    cover: '/cover.jpg',
+    art: '/art.jpg',
+    progress: 0,
+    platinum: false,
+    current: true,
+    owned: true,
+  })
+  expect(first.body.items[1].platinum).toBe(true)
+  expect((await send('GET', '/api/library?scope=owned&page=2')).body.items).toHaveLength(2)
+  expect((await send('GET', '/api/library?scope=owned&page=999')).body.page).toBe(2)
+  expect((await send('GET', '/api/library?scope=owned&page=NaN')).body.page).toBe(1)
+  expect((await send('GET', '/api/library?scope=owned&q=missing')).body).toMatchObject({
+    items: [],
+    total: 0,
+    page: 1,
+  })
+  expect(catalog).not.toHaveBeenCalled()
+})
+
+for (const includeDlc of [false, true]) {
+  test(`owned library respects DLC preference ${includeDlc} without redefining platinum`, async () => {
+    spyOn(auth, 'authenticate').mockResolvedValue({ ...me, include_dlc_progress: includeDlc })
+    const earnedByType = { bronze: 28, silver: 15, gold: 2, platinum: 1 as const }
+    const completed = makeTitle({ earned: 46, total: 61, progress: 70, earnedByType })
+    const noPlatinum = makeTitle({
+      npCommunicationId: 'NO_PLAT',
+      progress: 100,
+      earnedByType: { ...earnedByType, platinum: 0 },
+    })
+    spyOn(lib, 'library').mockResolvedValue([completed, noPlatinum])
+    spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
+    const groups = makeGroups()
+    groups.base = { ...groups.base, earned: 46, total: 46, remaining: 0, earnedByType }
+    groups.dlc = {
+      ...groups.base,
+      earned: 0,
+      total: 15,
+      remaining: 15,
+      earnedByType: { bronze: 0, silver: 0, gold: 0, platinum: 0 },
+    }
+    spyOn(ranking, 'loadGroups').mockResolvedValue(groups)
+    const { body } = await send('GET', '/api/library?scope=owned')
+    expect(body.items[0]).toMatchObject({
+      earned: 46,
+      total: includeDlc ? 61 : 46,
+      progress: includeDlc ? 75 : 100,
+      progressScope: includeDlc ? 'all' : 'base',
+      platinum: true,
+    })
+    expect(body.items[1].platinum).toBe(false)
+    const chatSearch = await send('GET', '/api/library')
+    expect(chatSearch.body[0].progress).toBe(includeDlc ? 75 : 100)
+    expect(ranking.loadGroups).toHaveBeenCalledWith(
+      completed,
+      expect.objectContaining({ include_dlc_progress: includeDlc }),
+    )
+  })
+}

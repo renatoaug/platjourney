@@ -17,6 +17,7 @@ import { modelWorkDone } from '../plugins'
 import { Icon } from '../ui/icon'
 import { GuideText, Markdown } from '../ui/markdown'
 import { repeat, Sk } from '../ui/skeleton'
+import { ErrorState } from '../ui/states'
 import { toast } from '../ui/toast'
 import { assistantName } from './app-logo'
 import { DemoNote } from './demo'
@@ -72,6 +73,8 @@ const messages = defineMessages({
     endSession: 'Encerrar sessão',
     ready: 'Roteiro de {time} pronto',
     failed: 'Não conseguimos montar o roteiro. Tenta de novo.',
+    loadFailed: 'Não conseguimos carregar seu roteiro. Atualize para tentar novamente.',
+    closeFailed: 'Não conseguimos encerrar o roteiro. Tente novamente.',
     reasonAsk: 'O roteiro não rolou? Se quiser, conta o porquê.',
     reasonSkip: 'Agora não',
     reasonThanks: 'Valeu, isso ajuda a melhorar os roteiros.',
@@ -131,6 +134,8 @@ const messages = defineMessages({
     endSession: 'End session',
     ready: '{time} route ready',
     failed: 'We couldn’t build the route. Try again.',
+    loadFailed: 'Could not load your route. Refresh to try again.',
+    closeFailed: 'Could not end the route. Try again.',
     reasonAsk: 'Route didn’t work out? Tell me why, if you like.',
     reasonSkip: 'Not now',
     reasonThanks: 'Thanks, that helps make better routes.',
@@ -694,7 +699,9 @@ export function Plan({
 }
 
 /** Loads the session plan, refreshes it with the app state and builds or discards it. */
-export function PlanCard() {
+export function PlanCard({ np }: { np?: string } = {}) {
+  const endpoint = `/api/plan${np ? `?np=${encodeURIComponent(np)}` : ''}`
+  const [failed, setFailed] = useState(false)
   const { syncedAt, me } = useApp()
   const [plan, setPlan] = useState<SessionPlan | null | undefined>(undefined)
   const [busy, setBusy] = useState(false)
@@ -714,13 +721,14 @@ export function PlanCard() {
   useEffect(() => {
     if (hold.current) return
     let live = true
-    api<{ plan: SessionPlan | null }>('/api/plan')
+    setFailed(false)
+    api<{ plan: SessionPlan | null }>(endpoint)
       .then((r) => live && !hold.current && setPlan(r.plan))
-      .catch(() => live && !hold.current && setPlan(null))
+      .catch(() => live && !hold.current && setFailed(true))
     return () => {
       live = false
     }
-  }, [synced])
+  }, [synced, endpoint])
 
   const go = async () => {
     const asked = minutes
@@ -728,7 +736,10 @@ export function PlanCard() {
     setBusy(true)
     setPicking(false)
     try {
-      const r = await api<{ plan: SessionPlan }>('/api/plan', { minutes: asked })
+      const r = await api<{ plan: SessionPlan }>('/api/plan', {
+        minutes: asked,
+        ...(np ? { np } : {}),
+      })
       setPlan(r.plan)
       setBusy(false)
       requestAnimationFrame(() =>
@@ -744,10 +755,12 @@ export function PlanCard() {
 
   const discard = async () => {
     setDiscarding(true)
-    const r = await del<{ closed: string | null; askReason: boolean }>('/api/plan').catch(
-      () => null,
-    )
+    const r = await del<{ closed: string | null; askReason: boolean }>(endpoint).catch(() => null)
     setDiscarding(false)
+    if (!r) {
+      toast(tr('closeFailed'))
+      return
+    }
     setPlan(null)
     setClosed(r?.askReason && r.closed ? r.closed : null)
   }
@@ -758,6 +771,7 @@ export function PlanCard() {
     toast(tr('reasonThanks'), 'success')
   }
 
+  if (failed) return <ErrorState>{tr('loadFailed')}</ErrorState>
   return (
     <Plan
       plan={plan}

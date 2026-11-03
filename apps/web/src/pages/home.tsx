@@ -94,7 +94,7 @@ export function Home({ releases = <Releases /> }: { releases?: ReactNode } = {})
               <span className="eyebrow">{t('radarEyebrow')}</span>
               <h2>{t('radarTitle')}</h2>
             </div>
-            <Link to="/discover" className="text-link">
+            <Link to="/games" className="text-link">
               {t('seeLibrary')} <Icon name="arrow" />
             </Link>
           </div>

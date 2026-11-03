@@ -4,18 +4,21 @@
  * opens the game, the art and the title carried over to its page. */
 import { type CSSProperties, type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { useApp } from '../app/app-state'
 import { useProfile } from '../app/use-profile'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtPlayTime, fmtRate, pct } from '../lib/format'
+import { shownProgress } from '../lib/progress'
 import { tintStyle } from '../lib/tint'
-import type { AppStateData } from '../lib/types'
+import type { AppStateData, CurrentGame } from '../lib/types'
 import type { Platinum } from '../pages/profile'
 import { BoldText } from '../ui/bold-text'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
-import { Sk } from '../ui/skeleton'
+import { repeat, Sk } from '../ui/skeleton'
 import { DifficultyMeter } from './difficulty-meter'
-import { titleHref } from './tip'
+import { JourneyLink } from './journey-link'
+import { nexoHref, titleHref } from './tip'
 import './console.css'
 
 const messages = defineMessages({
@@ -101,6 +104,8 @@ interface Item {
   earnedAt?: string
   ordinal?: number
   tip?: string
+  context: string
+  target?: string
 }
 
 const bigCover = (url?: string | null) => url?.replace('/t_cover_big/', '/t_1080p/') ?? null
@@ -109,11 +114,17 @@ const bigCover = (url?: string | null) => url?.replace('/t_cover_big/', '/t_1080
 const isCover = (art?: string | null, cover?: string | null) =>
   !art || (!!cover && art === bigCover(cover)) || art.includes('/t_cover')
 
-function items(data: AppStateData, platinums: Platinum[] | null): Item[] {
+function focusLine(c: CurrentGame, note?: string) {
+  const next = c.focus?.trophy
+  return next ? `${next.name}: ${next.detail}` : note?.split(/\n\s*\n/)[0]
+}
+
+function items(data: AppStateData, platinums: Platinum[] | null, includeDlc: boolean): Item[] {
   const list: Item[] = []
   const c = data.current
   if (c && c.owned !== false) {
     const base = c.groups?.base
+    const progress = base ? shownProgress(base, c.groups?.dlc, includeDlc) : c
     const tip = data.tips.find(
       (tip) =>
         tip.game?.id === c.game.id && ['start', 'unlock', 'session', 'route'].includes(tip.kind),
@@ -123,25 +134,28 @@ function items(data: AppStateData, platinums: Platinum[] | null): Item[] {
       kind: 'current',
       name: c.name,
       cover: c.game.cover_url,
-      art: c.icon,
-      blur: isCover(c.icon, c.game.cover_url),
+      art: c.game.art_url ?? c.icon,
+      blur: isCover(c.game.art_url ?? c.icon, c.game.cover_url),
       tint: c.game.tint,
       to: '/game',
-      earned: base?.earned ?? c.earned,
-      total: base?.total ?? c.total,
-      progress: base ? Math.round((base.earned / base.total) * 100) : c.progress,
+      earned: progress.earned,
+      total: progress.total,
+      progress: progress.progress,
       remaining: base?.remaining ?? Math.max(0, c.total - c.earned - 1),
       difficulty: c.guide?.difficulty,
       hours: c.hoursPlayed,
       guideHours: c.guide?.hours,
       platform: c.platform,
-      tip: tip?.content.split(/\n\s*\n/)[0],
+      tip: focusLine(c, tip?.content),
+      context: c.np,
+      target: c.focus?.trophy?.name,
     })
   }
   for (const r of data.ranking) {
     if (c && r.game === c.game.id) continue
     list.push({
       key: `r:${r.game}`,
+      context: r.game,
       kind: 'radar',
       name: r.name,
       cover: r.cover,
@@ -164,6 +178,7 @@ function items(data: AppStateData, platinums: Platinum[] | null): Item[] {
     const art = p.game.art_url ?? bigCover(p.game.cover_url)
     list.push({
       key: `p:${p.game.id}`,
+      context: p.game.id,
       kind: 'platinum',
       name: p.game.name,
       cover: p.game.cover_url,
@@ -213,7 +228,6 @@ function Meta({ item }: { item: Item }) {
           })}
         </span>
       )}
-      {item.platform && <span>{item.platform.replaceAll(',', '/')}</span>}
     </div>
   )
 }
@@ -250,7 +264,12 @@ function Focus({ item, platinums, onOpen }: { item: Item; platinums: number; onO
   const t = useMessages(messages)
   return (
     <div className="console-focus">
-      <span className="eyebrow">{t(`label.${item.kind}`)}</span>
+      <div className="console-top">
+        <span className="eyebrow">{t(`label.${item.kind}`)}</span>
+        {item.platform && (
+          <span className="console-platform">{item.platform.replaceAll(',', '/')}</span>
+        )}
+      </div>
       <h2 className="console-title" style={{ '--title-chars': item.name.length } as CSSProperties}>
         {item.name}
       </h2>
@@ -279,9 +298,12 @@ function Focus({ item, platinums, onOpen }: { item: Item; platinums: number; onO
           {t('open')} <Icon name="arrow" />
         </button>
         {item.kind !== 'platinum' && (
-          <Link className="button secondary" to="/nexo">
-            {t('askNexo')}
-          </Link>
+          <JourneyLink
+            className="button secondary"
+            to={nexoHref(item.context, item.name, item.target)}
+          >
+            <img className="icon" src="/nexo-avatar.svg" alt="" /> {t('askNexo')}
+          </JourneyLink>
         )}
       </div>
     </div>
@@ -292,7 +314,11 @@ export function Console({ data }: { data: AppStateData }) {
   const t = useMessages(messages)
   const navigate = useNavigate()
   const profile = useProfile()
-  const list = useMemo(() => items(data, profile?.platinums ?? null), [data, profile])
+  const { includeDlcProgress } = useApp().me
+  const list = useMemo(
+    () => items(data, profile?.platinums ?? null, includeDlcProgress),
+    [data, profile, includeDlcProgress],
+  )
   const [focusKey, setFocusKey] = useState<string | null>(null)
   const index = Math.max(
     0,
@@ -410,13 +436,49 @@ export function Console({ data }: { data: AppStateData }) {
 
 export function ConsoleSkeleton() {
   return (
-    <div className="console tinted">
+    <div className="console tinted console-loading" aria-hidden="true">
       <div className="console-focus">
-        <Sk w="120px" h={10} />
-        <Sk w="60%" h={56} />
-        <Sk w="40%" h={12} />
-        <Sk w="420px" h={9} />
+        <div className="console-top">
+          <Sk w="120px" h={12} />
+          <Sk w="32px" h={12} />
+        </div>
+        <h2 className="console-title">
+          <Sk w="80%" h={0} style={{ height: '1em' }} />
+        </h2>
+        <div className="console-meta">
+          {repeat(3, () => (
+            <span>
+              <Sk w="70px" h={12} />
+            </span>
+          ))}
+        </div>
+        <div className="console-progress">
+          <div className="console-progress-label">
+            <Sk w="130px" h={12} />
+            <Sk w="35px" h={12} />
+          </div>
+          <div className="bar-row">
+            <Sk w="100%" h={6} />
+          </div>
+        </div>
+        <p className="console-nexo">
+          <Sk w="90%" h={16} />
+        </p>
+        <div className="console-actions">
+          <Sk w="100%" h={44} />
+          <Sk w="100%" h={44} />
+        </div>
       </div>
+      <section className="console-shelf">
+        {repeat(6, () => (
+          <div className="console-slot">
+            <button type="button" disabled tabIndex={-1}>
+              <span className="console-cover sk" style={{ height: 'auto' }} />
+              <Sk w="80%" h={10} />
+            </button>
+          </div>
+        ))}
+      </section>
     </div>
   )
 }

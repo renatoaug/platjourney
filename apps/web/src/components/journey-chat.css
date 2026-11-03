@@ -1,0 +1,142 @@
+@layer screens {
+  .journey-chat {
+    width: min(920px, 100%);
+    max-width: 100%;
+    height: 92dvh;
+    max-height: 100dvh;
+    padding: 0;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-card);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    overflow: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .journey-chat[open] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .journey-chat::backdrop {
+    background: color-mix(in srgb, var(--color-shadow) var(--alpha-dim), transparent);
+  }
+
+  .journey-chat-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex: none;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: var(--color-bg);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .journey-chat-bar button {
+    min-height: 44px;
+    font-size: var(--text-body);
+  }
+
+  .journey-chat > .page {
+    padding: 20px;
+    animation: none;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .journey-chat .nexo-layout {
+    min-height: 0;
+    height: 100%;
+    align-items: stretch;
+  }
+
+  .journey-chat .nexo-layout > .chat-page {
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .journey-chat .chat {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .journey-chat .nexo-chat-heading,
+  .journey-chat-brand .nexo-keys {
+    display: none;
+  }
+
+  .journey-chat .chat-page .nexo-chat-tools {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .journey-chat-brand {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: none;
+  }
+
+  .journey-chat-brand .nexo-hero {
+    padding: 0;
+  }
+
+  .journey-chat-brand .nexo-hero > .nexo-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .journey-chat-brand h1 {
+    font-size: var(--text-lg);
+  }
+
+  .journey-chat #chat-chips .chip,
+  .journey-chat :is(.nexo-threads-toggle, .nexo-sub-switch) {
+    min-height: 44px;
+  }
+
+  .journey-chat textarea {
+    font-size: var(--text-lg);
+  }
+
+  @media (max-width: 760px) {
+    .journey-chat {
+      margin: 0;
+      width: 100%;
+      position: fixed;
+      top: var(--journey-viewport-top, 0px);
+      height: var(--journey-viewport-height, 100dvh);
+      max-height: var(--journey-viewport-height, 100dvh);
+      border: 0;
+      border-radius: 0;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .journey-chat::backdrop {
+      background: var(--color-bg);
+    }
+
+    .journey-chat[data-keyboard="true"] :is(.nexo-chat-tools, .nexo-note, #chat-chips) {
+      display: none;
+    }
+
+    .journey-chat[data-keyboard="true"] {
+      padding-bottom: 0;
+    }
+
+    .journey-chat > .page {
+      padding: 12px;
+    }
+
+    .journey-chat .chat-welcome > :is(.nexo-avatar, .eyebrow) {
+      display: none;
+    }
+  }
+}

@@ -38,6 +38,12 @@ describe('Guide', () => {
     const summary = panel()
     expect(within(summary).getByText('3/10')).toBeTruthy()
     expect(within(summary).getByText('~70h')).toBeTruthy()
+    expect(
+      [...summary.querySelectorAll('.quick-facts-primary dt')].map((e) => e.textContent),
+    ).toEqual(['Dificuldade', 'Tempo estimado', 'Jogadas mínimas'])
+    expect(summary.querySelector('.quick-facts-conditions')?.textContent).toContain(
+      'Dá para continuar',
+    )
     expect(within(summary).getByText('Antes de começar')).toBeTruthy()
     expect(within(summary).queryByText('Ponto sem retorno')).toBeNull()
     expect(within(summary).getByText('Durante a história')).toBeTruthy()
@@ -239,7 +245,7 @@ describe('Guide', () => {
     expect(screen.getByText('O guia aparece aqui assim que estiver pronto.')).toBeTruthy()
     const preview = container.querySelector('.guide-research-preview')
     expect(preview?.getAttribute('aria-hidden')).toBe('true')
-    expect(preview?.querySelector('.tabs')).toBeTruthy()
+    expect(preview?.querySelector('.guide-tabs')).toBeTruthy()
   })
 
   test('the skeleton alone has the heading and disabled tabs', () => {
@@ -269,4 +275,13 @@ test('without a researched difficulty, a rare platinum is not taken as hard', ()
 test('a time under an hour shows in minutes', () => {
   show({ ...game, guide: { ...guide, hours: 0.5833 } })
   expect(screen.getByText('~35 min')).toBeTruthy()
+})
+
+test('an unknown playthrough count stays textual instead of a large numeric metric', () => {
+  show({ ...game, guide: { ...guide, playthroughs: 0, hours: 130 } })
+  const value = screen.getByText('Sem dado ainda')
+  expect(value.closest('.quick-fact')?.classList.contains('unknown')).toBe(true)
+  expect(screen.getByText('~130h').closest('.quick-fact')?.classList.contains('unknown')).toBe(
+    false,
+  )
 })

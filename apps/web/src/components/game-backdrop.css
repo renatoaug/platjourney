@@ -47,16 +47,48 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 7px 12px;
-    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
-    border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+    min-height: 44px;
+    padding: 8px 10px;
+    position: relative;
+    isolation: isolate;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
     color: var(--color-fg);
-    font-size: var(--text-md);
+    font-size: var(--text-sm);
+  }
+
+  /* A compact 32px surface inside the unchanged 44px touch target. */
+  .scenes-count {
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    .scenes-button.compact {
+      padding-inline: 10px;
+    }
+
+    .scenes-button.compact .scenes-label {
+      display: none;
+    }
+
+    .scenes-button.compact .scenes-count {
+      display: inline;
+    }
+  }
+
+  .scenes-button::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 6px 0;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
     backdrop-filter: blur(10px);
   }
 
-  .scenes-button:hover {
+  .scenes-button:hover::before {
     border-color: var(--color-accent);
     background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
   }

@@ -4,7 +4,8 @@ import { Page } from '../app/page'
 import { applyCommand, emptyGoals, fakeSearch, sampleGoals } from '../components/goals/fixtures'
 import { Language } from '../i18n/i18n'
 import type { YearGoals } from '../lib/types'
-import { Goals, GoalsView } from './goals'
+import { Goals, GoalsSkeleton, GoalsView } from './goals'
+import './games.css'
 
 const meta: Meta = { title: 'Pages/Goals', parameters: { layout: 'fullscreen' } }
 export default meta
@@ -61,3 +62,18 @@ export const LoadFailed: Story = {
 
 // The same screen in English (the toolbar switches any story).
 export const English: Story = { ...Loaded, globals: { locale: Language.En } }
+
+export const InterestsLoading: Story = {
+  render: () => (
+    <div className="games-interests">
+      <GoalsSkeleton section="interests" />
+    </div>
+  ),
+}
+export const AchievementsLoading: Story = {
+  render: () => (
+    <div className="games-goals">
+      <GoalsSkeleton section="goals" />
+    </div>
+  ),
+}

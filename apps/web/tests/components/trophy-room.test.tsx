@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test'
 import { screen } from '@testing-library/react'
-import { TrophyRoom } from '../../src/components/trophy-room'
+import { TrophyRoom, TrophyRoomSkeleton } from '../../src/components/trophy-room'
 import type { Platinum } from '../../src/pages/profile'
 import { renderApp } from '../support/web'
 
@@ -41,4 +41,15 @@ test('without hours the time records are left out', () => {
 test('no platinum, no room', () => {
   const { container } = renderApp(<TrophyRoom platinums={[]} />)
   expect(container.querySelector('.trophy-room')).toBeNull()
+})
+
+test('loading reserves the records showcase without invented facts or clickable game links', () => {
+  const { container } = renderApp(<TrophyRoomSkeleton />)
+  expect(screen.getByRole('region', { name: 'Seus recordes' }).getAttribute('aria-busy')).toBe(
+    'true',
+  )
+  expect(container.querySelectorAll('.room-record')).toHaveLength(4)
+  expect(container.querySelectorAll('.room-record-body .sk')).toHaveLength(8)
+  expect(container.querySelector('a.room-record')).toBeNull()
+  expect(container.querySelector('.room-record-stat')?.textContent).toBe('')
 })

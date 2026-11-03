@@ -16,8 +16,8 @@ import { Pager } from '../ui/pager'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { toast } from '../ui/toast'
-import { useSlide } from '../ui/use-slide'
 import '../components/trophy-list.css'
+import '../ui/section-tabs.css'
 import './guides.css'
 
 const messages = defineMessages({
@@ -582,7 +582,6 @@ export function Guides({
     if (typed.trim() !== q) setTyped(q)
   }
   const [load, setLoad] = useState<Load>({ status: 'loading' })
-  const platformRef = useSlide<HTMLDivElement>(platform)
 
   // Every change goes to the address, so a link or the back button gives the same list.
   const change = (next: Record<string, string>) =>
@@ -655,10 +654,9 @@ export function Guides({
           <div className="guides-toolbar">
             {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
             <div
-              className="trophy-status"
+              className="trophy-status section-tabs"
               role="group"
               aria-label={t('platformLabel')}
-              ref={platformRef}
             >
               {['', ...PLATFORMS].map((value) => (
                 <button

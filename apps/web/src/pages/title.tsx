@@ -1,3 +1,5 @@
+import { Journey, JourneySkeleton } from '../components/journey'
+import { PlanCard } from '../components/plan'
 /** Game detail for a title outside the current game (owned or recommended). */
 
 import { type ReactNode, useEffect, useState } from 'react'
@@ -21,13 +23,14 @@ import {
 } from '../components/hero'
 import { NextTrophy } from '../components/next-trophy'
 import { SimilarGamesSection, similarGames } from '../components/similar-games'
-import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
+import { TrophyList } from '../components/trophy-list'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { ApiError, api } from '../lib/api'
+import { api } from '../lib/api'
 import { fmtHours } from '../lib/format'
 import { tintStyle } from '../lib/tint'
 import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
+import { Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import './title.css'
 import { nexoHref } from '../components/tip'
@@ -54,7 +57,7 @@ const messages = defineMessages({
     trophies: 'Troféus',
     inLibrary: 'NA SUA BIBLIOTECA',
     talkToNexo: 'Conversar com o Nexo',
-    askNexo: 'Perguntar ao Nexo sobre ele',
+    askNexo: 'Perguntar ao Nexo sobre',
     trophiesPendingTitle: 'Buscando a lista de troféus',
     trophiesPending:
       'A lista deste jogo ainda está chegando da PSN. Volte em breve para ver cada troféu.',
@@ -94,6 +97,7 @@ const messages = defineMessages({
 /** What /api/title sends. Games not owned have no progress, and their trophies come from the catalog. */
 export interface TitleDetail {
   owned: boolean
+  focus?: CurrentGame['focus']
   np?: string
   game: Game
   name: string
@@ -207,36 +211,30 @@ function SaveButton({ d }: { d: TitleDetail }) {
   )
 }
 
-/** The skeleton of a title page: the two columns when the game is likely owned, the wide guide otherwise. */
+/** Owned titles load into the same journey as the current game. */
 function TitleSkeleton({ owned = true }: { owned?: boolean }) {
-  const t = useMessages(messages)
+  if (owned) return <JourneySkeleton gallery={false} />
   return (
     <>
       <div className="hero immersive">
-        <HeroSkeleton />
-      </div>
-      {owned ? (
-        <GameColumns
-          style={{ marginTop: 20 }}
-          trophies={
-            <div className="card">
-              <h2>{t('trophies')}</h2>
-              <TrophyListSkeleton rows={6} />
-            </div>
-          }
-          guide={
-            <div className="stack">
-              <div className="card">
-                <GuideSkeleton />
+        <HeroSkeleton
+          aside={false}
+          gallery={false}
+          breakdown
+          cta={
+            <>
+              <Sk w="100%" h={44} />
+              <div className="title-secondary-actions">
+                <Sk w="100%" h={60} />
+                <Sk w="100%" h={60} />
               </div>
-            </div>
+            </>
           }
         />
-      ) : (
-        <div className="card guide-wide" style={{ marginTop: 20 }}>
-          <GuideSkeleton />
-        </div>
-      )}
+      </div>
+      <div className="card guide-wide" style={{ marginTop: 20 }}>
+        <GuideSkeleton />
+      </div>
     </>
   )
 }
@@ -270,12 +268,14 @@ function HeroBottom({ d }: { d: TitleDetail }) {
       {d.trophies?.length ? <TrophyBreakdown trophies={d.trophies} /> : null}
       <div className="cta">
         <SaveButton d={d} />
-        {d.trophies?.length ? (
-          <Link className="button secondary" to={nexoHref(d.game.id, d.name)}>
-            {t('askNexo')} <Icon name="arrow" />
-          </Link>
-        ) : null}
-        {d.store && <StoreOffer store={d.store} />}
+        <div className="title-secondary-actions">
+          {d.trophies?.length ? (
+            <Link className="button secondary" to={nexoHref(d.game.id, d.name)}>
+              <img className="icon" src="/nexo-avatar.svg" alt="" /> {t('askNexo')}
+            </Link>
+          ) : null}
+          {d.store && <StoreOffer store={d.store} />}
+        </div>
       </div>
     </div>
   )
@@ -284,11 +284,35 @@ function HeroBottom({ d }: { d: TitleDetail }) {
 const TITLE_SECTIONS: [GameSection, string][] = [
   ['guide', 'title-guide'],
   ['trophies', 'title-trophies'],
+  ['similar', 'similar-games'],
 ]
 
 /** A loaded title: its art across the top under the hero (and the next trophy, when it is in the
  * library), the bar of its sections, the platinum map, trophies and guide, then the similar games. */
-function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
+function OwnedJourney({
+  d,
+  similar,
+  back,
+}: {
+  d: TitleDetail
+  similar?: ReactNode
+  back: ReactNode
+}) {
+  const game: CurrentGame = {
+    ...d,
+    np: d.np ?? '',
+    progress: d.progress ?? 0,
+    earned: d.earned ?? 0,
+    total: d.total ?? 0,
+    trophies: d.trophies ?? [],
+    icon: d.icon ?? undefined,
+  }
+  return (
+    <Journey game={game} plan={<PlanCard key={d.np} np={d.np} />} similar={similar} back={back} />
+  )
+}
+
+function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; back: ReactNode }) {
   const t = useMessages(messages)
   const g = d.guide
   const owned = d.owned
@@ -312,20 +336,21 @@ function TitleView({ d, similar }: { d: TitleDetail; similar?: ReactNode }) {
   return (
     <>
       <GameBackdrop src={d.icon} shots={shots} at={scene} tint={d.game.tint} />
+      <div className="game-page-actions">
+        {back}
+        <ScenesButton shots={shots} at={scene} name={d.name} onGo={setScene} />
+      </div>
       <div className="hero immersive tinted" id="title-hero" style={tintStyle(d.game.tint)}>
         <UnobtainableBanner guide={{ unobtainable: g?.unobtainable }} />
         <div className="inner">
           <div className="hero-top">
-            {/* Outside the library there is nothing of the player's to show: no label, no progress. */}
-            {owned && <span className="live-label">{t('inLibrary')}</span>}
-            <span className="hero-tools">
-              <ScenesButton shots={shots} at={scene} name={d.name} onGo={setScene} />
-              <span className="platform">{d.platform}</span>
-            </span>
+            <TitleMeta d={d} />
           </div>
           <div className="hero-headline">
-            <h2 className="hero-title">{d.name}</h2>
-            <TitleMeta d={d} />
+            <div className="hero-title-row">
+              <h2 className="hero-title">{d.name}</h2>
+              <span className="platform">{d.platform}</span>
+            </div>
           </div>
           <HeroBottom d={d} />
           {/* The next trophy to go for; with nothing left to push, or outside the library, the facts. */}
@@ -407,23 +432,36 @@ export function TitleScreen({
   // Back goes where the player came from (Guides, Discover, the library); a page opened from a
   // link, with nothing before it in the app, falls back to Discover.
   const opened = useLocation().key === 'default'
+  const back = (
+    <Link
+      className="text-link back-link"
+      to="/discover"
+      onClick={(e) => {
+        if (opened) return
+        e.preventDefault()
+        navigate(-1)
+      }}
+    >
+      <Icon name="arrow" /> {t('back')}
+    </Link>
+  )
   return (
     <Page path="/title">
-      <Link
-        className="text-link back-link"
-        to="/discover"
-        onClick={(e) => {
-          if (opened) return
-          e.preventDefault()
-          navigate(-1)
-        }}
-      >
-        <Icon name="arrow" /> {t('back')}
-      </Link>
+      {load.kind !== 'ready' && (
+        <div className="game-page-actions">
+          {back}
+          {load.kind === 'loading' && <Sk w="130px" h={44} />}
+        </div>
+      )}
       <div id="title-page">
         {load.kind === 'loading' && <TitleSkeleton owned={owned} />}
         {load.kind === 'error' && <ErrorState>{t('notFound')}</ErrorState>}
-        {load.kind === 'ready' && <TitleView d={load.d} similar={similar} />}
+        {load.kind === 'ready' &&
+          (load.d.owned && load.d.np ? (
+            <OwnedJourney d={load.d} similar={similar} back={back} />
+          ) : (
+            <TitleView d={load.d} similar={similar} back={back} />
+          ))}
       </div>
     </Page>
   )

@@ -26,7 +26,6 @@ const messages = defineMessages({
       all: 'Todos',
       playing: 'Em andamento',
       pending: 'Não começados',
-      done: 'Platinados',
     },
     list: {
       platinumed: 'platinado',
@@ -54,7 +53,6 @@ const messages = defineMessages({
       all: 'All',
       playing: 'In progress',
       pending: 'Not started',
-      done: 'Platinumed',
     },
     list: {
       platinumed: 'platinumed',
@@ -81,7 +79,7 @@ const messages = defineMessages({
 
 const GOAL_PAGE_SIZE = 10
 
-const FILTERS: GoalFilter[] = ['all', 'playing', 'pending', 'done']
+const FILTERS = ['all', 'playing', 'pending'] as const
 
 interface Ghost {
   id: string
@@ -167,6 +165,10 @@ function SavedFrom({ g }: { g: Interest }) {
   )
 }
 
+function InterestArt({ src }: { src?: string | null }) {
+  return src ? <img className="goal-art" src={src} alt="" loading="lazy" decoding="async" /> : null
+}
+
 function Row({
   g,
   rank,
@@ -192,6 +194,7 @@ function Row({
           <Icon name="grip" />
         </span>
       )}
+      <InterestArt src={g.game.art_url} />
       {/* Its place in the list, or a check once platinumed. */}
       <span className={`goal-game-status${g.done ? ' complete' : ''}${rank === 1 ? ' first' : ''}`}>
         {g.done || !rank ? <Icon name={g.done ? 'check' : 'circle'} /> : <b>{rank}</b>}
@@ -233,7 +236,7 @@ function Row({
 
 export function InterestList({
   interests,
-  filter,
+  filter: savedFilter,
   page: wanted,
   onFilter,
   onPage,
@@ -258,6 +261,8 @@ export function InterestList({
   onReorder: (ids: string[]) => Promise<unknown>
 }) {
   const t = useMessages(messages)
+  // Old kept views may still carry the removed platinum-only filter.
+  const filter = savedFilter === 'done' ? 'all' : savedFilter
   const filtersRef = useSlide<HTMLDivElement>(filter)
   // Manual order for what is still to do; platinumed ones sink to the bottom.
   const open = interests.filter((g) => !g.done)
@@ -414,7 +419,7 @@ export function InterestList({
             disabled={busy}
             onClick={() => onFilter(key)}
           >
-            {t(`filters.${key}`)}
+            <span>{t(`filters.${key}`)}</span>
             <span className="chip-count">
               {key === 'all'
                 ? interests.length
@@ -496,28 +501,36 @@ export function InterestList({
 
 export function InterestListSkeleton() {
   return (
-    <>
+    <div aria-hidden="true">
       <div className="chips goal-filters">
-        <Sk w="70px" h={30} />
-        <Sk w="110px" h={30} />
-        <Sk w="120px" h={30} />
-        <Sk w="100px" h={30} />
+        {[70, 110, 120].map((width) => (
+          <span className="chip" key={width}>
+            <Sk w="70%" h={14} />
+            <Sk w={24} h={14} />
+          </span>
+        ))}
       </div>
       <ul className="goal-list">
         {Array.from({ length: 6 }, (_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: fixed placeholder rows
           <li key={i}>
-            <Sk w="22px" h={28} />
-            <Sk w="29px" h={29} style={{ borderRadius: '50%' }} />
-            <Sk w="34px" h={46} style={{ borderRadius: 'var(--radius-tag)' }} />
-            <span className="name">
-              <Sk w="55%" h={12} />
+            <span className="goal-cover sk" />
+            <span className="name" style={{ gridArea: 'name', minWidth: 0 }}>
+              <Sk w="85%" h={20} />
+              <Sk w="60%" h={14} style={{ marginTop: 8 }} />
             </span>
-            <Sk w="60px" h={10} />
-            <Sk w="30px" h={30} />
+            <span className="st">
+              <Sk w="90px" h={12} />
+            </span>
+            <span className="goal-grip">
+              <Sk w="20px" h={20} />
+            </span>
+            <span className="goal-remove">
+              <Sk w="20px" h={20} />
+            </span>
           </li>
         ))}
       </ul>
-    </>
+    </div>
   )
 }

@@ -1,9 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useState } from 'react'
+import { type CSSProperties, useState } from 'react'
 import { Language } from '../../i18n/i18n'
 import { type ChatLoad, type ChatMessage, NexoChat } from './chat'
+import { ChatThreadsToggle } from './threads'
+import '../../pages/nexo.css'
 
-const meta: Meta<typeof NexoChat> = { title: 'Nexo/Chat', component: NexoChat }
+const meta: Meta<typeof NexoChat> = {
+  title: 'Nexo/Chat',
+  component: NexoChat,
+  // Standalone stories have no shell bottom bar; keep the same viewport calculation as the app.
+  decorators: [
+    (Story) => (
+      <div style={{ '--bottom-bar': '0px' } as CSSProperties}>
+        <Story />
+      </div>
+    ),
+  ],
+}
 export default meta
 type Story = StoryObj<typeof NexoChat>
 
@@ -43,6 +56,17 @@ export const Loaded: Story = { args: { ...base, chat: MESSAGES } }
 export const Demo: Story = { args: { ...base, chat: [], demo: true } }
 export const DemoEnglish: Story = { ...Demo, globals: { locale: Language.En } }
 export const Empty: Story = { args: { ...base, chat: [] } }
+export const TrophyContext: Story = {
+  args: { ...base, chat: [], trophy: 'Laboratório de bolso' },
+  render: function Context(args) {
+    const [trophy, setTrophy] = useState(args.trophy)
+    return <NexoChat {...args} trophy={trophy} onClearTrophy={() => setTrophy(null)} />
+  },
+}
+export const LongTrophyContext: Story = {
+  ...TrophyContext,
+  args: { ...TrophyContext.args, trophy: 'Uma jornada muito longa até a última conquista' },
+}
 export const Loading: Story = { args: { ...base, chat: 'loading' } }
 export const Failed: Story = { args: { ...base, chat: 'error' } }
 export const Pending: Story = {
@@ -53,10 +77,11 @@ export const Pending: Story = {
   },
 }
 
-// Sends for real in the story: the answer arrives after a moment.
+// Local synthetic exchange only: no API or model is called.
 function Interactive() {
   const [chat, setChat] = useState<ChatLoad>(MESSAGES)
   const [sending, setSending] = useState(false)
+  const [replyVersion, setReplyVersion] = useState(0)
   const send = (text: string) => {
     setSending(true)
     setChat((c) => [
@@ -68,10 +93,19 @@ function Interactive() {
         ...(Array.isArray(c) ? c : []),
         { role: 'assistant', content: `Anotado: "${text}". Vamos por partes.` },
       ])
+      setReplyVersion((version) => version + 1)
       setSending(false)
     }, 1200)
   }
-  return <NexoChat chat={chat} sending={sending} subtitle={base.subtitle} onSend={send} />
+  return (
+    <NexoChat
+      chat={chat}
+      sending={sending}
+      replyVersion={replyVersion}
+      subtitle={base.subtitle}
+      onSend={send}
+    />
+  )
 }
 
 export const Conversation: Story = { render: () => <Interactive /> }
@@ -97,5 +131,39 @@ export const GameSwitch: Story = {
     searchGames: async (q: string) =>
       library.filter((g) => g.name.toLowerCase().includes(q.toLowerCase())),
     onPickGame: () => {},
+  },
+}
+
+/** Long game name plus the real header control footprint at phone widths. */
+export const Header: Story = {
+  decorators: [
+    (Story) => (
+      <div className="nexo-layout nexo-conversation">
+        <Story />
+      </div>
+    ),
+  ],
+  args: {
+    ...base,
+    subtitle: 'A Plague Tale: Requiem · 42%',
+    chat: [],
+    historyControl: <ChatThreadsToggle onOpen={() => {}} />,
+    searchGames: async () => library,
+  },
+}
+
+export const LongConversation: Story = {
+  args: {
+    ...base,
+    historyControl: <ChatThreadsToggle onOpen={() => {}} />,
+    chat: Array.from({ length: 8 }, (_, i) => ({
+      id: `long-${i}`,
+      role: i % 2 ? 'assistant' : 'user',
+      content:
+        i % 2
+          ? 'Confira **o objetivo** e siga os passos:\n\n- Leia a descrição.\n- Confira o requisito.\n- Continue sua jornada quando estiver pronto.'
+          : 'Pode explicar o próximo passo?',
+      game,
+    })),
   },
 }

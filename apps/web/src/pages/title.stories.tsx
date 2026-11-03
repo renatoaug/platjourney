@@ -87,3 +87,40 @@ export const NotFound: Story = { render: () => <TitleScreen owned load={{ kind: 
 
 // The same screen in English (the toolbar switches any story).
 export const English: Story = { ...Owned, globals: { locale: Language.En } }
+
+export const GalleryBesideBack: Story = {
+  render: () => (
+    <TitleScreen
+      owned={false}
+      load={{
+        kind: 'ready',
+        d: {
+          ...recommendedData,
+          store: { url: 'https://store.playstation.com/', deal: null },
+          game: { ...recommendedData.game, screenshot_ids: ['r5mn9rt7aqvf5nrn8dqq'] },
+        },
+      }}
+    />
+  ),
+}
+
+export const CompactTrophyCounts: Story = {
+  render: () => (
+    <TitleScreen
+      owned={false}
+      load={{
+        kind: 'ready',
+        d: {
+          ...recommendedData,
+          trophies: Array.from({ length: 142 }, (_, i) => ({
+            ...trophies[0],
+            id: i,
+            type: i === 0 ? 'platinum' : i < 4 ? 'gold' : i < 18 ? 'silver' : 'bronze',
+            earned: false,
+            earnedRate: 0,
+          })),
+        },
+      }}
+    />
+  ),
+}

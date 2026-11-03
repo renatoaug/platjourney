@@ -60,19 +60,34 @@ export function ScenesButton({
   at,
   name,
   onGo,
+  compact = false,
 }: {
   shots: string[]
   at: number
   name: string
   onGo: (i: number) => void
+  compact?: boolean
 }) {
   const t = useMessages(messages)
   const [open, setOpen] = useState(false)
   if (!shots.length) return null
   return (
     <>
-      <button type="button" className="scenes-button" onClick={() => setOpen(true)}>
-        <Icon name="expand" /> {t('scenes', { count: shots.length })}
+      <button
+        type="button"
+        className={`scenes-button${compact ? ' compact' : ''}`}
+        aria-label={t('scenes', { count: shots.length })}
+        onClick={() => setOpen(true)}
+      >
+        <Icon name="expand" />
+        <span className="scenes-label" aria-hidden="true">
+          {t('scenes', { count: shots.length })}
+        </span>
+        {compact && (
+          <span className="scenes-count" aria-hidden="true">
+            {shots.length}
+          </span>
+        )}
       </button>
       {open && (
         <GalleryLightbox

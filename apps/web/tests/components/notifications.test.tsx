@@ -73,7 +73,7 @@ test('opening lists the notices, then marks them read everywhere', async () => {
     'GET /api/notifications?page=1&size=8',
     'POST /api/notifications/read',
   ])
-  expect(within(panel()).getByRole('link', { name: /Ver histórico completo/ })).toBeTruthy()
+  expect(within(panel()).getByRole('link', { name: /Ver tudo/ })).toBeTruthy()
 })
 
 test('with nothing new, opening does not mark anything', async () => {
@@ -173,4 +173,18 @@ test('a long notice starts clamped, with "Ler tudo"', async () => {
     if (saved) Object.defineProperty(proto, 'scrollHeight', saved)
     else delete (proto as unknown as Record<string, unknown>).scrollHeight
   }
+})
+
+test('many notification pages keep first, current and last reachable without listing every page', async () => {
+  setup(0, { '/api/notifications': { items, total: 80 } })
+  fireEvent.click(screen.getByRole('button', { name: 'Notificações' }))
+  const last = await screen.findByRole('button', { name: 'Página 10' })
+  expect(screen.queryByRole('button', { name: 'Página 8' })).toBeNull()
+  fireEvent.click(last)
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Página 10' }).getAttribute('aria-current')).toBe(
+      'page',
+    ),
+  )
+  expect(screen.getByRole('button', { name: 'Página 1' })).toBeTruthy()
 })

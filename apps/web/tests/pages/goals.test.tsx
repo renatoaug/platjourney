@@ -102,12 +102,12 @@ test('filters and pages are kept across visits', () => {
   const pager = screen.getByRole('navigation', { name: 'Páginas de interesses' })
   fireEvent.click(within(pager).getByRole('button', { name: 'Próxima página' }))
   expect(cache['goals.page']).toBe(2)
-  fireEvent.click(screen.getByRole('button', { name: /^Platinados/ }))
-  expect(cache['goals.filter']).toBe('done')
+  fireEvent.click(screen.getByRole('button', { name: /^Não começados/ }))
+  expect(cache['goals.filter']).toBe('pending')
   expect(cache['goals.page']).toBe(1)
   unmount()
   renderApp(<GoalsView goals={sampleGoals} command={ok()} />, { value: { cache } })
-  expect(screen.getByRole('button', { name: /^Platinados/ }).className).toContain('active')
+  expect(screen.getByRole('button', { name: /^Não começados/ }).className).toContain('active')
 })
 
 test('without a fake, changes go through /api/goals and update the app state', async () => {

@@ -117,3 +117,18 @@ export const FullScreen: Story = {
     />
   ),
 }
+
+/** Long modes stay beside their label and scroll within the available width. */
+export const MultipleModes: Story = {
+  render: () => (
+    <div style={{ maxWidth: 380 }}>
+      <GameAbout
+        game={{
+          ...daysGone,
+          modes: ['Single player', 'Multiplayer', 'Co-operative'],
+        }}
+        name="Days Gone"
+      />
+    </div>
+  ),
+}

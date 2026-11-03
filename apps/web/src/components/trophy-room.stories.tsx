@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Language } from '../i18n/i18n'
 import { profileData } from '../pages/profile.stories'
-import { TrophyRoom } from './trophy-room'
+import { TrophyRoom, TrophyRoomSkeleton } from './trophy-room'
 
 const meta: Meta = { title: 'Components/TrophyRoom' }
 export default meta
@@ -15,3 +15,5 @@ export const FewPlatinums: Story = {
 }
 
 export const English: Story = { ...Records, globals: { locale: Language.En } }
+
+export const Loading: Story = { render: () => <TrophyRoomSkeleton /> }

@@ -338,7 +338,22 @@ export function GoalSeasonSkeleton() {
           <Sk w="80px" h={12} />
         </div>
         <Sk w="100%" h={5} />
-        <Sk w="70%" h={12} style={{ marginTop: 14 }} />
+        <div className="goal-months" aria-hidden="true">
+          {Array.from({ length: 12 }, (_, month) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: fixed calendar placeholders
+            <span key={month} className="goal-month">
+              <b>
+                <Sk w="14px" h={18} />
+              </b>
+              <small>
+                <Sk w="22px" h={10} />
+              </small>
+            </span>
+          ))}
+        </div>
+        <p className="goal-pace">
+          <Sk w="70%" h={12} />
+        </p>
       </div>
       <div className="goal-control-wrap">
         <Sk w="40%" h={9} />

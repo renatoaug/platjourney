@@ -2,13 +2,15 @@ import { ai } from '../ai.ts'
 import { config } from '../config.ts'
 import { tagged } from '../costs.ts'
 import { isDemo } from '../demo.ts'
-import { getChat, setChat, setChatFromCatalog } from '../game-context.ts'
+import { getChat, getCurrent, setChat, setChatFromCatalog } from '../game-context.ts'
 import { json, readBody } from '../http.ts'
 import type { library } from '../library.ts'
 import { reply } from '../nexo.ts'
+import { shownProgress } from '../progress.ts'
+import { loadGroups } from '../ranking.ts'
 import { allow } from '../rate-limit.ts'
 import { chatThreads, recentMessages } from '../repository/activity.ts'
-import { getGame, searchCatalog } from '../repository/game.ts'
+import { gamesForTitles, getGame, searchCatalog } from '../repository/game.ts'
 import type { User } from '../repository/user.ts'
 import { chatOrCheck } from '../watcher.ts'
 import { type Api, type ApiHandler, currentView } from './api.ts'
@@ -68,20 +70,61 @@ async function transcribe({ req, res, me }: Api) {
 // The chat's game, as /game in Telegram: the player's own titles, searched by name, and the
 // switch, which loads that game's context for the chat and the notices alike.
 async function librarySearch({ res, url, me, titles }: Api) {
-  if (isDemo(me)) return json(res, 200, [])
+  if (isDemo(me) && url.searchParams.get('scope') !== 'owned') return json(res, 200, [])
   const q = (url.searchParams.get('q') ?? '').trim().toLowerCase()
   const current = getChat(me)?.title.npCommunicationId
   const own = await titles()
+  // The Games page is the personal PSN library, not the chat's mixed catalog search.
+  if (url.searchParams.get('scope') === 'owned') {
+    const size = 12
+    const hits = own.filter((ti) => ti.name.toLowerCase().includes(q))
+    const requested = Number(url.searchParams.get('page') ?? 1)
+    const page = Math.min(
+      Number.isSafeInteger(requested) && requested > 0 ? requested : 1,
+      Math.max(1, Math.ceil(hits.length / size)),
+    )
+    const visible = hits.slice((page - 1) * size, page * size)
+    const art = await gamesForTitles(visible, false)
+    const playing = getCurrent(me)?.title.npCommunicationId
+    return json(res, 200, {
+      items: await Promise.all(
+        visible.map(async (ti) => {
+          const groups = await loadGroups(ti, me)
+          const { earned, total, progress } = shownProgress(me, ti, groups)
+          return {
+            np: ti.npCommunicationId,
+            name: ti.name,
+            platform: ti.platform,
+            icon: ti.iconUrl,
+            cover: art.get(ti.npCommunicationId)?.cover_url ?? null,
+            art: art.get(ti.npCommunicationId)?.art_url ?? null,
+            progress,
+            earned,
+            total,
+            progressScope: !groups ? 'psn' : me.include_dlc_progress && groups.dlc ? 'all' : 'base',
+            platinum: ti.earnedByType.platinum > 0,
+            current: ti.npCommunicationId === playing,
+            owned: true,
+          }
+        }),
+      ),
+      total: hits.length,
+      page,
+      size,
+    })
+  }
   const hits = own.filter((ti) => ti.name.toLowerCase().includes(q)).slice(0, 8)
-  const mine = hits.map((ti) => ({
-    np: ti.npCommunicationId,
-    name: ti.name,
-    platform: ti.platform,
-    icon: ti.iconUrl,
-    progress: ti.progress,
-    current: ti.npCommunicationId === current,
-    owned: true,
-  }))
+  const mine = await Promise.all(
+    hits.map(async (ti) => ({
+      np: ti.npCommunicationId,
+      name: ti.name,
+      platform: ti.platform,
+      icon: ti.iconUrl,
+      progress: shownProgress(me, ti, await loadGroups(ti, me)).progress,
+      current: ti.npCommunicationId === current,
+      owned: true,
+    })),
+  )
   const others = q.length < 2 || mine.length >= 8 ? [] : await notOwned(me, q, own, 8 - mine.length)
   return json(res, 200, [...mine, ...others])
 }

@@ -1,8 +1,11 @@
 @layer screens {
   .guide-spotlight {
     display: grid;
-    grid-template-columns: 112px 1fr;
-    gap: 18px;
+    grid-template-columns: 112px minmax(0, 1fr);
+    grid-template-areas: "heading heading" "cover body" "cover chips";
+    align-content: start;
+    align-self: start;
+    gap: 12px 18px;
     width: min(500px, 100%);
     padding: 16px;
     border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
@@ -12,7 +15,17 @@
     box-shadow: var(--shadow-popover);
   }
 
+  .guide-spotlight-heading {
+    grid-area: heading;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-block: -8px 0;
+  }
+
   .guide-spotlight-cover {
+    grid-area: cover;
     width: 112px;
     aspect-ratio: 3 / 4;
     object-fit: cover;
@@ -20,6 +33,7 @@
   }
 
   .guide-spotlight-body {
+    grid-area: body;
     display: grid;
     align-content: start;
     gap: 6px;
@@ -34,7 +48,7 @@
     text-transform: uppercase;
   }
 
-  /* The name and, at the far end of its line, the way in. */
+  /* The action lives in the header so the title keeps the full text column. */
   .guide-spotlight-head {
     display: flex;
     align-items: flex-start;
@@ -48,7 +62,7 @@
     font-weight: var(--weight-medium);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-snug);
-    text-wrap: balance;
+    overflow-wrap: anywhere;
   }
 
   .guide-spotlight-sub {
@@ -59,9 +73,10 @@
   /* The same glass chips as a game's page: the difficulty in its band's color. */
   .guide-spotlight-chips {
     display: flex;
-    flex-wrap: nowrap;
+    grid-area: chips;
+    flex-wrap: wrap;
     gap: 6px;
-    margin: 4px 0 6px;
+    margin: 0;
   }
 
   .guide-spotlight-chips > * {
@@ -115,18 +130,21 @@
     color: var(--color-accent);
   }
 
-  .guide-spotlight .button {
+  .guide-spotlight-open {
     flex: none;
     gap: 6px;
-    height: 32px;
-    min-height: 0;
-    margin-top: 2px;
-    padding: 0 12px;
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+    padding: 0 4px;
     font-size: var(--text-sm);
     white-space: nowrap;
   }
 
-  .guide-spotlight .button .icon {
+  .guide-spotlight-open .icon {
     width: 13px;
     height: 13px;
   }
@@ -139,7 +157,8 @@
 
   @media (max-width: 480px) {
     .guide-spotlight {
-      grid-template-columns: 80px 1fr;
+      grid-template-columns: 80px minmax(0, 1fr);
+      grid-template-areas: "heading heading" "cover body" "chips chips";
       gap: 14px;
     }
 

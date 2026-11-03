@@ -164,10 +164,10 @@
 
   .lightbox-close {
     position: absolute;
-    top: 16px;
+    top: calc(16px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
     right: 16px;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     display: grid;
     place-items: center;
@@ -184,7 +184,7 @@
 
   .lightbox-count {
     position: absolute;
-    bottom: 16px;
+    bottom: calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
     left: 50%;
     translate: -50% 0;
     color: var(--color-fg-muted);
@@ -333,11 +333,65 @@
     overflow-wrap: anywhere;
   }
 
+  .game-about-modes dd {
+    width: 0;
+    min-width: 0;
+    flex: 2;
+  }
+
+  .game-modes-window {
+    position: relative;
+    text-align: left;
+  }
+
+  .game-modes-scroll {
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    text-align: left;
+  }
+
+  .game-modes-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .game-modes-preview {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .game-modes-window[data-preview="true"]:not(:focus-within) .game-modes-preview {
+    visibility: visible;
+  }
+
+  .game-modes-window[data-preview="true"]:not(:focus-within) .game-modes-scroll span {
+    opacity: 0;
+  }
+
+  .game-modes-scroll span {
+    display: inline-block;
+  }
+
+  .game-modes-scroll:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
   .game-about-facts a {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     color: var(--color-accent);
+  }
+
+  .game-about-facts .game-about-site {
+    white-space: nowrap;
   }
 
   .game-about-facts a .icon {

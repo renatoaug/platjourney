@@ -1,7 +1,6 @@
 /** The one trophy to go for next, on the game's hero: today's route first, then the phase of the
  * guide the player is in, then the most common one still missing. A tap away from a tip on it. */
 import { type ReactNode, useEffect, useState } from 'react'
-import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
@@ -9,6 +8,7 @@ import { fmtMinutes, fmtRate } from '../lib/format'
 import type { GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { TrophyArt } from '../ui/trophy-art'
+import { JourneyLink as Link } from './journey-link'
 import type { SessionPlan } from './plan'
 import { nexoHref } from './tip'
 import './next-trophy.css'

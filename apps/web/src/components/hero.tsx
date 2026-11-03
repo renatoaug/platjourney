@@ -18,6 +18,8 @@ const messages = defineMessages({
     ofTotal: 'de {total} troféus',
     ofTotalWithDlc: 'de {total} troféus com DLC',
     progressLabel: 'Progresso do jogo',
+    trophiesLeft: { one: '{count} troféu pendente', other: '{count} troféus pendentes' },
+    captionTrophies: 'Acompanhe suas conquistas, um troféu de cada vez.',
     platinumEarned: 'Platina conquistada',
     platinumAhead: 'Platina no fim da barra',
     remaining: {
@@ -56,6 +58,8 @@ const messages = defineMessages({
     ofTotal: 'of {total} trophies',
     ofTotalWithDlc: 'of {total} trophies with DLC',
     progressLabel: 'Game progress',
+    trophiesLeft: { one: '{count} trophy left', other: '{count} trophies left' },
+    captionTrophies: 'Follow your achievements, one trophy at a time.',
     platinumEarned: 'Platinum earned',
     platinumAhead: 'Platinum at the end of the bar',
     remaining: {
@@ -114,7 +118,7 @@ type HeroGame = Pick<CurrentGame, 'earned' | 'total' | 'progress' | 'groups'> & 
   trophies?: Trophy[] | null
 }
 
-/** The platinum only needs the base game, so the hero counts that; DLC is a footnote. */
+/** Count the saved DLC scope; platinum status always comes from its actual trophy. */
 export function HeroProgress({ game: c }: { game: HeroGame }) {
   const t = useMessages(messages)
   const includeDlc = useApp().me.includeDlcProgress
@@ -158,7 +162,13 @@ export function HeroProgress({ game: c }: { game: HeroGame }) {
           <span className="plat-done">{t('platinumEarned')}</span>
         ) : (
           <span>
-            <b>{remaining}</b> {t('remaining', { count: remaining })}
+            {platinum ? (
+              <>
+                <b>{remaining}</b> {t('remaining', { count: remaining })}
+              </>
+            ) : (
+              t('trophiesLeft', { count: Math.max(0, total - earned) })
+            )}
           </span>
         )}
         {dlc && !withDlc && (
@@ -171,7 +181,7 @@ export function HeroProgress({ game: c }: { game: HeroGame }) {
   )
 }
 
-function HeroMeta({ c }: { c: CurrentGame }) {
+export function HeroMeta({ c, difficulty = true }: { c: CurrentGame; difficulty?: boolean }) {
   const t = useMessages(messages)
   const g = c.guide
   const played = c.hoursPlayed
@@ -189,7 +199,7 @@ function HeroMeta({ c }: { c: CurrentGame }) {
   return (
     <div className="meta">
       {/* 0 means the sources do not say yet: the fact is left out, never shown as 0. */}
-      {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
+      {difficulty && g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
       {(g.hours > 0 || played != null) && (
         <span>
           <Icon name="clock" />{' '}
@@ -234,14 +244,24 @@ export function TrophyBreakdown({ trophies }: { trophies: Trophy[] }) {
   const platinum = trophies.find((tr) => tr.type === 'platinum')
   return (
     <div className="trophy-breakdown">
-      <b>{t('breakdown', { count: trophies.length })}</b>
-      {(['platinum', 'gold', 'silver', 'bronze'] as const).map((type) =>
-        count(type) ? (
-          <span key={type} className={`tier ${type}`}>
-            <Icon name="trophy" /> {count(type)} {t(`tiers.${type}`)}
-          </span>
-        ) : null,
-      )}
+      <div className="trophy-counts-row">
+        <b>{t('breakdown', { count: trophies.length })}</b>
+        {(['platinum', 'gold', 'silver', 'bronze'] as const).map((type) =>
+          count(type) ? (
+            <span
+              key={type}
+              className={`tier ${type}`}
+              role="img"
+              aria-label={`${count(type)} ${t(`tiers.${type}`)}`}
+              data-tip={`${count(type)} ${t(`tiers.${type}`)}`}
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: keyboard focus reveals the tier name hidden from the compact row
+              tabIndex={0}
+            >
+              <Icon name="trophy" /> <span aria-hidden="true">{count(type)}</span>
+            </span>
+          ) : null,
+        )}
+      </div>
       {!!platinum?.earnedRate && (
         <span className="plat-rate">
           {t('platinumRate', { rate: fmtRate(platinum.earnedRate) })}
@@ -273,17 +293,23 @@ export function Hero({
   aside,
   tools,
   line,
+  heading = 2,
+  hideTools = false,
 }: {
   game: CurrentGame | null
   compact?: boolean
   cta?: ReactNode
   aside?: ReactNode
-  /** Beside the platform in the top row (the button that opens the scenes). */
+  /** Secondary tools below the headline (the button that opens the scenes). */
   tools?: ReactNode
   /** Under the name, in place of the caption: what the game is. */
   line?: ReactNode
+  heading?: 1 | 2
+  /** The same gallery is rendered beside Back on title pages. */
+  hideTools?: boolean
 }) {
   const t = useMessages(messages)
+  const Heading = heading === 1 ? 'h1' : 'h2'
   if (!c)
     return (
       <div className="inner">
@@ -304,19 +330,23 @@ export function Hero({
       <div className="inner">
         <div className="hero-top">
           <span className="live-label">{t('currentLabel')}</span>
-          <span className="hero-tools">
-            {tools}
-            <span className="platform">{c.platform}</span>
-          </span>
+          {tools && <HeroMeta c={c} />}
         </div>
         <div className="hero-headline">
-          <h2 className="hero-title">{c.name}</h2>
+          <div className="hero-title-row">
+            <Heading className="hero-title">{c.name}</Heading>
+            <span className="platform">{c.platform}</span>
+          </div>
           {line ?? (
             <p className="hero-caption">
-              {c.progress >= 100 ? t('captionDone') : t('captionOngoing')}
+              {c.trophies?.some((trophy) => trophy.type === 'platinum' && trophy.earned)
+                ? t('captionDone')
+                : c.trophies?.some((trophy) => trophy.type === 'platinum')
+                  ? t('captionOngoing')
+                  : t('captionTrophies')}
             </p>
           )}
-          <HeroMeta c={c} />
+          {!tools && <HeroMeta c={c} />}
         </div>
         <div className="hero-bottom">
           <HeroProgress game={c} />
@@ -328,6 +358,7 @@ export function Hero({
             </div>
           )}
         </div>
+        {tools && !hideTools && <div className="hero-gallery">{tools}</div>}
         {aside && <div className="hero-aside">{aside}</div>}
       </div>
     </>
@@ -336,35 +367,77 @@ export function Hero({
 
 /** The game page's hero while it loads, in the same places: the scenes button and platform on the
  * right, the name, the chips of facts, the progress and, beside them, the card on the right. */
-export function HeroSkeleton({ cta = true, aside = true }: { cta?: boolean; aside?: boolean }) {
+export function HeroSkeleton({
+  cta = true,
+  aside = true,
+  gallery = true,
+  breakdown = false,
+}: {
+  cta?: ReactNode
+  aside?: boolean
+  gallery?: boolean
+  breakdown?: boolean
+}) {
   const pill = { borderRadius: 'var(--radius-pill)' }
   return (
     <div className="inner">
       <div className="hero-top">
-        <span className="hero-tools">
-          <Sk w="128px" h={34} style={pill} />
-          <Sk w="38px" h={22} />
-        </span>
-      </div>
-      <div className="hero-headline">
-        <Sk w="min(520px, 80%)" h={56} />
         <div className="meta">
-          {[64, 150, 96, 130].map((w) => (
-            <Sk key={w} w={`${w}px`} h={30} style={pill} />
+          <Sk w="164px" h={46} />
+          {[90, 76, 110].map((w) => (
+            <span key={w}>
+              <Sk w={`${w}px`} h={16} />
+            </span>
           ))}
         </div>
       </div>
-      <div className="hero-bottom">
-        <div className="hero-progress">
-          <Sk w="60%" h={24} />
-          <Sk w="100%" h={9} style={{ marginTop: 12 }} />
+      <div className="hero-headline">
+        <div className="hero-title-row">
+          <Sk w="min(520px, 80%)" h={56} />
+          <Sk w="38px" h={22} />
         </div>
-        {cta && (
-          <div className="cta">
-            <Sk w="180px" h={40} />
+        <Sk w="min(380px, 100%)" h={18} />
+      </div>
+      <div className="hero-bottom">
+        {breakdown ? (
+          <div className="trophy-breakdown" aria-hidden="true">
+            <div className="trophy-counts-row">
+              <Sk w="85px" h={30} />
+              {[0, 1, 2, 3].map((tier) => (
+                <Sk key={tier} w="32px" h={18} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="hero-progress">
+            <div className="barlabel">
+              <span>
+                <Sk w="110px" h={20} />
+              </span>
+              <b className="pct">
+                <Sk w="36px" h={20} />
+              </b>
+            </div>
+            <div className="bar-row">
+              <span className="bar">
+                <Sk h={8} />
+              </span>
+              <span className="plat-mark">
+                <Sk w="18px" h={18} />
+              </span>
+            </div>
+            <div className="remaining">
+              <Sk w="180px" h={14} />
+            </div>
           </div>
         )}
+        {cta && <div className="cta">{cta === true ? <Sk w="180px" h={40} /> : cta}</div>}
       </div>
+      {gallery && (
+        <div className="hero-gallery">
+          <Sk w="130px" h={32} style={pill} />
+        </div>
+      )}
       {aside && (
         <div className="hero-aside">
           <div className="hero-aside-sk">

@@ -154,10 +154,11 @@ describe('PlanCard', () => {
     expect(await screen.findByText('Siga na ordem · 1 de 4')).toBeTruthy()
   })
 
-  test('a failed load shows the invite', async () => {
+  test('a failed load exposes the failure instead of inviting a replacement', async () => {
     spyOn(globalThis, 'fetch').mockResolvedValue(json({}, 500))
     card()
-    expect(await screen.findByText('Vai jogar agora? Eu monto o caminho.')).toBeTruthy()
+    expect(await screen.findByRole('alert')).toBeTruthy()
+    expect(screen.queryByText('Vai jogar agora? Eu monto o caminho.')).toBeNull()
   })
 
   test('builds a route for the time picked', async () => {
@@ -239,6 +240,21 @@ describe('PlanCard', () => {
       id: 'session_plan:p',
       reason: 'too_long',
     })
+  })
+
+  test('failed dismissal keeps the route visible for retry', async () => {
+    spyOn(globalThis, 'fetch').mockImplementation(((_url: string, init?: RequestInit) =>
+      Promise.resolve(
+        init?.method === 'DELETE' ? json({}, 503) : json({ plan: samplePlan }),
+      )) as typeof fetch)
+    card()
+    await screen.findByText('Siga na ordem · 1 de 4')
+    fireEvent.click(screen.getByRole('button', { name: /Encerrar sessão/ }))
+    expect(
+      await screen.findByText('Não conseguimos encerrar o roteiro. Tente novamente.'),
+    ).toBeTruthy()
+    expect(screen.getByText('Siga na ordem · 1 de 4')).toBeTruthy()
+    expect(screen.queryByText('Vai jogar agora? Eu monto o caminho.')).toBeNull()
   })
 
   test('the question can be skipped, and the invite stays usable', () => {

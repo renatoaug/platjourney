@@ -19,6 +19,8 @@ test('the profile: identity, tiles, the collection and the yearly rhythm', async
   const { container } = renderApp(<Profile />)
   expect(container.querySelector('#profile-page .sk')).toBeTruthy()
   expect(await screen.findByRole('heading', { level: 1, name: 'jogador' })).toBeTruthy()
+  expect(container.querySelector('.profile-skeleton')).toBeNull()
+  expect(container.querySelectorAll('.room-record')).toHaveLength(4)
   expect(container.querySelector('.profile-platforms')?.textContent).toContain('PS5 24')
   expect(screen.getAllByText('40% para o 313')).toHaveLength(2)
   const tiles = container.querySelector('.profile-tiles') as HTMLElement
@@ -187,4 +189,17 @@ test('loading stays on the skeleton', () => {
   const { container } = renderApp(<Profile />)
   expect(container.querySelectorAll('.profile-tiles .tile')).toHaveLength(5)
   expect(container.querySelectorAll('.collection-grid .collection-tile')).toHaveLength(10)
+  expect(screen.getByRole('region', { name: 'Seus recordes' }).getAttribute('aria-busy')).toBe(
+    'true',
+  )
+  expect(container.querySelectorAll('.room-record')).toHaveLength(4)
+  expect(container.querySelector('.profile-avatar.sk')).toBeTruthy()
+  expect(container.querySelectorAll('.profile-most .plat-cover.sk')).toHaveLength(3)
+  expect(container.querySelector('.profile-rarest .plat-cover.sk')).toBeTruthy()
+  expect(container.querySelector('.platinum-collection .trophy-results .sk')).toBeTruthy()
+  expect(container.querySelectorAll('.collection-tile time .sk')).toHaveLength(10)
+  expect(search().hasAttribute('disabled')).toBe(true)
+  // Unknown records do not offer fabricated game links or statistics.
+  expect(container.querySelector('.profile-skeleton a')).toBeNull()
+  expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
 })

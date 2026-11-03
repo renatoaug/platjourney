@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Link } from 'react-router'
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtPlayTime, fmtRate } from '../lib/format'
 import { nameText } from '../lib/text'
@@ -20,8 +19,10 @@ import { SourceNote } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
 import { TrophyArt } from '../ui/trophy-art'
 import { bandOf } from './difficulty-meter'
+import { JourneyLink as Link } from './journey-link'
 import { NexoHero } from './nexo-hero'
 import { nexoHref } from './tip'
+import '../ui/section-tabs.css'
 import './guide.css'
 
 const messages = defineMessages({
@@ -622,20 +623,22 @@ function QuickFacts({ g }: { g: GuideDetail }) {
     [t('facts.difficulty'), g.difficulty ? `tone-${bandOf(g.difficulty)}` : ''],
     [t('facts.missables'), missables ? 'tone-warn' : ''],
   ])
+  const fact = ([symbol, label, value, detail]: [string, string, string, string]) => (
+    <div
+      key={label}
+      className={`quick-fact ${tone.get(label) ?? ''}${value === t('facts.unknown') ? ' unknown' : ''}`.trim()}
+      data-tip={detail || undefined}
+    >
+      <Icon name={symbol} />
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  )
   return (
-    <dl className="quick-facts">
-      {facts.map(([symbol, label, value, detail]) => (
-        <div
-          key={label}
-          className={`quick-fact ${tone.get(label) ?? ''}`.trim()}
-          data-tip={detail || undefined}
-        >
-          <Icon name={symbol} />
-          <dt>{label}</dt>
-          <dd>{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <div className="quick-facts">
+      <dl className="quick-facts-primary">{facts.slice(0, 3).map(fact)}</dl>
+      <dl className="quick-facts-conditions">{facts.slice(3).map(fact)}</dl>
+    </div>
   )
 }
 
@@ -857,13 +860,13 @@ export function GuideSkeleton() {
         <Icon name="book-open" />
         <span>{t('title')}</span>
       </h2>
-      <div className="tabs">
+      <div className="guide-tabs section-tabs">
         {(
           [
             'tabs.summary',
+            'tabs.roadmap',
             'tabs.key',
             'tabs.missablesSkeleton',
-            'tabs.roadmap',
             'tabs.glossary',
           ] as const
         ).map((key, i) => (
@@ -873,6 +876,34 @@ export function GuideSkeleton() {
         ))}
       </div>
       <div data-panel="0">
+        <div className="quick-facts">
+          <dl className="quick-facts-primary">
+            {repeat(3, () => (
+              <div className="quick-fact">
+                <Icon name="circle" />
+                <dt>
+                  <Sk w="80%" h={13} />
+                </dt>
+                <dd>
+                  <Sk w="75%" h={24} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <dl className="quick-facts-conditions">
+            {repeat(5, () => (
+              <div className="quick-fact">
+                <Icon name="circle" />
+                <dt>
+                  <Sk w={90} h={13} />
+                </dt>
+                <dd>
+                  <Sk w={40} h={14} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
         <Sk w="100%" h={13} />
         <Sk w="96%" h={13} style={{ marginTop: 8 }} />
         <Sk w="72%" h={13} style={{ marginTop: 8 }} />
@@ -1105,7 +1136,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
             requestAnimationFrame(checkTabs)
           }
         }}
-        className={`tabs guide-tabs${moreTabs ? ' has-more' : ''}`}
+        className={`guide-tabs section-tabs${moreTabs ? ' has-more' : ''}`}
         role="tablist"
         aria-label={tr('tabs.label')}
         onScroll={checkTabs}

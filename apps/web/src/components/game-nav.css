@@ -2,7 +2,7 @@
   .game-nav {
     position: sticky;
     z-index: 5;
-    top: 0;
+    top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
     display: flex;
     align-items: center;
     margin: 0 0 12px;
@@ -11,6 +11,16 @@
     transition:
       background-color 0.25s,
       border-color 0.25s;
+  }
+
+  .game-nav-tools {
+    flex: none;
+    margin-left: auto;
+    padding-left: 8px;
+  }
+
+  .game-nav ul {
+    min-width: 0;
   }
 
   /* Past the hero the bar gets a floor of its own and the game's name slides in. */
@@ -101,7 +111,9 @@
   }
 
   .game-nav a {
-    display: block;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
     padding: 6px 12px;
     line-height: 1.2;
     border-radius: var(--radius-pill);
@@ -137,8 +149,19 @@
   }
 
   /* The sections it links to stop under the bar, not behind it. */
-  :is(#plan-card, #guide-card, #trophies-card, #title-guide, #title-trophies, .game-columns-wrap) {
-    scroll-margin-top: 76px;
+  :is(
+    #plan-card,
+    #guide-card,
+    #trophies-card,
+    #title-guide,
+    #title-trophies,
+    .game-columns-wrap,
+    #journey-session,
+    #journey-trophies,
+    #journey-guide-section,
+    #similar-games
+  ) {
+    scroll-margin-top: calc(76px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
   }
 
   @media (max-width: 760px) {

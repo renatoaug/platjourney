@@ -31,6 +31,10 @@ const card = (g: GuideGame | null) => (
 
 export const Loaded: Story = { render: () => card(game) }
 
+export const UnknownPlaythroughs: Story = {
+  render: () => card({ ...game, guide: { ...guide, hours: 130, playthroughs: 0 } }),
+}
+
 /** Missables, online trophies and a detailed glossary, to see the tab counts and sidebar. */
 export const WithMissablesAndOnline: Story = {
   render: () =>

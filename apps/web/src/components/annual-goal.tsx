@@ -49,7 +49,7 @@ export function AnnualGoal({ goals: p }: { goals: YearGoals }) {
         <i style={{ width: `${progress}%` }} />
       </div>
       <p>{pace}</p>
-      <Link className="text-link" to="/goals">
+      <Link className="text-link" to="/games?tab=goals">
         {p.target ? t('follow') : t('set')} <Icon name="arrow" />
       </Link>
     </>

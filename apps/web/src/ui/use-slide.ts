@@ -3,7 +3,7 @@
  * element in its CSS can slide there when the choice changes. Follows the control's size too. */
 import { useLayoutEffect, useRef } from 'react'
 
-const CHOSEN = '[aria-pressed="true"], [aria-current="location"], .active'
+const CHOSEN = '[aria-pressed="true"], [aria-selected="true"], [aria-current="location"], .active'
 
 export function useSlide<T extends HTMLElement>(choice: unknown) {
   const ref = useRef<T>(null)
