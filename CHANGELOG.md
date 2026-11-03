@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.45.1](https://github.com/renatoaug/platjourney/compare/v0.45.0...v0.45.1) (2026-11-03)
+
+### Bug Fixes
+
+* **web:** refine guide discovery layouts and daily artwork ([#129](https://github.com/renatoaug/platjourney/issues/129)) ([4232c09](https://github.com/renatoaug/platjourney/commit/4232c094021121cd9fde3d1746f9ef7fd18c5d7a))
+
 ## [0.45.0](https://github.com/renatoaug/platjourney/compare/v0.44.3...v0.45.0) (2026-11-03)
 
 ### Features
