@@ -10,6 +10,7 @@ import './game-nav.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     label: 'Seções do jogo',
+    route: 'Roteiro',
     plan: 'Sessão',
     guide: 'Guia',
     trophies: 'Troféus',
@@ -17,6 +18,7 @@ const messages = defineMessages({
   },
   [Language.En]: {
     label: 'Game sections',
+    route: 'Roadmap',
     plan: 'Session',
     guide: 'Guide',
     trophies: 'Trophies',
@@ -24,7 +26,7 @@ const messages = defineMessages({
   },
 })
 
-export type GameSection = 'plan' | 'guide' | 'trophies' | 'similar'
+export type GameSection = 'route' | 'plan' | 'guide' | 'trophies' | 'similar'
 
 // On a phone the guide and the trophies take turns behind a switch: a hidden one scrolls to the pair.
 const scrollTo = (id: string) => {

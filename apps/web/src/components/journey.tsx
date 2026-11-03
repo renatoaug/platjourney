@@ -12,9 +12,8 @@ import { GameColumns } from './game-columns'
 import { GameNav, type GameSection } from './game-nav'
 import { Guide, GuideSkeleton } from './guide'
 import { Hero, HeroSkeleton } from './hero'
-import { JourneyLink } from './journey-link'
-import { nexoHref } from './tip'
 import { TrophyList, TrophyListSkeleton } from './trophy-list'
+import { TrophyRoadmap, TrophyRoadmapSkeleton } from './trophy-roadmap'
 import './journey.css'
 
 const messages = defineMessages({
@@ -68,6 +67,7 @@ const messages = defineMessages({
 })
 
 const SECTIONS: [GameSection, string][] = [
+  ['route', 'journey-roadmap'],
   ['plan', 'journey-session'],
   ['trophies', 'journey-trophies'],
   ['guide', 'journey-guide-section'],
@@ -124,7 +124,6 @@ export function Journey({
   const [scene, setScene] = useScene(shots.length)
   const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
   const focus = done || c.guide?.unobtainable ? null : c.focus
-  const next = focus?.trophy
   const missing = c.trophies.filter(
     (x) => !x.earned && x.type !== 'platinum' && x.groupId === 'default',
   ).length
@@ -146,29 +145,7 @@ export function Journey({
           !back && <ScenesButton compact shots={shots} at={scene} name={c.name} onGo={setScene} />
         }
       />
-      <div className="journey-focus card">
-        <span className="eyebrow">
-          <Icon name="nexo" /> {t('next')}
-        </span>
-        <h2>{done ? t('done') : (next?.name ?? t('unknown'))}</h2>
-        <p>{done ? t('doneBody') : (next?.detail ?? t('unknownBody'))}</p>
-        {focus?.trick && (
-          <p className="journey-trick">
-            <GuideText text={focus.trick} />
-          </p>
-        )}
-        {next && (
-          <small>
-            {t('source')} · {focus?.phase}
-            {focus?.behind ? ` · ${t('pending')}` : ''}
-          </small>
-        )}
-        <JourneyLink className="button" to={nexoHref(c.np, c.name, next?.name)}>
-          <Icon name="nexo" />
-          {next ? t('ask') : t('talk')}
-        </JourneyLink>
-        {next && <p className="journey-basis">{t('basis')}</p>}
-      </div>
+      <TrophyRoadmap key={c.np} game={c} />
       <JourneyWarning warning={focus?.missable} />
       <details className="journey-session" id="journey-session">
         <summary>
@@ -229,21 +206,7 @@ export function JourneySkeleton({ gallery = true }: { gallery?: boolean }) {
           </span>
         )}
       </div>
-      <div className="journey-focus card" aria-hidden="true">
-        <span className="eyebrow">
-          <Sk w="140px" h={12} />
-        </span>
-        <h2>
-          <Sk w="65%" h={30} />
-        </h2>
-        <p>
-          <Sk w="95%" h={18} />
-        </p>
-        <p>
-          <Sk w="75%" h={18} />
-        </p>
-        <Sk w="180px" h={48} />
-      </div>
+      <TrophyRoadmapSkeleton />
       <details className="journey-session">
         <summary>
           <Icon name="clock" />

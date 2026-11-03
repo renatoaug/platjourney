@@ -10,7 +10,7 @@ Owned games share `Journey` in `src/components/journey.tsx`, whether opened from
 ## Owned game: top to bottom
 
 1. Existing immersive hero, catalog backdrop/scenes, name, platform and personal `HeroProgress`. `UnobtainableBanner` remains visible when appropriate.
-2. Next step from the server's `todaysFocus`, with relevant warning and one contextual Nexo action. A roadmap phase is not the player's confirmed location. With no reliable target, ask for context instead of guessing.
+2. A connected trophy roadmap uses existing guide phase order and unique exact localized-name matches. Repeated references appear once; unmatched trophies are explicitly unplaced, platinum is the final milestone and DLC remains separate. Earned state comes only from PSN. Existing guide tips, warnings and contextual Nexo actions accompany each trophy; missing advice stays explicit. Hidden pending trophies require an explicit reveal. The server's `todaysFocus` can highlight a suggestion without changing its ranking. Guide order is advisory and never claims the player's confirmed location or a guaranteed unlock sequence.
 3. Collapsible session route (`PlanCard` scoped by PSN list id). One active route per account; making another replaces the previous route and the UI states this.
 4. `GameColumns` switches between `TrophyList` and the full `Guide` on the journey, preserving filters, sorting, help, guide numbers, sources, nested tabs and pending states. No invented trophy completion.
 5. Similar games remain reachable through the sticky section navigation when available.

@@ -8,7 +8,7 @@ import { renderApp } from '../support/web'
 test('owned game loading keeps the journey hierarchy instead of the old two-column layout', () => {
   const { container } = renderApp(<JourneySkeleton />)
   expect(container.querySelector('.journey > .hero.immersive')).toBeTruthy()
-  expect(container.querySelector('.journey-focus')).toBeTruthy()
+  expect(container.querySelector('.trophy-roadmap')).toBeTruthy()
   expect(container.querySelector('.journey-session')).toBeTruthy()
   expect(container.querySelector('.journey-trophies')).toBeTruthy()
   expect(container.querySelector('[role="tablist"]')).toBeTruthy()

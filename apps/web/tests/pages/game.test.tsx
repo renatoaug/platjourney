@@ -39,9 +39,11 @@ test('journey prioritizes progress and server focus; plan and guide remain avail
   renderApp(<GameScreen current={game} plan={<p>plano</p>} />)
   expect(screen.getByRole('heading', { level: 1, name: 'DAYS GONE' })).toBeTruthy()
   expect(screen.getByRole('progressbar', { name: 'Progresso do jogo' })).toBeTruthy()
-  expect(screen.getByRole('link', { name: 'Me ajuda com isso' }).getAttribute('href')).toContain(
-    'trophy=',
-  )
+  const reveal = document.querySelector<HTMLButtonElement>('.roadmap-step.is-suggested button')
+  if (reveal) fireEvent.click(reveal)
+  expect(
+    document.querySelector('.roadmap-step.is-suggested .roadmap-ask')?.getAttribute('href'),
+  ).toContain('trophy=')
   expect(document.getElementById('journey-session')?.hasAttribute('open')).toBe(false)
   fireEvent.click(screen.getByText('Planejar minha sessão'))
   expect(screen.getByText('plano')).toBeTruthy()
