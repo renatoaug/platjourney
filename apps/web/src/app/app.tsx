@@ -13,6 +13,7 @@ import {
   useMessages,
 } from '../i18n/i18n'
 import { api } from '../lib/api'
+import { handoffLaunchScreen } from '../lib/native'
 import { startNativePush } from '../lib/native-push'
 import type { Me } from '../lib/types'
 import { Connect, isConnectPage } from '../pages/connect'
@@ -64,6 +65,9 @@ function useBoot(ready: boolean): 'shown' | 'leaving' | 'gone' {
 
 export function App() {
   const t = useMessages(messages)
+  // Stay mounted through fast session responses: the boot overlay may already have faded while
+  // its image decodes. Either way, release the native cover only after the web view has painted.
+  useEffect(handoffLaunchScreen, [])
   const [session, setSession] = useState<Session>({ kind: 'loading' })
   const pushOwner = session.kind === 'in' && !session.me.demo ? session.me.id : null
   const pushAvailable = session.kind === 'in' && !!session.me.nativePush

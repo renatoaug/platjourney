@@ -33,6 +33,23 @@ let registration:
   | undefined
 const preference = (user = owner) => `platjourney:apns:${user}`
 const enabled = () => !!owner && localStorage.getItem(preference()) === 'on'
+const CLEANUP_PENDING = 'platjourney:apns-cleanup-pending'
+
+/** Capacitor cannot clear delivered notices before this process receives an APNs callback.
+ * Keep that cleanup durable until registration, without confusing it with revoking delivery.
+ * Only this specific plugin prerequisite is deferred; other native failures still surface. */
+async function clearDeliveredNotifications(): Promise<void> {
+  localStorage.setItem(CLEANUP_PENDING, 'yes')
+  try {
+    await plugin()?.removeAllDeliveredNotifications()
+    localStorage.removeItem(CLEANUP_PENDING)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    if (!message.startsWith('event capacitorDidRegisterForRemoteNotifications not called.'))
+      throw error
+  }
+}
+
 function installation(): string {
   const key = 'platjourney:apns-installation'
   let id = localStorage.getItem(key)
@@ -84,6 +101,8 @@ export function listenNativePush(): Promise<void> {
       if (!current || !enabled() || !event.value) return
       saving = saving
         .then(async () => {
+          if (epoch !== generation || !enabled()) return
+          if (localStorage.getItem(CLEANUP_PENDING)) await clearDeliveredNotifications()
           if (epoch !== generation || !enabled()) return
           await api('/api/push/native', {
             installation: installation(),
@@ -172,10 +191,7 @@ function revokeDevice(): Promise<void> {
   const previous = saving
   const work = (async () => {
     // Attempt both native operations even if either one or the network fails.
-    const cleanup = Promise.allSettled([
-      plugin()?.unregister(),
-      plugin()?.removeAllDeliveredNotifications(),
-    ])
+    const cleanup = Promise.allSettled([plugin()?.unregister(), clearDeliveredNotifications()])
     const remote = (async () => {
       await previous
       if (current !== owner || epoch !== generation) throw new Error('APNs session changed')
@@ -223,9 +239,7 @@ export function startNativePush(user: string | null, ready = false): () => void 
     plugin()
       ?.unregister()
       .catch(() => {})
-    plugin()
-      ?.removeAllDeliveredNotifications()
-      .catch(() => {})
+    clearDeliveredNotifications().catch(() => {})
   }
   listenNativePush()
     .then(refresh)
