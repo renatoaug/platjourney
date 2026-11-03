@@ -124,8 +124,10 @@
     min-width: 0;
     align-items: center;
     gap: 10px;
-    border-bottom: 1px solid var(--color-border-strong);
-    padding: 0;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
+    padding: 0 12px;
     color: var(--color-fg-muted);
   }
 
@@ -156,17 +158,16 @@
   }
 
   .trophy-toolbar {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 14px 0;
+    gap: 16px 12px;
+    padding: 4px 0 16px;
   }
 
   .trophy-status {
-    flex-basis: auto;
-    width: fit-content;
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .trophy-options {
@@ -260,6 +261,25 @@
     }
   }
 
+  @container (max-width: 300px) {
+    .trophy-toolbar {
+      column-gap: 8px;
+    }
+
+    .trophy-search {
+      gap: 8px;
+      padding-inline: 10px;
+    }
+
+    .trophy-toolbar .trophy-options {
+      padding-inline: 8px;
+    }
+
+    .trophy-options > .icon:first-child {
+      display: none;
+    }
+  }
+
   /* Skeleton fills inside the real trophy/guide containers */
   .trophy-art .sk {
     width: 100%;
@@ -320,9 +340,10 @@
   .trophy-options {
     flex: none;
     margin-left: auto;
-    padding: 0;
-    border: 0;
-    background: transparent;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-bg-subtle);
   }
 
   .trophy-options > span:not(:empty) {
@@ -338,7 +359,7 @@
   }
 
   .trophy-options-body {
-    flex-basis: 100%;
+    grid-column: 1 / -1;
     min-width: 0;
     display: flex;
     flex-wrap: wrap;

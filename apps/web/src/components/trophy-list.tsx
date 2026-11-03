@@ -42,7 +42,7 @@ const messages = defineMessages({
     heading: 'Troféus',
     empty: 'Os troféus deste jogo aparecem aqui assim que a PSN enviar a lista.',
     search: 'Buscar troféu',
-    searchPlaceholder: 'Buscar por nome ou descrição',
+    searchPlaceholder: 'Buscar troféu',
     statusLabel: 'Status dos troféus',
     status: {
       all: 'Todos',
@@ -98,7 +98,7 @@ const messages = defineMessages({
     heading: 'Trophies',
     empty: 'This game’s trophies show up here as soon as PSN sends the list.',
     search: 'Search trophies',
-    searchPlaceholder: 'Search by name or description',
+    searchPlaceholder: 'Search trophies',
     statusLabel: 'Trophy status',
     status: {
       all: 'All',

@@ -37,6 +37,14 @@ test('the games with a guide, each linking to its page', async () => {
   expect(within(first).getByRole('img', { name: 'Tem troféus perdíveis' })).toBeTruthy()
   expect(within(first).getByRole('img', { name: 'Tem troféus online' })).toBeTruthy()
   expect(screen.getByText('2 jogos')).toBeTruthy()
+  const search = list().getByRole('searchbox', { name: 'Buscar jogo' })
+  expect(document.querySelector('.page-top input[type="search"]')).toBeNull()
+  expect(search.closest('.guides-search-row')).toBeTruthy()
+  expect(
+    within(search.closest('.guides-search-row') as HTMLElement).getByRole('button', {
+      name: 'Filtros',
+    }),
+  ).toBeTruthy()
 })
 
 test('a game without a guide or with an unavailable platinum says so', async () => {
@@ -159,6 +167,7 @@ test('the filters go to the request, show their counts, and clear together', asy
   })
   renderApp(<Guides />, { path: '/guides', route: '/guides' })
   await inList('Game 1')
+  fireEvent.click(screen.getByRole('button', { name: 'Filtros' }))
   fireEvent.click(screen.getByRole('button', { name: /Fácil/ }))
   await waitFor(() => expect(calls.at(-1)?.path).toContain('difficulty=easy'))
   fireEvent.click(screen.getByRole('button', { name: /Até 25h/ }))
@@ -182,4 +191,26 @@ test('the list view shows the same games as rows', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Lista' }))
   await waitFor(() => expect(container.querySelectorAll('.guide-row')).toHaveLength(2))
   expect(container.querySelector('.guide-grid')).toBeNull()
+})
+
+test('filter panel opens beneath search and keeps values when closed and reopened', async () => {
+  mockApi({ '/api/guides': page([item(1)]) })
+  renderApp(<Guides />, { path: '/guides', route: '/guides' })
+  await inList('Game 1')
+  const toggle = screen.getByRole('button', { name: 'Filtros' })
+  const panel = document.getElementById('guides-filter-panel') as HTMLElement
+  expect(panel.hidden).toBe(true)
+  fireEvent.click(toggle)
+  expect(panel.hidden).toBe(false)
+  fireEvent.click(within(panel).getByRole('button', { name: /Sem perdíveis/ }))
+  await waitFor(() => expect(screen.getByTestId('location').textContent).toContain('noMissables=1'))
+  fireEvent.click(toggle)
+  expect(panel.hidden).toBe(true)
+  fireEvent.click(toggle)
+  expect(
+    within(panel)
+      .getByRole('button', { name: /Sem perdíveis/ })
+      .getAttribute('aria-pressed'),
+  ).toBe('true')
+  expect(toggle.closest('.guides-search-row')?.querySelector('input[type="search"]')).toBeTruthy()
 })

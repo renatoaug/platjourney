@@ -519,19 +519,9 @@ function GuideResults({
   )
 }
 
-/** The page's top: the title, the count and the search, the guide of the day beside them and its
+/** The page's top: the title and count, the guide of the day beside them and its
  * scene across the top of the screen. */
-function GuidesTop({
-  featured,
-  count,
-  typed,
-  onType,
-}: {
-  featured: GuideCardItem | null
-  count: number | null
-  typed: string
-  onType: (text: string) => void
-}) {
+function GuidesTop({ featured, count }: { featured: GuideCardItem | null; count: number | null }) {
   const t = useMessages(messages)
   return (
     <PageTop
@@ -540,18 +530,7 @@ function GuidesTop({
       lead={count ? t('leadCount', { count, total: count.toLocaleString(getLocale()) }) : t('lead')}
       art={featured?.shot ? image(featured.shot, 't_1080p') : null}
       aside={featured && <GuideSpotlight game={featured} />}
-    >
-      <label className="guides-hero-search">
-        <Icon name="search" />
-        <input
-          type="search"
-          aria-label={t('search')}
-          placeholder={t('searchPlaceholder')}
-          value={typed}
-          onChange={(e) => onType(e.target.value)}
-        />
-      </label>
-    </PageTop>
+    />
   )
 }
 
@@ -569,10 +548,7 @@ export function Guides({
   const filters = Object.fromEntries(FILTER_KEYS.map((k) => [k, params.get(k) ?? '']))
   const filterKey = FILTER_KEYS.map((k) => filters[k]).join('|')
   const activeFilters = FILTER_KEYS.filter((k) => filters[k]).length
-  // The filters stand beside the list on a wide screen and fold away on a phone.
-  const [filtersOpen, setFiltersOpen] = useState(
-    () => typeof window === 'undefined' || !window.matchMedia?.('(max-width: 760px)').matches,
-  )
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [typed, setTyped] = useState(q)
   // The address changed from outside the field (the Guides link in the menu, back, a link):
   // the field follows it, or the pending search below would put the old text back.
@@ -636,20 +612,8 @@ export function Guides({
   }
   return (
     <Page path="/guides">
-      <GuidesTop featured={featured} count={count} typed={typed} onType={setTyped} />
+      <GuidesTop featured={featured} count={count} />
       <div className="guides-layout">
-        <details
-          className="guides-aside"
-          open={filtersOpen}
-          onToggle={(e) => setFiltersOpen(e.currentTarget.open)}
-        >
-          <summary>
-            <Icon name="layers" />{' '}
-            {activeFilters ? t('filtersOn', { count: activeFilters }) : t('filters')}
-            <Icon name="chevron-down" className="guides-aside-chevron" />
-          </summary>
-          <GuideFilters facets={data?.facets} values={filters} onChange={change} />
-        </details>
         <div className="guides-main">
           <div className="guides-toolbar">
             {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
@@ -700,6 +664,32 @@ export function Guides({
                 ))}
               </div>
             </div>
+          </div>
+          <div className="guides-search-row">
+            <label className="guides-search">
+              <Icon name="search" />
+              <input
+                type="search"
+                aria-label={t('search')}
+                placeholder={t('searchPlaceholder')}
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="guides-filters-toggle"
+              aria-expanded={filtersOpen}
+              aria-controls="guides-filter-panel"
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              <Icon name="layers" />
+              {activeFilters ? t('filtersOn', { count: activeFilters }) : t('filters')}
+              <Icon name="chevron-down" />
+            </button>
+          </div>
+          <div id="guides-filter-panel" className="guides-filter-panel" hidden={!filtersOpen}>
+            <GuideFilters facets={data?.facets} values={filters} onChange={change} />
           </div>
           {load.status === 'loading' && <GuideGridSkeleton />}
           {load.status === 'error' && <ErrorState>{t('failed')}</ErrorState>}

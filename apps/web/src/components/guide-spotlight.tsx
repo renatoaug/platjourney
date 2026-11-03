@@ -5,6 +5,7 @@ import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { DifficultyMeter } from './difficulty-meter'
+import { image } from './game-showcase'
 import { titleHref } from './tip'
 import './guide-spotlight.css'
 
@@ -45,11 +46,35 @@ export function pickOfTheDay<T extends SpotlightGame>(items: T[], now = new Date
   return pool[day % pool.length]
 }
 
+/** Discovery rotates through the same catalog, starting after today's guide and skipping its scene. */
+export function pickDiscoveryOfTheDay<T extends SpotlightGame>(
+  items: T[],
+  now = new Date(),
+): T | null {
+  const pool = items.filter((i) => i.guide && i.shot)
+  if (!pool.length) return null
+  const day = Math.floor(now.getTime() / 86_400_000)
+  const guide = pool[day % pool.length]
+  for (let offset = 1; offset < pool.length; offset++) {
+    const candidate = pool[(day + offset) % pool.length]
+    if (candidate.shot !== guide.shot) return candidate
+  }
+  return guide
+}
+
 export function GuideSpotlight({ game }: { game: SpotlightGame }) {
   const t = useMessages(messages)
   const g = game.guide
   return (
     <aside className="guide-spotlight" aria-label={t('eyebrow')}>
+      {game.shot && (
+        <img
+          className="guide-spotlight-art"
+          src={image(game.shot, 't_720p')}
+          alt=""
+          loading="lazy"
+        />
+      )}
       <header className="guide-spotlight-heading">
         <span className="eyebrow">{t('eyebrow')}</span>
         <Link className="guide-spotlight-open" to={titleHref(game.id)}>

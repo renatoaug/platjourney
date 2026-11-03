@@ -17,6 +17,10 @@ const game = {
 
 export const GuideOfTheDay: Story = { render: () => <GuideSpotlight game={game} /> }
 
+export const WithoutArtwork: Story = {
+  render: () => <GuideSpotlight game={{ ...game, shot: null }} />,
+}
+
 // A long name wraps; missables show as a warning.
 export const LongNameWithMissables: Story = {
   render: () => (

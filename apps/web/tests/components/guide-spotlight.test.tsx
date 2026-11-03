@@ -1,6 +1,10 @@
 import { expect, test } from 'bun:test'
 import { screen } from '@testing-library/react'
-import { GuideSpotlight, pickOfTheDay } from '../../src/components/guide-spotlight'
+import {
+  GuideSpotlight,
+  pickDiscoveryOfTheDay,
+  pickOfTheDay,
+} from '../../src/components/guide-spotlight'
 import { renderApp } from '../support/web'
 
 const game = (n: number, shot: string | null = `s${n}`, guide = true) => ({
@@ -31,4 +35,25 @@ test('the card links to the guide with its facts', () => {
   )
   expect(screen.getByText('Tem perdíveis')).toBeTruthy()
   expect(screen.getByTitle('~40h até a platina')).toBeTruthy()
+})
+
+test('discovery rotates daily, stays stable within UTC day and avoids the guide scene', () => {
+  const items = [game(1), game(2), game(3)]
+  const day = new Date('2026-10-29T00:00:00Z')
+  const later = new Date('2026-10-29T23:59:59Z')
+  const tomorrow = new Date('2026-10-30T00:00:00Z')
+  expect(pickDiscoveryOfTheDay(items, day)?.shot).not.toBe(pickOfTheDay(items, day)?.shot)
+  expect(pickDiscoveryOfTheDay(items, day)?.id).toBe(pickDiscoveryOfTheDay(items, later)?.id)
+  expect(pickDiscoveryOfTheDay(items, tomorrow)?.shot).not.toBe(
+    pickDiscoveryOfTheDay(items, day)?.shot,
+  )
+  expect(pickDiscoveryOfTheDay(items, tomorrow)?.shot).not.toBe(pickOfTheDay(items, tomorrow)?.shot)
+})
+
+test('discovery skips duplicate scenes and falls back only when no alternative exists', () => {
+  const day = new Date('2026-10-29T00:00:00Z')
+  const items = [game(1, 'same'), game(2, 'same'), game(3, 'other')]
+  expect(pickDiscoveryOfTheDay(items, day)?.shot).not.toBe(pickOfTheDay(items, day)?.shot)
+  expect(pickDiscoveryOfTheDay([game(1, 'same'), game(2, 'same')], day)?.shot).toBe('same')
+  expect(pickDiscoveryOfTheDay([game(1, null), game(2, 's2', false)], day)).toBeNull()
 })

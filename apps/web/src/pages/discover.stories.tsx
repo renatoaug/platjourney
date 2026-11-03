@@ -10,6 +10,8 @@ import { similarData } from '../components/similar-picks.stories'
 import { Language } from '../i18n/i18n'
 import { Discover } from './discover'
 
+const noDailyGuide = async () => null
+
 // The calendar in a fixed state, so the stories need no network.
 const releases = (
   <ReleasesView
@@ -32,7 +34,7 @@ export const Loaded: Story = {
         cache: { similar: similarData, recsChecked: true, picks: [] },
       }}
     >
-      <Discover releases={releases} />
+      <Discover releases={releases} loadDailyGuide={noDailyGuide} />
     </MockAppState>
   ),
 }
@@ -46,7 +48,7 @@ export const NexoPicks: Story = {
         cache: { similar: similarData, recs: recsData, picks: picksData },
       }}
     >
-      <Discover releases={releases} />
+      <Discover releases={releases} loadDailyGuide={noDailyGuide} />
     </MockAppState>
   ),
 }
@@ -58,7 +60,7 @@ export const Empty: Story = {
         cache: { similar: { items: [], quick: [], series: [] }, recsChecked: true, picks: [] },
       }}
     >
-      <Discover releases={releases} />
+      <Discover releases={releases} loadDailyGuide={noDailyGuide} />
     </MockAppState>
   ),
 }
@@ -76,7 +78,7 @@ export const Loading: Story = {
         },
       }}
     >
-      <Discover releases={releases} />
+      <Discover releases={releases} loadDailyGuide={noDailyGuide} />
     </MockAppState>
   ),
 }
