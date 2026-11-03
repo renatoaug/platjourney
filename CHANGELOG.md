@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.45.0](https://github.com/renatoaug/platjourney/compare/v0.44.3...v0.45.0) (2026-11-03)
+
+### Features
+
+* **web:** unify player journeys and contextual nexo navigation ([#128](https://github.com/renatoaug/platjourney/issues/128)) ([671c3ff](https://github.com/renatoaug/platjourney/commit/671c3ffb13da36b479fecd2f0fef6d99387d62e5))
+
 ## [0.44.3](https://github.com/renatoaug/platjourney/compare/v0.44.2...v0.44.3) (2026-11-01)
 
 ### Performance Improvements
