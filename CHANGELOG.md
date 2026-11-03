@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.45.4](https://github.com/renatoaug/platjourney/compare/v0.45.3...v0.45.4) (2026-11-03)
+
+### Bug Fixes
+
+* **web:** restore notification test toast styling ([#132](https://github.com/renatoaug/platjourney/issues/132)) ([622df7c](https://github.com/renatoaug/platjourney/commit/622df7c127c768064f3597abe14d01bb66daa11c))
+
 ## [0.45.3](https://github.com/renatoaug/platjourney/compare/v0.45.2...v0.45.3) (2026-11-03)
 
 ### Bug Fixes
