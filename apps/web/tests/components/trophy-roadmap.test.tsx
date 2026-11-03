@@ -1,13 +1,58 @@
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import { fireEvent, screen } from '@testing-library/react'
+import { useState } from 'react'
 import { SAMPLE_ME } from '../../src/app/app-state'
 import { Journey } from '../../src/components/journey'
 import { TrophyRoadmap } from '../../src/components/trophy-roadmap'
 import { current } from '../../src/fixtures'
+import * as roadmapData from '../../src/lib/trophy-roadmap'
 import type { CurrentGame, GuideDetail } from '../../src/lib/types'
 import { mockApi, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
+
+test('selection reuses guide analysis while changed progress invalidates it', () => {
+  const ongoing = spyOn(roadmapData, 'ongoingObjectives')
+  const stages = spyOn(roadmapData, 'trophyRoadmap')
+  function LiveProgress() {
+    const [data, setData] = useState({
+      ...game,
+      trophies: [
+        { ...game.trophies[1], earned: false, progressValue: 0, progressTarget: 10 },
+        game.trophies[0],
+      ],
+    })
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() =>
+            setData({
+              ...data,
+              trophies: data.trophies.map((trophy) => ({ ...trophy, earned: true })),
+            })
+          }
+        >
+          Receive confirmed progress
+        </button>
+        <TrophyRoadmap game={data} />
+      </>
+    )
+  }
+  renderApp(<LiveProgress />)
+  const ongoingCalls = ongoing.mock.calls.length
+  const stageCalls = stages.mock.calls.length
+  expect(ongoingCalls).toBeGreaterThan(0)
+  expect(screen.getByRole('complementary', { name: 'Ao longo da jornada' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
+  expect(ongoing.mock.calls.length).toBe(ongoingCalls)
+  expect(stages.mock.calls.length).toBe(stageCalls)
+  fireEvent.click(screen.getByRole('button', { name: 'Receive confirmed progress' }))
+  expect(ongoing.mock.calls.length).toBeGreaterThan(ongoingCalls)
+  expect(stages.mock.calls.length).toBeGreaterThan(stageCalls)
+  expect(screen.queryByRole('complementary', { name: 'Ao longo da jornada' })).toBeNull()
+})
 
 const savedVisibility = new Map<string, string[]>()
 beforeEach(() => {

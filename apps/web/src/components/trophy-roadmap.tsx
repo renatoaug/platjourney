@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { roadPoint, roadSegment } from '../lib/roadmap-motion'
 import { ongoingObjectives, trophyAdvice, trophyRoadmap } from '../lib/trophy-roadmap'
@@ -472,9 +472,18 @@ function RoadmapForward({
   )
 }
 
-function RoadmapOngoing({ game, choose }: { game: RoadmapGame; choose: (trophy: Trophy) => void }) {
+const RoadmapOngoing = memo(function RoadmapOngoing({
+  game,
+  choose,
+}: {
+  game: RoadmapGame
+  choose: (trophy: Trophy) => void
+}) {
   const t = useMessages(messages)
-  const objectives = ongoingObjectives(game.trophies, game.guide)
+  const objectives = useMemo(
+    () => ongoingObjectives(game.trophies, game.guide),
+    [game.trophies, game.guide],
+  )
   if (!objectives.length) return null
   return (
     <aside className="roadmap-ongoing" aria-label={t('ongoing')}>
@@ -528,7 +537,7 @@ function RoadmapOngoing({ game, choose }: { game: RoadmapGame; choose: (trophy: 
       </ul>
     </aside>
   )
-}
+})
 
 function RoadmapVisibility({
   revealed,
@@ -592,8 +601,14 @@ export function TrophyRoadmap({
   const [fromStart, setFromStart] = useState(false)
   const { revealed, setRevealed, saving } = useGameSpoilers(source.game.id)
   const inspecting = preview || fromStart
-  const game = roadmapView(source, inspecting, revealed)
-  const stages = trophyRoadmap(game.trophies, game.guide)
+  const game = useMemo(
+    () => roadmapView(source, inspecting, revealed),
+    [source, inspecting, revealed],
+  )
+  const stages = useMemo(
+    () => trophyRoadmap(game.trophies, game.guide),
+    [game.trophies, game.guide],
+  )
   const base = game.trophies.filter((x) => x.groupId === 'default')
   const done = base.some((x) => x.type === 'platinum' && x.earned)
   const focus = !done && !game.guide?.unobtainable ? game.focus?.trophy : undefined
@@ -612,7 +627,9 @@ export function TrophyRoadmap({
   const stage = stages[stageIndex]
   const pending = ordered.filter((x) => !x.earned)
   const past = ordered.filter((x) => x.earned)
-  const choose = (trophy: Trophy) => setSelection(anchor(trophy))
+  const choose = useCallback((trophy: Trophy) => {
+    setSelection(anchor(trophy))
+  }, [])
   return (
     <section className="trophy-roadmap" id="journey-roadmap" aria-labelledby="roadmap-heading">
       <header className="roadmap-intro">
