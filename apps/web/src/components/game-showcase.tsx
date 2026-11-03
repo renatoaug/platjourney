@@ -23,6 +23,8 @@ const messages = defineMessages({
     released: 'Lançamento',
     platforms: 'Plataformas',
     site: 'Site oficial',
+    openSite: 'Abrir site',
+    siteLink: 'Abrir site: {host}',
     modes: 'Modos',
     rating: 'Nota da crítica',
     ratingValue: '{value}/100',
@@ -46,6 +48,8 @@ const messages = defineMessages({
     released: 'Release',
     platforms: 'Platforms',
     site: 'Official site',
+    openSite: 'Open site',
+    siteLink: 'Open site: {host}',
     modes: 'Modes',
     rating: 'Critic score',
     ratingValue: '{value}/100',
@@ -423,8 +427,15 @@ function GameFacts({
         <div>
           <dt>{t('site')}</dt>
           <dd>
-            <a href={site.href} target="_blank" rel="noopener noreferrer">
-              {site.host} <Icon name="arrow" />
+            <a
+              className="game-about-site"
+              href={site.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t('siteLink', { host: site.host })}
+              title={site.host}
+            >
+              {t('openSite')} <Icon name="arrow" />
             </a>
           </dd>
         </div>
@@ -526,7 +537,7 @@ export function GameShowcaseSkeleton() {
   )
 }
 
-/** Only http(s) links from the catalog are shown, with the host as their text. */
+/** Only http(s) links from the catalog are shown, with the host retained for accessible descriptions. */
 function safeUrl(raw: string): { href: string; host: string } | null {
   try {
     const u = new URL(raw)

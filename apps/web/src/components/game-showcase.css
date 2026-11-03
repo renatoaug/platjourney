@@ -340,6 +340,10 @@
     color: var(--color-accent);
   }
 
+  .game-about-facts .game-about-site {
+    white-space: nowrap;
+  }
+
   .game-about-facts a .icon {
     width: 12px;
     height: 12px;

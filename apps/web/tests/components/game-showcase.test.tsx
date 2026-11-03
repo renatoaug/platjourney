@@ -73,7 +73,11 @@ describe('GameAbout', () => {
     expect(screen.getByText('PS5')).toBeTruthy()
     expect(screen.queryByText('PC')).toBeNull()
     const link = screen.getByRole('link') as HTMLAnchorElement
-    expect(link.textContent).toContain('bendstudio.com')
+    expect(link.textContent).toContain('Abrir site')
+    expect(link.getAttribute('aria-label')).toBe('Abrir site: bendstudio.com')
+    expect(link.title).toBe('bendstudio.com')
+    expect(link.href).toBe(game.website as string)
+    expect(link.rel).toBe('noopener noreferrer')
     expect(link.target).toBe('_blank')
   })
 
