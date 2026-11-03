@@ -11,7 +11,20 @@ beforeEach(() => {
 // state and releases) against the real fetch, which the setup refuses. CI is slow enough to hit it.
 afterEach(() => {
   cleanup()
+  delete (window as Window & { Capacitor?: unknown }).Capacitor
   mock.restore()
+})
+
+test('the mounted app hands the native cover over even when the session fails immediately', async () => {
+  const hide = mock(() => Promise.resolve())
+  ;(window as Window & { Capacitor?: unknown }).Capacitor = {
+    isNativePlatform: () => true,
+    Plugins: { SplashScreen: { hide } },
+  }
+  mockApi({ '/api/me': reply(503) })
+  render(<App />)
+  await screen.findByRole('heading', { name: 'Perdemos a conexão por um instante' })
+  await waitFor(() => expect(hide).toHaveBeenCalledTimes(1), { timeout: 2500 })
 })
 
 test('a signed-in player lands on the app', async () => {

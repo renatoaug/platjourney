@@ -15,6 +15,38 @@ export function isNative(): boolean {
   return bridge()?.isNativePlatform?.() === true
 }
 
+/** Release the native cover after React mounts, the mascot decodes and a frame paints.
+ * A failed or stalled image cannot keep the app covered; cleanup cancels StrictMode's old mount. */
+export function handoffLaunchScreen(): () => void {
+  if (!isNative()) return () => {}
+  let cancelled = false
+  let scheduled = false
+  let frame = 0
+  const paint = () => {
+    if (cancelled || scheduled) return
+    scheduled = true
+    clearTimeout(timeout)
+    frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        if (!cancelled) hideLaunchScreen()
+      })
+    })
+  }
+  const timeout = setTimeout(paint, 1500)
+  const image = document.querySelector<HTMLImageElement>('.boot-nexo')
+  if (image?.decode)
+    image
+      .decode()
+      .catch(() => {})
+      .then(paint)
+  else paint()
+  return () => {
+    cancelled = true
+    clearTimeout(timeout)
+    cancelAnimationFrame(frame)
+  }
+}
+
 /** The light tick a phone gives when a choice changes (a tab, a switch). */
 export function tick(): void {
   bridge()

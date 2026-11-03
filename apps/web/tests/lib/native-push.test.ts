@@ -31,6 +31,7 @@ test('notification taps accept only the internal history route and a valid tip',
 
 test('iOS registers, renews, revokes, respects account preferences and stops on logout', async () => {
   let permission = 'prompt'
+  let registeredThisProcess = false
   let token = 'a'.repeat(64)
   const handlers = new Map<string, (event: object) => void>()
   const push = {
@@ -44,10 +45,16 @@ test('iOS registers, renews, revokes, respects account preferences and stops on 
       return { remove: async () => {} }
     },
     register: mock(async () => {
+      registeredThisProcess = true
       handlers.get('registration')?.({ value: token })
     }),
     unregister: mock(async () => {}),
-    removeAllDeliveredNotifications: mock(async () => {}),
+    removeAllDeliveredNotifications: mock(async () => {
+      if (!registeredThisProcess)
+        throw new Error(
+          'event capacitorDidRegisterForRemoteNotifications not called.  Visit the plugin documentation',
+        )
+    }),
   }
   ;(window as unknown as Record<string, unknown>).Capacitor = {
     isNativePlatform: () => true,
@@ -69,7 +76,13 @@ test('iOS registers, renews, revokes, respects account preferences and stops on 
   await waitFor(() => {
     if (!calls.length) throw new Error('waiting for permission check')
   })
+  // A first install has not registered yet. Capacitor rejects clearing delivered notifications
+  // in this state, but the account must still see an off switch that it can turn on.
+  expect(await nativePushState()).toBe('off')
+  expect(localStorage.getItem('platjourney:apns:user:one')).toBeNull()
+  expect(localStorage.getItem('platjourney:apns-cleanup-pending')).toBe('yes')
   expect(await enableNativePush()).toBe('on')
+  expect(localStorage.getItem('platjourney:apns-cleanup-pending')).toBeNull()
   const first = calls.find((c) => c.method === 'POST')?.body as {
     owner: string
     installation: string
@@ -111,6 +124,18 @@ test('iOS registers, renews, revokes, respects account preferences and stops on 
   expect(await disableNativePush()).toBe('off')
   expect(await nativePushState()).toBe('off')
   expect(push.unregister).toHaveBeenCalled()
+  // The plugin's registration flag resets when the app process restarts. A durable revocation
+  // still completes, while delivered-notification cleanup waits for the next explicit opt-in.
+  registeredThisProcess = false
+  localStorage.setItem('platjourney:apns:user:one', 'revoking')
+  expect(await nativePushState()).toBe('off')
+  expect(localStorage.getItem('platjourney:apns-cleanup-pending')).toBe('yes')
+  expect(await enableNativePush()).toBe('on')
+  expect(localStorage.getItem('platjourney:apns-cleanup-pending')).toBeNull()
+  push.removeAllDeliveredNotifications.mockRejectedValueOnce(new Error('unexpected cleanup error'))
+  await expect(disableNativePush()).rejects.toThrow('revocation pending')
+  expect(localStorage.getItem('platjourney:apns:user:one')).toBe('revoking')
+  expect(await nativePushState()).toBe('off')
   expect(await enableNativePush()).toBe('on')
   deletionFailure = 'server'
   await expect(disableNativePush()).rejects.toThrow('revocation pending')
