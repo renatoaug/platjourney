@@ -1248,10 +1248,8 @@
   }
 
   .quick-facts-conditions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 12px 22px;
+    display: grid;
+    gap: 12px;
     margin: 18px 0 0;
   }
 
@@ -1286,10 +1284,6 @@
 
     .quick-facts-primary .quick-fact:not(.unknown) dd {
       font-size: var(--text-2xl);
-    }
-
-    .quick-facts-conditions {
-      gap: 12px 18px;
     }
   }
 
