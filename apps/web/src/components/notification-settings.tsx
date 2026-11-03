@@ -236,7 +236,7 @@ export function NotificationSettings({ user }: { user: Me }) {
     run(async () => {
       const { sent } = await api<{ sent: number }>('/api/push/test', {})
       // The response counts provider acceptance across devices, never device receipt.
-      toast(sent ? t('testSent') : t('testNone'), 'info')
+      toast(sent ? t('testSent') : t('testNone'), sent ? 'success' : 'info')
     }, t('testFailed'))
   const changeTelegram = (on: boolean) =>
     run(async () => {

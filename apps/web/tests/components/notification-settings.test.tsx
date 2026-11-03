@@ -47,8 +47,10 @@ test('turning push on subscribes the device and offers a test', async () => {
   const accepted = await screen.findByText(
     'Envio aceito pelo serviço de notificações. Recebimento ainda não confirmado.',
   )
-  expect(accepted.closest('.toast')?.classList.contains('info')).toBe(true)
-  expect(accepted.closest('.toast')?.classList.contains('success')).toBe(false)
+  expect(accepted.closest('.toast')?.classList.contains('success')).toBe(true)
+  expect(accepted.closest('.toast')?.classList.contains('info')).toBe(false)
+  expect(accepted.closest('.toast')?.querySelector('.toast-mark')).toBeTruthy()
+  expect(accepted.closest('.toast')?.querySelector('.burst')).toBeTruthy()
 })
 
 test('turning push off, a test with no accepted sends, and a failure', async () => {
@@ -57,9 +59,11 @@ test('turning push off, a test with no accepted sends, and a failure', async () 
   mockApi({ 'POST /api/push/test': { sent: 0 } })
   show()
   fireEvent.click(await screen.findByRole('button', { name: 'Enviar um teste' }))
-  expect(
-    await screen.findByText('O serviço de notificações não aceitou nenhum envio. Tente novamente.'),
-  ).toBeTruthy()
+  const notSent = await screen.findByText(
+    'O serviço de notificações não aceitou nenhum envio. Tente novamente.',
+  )
+  expect(notSent.closest('.toast')?.classList.contains('info')).toBe(true)
+  expect(notSent.closest('.toast')?.querySelector('.burst')).toBeNull()
   fireEvent.click(screen.getByRole('switch', { name: /Neste aparelho/ }))
   expect(await screen.findByText('Não conseguimos mudar agora. Tente de novo.')).toBeTruthy()
   disable.mockResolvedValue('off')
