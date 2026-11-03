@@ -4,8 +4,8 @@
     isolation: isolate;
     overflow: hidden;
     display: grid;
-    grid-template-columns: 64px minmax(0, 1fr);
-    grid-template-areas: "heading heading" "cover body" "chips chips";
+    grid-template-columns: 80px minmax(0, 1fr);
+    grid-template-areas: "heading heading" "cover body" "cover chips";
     align-content: start;
     align-self: start;
     gap: 8px 12px;
@@ -54,7 +54,7 @@
 
   .guide-spotlight-cover {
     grid-area: cover;
-    width: 64px;
+    width: 80px;
     aspect-ratio: 3 / 4;
     object-fit: cover;
     border-radius: var(--radius-control);
@@ -67,7 +67,7 @@
     align-content: start;
     gap: 6px;
     min-width: 0;
-    align-self: center;
+    align-self: end;
   }
 
   .guide-spotlight .eyebrow {
@@ -106,10 +106,10 @@
     display: flex;
     grid-area: chips;
     flex-wrap: wrap;
-    gap: 8px 18px;
+    align-self: start;
+    gap: 6px 14px;
     margin: 0;
-    padding-top: 8px;
-    border-top: 1px solid var(--color-border-strong);
+    padding: 0;
   }
 
   .guide-spotlight-chips > * {
@@ -181,11 +181,11 @@
 
   @media (max-width: 480px) {
     .guide-spotlight {
-      grid-template-columns: 52px minmax(0, 1fr);
+      grid-template-columns: 72px minmax(0, 1fr);
     }
 
     .guide-spotlight-cover {
-      width: 52px;
+      width: 72px;
     }
 
     .guide-spotlight-head > b {
