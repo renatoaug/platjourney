@@ -247,6 +247,7 @@ export type Target =
   | 'ReleaseStatus'
   | 'Releases'
   | 'ReleasesView'
+  | 'ReviewedPreparation'
   | 'Rich'
   | 'RoadmapForward'
   | 'RoadmapLandscape'

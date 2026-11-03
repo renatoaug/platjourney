@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { SAMPLE_ME } from '../../src/app/app-state'
 import { Journey } from '../../src/components/journey'
 import { TrophyRoadmap } from '../../src/components/trophy-roadmap'
 import { current } from '../../src/fixtures'
+import { requiemGame } from '../../src/fixtures/requiem'
 import * as roadmapData from '../../src/lib/trophy-roadmap'
 import type { CurrentGame, GuideDetail } from '../../src/lib/types'
 import { mockApi, renderApp, reply } from '../support/web'
@@ -572,4 +573,57 @@ test('movement starts on the next frame, follows the cubic road both ways and ca
   } finally {
     globalThis.ResizeObserver = original
   }
+})
+
+test('mounted Requiem roadmap shows reviewed chronology, preparation and no inferred position', () => {
+  renderApp(<TrophyRoadmap game={requiemGame(['chapter-3'])} />)
+  expect(screen.getByRole('heading', { name: 'Piedade', level: 3 })).toBeTruthy()
+  expect(screen.getByText(/Capítulo 3 concluído na PSN/)).toBeTruthy()
+  expect(screen.getAllByText(/preserve a vida do guarda/).length).toBeGreaterThan(0)
+  fireEvent.click(screen.getByText('Prepare enquanto avança'))
+  expect(
+    within(screen.getByRole('complementary', { name: 'Roteiro revisado · Requiem' })).getByRole(
+      'button',
+      { name: 'Exploradora' },
+    ),
+  ).toBeTruthy()
+  expect(screen.queryByText(/Feche o jogo imediatamente/)).toBeNull()
+})
+
+test('live out-of-order progress re-evaluates an unselected route', () => {
+  function Live() {
+    const [data, setData] = useState(requiemGame())
+    return (
+      <>
+        <button type="button" onClick={() => setData(requiemGame(['chapter-8']))}>
+          New milestone
+        </button>
+        <TrophyRoadmap game={data} />
+      </>
+    )
+  }
+  renderApp(<Live />)
+  expect(screen.getByRole('heading', { name: 'Mira perfeita', level: 3 })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'New milestone' }))
+  expect(screen.getByRole('heading', { name: 'Antiga protetora', level: 3 })).toBeTruthy()
+  expect(screen.getByText(/Capítulo 8 concluído na PSN/)).toBeTruthy()
+})
+
+test('partial reviewed lists do not claim a personalized recommendation', () => {
+  const data = requiemGame()
+  renderApp(<TrophyRoadmap game={{ ...data, trophies: data.trophies.slice(0, 3) }} />)
+  expect(screen.getByText(/não corresponde a todos os objetivos revisados/)).toBeTruthy()
+  expect(screen.queryByText('Sugestão atual do guia')).toBeNull()
+})
+
+test('reviewed hidden trophy advice never bypasses the account reveal preference', () => {
+  const data = requiemGame()
+  renderApp(
+    <TrophyRoadmap
+      game={{ ...data, trophies: data.trophies.map((x) => ({ ...x, hidden: true })) }}
+    />,
+  )
+  expect(screen.getByRole('heading', { name: 'Troféu oculto', level: 3 })).toBeTruthy()
+  expect(screen.queryByText(/desafio das pinhas/)).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Exploradora' })).toBeNull()
 })

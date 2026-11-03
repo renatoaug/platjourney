@@ -119,7 +119,7 @@ async function ownedDetail(
     )
   return {
     owned: true,
-    focus: todaysFocus({ trophies, guide: guide ?? undefined }),
+    focus: todaysFocus({ game: found, trophies, guide: guide ?? undefined }),
     np: title.npCommunicationId,
     deepGuide: await deepGuideOf(user, found),
     hoursPlayed: hours((await playtimes(user)).get(found.id)),

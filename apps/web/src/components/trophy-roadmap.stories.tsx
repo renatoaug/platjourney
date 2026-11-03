@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { current } from '../fixtures'
+import { requiemGame } from '../fixtures/requiem'
 import { TrophyRoadmap, TrophyRoadmapSkeleton } from './trophy-roadmap'
 
 const meta: Meta<typeof TrophyRoadmap> = {
@@ -132,4 +133,13 @@ export const OngoingObjectives: Story = {
 export const StartComparison: Story = {
   ...OngoingObjectives,
   args: { ...OngoingObjectives.args, preview: true },
+}
+
+export const ReviewedRequiemStart: Story = { args: { game: requiemGame() } }
+export const ReviewedRequiemMiddle: Story = {
+  args: { game: requiemGame(['chapter-1', 'chapter-2', 'chapter-3']) },
+}
+export const ReviewedRequiemOutOfOrder: Story = { args: { game: requiemGame(['chapter-8']) } }
+export const ReviewedRequiemPartialList: Story = {
+  args: { game: { ...requiemGame(), trophies: requiemGame().trophies.slice(0, 8) } },
 }
