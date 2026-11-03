@@ -453,10 +453,24 @@ export function TrophyRoadmap({ game }: { game: CurrentGame }) {
                       <button
                         type="button"
                         aria-pressed={selected === trophy}
+                        aria-label={trophy.name}
+                        aria-describedby={
+                          trophy.detail ? `${anchor(trophy)}-earned-detail` : undefined
+                        }
                         onClick={() => choose(trophy)}
                       >
-                        <Icon name="check" />
-                        <span>{trophy.name}</span>
+                        <span className="roadmap-earned-art">
+                          <TrophyArt url={trophy.iconUrl} />
+                          <span className="roadmap-earned-check">
+                            <Icon name="check" />
+                          </span>
+                        </span>
+                        <span className="roadmap-earned-copy">
+                          <strong>{trophy.name}</strong>
+                          {trophy.detail && (
+                            <span id={`${anchor(trophy)}-earned-detail`}>{trophy.detail}</span>
+                          )}
+                        </span>
                         <Icon name="chevron-right" />
                       </button>
                     </li>

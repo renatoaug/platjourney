@@ -263,3 +263,32 @@ test('objective and stored guidance have distinct icons, while missing advice ad
   expect(screen.queryByText('Sem dica específica no guia.')).toBeNull()
   expect(screen.getByRole('link', { name: 'Perguntar ao Nexo' })).toBeTruthy()
 })
+
+test('earned history shows trophy art and full descriptions without changing progress', () => {
+  const earned = {
+    ...game.trophies[1],
+    iconUrl: '/synthetic-earned.png',
+    detail: 'Complete objective description',
+  }
+  const { container } = renderApp(
+    <TrophyRoadmap game={{ ...game, trophies: [game.trophies[0], earned] }} />,
+  )
+  const history = container.querySelector<HTMLDetailsElement>('.roadmap-past')
+  if (!history) throw new Error('earned history missing')
+  expect(history.open).toBe(false)
+  history.open = true
+  const button = screen.getByRole('button', { name: earned.name })
+  expect(button.getAttribute('aria-describedby')).toBe('roadmap-default-1-earned-detail')
+  expect(button.querySelector('.roadmap-earned-copy > span')?.textContent).toBe(earned.detail)
+  const art = button.querySelector('img')
+  if (!art) throw new Error('earned artwork missing')
+  expect(art.getAttribute('src')).toBe(earned.iconUrl)
+  fireEvent.error(art)
+  expect(button.querySelector('img')).toBeNull()
+  expect(button.querySelector('.roadmap-earned-art > svg use')?.getAttribute('href')).toBe(
+    '/icons.svg#trophy',
+  )
+  fireEvent.click(button)
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(earned.name)
+  expect(earned.earned).toBe(true)
+})

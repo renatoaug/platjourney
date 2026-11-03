@@ -81,3 +81,21 @@ export const ChallengeSignals: Story = {
     },
   },
 }
+
+export const EarnedDetails: Story = {
+  args: {
+    game: {
+      ...current,
+      trophies: current.trophies.map((t, i) => ({
+        ...t,
+        earned: true,
+        name: i === 0 ? 'Uma conquista com nome longo que continua legível no histórico' : t.name,
+        detail:
+          i === 0
+            ? 'Descrição ilustrativa completa para conferir a leitura e a quebra natural em telas pequenas, sem esconder o objetivo conquistado.'
+            : t.detail,
+        iconUrl: i === 1 ? undefined : t.iconUrl,
+      })),
+    },
+  },
+}
