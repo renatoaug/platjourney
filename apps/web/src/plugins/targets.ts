@@ -250,6 +250,7 @@ export type Target =
   | 'Rich'
   | 'RoadmapForward'
   | 'RoadmapLandscape'
+  | 'RoadmapSignal'
   | 'Route'
   | 'Row'
   | 'SaveButton'

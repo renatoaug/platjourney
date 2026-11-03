@@ -28,6 +28,8 @@ const messages = defineMessages({
     open: 'Explorar marco',
     close: 'Recolher dica',
     challenge: 'Atenção no caminho',
+    missable: 'Perdível',
+    finale: 'Platina',
     order: 'Como este caminho é definido',
     subtitle:
       'Todos os troféus conectados ao roteiro. Cada conquista acompanha seu progresso na PSN.',
@@ -84,6 +86,8 @@ const messages = defineMessages({
     open: 'Explore milestone',
     close: 'Collapse advice',
     challenge: 'Watch your step',
+    missable: 'Missable',
+    finale: 'Platinum',
     order: 'How this path is defined',
     subtitle: 'Every trophy connected to the roadmap. Each achievement follows your PSN progress.',
     basis:
@@ -123,6 +127,8 @@ const messages = defineMessages({
     platinumType: 'Platinum',
   },
 })
+
+const roadCurves = ['M48 96 C110 96 166 56 228 56', 'M48 56 C110 56 166 96 228 96']
 
 const anchor = (trophy: Trophy) => `roadmap-${encodeURIComponent(trophy.groupId)}-${trophy.id}`
 
@@ -273,11 +279,32 @@ function RoadmapLandscape({
   )
 }
 
+function RoadmapSignal({ missable, final }: { missable: boolean; final: boolean }) {
+  const t = useMessages(messages)
+  if (missable)
+    return (
+      <span className="roadmap-route-risk">
+        <Icon name="warning" />
+        {t('missable')}
+      </span>
+    )
+  if (final)
+    return (
+      <span className="roadmap-route-finale">
+        <Icon name="trophy" />
+        {t('finale')}
+      </span>
+    )
+  return null
+}
+
 function RoadmapForward({
   pending,
   selected,
   choose,
+  game,
 }: {
+  game: CurrentGame
   pending: Trophy[]
   selected: Trophy
   choose: (trophy: Trophy) => void
@@ -287,8 +314,20 @@ function RoadmapForward({
   const at = pending.indexOf(selected)
   const activeId = selected ? anchor(selected) : null
   useEffect(() => {
-    const node = rail.current?.querySelector<HTMLElement>(`[data-trophy="${activeId}"]`)
-    if (node) rail.current?.scrollTo?.({ left: node.offsetLeft - 24, behavior: 'auto' })
+    const track = rail.current
+    if (!track) return
+    const place = () => {
+      const node = track.querySelector<HTMLElement>(`[data-trophy="${activeId}"]`)
+      if (node)
+        track.scrollTo?.({
+          left: Math.min(node.offsetLeft, Math.max(0, track.scrollWidth - track.clientWidth)),
+          behavior: 'auto',
+        })
+    }
+    place()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place)
+    observer?.observe(track)
+    return () => observer?.disconnect()
   }, [activeId])
   return (
     <div className="roadmap-forward">
@@ -320,30 +359,52 @@ function RoadmapForward({
       </div>
       {!!pending.length && (
         <ol className="roadmap-route" ref={rail} aria-label={t('ahead')}>
-          {pending.map((trophy, i) => (
-            <li
-              key={anchor(trophy)}
-              data-trophy={anchor(trophy)}
-              className={selected === trophy ? 'is-current' : ''}
-            >
-              <svg
-                className="roadmap-route-line"
-                viewBox="0 0 180 140"
-                preserveAspectRatio="none"
-                aria-hidden="true"
+          {pending.map((trophy, i) => {
+            const hidden = trophy.hidden
+            const current = selected === trophy
+            const missable = !hidden && !!trophyAdvice(trophy, game.guide).warning
+            const final = trophy.type === 'platinum'
+            const path = roadCurves[i % 2]
+            return (
+              <li
+                key={anchor(trophy)}
+                data-trophy={anchor(trophy)}
+                className={current ? 'is-current' : ''}
+                data-missable={missable}
+                data-final={final}
               >
-                <path d={i % 2 ? 'M17 29 C72 29 102 89 197 89' : 'M17 89 C72 89 102 29 197 29'} />
-              </svg>
-              <button
-                type="button"
-                aria-pressed={selected === trophy}
-                onClick={() => choose(trophy)}
-              >
-                <span className="roadmap-route-pin">{String(i + 1).padStart(2, '0')}</span>
-                <span>{trophy.hidden && !trophy.earned ? t('secret') : trophy.name}</span>
-              </button>
-            </li>
-          ))}
+                <svg
+                  className="roadmap-route-line"
+                  viewBox="0 0 180 150"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path className="roadmap-road-bed" d={path} />
+                  <path className="roadmap-road-edge" d={path} />
+                  <path className="roadmap-road-trail" d={path} />
+                </svg>
+                <button
+                  type="button"
+                  aria-pressed={current}
+                  tabIndex={current ? 0 : -1}
+                  onClick={() => choose(trophy)}
+                >
+                  <span className="roadmap-route-pin">
+                    <span className="roadmap-route-art">
+                      <TrophyArt url={hidden ? undefined : trophy.iconUrl} />
+                    </span>
+                    <span className="roadmap-route-number" aria-hidden="true">
+                      {final ? <Icon name="trophy" /> : String(i + 1).padStart(2, '0')}
+                    </span>
+                  </span>
+                  <span className="roadmap-route-caption">
+                    <span className="roadmap-route-name">{hidden ? t('secret') : trophy.name}</span>
+                    <RoadmapSignal missable={missable} final={final} />
+                  </span>
+                </button>
+              </li>
+            )
+          })}
         </ol>
       )}
     </div>
@@ -424,7 +485,7 @@ export function TrophyRoadmap({ game }: { game: CurrentGame }) {
               stageIndex={stageIndex}
               suggested={suggested === selected}
             />
-            <RoadmapForward pending={pending} selected={selected} choose={choose} />
+            <RoadmapForward game={game} pending={pending} selected={selected} choose={choose} />
             <TrophyStep
               key={anchor(selected)}
               trophy={selected}
@@ -508,9 +569,28 @@ export function TrophyRoadmapSkeleton() {
           </div>
         </div>
         <div className="roadmap-forward">
-          <Sk w="55%" h={20} />
-          <div className="roadmap-route">
-            <Sk w="100%" h={160} />
+          <div className="roadmap-forward-heading roadmap-loading-heading">
+            <div>
+              <Sk w="65%" h={18} />
+              <p>
+                <Sk w="90%" h={14} />
+              </p>
+            </div>
+            <span className="roadmap-route-controls">
+              <Sk w="44px" h={44} />
+              <Sk w="44px" h={44} />
+            </span>
+          </div>
+          <div className="roadmap-route roadmap-route-loading">
+            {[0, 1, 2].map((step) => (
+              <div key={step} className="roadmap-loading-stop">
+                <span className="roadmap-loading-art">
+                  <Sk w="80px" h={80} style={{ borderRadius: 'var(--radius-round)' }} />
+                </span>
+                <Sk w="85%" h={18} />
+                <Sk w="55%" h={14} />
+              </div>
+            ))}
           </div>
         </div>
         <div className="roadmap-content">

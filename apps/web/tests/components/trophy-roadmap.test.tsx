@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test'
+import { expect, mock, test } from 'bun:test'
 import { fireEvent, screen } from '@testing-library/react'
 import { Journey } from '../../src/components/journey'
 import { TrophyRoadmap } from '../../src/components/trophy-roadmap'
@@ -153,4 +153,84 @@ test('the pending path crosses stages without traversing earned history', () => 
   fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
   expect(container.querySelector('.roadmap-past')?.hasAttribute('open')).toBe(false)
+})
+
+test('route artwork and missable signals use exact guide facts, with no hidden trophy spoilers', () => {
+  const items = game.trophies.map((t, i) => ({
+    ...t,
+    earned: false,
+    iconUrl: `/synthetic-trophy-${i}.png`,
+  }))
+  const guide = {
+    ...(game.guide as GuideDetail),
+    hasMissables: true,
+    missables: [
+      { trophy: 'First step', when: 'Before moving on', how: 'Check the objective' },
+      { trophy: 'Secret scene', when: 'Secret warning', how: 'Hidden guidance' },
+      { trophy: 'Unmatched trophy', when: 'Unmatched', how: '' },
+    ],
+  }
+  const { container, unmount } = renderApp(
+    <TrophyRoadmap game={{ ...game, trophies: items, guide }} />,
+  )
+  const stops = container.querySelectorAll('.roadmap-route li')
+  expect(stops).toHaveLength(3)
+  expect(container.querySelectorAll('.roadmap-route-risk')).toHaveLength(1)
+  expect(stops[0]?.getAttribute('data-missable')).toBe('true')
+  expect(stops[0]?.querySelector('img')?.getAttribute('src')).toBe('/synthetic-trophy-1.png')
+  expect(stops[1]?.querySelector('img')).toBeNull()
+  expect(stops[1]?.getAttribute('data-missable')).toBe('false')
+  expect(stops[1]?.textContent).toContain('Troféu oculto')
+  expect(stops[2]?.getAttribute('data-final')).toBe('true')
+  expect(screen.queryByText('Secret warning')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: /First step Perdível/ }))
+  expect(screen.getByText('Check the objective')).toBeTruthy()
+  const art = stops[0]?.querySelector('img')
+  if (!art) throw new Error('missing trophy artwork')
+  fireEvent.error(art)
+  expect(stops[0]?.querySelector('img')).toBeNull()
+  expect(stops[0]?.textContent).toContain('First step')
+  unmount()
+  renderApp(
+    <TrophyRoadmap game={{ ...game, trophies: items, guide: { ...guide, missables: [] } }} />,
+  )
+  expect(document.querySelectorAll('.roadmap-route-risk')).toHaveLength(0)
+})
+
+test('arrow navigation keeps only the selected milestone tabbable and clamps the rail after resize', () => {
+  const previous = globalThis.ResizeObserver
+  const callbacks: Array<() => void> = []
+  const disconnect = mock(() => {})
+  globalThis.ResizeObserver = class {
+    constructor(callback: () => void) {
+      callbacks.push(callback)
+    }
+    observe() {}
+    unobserve() {}
+    disconnect = disconnect
+  } as unknown as typeof ResizeObserver
+  try {
+    const { container, unmount } = renderApp(<TrophyRoadmap game={game} />)
+    const track = container.querySelector<HTMLOListElement>('.roadmap-route')
+    if (!track) throw new Error('route missing')
+    const stops = track.querySelectorAll<HTMLElement>('li')
+    const scroll = mock(() => {})
+    track.scrollTo = scroll
+    Object.defineProperties(track, {
+      clientWidth: { value: 320, configurable: true },
+      scrollWidth: { value: 640 },
+    })
+    Object.defineProperty(stops[1], 'offsetLeft', { value: 320 })
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+    expect(scroll).toHaveBeenLastCalledWith({ left: 320, behavior: 'auto' })
+    expect(stops[0]?.querySelector('button')?.tabIndex).toBe(-1)
+    expect(stops[1]?.querySelector('button')?.tabIndex).toBe(0)
+    Object.defineProperty(track, 'clientWidth', { value: 640 })
+    callbacks.at(-1)?.()
+    expect(scroll).toHaveBeenLastCalledWith({ left: 0, behavior: 'auto' })
+    unmount()
+    expect(disconnect).toHaveBeenCalledTimes(2)
+  } finally {
+    globalThis.ResizeObserver = previous
+  }
 })

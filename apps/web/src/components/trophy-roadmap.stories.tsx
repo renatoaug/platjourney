@@ -41,3 +41,43 @@ export const HiddenAndLong: Story = {
   },
 }
 export const Loading: Story = { render: () => <TrophyRoadmapSkeleton /> }
+
+// Synthetic guide conditions exercise risk signals without attributing them to the fixture game.
+export const ChallengeSignals: Story = {
+  args: {
+    game: {
+      ...current,
+      name: 'Jogo de demonstração',
+      focus: null,
+      trophies: current.trophies.map((t, i) => ({
+        ...t,
+        name: i === 0 ? 'Um encontro que não volta' : i === 1 ? 'O caminho da vitória' : t.name,
+        hidden: false,
+        earned: false,
+      })),
+      guide: current.guide
+        ? {
+            ...current.guide,
+            hasMissables: true,
+            roadmap: [
+              {
+                phase: 'Exploração',
+                goal: '',
+                trophies: ['Um encontro que não volta', 'O caminho da vitória'],
+              },
+            ],
+            missables: [
+              {
+                trophy: 'Um encontro que não volta',
+                when: 'Antes de deixar esta área.',
+                how: 'Confira o objetivo antes de seguir. Condição ilustrativa para esta demonstração.',
+              },
+            ],
+            tricks: [],
+            buggy: [],
+            onlineTrophies: [],
+          }
+        : null,
+    },
+  },
+}
