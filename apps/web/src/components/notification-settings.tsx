@@ -32,7 +32,7 @@ const messages = defineMessages({
     },
     retry: 'Tentar novamente',
     test: 'Enviar um teste',
-    testSent: 'Envio aceito pelo serviço de notificações. Recebimento ainda não confirmado.',
+    testSent: 'Notificação de teste enviada',
     testNone: 'O serviço de notificações não aceitou nenhum envio. Tente novamente.',
     testFailed: 'Não foi possível enviar o teste. Tente novamente.',
     telegram: 'No Telegram',
@@ -63,7 +63,7 @@ const messages = defineMessages({
     },
     retry: 'Try again',
     test: 'Send a test',
-    testSent: 'Sending accepted by the notification service. Receipt is not yet confirmed.',
+    testSent: 'Test notification sent',
     testNone: 'The notification service accepted no sends. Try again.',
     testFailed: 'The test could not be sent. Try again.',
     telegram: 'On Telegram',
@@ -236,7 +236,7 @@ export function NotificationSettings({ user }: { user: Me }) {
     run(async () => {
       const { sent } = await api<{ sent: number }>('/api/push/test', {})
       // The response counts provider acceptance across devices, never device receipt.
-      toast(sent ? t('testSent') : t('testNone'), 'info')
+      toast(sent ? t('testSent') : t('testNone'), sent ? 'success' : 'info')
     }, t('testFailed'))
   const changeTelegram = (on: boolean) =>
     run(async () => {

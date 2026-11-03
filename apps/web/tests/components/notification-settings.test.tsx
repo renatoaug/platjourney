@@ -44,11 +44,11 @@ test('turning push on subscribes the device and offers a test', async () => {
   expect(await screen.findByText('Notificações ligadas neste aparelho.')).toBeTruthy()
   expect(enable).toHaveBeenCalledWith('AQID')
   fireEvent.click(screen.getByRole('button', { name: 'Enviar um teste' }))
-  const accepted = await screen.findByText(
-    'Envio aceito pelo serviço de notificações. Recebimento ainda não confirmado.',
-  )
-  expect(accepted.closest('.toast')?.classList.contains('info')).toBe(true)
-  expect(accepted.closest('.toast')?.classList.contains('success')).toBe(false)
+  const accepted = await screen.findByText('Notificação de teste enviada')
+  expect(accepted.closest('.toast')?.classList.contains('success')).toBe(true)
+  expect(accepted.closest('.toast')?.classList.contains('info')).toBe(false)
+  expect(accepted.closest('.toast')?.querySelector('.toast-mark')).toBeTruthy()
+  expect(accepted.closest('.toast')?.querySelector('.burst')).toBeTruthy()
 })
 
 test('turning push off, a test with no accepted sends, and a failure', async () => {
@@ -57,9 +57,11 @@ test('turning push off, a test with no accepted sends, and a failure', async () 
   mockApi({ 'POST /api/push/test': { sent: 0 } })
   show()
   fireEvent.click(await screen.findByRole('button', { name: 'Enviar um teste' }))
-  expect(
-    await screen.findByText('O serviço de notificações não aceitou nenhum envio. Tente novamente.'),
-  ).toBeTruthy()
+  const notSent = await screen.findByText(
+    'O serviço de notificações não aceitou nenhum envio. Tente novamente.',
+  )
+  expect(notSent.closest('.toast')?.classList.contains('info')).toBe(true)
+  expect(notSent.closest('.toast')?.querySelector('.burst')).toBeNull()
   fireEvent.click(screen.getByRole('switch', { name: /Neste aparelho/ }))
   expect(await screen.findByText('Não conseguimos mudar agora. Tente de novo.')).toBeTruthy()
   disable.mockResolvedValue('off')
@@ -77,7 +79,7 @@ test('a test request failure is not reported as delivery or a settings change', 
   show()
   fireEvent.click(await screen.findByRole('button', { name: 'Enviar um teste' }))
   expect(await screen.findByText('Não foi possível enviar o teste. Tente novamente.')).toBeTruthy()
-  expect(screen.queryByText(/Envio aceito/)).toBeNull()
+  expect(screen.queryByText('Notificação de teste enviada')).toBeNull()
   expect(screen.queryByText('Não conseguimos mudar agora. Tente de novo.')).toBeNull()
   expect(
     (screen.getByRole('button', { name: 'Enviar um teste' }) as HTMLButtonElement).disabled,
