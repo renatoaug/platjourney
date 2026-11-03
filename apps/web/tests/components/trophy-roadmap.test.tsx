@@ -47,11 +47,12 @@ const game: CurrentGame = {
   },
 }
 
-test('mounted journey renders every trophy once in its roadmap and keeps full trophy tools', async () => {
+test('mounted journey starts at a pending challenge and keeps completed trophies out of the foreground', async () => {
   const { container } = renderApp(<Journey game={game} plan={null} />, { path: '/game' })
   await screen.findByRole('link', { name: 'Roteiro' })
-  expect(container.querySelectorAll('.roadmap-step').length).toBe(3)
-  expect(container.querySelectorAll('.roadmap-step.is-earned').length).toBe(1)
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
+  expect(container.querySelector('.roadmap-past')?.hasAttribute('open')).toBe(false)
+  expect(container.querySelectorAll('.roadmap-route li').length).toBe(2)
   expect(container.querySelector('.journey-trophies')).toBeTruthy()
   expect(container.querySelector('.journey-guide')).toBeTruthy()
   expect(screen.getByText('1 de 3 conquistados no jogo base')).toBeTruthy()
@@ -61,16 +62,23 @@ test('hidden advice is opt in, guide markup is sanitized and links retain exact 
   const { container } = renderApp(<TrophyRoadmap game={game} />, { path: '/game' })
   expect(screen.queryByText('Secret plot')).toBeNull()
   expect(screen.queryByText('Secret advice')).toBeNull()
-  expect(container.querySelector('.roadmap-advice strong')?.textContent).toBe('the path')
-  expect(container.querySelector('script')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Revelar este troféu' }))
   expect(screen.getByText('Secret advice')).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Secret scene' })).toBeTruthy()
   const link = [...container.querySelectorAll<HTMLAnchorElement>('.roadmap-ask')].find((a) =>
     a.href.includes('Secret'),
   )
-  expect(link).toBeTruthy()
   expect(new URL(link?.href ?? 'http://localhost/').searchParams.get('trophy')).toBe('Secret scene')
   fireEvent.click(screen.getByRole('button', { name: 'Ocultar detalhes' }))
+  expect(screen.queryByText('Secret advice')).toBeNull()
+  const past = container.querySelector<HTMLDetailsElement>('.roadmap-past')
+  if (!past) throw new Error('earned history missing')
+  past.open = true
+  fireEvent.click(screen.getByRole('button', { name: 'First step' }))
+  expect(container.querySelector('.roadmap-advice strong')?.textContent).toBe('the path')
+  expect(container.querySelector('script')).toBeNull()
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('First step')
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
   expect(screen.queryByText('Secret advice')).toBeNull()
 })
 
@@ -91,13 +99,58 @@ test('zero counter remains visible, unavailable counters are not invented and em
   expect(screen.getByText(/Os troféus ainda não estão disponíveis/)).toBeTruthy()
 })
 
-test('the map keeps advice collapsed until explored and jumping opens the pending milestone', () => {
+test('all guide stages remain reachable without changing earned state', () => {
   const { container } = renderApp(<TrophyRoadmap game={game} />)
-  const milestones = [...container.querySelectorAll<HTMLDetailsElement>('.roadmap-milestone')]
-  expect(milestones.every((x) => !x.open)).toBe(true)
-  expect(container.querySelectorAll('svg.roadmap-path').length).toBe(3)
-  fireEvent.click(screen.getByRole('button', { name: 'Ir ao primeiro pendente' }))
-  expect(milestones[1].open).toBe(true)
-  expect(milestones[0].open).toBe(false)
-  expect(game.trophies[2].earned).toBe(false)
+  const chapters = container.querySelector<HTMLDetailsElement>('.roadmap-chapters')
+  if (!chapters) throw new Error('chapter selector missing')
+  chapters.open = true
+  fireEvent.click(screen.getByRole('button', { name: /A conquista final/ }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Complete')
+  expect(screen.getByText(/A platina só aparece concluída/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
+  expect(game.trophies[0].earned).toBe(false)
+})
+
+test('next and previous select pending milestones while completion opens the earned final milestone', () => {
+  const items = game.trophies.map((x) => ({ ...x, earned: false, hidden: false }))
+  const { container, unmount } = renderApp(<TrophyRoadmap game={{ ...game, trophies: items }} />)
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('First step')
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Secret scene')
+  fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('First step')
+  expect(items.every((x) => !x.earned)).toBe(true)
+  unmount()
+  renderApp(
+    <TrophyRoadmap game={{ ...game, trophies: items.map((x) => ({ ...x, earned: true })) }} />,
+  )
+  expect(screen.getByRole('heading', { name: 'Complete' })).toBeTruthy()
+  expect(screen.getByText('Etapa concluída')).toBeTruthy()
+  expect(document.querySelectorAll('.roadmap-route li')).toHaveLength(0)
+})
+
+test('an unavailable landscape falls back without broken artwork or losing the objective', () => {
+  const { container } = renderApp(
+    <TrophyRoadmap
+      game={{ ...game, game: { ...game.game, art_url: '/synthetic-landscape.jpg' } }}
+    />,
+  )
+  const art = container.querySelector('.roadmap-scene')
+  if (!art) throw new Error('landscape missing')
+  fireEvent.error(art)
+  expect(container.querySelector('.roadmap-scene')).toBeNull()
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
+})
+
+test('the pending path crosses stages without traversing earned history', () => {
+  const { container } = renderApp(<TrophyRoadmap game={game} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Complete')
+  expect(container.querySelector('.roadmap-chapter-caption')?.textContent).toContain(
+    'A conquista final',
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
+  expect(container.querySelector('.roadmap-past')?.hasAttribute('open')).toBe(false)
 })
