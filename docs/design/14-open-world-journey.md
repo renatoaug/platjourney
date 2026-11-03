@@ -22,9 +22,15 @@ Eleven pending base objectives are explicitly continuous: romance opportunities,
 
 Only the reviewed romance objective carries the opportunity-loss warning. An absent trophy does not establish that all opportunities were lost, including after story completion. The app asks the player to consult available in-game opportunities rather than prescribing a new save.
 
-## Future session-plan integration
+## Session selection
 
-The evaluator exposes ordered `candidates` with stable objective keys, states, prerequisites, availability checks, risks, actions and sources. UI focus and server focus already use this same evaluation. The existing session generator is not changed and does not yet consume these candidates. A future integration should select a small subset for a user-supplied time budget, retain objective IDs and model version in the generated plan, and re-evaluate after confirmed unlocks. It must not convert a candidate into a time estimate or available quest without supporting evidence. Region/quest selection can be an optional high-value clarification rather than a mandatory collectible checklist.
+`shared/journey/session.ts` selects from the same evaluated candidates for reviewed editions. It excludes earned, hidden-without-consent, verification-only and later objectives, platinum and DLC. Missing or ambiguous base lists fail closed with an actionable conflict instead of replacing an existing plan. Other editions retain the existing model-generated session flow.
+
+Requested minutes are **reserved time blocks**, not estimates of objective duration. At most one focus per reserved hour (rounded up, capped at three) limits context switching; it does not promise completion. Each step retains the PSN edition, reviewed model version and objective key within the existing flexible `session_plan.steps` object. The web and MCP views identify this timing as `budget`. Guidance comes from reviewed actions, availability checks, preparation/recovery and sources; this path makes no model call. The account's ownership, one-active-plan, replacement, expiry, dismissal and feedback rules remain unchanged.
+
+On a subsequent read, confirmed unlocks re-evaluate the saved selection. Completed steps require their own earned flag. Missing earlier story records do not become completed, blocked steps are not presented as the next action, and newly eligible tasks are not silently inserted into the stored plan. A changed model, incomplete context or revoked spoiler preference safely withholds affected guidance. The original identities remain stored for correct completion/history tracking. Old plans without reviewed metadata retain their old behavior until the player explicitly requests a new plan. Catalog previews do not create personal sessions.
+
+This is a bounded slice of eligible objectives, not a duration optimizer: the save's location, quest availability, remaining counters and task duration are still unknown. Every session asks the player to verify availability before committing the reserved block. Region/quest clarification and measured task durations remain future work.
 
 ## Validation and limits
 

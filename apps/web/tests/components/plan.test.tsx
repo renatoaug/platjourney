@@ -2,7 +2,7 @@ import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MockAppState } from '../../src/app/app-state'
 import { Plan, PlanCard, type PlanProps, type SessionPlan } from '../../src/components/plan'
-import { samplePlan } from '../../src/components/plan.stories'
+import { reviewedPlan, samplePlan } from '../../src/components/plan.stories'
 import { ToastHost } from '../../src/ui/toast'
 
 const noop = () => {}
@@ -25,6 +25,27 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 afterEach(() => mock.restore())
 
 describe('Plan', () => {
+  test('reviewed sessions show allocated time instead of estimated unlock durations or hard ordering', () => {
+    show({ plan: reviewedPlan })
+    expect(screen.getByText('Objetivos da sessão · 0 de 2 conquistados')).toBeTruthy()
+    expect(screen.getByText(/Tempo reservado para trabalhar/)).toBeTruthy()
+    expect(screen.getByText('1h reservados')).toBeTruthy()
+    expect(screen.queryByText(/Depois do passo/)).toBeNull()
+    fireEvent.click(document.querySelectorAll('.route-stop button')[1])
+    expect(screen.getByText('Bloco 2')).toBeTruthy()
+  })
+
+  test('a reviewed selection that needs rechecking does not silently choose a blocked step', () => {
+    show({
+      plan: {
+        ...reviewedPlan,
+        nextIndex: -1,
+        steps: reviewedPlan.steps.map((s) => ({ ...s, blocked: true })),
+      },
+    })
+    expect(screen.getByRole('heading', { name: 'Confira o roteiro atualizado' })).toBeTruthy()
+    expect(screen.queryByText('Agora')).toBeNull()
+  })
   test('an active plan shows the route, the step to play now and the warnings', () => {
     show({})
     expect(screen.getByText('Siga na ordem · 1 de 4')).toBeTruthy()
@@ -194,6 +215,24 @@ describe('PlanCard', () => {
     await screen.findByText('Vai jogar agora? Eu monto o caminho.')
     fireEvent.click(screen.getByRole('button', { name: /Montar roteiro/ }))
     expect(await screen.findByText('Não conseguimos montar o roteiro. Tenta de novo.')).toBeTruthy()
+  })
+
+  test('an unavailable reviewed route explains the limitation and preserves the existing plan', async () => {
+    spyOn(globalThis, 'fetch').mockImplementation(((_url: string, init?: RequestInit) =>
+      Promise.resolve(
+        init?.method === 'POST'
+          ? json(
+              { error: 'journey_session_unavailable', message: 'Confira a lista de troféus.' },
+              409,
+            )
+          : json({ plan: samplePlan }),
+      )) as typeof fetch)
+    card()
+    await screen.findByText('Siga na ordem · 1 de 4')
+    fireEvent.click(screen.getByRole('button', { name: /Refazer roteiro/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Montar roteiro/ }))
+    expect(await screen.findByText('Confira a lista de troféus.')).toBeTruthy()
+    expect(screen.getByText('Siga na ordem · 1 de 4')).toBeTruthy()
   })
 
   test('redo opens the picker, cancel goes back, end discards the plan', async () => {

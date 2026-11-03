@@ -16,6 +16,7 @@ import * as guide from '../src/guide.ts'
 import { GUIDE_VERSION, type Guide } from '../src/guide.ts'
 import { pagePolicy, SECURITY_HEADERS } from '../src/http.ts'
 import * as interests from '../src/interests.ts'
+import { JourneySessionUnavailable } from '../src/journey-session.ts'
 import * as lib from '../src/library.ts'
 import * as nexo from '../src/nexo.ts'
 import * as nextPickModule from '../src/next-pick.ts'
@@ -783,6 +784,19 @@ test('plans are read, discarded and made for 15 to 600 minutes', async () => {
   expect((await send('POST', '/api/plan', { minutes: '60' })).status).toBe(400)
   expect((await send('POST', '/api/plan', { minutes: 60 })).body).toEqual({ plan: { minutes: 60 } })
   expect(make).toHaveBeenCalledWith(me, ctx, 60)
+})
+
+test('reviewed session limitations return a specific actionable conflict', async () => {
+  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext())
+  spyOn(planner, 'planSession').mockRejectedValue(
+    new JourneySessionUnavailable('Confira a lista de troféus.'),
+  )
+  const result = await send('POST', '/api/plan', { minutes: 60 })
+  expect(result.status).toBe(409)
+  expect(result.body).toEqual({
+    error: 'journey_session_unavailable',
+    message: 'Confira a lista de troféus.',
+  })
 })
 
 test('a closed plan takes a known reason, only from its owner', async () => {

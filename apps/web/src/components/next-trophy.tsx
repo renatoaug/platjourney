@@ -87,6 +87,21 @@ const messages = defineMessages({
 
 type Pick = { trophy: Trophy; from: 'plan' | 'phase' | 'rate'; minutes?: number }
 
+function pickPlanStep(
+  plan: SessionPlan | null,
+  find: (name: string) => Trophy | undefined,
+): Pick | null {
+  if (!plan) return null
+  const steps = plan.timing === 'budget' ? [plan.steps[plan.nextIndex]] : plan.steps
+  for (const step of steps) {
+    if (!step || step.done || step.blocked) continue
+    const trophy = find(step.trophy)
+    if (trophy)
+      return { trophy, from: 'plan', minutes: plan.timing === 'budget' ? undefined : step.minutes }
+  }
+  return null
+}
+
 function pickNext(
   trophies: Trophy[],
   guide: GuideDetail | null | undefined,
@@ -102,10 +117,8 @@ function pickNext(
     missing.find(
       (t) => normalize(t.name) === normalize(name) || normalize(t.nameEn) === normalize(name),
     )
-  for (const step of plan?.steps ?? []) {
-    const found = !step.done && byName(step.trophy)
-    if (found) return { trophy: found, from: 'plan', minutes: step.minutes }
-  }
+  const planned = pickPlanStep(plan, byName)
+  if (planned || plan?.timing === 'budget') return planned
   const inPhase = phaseTrophies(guide?.roadmap ?? [], missing)[0]
   if (inPhase) return { trophy: inPhase, from: 'phase' }
   const easiest = [...missing].sort((a, b) => (b.earnedRate ?? 0) - (a.earnedRate ?? 0))[0]

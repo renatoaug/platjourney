@@ -49,10 +49,10 @@ const messages = defineMessages({
     by: 'feito no {name}',
     byOther: 'feito num assistente',
     building: 'Montando o roteiro de {time}…',
-    buildingLead: 'Escolhendo os troféus que cabem no seu tempo e a melhor ordem.',
+    buildingLead: 'Organizando objetivos com seu tempo e o progresso conhecido.',
     inviteTitle: 'Vai jogar agora? Eu monto o caminho.',
     inviteLead:
-      'Você diz quanto tempo tem; o Nexo escolhe os troféus que cabem e a ordem para pegá-los. Vale só para esta sessão.',
+      'Você diz quanto tempo tem; o Nexo organiza os objetivos para esta sessão e o que conferir antes de começar.',
     headingDone: 'Roteiro cumprido.',
     headingExpired: 'Sessão encerrada: {done} de {total} troféus.',
     headingActive: 'Siga na ordem · {done} de {total}',
@@ -61,6 +61,15 @@ const messages = defineMessages({
     tomorrowAt: 'amanhã, {clock}',
     progressLabel: 'Progresso do roteiro',
     timeOf: '~{used} de {time}',
+    reserved: '{time} reservados',
+    budgetHeading: 'Objetivos da sessão · {done} de {total} conquistados',
+    budgetNote:
+      'Tempo reservado para trabalhar nos objetivos, não uma previsão de duração. Confira os requisitos no jogo; não há garantia de desbloqueio nesta sessão.',
+    checkStep: 'Conferir na jornada',
+    recheckTitle: 'Confira o roteiro atualizado',
+    recheckNote:
+      'As ações restantes precisam ser revistas. Consulte a jornada ou monte outro roteiro; nenhuma conquista foi presumida.',
+    plannedStep: 'Bloco {step}',
     warnings: {
       one: '{count} aviso para esta sessão',
       other: '{count} avisos para esta sessão',
@@ -110,10 +119,10 @@ const messages = defineMessages({
     by: 'made in {name}',
     byOther: 'made in an assistant',
     building: 'Building your {time} route…',
-    buildingLead: 'Picking the trophies that fit your time and the best order.',
+    buildingLead: 'Organizing objectives with your time and known progress.',
     inviteTitle: 'Playing now? I’ll map the way.',
     inviteLead:
-      'Tell me how much time you have; Nexo picks the trophies that fit and the order to get them. Good for this session only.',
+      'Tell me how much time you have; Nexo organizes objectives for this session and what to check before starting.',
     headingDone: 'Route complete.',
     headingExpired: 'Session over: {done} of {total} trophies.',
     headingActive: 'Follow the order · {done} of {total}',
@@ -122,6 +131,15 @@ const messages = defineMessages({
     tomorrowAt: 'tomorrow, {clock}',
     progressLabel: 'Route progress',
     timeOf: '~{used} of {time}',
+    reserved: '{time} reserved',
+    budgetHeading: 'Session objectives · {done} of {total} earned',
+    budgetNote:
+      'Time reserved to work on objectives, not a duration forecast. Check requirements in your game; an unlock in this session is not guaranteed.',
+    checkStep: 'Check in the journey',
+    recheckTitle: 'Check the updated route',
+    recheckNote:
+      'The remaining actions need reviewing. Consult the journey or build another route; no unlock was assumed.',
+    plannedStep: 'Block {step}',
     warnings: {
       one: '{count} warning for this session',
       other: '{count} warnings for this session',
@@ -169,6 +187,7 @@ interface PlanStep {
   type: string | null
   // The trophy's own description ("Open every secret chest"); absent on old plans.
   detail?: string | null
+  blocked?: boolean
 }
 
 export interface SessionPlan {
@@ -190,6 +209,7 @@ export interface SessionPlan {
   expiresAt: string
   // false while the player has not played since the plan was made: it waits for the sitting.
   started?: boolean
+  timing?: 'budget'
 }
 
 const PLAN_OPTIONS = [30, 60, 120, 180, 300]
@@ -250,23 +270,42 @@ function PlanPicker({
 }
 
 /** The tag over a step: done, the one to play now, any time, or after the step before it. */
-function stepLabel(t: Translator<typeof messages>, s: PlanStep, i: number, state: string) {
+function stepLabel(
+  t: Translator<typeof messages>,
+  s: PlanStep,
+  i: number,
+  state: string,
+  budget: boolean,
+) {
   if (s.done) return t('step.done')
+  if (s.blocked) return t('checkStep')
   if (state === 'next') return t('step.now')
+  if (budget) return t('plannedStep', { step: i + 1 })
   if (s.flexible) return t('step.anytime')
   return t('step.after', { step: i })
 }
 
 /** The route as a track of its trophies (lit up to the step to play now) and, under it, the picked
  * step open: what to do, the trick and the time. The session's end waits at the end of the track. */
+function nextStep(plan: SessionPlan) {
+  return plan.nextIndex >= 0 &&
+    plan.nextIndex < plan.steps.length &&
+    !plan.steps[plan.nextIndex].done
+    ? plan.nextIndex
+    : plan.timing === 'budget'
+      ? -1
+      : plan.steps.findIndex((s) => !s.done)
+}
+
+function needsReview(plan: SessionPlan, next: number) {
+  return plan.timing === 'budget' && plan.status === 'active' && next < 0
+}
+
 function Route({ plan }: { plan: SessionPlan }) {
   const t = useMessages(messages)
   const steps = plan.steps
   const [picked, setPicked] = useState<number | null>(null)
-  const next =
-    plan.nextIndex >= 0 && plan.nextIndex < steps.length && !steps[plan.nextIndex].done
-      ? plan.nextIndex
-      : steps.findIndex((s) => !s.done)
+  const next = nextStep(plan)
   const open = picked ?? (next >= 0 ? next : steps.length)
   const stops = steps.length + 1
   const lit = (next >= 0 ? next : steps.length) / (stops - 1)
@@ -352,9 +391,14 @@ function Route({ plan }: { plan: SessionPlan }) {
           </div>
           <div className="route-focus-body">
             <header>
-              <span className="road-tag">{stepLabel(t, s, open, state(open))}</span>
+              <span className="road-tag">
+                {stepLabel(t, s, open, state(open), plan.timing === 'budget')}
+              </span>
               <span className="road-time">
-                <Icon name="clock" /> ~{fmtMinutes(s.minutes)}
+                <Icon name="clock" />{' '}
+                {plan.timing === 'budget'
+                  ? t('reserved', { time: fmtMinutes(s.minutes) })
+                  : `~${fmtMinutes(s.minutes)}`}
               </span>
             </header>
             <h3>{s.trophy}</h3>
@@ -376,7 +420,8 @@ function Route({ plan }: { plan: SessionPlan }) {
             <Icon name="trophy" />
           </div>
           <div className="route-focus-body">
-            <h3>{t('endTitle')}</h3>
+            <h3>{t(needsReview(plan, next) ? 'recheckTitle' : 'endTitle')}</h3>
+            {needsReview(plan, next) && <p>{t('recheckNote')}</p>}
             {plan.ifTimeLeft && (
               <p>
                 {t('timeLeft')} {plainText(plan.ifTimeLeft)}
@@ -530,6 +575,7 @@ function planHeading(t: Translator<typeof messages>, plan: SessionPlan) {
   const total = plan.steps.length
   if (plan.status === 'done') return t('headingDone')
   if (plan.status === 'expired') return t('headingExpired', { done: plan.doneCount, total })
+  if (plan.timing === 'budget') return t('budgetHeading', { done: plan.doneCount, total })
   return t('headingActive', { done: plan.doneCount, total })
 }
 
@@ -669,14 +715,17 @@ export function Plan({
             <b>{progress}%</b>
             <span>
               <Icon name="clock" />{' '}
-              {t('timeOf', {
-                used: fmtMinutes(plan.totalMinutes),
-                time: fmtMinutes(plan.minutes),
-              })}
+              {plan.timing === 'budget'
+                ? t('reserved', { time: fmtMinutes(plan.totalMinutes) })
+                : t('timeOf', {
+                    used: fmtMinutes(plan.totalMinutes),
+                    time: fmtMinutes(plan.minutes),
+                  })}
             </span>
           </span>
         </div>
       </div>
+      {plan.timing === 'budget' && <p className="plan-budget-note">{t('budgetNote')}</p>}
       {plan.warnings.length > 0 && (
         <details className="plan-warnings">
           <summary>
@@ -695,6 +744,15 @@ export function Plan({
         <PlanActions closed={closed} discarding={discarding} onNew={onNew} onDiscard={onDiscard} />
       )}
     </>,
+  )
+}
+
+function reportPlanFailure(e: unknown) {
+  if (e instanceof ApiError && e.handled) return
+  toast(
+    e instanceof ApiError && e.code === 'journey_session_unavailable'
+      ? (e.friendly ?? tr('failed'))
+      : tr('failed'),
   )
 }
 
@@ -746,10 +804,10 @@ export function PlanCard({ np }: { np?: string } = {}) {
         sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
       )
       toast(tr('ready', { time: fmtMinutes(asked) }), 'success')
-      modelWorkDone()
+      if (r.plan.timing !== 'budget') modelWorkDone()
     } catch (e) {
       setBusy(false)
-      if (!(e instanceof ApiError && e.handled)) toast(tr('failed'))
+      reportPlanFailure(e)
     }
   }
 

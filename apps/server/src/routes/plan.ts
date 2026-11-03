@@ -1,6 +1,7 @@
 import { getCurrent } from '../game-context.ts'
 import type { Guide } from '../guide.ts'
 import { json, readBody } from '../http.ts'
+import { JourneySessionUnavailable } from '../journey-session.ts'
 import { trophyHelp } from '../nexo.ts'
 import { currentPlan, discardPlan, PLAN_REASONS, type PlanReason, planSession } from '../planner.ts'
 import { hours, playtimes } from '../playtime.ts'
@@ -34,7 +35,13 @@ async function newPlan(a: Api) {
     return json(a.res, 400, { error: 'minutes must be between 15 and 600' })
   const ctx = await planContext(a, np)
   if (!ctx) return json(a.res, np == null ? 409 : 404, { error: 'game not available' })
-  return json(a.res, 200, { plan: await planSession(a.me, ctx, minutes) })
+  try {
+    return json(a.res, 200, { plan: await planSession(a.me, ctx, minutes) })
+  } catch (e) {
+    if (e instanceof JourneySessionUnavailable)
+      return json(a.res, 409, { error: 'journey_session_unavailable', message: e.message })
+    throw e
+  }
 }
 
 async function trophyTip({ req, res, me, titles }: Api) {

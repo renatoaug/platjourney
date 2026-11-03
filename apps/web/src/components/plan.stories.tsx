@@ -1,9 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { odyssey } from '../../../../shared/journey/odyssey'
+import { selectJourneySession } from '../../../../shared/journey/session'
+import { odysseyGame } from '../fixtures/odyssey'
 import { Plan, type PlanProps, type SessionPlan } from './plan'
 
 // samplePlan is shared with the game screen's stories, not a story itself.
-const meta: Meta = { title: 'Game/Plan', excludeStories: ['samplePlan'] }
+const meta: Meta = { title: 'Game/Plan', excludeStories: ['samplePlan', 'reviewedPlan'] }
 export default meta
 type Story = StoryObj
 
@@ -129,3 +132,44 @@ export const Picking: Story = { render: () => <Demo picking /> }
 export const Building: Story = { render: () => <Demo plan={null} busy /> }
 
 export const Loading: Story = { render: () => <Demo plan={undefined} /> }
+
+/** Synthetic progress with the same selector as the real session flow. */
+export const reviewedPlan: SessionPlan = {
+  ...samplePlan,
+  game: 'game:103054',
+  gameName: "Assassin's Creed Odyssey",
+  summary: 'Tempo reservado para avançar nos objetivos, sem promessa de desbloqueio.',
+  timing: 'budget',
+  totalMinutes: 120,
+  doneCount: 0,
+  nextIndex: 0,
+  warnings: [],
+  ifTimeLeft: null,
+  steps: selectJourneySession(odyssey, odysseyGame(['episode-2']).trophies, 120, true).steps.map(
+    (item, i) => ({
+      trophy: item.trophy.name,
+      minutes: item.minutes,
+      startsAt: i * item.minutes,
+      how: `Confira a disponibilidade e o nível recomendado no seu jogo.\n\n${item.objective.action.pt}`,
+      why: 'Objetivo da jornada',
+      trick: null,
+      flexible: false,
+      done: false,
+      iconUrl: null,
+      type: item.trophy.type,
+    }),
+  ),
+}
+
+export const ReviewedBudget: Story = { render: () => <Demo plan={reviewedPlan} /> }
+export const ReviewedRecheck: Story = {
+  render: () => (
+    <Demo
+      plan={{
+        ...reviewedPlan,
+        nextIndex: -1,
+        steps: reviewedPlan.steps.map((s) => ({ ...s, blocked: true })),
+      }}
+    />
+  ),
+}

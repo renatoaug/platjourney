@@ -85,3 +85,48 @@ test('with nothing left to push, what the page gives stands in its place', () =>
   renderApp(<NextTrophy trophies={platinum} game="game:1" fallback={<p>ficha do jogo</p>} />)
   expect(screen.getByText('ficha do jogo')).toBeTruthy()
 })
+
+test('reviewed sessions use the reevaluated selection without presenting reserved time as an estimate', async () => {
+  mockApi({
+    '/api/plan': {
+      plan: {
+        game: 'game:1',
+        status: 'active',
+        timing: 'budget',
+        nextIndex: 1,
+        steps: [
+          { trophy: 'Segundo', minutes: 60, done: false },
+          { trophy: 'Terceiro', minutes: 60, done: false },
+        ],
+      },
+    },
+  })
+  renderApp(<NextTrophy trophies={trophies} guide={guide} game="game:1" />)
+  expect(await screen.findByText('Terceiro')).toBeTruthy()
+  expect(card().textContent).not.toContain('~')
+  expect(card().textContent).not.toContain('1h')
+})
+
+test('reviewed sessions with no eligible next step do not fall back to the legacy phase', async () => {
+  mockApi({
+    '/api/plan': {
+      plan: {
+        game: 'game:1',
+        status: 'active',
+        timing: 'budget',
+        nextIndex: -1,
+        steps: [{ trophy: 'Segundo', minutes: 60, done: false, blocked: true }],
+      },
+    },
+  })
+  renderApp(
+    <NextTrophy
+      trophies={trophies}
+      guide={guide}
+      game="game:1"
+      fallback={<p>Confira o roteiro</p>}
+    />,
+  )
+  expect(await screen.findByText('Confira o roteiro')).toBeTruthy()
+  expect(screen.queryByRole('complementary', { name: 'Próximo troféu' })).toBeNull()
+})

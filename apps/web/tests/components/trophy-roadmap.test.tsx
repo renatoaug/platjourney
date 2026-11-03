@@ -12,6 +12,44 @@ import { mockApi, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
 
+test('full route exposes confirmed past without resetting progress; pending view returns to future focus', () => {
+  const data = requiemGame(['chapter-1', 'perfect-shot'])
+  const before = structuredClone(data.trophies)
+  renderApp(<TrophyRoadmap game={data} />)
+  expect(screen.getByRole('region', { name: 'Seu próximo movimento' })).toBeTruthy()
+  const pendingRoute = screen.getByRole('list', { name: 'Caminho à frente' })
+  expect(within(pendingRoute).queryByRole('button', { name: /Sob um Novo Sol/ })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Rota completa · 36' }))
+  const full = screen.getByRole('list', { name: 'Rota completa' })
+  expect(within(full).getByRole('button', { name: /Sob um Novo Sol Conquistado/ })).toBeTruthy()
+  expect(within(full).getAllByText('Conquistado')).toHaveLength(2)
+  expect(screen.getByText(/não a sequência em que você conquistou/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Pendentes · 34' }))
+  expect(screen.getByRole('list', { name: 'Caminho à frente' })).toBeTruthy()
+  expect(data.trophies).toEqual(before)
+})
+
+test('full route keeps current focus, supports direct jumps to past and returns to the next objective', () => {
+  const data = requiemGame(['chapter-1', 'perfect-shot'])
+  const before = structuredClone(data.trophies)
+  const { container } = renderApp(<TrophyRoadmap game={data} />)
+  const current = container.querySelector('.roadmap-destination h3')?.textContent
+  fireEvent.click(screen.getByRole('button', { name: 'Rota completa · 36' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(current)
+  const select = screen.getByRole('combobox', { name: 'Explorar objetivo' }) as HTMLSelectElement
+  const past = [...select.options].find((o) => o.textContent?.includes('Mira perfeita'))
+  if (!past) throw new Error('missing past objective')
+  fireEvent.change(select, { target: { value: past.value } })
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Mira perfeita')
+  expect(screen.getByText('Marco 1 de 36')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar ao próximo objetivo' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(current)
+  expect(screen.getByRole('button', { name: 'Pendentes · 34' }).getAttribute('aria-pressed')).toBe(
+    'true',
+  )
+  expect(data.trophies).toEqual(before)
+})
+
 test('selection reuses guide analysis while changed progress invalidates it', () => {
   const ongoing = spyOn(roadmapData, 'ongoingObjectives')
   const stages = spyOn(roadmapData, 'trophyRoadmap')
