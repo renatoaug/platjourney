@@ -1,6 +1,6 @@
 import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { evaluateJourney } from '../../../../shared/journey/model'
-import { reviewedJourney } from '../../../../shared/journey/requiem'
+import { reviewedJourney } from '../../../../shared/journey/registry'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { roadPoint, roadSegment } from '../lib/roadmap-motion'
 import { ongoingObjectives, trophyAdvice, trophyRoadmap } from '../lib/trophy-roadmap'
@@ -17,20 +17,31 @@ import { nexoHref } from './tip'
 import './trophy-roadmap.css'
 
 type RoadmapGame = Pick<CurrentGame, 'game' | 'name' | 'np' | 'trophies' | 'guide' | 'focus'> & {
+  /** Catalog chat keeps game:id; the PSN edition is a separate identity. */
+  edition?: string
   journey?: ReturnType<typeof evaluateJourney<Trophy>>
 }
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    reviewed: 'Roteiro revisado · Requiem',
+    reviewed: 'Roteiro revisado · {name}',
     reviewedBasis:
-      'Base revisada para esta edição: oportunidades por capítulo, preparação e recuperação. Novas conquistas reavaliam a sugestão, sem mudar a ordem de referência nem inferir sua posição. A integração completa com o plano de sessão ainda está pendente.',
+      'Base revisada para esta edição: oportunidades por capítulo, preparação e recuperação. Novas conquistas reavaliam a sugestão, sem mudar a ordem de referência nem inferir sua posição. ',
     known:
       'Capítulo {chapter} concluído na PSN. Sua posição atual e o estado do save não são informados.',
     unknown:
       'Sem marco de capítulo confirmado. A rota inicial é uma referência; não pressupõe que você nunca jogou.',
     incomplete:
       'A lista recebida não corresponde a todos os objetivos revisados. A sugestão personalizada ficará disponível quando estiver completa.',
+    openWorldBasis:
+      'Objetivos paralelos do jogo base. Novas conquistas atualizam a sugestão; a ordem é uma referência, não um trajeto obrigatório. DLC fica separado.',
+    openWorldKnown:
+      'Conquistas confirmadas orientam a sugestão. Sua região, nível, inventário e missões abertas continuam desconhecidos.',
+    checkState:
+      'Confira a disponibilidade no seu diário ou menu do jogo antes de planejar esta ação.',
+    quest: 'Oportunidades durante missões',
+    preparationNote:
+      'Escolha um objetivo para ver a ação e os requisitos a conferir. Não há contador presumido nem checklist obrigatório.',
     preparation: 'Prepare enquanto avança',
     collectible: 'Exploração e colecionáveis',
     upgrade: 'Ferramentas e melhorias',
@@ -115,15 +126,23 @@ const messages = defineMessages({
     platinumType: 'Platina',
   },
   [Language.En]: {
-    reviewed: 'Reviewed roadmap · Requiem',
+    reviewed: 'Reviewed roadmap · {name}',
     reviewedBasis:
-      'Reviewed knowledge for this edition: chapter opportunities, preparation and recovery. New unlocks re-evaluate the suggestion without changing the reference order or inferring your location. Full session-plan integration is still pending.',
+      'Reviewed knowledge for this edition: chapter opportunities, preparation and recovery. New unlocks re-evaluate the suggestion without changing the reference order or inferring your location. ',
     known:
       'Chapter {chapter} completed on PSN. Your current location and save state are not reported.',
     unknown:
       'No confirmed chapter milestone. The opening route is a reference, not an assumption that you have never played.',
     incomplete:
       'The received list does not match all reviewed objectives. Personalized guidance will be available once it is complete.',
+    openWorldBasis:
+      'Parallel base-game objectives. New unlocks update the suggestion; the order is a reference, not a mandatory route. DLC stays separate.',
+    openWorldKnown:
+      'Confirmed unlocks inform the suggestion. Your region, level, inventory and open quests remain unknown.',
+    checkState: 'Check availability in your journal or game menu before planning this action.',
+    quest: 'Opportunities during quests',
+    preparationNote:
+      'Choose an objective to see its action and requirements to check. No presumed counter or mandatory checklist.',
     preparation: 'Prepare as you go',
     collectible: 'Exploration and collectibles',
     upgrade: 'Tools and upgrades',
@@ -224,6 +243,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
         <p className="roadmap-context-note">{t(`${reviewed.state}State`)}</p>
         <p>{reviewed.objective.action[language]}</p>
         {reviewed.objective.approach && <p>{reviewed.objective.approach[language]}</p>}
+        {reviewed.objective.availability && <p>{reviewed.objective.availability[language]}</p>}
         {reviewed.objective.recovery && reviewed.state !== 'complete' && (
           <p>{reviewed.objective.recovery[language]}</p>
         )}
@@ -566,27 +586,34 @@ function ReviewedPreparation({
   const t = useMessages(messages)
   const plan = game.journey
   if (!plan) return null
-  const groups = ['collectible', 'upgrade', 'skill', 'counter'] as const
+  const groups = ['quest', 'collectible', 'upgrade', 'skill', 'counter'] as const
   const language = getLocale() === Language.En ? 'en' : 'pt'
   const preparation =
     !plan.storyComplete &&
     plan.ongoing.find((x) => x.objective.key === 'explorer' && !x.trophy.hidden)
   return (
-    <aside className="roadmap-reviewed" aria-label={t('reviewed')}>
-      <strong>{t('reviewed')}</strong>
-      <p>{plan.confirmedChapter ? t('known', { chapter: plan.confirmedChapter }) : t('unknown')}</p>
+    <aside className="roadmap-reviewed" aria-label={t('reviewed', { name: plan.name })}>
+      <strong>{t('reviewed', { name: plan.name })}</strong>
+      <p>
+        {plan.mode === 'open-world'
+          ? t('openWorldKnown')
+          : plan.confirmedChapter
+            ? t('known', { chapter: plan.confirmedChapter })
+            : t('unknown')}
+      </p>
       {(plan.covered !== plan.expected || !!plan.unmatched.length) && <p>{t('incomplete')}</p>}
       {preparation && <p>{preparation.objective.action[language]}</p>}
       {plan.ongoing.some((x) => !x.trophy.hidden) && (
         <details>
           <summary>{t('preparation')}</summary>
+          <p>{t('preparationNote')}</p>
           {groups.map((kind) => {
             const items = plan.ongoing.filter((x) => x.objective.kind === kind && !x.trophy.hidden)
             if (!items.length) return null
             return (
               <div className="roadmap-preparation-group" key={kind}>
                 <h4>{t(kind === 'counter' ? 'counterGroup' : kind)}</h4>
-                <p>{items[0].objective.action[language]}</p>
+
                 <div>
                   {items.map(({ trophy }) => (
                     <button
@@ -596,6 +623,13 @@ function ReviewedPreparation({
                       onClick={() => choose(trophy)}
                     >
                       {trophy.name}
+                      {plan.items.find((x) => x.trophy === trophy)?.objective.risk ===
+                        'opportunity' && (
+                        <span className="roadmap-preparation-risk">
+                          <Icon name="warning" />
+                          {t('missable')}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -727,7 +761,11 @@ function roadmapView(source: RoadmapGame, inspecting: boolean, revealed: boolean
 }
 
 function roadmapBasis(game: RoadmapGame) {
-  return game.journey ? 'reviewedBasis' : 'basis'
+  return game.journey?.mode === 'open-world'
+    ? 'openWorldBasis'
+    : game.journey
+      ? 'reviewedBasis'
+      : 'basis'
 }
 
 function roadmapFocus(game: RoadmapGame, done: boolean) {
@@ -753,7 +791,10 @@ export function TrophyRoadmap({
     [source, inspecting, revealed],
   )
   const game = useMemo(() => {
-    const model = reviewedJourney({ ...projected.game, np: projected.np })
+    const model = reviewedJourney({
+      ...projected.game,
+      np: projected.edition ?? (projected.np.startsWith('game:') ? undefined : projected.np),
+    })
     return model ? { ...projected, journey: evaluateJourney(model, projected.trophies) } : projected
   }, [projected])
   const stages = useMemo(() => {

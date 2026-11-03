@@ -1,5 +1,5 @@
 import { evaluateJourney } from '../../../shared/journey/model.ts'
-import { reviewedJourney } from '../../../shared/journey/requiem.ts'
+import { reviewedJourney } from '../../../shared/journey/registry.ts'
 // What the player should go after now, from the guide's roadmap and the PSN list. The session
 // notice and the trophy notice both use it, so the target a notice names does not change unless
 // the player earned it.

@@ -658,11 +658,17 @@ test('a title the player does not own uses the catalog trophy list', async () =>
   spyOn(lib, 'library').mockResolvedValue([])
   spyOn(games, 'catalogGameForName').mockResolvedValue(game)
   spyOn(psn, 'catalogTrophies').mockResolvedValue({
+    np: 'NPWR13822_00',
     platform: 'PS4',
     trophies: [makeTrophy()],
   } as never)
   const res = await send('GET', '/api/title?name=Days')
-  expect(res.body).toMatchObject({ owned: false, platform: 'PS5', guide: { overview: 'ok' } })
+  expect(res.body).toMatchObject({
+    owned: false,
+    np: 'NPWR13822_00',
+    platform: 'PS5',
+    guide: { overview: 'ok' },
+  })
   expect(res.body.trophies).toHaveLength(1)
   expect(deepguide.ensureDeepGuide).toHaveBeenCalledWith(game)
 })

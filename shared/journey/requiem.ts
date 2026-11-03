@@ -199,9 +199,10 @@ const misc: JourneyObjective[] = [
 ]
 const objectives = [...story, ...optional, ...collectibles, ...upgrades, ...skills, ...misc]
 export const requiem: JourneyModel = {
+  name: 'Requiem',
   version: 1,
   reviewedAt: '2026-11-03',
-  finalChapter: 17,
+  planning: { kind: 'chapters', finalChapter: 17 },
   objectives: [
     ...objectives,
     {
@@ -217,15 +218,4 @@ export const requiem: JourneyModel = {
       sources: [primary, secondary],
     },
   ],
-}
-
-/** Edition-scoped pilot; titles alone must never activate a different game's knowledge. */
-export function reviewedJourney(identity: {
-  id?: string
-  np?: string
-  np_communication_ids?: string[]
-}) {
-  return identity.np === 'NPWR22997_00' || identity.np_communication_ids?.includes('NPWR22997_00')
-    ? requiem
-    : undefined
 }

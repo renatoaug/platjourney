@@ -18,3 +18,5 @@ How PlatJourney is built, in reading order. Each note describes the code as it i
 | [12-recommendations.md](12-recommendations.md) | The similar-games graph, taste vectors, Nexo's picks and "What to play now?": which games, from which data, and when a model is involved |
 
 - [Reviewed journey pilot](13-reviewed-journey.md): objective knowledge, evidence, evaluation and boundaries.
+
+- [Open-world journey pilot](14-open-world-journey.md): Odyssey base objectives, parallel preparation, unknown availability and session integration boundary.

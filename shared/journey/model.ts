@@ -17,14 +17,28 @@ export interface JourneyText {
 export interface JourneyObjective {
   key: string
   names: [string, string]
-  kind: 'story' | 'chapter' | 'collectible' | 'upgrade' | 'skill' | 'counter' | 'platinum'
+  kind:
+    | 'story'
+    | 'chapter'
+    | 'collectible'
+    | 'upgrade'
+    | 'skill'
+    | 'counter'
+    | 'quest'
+    | 'task'
+    | 'platinum'
   /** Advisory position; never the player's current location or a required unlock sequence. */
   order: number
   chapter?: number
   /** Hard dependencies only. Preparation and ordering are deliberately not dependencies. */
   requires?: string[]
   prepareFrom?: number
-  risk?: 'replay' | 'skill-carryover'
+  /** Open-world attention is independent of path order and never implies a known counter. */
+  ongoing?: boolean
+  /** Sufficient evidence of a system being unlocked, not mandatory trophy prerequisites. */
+  evidenceAny?: string[]
+  availability?: JourneyText
+  risk?: 'replay' | 'skill-carryover' | 'opportunity'
   action: JourneyText
   approach?: JourneyText
   recovery?: JourneyText
@@ -32,13 +46,21 @@ export interface JourneyObjective {
 }
 
 export interface JourneyModel {
+  name: string
   version: number
   reviewedAt: string
   objectives: JourneyObjective[]
-  finalChapter: number
+  planning: { kind: 'chapters'; finalChapter: number } | { kind: 'open-world'; finale: string }
 }
 
-export type ObjectiveState = 'complete' | 'available' | 'prepare' | 'later' | 'recover' | 'verify'
+export type ObjectiveState =
+  | 'complete'
+  | 'available'
+  | 'prepare'
+  | 'later'
+  | 'recover'
+  | 'verify'
+  | 'check'
 export interface JourneyItem<T extends JourneyTrophy> {
   objective: JourneyObjective
   trophy: T
@@ -70,18 +92,38 @@ export function evaluateJourney<T extends JourneyTrophy>(model: JourneyModel, tr
       .filter((x) => x.trophy.earned && x.objective.kind === 'story')
       .map((x) => x.objective.chapter ?? 0),
   )
-  const storyComplete = confirmedChapter === model.finalChapter
+  const planning = model.planning
+  const storyComplete =
+    planning.kind === 'chapters'
+      ? confirmedChapter === planning.finalChapter
+      : earned.has(planning.finale)
   // This is a planning horizon after a confirmed milestone, not a location inference.
-  const horizon = Math.min(model.finalChapter, confirmedChapter + 1)
+  const horizon =
+    planning.kind === 'chapters' ? Math.min(planning.finalChapter, confirmedChapter + 1) : 0
+  const lastStory = Math.max(
+    -1,
+    ...matches
+      .filter((x) => x.trophy.earned && x.objective.kind === 'story')
+      .map((x) => x.objective.order),
+  )
+  const storyNext = matches
+    .filter(
+      (x) => !x.trophy.earned && x.objective.kind === 'story' && x.objective.order > lastStory,
+    )
+    .sort((a, b) => a.objective.order - b.objective.order)[0]?.objective.key
   const items: JourneyItem<T>[] = matches
     .map(({ objective, trophy }) => ({
       objective,
       trophy,
-      state: objectiveState(objective, trophy, earned, confirmedChapter, horizon, storyComplete),
+      state:
+        planning.kind === 'open-world'
+          ? openWorldState(objective, trophy, earned, lastStory, storyNext)
+          : objectiveState(objective, trophy, earned, confirmedChapter, horizon, storyComplete),
     }))
     .sort((a, b) => a.objective.order - b.objective.order)
   const rank = (x: JourneyItem<T>) => {
     if (x.state === 'complete' || x.state === 'later' || x.state === 'verify') return 100
+    if (planning.kind === 'open-world') return openWorldRank(x)
     if (storyComplete && x.objective.kind === 'skill') return 0
     if (x.state === 'available' && x.objective.kind === 'chapter') return 1
     if (x.state === 'available') return 2
@@ -96,12 +138,18 @@ export function evaluateJourney<T extends JourneyTrophy>(model: JourneyModel, tr
     (x) =>
       x.state !== 'complete' &&
       x.state !== 'later' &&
-      ['collectible', 'upgrade', 'skill', 'counter'].includes(x.objective.kind),
+      (planning.kind === 'open-world'
+        ? !!x.objective.ongoing
+        : ['collectible', 'upgrade', 'skill', 'counter'].includes(x.objective.kind)),
   )
   const unmatched = base.filter((t) => !matches.some((x) => x.trophy === t))
   return {
     items,
+    name: model.name,
+    mode: planning.kind,
     next,
+    // Deterministic candidates for a future time-budget selector; not a session plan.
+    candidates,
     ongoing,
     confirmedChapter,
     storyComplete,
@@ -109,6 +157,31 @@ export function evaluateJourney<T extends JourneyTrophy>(model: JourneyModel, tr
     covered: matches.length,
     expected: model.objectives.length,
   }
+}
+
+function openWorldState(
+  o: JourneyObjective,
+  trophy: JourneyTrophy,
+  earned: Set<string>,
+  lastStory: number,
+  storyNext?: string,
+): ObjectiveState {
+  if (trophy.earned) return 'complete'
+  if (o.requires?.some((key) => !earned.has(key))) return 'later'
+  if (o.kind === 'platinum') return 'verify'
+  if (o.kind === 'story') {
+    if (o.order < lastStory) return 'verify'
+    return o.key === storyNext ? 'available' : 'later'
+  }
+  if (o.ongoing) return 'prepare'
+  return o.evidenceAny?.some((key) => earned.has(key)) ? 'available' : 'check'
+}
+
+function openWorldRank(x: JourneyItem<JourneyTrophy>): number {
+  if (x.state === 'available' && x.objective.kind === 'story') return 0
+  if (x.state === 'available') return 1
+  if (x.state === 'prepare') return 2
+  return 3
 }
 
 function objectiveState(

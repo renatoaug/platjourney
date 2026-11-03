@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test'
 import { evaluateJourney, type JourneyTrophy } from '../../../shared/journey/model.ts'
-import { requiem, reviewedJourney } from '../../../shared/journey/requiem.ts'
+import { reviewedJourney } from '../../../shared/journey/registry.ts'
+import { requiem } from '../../../shared/journey/requiem.ts'
 import { todaysFocus } from '../src/focus.ts'
 import { makeContext, makeTrophy } from './fixtures.ts'
 
@@ -33,7 +34,7 @@ test('reviewed Requiem catalogue covers 36 unique objectives, with sources and v
 
 test('the pilot is scoped to the PSN edition, never just a similar catalog name or id', () => {
   expect(reviewedJourney({ id: 'game:152242' })).toBeUndefined()
-  expect(reviewedJourney({ np: 'NPWR13822_00' })).toBeUndefined()
+  expect(reviewedJourney({ np: 'UNKNOWN' })).toBeUndefined()
   expect(reviewedJourney({ np: 'NPWR22997_00' })).toBe(requiem)
 })
 

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { current } from '../fixtures'
+import { odysseyGame } from '../fixtures/odyssey'
 import { requiemGame } from '../fixtures/requiem'
 import { TrophyRoadmap, TrophyRoadmapSkeleton } from './trophy-roadmap'
 
@@ -142,4 +143,26 @@ export const ReviewedRequiemMiddle: Story = {
 export const ReviewedRequiemOutOfOrder: Story = { args: { game: requiemGame(['chapter-8']) } }
 export const ReviewedRequiemPartialList: Story = {
   args: { game: { ...requiemGame(), trophies: requiemGame().trophies.slice(0, 8) } },
+}
+
+export const ReviewedOdysseyStart: Story = { args: { game: odysseyGame() } }
+export const ReviewedOdysseyMiddle: Story = { args: { game: odysseyGame(['episode-6']) } }
+export const ReviewedOdysseyOutOfOrder: Story = {
+  args: { game: odysseyGame(['episode-9', 'hunt', 'poseidon', 'contracts']) },
+}
+export const ReviewedOdysseyDlc: Story = {
+  args: {
+    game: {
+      ...odysseyGame(),
+      trophies: [
+        ...odysseyGame().trophies,
+        {
+          ...odysseyGame().trophies[0],
+          groupId: '001',
+          name: 'Conteúdo adicional ilustrativo',
+          earned: true,
+        },
+      ],
+    },
+  },
 }

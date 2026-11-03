@@ -627,3 +627,44 @@ test('reviewed hidden trophy advice never bypasses the account reveal preference
   expect(screen.queryByText(/desafio das pinhas/)).toBeNull()
   expect(screen.queryByRole('button', { name: 'Exploradora' })).toBeNull()
 })
+
+test('the mounted Odyssey catalog preview uses reviewed base goals without changing chat identity', async () => {
+  const { odysseyGame } = await import('../../src/fixtures/odyssey')
+  const data = odysseyGame()
+  const { container } = renderApp(
+    <TrophyRoadmap preview game={{ ...data, np: data.game.id, edition: 'NPWR13822_00' }} />,
+  )
+  const panel = screen.getByRole('complementary', { name: 'Roteiro revisado · Odyssey' })
+  expect(within(panel).getByText(/região, nível, inventário/)).toBeTruthy()
+  fireEvent.click(within(panel).getByText('Prepare enquanto avança'))
+  expect(within(panel).getAllByRole('button')).toHaveLength(11)
+  fireEvent.click(within(panel).getByRole('button', { name: 'Cria de Poseidon' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Cria de Poseidon')
+  expect(container.querySelector('.roadmap-advice')?.textContent).toContain(
+    'use Ikaros para localizar',
+  )
+  expect(container.querySelector('.roadmap-ask')?.getAttribute('href')).toContain(
+    'game=game%3A103054',
+  )
+  expect(container.textContent).not.toContain('Capítulo 0')
+})
+
+test('Odyssey preparation removes only earned base objectives, protecting hidden goals and DLC', async () => {
+  const { odysseyGame } = await import('../../src/fixtures/odyssey')
+  const data = odysseyGame(['contracts', 'poseidon', 'episode-9'])
+  data.trophies = data.trophies.map((t) => ({ ...t, hidden: t.name === 'Nos Braços de Afrodite' }))
+  data.trophies.push({
+    ...data.trophies[0],
+    groupId: '001',
+    name: 'DLC illustration',
+    earned: false,
+  })
+  const { container } = renderApp(<TrophyRoadmap game={data} />)
+  const panel = screen.getByRole('complementary', { name: 'Roteiro revisado · Odyssey' })
+  fireEvent.click(within(panel).getByText('Prepare enquanto avança'))
+  expect(within(panel).queryByRole('button', { name: 'Cria de Poseidon' })).toBeNull()
+  expect(within(panel).queryByRole('button', { name: 'Nos Braços de Afrodite' })).toBeNull()
+  expect(within(panel).queryByRole('button', { name: 'DLC illustration' })).toBeNull()
+  expect(within(panel).getByRole('button', { name: 'Senhor dos Mares' })).toBeTruthy()
+  expect(container.textContent).not.toContain('Capítulo 17')
+})

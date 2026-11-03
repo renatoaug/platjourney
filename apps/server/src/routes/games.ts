@@ -156,6 +156,7 @@ async function catalogDetail(user: User, found: Game, platform: string) {
     ensureDeepGuide(found).catch((e) => console.error('deep guide failed:', (e as Error).message))
   return {
     owned: false,
+    np: list?.np,
     trophies: list?.trophies ?? null,
     deepGuide: await deepGuideOf(user, found),
     game: found,

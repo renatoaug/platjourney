@@ -376,7 +376,14 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
         <TrophyRoadmap
           key={d.game.id}
           preview
-          game={{ game: d.game, name: d.name, np: d.game.id, trophies: d.trophies, guide: d.guide }}
+          game={{
+            game: d.game,
+            name: d.name,
+            np: d.game.id,
+            edition: d.np,
+            trophies: d.trophies,
+            guide: d.guide,
+          }}
         />
       )}
       {/* Every game gets the same two columns as the current game: the guide on the left,

@@ -17,3 +17,7 @@ Keep edition-scoped, source-linked objective knowledge and a pure evaluator in `
 
 ## Consequences
 The pilot is deterministic, testable and source-reviewable. Knowledge needs editorial maintenance and coverage checks. Session planning still needs a separate integration before it can be described as a time-bounded slice of this route; sharing the focus alone does not provide that guarantee.
+
+## Open-world validation
+
+Odyssey adds a separate planning policy rather than applying chapter recovery to an open world. Hard completion prerequisites remain distinct from sufficient unlock evidence; absent quest, inventory or level data stays unknown. Both policies return the same objective/candidate shape for future session selection. See [the open-world pilot](../design/14-open-world-journey.md).

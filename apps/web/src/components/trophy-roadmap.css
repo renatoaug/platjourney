@@ -931,4 +931,11 @@
   .roadmap-preparation-group .quiet:hover {
     background: var(--color-surface-raised);
   }
+
+  .roadmap-preparation-risk {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-highlight-warm);
+  }
 }
