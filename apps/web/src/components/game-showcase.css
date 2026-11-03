@@ -339,13 +339,39 @@
     flex: 2;
   }
 
+  .game-modes-window {
+    position: relative;
+    text-align: left;
+  }
+
   .game-modes-scroll {
     overflow-x: auto;
     white-space: nowrap;
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-border-strong) transparent;
+    scrollbar-width: none;
     overscroll-behavior-x: contain;
     text-align: left;
+  }
+
+  .game-modes-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .game-modes-preview {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .game-modes-window[data-preview="true"]:not(:focus-within) .game-modes-preview {
+    visibility: visible;
+  }
+
+  .game-modes-window[data-preview="true"]:not(:focus-within) .game-modes-scroll span {
+    opacity: 0;
   }
 
   .game-modes-scroll span {

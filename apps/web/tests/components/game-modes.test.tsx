@@ -79,10 +79,15 @@ test('modes pause at both ends, return, and yield to focus and manual input', ()
   try {
     const row = screen.getByRole('region', { name })
     expect(row.tabIndex).toBe(0)
+    expect(row.parentElement?.dataset.preview).toBe('true')
+    expect(
+      row.parentElement?.querySelector('.game-modes-preview')?.getAttribute('aria-hidden'),
+    ).toBe('true')
     time.advance(1600)
     expect(row.scrollLeft).toBe(0)
     time.advance(1400)
     expect(row.scrollLeft).toBeGreaterThan(0)
+    expect(row.parentElement?.dataset.preview).toBe('false')
     fireEvent.focus(row)
     const focusedAt = row.scrollLeft
     time.advance(3000)
@@ -103,6 +108,7 @@ test('modes pause at both ends, return, and yield to focus and manual input', ()
     expect(row.scrollLeft).toBe(0)
     fireEvent.pointerLeave(row, { pointerType: 'mouse' })
     expect(row.textContent).toBe(name)
+    expect(row.parentElement?.dataset.preview).toBe('true')
   } finally {
     unmount()
     expect(time.pending()).toBe(0)
@@ -123,6 +129,7 @@ test('modes stop automatically for reduced motion or when resize removes overflo
     time.resize(300)
     expect(time.pending()).toBe(0)
     expect(row.hasAttribute('tabindex')).toBe(false)
+    expect(row.parentElement?.dataset.preview).toBe('false')
     time.resize(100)
     expect(time.pending()).toBe(1)
     expect(row.tabIndex).toBe(0)

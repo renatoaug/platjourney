@@ -370,11 +370,11 @@ export function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
   )
 }
 
-/** The facts list: developer, release, modes, rating, platforms and site, each only when known. */
 /** Only the modes value moves; manual reading always takes priority. */
 function GameModes({ modes }: { modes: string[] }) {
   const ref = useRef<HTMLElement>(null)
   const [overflow, setOverflow] = useState(false)
+  const [atStart, setAtStart] = useState(true)
   const text = modes.join(', ')
 
   useEffect(() => {
@@ -389,6 +389,14 @@ function GameModes({ modes }: { modes: string[] }) {
     let returning = false
     let hovered = false
     let focused = false
+    let wasAtStart = true
+    const updateStart = () => {
+      const start = el.scrollLeft < 0.5
+      if (start !== wasAtStart) {
+        wasAtStart = start
+        setAtStart(start)
+      }
+    }
 
     const pauseAtEnd = (now: number) => {
       if (!returning && position >= max) {
@@ -410,6 +418,7 @@ function GameModes({ modes }: { modes: string[] }) {
       }
       position = Math.max(0, Math.min(max, position + elapsed * (returning ? -0.12 : 0.024)))
       el.scrollLeft = position
+      updateStart()
       pauseAtEnd(now)
     }
     const measure = () => {
@@ -417,6 +426,8 @@ function GameModes({ modes }: { modes: string[] }) {
       max = Math.max(0, el.scrollWidth - el.clientWidth)
       setOverflow(max > 1)
       el.scrollLeft = 0
+      wasAtStart = true
+      setAtStart(true)
       position = 0
       previous = 0
       returning = false
@@ -446,6 +457,7 @@ function GameModes({ modes }: { modes: string[] }) {
     if (el.firstElementChild) observer?.observe(el.firstElementChild)
     window.addEventListener('resize', measure)
     motion.addEventListener('change', measure)
+    el.addEventListener('scroll', updateStart, { passive: true })
     el.addEventListener('pointerenter', enter)
     el.addEventListener('pointerleave', leave)
     el.addEventListener('pointerdown', pause)
@@ -459,6 +471,7 @@ function GameModes({ modes }: { modes: string[] }) {
       observer?.disconnect()
       window.removeEventListener('resize', measure)
       motion.removeEventListener('change', measure)
+      el.removeEventListener('scroll', updateStart)
       el.removeEventListener('pointerenter', enter)
       el.removeEventListener('pointerleave', leave)
       el.removeEventListener('pointerdown', pause)
@@ -470,16 +483,26 @@ function GameModes({ modes }: { modes: string[] }) {
   }, [text])
 
   return (
-    <section
-      ref={ref}
-      className="game-modes-scroll"
-      tabIndex={overflow ? 0 : undefined}
-      aria-label={text}
-    >
-      <span>{text}</span>
-    </section>
+    <div className="game-modes-window" data-preview={overflow && atStart}>
+      <section
+        ref={ref}
+        className="game-modes-scroll"
+        tabIndex={overflow ? 0 : undefined}
+        aria-label={text}
+        title={text}
+      >
+        <span>{text}</span>
+      </section>
+      {overflow && (
+        <span className="game-modes-preview" aria-hidden="true">
+          {text}
+        </span>
+      )}
+    </div>
   )
 }
+
+/** The facts list: developer, release, modes, rating, platforms and site, each only when known. */
 
 function GameFacts({
   game,
