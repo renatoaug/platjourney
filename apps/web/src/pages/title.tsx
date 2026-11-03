@@ -58,7 +58,7 @@ const messages = defineMessages({
     trophies: 'Troféus',
     inLibrary: 'NA SUA BIBLIOTECA',
     talkToNexo: 'Conversar com o Nexo',
-    askNexo: 'Perguntar ao Nexo sobre',
+    askNexo: 'Perguntar ao Nexo',
     trophiesPendingTitle: 'Buscando a lista de troféus',
     trophiesPending:
       'A lista deste jogo ainda está chegando da PSN. Volte em breve para ver cada troféu.',
@@ -86,7 +86,7 @@ const messages = defineMessages({
     trophies: 'Trophies',
     inLibrary: 'IN YOUR LIBRARY',
     talkToNexo: 'Talk to Nexo',
-    askNexo: 'Ask Nexo about it',
+    askNexo: 'Ask Nexo',
     trophiesPendingTitle: 'Fetching the trophy list',
     trophiesPending:
       "This game's list is still on its way from PSN. Come back soon to see each trophy.",
@@ -226,8 +226,8 @@ function TitleSkeleton({ owned = true }: { owned?: boolean }) {
             <>
               <Sk w="100%" h={44} />
               <div className="title-secondary-actions">
-                <Sk w="100%" h={60} />
-                <Sk w="100%" h={60} />
+                <Sk w="100%" h={48} />
+                <Sk w="100%" h={48} />
               </div>
             </>
           }

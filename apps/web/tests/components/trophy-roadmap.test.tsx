@@ -1,4 +1,4 @@
-import { beforeEach, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import { fireEvent, screen } from '@testing-library/react'
 import { SAMPLE_ME } from '../../src/app/app-state'
 import { Journey } from '../../src/components/journey'
@@ -6,6 +6,8 @@ import { TrophyRoadmap } from '../../src/components/trophy-roadmap'
 import { current } from '../../src/fixtures'
 import type { CurrentGame, GuideDetail } from '../../src/lib/types'
 import { mockApi, renderApp, reply } from '../support/web'
+
+afterEach(() => mock.restore())
 
 const savedVisibility = new Map<string, string[]>()
 beforeEach(() => {
@@ -285,6 +287,10 @@ test('objective and stored guidance have distinct icons, while missing advice ad
 })
 
 test('selection stays on the visible page, crosses its boundary symmetrically and keeps order', () => {
+  spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+    callback(performance.now() + 1000)
+    return 1
+  })
   const previous = globalThis.ResizeObserver
   let resize = () => {}
   globalThis.ResizeObserver = class {
@@ -322,17 +328,17 @@ test('selection stays on the visible page, crosses its boundary symmetrically an
     const next = () => fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
     next()
     next()
-    expect(scroll).toHaveBeenLastCalledWith({ left: 0, behavior: 'smooth' })
+    expect(scroll).toHaveBeenLastCalledWith({ left: 0, behavior: 'auto' })
     expect(stops[2].querySelector('button')?.getAttribute('aria-pressed')).toBe('true')
     next()
-    expect(scroll).toHaveBeenLastCalledWith({ left: 300, behavior: 'smooth' })
+    expect(scroll).toHaveBeenLastCalledWith({ left: 300, behavior: 'auto' })
     fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
-    expect(scroll).toHaveBeenLastCalledWith({ left: 0, behavior: 'smooth' })
+    expect(scroll).toHaveBeenLastCalledWith({ left: 0, behavior: 'auto' })
     next()
     next()
     next()
     next()
-    expect(scroll).toHaveBeenLastCalledWith({ left: 600, behavior: 'smooth' })
+    expect(scroll).toHaveBeenLastCalledWith({ left: 600, behavior: 'auto' })
     expect(
       (screen.getByRole('button', { name: 'Próximo marco' }) as HTMLButtonElement).disabled,
     ).toBe(true)
@@ -446,7 +452,7 @@ test('start comparison uses the real list but never mutates account progress or 
     'PRÉVIA DO INÍCIO',
   )
   expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
-  expect(screen.getByText('Progresso não informado pela PSN')).toBeTruthy()
+  expect(screen.queryByText('Progresso não informado pela PSN')).toBeNull()
   expect(screen.queryByText('PSN: 8 / 10')).toBeNull()
   expect(container.querySelector('.roadmap-past')).toBeNull()
   expect(items[0].earned).toBe(true)
@@ -454,4 +460,71 @@ test('start comparison uses the real list but never mutates account progress or 
   fireEvent.click(screen.getByRole('button', { name: 'Voltar ao meu progresso' }))
   expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(1)
   expect(container.querySelector('.roadmap-past')).toBeTruthy()
+})
+
+test('movement starts on the next frame, follows the cubic road both ways and cancels on unmount', () => {
+  const original = globalThis.ResizeObserver
+  let resize = () => {}
+  globalThis.ResizeObserver = class {
+    constructor(cb: () => void) {
+      resize = cb
+    }
+    observe() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver
+  let frame: FrameRequestCallback = () => {}
+  const raf = spyOn(globalThis, 'requestAnimationFrame').mockImplementation((cb) => {
+    frame = cb
+    return 41
+  })
+  const cancel = spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => {})
+  spyOn(performance, 'now').mockReturnValue(0)
+  try {
+    const trophies = Array.from({ length: 4 }, (_, id) => ({
+      ...game.trophies[1],
+      id,
+      name: `Stop ${id}`,
+      earned: false,
+    }))
+    const view = renderApp(<TrophyRoadmap game={{ ...game, guide: null, focus: null, trophies }} />)
+    const track = view.container.querySelector<HTMLOListElement>('.roadmap-route')
+    if (!track) throw new Error('roadmap track missing')
+    Object.defineProperty(track, 'clientWidth', { value: 300 })
+    Object.defineProperty(track.querySelector('li'), 'offsetWidth', { value: 100 })
+    track.scrollTo = mock(() => {})
+    resize()
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+    expect(raf).toHaveBeenCalled()
+    frame(16)
+    expect(Number.parseFloat(track.style.getPropertyValue('--roadmap-cursor-x'))).toBeGreaterThan(
+      42,
+    )
+    frame(120)
+    expect(track.style.getPropertyValue('--roadmap-cursor-x')).toBe('92px')
+    expect(track.style.getPropertyValue('--roadmap-cursor-y')).toBe('70px')
+    frame(240)
+    expect(track.style.getPropertyValue('--roadmap-cursor-x')).toBe('142px')
+    expect(track.style.getPropertyValue('--roadmap-cursor-y')).toBe('50px')
+    expect(track.querySelector('path')?.getAttribute('d')).toContain('148 56')
+    fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
+    frame(120)
+    expect(track.style.getPropertyValue('--roadmap-cursor-y')).toBe('70px')
+    frame(240)
+    expect(track.style.getPropertyValue('--roadmap-cursor-x')).toBe('42px')
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    spyOn(window, 'matchMedia').mockReturnValue({
+      ...media,
+      matches: true,
+      addEventListener: mock(() => {}),
+      removeEventListener: mock(() => {}),
+    })
+    raf.mockClear()
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+    expect(raf).not.toHaveBeenCalled()
+    expect(track.style.getPropertyValue('--roadmap-cursor-x')).toBe('142px')
+    view.unmount()
+    expect(cancel).toHaveBeenCalledWith(41)
+  } finally {
+    globalThis.ResizeObserver = original
+  }
 })

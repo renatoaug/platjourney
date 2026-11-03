@@ -134,3 +134,31 @@ export const CompactTrophyCounts: Story = {
     />
   ),
 }
+
+export const SubscriptionActions: Story = {
+  render: () => (
+    <TitleScreen
+      owned={false}
+      load={{
+        kind: 'ready',
+        d: {
+          ...recommendedData,
+          store: {
+            url: 'https://store.playstation.com/',
+            deal: {
+              price: 0,
+              base: 20000,
+              discount: 0,
+              endsAt: null,
+              plus: true,
+              plusTier: 'extra',
+              mine: true,
+              currency: 'BRL',
+              storeUrl: 'https://store.playstation.com/',
+            },
+          },
+        },
+      }}
+    />
+  ),
+}

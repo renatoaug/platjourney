@@ -6,7 +6,8 @@
   .hero.immersive .cta .title-secondary-actions {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    gap: 8px;
+    gap: 10px;
+    align-items: end;
     width: 100%;
   }
 
@@ -17,7 +18,7 @@
   .hero .title-secondary-actions .button {
     min-width: 0;
     min-height: 44px;
-    height: auto;
+    height: 48px;
     padding: 8px;
     font-size: var(--text-base);
     gap: 6px;
@@ -26,12 +27,41 @@
   .hero .title-secondary-actions .game-about-store {
     min-width: 0;
     margin: 0;
-    align-items: stretch;
+    display: contents;
   }
 
   .hero .title-secondary-actions .game-about-buy {
     width: 100%;
     margin: 0;
+  }
+
+  .hero .title-secondary-actions > .button,
+  .hero .title-secondary-actions .game-about-buy {
+    grid-row: 2;
+  }
+
+  .hero .title-secondary-actions .game-about-deal {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    font-size: var(--text-base);
+  }
+
+  .hero .title-secondary-actions .game-about-deal b {
+    font-size: inherit;
+    font-weight: var(--weight-medium);
+  }
+
+  .hero .title-secondary-actions > .button {
+    grid-column: 1;
+  }
+
+  .hero .title-secondary-actions .game-about-buy {
+    grid-column: 2;
+  }
+
+  .hero .title-secondary-actions > :only-child .game-about-buy,
+  .hero .title-secondary-actions > .button:only-child {
+    grid-column: 1 / -1;
   }
 
   /* Guide as a full-width block on the detail page: tabs in a row, columns for long panels */

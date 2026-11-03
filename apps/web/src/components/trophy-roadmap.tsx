@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { roadPoint, roadSegment } from '../lib/roadmap-motion'
 import { ongoingObjectives, trophyAdvice, trophyRoadmap } from '../lib/trophy-roadmap'
 import type { CurrentGame, Trophy } from '../lib/types'
 import { useGameSpoilers } from '../lib/use-game-spoilers'
@@ -25,7 +26,6 @@ const messages = defineMessages({
     counter: 'Objetivo com contador da PSN',
     duration: 'Acompanhamento durante a campanha',
     early: 'Orientação para o início',
-    unknownProgress: 'Progresso não informado pela PSN',
     counterProgress: 'PSN: {value} / {target}',
     previewStart: 'Ver desde o início',
     previewBack: 'Voltar ao meu progresso',
@@ -95,7 +95,6 @@ const messages = defineMessages({
     counter: 'Objective with a PSN counter',
     duration: 'Follow throughout the campaign',
     early: 'Guidance for the start',
-    unknownProgress: 'Progress not reported by PSN',
     counterProgress: 'PSN: {value} / {target}',
     previewStart: 'Preview from the start',
     previewBack: 'Return to my progress',
@@ -156,8 +155,6 @@ const messages = defineMessages({
     platinumType: 'Platinum',
   },
 })
-
-const roadCurves = ['M48 96 C110 96 166 56 228 56', 'M48 56 C110 56 166 96 228 96']
 
 const anchor = (trophy: Trophy) => `roadmap-${encodeURIComponent(trophy.groupId)}-${trophy.id}`
 
@@ -320,38 +317,55 @@ function RoadmapForward({
 }) {
   const t = useMessages(messages)
   const rail = useRef<HTMLOListElement>(null)
-  const placed = useRef(false)
+  const position = useRef<number | null>(null)
   const at = pending.indexOf(selected)
-  const activeId = selected ? anchor(selected) : null
-  useEffect(() => {
+  useLayoutEffect(() => {
     const track = rail.current
     if (!track) return
+    let frame = 0
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
     const place = (resizing = false) => {
-      const node = track.querySelector<HTMLElement>(`[data-trophy="${activeId}"]`)
-      const width = track.querySelector<HTMLElement>('li')?.offsetWidth ?? 0
-      if (!node || !width || !track.clientWidth) return
+      cancelAnimationFrame(frame)
+      const first = track.querySelector<HTMLElement>('li')
+      const width = first?.getBoundingClientRect().width || first?.offsetWidth || 0
+      if (!width || !track.clientWidth) return
       const columns = Math.max(1, Math.round(track.clientWidth / width))
       const page = Math.floor(Math.max(0, at) / columns)
       const tail = (columns - (pending.length % columns)) % columns
       track.style.setProperty('--roadmap-tail', `${tail * width}px`)
-      const pin = node.querySelector<HTMLElement>('.roadmap-route-pin')
-      if (pin) {
-        track.style.setProperty(
-          '--roadmap-cursor-x',
-          `${node.offsetLeft + pin.offsetLeft + pin.offsetWidth / 2 - 6}px`,
-        )
-        track.style.setProperty(
-          '--roadmap-cursor-y',
-          `${pin.offsetTop + pin.offsetHeight / 2 - 6}px`,
-        )
-      }
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      track.scrollTo?.({
-        left: page * columns * width,
-        behavior: placed.current && !resizing && !reduced ? 'smooth' : 'auto',
+      track.querySelectorAll<SVGSVGElement>('.roadmap-route-line').forEach((svg, index) => {
+        svg.setAttribute('viewBox', `0 0 ${width} 150`)
+        svg.querySelectorAll('path').forEach((path) => {
+          path.setAttribute('d', roadSegment(index, width))
+        })
       })
-      placed.current = true
-      track.dataset.positioned = 'true'
+      const paint = (value: number, scroll: number) => {
+        position.current = value
+        const point = roadPoint(value, width)
+        track.style.setProperty('--roadmap-cursor-x', `${point.x - 6}px`)
+        track.style.setProperty('--roadmap-cursor-y', `${point.y - 6}px`)
+        track.scrollTo?.({ left: scroll, behavior: 'auto' })
+        track.dataset.positioned = 'true'
+      }
+      const destination = Math.max(0, at)
+      const targetScroll = page * columns * width
+      if (position.current === null || resizing || motion.matches) {
+        paint(destination, targetScroll)
+        return
+      }
+      const from = position.current
+      const scrollFrom = track.scrollLeft
+      const start = performance.now()
+      const tick = (now: number) => {
+        const fraction = Math.min(1, Math.max(0, (now - start) / 240))
+        paint(
+          from + (destination - from) * fraction,
+          scrollFrom + (targetScroll - scrollFrom) * fraction,
+        )
+        if (fraction < 1) frame = requestAnimationFrame(tick)
+      }
+      paint(from, scrollFrom)
+      frame = requestAnimationFrame(tick)
     }
     place()
     let measured = `${track.clientWidth}:${track.querySelector<HTMLElement>('li')?.offsetWidth}`
@@ -364,10 +378,18 @@ function RoadmapForward({
             measured = size
             place(true)
           })
+    const reduce = () => {
+      if (motion.matches) place(true)
+    }
+    motion.addEventListener('change', reduce)
     observer?.observe(track)
     if (track.firstElementChild) observer?.observe(track.firstElementChild)
-    return () => observer?.disconnect()
-  }, [activeId, at, pending.length])
+    return () => {
+      cancelAnimationFrame(frame)
+      observer?.disconnect()
+      motion.removeEventListener('change', reduce)
+    }
+  }, [at, pending.length])
   return (
     <div className="roadmap-forward">
       <div className="roadmap-forward-heading">
@@ -403,7 +425,7 @@ function RoadmapForward({
             const current = selected === trophy
             const missable = !hidden && !!trophyAdvice(trophy, game.guide).warning
             const final = trophy.type === 'platinum'
-            const path = roadCurves[i % 2]
+            const path = roadSegment(i, 180)
             return (
               <li
                 key={anchor(trophy)}
@@ -463,7 +485,7 @@ function RoadmapOngoing({ game, choose }: { game: RoadmapGame; choose: (trophy: 
       <p>{t('ongoingNote')}</p>
       <ul>
         {objectives.map(({ trophy, basis, warning, early }) => (
-          <li key={anchor(trophy)}>
+          <li key={anchor(trophy)} data-missable={!!warning}>
             <button
               type="button"
               className="roadmap-ongoing-select"
@@ -490,17 +512,17 @@ function RoadmapOngoing({ game, choose }: { game: RoadmapGame; choose: (trophy: 
                 <GuideText text={warning.when} />
               </p>
             )}
-            <p className="roadmap-ongoing-progress">
-              {trophy.progressValue != null &&
+            {trophy.progressValue != null &&
               trophy.progressTarget != null &&
               trophy.progressValue >= 0 &&
-              trophy.progressValue <= trophy.progressTarget
-                ? t('counterProgress', {
+              trophy.progressValue <= trophy.progressTarget && (
+                <p className="roadmap-ongoing-progress">
+                  {t('counterProgress', {
                     value: trophy.progressValue,
                     target: trophy.progressTarget,
-                  })
-                : t('unknownProgress')}
-            </p>
+                  })}
+                </p>
+              )}
           </li>
         ))}
       </ul>
