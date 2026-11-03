@@ -1,7 +1,7 @@
 @layer screens {
   .guide-spotlight {
     display: grid;
-    grid-template-columns: 112px minmax(0, 1fr);
+    grid-template-columns: 96px minmax(0, 1fr);
     grid-template-areas: "heading heading" "cover body" "cover chips";
     align-content: start;
     align-self: start;
@@ -26,7 +26,7 @@
 
   .guide-spotlight-cover {
     grid-area: cover;
-    width: 112px;
+    width: 96px;
     aspect-ratio: 3 / 4;
     object-fit: cover;
     border-radius: var(--radius-control);
@@ -157,13 +157,21 @@
 
   @media (max-width: 480px) {
     .guide-spotlight {
-      grid-template-columns: 80px minmax(0, 1fr);
+      grid-template-columns: 64px minmax(0, 1fr);
       grid-template-areas: "heading heading" "cover body" "chips chips";
-      gap: 14px;
+      gap: 12px 14px;
     }
 
     .guide-spotlight-cover {
-      width: 80px;
+      width: 64px;
+    }
+
+    .guide-spotlight-body {
+      align-self: center;
+    }
+
+    .guide-spotlight-head > b {
+      font-size: var(--text-xl);
     }
   }
 }
