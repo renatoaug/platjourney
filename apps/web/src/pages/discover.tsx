@@ -8,6 +8,8 @@ import { Page } from '../app/page'
 import { DemoNote } from '../components/demo'
 import { GameCard, GameShelf } from '../components/game-band'
 import { LibraryCard } from '../components/game-cards'
+import { image } from '../components/game-showcase'
+import { pickOfTheDay, type SpotlightGame } from '../components/guide-spotlight'
 import { NexoPickBox } from '../components/nexo-pick'
 import { PageTop } from '../components/page-top'
 import {
@@ -220,10 +222,34 @@ function Ranking() {
   )
 }
 
+const fetchDailyGuide = () =>
+  api<{ items: SpotlightGame[] }>('/api/guides?').then(({ items }) => pickOfTheDay(items))
+
 /** `releases` replaces the calendar's own request (stories and tests pass it in a fixed state). */
-export function Discover({ releases = <Releases look="band" /> }: { releases?: ReactNode } = {}) {
+export function Discover({
+  releases = <Releases look="band" />,
+  loadDailyGuide = fetchDailyGuide,
+}: {
+  releases?: ReactNode
+  loadDailyGuide?: () => Promise<SpotlightGame | null>
+} = {}) {
   const t = useMessages(messages)
   const { cache, me } = useApp()
+  const [dailyGuide, setDailyGuide] = useState<SpotlightGame | null>(null)
+  useEffect(() => {
+    let live = true
+    setDailyGuide(null)
+    loadDailyGuide()
+      .then((game) => {
+        if (live) setDailyGuide(game)
+      })
+      .catch(() => {
+        /* Decorative art must never block discovery. */
+      })
+    return () => {
+      live = false
+    }
+  }, [loadDailyGuide])
   // From the interests' "Deixa o Nexo escolher": the pick looks among the saved games.
   const [params] = useSearchParams()
   const [recs, setRecs] = useState<RecsState>(() => initialRecs(cache))
@@ -310,15 +336,15 @@ export function Discover({ releases = <Releases look="band" /> }: { releases?: R
   }
 
   const noLibrary = similar.status === 'ok' && similar.recs.reason === 'no-library'
-  // Wide artworks of the games recommended: the first runs across the top.
-  const art = [
-    ...(recs.status === 'ok' ? recs.recs.items : []),
-    ...(similar.status === 'ok' ? similar.recs.items : []),
-  ].flatMap((r) => (r.game.art_url ? [r.game.art_url] : []))
 
   return (
     <Page path="/discover">
-      <PageTop eyebrow={t('eyebrow')} title={t('title')} lead={t('lead')} art={art[0]} />
+      <PageTop
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        lead={t('lead')}
+        art={dailyGuide?.shot ? image(dailyGuide.shot, 't_1080p') : null}
+      />
       <NexoPickBox
         initialScope={params.get('scope') === 'interests' ? 'interests' : 'any'}
         spotlight={params.has('scope')}

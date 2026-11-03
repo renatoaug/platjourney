@@ -2,6 +2,7 @@ import { afterEach, expect, mock, test } from 'bun:test'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import { rankingData } from '../../src/components/game-cards.stories'
+import { pickOfTheDay } from '../../src/components/guide-spotlight'
 import { recsData } from '../../src/components/recommendations.stories'
 import { ReleasesView } from '../../src/components/releases'
 import { serversData } from '../../src/components/servers.stories'
@@ -13,6 +14,8 @@ import { MODEL_WORK_DONE } from '../../src/plugins'
 import { gone, mockApi, never, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
+
+const noDailyGuide = async () => null
 
 const loaded = { ...SAMPLE_DATA, ranking: rankingData, servers: serversData }
 const none: SimilarRecs = { items: [], quick: [], series: [] }
@@ -38,7 +41,9 @@ const askNexo = () => within(recs()).findByRole('button', { name: /Pedir ao Nexo
 test('by default: games like the player’s, with the games that led to each one', async () => {
   const cache: Record<string, unknown> = { picks: [] }
   const calls = mockApi({ '/api/recommendations/similar': similarData, [STORED]: noBatch })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache },
+  })
   const ranking = document.getElementById('ranking') as HTMLElement
   expect(within(ranking).getAllByRole('link')).toHaveLength(3)
   expect(screen.queryByRole('heading', { name: 'Servidores online' })).toBeNull()
@@ -71,7 +76,7 @@ test('by default: games like the player’s, with the games that led to each one
 test('the because line in English', async () => {
   setLocale('en', { persist: false })
   mockApi({})
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: { data: loaded, cache: { picks: [], similar: similarData } },
   })
   expect(reason(row('Horizon'))).toBe('Like Days Gone and Ghost of Tsushima')
@@ -80,7 +85,7 @@ test('the because line in English', async () => {
 
 test('short platinums and the same series in their bands', () => {
   mockApi({})
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: { data: loaded, cache: { picks: [], similar: similarData } },
   })
   const quick = screen.getByRole('region', { name: 'Platina relâmpago' })
@@ -102,7 +107,7 @@ test('short platinums and the same series in their bands', () => {
 test('a series game the player only played says so', () => {
   mockApi({})
   const series = [{ ...similarData.series[0], platinumed: [] }]
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: { data: loaded, cache: { picks: [], similar: { ...similarData, series } } },
   })
   const band = screen.getByRole('region', { name: 'Na mesma série' })
@@ -111,7 +116,7 @@ test('a series game the player only played says so', () => {
 
 test('the bands are left out when they have nothing', () => {
   mockApi({})
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: {
       data: loaded,
       cache: { picks: [], similar: { ...similarData, quick: [], series: [] } },
@@ -124,13 +129,13 @@ test('the bands are left out when they have nothing', () => {
 
 test('the bands wait for the similar games instead of flashing', () => {
   mockApi({ '/api/recommendations/similar': never })
-  renderApp(<Discover releases={null} />, { value: { data: loaded } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, { value: { data: loaded } })
   expect(screen.queryByRole('region', { name: 'Platina relâmpago' })).toBeNull()
 })
 
 test('a failed similarity search says so', async () => {
   mockApi({ '/api/recommendations/similar': reply(500) })
-  renderApp(<Discover releases={null} />, { value: { data: loaded } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, { value: { data: loaded } })
   expect((await within(similar()).findByRole('alert')).textContent).toContain(
     'Não conseguimos buscar jogos parecidos',
   )
@@ -139,7 +144,9 @@ test('a failed similarity search says so', async () => {
 
 test('no similar game yet', () => {
   mockApi({})
-  renderApp(<Discover releases={null} />, { value: { cache: { picks: [], similar: none } } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { cache: { picks: [], similar: none } },
+  })
   expect(screen.getByText('Nenhum jogo parecido ainda')).toBeTruthy()
   expect(screen.getByText('Nada em andamento ainda')).toBeTruthy()
   expect(screen.getByRole('link', { name: /Procurar um jogo/ }).getAttribute('href')).toBe(
@@ -154,7 +161,7 @@ test('rules that leave every similar game out say so and lead to them', async ()
     removed: { genres: [], traits: [], avoid: [] },
     filters: { noMissables: true },
   }
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: { data: loaded, cache: { picks: [], similar: none, recs: { ...recsData, prefs } } },
   })
   expect(screen.getByText('Nenhum parecido passa nos seus filtros')).toBeTruthy()
@@ -169,7 +176,9 @@ test('Pedir ao Nexo shows the stored batch, without forcing a new one', async ()
   window.addEventListener(MODEL_WORK_DONE, done)
   const cache: Record<string, unknown> = { picks: [], similar: similarData }
   const calls = mockApi({ [STORED]: noBatch, '/api/recommendations': recsData })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache },
+  })
   expect(within(recs()).getByText('ANÁLISE DO NEXO')).toBeTruthy()
   fireEvent.click(await askNexo())
   expect(await within(recs()).findByText(/Horizon Zero Dawn/)).toBeTruthy()
@@ -187,7 +196,9 @@ test('a saved batch shows on load, with nothing pressed and no model call', asyn
   window.addEventListener(MODEL_WORK_DONE, done)
   const cache: Record<string, unknown> = { picks: [], similar: similarData }
   const calls = mockApi({ [STORED]: recsData })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache },
+  })
   expect(recs().querySelector('.sk')).toBeTruthy()
   expect(await within(recs()).findByRole('link', { name: /Sekiro/ })).toBeTruthy()
   expect(screen.queryByRole('button', { name: /Pedir ao Nexo/ })).toBeNull()
@@ -201,12 +212,16 @@ test('a saved batch shows on load, with nothing pressed and no model call', asyn
 test('no saved batch leaves the invitation, and the next visit does not look again', async () => {
   const cache: Record<string, unknown> = { picks: [], similar: similarData }
   const calls = mockApi({ [STORED]: noBatch })
-  const { unmount } = renderApp(<Discover releases={null} />, { value: { data: loaded, cache } })
+  const { unmount } = renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache },
+  })
   expect(await askNexo()).toBeTruthy()
   expect(cache.recs).toBeUndefined()
   expect(cache.recsChecked).toBe(true)
   unmount()
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache },
+  })
   expect(within(recs()).getByRole('button', { name: /Pedir ao Nexo/ })).toBeTruthy()
   expect(calls).toHaveLength(1)
 })
@@ -215,7 +230,9 @@ test('Gerar de novo asks Nexo for fresh ones', async () => {
   const calls = mockApi({
     '/api/recommendations?refresh=1': { profile: null, items: [recsData.items[1]] },
   })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache: asked() },
+  })
   fireEvent.click(refresh())
   expect(refresh().hasAttribute('disabled')).toBe(true)
   await gone(() => within(recs()).queryByText(/Horizon Zero Dawn/))
@@ -225,7 +242,9 @@ test('Gerar de novo asks Nexo for fresh ones', async () => {
 
 test('Nexo’s picks already asked for cost nothing on the next visit', () => {
   const calls = mockApi({})
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache: asked() },
+  })
   expect(within(recs()).getByText(/Sekiro/)).toBeTruthy()
   expect(calls).toHaveLength(0)
 })
@@ -236,7 +255,7 @@ test('coming back mid-load waits for the request already running', async () => {
   const pending = new Promise<typeof recsData>((r) => {
     finish = r
   })
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: {
       data: loaded,
       cache: { picks: [], similar: similarData, recsLoad: pending },
@@ -250,7 +269,7 @@ test('coming back mid-load waits for the request already running', async () => {
 
 test('a failed Nexo search says so', async () => {
   mockApi({ [STORED]: noBatch, '/api/recommendations': reply(500) })
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: { data: loaded, cache: { picks: [], similar: similarData } },
   })
   fireEvent.click(await askNexo())
@@ -264,7 +283,9 @@ test('dismissing a similar game drops it without loading Nexo’s picks', async 
     [STORED]: noBatch,
     'POST /api/recommendations/dismiss': { ...recsData, items: [recsData.items[1]] },
   })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache },
+  })
   await askNexo()
   fireEvent.click(screen.getByRole('button', { name: 'Não recomendar Horizon Zero Dawn' }))
   fireEvent.click(screen.getByRole('button', { name: 'Só remover' }))
@@ -280,7 +301,9 @@ test('dismissing one of Nexo’s picks drops it and says it will not come back',
   const calls = mockApi({
     'POST /api/recommendations/dismiss': { ...recsData, items: [recsData.items[1]] },
   })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache },
+  })
   fireEvent.click(within(recs()).getByRole('button', { name: 'Não recomendar Horizon Zero Dawn' }))
   fireEvent.click(screen.getByRole('button', { name: 'Só remover' }))
   expect(await screen.findByText('Horizon Zero Dawn não aparece mais')).toBeTruthy()
@@ -293,7 +316,9 @@ test('a reason goes along and the toast says Nexo takes it into account', async 
   const calls = mockApi({
     'POST /api/recommendations/dismiss': { ...recsData, items: [recsData.items[1]] },
   })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache: asked() },
+  })
   fireEvent.click(within(recs()).getByRole('button', { name: 'Não recomendar Horizon Zero Dawn' }))
   fireEvent.click(screen.getByRole('button', { name: 'Muito longo' }))
   expect(
@@ -304,7 +329,9 @@ test('a reason goes along and the toast says Nexo takes it into account', async 
 
 test('a failed dismiss keeps the game and warns', async () => {
   mockApi({ 'POST /api/recommendations/dismiss': reply(500) })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache: asked() },
+  })
   fireEvent.click(
     within(recs()).getByRole('button', { name: 'Não recomendar Sekiro: Shadows Die Twice' }),
   )
@@ -316,7 +343,7 @@ test('a failed dismiss keeps the game and warns', async () => {
 })
 
 test('Nexo’s section with an empty batch', () => {
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: { cache: asked({ recs: { profile: null, items: [] } }) },
   })
   expect(screen.getByText('Nenhuma recomendação ainda')).toBeTruthy()
@@ -324,7 +351,9 @@ test('Nexo’s section with an empty batch', () => {
 
 test('loading: skeletons for the ranking and the similar games', () => {
   mockApi({ '/api/recommendations/similar': never })
-  const { container } = renderApp(<Discover releases={null} />, { value: { data: null } })
+  const { container } = renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: null },
+  })
   expect(container.querySelectorAll('#ranking .band-card')).toHaveLength(6)
   expect(container.querySelectorAll('#similar .band-card')).toHaveLength(6)
 })
@@ -336,7 +365,7 @@ test('the library: one card per game in the ranking order, six a page', () => {
     game: `game:r${i}`,
     name: `Jogo ${i}`,
   }))
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: { data: { ...loaded, ranking: many }, cache: { picks: [], similar: similarData } },
   })
   const ranking = document.getElementById('ranking') as HTMLElement
@@ -353,7 +382,9 @@ test('the library: one card per game in the ranking order, six a page', () => {
 
 test('Customize opens the taste profile', () => {
   mockApi({})
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache: asked() },
+  })
   const details = document.querySelector('#taste details') as HTMLDetailsElement
   expect(details.open).toBe(false)
   fireEvent.click(screen.getByRole('button', { name: /Personalizar/ }))
@@ -362,7 +393,7 @@ test('Customize opens the taste profile', () => {
 
 test('a library with nothing to learn from says so and offers no Nexo search', async () => {
   mockApi({ '/api/recommendations/similar': { ...none, reason: 'no-library' } })
-  renderApp(<Discover releases={null} />, {
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
     value: { data: { ...SAMPLE_DATA, ranking: [], servers: [] } },
   })
   expect(await screen.findByText('Seu gosto ainda é um mistério')).toBeTruthy()
@@ -376,7 +407,9 @@ test('profile changes stay a draft until saved; saving can bring new picks', asy
     '/api/recommendations?refresh=1': recsData,
     '/api/recommendations/similar': similarData,
   })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache: asked() },
+  })
   fireEvent.click(screen.getByText('Ver perfil completo'))
   fireEvent.click(screen.getByRole('button', { name: 'Tirar Troféus online' }))
   expect(screen.queryByRole('button', { name: 'Tirar Troféus online' })).toBeNull()
@@ -397,7 +430,9 @@ test('profile changes stay a draft until saved; saving can bring new picks', asy
 
 test('a failed save says so', async () => {
   mockApi({ 'POST /api/recommendations/preferences': reply(500) })
-  renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
+  renderApp(<Discover loadDailyGuide={noDailyGuide} releases={null} />, {
+    value: { data: loaded, cache: asked() },
+  })
   fireEvent.click(screen.getByText('Ver perfil completo'))
   fireEvent.click(screen.getByRole('button', { name: 'Tirar Troféus online' }))
   fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
@@ -415,3 +450,50 @@ test('the release calendar closes the page, as on the overview', () => {
   const page = document.querySelector('.page') as HTMLElement
   expect(page.lastElementChild?.classList.contains('releases')).toBe(true)
 })
+
+test('discovery uses the same daily guide selection as Guides, not recommendation art', async () => {
+  const items = [
+    {
+      id: 'game:101',
+      name: 'First',
+      shot: 'daily-one',
+      cover_url: null,
+      platforms: ['PS5'],
+      release_year: 2026,
+      guide: { difficulty: 3, hours: 20, hasMissables: false },
+    },
+    {
+      id: 'game:102',
+      name: 'Second',
+      shot: 'daily-two',
+      cover_url: null,
+      platforms: ['PS5'],
+      release_year: 2026,
+      guide: { difficulty: 5, hours: 40, hasMissables: true },
+    },
+  ]
+  mockApi({ '/api/guides?': { items } })
+  const frame = document.createElement('div')
+  frame.id = 'app'
+  document.body.append(frame)
+  try {
+    renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
+    await waitFor(() =>
+      expect(frame.querySelector('img.now')?.getAttribute('src')).toContain(
+        pickOfTheDay(items)?.shot ?? 'missing',
+      ),
+    )
+  } finally {
+    frame.remove()
+  }
+})
+
+test.each(['empty', 'failure'])(
+  'discovery keeps its normal background on %s daily guide',
+  async (state) => {
+    mockApi({ '/api/guides?': state === 'empty' ? { items: [] } : reply(500) })
+    renderApp(<Discover releases={null} />, { value: { data: loaded, cache: asked() } })
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Descobrir' })).toBeTruthy())
+    expect(document.querySelector('.page-top.on-art')).toBeNull()
+  },
+)

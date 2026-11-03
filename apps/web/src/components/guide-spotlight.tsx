@@ -5,6 +5,7 @@ import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { DifficultyMeter } from './difficulty-meter'
+import { image } from './game-showcase'
 import { titleHref } from './tip'
 import './guide-spotlight.css'
 
@@ -50,6 +51,14 @@ export function GuideSpotlight({ game }: { game: SpotlightGame }) {
   const g = game.guide
   return (
     <aside className="guide-spotlight" aria-label={t('eyebrow')}>
+      {game.shot && (
+        <img
+          className="guide-spotlight-art"
+          src={image(game.shot, 't_720p')}
+          alt=""
+          loading="lazy"
+        />
+      )}
       <header className="guide-spotlight-heading">
         <span className="eyebrow">{t('eyebrow')}</span>
         <Link className="guide-spotlight-open" to={titleHref(game.id)}>
