@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.45.3](https://github.com/renatoaug/platjourney/compare/v0.45.2...v0.45.3) (2026-11-03)
+
+### Bug Fixes
+
+* **web:** show foreground push alerts and clarify test feedback ([#131](https://github.com/renatoaug/platjourney/issues/131)) ([7b81aa8](https://github.com/renatoaug/platjourney/commit/7b81aa836e4312548fce152905b01920f3147c1a))
+
 ## [0.45.2](https://github.com/renatoaug/platjourney/compare/v0.45.1...v0.45.2) (2026-11-03)
 
 ### Bug Fixes
