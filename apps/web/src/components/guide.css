@@ -1200,11 +1200,12 @@
 
   .quick-facts-primary .quick-fact {
     display: grid;
-    grid-template-columns: 18px minmax(0, 1fr);
-    grid-template-areas: "icon value" "label label";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "icon" "value" "label";
     align-content: start;
-    align-items: center;
-    gap: 7px 6px;
+    justify-items: center;
+    text-align: center;
+    gap: 7px;
     padding-inline: 14px;
   }
 
@@ -1280,14 +1281,7 @@
 
   @container (max-width: 380px) {
     .quick-facts-primary .quick-fact {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: "value" "label";
-      gap: 7px;
       padding-inline: 4px;
-    }
-
-    .quick-facts-primary .icon {
-      display: none;
     }
 
     .quick-facts-primary .quick-fact:not(.unknown) dd {
