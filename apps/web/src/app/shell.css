@@ -251,13 +251,13 @@
      has no visible box. */
   .sidebar-note {
     margin-top: auto;
-    padding: 22px 12px;
-    border-radius: var(--radius-tag);
+    margin-bottom: 40px;
+    padding: 20px 12px;
+    border-radius: var(--radius-card);
     background: radial-gradient(
-      120% 85% at 0% 100%,
-      color-mix(in srgb, var(--color-accent) calc(var(--alpha-wash) * 2), transparent) 0%,
-      color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent) 40%,
-      transparent 75%
+      130% 110% at 100% 100%,
+      color-mix(in srgb, var(--color-accent) calc(var(--alpha-wash) * 3), transparent),
+      transparent 70%
     );
   }
 

@@ -383,7 +383,10 @@ export function HeroSkeleton({
     <div className="inner">
       <div className="hero-top">
         <div className="meta">
-          <Sk w="164px" h={46} />
+          {/* In a box of its own: the row's rules are for its text, and would hide a bare placeholder. */}
+          <div>
+            <Sk w="164px" h={46} />
+          </div>
           {[90, 76, 110].map((w) => (
             <span key={w}>
               <Sk w={`${w}px`} h={16} />
@@ -402,9 +405,13 @@ export function HeroSkeleton({
         {breakdown ? (
           <div className="trophy-breakdown" aria-hidden="true">
             <div className="trophy-counts-row">
-              <Sk w="85px" h={30} />
+              <b>
+                <Sk w="85px" h={18} />
+              </b>
               {[0, 1, 2, 3].map((tier) => (
-                <Sk key={tier} w="32px" h={18} />
+                <span key={tier} className="tier">
+                  <Sk w="32px" h={18} />
+                </span>
               ))}
             </div>
           </div>
