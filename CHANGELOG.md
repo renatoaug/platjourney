@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.47.2](https://github.com/renatoaug/platjourney/compare/v0.47.1...v0.47.2) (2026-11-04)
+
+### Bug Fixes
+
+* **ai:** mark the player's message after the context ([#136](https://github.com/renatoaug/platjourney/issues/136)) ([df66761](https://github.com/renatoaug/platjourney/commit/df6676147f22067d6d68dcb022fa9c7668a0b113))
+
 ## [0.47.1](https://github.com/renatoaug/platjourney/compare/v0.47.0...v0.47.1) (2026-11-04)
 
 ### Bug Fixes
