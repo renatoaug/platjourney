@@ -6,6 +6,7 @@ import { Journey } from '../../src/components/journey'
 import { TrophyRoadmap } from '../../src/components/trophy-roadmap'
 import { current } from '../../src/fixtures'
 import { requiemGame } from '../../src/fixtures/requiem'
+import { roadPoint, roadStop } from '../../src/lib/roadmap-motion'
 import * as roadmapData from '../../src/lib/trophy-roadmap'
 import type { CurrentGame, GuideDetail } from '../../src/lib/types'
 import { mockApi, renderApp, reply } from '../support/web'
@@ -581,24 +582,27 @@ test('movement starts on the next frame, follows the cubic road both ways and ca
     Object.defineProperty(track.querySelector('li'), 'offsetWidth', { value: 100 })
     track.scrollTo = mock(() => {})
     resize()
+    const start = roadStop(0, 100, 4)
+    const end = roadStop(1, 100, 4)
+    const cursor = () => ({
+      x: Number.parseFloat(track.style.getPropertyValue('--roadmap-cursor-x')) + 6,
+      y: Number.parseFloat(track.style.getPropertyValue('--roadmap-cursor-y')) + 6,
+    })
+    expect(cursor()).toEqual(roadPoint(start, 100))
     fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
     expect(raf).toHaveBeenCalled()
     frame(16)
-    expect(Number.parseFloat(track.style.getPropertyValue('--roadmap-cursor-x'))).toBeGreaterThan(
-      42,
-    )
+    expect(cursor().x).toBeGreaterThan(roadPoint(start, 100).x)
     frame(120)
-    expect(track.style.getPropertyValue('--roadmap-cursor-x')).toBe('92px')
-    expect(track.style.getPropertyValue('--roadmap-cursor-y')).toBe('70px')
+    expect(cursor()).toEqual(roadPoint((start + end) / 2, 100))
     frame(240)
-    expect(track.style.getPropertyValue('--roadmap-cursor-x')).toBe('142px')
-    expect(track.style.getPropertyValue('--roadmap-cursor-y')).toBe('50px')
+    expect(cursor()).toEqual(roadPoint(end, 100))
     expect(track.querySelector('path')?.getAttribute('d')).toContain('148 56')
     fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
     frame(120)
-    expect(track.style.getPropertyValue('--roadmap-cursor-y')).toBe('70px')
+    expect(cursor()).toEqual(roadPoint((start + end) / 2, 100))
     frame(240)
-    expect(track.style.getPropertyValue('--roadmap-cursor-x')).toBe('42px')
+    expect(cursor()).toEqual(roadPoint(start, 100))
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
     spyOn(window, 'matchMedia').mockReturnValue({
       ...media,
@@ -609,7 +613,7 @@ test('movement starts on the next frame, follows the cubic road both ways and ca
     raf.mockClear()
     fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
     expect(raf).not.toHaveBeenCalled()
-    expect(track.style.getPropertyValue('--roadmap-cursor-x')).toBe('142px')
+    expect(cursor()).toEqual(roadPoint(end, 100))
     view.unmount()
     expect(cancel).toHaveBeenCalledWith(41)
   } finally {

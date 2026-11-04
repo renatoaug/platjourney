@@ -10,7 +10,7 @@ import {
 import { evaluateJourney } from '../../../../shared/journey/model'
 import { reviewedJourney } from '../../../../shared/journey/registry'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
-import { roadPoint, roadSegment } from '../lib/roadmap-motion'
+import { roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
 import { ongoingObjectives, trophyAdvice, trophyRoadmap } from '../lib/trophy-roadmap'
 import type { CurrentGame, Trophy } from '../lib/types'
 import { useGameSpoilers } from '../lib/use-game-spoilers'
@@ -728,7 +728,7 @@ function RoadmapForward({
         track.scrollTo?.({ left: scroll, behavior: 'auto' })
         track.dataset.positioned = 'true'
       }
-      const destination = Math.max(0, at)
+      const destination = roadStop(Math.max(0, at), width, pending.length)
       const targetScroll = page * columns * width
       if (position.current === null || resizing || motion.matches) {
         paint(destination, targetScroll)
