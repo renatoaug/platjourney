@@ -165,7 +165,7 @@ async def test_start_tip_asks_with_the_context_and_no_history(model: Model) -> N
     [message] = call['input']
     assert message['role'] == 'user'
     assert message['content'].startswith('Jogo: Days Gone (PS4)')
-    assert message['content'].endswith('\n\n---\n' + nexo.start_prompt(context()))
+    assert message['content'].endswith(f'\n\n---\n{nexo.ASKED}\n' + nexo.start_prompt(context()))
     assert nexo.start_prompt(context()).startswith(
         'O jogador acabou de começar Days Gone (1 troféus até agora). Mande'
     )
@@ -209,7 +209,7 @@ async def test_reply_sends_history_and_guide_passages(
     assert turns[1]['content'].startswith('Contexto PSN do jogo atual:\nJogo: Days Gone')
     assert turns[1]['content'].endswith(
         '\n\nTrechos dos guias (use como fonte):\n[Trophy Guides — Collector]\nMap 1'
-        '\n\n---\ne o colecionador?'
+        f'\n\n---\n{nexo.ASKED}\ne o colecionador?'
     )
 
 
@@ -229,7 +229,7 @@ async def test_failed_retrieval_still_answers(
 async def test_reply_without_a_game(model: Model) -> None:
     await nexo.reply('oi', None, [])
     assert model.calls[0]['input'] == [
-        {'role': 'user', 'content': 'Sem contexto PSN carregado.\n\n---\noi'}
+        {'role': 'user', 'content': f'Sem contexto PSN carregado.\n\n---\n{nexo.ASKED}\noi'}
     ]
 
 

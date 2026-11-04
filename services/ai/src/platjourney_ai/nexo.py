@@ -521,6 +521,11 @@ def resume_note(resume: Resume | None) -> str:
     )
 
 
+# Without it, a short message after the long context reads as a fragment: the model asked the
+# player to finish a sentence that was already the request.
+ASKED = 'Mensagem do jogador (é a isto que você responde; o que vem acima é só dado de consulta):'
+
+
 async def ask(
     user_text: str,
     context: str,
@@ -534,7 +539,7 @@ async def ask(
         tools=[{'type': 'web_search'}],
         reasoning={'effort': 'low'},
         max_output_tokens=settings.chat_max_output_tokens,
-        input=[*turns, {'role': 'user', 'content': f'{context}\n\n---\n{user_text}'}],
+        input=[*turns, {'role': 'user', 'content': f'{context}\n\n---\n{ASKED}\n{user_text}'}],
     )
     return llm.strip_urls(response.output_text)
 
