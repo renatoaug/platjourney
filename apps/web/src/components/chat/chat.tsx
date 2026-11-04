@@ -27,6 +27,7 @@ import { DemoConnectButton } from '../demo'
 import { NexoHero } from '../nexo-hero'
 import { titleHref } from '../tip'
 import '../demo.css'
+import { AnswerGame, AnswerTrophy, type ChatGameCard, type ChatTrophyCard } from './answer-cards'
 import { CommandMenu, type MenuItem } from './command-menu'
 import './chat.css'
 
@@ -206,7 +207,9 @@ export interface ChatMessage {
   role: string
   content: string
   created_at?: string
-  game?: Pick<Game, 'id' | 'name' | 'cover_url'> | null
+  game?: Pick<Game, 'id' | 'name' | 'cover_url' | 'art_url'> | null
+  trophy?: ChatTrophyCard | null
+  card?: ChatGameCard | null
   optimistic?: boolean
 }
 
@@ -273,6 +276,8 @@ function AssistantMessage({
       id={pending ? 'pending' : undefined}
     >
       {!pending && message && <MessageMeta message={message} />}
+      {!pending && message?.trophy && <AnswerTrophy trophy={message.trophy} game={message.game} />}
+      {!pending && message?.card?.kind === 'game' && <AnswerGame card={message.card} />}
       {pending ? (
         <div className="message-content">
           <span className="typing" role="img" aria-label={t('typing')}>

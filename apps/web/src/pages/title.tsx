@@ -23,8 +23,8 @@ import {
 } from '../components/hero'
 import { NextTrophy } from '../components/next-trophy'
 import { SimilarGamesSection, similarGames } from '../components/similar-games'
-import { TrophyList } from '../components/trophy-list'
-import { TrophyRoadmap } from '../components/trophy-roadmap'
+import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
+import { TrophyRoadmap, TrophyRoadmapSkeleton } from '../components/trophy-roadmap'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { fmtHours } from '../lib/format'
@@ -133,7 +133,9 @@ function titleQuery(spec: string, search: string) {
       : kind === 'id'
         ? `id=${encodeURIComponent(value)}`
         : `name=${encodeURIComponent(value.split('?')[0])}&platform=${encodeURIComponent(platform)}`
-  return { query, owned: kind !== 'name' }
+  // A PSN list id comes from the player's library. A catalog link can be any game, and most are not
+  // owned, so its skeleton is the catalog page's.
+  return { query, owned: kind === 'id' }
 }
 
 function TitleMeta({ d }: { d: TitleDetail }) {
@@ -233,9 +235,25 @@ function TitleSkeleton({ owned = true }: { owned?: boolean }) {
           }
         />
       </div>
-      <div className="card guide-wide" style={{ marginTop: 20 }}>
-        <GuideSkeleton />
+      <div className="game-nav" aria-hidden="true">
+        <Sk w="186px" h={52} style={{ borderRadius: 'var(--radius-pill)' }} />
       </div>
+      <TrophyRoadmapSkeleton />
+      <GameColumns
+        style={{ marginTop: 20 }}
+        trophies={
+          <div className="card">
+            <TrophyListSkeleton />
+          </div>
+        }
+        guide={
+          <div className="stack">
+            <div className="card">
+              <GuideSkeleton />
+            </div>
+          </div>
+        }
+      />
     </>
   )
 }
@@ -396,9 +414,14 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
             id="title-trophies"
           >
             {owned || d.trophies?.length ? (
-              // Games not owned still list their trophies (from the catalog), without the
-              // player's progress and without "Pedir dica", which needs that progress.
-              <TrophyList trophies={d.trophies ?? []} prefix="title-t" np={owned ? d.np : null} />
+              // Games not owned list their trophies from the catalog, without the player's progress.
+              // Nexo talks about them by the catalog game.
+              <TrophyList
+                trophies={d.trophies ?? []}
+                prefix="title-t"
+                np={owned ? d.np : null}
+                askGame={owned ? undefined : { id: d.game.id, name: d.name }}
+              />
             ) : (
               <>
                 <h2 className="trophy-heading">

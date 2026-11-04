@@ -590,3 +590,31 @@ def test_journey_focus_matches_pending_owned_trophy_without_claiming_location() 
         context(journeyFocus='Sobrevivente', owned=False),
     ]:
         assert 'Próximo foco exibido na jornada:' not in nexo.lean_context(ctx)
+
+
+async def test_a_conversation_closes_by_pulling_the_next_step_and_a_notice_does_not(
+    model: Model,
+) -> None:
+    await nexo.ask('oi', 'ctx', conversation=True)
+    assert 'Como fechar uma resposta nesta conversa' in model.calls[-1]['instructions']
+    await nexo.ask('oi', 'ctx')
+    assert 'Como fechar uma resposta nesta conversa' not in model.calls[-1]['instructions']
+
+
+def test_the_closing_has_its_limits() -> None:
+    assert 'Uma dúvida rápida' in nexo.CLOSING
+    assert 'Nunca use frase genérica' in nexo.CLOSING
+    assert 'Não cite troféu oculto' in nexo.CLOSING
+    assert 'se despedir' in nexo.CLOSING
+
+
+def test_a_resume_names_the_trophies_and_when() -> None:
+    assert nexo.resume_note(None) == ''
+    note = nexo.resume_note(nexo.Resume(hours_ago=8, open=['Discreta']))
+    assert 'foi há 8 horas' in note
+    assert 'ainda em aberto: Discreta.' in note
+    assert 'conquistados' not in note
+    assert 'foi ontem' in nexo.resume_note(nexo.Resume(hours_ago=30, open=['Discreta']))
+    note = nexo.resume_note(nexo.Resume(hours_ago=72, earned=['Maligna'], open=['Discreta']))
+    assert 'foi há 3 dias' in note
+    assert 'conquistados depois dela: Maligna; ainda em aberto: Discreta.' in note

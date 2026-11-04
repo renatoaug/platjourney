@@ -3,7 +3,14 @@ import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
 import { currentTag } from '../src/costs.ts'
 import type { GameContext } from '../src/nexo.ts'
-import { proactiveTip, reply, trophyHelp, unlockReaction, withoutTitle } from '../src/nexo.ts'
+import {
+  proactiveTip,
+  reply,
+  resumeFrom,
+  trophyHelp,
+  unlockReaction,
+  withoutTitle,
+} from '../src/nexo.ts'
 import * as plugins from '../src/plugins.ts'
 import * as activity from '../src/repository/activity.ts'
 import { makeContext, makeTrophy, makeUser } from './fixtures.ts'
@@ -153,6 +160,44 @@ test('a reply carries the conversation with notices in time order', async () => 
     ['user:u1', 'user', 'e agora?', 'game:1'],
     ['user:u1', 'assistant', 'Resposta', 'game:1'],
   ])
+})
+
+test('a conversation picks up the trophies the player brought up, after six hours', () => {
+  const now = new Date('2026-01-03T10:00:00Z').getTime()
+  const at = '2026-01-01T10:00:00Z'
+  const said = (content: string, role = 'user') => ({ role, content, created_at: at })
+  const trophies = [
+    makeTrophy({ name: 'Maligna', earned: true, earnedAt: '2026-01-02T09:00:00Z' }),
+    makeTrophy({ name: 'Discreta', earned: false }),
+    makeTrophy({ name: 'Antiga', earned: true, earnedAt: '2025-12-01T09:00:00Z' }),
+    makeTrophy({ name: 'Segredo', earned: false, hidden: true }),
+  ]
+  const asked = [said('e o maligna, a discreta, antiga e segredo?')]
+  expect(resumeFrom(asked, trophies, now)).toEqual({
+    hoursAgo: 48,
+    earned: ['Maligna'],
+    open: ['Discreta'],
+  })
+  // Only listed in an answer, or never named: nothing to pick up.
+  expect(
+    resumeFrom([said('o que falta?'), said('Discreta', 'assistant')], trophies, now),
+  ).toBeNull()
+  // A word that merely contains the name is not the trophy.
+  expect(resumeFrom([said('indiscreta')], trophies, now)).toBeNull()
+  // The conversation is still going on.
+  expect(resumeFrom(asked, trophies, new Date(at).getTime() + 5 * 3_600_000)).toBeNull()
+  expect(resumeFrom([], trophies, now)).toBeNull()
+})
+
+test('a reply sends the resume when there is one', async () => {
+  spyOn(activity, 'recentMessages').mockResolvedValue([
+    { id: 'm1', role: 'user', content: 'como faço Maligna?', created_at: '2026-01-01T10:00:00Z' },
+  ])
+  const trophies = [makeTrophy({ name: 'Maligna', earned: false })]
+  await reply(user, 'oi', { ...ctx, trophies })
+  expect(ai.mock.calls[0]?.[1]).toMatchObject({
+    resume: { earned: [], open: ['Maligna'] },
+  })
 })
 
 test('a reply without a game sends no context', async () => {

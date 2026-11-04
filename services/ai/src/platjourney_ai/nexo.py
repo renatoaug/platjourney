@@ -478,12 +478,59 @@ LANGUAGE = {
 }
 
 
+# Only in a conversation: a notice arrives while the player is playing and asks for nothing.
+CLOSING = """
+
+Como fechar uma resposta nesta conversa:
+- A resposta vem primeiro. Uma dúvida rápida ("como faço X?", "como sobe Y?") termina na resposta: sem sugerir outro passo, sem lembrar o último troféu conquistado, sem resumo do que falta.
+- Acrescente uma última frase, de amigo que acompanha a jornada, só quando os dados trouxerem um gancho que muda o que o jogador faz agora: um perdível do guia ainda aberto perto de onde ele está, ou o jogador perguntando o que falta ou o que fazer e a platina estando perto.
+- A frase cita o fato concreto e chama para a ação ("São só 3. Dá para fechar a platina essa semana. Bora?"; "Antes de avançar, você já pegou o Piedade? Depois do portão ele fecha."). Vem antes da linha de fonte e cabe em uma linha. Nunca use frase genérica ("quer mais alguma dica?", "posso ajudar em algo mais?", "o que achou?").
+- No máximo uma por resposta. Se a sua última mensagem já fechou assim e o jogador não respondeu a isso, não insista.
+- Não invente: vale a mesma regra de nada sem base. Não cite troféu oculto nem revele o que vem depois na história.
+- Quando o jogador se despedir ou agradecer encerrando o assunto, responda só com a despedida: sem troféu, sem número, sem convite.
+
+Retomada (exceção à regra de responder só o que foi perguntado):
+- Quando o contexto trouxer "Retomada", feche com uma frase sobre um dos troféus dela, depois de responder o que o jogador perguntou. Essa frase substitui qualquer outro fechamento.
+- A conversa foi em outro dia: nunca fale do plano no presente ou no futuro nem repita a dica que já deu.
+- Conquistado depois: comemore pelo nome ("Boa, a **Maligna** caiu!"). Ainda em aberto: pergunte como foi ("E a **Maligna**, rolou?"). Se a pergunta atual já é sobre esse troféu, não pergunte: só responda.
+- Não comente quanto tempo passou. Sem "Retomada" no contexto, não pergunte como foi nada."""  # noqa: E501
+
+
+class Resume(Wire):
+    """The player back at a game's conversation, with the trophies they brought up in it."""
+
+    hours_ago: int
+    earned: list[str] = Field(default_factory=list[str])
+    open: list[str] = Field(default_factory=list[str])
+
+
+def resume_note(resume: Resume | None) -> str:
+    if not resume:
+        return ''
+    days = resume.hours_ago // 24
+    when = (
+        f'há {resume.hours_ago} horas' if not days else 'ontem' if days == 1 else f'há {days} dias'
+    )
+    parts = [
+        *([f'conquistados depois dela: {", ".join(resume.earned)}'] if resume.earned else []),
+        *([f'ainda em aberto: {", ".join(resume.open)}'] if resume.open else []),
+    ]
+    return (
+        f'\n\nRetomada: a última conversa sobre este jogo foi {when}. '
+        f'Troféus de que o jogador falou nela, {"; ".join(parts)}.'
+    )
+
+
 async def ask(
-    user_text: str, context: str, history: list[Turn] | None = None, locale: str = 'pt-BR'
+    user_text: str,
+    context: str,
+    history: list[Turn] | None = None,
+    locale: str = 'pt-BR',
+    conversation: bool = False,
 ) -> str:
     turns = [t.model_dump() for t in history or []]
     response = await llm.respond(
-        instructions=system_prompt() + LANGUAGE.get(locale, ''),
+        instructions=system_prompt() + (CLOSING if conversation else '') + LANGUAGE.get(locale, ''),
         tools=[{'type': 'web_search'}],
         reasoning={'effort': 'low'},
         max_output_tokens=settings.chat_max_output_tokens,
@@ -539,7 +586,12 @@ async def trophy_help(ctx: GameContext, trophy: Trophy) -> str:
     guide_passages, used = await passages(ctx, prompt, [trophy.name_en])
     context = lean_context(ctx, [trophy.name_en], prompt)
     return cite(
-        await ask(prompt, f'Contexto PSN do jogo:\n{context}{guide_passages}', locale=ctx.locale),
+        await ask(
+            prompt,
+            f'Contexto PSN do jogo:\n{context}{guide_passages}',
+            locale=ctx.locale,
+            conversation=True,
+        ),
         used,
     )
 
@@ -570,15 +622,21 @@ class Moderated(Exception):
 
 
 async def reply(
-    text: str, ctx: GameContext | None, history: list[Turn], locale: str = 'pt-BR'
+    text: str,
+    ctx: GameContext | None,
+    history: list[Turn],
+    locale: str = 'pt-BR',
+    resume: Resume | None = None,
 ) -> str:
     if await llm.flagged(text):
         raise Moderated
     if not ctx:
-        return await ask(text, 'Sem contexto PSN carregado.', history, locale)
+        return await ask(text, 'Sem contexto PSN carregado.', history, locale, conversation=True)
     focus = mentioned_trophies(text, ctx)
     found, used = await passages(ctx, text, focus)
     if not found:
         await record_gap(ctx, text)
-    context = f'Contexto PSN do jogo atual:\n{lean_context(ctx, focus, text)}{found}'
-    return cite(await ask(text, context, history, ctx.locale), used)
+    context = (
+        f'Contexto PSN do jogo atual:\n{lean_context(ctx, focus, text)}{resume_note(resume)}{found}'
+    )
+    return cite(await ask(text, context, history, ctx.locale, conversation=True), used)

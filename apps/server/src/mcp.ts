@@ -10,7 +10,8 @@ import { config, version } from './config.ts'
 import { tagged } from './costs.ts'
 import { isDemo } from './demo.ts'
 import { BadBody, json, readBody } from './http.ts'
-import { type Args, ToolError } from './mcp-tools/shared.ts'
+import { PLAYER_APP } from './mcp-apps/player.ts'
+import { type Args, type Tool, ToolError } from './mcp-tools/shared.ts'
 import { TOOLS } from './mcp-tools.ts'
 import { bearer, origin, resourceMetadataUrl } from './oauth.ts'
 import { beforeTool, Refused } from './plugins.ts'
@@ -19,17 +20,42 @@ import type { AssistantKey } from './repository/activity.ts'
 import type { User } from './repository/user.ts'
 
 const PROTOCOLS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05']
-const byName = new Map(TOOLS.map((t) => [t.name, t]))
-const listed = TOOLS.map(({ name, description, inputSchema, changes, destructive }) => ({
-  name,
-  description,
-  inputSchema,
-  annotations: {
-    readOnlyHint: !changes,
-    ...(changes ? { destructiveHint: destructive === true } : {}),
-    openWorldHint: false,
+// The views, while they are on.
+const apps = () => (config.mcp.apps ? [PLAYER_APP] : [])
+const allTools = () => {
+  const tools = [...TOOLS, ...apps().flatMap((app) => app.tools)]
+  const names = new Set<string>()
+  for (const tool of tools) {
+    if (names.has(tool.name)) throw new Error(`MCP tool ${tool.name} is registered more than once`)
+    names.add(tool.name)
+  }
+  return tools
+}
+const byName = () => new Map(allTools().map((tool) => [tool.name, tool]))
+const toolMeta = ({ resourceUri, visibility }: NonNullable<Tool['ui']>) => ({
+  _meta: {
+    ui: { ...(resourceUri ? { resourceUri } : {}), ...(visibility ? { visibility } : {}) },
+    // ChatGPT's compatibility alias; other hosts read ui.resourceUri above.
+    ...(resourceUri ? { 'openai/outputTemplate': resourceUri } : {}),
   },
-}))
+})
+const listed = () =>
+  allTools().map(({ name, description, inputSchema, changes, destructive, ui }) => ({
+    name,
+    description,
+    inputSchema,
+    annotations: {
+      readOnlyHint: !changes,
+      ...(changes ? { destructiveHint: destructive === true } : {}),
+      openWorldHint: false,
+    },
+    ...(ui ? toolMeta(ui) : {}),
+  }))
+
+const resources = () => apps().flatMap((app) => app.resources)
+
+const SHOWN =
+  'The card with this result is on screen for the player. Do not repeat it or draw another card: say one short sentence at most.'
 
 const text = (value: unknown, isError = false) => ({
   content: [{ type: 'text', text: typeof value === 'string' ? value : JSON.stringify(value) }],
@@ -43,8 +69,8 @@ interface Caller {
   assistant: AssistantKey
 }
 
-async function callTool({ user, connection, assistant }: Caller, params: Args) {
-  const tool = typeof params.name === 'string' ? byName.get(params.name) : undefined
+async function callTool({ user, connection, assistant }: Caller, params: Args, base: string) {
+  const tool = typeof params.name === 'string' ? byName().get(params.name) : undefined
   if (!tool) return text(`Unknown tool ${String(params.name)}.`, true)
   const limit = config.mcp.perMinute
   if (limit && !allow(`mcp|${connection}`, limit, 60_000))
@@ -54,9 +80,13 @@ async function callTool({ user, connection, assistant }: Caller, params: Args) {
   try {
     await beforeTool({ user, tool: tool.name })
     const args = (params.arguments ?? {}) as Args
-    const result = await tagged({ user: user.id }, () => tool.run(user, args, { assistant }))
+    const result = await tagged({ user: user.id }, () => tool.run(user, args, { assistant, base }))
     const value =
       tool.next && result && typeof result === 'object' ? { ...result, next: tool.next } : result
+    // What a view shows goes in _meta, which reaches the view and not the model: with the result in
+    // hand, an assistant retells the card in its own words right below it.
+    if (tool.ui?.resourceUri)
+      return { ...text(SHOWN), structuredContent: { shown: true }, _meta: { view: value } }
     return { ...text(value), structuredContent: value }
   } catch (e) {
     if (e instanceof ToolError || e instanceof Refused) return text(e.message, true)
@@ -165,7 +195,11 @@ async function answer(caller: Caller, msg: Args, base: string) {
       const asked = typeof params.protocolVersion === 'string' ? params.protocolVersion : ''
       return {
         protocolVersion: PROTOCOLS.includes(asked) ? asked : PROTOCOLS[0],
-        capabilities: { tools: { listChanged: false }, prompts: { listChanged: false } },
+        capabilities: {
+          tools: { listChanged: false },
+          prompts: { listChanged: false },
+          ...(resources().length ? { resources: { listChanged: false } } : {}),
+        },
         serverInfo: {
           name: 'platjourney',
           title: 'PlatJourney',
@@ -179,13 +213,40 @@ async function answer(caller: Caller, msg: Args, base: string) {
     case 'ping':
       return {}
     case 'tools/list':
-      return { tools: listed }
+      return { tools: listed() }
     case 'tools/call':
-      return callTool(caller, params)
+      return callTool(caller, params, base)
     case 'prompts/list':
       return { prompts: promptList }
     case 'prompts/get':
       return getPrompt(params)
+    case 'resources/list':
+      return resources().length
+        ? {
+            resources: resources().map(({ uri, name, mimeType, _meta }) => ({
+              uri,
+              name,
+              mimeType,
+              _meta,
+            })),
+          }
+        : undefined
+    case 'resources/read': {
+      const resource =
+        typeof params.uri === 'string' ? resources().find((r) => r.uri === params.uri) : undefined
+      return resource
+        ? {
+            contents: [
+              {
+                uri: resource.uri,
+                mimeType: resource.mimeType,
+                text: resource.text,
+                _meta: resource._meta,
+              },
+            ],
+          }
+        : undefined
+    }
     default:
       return undefined
   }

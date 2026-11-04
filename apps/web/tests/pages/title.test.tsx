@@ -67,17 +67,19 @@ test('a game by name asks with its platform, PS5 by default', async () => {
   expect(second.calls[0].path).toBe('/api/title?name=Days%20Gone&platform=PS5')
 })
 
-test('loading: the journey for a library game, the wide guide for one by name', () => {
+test('loading: the journey for a library game, the catalog page for any other link', () => {
   mockApi({ '/api/title': never })
-  const { container, unmount } = renderApp(<Title />, {
-    path: '/title/game/game%3A1',
-    route: '/title/*',
-  })
+  const { unmount } = renderApp(<Title />, { path: '/title/id/NPWR1_00', route: '/title/*' })
   expect(screen.getByRole('heading', { name: 'Seus troféus' })).toBeTruthy()
-  expect(container.querySelector('.guide-wide')).toBeNull()
   unmount()
-  const second = renderApp(<Title />, { path: '/title/name/Hades', route: '/title/*' })
-  expect(second.container.querySelector('.guide-wide .sk')).toBeTruthy()
+  for (const path of ['/title/game/game%3A1', '/title/name/Hades']) {
+    const view = renderApp(<Title />, { path, route: '/title/*' })
+    expect(screen.queryByRole('heading', { name: 'Seus troféus' })).toBeNull()
+    expect(view.container.querySelector('.trophy-roadmap')).toBeTruthy()
+    expect(view.container.querySelector('.guide-heading')).toBeTruthy()
+    expect(view.container.querySelector('.trophy-controls')).toBeTruthy()
+    view.unmount()
+  }
 })
 
 test('a game the player does not own: its list by tier, its facts and saving it', async () => {
@@ -279,4 +281,14 @@ test('a catalog game offers a roadmap preview without asserting ownership or per
   expect(document.querySelector('.roadmap-total')?.textContent).toContain('sem progresso pessoal')
   expect(screen.queryByRole('button', { name: 'Voltar ao meu progresso' })).toBeNull()
   expect(document.querySelector('.roadmap-past')).toBeNull()
+})
+
+test('a game the player does not own offers Nexo on its trophies, by the catalog game', async () => {
+  open('/title/game/game%3A19561', recommendedData)
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
+  const asks = [...document.querySelectorAll('#title-trophies .trophy-help-btn')]
+  expect(asks.length).toBeGreaterThan(0)
+  const href = asks[0].getAttribute('href') ?? ''
+  expect(href).toContain(`game=${encodeURIComponent('game:19561')}`)
+  expect(href).toContain('trophy=')
 })

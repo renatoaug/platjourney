@@ -335,7 +335,7 @@
   }
 
   .roadmap-context-details > summary {
-    padding: 14px 20px;
+    padding: 14px 32px;
     min-height: 44px;
     cursor: pointer;
     color: var(--color-fg-muted);
@@ -1434,6 +1434,10 @@
 
     .roadmap-past {
       margin: 0 20px;
+    }
+
+    .roadmap-context-details > summary {
+      padding-inline: 20px;
     }
   }
 

@@ -202,11 +202,45 @@ export function trophyHelp(user: User, ctx: GameContext, trophy: TrophyStatus): 
   })
 }
 
+const RESUME_AFTER_HOURS = 6
+const HOUR_MS = 3_600_000
+const RESUME_MESSAGES = 6
+
+function mentions(text: string, name: string): boolean {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}($|[^\\p{L}\\p{N}])`, 'iu').test(text)
+}
+
+/** The player coming back to a game's conversation after a while, with the trophies they brought
+ * up in it, so Nexo can ask how it went. A trophy only listed in an answer is not one the player
+ * was after, and a hidden one still locked stays unnamed. Nothing to pick up, nothing is sent. */
+export function resumeFrom(
+  messages: { role: string; content: string; created_at: string }[],
+  trophies: TrophyStatus[],
+  now = Date.now(),
+) {
+  if (!messages.length) return null
+  const last = Math.max(...messages.map((m) => new Date(m.created_at).getTime()))
+  const hoursAgo = Math.floor((now - last) / HOUR_MS)
+  if (hoursAgo < RESUME_AFTER_HOURS) return null
+  const said = messages.filter((m) => m.role === 'user').map((m) => m.content)
+  const named = trophies.filter(
+    (t) => (t.earned || !t.hidden) && said.some((text) => mentions(text, t.name)),
+  )
+  const earned = named.filter((t) => t.earnedAt && new Date(t.earnedAt).getTime() > last)
+  const open = named.filter((t) => !t.earned)
+  if (!earned.length && !open.length) return null
+  return { hoursAgo, earned: earned.map((t) => t.name), open: open.map((t) => t.name) }
+}
+
 export function reply(user: User, userText: string, ctx?: GameContext): Promise<string> {
   // The guide lookup is part of the answer's cost.
   return tagged({ user: user.id, action: 'chat' }, async () => {
     let text: string
     try {
+      const resume = ctx
+        ? resumeFrom(await recentMessages(user.id, RESUME_MESSAGES, ctx.game.id), ctx.trophies)
+        : null
       text = await ask(
         user,
         'chat',
@@ -215,6 +249,7 @@ export function reply(user: User, userText: string, ctx?: GameContext): Promise<
           text: userText,
           context: ctx ? aiContext(ctx, user) : null,
           locale: user.locale === 'en' ? 'en' : 'pt-BR',
+          ...(resume ? { resume } : {}),
         },
         { text: userText, game: ctx?.game.id },
       )

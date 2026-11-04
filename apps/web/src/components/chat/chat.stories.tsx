@@ -56,6 +56,61 @@ export const Loaded: Story = { args: { ...base, chat: MESSAGES } }
 export const Demo: Story = { args: { ...base, chat: [], demo: true } }
 export const DemoEnglish: Story = { ...Demo, globals: { locale: Language.En } }
 export const Empty: Story = { args: { ...base, chat: [] } }
+export const GameCard: Story = {
+  args: {
+    ...base,
+    chat: [
+      { role: 'user', content: 'O que platinar agora?' },
+      {
+        role: 'assistant',
+        content:
+          'Curto, tranquilo e combina com o que você terminou por último.\n\n**Primeiro passo:** comece pelo capítulo 1.',
+        card: {
+          kind: 'game',
+          game: 'game:110248',
+          name: 'Stray',
+          difficulty: 2,
+          hours: 10,
+          progress: 30,
+        },
+      },
+    ],
+  },
+}
+export const GameCardNoGuide: Story = {
+  args: {
+    ...base,
+    chat: [
+      { role: 'user', content: 'What should I play now?' },
+      {
+        role: 'assistant',
+        content: 'A game without a guide yet.',
+        card: { kind: 'game', game: 'game:1', name: 'Jogo sem guia' },
+      },
+    ],
+  },
+}
+export const TrophyCard: Story = {
+  args: {
+    ...base,
+    chat: [
+      { role: 'user', content: 'Sobre o troféu **Mira Certeira**: como faço?' },
+      {
+        role: 'assistant',
+        content: 'Carregue cada disparo antes de soltar: errar um alvo reinicia o desafio.',
+        game: { id: 'game:1', name: 'Caminho de Exemplo' },
+        trophy: {
+          id: 2,
+          name: 'Mira Certeira',
+          detail: 'Acerte os cinco alvos do capítulo 2.',
+          type: 'bronze',
+          earned: false,
+          rarity: 12.4,
+        },
+      },
+    ],
+  },
+}
 export const TrophyContext: Story = {
   args: { ...base, chat: [], trophy: 'Laboratório de bolso' },
   render: function Context(args) {

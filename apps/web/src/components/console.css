@@ -79,6 +79,9 @@
   }
 
   .console-focus {
+    /* Progress, Nexo's line and the actions share one width. */
+    --console-column: 620px;
+
     align-self: end;
     display: grid;
     gap: 10px;
@@ -224,7 +227,7 @@
     grid-template-columns: auto minmax(80px, 1fr) auto auto;
     align-items: center;
     gap: 14px;
-    max-width: 560px;
+    max-width: var(--console-column);
     padding: 12px 16px;
     border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
     border-radius: var(--radius-card);
@@ -293,7 +296,7 @@
     display: flex;
     gap: 10px;
     align-items: flex-start;
-    max-width: 620px;
+    max-width: var(--console-column);
     margin: 0;
     padding: 10px 12px;
     border: 1px solid color-mix(in srgb, var(--color-fg) var(--alpha-tint), transparent);
@@ -320,6 +323,7 @@
   }
 
   .console-actions {
+    max-width: var(--console-column);
     display: grid;
     grid-template-columns: minmax(0, 0.8fr) minmax(max-content, 1.2fr);
     gap: 8px;

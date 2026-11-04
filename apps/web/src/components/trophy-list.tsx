@@ -449,12 +449,15 @@ export function TrophyList({
   trophies,
   prefix = 't',
   np,
+  askGame,
   heading,
   note,
 }: {
   trophies: Trophy[] | null
   prefix?: string
   np?: string | null
+  /** A catalog game the player does not own: Nexo can still talk about its trophies. */
+  askGame?: { id: string; name: string }
   heading?: string
   note?: string
 }) {
@@ -474,7 +477,11 @@ export function TrophyList({
   const paged = useRef(false)
 
   // "Pedir dica" opens Nexo with the trophy attached; the demo never asks the model.
-  const askHref = (name: string) => (np && !me.demo ? nexoHref(np, null, name) : null)
+  const askHref = (name: string) => {
+    if (me.demo) return null
+    if (np) return nexoHref(np, null, name)
+    return askGame ? nexoHref(askGame.id, askGame.name, name) : null
+  }
 
   const list = trophies ?? []
   const sort = chosenSort ?? autoSort(list, saved)

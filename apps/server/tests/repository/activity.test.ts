@@ -127,10 +127,27 @@ test('a chat message is stored with its role and optional game', async () => {
   await appendMessage('user:u1', 'user', 'Oi', 'game:7')
   await appendMessage('user:u1', 'assistant', 'Olá')
   expect(q.mock.calls[0]).toEqual([
-    'CREATE message SET user = $user, role = $role, content = $content, game = $game',
+    'CREATE message SET user = $user, role = $role, content = $content, game = $game, card = $card',
     { user, role: 'user', content: 'Oi', game },
   ])
   expect(q.mock.calls[1][1]).toEqual({ user, role: 'assistant', content: 'Olá', game: undefined })
+})
+
+test('a card is stored in snake_case and comes back in camelCase', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue(undefined)
+  await appendMessage('user:u1', 'assistant', 'Olá', 'game:7', {
+    kind: 'game',
+    game: 'game:7',
+    name: 'Stray',
+    coverUrl: 'c.jpg',
+    artUrl: null,
+    difficulty: 2,
+    hours: 10,
+    progress: null,
+  })
+  expect((q.mock.calls[0][1] as { card: unknown }).card).toMatchObject({ cover_url: 'c.jpg' })
+  q.mockResolvedValue([{ content: 'a', card: { kind: 'game', cover_url: 'c.jpg' } }] as never)
+  expect((await recentMessages('user:u1'))[0].card).toMatchObject({ coverUrl: 'c.jpg' })
 })
 
 test('recent messages come back oldest first', async () => {

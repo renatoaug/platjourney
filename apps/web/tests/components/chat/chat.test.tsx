@@ -2,9 +2,15 @@ import { describe, expect, mock, test } from 'bun:test'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { CHAT_MAX, type ChatLoad, ChatSkeleton, NexoChat } from '../../../src/components/chat/chat'
-import { Loaded, Pending } from '../../../src/components/chat/chat.stories'
+import {
+  GameCard,
+  GameCardNoGuide,
+  Loaded,
+  Pending,
+  TrophyCard,
+} from '../../../src/components/chat/chat.stories'
 import { fakeRecorder } from '../../support/recorder'
-import { mockApi } from '../../support/web'
+import { mockApi, renderApp } from '../../support/web'
 
 const messages = Loaded.args?.chat as ChatLoad
 const pending = Pending.args?.chat as ChatLoad
@@ -312,4 +318,76 @@ describe('mic', () => {
     await screen.findByDisplayValue('No Plague Tale: onde fica a cripta?')
     recorder.restore()
   })
+})
+
+test('an answer about a trophy shows its art, what PSN asks and where to see it', () => {
+  show(TrophyCard.args?.chat as ChatLoad)
+  const card = document.querySelector('.answer-card')
+  expect(card?.textContent).toContain('Mira Certeira')
+  expect(card?.textContent).toContain('Pendente')
+  expect(card?.textContent).toContain('Acerte os cinco alvos')
+  expect(
+    within(card as HTMLElement)
+      .getByRole('link')
+      .getAttribute('href'),
+  ).toContain('game')
+})
+
+test('an answer about no trophy has no card', () => {
+  show(messages)
+  expect(document.querySelector('.answer-card')).toBeNull()
+})
+
+test('a recommendation shows the game, what it takes and the way to it', () => {
+  renderApp(
+    <NexoChat
+      chat={GameCard.args?.chat as ChatLoad}
+      sending={false}
+      subtitle=""
+      onSend={() => {}}
+    />,
+  )
+  const card = document.querySelector('.answer-card')
+  expect(card?.textContent).toContain('Stray')
+  expect(card?.textContent).toContain('2/10')
+  expect(card?.textContent).toContain('~10 horas')
+  expect(card?.textContent).toContain('30%')
+  expect(
+    within(card as HTMLElement)
+      .getByRole('link')
+      .getAttribute('href'),
+  ).toContain('110248')
+})
+
+test('a game already in the interests says so instead of offering to add it', () => {
+  renderApp(
+    <NexoChat
+      chat={GameCard.args?.chat as ChatLoad}
+      sending={false}
+      subtitle=""
+      onSend={() => {}}
+    />,
+    {
+      value: {
+        data: { goals: { interests: [{ id: 'i1', game: { id: 'game:110248', name: 'Stray' } }] } },
+      },
+    } as never,
+  )
+  const button = document.querySelector('.answer-card button') as HTMLButtonElement
+  expect(button.textContent).toBe('Nos seus interesses')
+  expect(button.disabled).toBe(true)
+})
+
+test('a game with no guide facts shows only what it has', () => {
+  renderApp(
+    <NexoChat
+      chat={GameCardNoGuide.args?.chat as ChatLoad}
+      sending={false}
+      subtitle=""
+      onSend={() => {}}
+    />,
+  )
+  const card = document.querySelector('.answer-card')
+  expect(card?.textContent).toContain('Jogo sem guia')
+  expect(card?.querySelector('.answer-stats')).toBeNull()
 })

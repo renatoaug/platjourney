@@ -879,12 +879,30 @@
     mask-image: radial-gradient(ellipse, var(--color-fg) 25%, transparent 72%);
   }
 
+  /* The game's name and the conversations stay readable over the messages passing under them. */
+  .chat-page .nexo-chat-tools {
+    position: relative;
+  }
+
+  .chat-page .nexo-chat-tools::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    /* Up to the row's top only: above it is the page's toolbar. */
+    inset: 0 -20px -14px;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--color-bg) 78%, transparent);
+    backdrop-filter: blur(10px);
+    mask-image: linear-gradient(var(--color-fg) 62%, transparent);
+  }
+
   .chat-page .nexo-chat-top :is(button, a, input) {
     pointer-events: auto;
   }
 
   @media (prefers-reduced-transparency: reduce) {
-    .chat-page .nexo-chat-heading::before {
+    .chat-page .nexo-chat-heading::before,
+    .chat-page .nexo-chat-tools::before {
       background: var(--color-bg);
       backdrop-filter: none;
     }
