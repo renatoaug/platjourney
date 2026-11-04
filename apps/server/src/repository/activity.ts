@@ -1,4 +1,4 @@
-import { plain, q, RecordId } from '../db.ts'
+import { camelKeys, plain, q, RecordId, snakeKeys } from '../db.ts'
 import type { Game } from './game.ts'
 import { gameRef } from './game.ts'
 import { userRef } from './user.ts'
@@ -199,10 +199,24 @@ export async function serverWarnedGames(user: string): Promise<Set<string>> {
 export type ChatRole = 'user' | 'assistant'
 export interface ChatMessage {
   game?: Game | null
+  /** What the answer shows besides its text, as it was when written. */
+  card?: GameCard | null
   id: string
   role: ChatRole
   content: string
   created_at: string
+}
+
+export interface GameCard {
+  kind: 'game'
+  game: string
+  name: string
+  coverUrl: string | null
+  artUrl: string | null
+  difficulty: number | null
+  hours: number | null
+  /** The player's progress, when they own it. */
+  progress: number | null
 }
 
 export async function appendMessage(
@@ -210,13 +224,18 @@ export async function appendMessage(
   role: ChatRole,
   content: string,
   game?: string,
+  card?: GameCard,
 ): Promise<void> {
-  await q('CREATE message SET user = $user, role = $role, content = $content, game = $game', {
-    user: userRef(user),
-    role,
-    content,
-    game: game ? gameRef(game) : undefined,
-  })
+  await q(
+    'CREATE message SET user = $user, role = $role, content = $content, game = $game, card = $card',
+    {
+      user: userRef(user),
+      role,
+      content,
+      game: game ? gameRef(game) : undefined,
+      card: card ? snakeKeys(card) : undefined,
+    },
+  )
 }
 
 /** The latest messages, oldest first. Each game has its own conversation: `game` picks it (a game
@@ -233,7 +252,7 @@ export async function recentMessages(
       { user: userRef(user), limit, ...(game ? { game: gameRef(game) } : {}) },
     ),
   )
-  return rows.reverse()
+  return rows.reverse().map((row) => (row.card ? { ...row, card: camelKeys(row.card) } : row))
 }
 
 /** One conversation per game the player talked about, the latest first. */
