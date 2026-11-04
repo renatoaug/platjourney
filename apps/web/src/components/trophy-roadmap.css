@@ -23,6 +23,11 @@
     min-height: 64px;
     cursor: pointer;
     list-style: none;
+    background: linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--color-accent) 8%, transparent),
+      transparent 70%
+    );
   }
 
   .roadmap-explore > summary::-webkit-details-marker {
@@ -33,6 +38,7 @@
     color: var(--color-accent);
     width: 28px;
     height: 28px;
+    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--color-accent) 45%, transparent));
   }
 
   .roadmap-explore > summary > span {
@@ -298,7 +304,10 @@
     overflow: hidden;
     border-radius: var(--radius-card);
     background: var(--color-bg-subtle);
-    box-shadow: var(--shadow-popover);
+    box-shadow:
+      var(--shadow-popover),
+      0 0 0 1px color-mix(in srgb, var(--color-trophy-gold) 22%, transparent),
+      0 0 36px color-mix(in srgb, var(--color-trophy-gold) 6%, transparent);
   }
 
   .roadmap-landscape {
@@ -344,27 +353,49 @@
     pointer-events: none;
     z-index: -1;
     background: radial-gradient(
-      ellipse at 80% 35%,
-      color-mix(in srgb, var(--color-trophy-gold) var(--alpha-tint), transparent),
-      transparent 55%
+      ellipse at 15% 45%,
+      color-mix(in srgb, var(--color-trophy-gold) 28%, transparent),
+      color-mix(in srgb, var(--color-trophy-gold) 8%, transparent) 38%,
+      transparent 75%
     );
     animation: roadmap-atmosphere 9s ease-in-out infinite alternate;
   }
 
   .roadmap-destination {
     display: flex;
-    gap: 22px;
+    gap: 30px;
     align-items: center;
     margin-top: 10px;
     max-width: 680px;
   }
 
   .roadmap-destination-art {
+    position: relative;
+    isolation: isolate;
     display: grid;
     place-items: center;
     width: 80px;
     height: 80px;
     flex-shrink: 0;
+  }
+
+  .roadmap-destination-art::before {
+    content: "";
+    position: absolute;
+    inset: -9px;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: var(--radius-round);
+    border: 1px solid color-mix(in srgb, var(--color-trophy-gold) 65%, transparent);
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-trophy-gold) 16%, var(--color-bg-subtle)),
+      color-mix(in srgb, var(--color-bg-subtle) 85%, transparent)
+    );
+    box-shadow:
+      0 0 0 5px color-mix(in srgb, var(--color-trophy-gold) 7%, transparent),
+      0 0 0 6px color-mix(in srgb, var(--color-trophy-gold) 22%, transparent),
+      0 0 30px color-mix(in srgb, var(--color-trophy-gold) 28%, transparent);
   }
 
   .roadmap-destination-art > img,
@@ -1085,7 +1116,7 @@
     }
 
     .roadmap-destination {
-      gap: 14px;
+      gap: 24px;
       margin-top: 8px;
     }
 
