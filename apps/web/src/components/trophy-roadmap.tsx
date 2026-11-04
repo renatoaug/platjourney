@@ -38,19 +38,10 @@ const messages = defineMessages({
     destination: 'Destino',
     mapNote: 'Rota sugerida, não sua localização no jogo.',
     parallelTrail: 'Enquanto avança',
-    mapTools: 'Ver toda a rota e conquistas',
+    extraRoute: 'Conteúdo adicional · {count}',
+    baseRoute: 'Voltar ao jogo base',
     reviewed: 'Roteiro revisado · {name}',
-    routeView: 'Visualização da rota',
-    routeJump: 'Explorar objetivo',
-    routeChoose: 'Escolha um objetivo',
-    routePosition: 'Marco {index} de {total}',
-    routeNow: 'Voltar ao próximo objetivo',
-    routeExtras: 'A rota inclui {count} troféus adicionais após a platina.',
-    routePending: 'Pendentes · {count}',
-    routeAll: 'Rota completa · {count}',
     routeComplete: 'Rota completa',
-    routeReference:
-      'Ordem de referência do roteiro, não a sequência em que você conquistou os troféus.',
     routeEarned: 'Conquistado',
     quickRead: 'Outras oportunidades',
     exploreRoute: 'Explorar o caminho',
@@ -175,18 +166,10 @@ const messages = defineMessages({
     destination: 'Destination',
     mapNote: 'Suggested route, not your location in the game.',
     parallelTrail: 'Along the way',
-    mapTools: 'Full route and achievements',
+    extraRoute: 'Additional content · {count}',
+    baseRoute: 'Back to the base game',
     reviewed: 'Reviewed roadmap · {name}',
-    routeView: 'Route view',
-    routeJump: 'Explore objective',
-    routeChoose: 'Choose an objective',
-    routePosition: 'Milestone {index} of {total}',
-    routeNow: 'Return to the next objective',
-    routeExtras: 'The route includes {count} additional trophies after the platinum.',
-    routePending: 'Pending · {count}',
-    routeAll: 'Full route · {count}',
     routeComplete: 'Full route',
-    routeReference: 'Roadmap reference order, not the sequence in which you earned trophies.',
     routeEarned: 'Earned',
     quickRead: 'Other opportunities',
     exploreRoute: 'Explore the path',
@@ -545,14 +528,13 @@ function RoadmapParallel({
   )
   if (!items.length) return null
   return (
-    <details className="roadmap-parallel">
-      <summary>
+    <section className="roadmap-parallel" aria-label={t('parallelTrail')}>
+      <h3>
         <Icon name="target" />
         <span>
           {t('parallelTrail')} <small>· {items.length}</small>
         </span>
-        <Icon name="chevron-down" />
-      </summary>
+      </h3>
       <p>{t('ongoingNote')}</p>
       <div>
         {items.map((trophy) => (
@@ -564,10 +546,17 @@ function RoadmapParallel({
           >
             <TrophyArt url={trophy.iconUrl} />
             <span>{trophy.name}</span>
+            {roadmapRisk(game, trophy) && (
+              <span className="roadmap-parallel-risk">
+                <Icon name="warning" />
+                {t('missable')}
+              </span>
+            )}
+            <Icon name="chevron-right" />
           </button>
         ))}
       </div>
-    </details>
+    </section>
   )
 }
 
@@ -585,17 +574,11 @@ function RoadmapNavigation({
   choose: (trophy: Trophy) => void
 }) {
   const t = useMessages(messages)
-  const [complete, setComplete] = useState(false)
   const platinum = ordered.find((x) => x.groupId === 'default' && x.type === 'platinum')
   const first = ordered[0]
-  const full = complete || selected.earned
   const extra = selected.groupId !== 'default'
   const route = ordered.filter((x) => (x.groupId !== 'default') === extra)
-  const remaining = route.filter((x) => !x.earned)
-  const select = (trophy: Trophy) => {
-    if (trophy.earned) setComplete(true)
-    choose(trophy)
-  }
+  const extras = ordered.filter((x) => x.groupId !== 'default')
   return (
     <section className="roadmap-campaign" aria-label={t('campaign')}>
       <RoadmapBackdrop game={game} />
@@ -604,7 +587,6 @@ function RoadmapNavigation({
           type="button"
           className="roadmap-origin"
           onClick={() => {
-            setComplete(true)
             if (first) choose(first)
           }}
         >
@@ -620,7 +602,7 @@ function RoadmapNavigation({
         </button>
         <span className="roadmap-endpoint-line" aria-hidden="true" />
         {platinum && (
-          <button type="button" className="roadmap-finish" onClick={() => select(platinum)}>
+          <button type="button" className="roadmap-finish" onClick={() => choose(platinum)}>
             <span>
               <small>{t('destination')}</small>
               <strong>{t('finale')}</strong>
@@ -630,11 +612,11 @@ function RoadmapNavigation({
         )}
       </div>
       <RoadmapForward
-        key={String(full)}
+        key={String(extra)}
         game={game}
-        pending={full ? route : remaining}
+        pending={route}
         order={ordered}
-        complete={full}
+        complete
         selected={selected}
         target={target}
         choose={choose}
@@ -652,125 +634,21 @@ function RoadmapNavigation({
           </button>
         )}
       </div>
-      <RoadmapParallel game={game} choose={select} />
-      <details className="roadmap-map-tools">
-        <summary>{t('mapTools')}</summary>
-        <RoadmapViewControls
-          complete={full}
-          pending={remaining.length}
-          total={route.length}
-          onChange={(full) => {
-            setComplete(full)
-            if (!full && target) choose(target)
-          }}
-        />
-        <RoadmapJump
-          route={full ? ordered : ordered.filter((x) => !x.earned)}
-          ordered={ordered}
-          selected={selected}
-          target={target}
-          choose={choose}
-          resume={() => {
-            setComplete(false)
-            if (target) choose(target)
-          }}
-        />
-      </details>
-    </section>
-  )
-}
-
-function RoadmapJump({
-  route,
-  ordered,
-  selected,
-  target,
-  choose,
-  resume,
-}: {
-  route: Trophy[]
-  ordered: Trophy[]
-  selected: Trophy
-  target?: Trophy
-  choose: (trophy: Trophy) => void
-  resume: () => void
-}) {
-  const t = useMessages(messages)
-  const position = ordered.indexOf(selected)
-  const extras = ordered.filter((x) => (x.groupId ?? 'default') !== 'default').length
-  return (
-    <div className="roadmap-jump">
-      <label>
-        <span>{t('routeJump')}</span>
-        <select
-          value={route.includes(selected) ? anchor(selected) : ''}
-          onChange={(event) => {
-            const trophy = route.find((x) => anchor(x) === event.target.value)
-            if (trophy) choose(trophy)
-          }}
-        >
-          <option value="" disabled>
-            {t('routeChoose')}
-          </option>
-          {route.map((x) => (
-            <option key={anchor(x)} value={anchor(x)}>
-              {ordered.indexOf(x) + 1} · {x.hidden && !x.earned ? t('secret') : x.name} ·{' '}
-              {t(x.earned ? 'earned' : 'pending')}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="roadmap-jump-status">
-        {position >= 0 && (
-          <span aria-live="polite">
-            {t('routePosition', { index: position + 1, total: ordered.length })}
-          </span>
-        )}
-        {target && selected !== target && (
-          <button type="button" className="ghost" onClick={resume}>
-            {t('routeNow')}
+      {!!extras.length && (
+        <div className="roadmap-extra-route">
+          <button
+            type="button"
+            className="quiet"
+            onClick={() =>
+              choose(extra ? (target?.groupId === 'default' ? target : first) : extras[0])
+            }
+          >
+            <Icon name="compass" />
+            {extra ? t('baseRoute') : t('extraRoute', { count: extras.length })}
           </button>
-        )}
-      </div>
-      {extras > 0 && <p>{t('routeExtras', { count: extras })}</p>}
-    </div>
-  )
-}
-
-function RoadmapViewControls({
-  complete,
-  pending,
-  total,
-  onChange,
-}: {
-  complete: boolean
-  pending: number
-  total: number
-  onChange: (full: boolean) => void
-}) {
-  const t = useMessages(messages)
-  return (
-    <div className="roadmap-view-controls">
-      <fieldset aria-label={t('routeView')}>
-        <button
-          type="button"
-          className="quiet"
-          aria-pressed={!complete}
-          onClick={() => onChange(false)}
-        >
-          {t('routePending', { count: pending })}
-        </button>
-        <button
-          type="button"
-          className="quiet"
-          aria-pressed={complete}
-          onClick={() => onChange(true)}
-        >
-          {t('routeAll', { count: total })}
-        </button>
-      </fieldset>
-      {complete && <p>{t('routeReference')}</p>}
-    </div>
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -1294,6 +1172,7 @@ export function TrophyRoadmap({
               choose={choose}
             />
             <RoadmapFocus game={game} selected={selected} target={target} />
+            <RoadmapParallel game={game} choose={inspect} />
             {!!past.length && (
               <details className="roadmap-past">
                 <summary>
@@ -1432,6 +1311,22 @@ export function TrophyRoadmapSkeleton() {
             <Sk w="90%" h={16} />
             <Sk w="75%" h={16} />
             <Sk w="180px" h={44} />
+          </div>
+        </div>
+        <div className="roadmap-parallel roadmap-parallel-loading">
+          <h3>
+            <Sk w="160px" h={20} />
+          </h3>
+          <p>
+            <Sk w="75%" h={14} />
+          </p>
+          <div>
+            {[0, 1, 2].map((i) => (
+              <div className="roadmap-parallel-placeholder" key={i}>
+                <Sk w="40px" h={40} />
+                <Sk w="65%" h={18} />
+              </div>
+            ))}
           </div>
         </div>
         <div className="roadmap-loading-disclosures">

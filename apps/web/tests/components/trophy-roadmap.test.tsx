@@ -12,41 +12,40 @@ import { mockApi, renderApp, reply } from '../support/web'
 
 afterEach(() => mock.restore())
 
-test('full route exposes confirmed past without resetting progress; pending view returns to future focus', () => {
+test('one continuous route includes confirmed past and opens on the next suggestion without changing progress', () => {
   const data = requiemGame(['chapter-1', 'perfect-shot'])
   const before = structuredClone(data.trophies)
-  renderApp(<TrophyRoadmap game={data} />)
-  expect(screen.getByRole('region', { name: 'Caminho até a platina' })).toBeTruthy()
-  const pendingRoute = screen.getByRole('list', { name: 'Caminho à frente' })
-  expect(within(pendingRoute).queryByRole('button', { name: /Sob um Novo Sol/ })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Rota completa · 36' }))
-  const full = screen.getByRole('list', { name: 'Rota completa' })
-  expect(within(full).getByRole('button', { name: /Sob um Novo Sol Conquistado/ })).toBeTruthy()
-  expect(within(full).getAllByText('Conquistado')).toHaveLength(2)
-  expect(screen.getByText(/não a sequência em que você conquistou/)).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', { name: 'Pendentes · 34' }))
-  expect(screen.getByRole('list', { name: 'Caminho à frente' })).toBeTruthy()
+  const { container } = renderApp(<TrophyRoadmap game={data} />)
+  const route = screen.getByRole('list', { name: 'Rota completa' })
+  expect(within(route).getByRole('button', { name: /Sob um Novo Sol Conquistado/ })).toBeTruthy()
+  expect(within(route).getAllByText('Conquistado')).toHaveLength(2)
+  expect(container.querySelector('.roadmap-route .is-current')?.getAttribute('data-earned')).toBe(
+    'false',
+  )
+  expect(screen.queryByRole('combobox', { name: 'Explorar objetivo' })).toBeNull()
+  expect(container.querySelector('.roadmap-map-tools')).toBeNull()
   expect(data.trophies).toEqual(before)
 })
 
-test('full route keeps current focus, supports direct jumps to past and returns to the next objective', () => {
+test('origin and arrows navigate past milestones on the same route and resume the suggestion', () => {
   const data = requiemGame(['chapter-1', 'perfect-shot'])
   const before = structuredClone(data.trophies)
   const { container } = renderApp(<TrophyRoadmap game={data} />)
   const current = container.querySelector('.roadmap-destination h3')?.textContent
-  fireEvent.click(screen.getByRole('button', { name: 'Rota completa · 36' }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(current)
-  const select = screen.getByRole('combobox', { name: 'Explorar objetivo' }) as HTMLSelectElement
-  const past = [...select.options].find((o) => o.textContent?.includes('Mira perfeita'))
-  if (!past) throw new Error('missing past objective')
-  fireEvent.change(select, { target: { value: past.value } })
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Mira perfeita')
-  expect(screen.getByText('Marco 1 de 36')).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', { name: 'Voltar ao próximo objetivo' }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(current)
-  expect(screen.getByRole('button', { name: 'Pendentes · 34' }).getAttribute('aria-pressed')).toBe(
-    'true',
+  const order = [...container.querySelectorAll('.roadmap-route li')].map((x) =>
+    x.getAttribute('data-trophy'),
   )
+  fireEvent.click(screen.getByRole('button', { name: /Início da rota/ }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Mira perfeita')
+  expect(screen.getByRole('button', { name: 'Marco anterior' }).hasAttribute('disabled')).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Mira perfeita')
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(current)
+  expect(
+    [...container.querySelectorAll('.roadmap-route li')].map((x) => x.getAttribute('data-trophy')),
+  ).toEqual(order)
   expect(data.trophies).toEqual(before)
 })
 
@@ -155,7 +154,7 @@ test('mounted journey starts at a pending challenge and keeps completed trophies
   await screen.findByRole('link', { name: 'Roteiro' })
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
   expect(container.querySelector('.roadmap-past')?.hasAttribute('open')).toBe(false)
-  expect(container.querySelectorAll('.roadmap-route li').length).toBe(2)
+  expect(container.querySelectorAll('.roadmap-route li').length).toBe(3)
   expect(container.querySelector('.journey-trophies')).toBeTruthy()
   expect(container.querySelector('.journey-guide')).toBeTruthy()
   expect(screen.getByText('1 de 3 conquistados no jogo base')).toBeTruthy()
@@ -256,7 +255,7 @@ test('an unavailable landscape falls back without broken artwork or losing the o
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
 })
 
-test('the pending path crosses stages without traversing earned history', () => {
+test('the route crosses guide stages while the history disclosure stays closed', () => {
   const { container } = renderApp(<TrophyRoadmap game={game} />)
   fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Complete')
@@ -322,7 +321,11 @@ test('arrow navigation keeps only the selected milestone tabbable and clamps the
     disconnect = disconnect
   } as unknown as typeof ResizeObserver
   try {
-    const { container, unmount } = renderApp(<TrophyRoadmap game={game} />)
+    const { container, unmount } = renderApp(
+      <TrophyRoadmap
+        game={{ ...game, trophies: game.trophies.map((x) => ({ ...x, earned: false })) }}
+      />,
+    )
     const track = container.querySelector<HTMLOListElement>('.roadmap-route')
     if (!track) throw new Error('route missing')
     const stops = track.querySelectorAll<HTMLLIElement>('li')
@@ -531,7 +534,7 @@ test('ongoing objectives stay present while browsing and never complete from a f
 test('start comparison uses the real list but never mutates account progress or counters', () => {
   const items = [{ ...game.trophies[1], progressValue: 8, progressTarget: 10 }, game.trophies[0]]
   const { container } = renderApp(<TrophyRoadmap game={{ ...game, trophies: items }} />)
-  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(1)
+  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
   fireEvent.click(screen.getByRole('button', { name: 'Ver desde o início' }))
   expect(container.querySelector('.roadmap-preview-notice[role=status]')?.textContent).toContain(
     'PRÉVIA DO INÍCIO',
@@ -543,7 +546,7 @@ test('start comparison uses the real list but never mutates account progress or 
   expect(items[0].earned).toBe(true)
   expect(items[0].progressValue).toBe(8)
   fireEvent.click(screen.getByRole('button', { name: 'Voltar ao meu progresso' }))
-  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(1)
+  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
   expect(container.querySelector('.roadmap-past')).toBeTruthy()
 })
 
@@ -719,7 +722,7 @@ test('campaign is visible first, with origin and destination, while guidance fol
   const focus = container.querySelector('.roadmap-focus')
   if (!focus) throw new Error('guidance missing')
   expect(focus.querySelector('.roadmap-advice > p')?.textContent?.length).toBeGreaterThan(20)
-  expect(container.querySelector<HTMLDetailsElement>('.roadmap-map-tools')?.open).toBe(false)
+  expect(container.querySelector('.roadmap-map-tools')).toBeNull()
   const initial = focus.querySelector('h3')?.textContent
   const order = [...container.querySelectorAll('.roadmap-route li')].map((x) =>
     x.getAttribute('data-trophy'),
@@ -745,7 +748,8 @@ test('parallel objectives select existing milestones and history selection keeps
   const { container } = renderApp(<TrophyRoadmap game={data} />)
   const parallel = container.querySelector('.roadmap-parallel')
   if (!parallel) throw new Error('parallel route missing')
-  fireEvent.click(within(parallel as HTMLElement).getByText(/Enquanto avança/))
+  expect(parallel.tagName).toBe('SECTION')
+  expect(within(parallel as HTMLElement).queryByRole('group')).toBeNull()
   const button = within(parallel as HTMLElement).getAllByRole('button')[0]
   fireEvent.click(button)
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(button.textContent)
@@ -771,14 +775,11 @@ test('campaign ends at the base platinum while additional trophies remain availa
   const dlc = { ...game.trophies[1], id: 99, groupId: '1', name: 'Extra objective', earned: false }
   const data = { ...game, trophies: [...game.trophies, dlc] }
   const { container } = renderApp(<TrophyRoadmap game={data} />)
-  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
+  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(3)
   expect(container.querySelector('.roadmap-route li:last-child')?.getAttribute('data-final')).toBe(
     'true',
   )
-  const select = screen.getByRole('combobox', { name: 'Explorar objetivo' }) as HTMLSelectElement
-  const extra = [...select.options].find((x) => x.textContent?.includes('Extra objective'))
-  if (!extra) throw new Error('additional content not reachable')
-  fireEvent.change(select, { target: { value: extra.value } })
+  fireEvent.click(screen.getByRole('button', { name: 'Conteúdo adicional · 1' }))
   expect(container.querySelector('.roadmap-route')?.textContent).toContain('Extra objective')
   expect(container.querySelector('.roadmap-route')?.textContent).not.toContain('Complete')
   expect(screen.getByRole('heading', { name: 'Além do jogo base' })).toBeTruthy()
