@@ -293,7 +293,7 @@ test('catalog roadmap retains the actual PSN edition while Nexo uses the catalog
   })
   expect(await screen.findByRole('region', { name: 'Enquanto avança' })).toBeTruthy()
   expect(screen.getByText(/A próxima ação e o percurso restante se reajustam/)).toBeTruthy()
-  expect(document.querySelector('.roadmap-total')?.textContent).toContain('51 troféus no jogo base')
+  expect(document.querySelector('.roadmap-total')?.textContent).toContain('51 troféus')
   expect(screen.getByRole('link', { name: 'Conversar com Nexo' }).getAttribute('href')).toContain(
     'game=game%3A103054',
   )

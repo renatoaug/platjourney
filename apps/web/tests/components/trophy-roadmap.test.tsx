@@ -166,7 +166,7 @@ test('mounted journey starts at a pending challenge and keeps completed trophies
   expect(container.querySelectorAll('.roadmap-route li').length).toBe(3)
   expect(container.querySelector('.journey-trophies')).toBeTruthy()
   expect(container.querySelector('.journey-guide')).toBeTruthy()
-  expect(screen.getByText('1 de 3 conquistados no jogo base')).toBeTruthy()
+  expect(screen.getByText('1 de 3 conquistados')).toBeTruthy()
 })
 
 test('hidden advice is opt in, guide markup is sanitized and links retain exact trophy context', async () => {
@@ -175,6 +175,12 @@ test('hidden advice is opt in, guide markup is sanitized and links retain exact 
   expect(screen.queryByText('Secret advice')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Revelar ocultos' }))
   await screen.findByRole('button', { name: 'Ocultar segredos' })
+  expect(
+    screen
+      .getByRole('button', { name: 'Ocultar segredos' })
+      .querySelector('use')
+      ?.getAttribute('href'),
+  ).toBe('/icons.svg#eye-off')
   expect(screen.getByText('Secret advice')).toBeTruthy()
   expect(screen.getByRole('heading', { name: 'Secret scene' })).toBeTruthy()
   const link = [...container.querySelectorAll<HTMLAnchorElement>('.roadmap-ask')].find((a) =>
@@ -454,11 +460,28 @@ test('reveal applies to the whole game, reloads from the account and isolates ot
     trophies: game.trophies.map((trophy) => ({ ...trophy, hidden: true, earned: false })),
   }
   let view = renderApp(<TrophyRoadmap game={hiddenGame} />)
+  expect(
+    screen
+      .getByRole('button', { name: 'Revelar ocultos' })
+      .querySelector('use')
+      ?.getAttribute('href'),
+  ).toBe('/icons.svg#eye')
   fireEvent.click(screen.getByRole('button', { name: 'Revelar ocultos' }))
   await screen.findByRole('button', { name: 'Ocultar segredos' })
   expect(view.container.querySelector('.roadmap-route')?.textContent).not.toContain('Troféu oculto')
   expect(screen.queryByRole('button', { name: 'Revelar este troféu' })).toBeNull()
   expect(localStorage.length).toBe(0)
+  expect(
+    screen
+      .getByRole('button', { name: 'Ocultar segredos' })
+      .querySelector('use')
+      ?.getAttribute('href'),
+  ).toBe('/icons.svg#eye-off')
+  fireEvent.click(screen.getByRole('button', { name: 'Ocultar segredos' }))
+  const revealAgain = await screen.findByRole('button', { name: 'Revelar ocultos' })
+  expect(revealAgain.querySelector('use')?.getAttribute('href')).toBe('/icons.svg#eye')
+  fireEvent.click(revealAgain)
+  await screen.findByRole('button', { name: 'Ocultar segredos' })
   view.unmount()
   const account = { ...SAMPLE_ME, revealedTrophyGames: savedVisibility.get(SAMPLE_ME.id) }
   view = renderApp(<TrophyRoadmap game={hiddenGame} />, { value: { me: account } })

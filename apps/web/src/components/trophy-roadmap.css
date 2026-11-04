@@ -1266,13 +1266,20 @@
       justify-content: flex-start;
     }
 
+    .roadmap-intro-actions .roadmap-visibility {
+      padding-inline: 0;
+      border: 0;
+      gap: 8px;
+    }
+
     .roadmap-landscape {
       min-height: 150px;
       padding: 18px 20px 28px;
     }
 
     .roadmap-destination {
-      gap: 24px;
+      gap: 20px;
+      padding-inline-start: 16px;
       margin-top: 8px;
     }
 

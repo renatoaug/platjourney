@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { MockAppState, SAMPLE_ME } from '../app/app-state'
 import { current } from '../fixtures'
 import { odysseyGame } from '../fixtures/odyssey'
 import { requiemGame } from '../fixtures/requiem'
@@ -41,6 +42,16 @@ export const HiddenAndLong: Story = {
       })),
     },
   },
+}
+export const Revealed: Story = {
+  ...HiddenAndLong,
+  decorators: [
+    (Story) => (
+      <MockAppState value={{ me: { ...SAMPLE_ME, revealedTrophyGames: [current.game.id] } }}>
+        <Story />
+      </MockAppState>
+    ),
+  ],
 }
 export const Loading: Story = { render: () => <TrophyRoadmapSkeleton /> }
 

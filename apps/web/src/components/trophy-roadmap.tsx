@@ -114,7 +114,7 @@ const messages = defineMessages({
     previewBack: 'Voltar ao meu progresso',
     previewLabel: 'PRÉVIA DO INÍCIO',
     previewNote: 'Comparação sem progresso pessoal. Nenhuma conquista ou dado da conta é alterado.',
-    catalogCount: '{total} troféus no jogo base · sem progresso pessoal',
+    catalogCount: '{total} troféus · sem progresso pessoal',
     ahead: 'Caminho à frente',
     past: 'Conquistas anteriores ({count})',
     stageDone: 'Caminho concluído',
@@ -135,7 +135,7 @@ const messages = defineMessages({
       'Todos os troféus conectados ao roteiro. Cada conquista acompanha seu progresso na PSN.',
     basis:
       'Ordem sugerida pelo guia, não uma sequência garantida. Objetivos podem ser feitos em paralelo; sua posição no jogo não é confirmada pelos troféus.',
-    count: '{earned} de {total} conquistados no jogo base',
+    count: '{earned} de {total} conquistados',
     unplaced: 'Ainda sem posição no roteiro',
     unplacedNote:
       'Estes troféus não têm uma correspondência única nas fases do guia. Esses marcos seguem a lista PSN, não uma recomendação.',
@@ -245,7 +245,7 @@ const messages = defineMessages({
     previewLabel: 'START PREVIEW',
     previewNote:
       'Comparison without personal progress. No achievements or account data are changed.',
-    catalogCount: '{total} base-game trophies · no personal progress',
+    catalogCount: '{total} trophies · no personal progress',
     ahead: 'The road ahead',
     past: 'Previous achievements ({count})',
     stageDone: 'Path complete',
@@ -265,7 +265,7 @@ const messages = defineMessages({
     subtitle: 'Every trophy connected to the roadmap. Each achievement follows your PSN progress.',
     basis:
       'Suggested guide order, not a guaranteed sequence. Objectives can run in parallel; trophies do not confirm your location in the game.',
-    count: '{earned} of {total} earned in the base game',
+    count: '{earned} of {total} earned',
     unplaced: 'Not yet placed on the roadmap',
     unplacedNote:
       'These trophies do not have a unique match in the guide phases. These milestones follow the PSN list, not a recommendation.',
@@ -1026,7 +1026,7 @@ function RoadmapVisibility({
         }
       }}
     >
-      <Icon name="eye" />
+      <Icon name={revealed ? 'eye-off' : 'eye'} />
       {t(revealed ? 'hide' : 'reveal')}
     </button>
   )
