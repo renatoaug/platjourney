@@ -1,10 +1,8 @@
 import { ai } from './ai.ts'
 import { aiContext } from './ai-context.ts'
 import { tagged } from './costs.ts'
-import { DemoReadOnly, isDemo } from './demo.ts'
+import { isDemo } from './demo.ts'
 import { DEFAULT_LOCALE, defineMessages, Language, type Locale, translator } from './i18n.ts'
-import { withJourneyModel } from './journey-context.ts'
-import { isJourneySession, journeySession, refreshJourneySession } from './journey-session.ts'
 import type { GameContext } from './nexo.ts'
 import { aroundModel } from './plugins.ts'
 import type { TrophyStatus } from './psn.ts'
@@ -25,13 +23,11 @@ const messages = defineMessages({
     title: '**Plano de {duration}: {game}**',
     trick: 'Macete: {trick}',
     ifTimeLeft: 'Se sobrar tempo: {text}',
-    reserved: 'tempo reservado: {time}',
   },
   [Language.En]: {
     title: '**{duration} plan: {game}**',
     trick: 'Trick: {trick}',
     ifTimeLeft: 'If you have time left: {text}',
-    reserved: 'reserved time: {time}',
   },
 })
 
@@ -51,8 +47,6 @@ export interface PlanStep {
   trophyId?: number | null
   // Earned by the time the plan ended; false while it is on screen.
   done?: boolean
-  /** Reviewed selection; minutes are a timebox, not a duration estimate. */
-  journey?: { edition: string; version: number; objective: string }
 }
 
 // How a plan left the screen: the player ended the session early, closed it once it was over, made
@@ -90,7 +84,6 @@ export interface PlanView extends Omit<SessionPlan, 'status'> {
     iconUrl: string | null
     type: string | null
     detail: string | null
-    blocked?: boolean
   })[]
   doneCount: number
   status: PlanStatus
@@ -99,7 +92,6 @@ export interface PlanView extends Omit<SessionPlan, 'status'> {
   expiresAt: string
   // Whether the player has earned a trophy of the game since the plan was made; until then it waits.
   started: boolean
-  timing?: 'budget'
 }
 
 // A plan belongs to one sitting: it stays active for the time asked plus a grace period from when the
@@ -120,28 +112,23 @@ export async function planSession(
   ctx: GameContext,
   minutes: number,
 ): Promise<PlanView> {
-  if (isDemo(user)) throw new DemoReadOnly()
   // Asked again while a route of this game is on: the player wants another way, so the model is told
   // which trophies to change.
   // The demo asks the model nothing, and reads no plan before being refused.
-  const current = await activePlan(user.id)
+  const current = isDemo(user) ? undefined : await activePlan(user.id)
   const avoid =
     current?.status === 'active' && current.game === ctx.game.id
       ? current.steps.map((s) => s.trophy)
       : []
-  ctx = await withJourneyModel(ctx)
-  const reviewed = journeySession(user, ctx, minutes, avoid)
-  const plan =
-    reviewed ??
-    (await aroundModel({ user, action: 'plan' }, () =>
-      tagged({ user: user.id, action: 'plan' }, () =>
-        ai<Omit<SessionPlan, 'game' | 'gameName' | 'minutes' | 'createdAt'>>('/plans/session', {
-          context: aiContext(ctx, user),
-          minutes,
-          avoid,
-        }),
-      ),
-    ))
+  const plan = await aroundModel({ user, action: 'plan' }, () =>
+    tagged({ user: user.id, action: 'plan' }, () =>
+      ai<Omit<SessionPlan, 'game' | 'gameName' | 'minutes' | 'createdAt'>>('/plans/session', {
+        context: aiContext(ctx, user),
+        minutes,
+        avoid,
+      }),
+    ),
+  )
   const saved = await startPlan(
     user,
     {
@@ -153,7 +140,7 @@ export async function planSession(
     },
     ctx,
   )
-  return view(saved, ctx, user)
+  return view(saved, ctx)
 }
 
 // A new plan, Nexo's or a connected assistant's, takes the place of the one on screen; that one
@@ -208,18 +195,15 @@ export async function startPlan(
   const current = await activePlan(user.id)
   if (current?.status === 'active' && current.id)
     await closePlan(current.id, 'replaced', await ticked(user, current, ctx))
-  const reviewed = isJourneySession(plan)
   const byName = new Map(ctx.trophies.map((t) => [t.name, t.id]))
   return savePlan(user.id, {
     ...plan,
     npCommunicationId: ctx.title.npCommunicationId,
-    steps: (reviewed ? plan.steps : foldProgress(oneStepPerTrophy(plan.steps), ctx.trophies)).map(
-      (s) => ({
-        ...s,
-        trophyId: reviewed ? s.trophyId : (byName.get(s.trophy) ?? null),
-        done: false,
-      }),
-    ),
+    steps: foldProgress(oneStepPerTrophy(plan.steps), ctx.trophies).map((s) => ({
+      ...s,
+      trophyId: byName.get(s.trophy) ?? null,
+      done: false,
+    })),
   })
 }
 
@@ -247,17 +231,7 @@ async function lastPlayedOn(user: string, plan: SessionPlan): Promise<string | n
 // The steps with whether each was earned: from the trophies just read when they are this game's,
 // otherwise from the earned trophies the last sync stored.
 async function ticked(user: User, plan: SessionPlan, ctx?: GameContext): Promise<PlanStep[]> {
-  const strip = ({
-    trophy,
-    trophyId,
-    minutes,
-    how,
-    why,
-    trick,
-    flexible,
-    journey,
-    earns,
-  }: PlanStep) => ({
+  const strip = ({ trophy, trophyId, minutes, how, why, trick, flexible }: PlanStep) => ({
     trophy,
     trophyId: trophyId ?? null,
     minutes,
@@ -265,17 +239,9 @@ async function ticked(user: User, plan: SessionPlan, ctx?: GameContext): Promise
     why,
     trick,
     flexible,
-    ...(journey ? { journey, earns } : {}),
   })
   if (ctx?.game.id === plan.game)
-    return plan.steps.map((s) => ({
-      ...strip(s),
-      done: ctx.trophies.some(
-        (t) =>
-          t.earned &&
-          (s.journey ? t.groupId === 'default' && t.id === s.trophyId : t.name === s.trophy),
-      ),
-    }))
+    return view(plan, ctx).steps.map((s) => ({ ...strip(s), done: s.done }))
   return doneFromLibrary(user.id, plan).then((steps) =>
     steps.map((s) => ({ ...strip(s), done: s.done })),
   )
@@ -311,27 +277,23 @@ async function tickLate(now: number): Promise<void> {
 }
 
 // Steps tick themselves off as PSN reports the trophies earned.
-function view(plan: SessionPlan, ctx: GameContext | undefined, user: User): PlanView {
-  const reviewed = isJourneySession(plan) ? refreshJourneySession(plan, ctx, user) : undefined
+function view(plan: SessionPlan, ctx?: GameContext): PlanView {
   const earned = new Set(
     (ctx?.game.id === plan.game ? ctx.trophies : []).filter((t) => t.earned).map((t) => t.name),
   )
   const byName = new Map((ctx?.game.id === plan.game ? ctx.trophies : []).map((t) => [t.name, t]))
-  const displaySteps =
-    reviewed?.steps ??
-    plan.steps.map((s) => {
-      const trophy = byName.get(s.trophy)
-      return {
-        ...s,
-        done: earned.has(s.trophy),
-        iconUrl: trophy?.iconUrl ?? null,
-        detail: trophy?.detail ?? null,
-        type: trophy?.type ?? null,
-      }
-    })
   let clock = 0
-  const steps = displaySteps.map((s) => {
-    const step = { ...s, flexible: s.flexible ?? false, startsAt: clock }
+  const steps = plan.steps.map((s) => {
+    const trophy = byName.get(s.trophy)
+    const step = {
+      ...s,
+      flexible: s.flexible ?? false,
+      done: earned.has(s.trophy),
+      startsAt: clock,
+      iconUrl: trophy?.iconUrl ?? null,
+      detail: trophy?.detail ?? null,
+      type: trophy?.type ?? null,
+    }
     clock += s.minutes
     return step
   })
@@ -349,17 +311,15 @@ function view(plan: SessionPlan, ctx: GameContext | undefined, user: User): Plan
     steps,
     doneCount,
     status,
-    nextIndex: status === 'active' ? (reviewed?.nextIndex ?? steps.findIndex((s) => !s.done)) : -1,
+    nextIndex: status === 'active' ? steps.findIndex((s) => !s.done) : -1,
     expiresAt,
     started: started(plan, lastPlayed),
-    ...(reviewed ? { timing: 'budget' as const } : {}),
   }
 }
 
 export async function currentPlan(user: User, ctx?: GameContext): Promise<PlanView | null> {
   const stored = (await activePlan(user.id)) ?? null
   if (!stored || (ctx && stored.game !== ctx.game.id)) return null
-  if (ctx && isJourneySession(stored)) ctx = await withJourneyModel(ctx)
   // The demo's stored plan is always the one being played: it never expires.
   const plan = isDemo(user)
     ? { ...stored, createdAt: new Date(Date.now() - DEMO_PLAN_AGE).toISOString() }
@@ -367,7 +327,7 @@ export async function currentPlan(user: User, ctx?: GameContext): Promise<PlanVi
   const lastPlayed = ctx?.game.id === plan.game ? ctx.title.lastUpdated : null
   if (Date.now() > endsAt(plan, lastPlayed).getTime() + RECAP_HOURS * 3_600_000) return null
   // The demo's plan is the session being played.
-  return isDemo(user) ? { ...view(plan, ctx, user), started: true } : view(plan, ctx, user)
+  return isDemo(user) ? { ...view(plan, ctx), started: true } : view(plan, ctx)
 }
 
 // The player takes the plan off the screen: ending the session while it runs, or dismissing it once
@@ -400,7 +360,7 @@ export function planReport(p: PlanView, locale: Locale = DEFAULT_LOCALE): string
     '',
     ...p.steps.map(
       (s, i) =>
-        `${i + 1}. ${s.done ? '✅ ' : ''}**${s.trophy}** (${p.timing === 'budget' ? t('reserved', { time: h(s.minutes) }) : `~${h(s.minutes)}`})\n   ${s.how}${s.trick ? `\n   ${t('trick', { trick: s.trick })}` : ''}`,
+        `${i + 1}. ${s.done ? '✅ ' : ''}**${s.trophy}** (~${h(s.minutes)})\n   ${s.how}${s.trick ? `\n   ${t('trick', { trick: s.trick })}` : ''}`,
     ),
     ...(p.warnings.length ? ['', ...p.warnings.map((w) => `⚠️ ${w}`)] : []),
     ...(p.ifTimeLeft ? ['', t('ifTimeLeft', { text: p.ifTimeLeft })] : []),

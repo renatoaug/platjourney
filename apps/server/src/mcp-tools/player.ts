@@ -55,7 +55,6 @@ async function planRow(user: User, ctx: GameContext) {
   return {
     summary: plan.summary,
     minutes: plan.minutes,
-    ...(plan.timing ? { timing: plan.timing } : {}),
     validUntil: plan.expiresAt,
     // false: the player has not played since it was made, and it waits for the sitting until validUntil.
     started: plan.started,

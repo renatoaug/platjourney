@@ -25,7 +25,6 @@ import {
 import { requestMissingGame } from '../repository/game-request.ts'
 import { getGuide } from '../repository/guide.ts'
 import { requestGuide } from '../repository/guide-request.ts'
-import { getJourneyModel } from '../repository/journey-model.ts'
 import type { User } from '../repository/user.ts'
 import { similarToGame } from '../similar.ts'
 import { withTints } from '../tint.ts'
@@ -118,11 +117,9 @@ async function ownedDetail(
     ensureDeepGuide(found, title.total).catch((e) =>
       console.error('deep guide failed:', (e as Error).message),
     )
-  const journeyModel = await getJourneyModel(found.id, title.npCommunicationId)
   return {
-    journeyModel,
     owned: true,
-    focus: todaysFocus({ game: found, title, trophies, guide: guide ?? undefined, journeyModel }),
+    focus: todaysFocus({ trophies, guide: guide ?? undefined }),
     np: title.npCommunicationId,
     deepGuide: await deepGuideOf(user, found),
     hoursPlayed: hours((await playtimes(user)).get(found.id)),
@@ -158,9 +155,7 @@ async function catalogDetail(user: User, found: Game, platform: string) {
   if (guide && !isDemo(user))
     ensureDeepGuide(found).catch((e) => console.error('deep guide failed:', (e as Error).message))
   return {
-    journeyModel: await getJourneyModel(found.id, list?.np),
     owned: false,
-    np: list?.np,
     trophies: list?.trophies ?? null,
     deepGuide: await deepGuideOf(user, found),
     game: found,

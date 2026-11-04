@@ -1245,6 +1245,33 @@
     overflow-wrap: anywhere;
   }
 
+  .roadmap-tips {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .roadmap-tips > li {
+    display: grid;
+    gap: 4px;
+  }
+
+  .roadmap-tips em,
+  .roadmap-tips small {
+    color: var(--color-fg-muted);
+  }
+
+  .roadmap-tips ol {
+    margin: 0;
+    padding-inline-start: 20px;
+  }
+
+  .roadmap-advice p.roadmap-phase-goal {
+    color: var(--color-fg-muted);
+  }
+
   .roadmap-caution {
     display: grid;
     gap: 8px;

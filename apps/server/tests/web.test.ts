@@ -1,5 +1,3 @@
-import * as journeyModels from '../src/repository/journey-model.ts'
-import { requiem } from './journey-fixtures.ts'
 import './env.ts'
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import * as fs from 'node:fs'
@@ -18,7 +16,6 @@ import * as guide from '../src/guide.ts'
 import { GUIDE_VERSION, type Guide } from '../src/guide.ts'
 import { pagePolicy, SECURITY_HEADERS } from '../src/http.ts'
 import * as interests from '../src/interests.ts'
-import { JourneySessionUnavailable } from '../src/journey-session.ts'
 import * as lib from '../src/library.ts'
 import * as nexo from '../src/nexo.ts'
 import * as nextPickModule from '../src/next-pick.ts'
@@ -666,12 +663,7 @@ test('a title the player does not own uses the catalog trophy list', async () =>
     trophies: [makeTrophy()],
   } as never)
   const res = await send('GET', '/api/title?name=Days')
-  expect(res.body).toMatchObject({
-    owned: false,
-    np: 'NPWR13822_00',
-    platform: 'PS5',
-    guide: { overview: 'ok' },
-  })
+  expect(res.body).toMatchObject({ owned: false, platform: 'PS5', guide: { overview: 'ok' } })
   expect(res.body.trophies).toHaveLength(1)
   expect(deepguide.ensureDeepGuide).toHaveBeenCalledWith(game)
 })
@@ -786,19 +778,6 @@ test('plans are read, discarded and made for 15 to 600 minutes', async () => {
   expect((await send('POST', '/api/plan', { minutes: '60' })).status).toBe(400)
   expect((await send('POST', '/api/plan', { minutes: 60 })).body).toEqual({ plan: { minutes: 60 } })
   expect(make).toHaveBeenCalledWith(me, ctx, 60)
-})
-
-test('reviewed session limitations return a specific actionable conflict', async () => {
-  spyOn(gameContext, 'getCurrent').mockReturnValue(makeContext())
-  spyOn(planner, 'planSession').mockRejectedValue(
-    new JourneySessionUnavailable('Confira a lista de troféus.'),
-  )
-  const result = await send('POST', '/api/plan', { minutes: 60 })
-  expect(result.status).toBe(409)
-  expect(result.body).toEqual({
-    error: 'journey_session_unavailable',
-    message: 'Confira a lista de troféus.',
-  })
 })
 
 test('a closed plan takes a known reason, only from its owner', async () => {
@@ -1683,51 +1662,4 @@ test('trophy visibility persists per authenticated owner and rejects stale accou
   spyOn(auth, 'authenticate').mockResolvedValue(undefined as never)
   expect((await send('POST', '/api/account/trophy-visibility', body)).status).toBe(401)
   expect(save).toHaveBeenCalledTimes(1)
-})
-
-test('owned title focus uses the selected edition instead of another catalog release', async () => {
-  spyOn(journeyModels, 'getJourneyModel').mockImplementation(async (_game, edition) =>
-    edition === requiem.edition ? requiem : undefined,
-  )
-  const found = makeGame({ np_communication_ids: ['NPWR1', 'NPWR22997_00'] })
-  spyOn(games, 'getGame').mockResolvedValue(found)
-  spyOn(lib, 'library').mockResolvedValue([
-    makeTitle({ npCommunicationId: 'NPWR1' }),
-    makeTitle({ npCommunicationId: 'NPWR22997_00' }),
-  ])
-  spyOn(guides, 'getGuide').mockResolvedValue({
-    ...freshGuide,
-    roadmap: [{ phase: 'Explore', goal: 'Read', trophies: ['Leitor'] }],
-  })
-  const legacy = await send('GET', '/api/title?game=game:1&id=NPWR1')
-  expect(legacy.body.focus.trophy.name).toBe('Leitor')
-  const incomplete = await send('GET', '/api/title?game=game:1&id=NPWR22997_00')
-  expect(incomplete.body.focus).toEqual({ phases: [] })
-})
-
-beforeEach(() => {
-  spyOn(journeyModels, 'getJourneyModel').mockResolvedValue(undefined)
-})
-
-test('title API loads a generic published edition and preserves unowned preview state', async () => {
-  const model = { ...requiem, edition: 'NPWR55555_00', name: 'Another reviewed edition' }
-  const found = makeGame({ np_communication_ids: ['NPWR1', model.edition] })
-  spyOn(games, 'getGame').mockResolvedValue(found)
-  spyOn(lib, 'library').mockResolvedValue([])
-  spyOn(psn, 'catalogTrophies').mockResolvedValue({
-    np: model.edition,
-    platform: 'PS5',
-    trophies: [makeTrophy()],
-  })
-  const load = spyOn(journeyModels, 'getJourneyModel').mockResolvedValue(model)
-  const result = await send('GET', '/api/title?game=game:1')
-  expect(result.status).toBe(200)
-  expect(result.body.owned).toBe(false)
-  expect(result.body.journeyModel).toEqual(model)
-  expect(load).toHaveBeenCalledWith('game:1', model.edition)
-  expect(result.body.trophies[0].earned).toBe(false)
-  load.mockResolvedValue(undefined)
-  expect((await send('GET', '/api/title?game=game:1')).body.journeyModel).toBeUndefined()
-  load.mockRejectedValue(new Error('Journey model integrity check failed'))
-  expect((await send('GET', '/api/title?game=game:1')).status).toBe(500)
 })

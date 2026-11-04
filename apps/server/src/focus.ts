@@ -1,5 +1,3 @@
-import { evaluateJourney } from '../../../shared/journey/model.ts'
-import { reviewedJourney } from '../../../shared/journey/registry.ts'
 // What the player should go after now, from the guide's roadmap and the PSN list. The session
 // notice and the trophy notice both use it, so the target a notice names does not change unless
 // the player earned it.
@@ -36,9 +34,6 @@ interface Focus {
   missable?: { trophy: string; when: string }
 }
 
-type FocusContext = Pick<GameContext, 'trophies' | 'guide'> &
-  Partial<Pick<GameContext, 'game' | 'title' | 'journeyModel'>>
-
 // PSN sometimes writes a name with a double space ("Caçador de  Emboscadas"); the guide copies it.
 // Compared and shown with single spaces.
 export const tidy = (name: string) => name.replace(/\s+/g, ' ').trim()
@@ -52,9 +47,7 @@ export function storyTrophy(guide: Pick<Guide, 'milestones'> | undefined, name?:
 
 const shortName = (phase: string) => tidy(phase.split(/\s[—–-]\s/)[0])
 
-export function todaysFocus(ctx: FocusContext): Focus {
-  const reviewed = reviewedFocus(ctx)
-  if (reviewed) return reviewed
+export function todaysFocus(ctx: Pick<GameContext, 'trophies' | 'guide'>): Focus {
   const base = ctx.trophies.filter((x) => x.groupId === 'default' && x.type !== 'platinum')
   const open = new Map(base.filter((x) => !x.earned).map((x) => [tidy(x.name), x]))
   const earned = new Set(base.filter((x) => x.earned).map((x) => tidy(x.name)))
@@ -100,7 +93,7 @@ export function todaysFocus(ctx: FocusContext): Focus {
 // one of them was it; then the next one by the same rule is new. A phase whose last open trophy is
 // among these unlocks is `completed`.
 export function focusAfter(
-  ctx: FocusContext,
+  ctx: Pick<GameContext, 'trophies' | 'guide'>,
   unlocked: TrophyStatus[],
 ): Focus & { changed: boolean; completed?: string } {
   const ids = new Set(unlocked.map((t) => t.id))
@@ -116,31 +109,4 @@ export function focusAfter(
     changed: before.trophy?.name !== now.trophy?.name,
     ...(completed ? { completed } : {}),
   }
-}
-
-function reviewedFocus(ctx: FocusContext): Focus | undefined {
-  // A catalog can group reviewed and unreviewed releases. Only the opened PSN list
-  // identifies the model; a missing edition must not borrow another release's rules.
-  const reviewed = ctx.title?.npCommunicationId
-    ? reviewedJourney({ np: ctx.title.npCommunicationId }, ctx.journeyModel)
-    : undefined
-  if (reviewed) {
-    if (ctx.guide?.unobtainable) return { phases: [] }
-    const plan = evaluateJourney(reviewed, ctx.trophies)
-    // A partial list cannot support a confident pilot recommendation.
-    if (plan.covered === plan.expected && !plan.unmatched.length) {
-      return {
-        phases: [],
-        ...(plan.next
-          ? {
-              trophy: plan.next.trophy,
-              trick: plan.next.objective.action.pt,
-              behind: plan.next.state === 'recover',
-            }
-          : {}),
-      }
-    }
-    return { phases: [] }
-  }
-  return undefined
 }

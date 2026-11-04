@@ -1,4 +1,3 @@
-import type { JourneyModel } from '../../../../shared/journey/model'
 import type { Locale } from '../i18n/locale'
 
 /** Shapes of the /api payloads the screens share. Screen-specific payloads are typed next to their screen. */
@@ -108,6 +107,17 @@ interface KeyTrophy {
 }
 
 /** A platinum guide as the API sends it. */
+/** One point of the guide's route; a checklist item has its steps, an older tip only its text. */
+export interface RouteTip {
+  kind: string
+  text: string
+  trophy: string | null
+  name?: string | null
+  where?: string | null
+  steps?: string[] | null
+  ifMissed?: string | null
+}
+
 export interface GuideDetail {
   version?: number
   overview: string
@@ -131,6 +141,7 @@ export interface GuideDetail {
     status?: string | null
   }[]
   roadmap: { phase: string; goal: string; trophies: string[] }[]
+  milestones?: { after: string | null; tips: RouteTip[] }[]
   glossary: { term: string; meaning: string }[]
   collectibles?: string | null
   pointOfNoReturn?: string | null
@@ -159,7 +170,6 @@ interface JourneyFocus {
 }
 
 export interface CurrentGame {
-  journeyModel?: JourneyModel
   focus?: JourneyFocus | null
   game: Game
   name: string

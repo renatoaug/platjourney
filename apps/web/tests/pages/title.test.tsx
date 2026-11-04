@@ -280,21 +280,3 @@ test('a catalog game offers a roadmap preview without asserting ownership or per
   expect(screen.queryByRole('button', { name: 'Voltar ao meu progresso' })).toBeNull()
   expect(document.querySelector('.roadmap-past')).toBeNull()
 })
-
-test('catalog roadmap retains the actual PSN edition while Nexo uses the catalog context', async () => {
-  const { odysseyGame } = await import('../../src/fixtures/odyssey')
-  const data = odysseyGame()
-  open('/title/game/game%3A103054', {
-    ...recommendedData,
-    ...data,
-    owned: false,
-    building: false,
-    guide: null,
-  })
-  expect(await screen.findByRole('region', { name: 'Enquanto avança' })).toBeTruthy()
-  expect(screen.getByText(/A próxima ação e o percurso restante se reajustam/)).toBeTruthy()
-  expect(document.querySelector('.roadmap-total')?.textContent).toContain('51 troféus')
-  expect(screen.getByRole('link', { name: 'Conversar com Nexo' }).getAttribute('href')).toContain(
-    'game=game%3A103054',
-  )
-})

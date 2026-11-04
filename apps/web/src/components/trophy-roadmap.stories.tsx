@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MockAppState, SAMPLE_ME } from '../app/app-state'
 import { current } from '../fixtures'
-import { odysseyGame } from '../fixtures/odyssey'
-import { requiemGame } from '../fixtures/requiem'
+import { routeGame } from '../fixtures/route'
 import { TrophyRoadmap, TrophyRoadmapSkeleton } from './trophy-roadmap'
 
 const meta: Meta<typeof TrophyRoadmap> = {
@@ -147,46 +146,30 @@ export const StartComparison: Story = {
   args: { ...OngoingObjectives.args, preview: true },
 }
 
-export const ReviewedRequiemStart: Story = { args: { game: requiemGame() } }
-export const ReviewedRequiemMiddle: Story = {
-  args: { game: requiemGame(['chapter-1', 'chapter-2', 'chapter-3']) },
+export const GuideRouteStart: Story = { args: { game: routeGame() } }
+export const GuideRouteMiddle: Story = {
+  args: { game: routeGame(['Primeiro Passo', 'Mira Certeira', 'Segundo Ato']) },
 }
-export const ReviewedRequiemOutOfOrder: Story = { args: { game: requiemGame(['chapter-8']) } }
-export const ReviewedRequiemPartialList: Story = {
-  args: { game: { ...requiemGame(), trophies: requiemGame().trophies.slice(0, 8) } },
-}
-
-export const ReviewedOdysseyStart: Story = { args: { game: odysseyGame() } }
-export const ReviewedOdysseyMiddle: Story = { args: { game: odysseyGame(['episode-6']) } }
-export const ReviewedOdysseyOutOfOrder: Story = {
-  args: { game: odysseyGame(['episode-9', 'hunt', 'poseidon', 'contracts']) },
-}
-export const ReviewedOdysseyDlc: Story = {
-  args: {
-    game: {
-      ...odysseyGame(),
-      trophies: [
-        ...odysseyGame().trophies,
-        {
-          ...odysseyGame().trophies[0],
-          groupId: '001',
-          name: 'Conteúdo adicional ilustrativo',
-          earned: true,
-        },
-      ],
-    },
-  },
+export const GuideRouteOutOfOrder: Story = { args: { game: routeGame(['Fim da Jornada']) } }
+export const GuideRoutePartialList: Story = {
+  args: { game: { ...routeGame(), trophies: routeGame().trophies.slice(0, 4) } },
 }
 
 export const ConfirmedChronology: Story = {
   args: {
     game: {
-      ...requiemGame(['chapter-1', 'chapter-8', 'perfect-shot']),
-      trophies: requiemGame(['chapter-1', 'chapter-8', 'perfect-shot']).trophies.map((t) => ({
-        ...t,
-        earnedAt:
-          t.id === 1 ? '2024-01-03T12:00:00Z' : t.id === 8 ? '2024-01-02T12:00:00Z' : undefined,
-      })),
+      ...routeGame(['Primeiro Passo', 'Fim da Jornada', 'Mira Certeira']),
+      trophies: routeGame(['Primeiro Passo', 'Fim da Jornada', 'Mira Certeira']).trophies.map(
+        (t) => ({
+          ...t,
+          earnedAt:
+            t.name === 'Primeiro Passo'
+              ? '2024-01-03T12:00:00Z'
+              : t.name === 'Fim da Jornada'
+                ? '2024-01-02T12:00:00Z'
+                : undefined,
+        }),
+      ),
     },
   },
 }

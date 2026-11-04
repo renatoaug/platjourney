@@ -1,6 +1,5 @@
-import * as journeyModels from '../src/repository/journey-model.ts'
 import './env.ts'
-import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
+import { afterEach, expect, mock, spyOn, test } from 'bun:test'
 import * as ai from '../src/ai.ts'
 import * as auth from '../src/auth.ts'
 import { tagged } from '../src/costs.ts'
@@ -187,8 +186,4 @@ test('the demo session opens without a password, and only when a demo is loaded'
   expect(session?.user).toEqual({ id: 'user:demo', demo: true } as never)
   expect(session?.token).toMatch(/^[a-f0-9]{64}$/)
   expect(create.mock.calls[0][0]).toStartWith('CREATE auth_session')
-})
-
-beforeEach(() => {
-  spyOn(journeyModels, 'getJourneyModel').mockResolvedValue(undefined)
 })

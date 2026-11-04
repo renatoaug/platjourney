@@ -3,7 +3,6 @@ import { tagged } from './costs.ts'
 import { ensureDeepGuide } from './deepguide.ts'
 import { isDemo, trophiesFor } from './demo.ts'
 import { ensureGuide, type Guide } from './guide.ts'
-import { withJourneyModel } from './journey-context.ts'
 import { library } from './library.ts'
 import type { GameContext } from './nexo.ts'
 import { hours, playtimes } from './playtime.ts'
@@ -52,14 +51,7 @@ async function loadContext(user: User, title: TitleProgress): Promise<GameContex
   if (guide && !isDemo(user))
     ensureDeepGuide(game, title.total).catch((e) => console.error('deep guide failed:', e.message))
   const played = await playtimes(user).catch(() => new Map())
-  return withJourneyModel({
-    game,
-    title,
-    trophies,
-    guide,
-    groups,
-    hoursPlayed: hours(played.get(game.id)),
-  })
+  return { game, title, trophies, guide, groups, hoursPlayed: hours(played.get(game.id)) }
 }
 
 // The game being played changes: the watcher's own switch.
@@ -75,7 +67,6 @@ export async function setChat(user: User, title: TitleProgress): Promise<GameCon
   const playing = contexts.get(user.id)
   if (playing?.title.npCommunicationId === title.npCommunicationId) {
     chatContexts.delete(user.id)
-    Object.assign(playing, await withJourneyModel(playing))
     return playing
   }
   const ctx = await loadContext(user, title)
@@ -108,14 +99,14 @@ export async function setChatFromCatalog(user: User, game: Game): Promise<GameCo
   }
   const guide = await getGuide<Guide>(game.id)
   if (!guide && !isDemo(user)) await requestGuide(game.id, user.id)
-  const ctx: GameContext = await withJourneyModel({
+  const ctx: GameContext = {
     game,
     title,
     trophies: list.trophies,
     guide,
     groups: null,
     owned: false,
-  })
+  }
   chatContexts.set(user.id, ctx)
   return ctx
 }

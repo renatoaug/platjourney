@@ -21,40 +21,6 @@ What it costs: vectors from different embedding models do not compare, so changi
 
 One diagram per area, with every field. Each field shows its name, then its type (`option(string)` is `option<string>`, `record(user)` is `record<user>`), and a table drawn with only its `id` belongs to another area. Arrows join a table to the record its `FK` fields point to. `verification` stands alone: it is keyed by the PSN id typed at sign-up, before an account exists.
 
-### Reviewed journey knowledge
-
-Published knowledge belongs to a catalog game and one exact PSN edition. Versioned documents are immutable, independent of player state. The active pointer can change without rebuilding the application; imports alone do not activate anything.
-
-```mermaid
-erDiagram
-    game ||--o{ journey_model : "reviewed editions"
-    game ||--o{ journey_publication : "publishes"
-    journey_model o|--o| journey_publication : "active version"
-    game {
-        id record(game) PK
-    }
-    journey_model {
-        id record(journey_model) PK
-        game record(game) FK
-        edition string
-        version int
-        checksum string "canonical SHA256"
-        payload object "flexible, immutable, schema_version 1"
-        created_at datetime
-    }
-    journey_publication {
-        id record(journey_publication) PK
-        game record(game) FK
-        edition string
-        model nullable_record(journey_model) FK
-        version nullable_int
-        created_at datetime
-        updated_at datetime
-    }
-```
-
-The repository validates `payload` on both import and read, converting all nested keys to/from snake_case. It contains `schema_version`, `edition`, `name`, `version`, `reviewed_at`, `planning` and `objectives`; each objective retains its `group_id`, `trophy_id`, evidence, sources, advisory placement and hard prerequisites. Schema version 1 explicitly supports the base group, leaving DLC in the ordinary separate track. A bad checksum or invalid stored payload is an explicit error, not an invitation to fabricate a recommendation. The publication uses a compare-and-set expected version, including `null` for no active version. [Import, activation and rollback procedure](15-journey-storage.md).
-
 ### Players and their games
 
 The account, what PSN says about each game in the library, and the session plans made for them.
@@ -144,7 +110,7 @@ erDiagram
         np_communication_id option(string)
         minutes number
         summary string
-        steps array(object) "flexible; reviewed steps include journey edition/version/objective"
+        steps array(object)
         total_minutes number
         warnings array(string)
         if_time_left option(string)
@@ -521,8 +487,6 @@ erDiagram
 | `tip` | notice or tip Nexo wrote, or a tip an assistant saved | | `kind`: `start`, `unlock`, `session`, `route` (a tip on the game's route), `chat` (help on one trophy), `server`, `deal` (a saved game went on sale), `assistant` (saved by an assistant connected through MCP with `save_tip`; `assistant` says which, `claude`, `chatgpt` or `other`; never a notification) |
 | `message` | chat message | | `role`: user or assistant |
 | `notification` | item in the bell | | `kind`: `start`, `unlock`, `session`, `route`, `server`, `deal`. Points at the `tip` it shows, when there is one |
-| `journey_model` | game, PSN edition and immutable version | `game, edition, version` unique | Validated reviewed knowledge with canonical checksum and source-linked objective identities. The operator importer creates a new row; same-content reimport is idempotent and a different payload at the same version is rejected. Contains no player state |
-| `journey_publication` | game and PSN edition | `game, edition` unique | Active model record and version, or null when disabled. Only the operator activation command updates it with an expected previous version. Rollback moves the pointer and preserves every imported version; account data and stored guides are unaffected |
 | `session_plan` | session plan | `user, status` | One row per plan, Nexo's or a connected assistant's (`assistant`: `claude`, `chatgpt`, `other`). `status`: `active` while on screen, `ended` (the player ended the session before its time), `dismissed` (closed once it was over), `replaced` (a new plan took its place) or `expired` (its time, the minutes asked plus an hour, ran out with no action; it still shows as a recap until the next day, and an hourly check marks it). The plan on screen is the player's latest `active` or `expired` one. Reviewed steps additionally retain `journey: {edition, version, objective}` inside the existing flexible `steps` object; their `minutes` are reserved blocks, not task-duration estimates. The API derives `timing: budget`, current eligibility and spoiler masking without storing additional root fields. This needs no schema migration. Each step keeps its trophy and `trophy_id` on `np_communication_id`, and `done` (earned by `ended_at`; for an expired plan, checked against the trophies the last sync stored). `reason` is why the player closed a plan with no step done, when they answered the optional question: `not_useful`, `too_long`, `other_game` or `no_time`. Kept with the account and wiped with it |
 | `push_subscription` | Push destination owned by a user, discriminated by `transport` (`webpush` or `apns`) | (`transport`, `destination_key`); (`transport`, `registration_key`); legacy Web Push `endpoint` | Flat typed fields with transport-specific assertions, never a free JSON payload. Web Push keeps endpoint/p256dh/auth and account ownership without inventing a session or installation. APNs requires installation/token/environment/session_hash; only live owner sessions deliver. Derived keys are always populated: Web Push uses its endpoint for both, APNs uses environment:token for destination and installation for registration. Token reuse on a new installation transfers ownership atomically; invalid-token cleanup matches installation/token/environment. Existing Web Push rows are upgraded in place by migration 028. Automatic rollback to older servers is not supported: their sender does not filter by transport; see ADR-012. The ops device metric now includes both transports. |
 | `auth_session` | signed-in browser | `token_hash` | Only the hash of the cookie is stored |

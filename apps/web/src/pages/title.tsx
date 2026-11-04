@@ -97,7 +97,6 @@ const messages = defineMessages({
 
 /** What /api/title sends. Games not owned have no progress, and their trophies come from the catalog. */
 export interface TitleDetail {
-  journeyModel?: CurrentGame['journeyModel']
   owned: boolean
   focus?: CurrentGame['focus']
   np?: string
@@ -381,8 +380,6 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
             game: d.game,
             name: d.name,
             np: d.game.id,
-            edition: d.np,
-            journeyModel: d.journeyModel,
             trophies: d.trophies,
             guide: d.guide,
           }}

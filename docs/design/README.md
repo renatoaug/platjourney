@@ -17,6 +17,5 @@ How PlatJourney is built, in reading order. Each note describes the code as it i
 | [11-mcp.md](11-mcp.md) | Using PlatJourney from Claude, ChatGPT and other assistants: the MCP server, its sign-in (OAuth) and its tools |
 | [12-recommendations.md](12-recommendations.md) | The similar-games graph, taste vectors, Nexo's picks and "What to play now?": which games, from which data, and when a model is involved |
 
-- [Reviewed journey pilot](13-reviewed-journey.md): objective knowledge, evidence, evaluation and boundaries.
+- [Trophy journey](13-journey.md): the map derived from the guide and the PSN list, how it adapts and what it covers.
 
-- [Open-world journey pilot](14-open-world-journey.md): Odyssey base objectives, parallel preparation, unknown availability and session integration boundary.

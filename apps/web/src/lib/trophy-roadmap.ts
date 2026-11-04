@@ -56,6 +56,10 @@ export function trophyRoadmap(trophies: Trophy[], guide?: GuideDetail | null): T
 
 export function trophyAdvice(trophy: Trophy, guide?: GuideDetail | null) {
   return {
+    tips: (guide?.milestones ?? []).flatMap((m) =>
+      m.tips.filter((tip) => !!tip.trophy && trophyMatches(trophy, tip.trophy)),
+    ),
+    phase: guide?.roadmap.find((p) => p.trophies.some((name) => trophyMatches(trophy, name))),
     trick: guide?.tricks?.find((x) => trophyMatches(trophy, x.trophy))?.trick,
     warning: guide?.missables.find((x) => trophyMatches(trophy, x.trophy)),
     online: guide?.onlineTrophies.find((x) => trophyMatches(trophy, x.trophy)),
@@ -113,11 +117,16 @@ export function ongoingObjectives(trophies: Trophy[], guide?: GuideDetail | null
     const duration = warning && campaignWindow.test(warning.when.trim()) ? warning : undefined
     const early = earlyAdvice(trophy, trophies, guide?.earlyTips ?? [])
     const counter = trophy.progressTarget != null && trophy.progressTarget > 1
-    if (phases.length < 2 && !duration && !counter && !early) return []
+    // Tips about it in several stretches of the route: a collection picked up along the way.
+    const stretches = (guide?.milestones ?? []).filter((m) =>
+      m.tips.some((tip) => !!tip.trophy && trophyMatches(trophy, tip.trophy) && unique(tip.trophy)),
+    )
+    const repeated = phases.length > 1 || stretches.length > 1
+    if (!repeated && !duration && !counter && !early) return []
     return [
       {
         trophy,
-        basis: ongoingBasis(!!early, !!duration, phases.length > 1),
+        basis: ongoingBasis(!!early, !!duration, repeated),
         warning,
         early,
       },

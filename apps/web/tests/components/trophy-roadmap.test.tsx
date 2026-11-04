@@ -5,7 +5,7 @@ import { SAMPLE_ME } from '../../src/app/app-state'
 import { Journey } from '../../src/components/journey'
 import { TrophyRoadmap } from '../../src/components/trophy-roadmap'
 import { current } from '../../src/fixtures'
-import { requiemGame } from '../../src/fixtures/requiem'
+import { routeFocus, routeGame } from '../../src/fixtures/route'
 import { roadPoint, roadStop } from '../../src/lib/roadmap-motion'
 import * as roadmapData from '../../src/lib/trophy-roadmap'
 import type { CurrentGame, GuideDetail } from '../../src/lib/types'
@@ -14,11 +14,11 @@ import { mockApi, renderApp, reply } from '../support/web'
 afterEach(() => mock.restore())
 
 test('one continuous route includes confirmed past and opens on the next suggestion without changing progress', () => {
-  const data = requiemGame(['chapter-1', 'perfect-shot'])
+  const data = routeGame(['Primeiro Passo', 'Mira Certeira'])
   const before = structuredClone(data.trophies)
   const { container } = renderApp(<TrophyRoadmap game={data} />)
   const route = screen.getByRole('list', { name: 'Rota completa' })
-  expect(within(route).getByRole('button', { name: /Sob um Novo Sol Conquistado/ })).toBeTruthy()
+  expect(within(route).getByRole('button', { name: /Primeiro Passo Conquistado/ })).toBeTruthy()
   expect(within(route).getAllByText('Conquistado')).toHaveLength(2)
   expect(container.querySelector('.roadmap-route .is-current')?.getAttribute('data-earned')).toBe(
     'false',
@@ -29,11 +29,11 @@ test('one continuous route includes confirmed past and opens on the next suggest
 })
 
 test('origin and arrows navigate past milestones on the same route and resume the suggestion', () => {
-  const data = requiemGame(['chapter-1', 'perfect-shot'])
+  const data = routeGame(['Primeiro Passo', 'Mira Certeira'])
   data.trophies = data.trophies.map((t) => ({
     ...t,
     earnedAt: t.earned
-      ? t.id === 32
+      ? t.name === 'Mira Certeira'
         ? '2024-01-01T10:00:00Z'
         : '2024-01-01T11:00:00Z'
       : undefined,
@@ -45,11 +45,11 @@ test('origin and arrows navigate past milestones on the same route and resume th
     x.getAttribute('data-trophy'),
   )
   fireEvent.click(screen.getByRole('button', { name: /Início da rota/ }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Mira perfeita')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Mira Certeira')
   expect(screen.getByRole('button', { name: 'Marco anterior' }).hasAttribute('disabled')).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
   fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Mira perfeita')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Mira Certeira')
   fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(current)
   expect(
@@ -656,27 +656,54 @@ test('movement starts on the next frame, follows the cubic road both ways and ca
   }
 })
 
-test('mounted Requiem roadmap shows reviewed chronology, preparation and no inferred position', () => {
-  renderApp(<TrophyRoadmap game={requiemGame(['chapter-3'])} />)
-  expect(screen.getByRole('heading', { name: 'Piedade', level: 3 })).toBeTruthy()
-  expect(screen.getByText(/Capítulo 3 concluído na PSN/)).toBeTruthy()
-  expect(screen.getAllByText(/preserve a vida do guarda/).length).toBeGreaterThan(0)
-  expect(screen.getByText(/A oportunidade ocorre dentro do capítulo 4/)).toBeTruthy()
-  expect(screen.queryByText('Seu progresso e objetivos paralelos')).toBeNull()
-  expect(
-    within(screen.getByRole('region', { name: 'Enquanto avança' })).getByRole('button', {
-      name: 'Exploradora',
-    }),
-  ).toBeTruthy()
-  expect(screen.queryByText(/Feche o jogo imediatamente/)).toBeNull()
+test('a trophy shows the guide tips of its stretch and the goal of its phase', () => {
+  const { container } = renderApp(<TrophyRoadmap game={routeGame(['Primeiro Passo'])} />)
+  expect(screen.getByRole('heading', { name: 'Mira Certeira', level: 3 })).toBeTruthy()
+  expect(container.querySelector('.roadmap-tips')?.textContent).toContain('Carregue cada disparo')
+  expect(container.querySelector('.roadmap-phase-goal')?.textContent).toContain(
+    'Avance pela história',
+  )
 })
 
-test('live out-of-order progress re-evaluates an unselected route', () => {
+test('a tip that repeats the warning or the trick is not shown twice', () => {
+  const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
+  fireEvent.click(screen.getByRole('button', { name: /Piedade/ }))
+  expect(container.querySelector('.roadmap-caution')?.textContent).toContain('guarda ferido')
+  expect(container.querySelector('.roadmap-tips')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: /Perito/ }))
+  expect(container.querySelector('.roadmap-advice')?.textContent).toContain('Use o bloqueio')
+})
+
+test('a collection folds its checklist, keeps each step and stays visible along the way', () => {
+  const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
+  const along = screen.getByRole('region', { name: 'Enquanto avança' })
+  fireEvent.click(within(along).getByRole('button', { name: /Colecionador/ }))
+  const list = container.querySelector('.roadmap-advice-details')
+  expect(list?.querySelector('summary')?.textContent).toBe('Ver os 3 pontos do roteiro')
+  expect(list?.textContent).toContain('Praça do mercado')
+  expect(list?.textContent).toContain('Contorne pela esquerda')
+  expect(list?.textContent).toContain('Volte pela seleção de capítulo')
+})
+
+test('a trophy the guide only mentions gets its goal and Nexo, with no invented advice', () => {
+  const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
+  fireEvent.click(screen.getByRole('button', { name: /Sem Atalho/ }))
+  expect(container.querySelector('.roadmap-tips')).toBeNull()
+  expect(container.querySelector('.roadmap-advice-label')).toBeNull()
+  expect(container.querySelector('.roadmap-phase-goal')?.textContent).toContain(
+    'Volte pela seleção',
+  )
+  expect(container.querySelector('.roadmap-advice .roadmap-ask')?.getAttribute('href')).toContain(
+    'Sem+Atalho',
+  )
+})
+
+test('live progress moves the suggestion on an unselected route', () => {
   function Live() {
-    const [data, setData] = useState(requiemGame())
+    const [data, setData] = useState(routeGame())
     return (
       <>
-        <button type="button" onClick={() => setData(requiemGame(['chapter-8']))}>
+        <button type="button" onClick={() => setData(routeGame(['Primeiro Passo']))}>
           New milestone
         </button>
         <TrophyRoadmap game={data} />
@@ -684,79 +711,34 @@ test('live out-of-order progress re-evaluates an unselected route', () => {
     )
   }
   renderApp(<Live />)
-  expect(screen.getByRole('heading', { name: 'Mira perfeita', level: 3 })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Primeiro Passo', level: 3 })).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'New milestone' }))
-  expect(screen.getByRole('heading', { name: 'Antiga protetora', level: 3 })).toBeTruthy()
-  expect(screen.getByText(/Capítulo 8 concluído na PSN/)).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Mira Certeira', level: 3 })).toBeTruthy()
 })
 
-test('partial reviewed lists do not claim a personalized recommendation', () => {
-  const data = requiemGame()
+test('hidden trophies keep guide tips and goals behind the account reveal preference', () => {
+  const data = routeGame()
   const { container } = renderApp(
-    <TrophyRoadmap game={{ ...data, trophies: data.trophies.slice(0, 3) }} />,
-  )
-  expect(container.querySelector('[data-suggested="true"]')).toBeNull()
-  expect(container.querySelector('.roadmap-step.is-suggested')).toBeNull()
-  expect(screen.queryByText('Sugestão para agora')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
-  expect(screen.queryByRole('button', { name: 'Voltar à sugestão' })).toBeNull()
-  expect(screen.getByText(/não corresponde a todos os objetivos revisados/)).toBeTruthy()
-  expect(screen.queryByText('Sugestão atual do guia')).toBeNull()
-})
-
-test('reviewed hidden trophy advice never bypasses the account reveal preference', () => {
-  const data = requiemGame()
-  renderApp(
     <TrophyRoadmap
       game={{ ...data, trophies: data.trophies.map((x) => ({ ...x, hidden: true })) }}
     />,
   )
   expect(screen.getByRole('heading', { name: 'Troféu oculto', level: 3 })).toBeTruthy()
-  expect(screen.queryByText(/desafio das pinhas/)).toBeNull()
-  expect(screen.queryByRole('button', { name: 'Exploradora' })).toBeNull()
+  expect(container.querySelector('.roadmap-tips')).toBeNull()
+  expect(container.querySelector('.roadmap-phase-goal')).toBeNull()
+  expect(screen.queryByRole('button', { name: /Colecionador/ })).toBeNull()
 })
 
-test('the mounted Odyssey catalog preview uses reviewed base goals without changing chat identity', async () => {
-  const { odysseyGame } = await import('../../src/fixtures/odyssey')
-  const data = odysseyGame()
-  const { container } = renderApp(
-    <TrophyRoadmap preview game={{ ...data, np: data.game.id, edition: 'NPWR13822_00' }} />,
-  )
-  const panel = screen.getByRole('region', { name: 'Enquanto avança' })
-  expect(screen.getByText(/região, nível, inventário/)).toBeTruthy()
-  expect(within(panel).getAllByRole('button')).toHaveLength(11)
-  fireEvent.click(within(panel).getByRole('button', { name: 'Cria de Poseidon' }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Cria de Poseidon')
-  expect(container.querySelector('.roadmap-advice')?.textContent).toContain(
-    'use Ikaros para localizar',
-  )
+test('a catalog preview keeps the chat on the catalog game', () => {
+  const data = routeGame()
+  const { container } = renderApp(<TrophyRoadmap preview game={{ ...data, np: data.game.id }} />)
   expect(container.querySelector('.roadmap-ask')?.getAttribute('href')).toContain(
-    'game=game%3A103054',
+    'game=game%3A900001',
   )
-  expect(container.textContent).not.toContain('Capítulo 0')
-})
-
-test('Odyssey preparation removes only earned base objectives, protecting hidden goals and DLC', async () => {
-  const { odysseyGame } = await import('../../src/fixtures/odyssey')
-  const data = odysseyGame(['contracts', 'poseidon', 'episode-9'])
-  data.trophies = data.trophies.map((t) => ({ ...t, hidden: t.name === 'Nos Braços de Afrodite' }))
-  data.trophies.push({
-    ...data.trophies[0],
-    groupId: '001',
-    name: 'DLC illustration',
-    earned: false,
-  })
-  const { container } = renderApp(<TrophyRoadmap game={data} />)
-  const panel = screen.getByRole('region', { name: 'Enquanto avança' })
-  expect(within(panel).queryByRole('button', { name: 'Cria de Poseidon' })).toBeNull()
-  expect(within(panel).queryByRole('button', { name: 'Nos Braços de Afrodite' })).toBeNull()
-  expect(within(panel).queryByRole('button', { name: 'DLC illustration' })).toBeNull()
-  expect(within(panel).getByRole('button', { name: 'Senhor dos Mares' })).toBeTruthy()
-  expect(container.textContent).not.toContain('Capítulo 17')
 })
 
 test('campaign is visible first, with origin and destination, while guidance follows selection without writing progress', () => {
-  const data = requiemGame(['chapter-1', 'perfect-shot'])
+  const data = routeGame(['Primeiro Passo', 'Mira Certeira'])
   const before = structuredClone(data.trophies)
   const { container } = renderApp(<TrophyRoadmap game={data} />)
   const expedition = container.querySelector('.roadmap-expedition')
@@ -788,7 +770,7 @@ test('campaign is visible first, with origin and destination, while guidance fol
 })
 
 test('parallel objectives select existing milestones and history selection keeps its map marker', () => {
-  const data = requiemGame(['chapter-1', 'perfect-shot'])
+  const data = routeGame(['Primeiro Passo', 'Mira Certeira'])
   const { container } = renderApp(<TrophyRoadmap game={data} />)
   const parallel = container.querySelector('.roadmap-parallel')
   if (!parallel) throw new Error('parallel route missing')
@@ -803,12 +785,12 @@ test('parallel objectives select existing milestones and history selection keeps
   const history = container.querySelector('.roadmap-past')
   if (!history) throw new Error('history missing')
   fireEvent.click(within(history as HTMLElement).getByText(/Conquistas anteriores/))
-  fireEvent.click(within(history as HTMLElement).getByRole('button', { name: 'Mira perfeita' }))
+  fireEvent.click(within(history as HTMLElement).getByRole('button', { name: 'Mira Certeira' }))
   expect(container.querySelector('.roadmap-route .is-current')?.getAttribute('data-earned')).toBe(
     'true',
   )
   expect(container.querySelector('.roadmap-route .is-current')?.textContent).toContain(
-    'Mira perfeita',
+    'Mira Certeira',
   )
   expect(screen.getByRole('link', { name: 'Ler dica deste objetivo' }).getAttribute('href')).toBe(
     '#roadmap-focus',
@@ -835,7 +817,7 @@ test('campaign ends at the base platinum while additional trophies remain availa
 })
 
 test('mounted sync moves out-of-order achievements into timestamp history and rebases the next action', () => {
-  const original = requiemGame(['chapter-1'])
+  const original = routeGame(['Primeiro Passo'])
   original.trophies = original.trophies.map((t) => ({
     ...t,
     earnedAt: t.earned ? '2024-01-03T12:00:00Z' : undefined,
@@ -846,14 +828,14 @@ test('mounted sync moves out-of-order achievements into timestamp history and re
       <>
         <button
           type="button"
-          onClick={() =>
-            setData({
-              ...data,
-              trophies: data.trophies.map((t) =>
-                t.id === 8 ? { ...t, earned: true, earnedAt: '2024-01-02T12:00:00Z' } : t,
-              ),
-            })
-          }
+          onClick={() => {
+            const trophies = data.trophies.map((t) =>
+              t.name === 'Mira Certeira'
+                ? { ...t, earned: true, earnedAt: '2024-01-02T12:00:00Z' }
+                : t,
+            )
+            setData({ ...data, trophies, focus: routeFocus(trophies) })
+          }}
         >
           Receive sync
         </button>
@@ -862,16 +844,16 @@ test('mounted sync moves out-of-order achievements into timestamp history and re
     )
   }
   const { container } = renderApp(<LiveSync />)
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Recém-chegados')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Mira Certeira')
   fireEvent.click(screen.getByRole('button', { name: 'Receive sync' }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Antiga protetora')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Segundo Ato')
   const names = [...container.querySelectorAll('.roadmap-route-name')].map((e) => e.textContent)
-  expect(names.slice(0, 3)).toEqual(['Mar de Promessas', 'Sob um Novo Sol', 'Antiga protetora'])
+  expect(names.slice(0, 3)).toEqual(['Mira Certeira', 'Primeiro Passo', 'Segundo Ato'])
   expect(
     [...container.querySelectorAll('.roadmap-past time')].map((e) => e.getAttribute('datetime')),
   ).toEqual(['2024-01-02T12:00:00.000Z', '2024-01-03T12:00:00.000Z'])
   fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Sob um Novo Sol')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Primeiro Passo')
   expect([...container.querySelectorAll('.roadmap-route-name')].map((e) => e.textContent)).toEqual(
     names,
   )
@@ -879,7 +861,7 @@ test('mounted sync moves out-of-order achievements into timestamp history and re
 })
 
 test('undated achievements remain explicit and start preview discards personal chronology', () => {
-  const data = requiemGame(['chapter-8'])
+  const data = routeGame(['Terceiro Ato'])
   const { container, unmount } = renderApp(<TrophyRoadmap game={data} />)
   expect(container.querySelector('.roadmap-route > li:first-child')?.textContent).toContain(
     'Data indisponível',
@@ -890,7 +872,6 @@ test('undated achievements remain explicit and start preview discards personal c
   expect(container.querySelector('.roadmap-past time')).toBeNull()
   unmount()
   renderApp(<TrophyRoadmap preview game={data} />)
-  expect(screen.getByRole('heading', { name: 'Mira perfeita', level: 3 })).toBeTruthy()
   expect(document.querySelectorAll('.roadmap-route [data-earned="true"]')).toHaveLength(0)
   expect(document.querySelector('.roadmap-past')).toBeNull()
   expect(screen.getByText(/Comparação sem progresso pessoal/)).toBeTruthy()
@@ -915,7 +896,7 @@ test('fallback inspection never becomes advice when focus is missing or platinum
 })
 
 test('a valid recommendation stays marked while inspecting another milestone', () => {
-  const view = renderApp(<TrophyRoadmap game={requiemGame()} />)
+  const view = renderApp(<TrophyRoadmap game={routeGame()} />)
   const marker = view.container.querySelector('[data-suggested="true"]')
   expect(marker).toBeTruthy()
   expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeTruthy()
