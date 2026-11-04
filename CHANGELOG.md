@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.46.0](https://github.com/renatoaug/platjourney/compare/v0.45.4...v0.46.0) (2026-11-04)
+
+### Features
+
+* **web:** add a trophy journey map built from the guide ([#133](https://github.com/renatoaug/platjourney/issues/133)) ([9a873d7](https://github.com/renatoaug/platjourney/commit/9a873d769b4b4843e6aa0d4d0b2be3dd9802c6f9))
+
 ## [0.45.4](https://github.com/renatoaug/platjourney/compare/v0.45.3...v0.45.4) (2026-11-03)
 
 ### Bug Fixes
