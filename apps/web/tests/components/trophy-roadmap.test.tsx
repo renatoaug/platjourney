@@ -906,3 +906,13 @@ test('a valid recommendation stays marked while inspecting another milestone', (
   fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
   expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeTruthy()
 })
+
+test('the journey says it is in beta, also while it has no trophies to show', () => {
+  const { container, unmount } = renderApp(<TrophyRoadmap game={routeGame()} />)
+  expect(container.querySelector('.roadmap-preview-notice')?.textContent).toContain('BETA')
+  unmount()
+  const empty = renderApp(<TrophyRoadmap game={{ ...routeGame(), trophies: [] }} />)
+  expect(empty.container.querySelector('.roadmap-preview-notice')?.textContent).toContain(
+    'ainda está em testes',
+  )
+})
