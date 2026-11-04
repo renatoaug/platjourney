@@ -81,6 +81,18 @@ What the player and the assistant decide in the chat can live in the app too, un
 
 A game is named by its catalog id (`game:1234`, from `search_games`) or its name; a name the catalog does not know is not looked up anywhere else. A guide that is not stored yet is not researched on the spot: the assistant can search the web with its own tools.
 
+## Interactive views
+
+With `MCP_APPS=1`, an assistant that renders [MCP Apps](https://github.com/modelcontextprotocol/ext-apps) can open three views, in the app's own look. It is off by default: no host has been tested end to end yet, so turning it on is part of that test. A host without MCP Apps support still gets a useful text result.
+
+| Tool | What the view shows | What its buttons do |
+|---|---|---|
+| `show_taste_profile` | The player's taste, to change and review | `change_taste_preferences`, after a confirmation |
+| `show_platinum_pick` | The game the assistant recommends: art, difficulty, hours, progress, why and where to start | `add_interest`, or saying the game is already there, and opening the game in the app |
+| `show_trophy_card` | One trophy: image, what PSN asks for, status, rarity and the assistant's tip | `save_tip`, and opening the game in the app |
+
+The assistant does the thinking: it reads the player's data, chooses the game or writes the tip and passes it to the view, so the views never run the app's model and cost nothing. `change_taste_preferences` has `_meta.ui.visibility: ["app"]`: a host keeps it out of the assistant's list, so only the view's confirmation reaches it. Everything goes through `/mcp`, with its sign-in, rate limit, demo block and `beforeTool`. A view has no network access, and its policy allows images only from the PSN's and the catalog's image hosts. The taste view sends the change, not the whole profile, so the server keeps whatever the change does not name. A hidden trophy gets a card, marked as hidden, only when the player asks about it: the tool's description tells the assistant not to pick or name one by itself. What a view shows travels in the result's `_meta`, which reaches the view and not the model, and the model only reads that the card is on screen, so it has nothing to retell. So these three tools are only useful on a host that renders MCP Apps, which is why they stay behind `MCP_APPS`.
+
 ## Shortcuts
 
 Three MCP prompts, which an assistant offers as shortcuts (a slash command, a menu): `what_to_play` (with an optional mood), `plan_session` (with the minutes available) and `trophy_tip` (with an optional trophy). Each tells the assistant which tools to read and how Nexo weighs the answer. That part is the same text Nexo's own prompts are built from (`services/ai/src/platjourney_ai/method.py`), asked once from the AI service (`POST /method`) and kept, so a change there changes Nexo and the shortcuts together. The assistant's model does the thinking.

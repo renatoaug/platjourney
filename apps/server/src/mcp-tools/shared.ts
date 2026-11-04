@@ -16,6 +16,8 @@ export type Args = Record<string, unknown>
 /** Which assistant called: what the app shows next to what it saved. */
 interface From {
   assistant: AssistantKey
+  /** This instance's address, for links back to the app. */
+  base?: string
 }
 export interface Tool {
   name: string
@@ -29,6 +31,9 @@ export interface Tool {
   /** Added to the result as `next`: what to save when the assistant acts on it. An assistant that
    * loads tools as it needs them reads this, where it may never read the server's instructions. */
   next?: string
+  /** MCP Apps: the view this tool opens, and who may call it. `['app']` keeps a tool out of the
+   * assistant's list, so only the view's own controls reach it. */
+  ui?: { resourceUri?: string; visibility?: ('model' | 'app')[] }
 }
 
 export const SAVE_PICK =

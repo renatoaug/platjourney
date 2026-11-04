@@ -128,6 +128,35 @@ export function readPrefs(raw: unknown): TastePrefs | null {
   return { added, removed, filters }
 }
 
+/** The player's preferences after one change, keeping everything the change does not name. A value
+ * added stops being removed and the other way around. Null when the change has the wrong shape. */
+export function changedPrefs(
+  current: TastePrefs,
+  change: { add?: unknown; remove?: unknown; filters?: unknown },
+): TastePrefs | null {
+  const asked = readPrefs({
+    added: change.add,
+    removed: change.remove,
+    filters: { ...current.filters, ...((change.filters ?? {}) as object) },
+  })
+  if (!asked) return null
+  const same = (a: string, b: string) => a.toLocaleLowerCase() === b.toLocaleLowerCase()
+  const without = (list: string[], gone: string[]) =>
+    list.filter((x) => !gone.some((y) => same(x, y)))
+  const lists = (mine: Lists, theirs: Lists, undo: Lists) =>
+    Object.fromEntries(
+      TASTE_LISTS.map((key) => [
+        key,
+        [...without(mine[key], [...theirs[key], ...undo[key]]), ...theirs[key]],
+      ]),
+    ) as Lists
+  return readPrefs({
+    added: lists(current.added, asked.added, asked.removed),
+    removed: lists(current.removed, asked.removed, asked.added),
+    filters: asked.filters,
+  })
+}
+
 /** The profile the player sees: the model's, without what they removed and with what they added. */
 export function effectiveProfile(
   profile: TasteProfile | null,

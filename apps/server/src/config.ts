@@ -54,6 +54,8 @@ export const config = {
     accessMinutes: 60,
     refreshDays: Number(process.env.MCP_REFRESH_DAYS ?? 14),
     perMinute: Math.max(0, Number(process.env.MCP_RATE_LIMIT ?? 60) || 0),
+    // The interactive views for assistants (MCP Apps): off until a host has been tested end to end.
+    apps: process.env.MCP_APPS === '1',
   },
   // Notices as push to the browser and the installed web app (Web Push). Off without both VAPID
   // keys; `bun run --cwd apps/server push:keys` makes a pair. The contact goes to the push services

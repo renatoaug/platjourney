@@ -17,7 +17,6 @@ import * as activity from '../src/repository/activity.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as recs from '../src/repository/recommendation.ts'
-import * as users from '../src/repository/user.ts'
 import * as watcher from '../src/watcher.ts'
 import { makeContext, makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
 import { connect, fakeOauthStore, send } from './oauth-store.ts'
@@ -130,6 +129,39 @@ test('initialize, ping and the tool list', async () => {
     code: -32601,
     message: 'Method not found',
   })
+})
+
+test('the player views stay off unless the instance turns them on', async () => {
+  const names = async () =>
+    (await rpc('tools/list')).body.result.tools.map((tool: { name: string }) => tool.name)
+  expect(await names()).not.toContain('show_taste_profile')
+  expect((await rpc('resources/list')).body.result).toBeUndefined()
+  config.mcp.apps = true
+  try {
+    expect(await names()).toContain('show_taste_profile')
+    const tools = (await rpc('tools/list')).body.result.tools
+    expect(
+      tools.find((t: { name: string }) => t.name === 'change_taste_preferences')._meta.ui,
+    ).toEqual({
+      visibility: ['app'],
+    })
+    const views = (await rpc('resources/list')).body.result.resources
+    expect(views).toHaveLength(3)
+    expect(
+      (await rpc('resources/read', { uri: views[0].uri })).body.result.contents[0].mimeType,
+    ).toBe('text/html;profile=mcp-app')
+    expect(
+      (await rpc('initialize', { protocolVersion: '2025-11-25', capabilities: {} })).body.result
+        .capabilities.resources,
+    ).toEqual({ listChanged: false })
+    const result = (await rpc('tools/call', { name: 'show_taste_profile', arguments: {} })).body
+      .result
+    expect(result.structuredContent).toEqual({ shown: true })
+    expect(result.content[0].text).toContain('on screen')
+    expect(result._meta.view).toHaveProperty('profile')
+  } finally {
+    config.mcp.apps = false
+  }
 })
 
 test('notifications are acknowledged, and only POST with a JSON-RPC message is read', async () => {
