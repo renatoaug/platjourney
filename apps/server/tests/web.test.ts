@@ -1682,3 +1682,20 @@ test('trophy visibility persists per authenticated owner and rejects stale accou
   expect((await send('POST', '/api/account/trophy-visibility', body)).status).toBe(401)
   expect(save).toHaveBeenCalledTimes(1)
 })
+
+test('owned title focus uses the selected edition instead of another catalog release', async () => {
+  const found = makeGame({ np_communication_ids: ['NPWR1', 'NPWR22997_00'] })
+  spyOn(games, 'getGame').mockResolvedValue(found)
+  spyOn(lib, 'library').mockResolvedValue([
+    makeTitle({ npCommunicationId: 'NPWR1' }),
+    makeTitle({ npCommunicationId: 'NPWR22997_00' }),
+  ])
+  spyOn(guides, 'getGuide').mockResolvedValue({
+    ...freshGuide,
+    roadmap: [{ phase: 'Explore', goal: 'Read', trophies: ['Leitor'] }],
+  })
+  const legacy = await send('GET', '/api/title?game=game:1&id=NPWR1')
+  expect(legacy.body.focus.trophy.name).toBe('Leitor')
+  const incomplete = await send('GET', '/api/title?game=game:1&id=NPWR22997_00')
+  expect(incomplete.body.focus).toEqual({ phases: [] })
+})

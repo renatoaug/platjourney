@@ -112,6 +112,7 @@ test('counters and base completion never fabricate earned state or a platinum un
 test('server and UI share focus; missing or ambiguous lists withhold personalized recommendations', () => {
   const ctx = makeContext({ trophies: list(['episode-6']).map((t) => makeTrophy(t)) })
   ctx.game.np_communication_ids = ['NPWR13822_00']
+  ctx.title.npCommunicationId = 'NPWR13822_00'
   expect(todaysFocus(ctx).trophy?.name).toBe(plan(['episode-6']).next?.trophy.name)
   ctx.trophies.push({ ...ctx.trophies[0], id: 999 })
   expect(todaysFocus(ctx)).toEqual({ phases: [] })

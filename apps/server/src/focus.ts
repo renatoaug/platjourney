@@ -36,6 +36,9 @@ interface Focus {
   missable?: { trophy: string; when: string }
 }
 
+type FocusContext = Pick<GameContext, 'trophies' | 'guide'> &
+  Partial<Pick<GameContext, 'game' | 'title'>>
+
 // PSN sometimes writes a name with a double space ("Caçador de  Emboscadas"); the guide copies it.
 // Compared and shown with single spaces.
 export const tidy = (name: string) => name.replace(/\s+/g, ' ').trim()
@@ -49,9 +52,7 @@ export function storyTrophy(guide: Pick<Guide, 'milestones'> | undefined, name?:
 
 const shortName = (phase: string) => tidy(phase.split(/\s[—–-]\s/)[0])
 
-export function todaysFocus(
-  ctx: Pick<GameContext, 'trophies' | 'guide'> & Partial<Pick<GameContext, 'game'>>,
-): Focus {
+export function todaysFocus(ctx: FocusContext): Focus {
   const reviewed = reviewedFocus(ctx)
   if (reviewed) return reviewed
   const base = ctx.trophies.filter((x) => x.groupId === 'default' && x.type !== 'platinum')
@@ -99,7 +100,7 @@ export function todaysFocus(
 // one of them was it; then the next one by the same rule is new. A phase whose last open trophy is
 // among these unlocks is `completed`.
 export function focusAfter(
-  ctx: Pick<GameContext, 'trophies' | 'guide'> & Partial<Pick<GameContext, 'game'>>,
+  ctx: FocusContext,
   unlocked: TrophyStatus[],
 ): Focus & { changed: boolean; completed?: string } {
   const ids = new Set(unlocked.map((t) => t.id))
@@ -117,10 +118,12 @@ export function focusAfter(
   }
 }
 
-function reviewedFocus(
-  ctx: Pick<GameContext, 'trophies' | 'guide'> & Partial<Pick<GameContext, 'game'>>,
-): Focus | undefined {
-  const reviewed = ctx.game && reviewedJourney(ctx.game)
+function reviewedFocus(ctx: FocusContext): Focus | undefined {
+  // A catalog can group reviewed and unreviewed releases. Only the opened PSN list
+  // identifies the model; a missing edition must not borrow another release's rules.
+  const reviewed = ctx.title?.npCommunicationId
+    ? reviewedJourney({ np: ctx.title.npCommunicationId })
+    : undefined
   if (reviewed) {
     if (ctx.guide?.unobtainable) return { phases: [] }
     const plan = evaluateJourney(reviewed, ctx.trophies)

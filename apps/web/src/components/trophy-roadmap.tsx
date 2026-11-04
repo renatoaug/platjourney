@@ -1142,14 +1142,16 @@ export function TrophyRoadmap({
   const suggested = ordered.find(
     (x) => !x.earned && x.id === focus?.id && x.groupId === focus.groupId,
   )
-  const target =
+  // Inspection still opens a milestone when the engine withholds a recommendation.
+  // Only `suggested` may supply recommendation badges and the resume action.
+  const defaultSelection =
     suggested ??
     ordered.find((x) => !x.earned && x.type !== 'platinum') ??
     ordered.find((x) => !x.earned) ??
     ordered.find((x) => x.type === 'platinum' && x.groupId === 'default') ??
     ordered.at(-1)
   const [selection, setSelection] = useState<string | null>(null)
-  const selected = ordered.find((x) => anchor(x) === selection) ?? target
+  const selected = ordered.find((x) => anchor(x) === selection) ?? defaultSelection
   const stageIndex = stages.findIndex((s) => selected && s.trophies.includes(selected))
   const stage = stages[stageIndex]
   const history = achievementHistory(ordered)
@@ -1197,10 +1199,10 @@ export function TrophyRoadmap({
               game={game}
               ordered={ordered}
               selected={selected}
-              target={target}
+              target={suggested}
               choose={choose}
             />
-            <RoadmapFocus game={game} selected={selected} target={target} />
+            <RoadmapFocus game={game} selected={selected} target={suggested} />
             <RoadmapParallel game={game} choose={inspect} />
             {!!past.length && (
               <details className="roadmap-past">

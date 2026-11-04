@@ -197,7 +197,8 @@ test('hidden advice is opt in, guide markup is sanitized and links retain exact 
   expect(container.querySelector('.roadmap-advice strong')?.textContent).toBe('the path')
   expect(container.querySelector('script')).toBeNull()
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('First step')
-  fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
+  expect(screen.queryByRole('button', { name: 'Voltar à sugestão' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
   expect(screen.queryByText('Secret advice')).toBeNull()
 })
 
@@ -234,7 +235,8 @@ test('the journey is continuous and every previous achievement stays accessible'
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('First step')
   fireEvent.click(screen.getByRole('button', { name: 'Secret scene' }))
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Secret scene')
-  fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
+  expect(screen.queryByRole('button', { name: 'Voltar à sugestão' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Complete')
   expect(game.trophies[0].earned).toBe(false)
 })
@@ -690,7 +692,14 @@ test('live out-of-order progress re-evaluates an unselected route', () => {
 
 test('partial reviewed lists do not claim a personalized recommendation', () => {
   const data = requiemGame()
-  renderApp(<TrophyRoadmap game={{ ...data, trophies: data.trophies.slice(0, 3) }} />)
+  const { container } = renderApp(
+    <TrophyRoadmap game={{ ...data, trophies: data.trophies.slice(0, 3) }} />,
+  )
+  expect(container.querySelector('[data-suggested="true"]')).toBeNull()
+  expect(container.querySelector('.roadmap-step.is-suggested')).toBeNull()
+  expect(screen.queryByText('Sugestão para agora')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+  expect(screen.queryByRole('button', { name: 'Voltar à sugestão' })).toBeNull()
   expect(screen.getByText(/não corresponde a todos os objetivos revisados/)).toBeTruthy()
   expect(screen.queryByText('Sugestão atual do guia')).toBeNull()
 })
@@ -885,4 +894,34 @@ test('undated achievements remain explicit and start preview discards personal c
   expect(document.querySelectorAll('.roadmap-route [data-earned="true"]')).toHaveLength(0)
   expect(document.querySelector('.roadmap-past')).toBeNull()
   expect(screen.getByText(/Comparação sem progresso pessoal/)).toBeTruthy()
+})
+
+test('fallback inspection never becomes advice when focus is missing or platinum is unobtainable', () => {
+  for (const unavailable of [false, true]) {
+    const data = {
+      ...game,
+      focus: unavailable ? game.focus : null,
+      guide: unavailable ? { ...(game.guide as GuideDetail), unobtainable: 'Unavailable' } : null,
+    }
+    const view = renderApp(<TrophyRoadmap game={data} />)
+    expect(view.container.querySelector('.roadmap-route .is-current')).toBeTruthy()
+    expect(view.container.querySelector('[data-suggested="true"]')).toBeNull()
+    expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeNull()
+    expect(screen.queryByText('Sugestão para agora')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+    expect(screen.queryByRole('button', { name: 'Voltar à sugestão' })).toBeNull()
+    view.unmount()
+  }
+})
+
+test('a valid recommendation stays marked while inspecting another milestone', () => {
+  const view = renderApp(<TrophyRoadmap game={requiemGame()} />)
+  const marker = view.container.querySelector('[data-suggested="true"]')
+  expect(marker).toBeTruthy()
+  expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+  expect(view.container.querySelector('[data-suggested="true"]')).toBe(marker)
+  expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
+  expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeTruthy()
 })

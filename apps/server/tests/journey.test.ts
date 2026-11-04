@@ -107,8 +107,9 @@ test('server focus consumes the same reviewed recommendation rather than the leg
     trophies: list(['chapter-8']).map((t) => makeTrophy(t as Parameters<typeof makeTrophy>[0])),
   })
   ctx.game.np_communication_ids = ['NPWR22997_00']
+  ctx.title.npCommunicationId = 'NPWR22997_00'
   expect(todaysFocus(ctx).trophy?.name).toBe('Antiga protetora')
-  ctx.game.np_communication_ids = ['OTHER']
+  ctx.title.npCommunicationId = 'OTHER'
   expect(todaysFocus(ctx).trophy?.name).not.toBe('Antiga protetora')
 })
 
@@ -117,6 +118,7 @@ test('an incomplete reviewed edition does not fall back to an unreviewed focus',
     trophies: [makeTrophy({ name: 'Mira perfeita', nameEn: 'Perfect shot' })],
   })
   ctx.game.np_communication_ids = ['NPWR22997_00']
+  ctx.title.npCommunicationId = 'NPWR22997_00'
   expect(todaysFocus(ctx)).toEqual({ phases: [] })
 })
 
@@ -148,6 +150,7 @@ test('an unobtainable guide suppresses the reviewed server recommendation', () =
     },
   })
   ctx.game.np_communication_ids = ['NPWR22997_00']
+  ctx.title.npCommunicationId = 'NPWR22997_00'
   expect(todaysFocus(ctx)).toEqual({ phases: [] })
 })
 
@@ -185,4 +188,24 @@ test('collectible finish windows are interleaved without inventing collected ite
   expect(state(['chapter-4']).ongoing.some((x) => x.objective.key === 'crossbow')).toBe(true)
   expect(state([]).ongoing.some((x) => x.objective.kind === 'skill')).toBe(false)
   expect(state(['chapter-1']).ongoing.filter((x) => x.objective.kind === 'skill')).toHaveLength(3)
+})
+
+test('server focus follows the opened edition in a multi-edition catalog, including legacy fallback', () => {
+  const ctx = makeContext({
+    trophies: list(['chapter-8']).map((t) => makeTrophy(t as Parameters<typeof makeTrophy>[0])),
+  })
+  ctx.game.np_communication_ids = ['OTHER', 'NPWR22997_00', 'NPWR13822_00']
+  ctx.title.npCommunicationId = 'NPWR22997_00'
+  expect(todaysFocus(ctx).trophy?.name).toBe('Antiga protetora')
+  ctx.title.npCommunicationId = 'OTHER'
+  ctx.guide = {
+    roadmap: [{ phase: 'Optional', goal: 'Inspect', trophies: ['Mira perfeita'] }],
+  } as NonNullable<typeof ctx.guide>
+  expect(todaysFocus(ctx).trophy?.name).toBe('Mira perfeita')
+  expect(
+    todaysFocus({ game: ctx.game, trophies: ctx.trophies, guide: ctx.guide }).trophy?.name,
+  ).toBe('Mira perfeita')
+  ctx.title.npCommunicationId = 'NPWR22997_00'
+  ctx.trophies = ctx.trophies.slice(0, 3)
+  expect(todaysFocus(ctx)).toEqual({ phases: [] })
 })
