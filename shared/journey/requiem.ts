@@ -1,4 +1,4 @@
-import type { JourneyModel, JourneyObjective, JourneyText } from './model.ts'
+import type { JourneyDraft, JourneyModel, JourneyObjective, JourneyText } from './model.ts'
 
 const primary = 'https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/'
 const secondary = 'https://platget.com/guides/a-plague-tale-requiem-trophy-guide/'
@@ -26,7 +26,7 @@ const chapters = [
   ['Rei Hugo', 'King Hugo'],
   ['Cavaleiros!', 'Knights!'],
 ] as const
-const story: JourneyObjective[] = chapters.map(([pt, en], i) => ({
+const story: JourneyDraft[] = chapters.map(([pt, en], i) => ({
   key: `chapter-${i + 1}`,
   names: [pt, en],
   kind: 'story',
@@ -38,7 +38,7 @@ const story: JourneyObjective[] = chapters.map(([pt, en], i) => ({
   ),
   sources: [primary, secondary],
 }))
-const optional: JourneyObjective[] = [
+const optional: JourneyDraft[] = [
   {
     key: 'perfect-shot',
     names: ['Mira perfeita', 'Perfect shot'],
@@ -88,7 +88,7 @@ const collectAction = text(
   'Aproveite a exploração para procurar os itens deste objetivo. Consulte as indicações por capítulo; não é necessário marcar cada item no app.',
   'Look for this objective’s items as you explore. Consult chapter guidance; there is no need to check off each item in the app.',
 )
-const collectibles: JourneyObjective[] = [
+const collectibles: JourneyDraft[] = [
   ['herbalist', 'Herbalista', 'Herbalist'],
   ['ornithologist', 'Ornitóloga', 'Ornithologist'],
   ['explorer', 'Exploradora', 'Explorer'],
@@ -113,7 +113,7 @@ const upgradeAction = text(
   'Recolha ferramentas e peças ao explorar e confira as melhorias restantes nas bancadas. Continue com recursos obtidos no jogo; este roteiro não depende de fechar o app para desfazer compras.',
   'Collect tools and pieces while exploring and check remaining workbench upgrades. Use resources earned in the game; this route does not rely on closing the app to undo purchases.',
 )
-const upgrades: JourneyObjective[] = [
+const upgrades: JourneyDraft[] = [
   ['sling', 'Brinquedo nada', 'Not a toy anymore'],
   ['crossbow', 'Balestra aprimorada', 'Improved crossbow'],
   ['gear', 'Bolsos e mais bolsos', 'Handful of pockets'],
@@ -136,7 +136,7 @@ const skillAction = text(
   'Quando o menu de habilidades estiver disponível, confira esta barra antes de escolher como abordar o próximo encontro. Não é possível deduzir a barra pela ausência do troféu. Na New Game+, priorize as habilidades que ainda faltam.',
   'Once the skills menu is available, check this bar before choosing how to approach the next encounter. A missing trophy does not reveal its progress. In New Game+, prioritize the skills still missing.',
 )
-const skills: JourneyObjective[] = [
+const skills: JourneyDraft[] = [
   ['prudence', 'Discreta', 'Sneaky'],
   ['aggressive', 'Lutadora', 'Fighter'],
   ['opportunism', 'Maligna', 'Malignant'],
@@ -169,7 +169,7 @@ const skills: JourneyObjective[] = [
   ),
   sources: [primary, secondary],
 }))
-const misc: JourneyObjective[] = [
+const misc: JourneyDraft[] = [
   {
     key: 'night-guard',
     names: ['Guarda noturna', 'Night guard'],
@@ -198,12 +198,113 @@ const misc: JourneyObjective[] = [
   },
 ]
 const objectives = [...story, ...optional, ...collectibles, ...upgrades, ...skills, ...misc]
+
+const collectibleSource =
+  'https://www.powerpyx.com/a-plague-tale-requiem-all-collectibles-locations-guide/'
+const ids: Record<string, number> = {
+  herbalist: 18,
+  ornithologist: 19,
+  explorer: 20,
+  memories: 21,
+  sling: 22,
+  crossbow: 23,
+  gear: 24,
+  instruments: 25,
+  alchemy: 26,
+  'night-guard': 27,
+  alchemist: 28,
+  prudence: 29,
+  aggressive: 30,
+  opportunism: 31,
+  'perfect-shot': 32,
+  'perfect-throw': 33,
+  'old-protector': 34,
+  mercy: 35,
+  platinum: 0,
+}
+const finishes: Record<string, [number, number]> = {
+  memories: [13, 126],
+  ornithologist: [13, 127],
+  explorer: [13, 128],
+  herbalist: [16, 159],
+}
+function placement(o: JourneyDraft): JourneyObjective['placement'] {
+  const chapter = o.chapter ?? 0
+  const finish = finishes[o.key]?.[0]
+  if (o.kind === 'story')
+    return {
+      kind: 'story',
+      after: chapter > 1 ? `chapter-${chapter - 1}` : undefined,
+      label: text(`Capítulo ${chapter}`, `Chapter ${chapter}`),
+      evidence: text(
+        `Este troféu confirma a conclusão do capítulo ${chapter}, não a posição atual do save.`,
+        `This trophy confirms chapter ${chapter} completion, not the current save location.`,
+      ),
+      sources: o.sources,
+    }
+  if (finish)
+    return {
+      kind: 'window',
+      after: `chapter-${finish - 1}`,
+      before: `chapter-${finish}`,
+      label: text(`Pode concluir no cap. ${finish}`, `Can finish in ch. ${finish}`),
+      evidence: text(
+        `O último item deste conjunto está no capítulo ${finish}. Esta posição só representa a conclusão possível se os anteriores foram obtidos; a preparação começa antes e itens perdidos podem ser recuperados.`,
+        `The last item in this set is in chapter ${finish}. This is only a possible completion point if earlier items were collected; preparation starts earlier and missing items can be recovered.`,
+      ),
+      sources: [collectibleSource],
+    }
+  if (o.kind === 'chapter')
+    return {
+      kind: 'window',
+      after: chapter > 1 ? `chapter-${chapter - 1}` : undefined,
+      before: `chapter-${chapter}`,
+      label: text(`Oportunidade · cap. ${chapter}`, `Opportunity · ch. ${chapter}`),
+      evidence: text(
+        `A oportunidade ocorre dentro do capítulo ${chapter}, antes do troféu de encerramento. Pode ser recuperada depois por seleção de capítulos.`,
+        `This opportunity occurs within chapter ${chapter}, before its completion trophy. It can be recovered later through chapter select.`,
+      ),
+      sources: o.sources,
+    }
+  if (o.kind === 'platinum')
+    return {
+      kind: 'destination',
+      label: text('Destino', 'Destination'),
+      evidence: text(
+        'Exige os demais troféus do jogo base, sem DLC.',
+        'Requires the other base-game trophies, without DLC.',
+      ),
+      sources: o.sources,
+    }
+  return {
+    kind: 'parallel',
+    label: text('Em paralelo', 'In parallel'),
+    evidence: text(
+      'A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.',
+      'Order depends on exploration, resources and playstyle. Map position is not an unlock prediction.',
+    ),
+    sources: o.sources,
+  }
+}
+function identify(drafts: JourneyDraft[]): JourneyObjective[] {
+  return drafts.map((o) => ({
+    ...o,
+    trophyId: o.kind === 'story' ? Number(o.key.slice(8)) : ids[o.key],
+    groupId: 'default',
+    order: finishes[o.key]?.[1] ?? o.order,
+    prepareFrom: o.key === 'crossbow' ? 5 : o.kind === 'skill' ? 2 : o.prepareFrom,
+    completionChapter: finishes[o.key]?.[0],
+    placement: placement(o),
+  }))
+}
+
 export const requiem: JourneyModel = {
+  edition: 'NPWR22997_00',
   name: 'Requiem',
-  version: 1,
-  reviewedAt: '2026-11-03',
+  version: 2,
+  reviewedAt: '2026-11-04',
   planning: { kind: 'chapters', finalChapter: 17 },
-  objectives: [
+  objectives: identify([
     ...objectives,
     {
       key: 'platinum',
@@ -217,5 +318,5 @@ export const requiem: JourneyModel = {
       ),
       sources: [primary, secondary],
     },
-  ],
+  ]),
 }

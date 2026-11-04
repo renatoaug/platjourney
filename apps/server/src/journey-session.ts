@@ -68,6 +68,7 @@ function guidance(item: JourneyItem<TrophyStatus>, user: User) {
     t('check'),
     item.state === 'prepare' ? t('prepare') : item.state === 'recover' ? t('recover') : '',
     o.action[language],
+    o.placement.evidence[language],
     o.approach?.[language],
     o.availability?.[language],
     item.state === 'recover' ? o.recovery?.[language] : undefined,

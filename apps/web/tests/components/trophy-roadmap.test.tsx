@@ -626,6 +626,7 @@ test('mounted Requiem roadmap shows reviewed chronology, preparation and no infe
   expect(screen.getByRole('heading', { name: 'Piedade', level: 3 })).toBeTruthy()
   expect(screen.getByText(/Capítulo 3 concluído na PSN/)).toBeTruthy()
   expect(screen.getAllByText(/preserve a vida do guarda/).length).toBeGreaterThan(0)
+  expect(screen.getByText(/A oportunidade ocorre dentro do capítulo 4/)).toBeTruthy()
   fireEvent.click(screen.getByText('Prepare enquanto avança'))
   expect(
     within(screen.getByRole('complementary', { name: 'Roteiro revisado · Requiem' })).getByRole(

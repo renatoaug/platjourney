@@ -6,8 +6,8 @@ import { todaysFocus } from '../src/focus.ts'
 import { makeContext, makeTrophy } from './fixtures.ts'
 
 const list = (earned: string[] = []): JourneyTrophy[] =>
-  odyssey.objectives.map((o, id) => ({
-    id,
+  odyssey.objectives.map((o) => ({
+    id: o.trophyId,
     groupId: 'default',
     name: o.names[0],
     nameEn: o.names[1],
@@ -118,3 +118,50 @@ test('server and UI share focus; missing or ambiguous lists withhold personalize
   ctx.trophies = []
   expect(todaysFocus(ctx)).toEqual({ phases: [] })
 })
+
+test('source-backed windows sit inside the campaign without becoming unlock requirements', () => {
+  const p = plan()
+  const keys = p.items.map((x) => x.objective.key)
+  for (const [key, after, before] of [
+    ['first-upgrade', 'episode-1', 'episode-2'],
+    ['shiny', 'episode-2', 'episode-3'],
+    ['romance', 'episode-2', 'episode-3'],
+    ['birthright', 'episode-6', 'episode-7'],
+    ['olympics', 'episode-6', 'episode-7'],
+  ]) {
+    expect(keys.indexOf(key)).toBeGreaterThan(keys.indexOf(after))
+    expect(keys.indexOf(key)).toBeLessThan(keys.indexOf(before))
+    expect(p.items.find((x) => x.objective.key === key)?.objective.requires).toBeUndefined()
+  }
+  expect(plan(['olympics']).items.find((x) => x.objective.key === 'olympics')?.state).toBe(
+    'complete',
+  )
+  expect(plan(['olympics']).items.find((x) => x.objective.key === 'episode-7')?.trophy.earned).toBe(
+    false,
+  )
+  expect(plan(['episode-7']).items.find((x) => x.objective.key === 'olympics')?.state).toBe('check')
+  expect(plan(['episode-2']).items.find((x) => x.objective.key === 'shiny')?.state).toBe(
+    'available',
+  )
+  expect(p.items.find((x) => x.objective.key === 'contracts')?.objective.placement.kind).toBe(
+    'parallel',
+  )
+})
+
+for (const model of [odyssey])
+  test('canonical IDs remain independent of display order or localization', () => {
+    expect(model.objectives.find((x) => x.key === 'shiny')?.trophyId).toBe(14)
+    expect(model.objectives.find((x) => x.key === 'olympics')?.trophyId).toBe(34)
+    expect(model.objectives.find((x) => x.key === 'contracts')?.trophyId).toBe(45)
+    const renamed = list().map((t) => ({ ...t, name: 'Same translated label', nameEn: undefined }))
+    expect(evaluateJourney(model, renamed).covered).toBe(51)
+    renamed[0].id = 999
+    expect(evaluateJourney(model, renamed).covered).toBe(50)
+    expect(evaluateJourney(model, [...list(), { ...list()[0] }]).covered).toBe(50)
+    expect(
+      evaluateJourney(
+        model,
+        list().map((t) => ({ ...t, groupId: '001' })),
+      ).covered,
+    ).toBe(0)
+  })

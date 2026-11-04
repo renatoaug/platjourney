@@ -16,8 +16,8 @@ export function odysseyGame(earned: string[] = []): CurrentGame {
     focus: null,
     guide: null,
     icon: '',
-    trophies: odyssey.objectives.map((o, id) => ({
-      id,
+    trophies: odyssey.objectives.map((o) => ({
+      id: o.trophyId,
       groupId: 'default',
       name: o.names[0],
       nameEn: o.names[1],

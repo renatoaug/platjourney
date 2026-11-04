@@ -7,8 +7,8 @@ import { makeContext, makeTrophy } from './fixtures.ts'
 
 // Public trophy metadata, synthetic progress only. No player records in fixtures.
 const list = (earned: string[] = []): JourneyTrophy[] =>
-  requiem.objectives.map((o, id) => ({
-    id,
+  requiem.objectives.map((o) => ({
+    id: o.trophyId,
     groupId: 'default',
     name: o.names[0],
     nameEn: o.names[1],
@@ -90,14 +90,16 @@ test('endgame prioritizes skill carryover before upgrades and removes only confi
   ).toBe(true)
 })
 
-test('ambiguous names and partial lists fail closed; foreign and DLC objectives stay unmatched', () => {
+test('identity survives translation changes; duplicate ids and unknown ids fail closed', () => {
   const trophies = list()
-  trophies[1].name = 'Unknown'
-  trophies[1].nameEn = 'Unknown'
-  trophies.push({ ...trophies[2], id: 99 }, { ...trophies[3], id: 100, groupId: '001' })
+  trophies[1].name = 'New translation'
+  trophies[1].nameEn = undefined
+  expect(evaluateJourney(requiem, trophies).covered).toBe(36)
+  trophies[1].id = 999
+  trophies.push({ ...trophies[2] }, { ...trophies[3], groupId: '001' })
   const p = evaluateJourney(requiem, trophies)
   expect(p.covered).toBe(34)
-  expect(p.unmatched.map((x) => x.id)).toEqual([1, 2, 99])
+  expect(p.unmatched.map((x) => x.id)).toEqual([999, 3, 3])
 })
 
 test('server focus consumes the same reviewed recommendation rather than the legacy phase ordering', () => {
@@ -161,4 +163,26 @@ test('English lists bind uniquely and a full counter never completes an objectiv
   expect(p.covered).toBe(36)
   expect(p.items.every((x) => x.state !== 'complete')).toBe(true)
   expect(p.next?.objective.key).toBe('perfect-shot')
+})
+
+test('collectible finish windows are interleaved without inventing collected items', () => {
+  const p = state(['chapter-12'])
+  const keys = p.items.map((x) => x.objective.key)
+  expect(keys.indexOf('memories')).toBeGreaterThan(keys.indexOf('chapter-12'))
+  expect(keys.indexOf('memories')).toBeLessThan(keys.indexOf('chapter-13'))
+  expect(keys.indexOf('ornithologist')).toBeLessThan(keys.indexOf('explorer'))
+  expect(keys.indexOf('explorer')).toBeLessThan(keys.indexOf('chapter-13'))
+  expect(keys.indexOf('herbalist')).toBeGreaterThan(keys.indexOf('chapter-15'))
+  expect(keys.indexOf('herbalist')).toBeLessThan(keys.indexOf('chapter-16'))
+  expect(p.items.find((x) => x.objective.key === 'memories')?.state).toBe('prepare')
+  const after = state(['chapter-13'])
+  expect(after.items.find((x) => x.objective.key === 'memories')?.state).toBe('recover')
+  expect(after.items.find((x) => x.objective.key === 'memories')?.trophy.earned).toBe(false)
+  expect(
+    state(['chapter-13', 'memories']).items.find((x) => x.objective.key === 'memories')?.state,
+  ).toBe('complete')
+  expect(state([]).ongoing.some((x) => x.objective.key === 'crossbow')).toBe(false)
+  expect(state(['chapter-4']).ongoing.some((x) => x.objective.key === 'crossbow')).toBe(true)
+  expect(state([]).ongoing.some((x) => x.objective.kind === 'skill')).toBe(false)
+  expect(state(['chapter-1']).ongoing.filter((x) => x.objective.kind === 'skill')).toHaveLength(3)
 })

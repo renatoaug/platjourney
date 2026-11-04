@@ -16,6 +16,18 @@ export interface JourneyText {
 
 export interface JourneyObjective {
   key: string
+  /** Identity is scoped by JourneyModel.edition, never by translated display names. */
+  trophyId: number
+  groupId: 'default'
+  placement: {
+    kind: 'story' | 'window' | 'parallel' | 'destination'
+    /** Advisory map relations, not requirements to have earned another trophy. */
+    after?: string
+    before?: string
+    label: JourneyText
+    evidence: JourneyText
+    sources: string[]
+  }
   names: [string, string]
   kind:
     | 'story'
@@ -33,6 +45,8 @@ export interface JourneyObjective {
   /** Hard dependencies only. Preparation and ordering are deliberately not dependencies. */
   requires?: string[]
   prepareFrom?: number
+  /** Last collectible location, not proof that earlier items were collected. */
+  completionChapter?: number
   /** Open-world attention is independent of path order and never implies a known counter. */
   ongoing?: boolean
   /** Sufficient evidence of a system being unlocked, not mandatory trophy prerequisites. */
@@ -45,7 +59,10 @@ export interface JourneyObjective {
   sources: string[]
 }
 
+export type JourneyDraft = Omit<JourneyObjective, 'trophyId' | 'groupId' | 'placement'>
+
 export interface JourneyModel {
+  edition: string
   name: string
   version: number
   reviewedAt: string
@@ -67,22 +84,11 @@ export interface JourneyItem<T extends JourneyTrophy> {
   state: ObjectiveState
 }
 
-const normalized = (text: string) =>
-  text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim()
-
-/** Missing and ambiguous names fail closed, rather than attaching guidance to a different trophy. */
+/** Edition is resolved by the registry; duplicate identities fail closed, names never bind. */
 export function evaluateJourney<T extends JourneyTrophy>(model: JourneyModel, trophies: T[]) {
   const base = trophies.filter((t) => t.groupId === 'default')
   const matches = model.objectives.flatMap((objective) => {
-    const names = objective.names.map(normalized)
-    const found = base.filter((t) =>
-      [t.name, t.nameEn].some((n) => n && names.includes(normalized(n))),
-    )
+    const found = base.filter((t) => t.id === objective.trophyId && t.groupId === objective.groupId)
     return found.length === 1 ? [{ objective, trophy: found[0] }] : []
   })
   const earned = new Set(matches.filter((x) => x.trophy.earned).map((x) => x.objective.key))
@@ -196,8 +202,9 @@ function objectiveState(
   if (o.requires?.some((key) => !earned.has(key))) return 'later'
   if (o.kind === 'platinum') return 'verify'
   if (o.kind === 'story' || o.kind === 'chapter') return chapterState(o, confirmed, horizon)
-  if (o.kind === 'skill') return storyComplete ? 'available' : 'prepare'
+  if (o.completionChapter && confirmed >= o.completionChapter) return 'recover'
   if ((o.prepareFrom ?? 1) > horizon) return 'later'
+  if (o.kind === 'skill') return storyComplete ? 'available' : 'prepare'
   return storyComplete ? 'recover' : 'prepare'
 }
 

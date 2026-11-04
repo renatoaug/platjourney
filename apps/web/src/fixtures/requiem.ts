@@ -16,8 +16,8 @@ export function requiemGame(earned: string[] = []): CurrentGame {
     focus: null,
     guide: null,
     icon: '',
-    trophies: requiem.objectives.map((o, id) => ({
-      id,
+    trophies: requiem.objectives.map((o) => ({
+      id: o.trophyId,
       groupId: 'default',
       name: o.names[0],
       nameEn: o.names[1],

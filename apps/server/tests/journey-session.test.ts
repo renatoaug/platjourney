@@ -23,9 +23,9 @@ const editions = new Map([
 ])
 function context(model: JourneyModel, earned: string[] = [], hidden: string[] = []) {
   const ctx = makeContext({
-    trophies: model.objectives.map((o, id) =>
+    trophies: model.objectives.map((o) =>
       makeTrophy({
-        id,
+        id: o.trophyId,
         name: o.names[0],
         nameEn: o.names[1],
         groupId: 'default',
@@ -181,3 +181,27 @@ test('English plans use reviewed English advice and demo remains read-only', asy
   await expect(planSession({ ...user, demo: true }, ctx, 60)).rejects.toBeInstanceOf(DemoReadOnly)
   expect(active).not.toHaveBeenCalled()
 })
+
+for (const model of [requiem, odyssey])
+  test(`${model.name} source relations are complete and acyclic in displayed order`, () => {
+    expect(new Set(model.objectives.map((o) => `${o.groupId}/${o.trophyId}`)).size).toBe(
+      model.objectives.length,
+    )
+    for (const o of model.objectives) {
+      expect(Number.isInteger(o.trophyId)).toBe(true)
+      expect(o.placement.evidence.pt.length).toBeGreaterThan(20)
+      expect(o.placement.sources.length).toBeGreaterThan(0)
+      if (o.placement.after)
+        expect(model.objectives.find((x) => x.key === o.placement.after)?.order).toBeLessThan(
+          o.order,
+        )
+      if (o.placement.before)
+        expect(model.objectives.find((x) => x.key === o.placement.before)?.order).toBeGreaterThan(
+          o.order,
+        )
+    }
+    const ctx = context(model, ['chapter-13', 'episode-2'])
+    const result = selectJourneySession(model, ctx.trophies, 60, true)
+    expect(result.steps.every((x) => x.objective.groupId === 'default')).toBe(true)
+    expect(result.steps.every((x) => !x.trophy.earned)).toBe(true)
+  })

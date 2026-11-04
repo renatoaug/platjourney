@@ -304,6 +304,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
         <details className="roadmap-advice-details" key={reviewed.objective.key}>
           <summary>{t('adviceDetails')}</summary>
           <p className="roadmap-context-note">{t(`${reviewed.state}State`)}</p>
+          <p>{reviewed.objective.placement.evidence[language]}</p>
           {reviewed.objective.approach && <p>{reviewed.objective.approach[language]}</p>}
           {reviewed.objective.availability && <p>{reviewed.objective.availability[language]}</p>}
           {reviewed.objective.recovery && reviewed.state !== 'complete' && (
@@ -312,7 +313,12 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           <details className="roadmap-basis">
             <summary>{t('sources')}</summary>
             <ul>
-              {reviewed.objective.sources.map((url) => (
+              {[
+                ...new Set([
+                  ...reviewed.objective.sources,
+                  ...reviewed.objective.placement.sources,
+                ]),
+              ].map((url) => (
                 <li key={url}>
                   <a href={url} target="_blank" rel="noreferrer">
                     {new URL(url).hostname}
@@ -661,12 +667,13 @@ function RouteNumber({ trophy, index }: { trophy: Trophy; index: number }) {
 function RoadmapTiming({ game, trophy }: { game: RoadmapGame; trophy: Trophy }) {
   const t = useMessages(messages)
   const reviewed = game.journey?.items.find((x) => x.trophy === trophy)
-  if (trophy.earned || trophy.hidden || !reviewed?.objective.chapter) return null
+  if (trophy.earned || trophy.hidden || trophy.type === 'platinum' || !reviewed) return null
+  const language = getLocale() === Language.En ? 'en' : 'pt'
   return (
     <small>
-      {t(reviewed.state === 'recover' ? 'recoverWhen' : 'chapterWhen', {
-        chapter: reviewed.objective.chapter,
-      })}
+      {reviewed.state === 'recover' && reviewed.objective.chapter
+        ? t('recoverWhen', { chapter: reviewed.objective.chapter })
+        : reviewed.objective.placement.label[language]}
     </small>
   )
 }
@@ -677,6 +684,24 @@ function roadmapRisk(game: RoadmapGame, trophy: Trophy) {
   return reviewed
     ? reviewed.objective.risk === 'opportunity'
     : !!trophyAdvice(trophy, game.guide).warning
+}
+
+function measuredRoadGeometry(first: HTMLElement | null) {
+  const pin = first?.querySelector('.roadmap-route-pin')?.getBoundingClientRect()
+  const firstRect = first?.getBoundingClientRect()
+  const second = first?.nextElementSibling
+  const secondPin = second?.querySelector('.roadmap-route-pin')?.getBoundingClientRect()
+  return pin?.width && firstRect
+    ? {
+        x: pin.left - firstRect.left + pin.width / 2,
+        rim: pin.width / 2 + 6,
+        low: pin.top - firstRect.top + pin.height / 2,
+        high:
+          secondPin && second
+            ? secondPin.top - second.getBoundingClientRect().top + secondPin.height / 2
+            : pin.top - firstRect.top + pin.height / 2,
+      }
+    : undefined
 }
 
 function RoadmapForward({
@@ -710,6 +735,7 @@ function RoadmapForward({
       const first = track.querySelector<HTMLElement>('li')
       const width = first?.getBoundingClientRect().width || first?.offsetWidth || 0
       if (!width || !track.clientWidth) return
+      const geometry = measuredRoadGeometry(first)
       const columns = Math.max(1, Math.round(track.clientWidth / width))
       const page = Math.floor(Math.max(0, at) / columns)
       const tail = (columns - (pending.length % columns)) % columns
@@ -717,12 +743,12 @@ function RoadmapForward({
       track.querySelectorAll<SVGSVGElement>('.roadmap-route-line').forEach((svg, index) => {
         svg.setAttribute('viewBox', `0 0 ${width} 150`)
         svg.querySelectorAll('path').forEach((path) => {
-          path.setAttribute('d', roadSegment(index, width))
+          path.setAttribute('d', roadSegment(index, width, geometry))
         })
       })
       const paint = (value: number, scroll: number) => {
         position.current = value
-        const point = roadPoint(value, width)
+        const point = roadPoint(value, width, geometry)
         track.style.setProperty('--roadmap-cursor-x', `${point.x - 6}px`)
         track.style.setProperty('--roadmap-cursor-y', `${point.y - 6}px`)
         track.scrollTo?.({ left: scroll, behavior: 'auto' })
@@ -1287,7 +1313,9 @@ export function TrophyRoadmapSkeleton() {
           <div className="roadmap-loading-path">
             {[0, 1, 2, 3, 4].map((i) => (
               <div key={i} className="roadmap-loading-stop">
-                <Sk w="80px" h={80} />
+                <span className="roadmap-loading-pin">
+                  <Sk w="100%" style={{ height: '100%' }} />
+                </span>
                 <Sk w="85%" h={18} />
               </div>
             ))}

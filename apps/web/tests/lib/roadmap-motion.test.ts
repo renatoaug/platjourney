@@ -39,3 +39,17 @@ test('resizing changes the side only when the milestone becomes first on its pag
   expect(roadStop(3, 2)).toBe(3)
   expect(roadStop(4, 2)).toBe(4.5)
 })
+
+for (const width of [82.6667, 101, 180])
+  test(`measured compact geometry follows ring and road at ${width}px`, () => {
+    const geometry = { x: width / 2, rim: 34, low: 72, high: 44 }
+    for (let i = 0; i < 9; i++) {
+      const point = roadPoint(roadStop(i, 3), width, geometry)
+      expect(point.x).toBeCloseTo(width / 2 + i * width + (i % 3 ? -34 : 34), 8)
+      expect(point.y).toBeCloseTo(i % 2 ? 44 : 72, 8)
+      expect(roadSegment(i, width, geometry)).toStartWith(`M${width / 2 + 34} ${i % 2 ? 44 : 72}`)
+      const midpoint = roadPoint(i + 0.75, width, geometry)
+      expect(midpoint.y).toBe(58)
+      expect(midpoint.x).toBeCloseTo((i + 1) * width, 8)
+    }
+  })
