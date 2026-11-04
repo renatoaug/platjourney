@@ -43,8 +43,9 @@ const messages = defineMessages({
       'Conquistas sem data aparecem agrupadas após as datadas, sem ordem cronológica conhecida. Datas iguais não informam a ordem entre si.',
     parallelTrail: 'Enquanto avança',
     phaseGoal: 'Neste trecho',
-    betaLabel: 'BETA',
-    betaNote: 'A ordem e as dicas ainda estão passando por avaliações de qualidade.',
+    betaLabel: 'BETA:',
+    betaNote:
+      'A jornada ainda está em testes. A ordem e as dicas ainda estão passando por avaliações de qualidade.',
     tipsCount: { one: 'Ver {count} ponto do roteiro', other: 'Ver os {count} pontos do roteiro' },
     extraRoute: 'Conteúdo adicional · {count}',
     baseRoute: 'Voltar ao jogo base',
@@ -120,8 +121,9 @@ const messages = defineMessages({
       'Undated achievements are grouped after dated ones, without a known chronological order. Equal timestamps do not establish order between them.',
     parallelTrail: 'Along the way',
     phaseGoal: 'In this stretch',
-    betaLabel: 'BETA',
-    betaNote: 'The order and tips are still going through quality reviews.',
+    betaLabel: 'BETA:',
+    betaNote:
+      'The journey is still being tested. The order and tips are still going through quality reviews.',
     tipsCount: { one: 'See {count} route point', other: 'See all {count} route points' },
     extraRoute: 'Additional content · {count}',
     baseRoute: 'Back to the base game',
@@ -1012,7 +1014,10 @@ export function TrophyRoadmap({
         </div>
       </header>
       <p className="roadmap-preview-notice">
-        <strong>{t('betaLabel')}</strong> {t('betaNote')}
+        <strong>
+          <Icon name="warning" /> {t('betaLabel')}
+        </strong>{' '}
+        {t('betaNote')}
       </p>
       {inspecting && (
         <p className="roadmap-preview-notice" role="status">
