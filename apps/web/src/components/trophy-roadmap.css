@@ -1268,8 +1268,19 @@
     padding-inline-start: 20px;
   }
 
-  .roadmap-advice p.roadmap-phase-goal {
+  .roadmap-phase {
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-border);
     color: var(--color-fg-muted);
+  }
+
+  .roadmap-phase > summary {
+    cursor: pointer;
+    color: var(--color-fg);
+  }
+
+  .roadmap-phase > summary span {
+    color: var(--color-trophy-gold);
   }
 
   .roadmap-caution {

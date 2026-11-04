@@ -67,6 +67,65 @@ export function trophyAdvice(trophy: Trophy, guide?: GuideDetail | null) {
   }
 }
 
+const MAX_MENTIONS = 3
+
+// A step of a phase or a sentence of a tip, on its own. A sentence that leans on the one before it
+// ("Isso libera o troféu X.") keeps that one, or it says nothing alone.
+function guideSteps(text: string) {
+  return text.split(/\n+/).flatMap((line) => {
+    const step = line.replace(/^\s*(?:\d+[.)]|[-•])\s*/, '').trim()
+    if (!step) return []
+    if (/^\s*\d+[.)]/.test(line)) return [step]
+    const sentences = step.split(/(?<=[.!?])\s+(?=[\p{Lu}*\d])/u)
+    return sentences.map((sentence, i) =>
+      i && /^(?:isso|isto|esse|essa|este|esta|assim|this|that|these)\b/i.test(sentence)
+        ? `${sentences[i - 1]} ${sentence}`
+        : sentence,
+    )
+  })
+}
+
+// Guides write trophy names in bold. A name of several words is also safe in plain text; one word
+// alone ("Piedade") is an ordinary word unless it is bold.
+function names(step: string, name: string | undefined) {
+  if (!name) return false
+  const key = normalized(name)
+  const bold = [...step.matchAll(/\*\*(.+?)\*\*/g)].some((m) => normalized(m[1]) === key)
+  return bold || (key.includes(' ') && words(step).includes(words(name)))
+}
+
+const mentions = (step: string, trophy: Trophy) =>
+  names(step, trophy.name) || names(step, trophy.nameEn)
+
+/** A phase's goal for the whole phase, without the steps that name a trophy still hidden. */
+export function phasePlan(goal: string, trophies: Trophy[]) {
+  const hidden = trophies.filter((t) => t.hidden && !t.earned)
+  return goal
+    .split(/\n+/)
+    .filter((line) => !hidden.some((t) => mentions(line, t)))
+    .join('\n')
+}
+
+/** The guide's steps that name this trophy. One that names a trophy still hidden would spoil it. */
+export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: GuideDetail | null) {
+  const hidden = trophies.filter((t) => t !== trophy && t.hidden && !t.earned)
+  const shared = trophies.some(
+    (o) => o !== trophy && (o.name === trophy.name || (!!o.nameEn && o.nameEn === trophy.nameEn)),
+  )
+  if (shared) return []
+  const steps = [
+    ...(guide?.roadmap ?? []).flatMap((p) => guideSteps(p.goal)),
+    ...(guide?.earlyTips ?? []).flatMap(guideSteps),
+    ...guideSteps(guide?.collectibles ?? ''),
+    ...(guide?.milestones ?? []).flatMap((m) =>
+      m.tips.filter((tip) => !tip.trophy).flatMap((tip) => guideSteps(tip.text)),
+    ),
+  ]
+  return [...new Set(steps)]
+    .filter((step) => mentions(step, trophy) && !hidden.some((t) => mentions(step, t)))
+    .slice(0, MAX_MENTIONS)
+}
+
 function ongoingBasis(early: boolean, duration: boolean, repeated: boolean) {
   if (early) return 'early' as const
   if (duration) return 'duration' as const

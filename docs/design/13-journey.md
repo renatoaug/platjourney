@@ -9,7 +9,8 @@ The journey is a map of a game's trophies that follows the player's progress. It
 | Order of the route | `roadmap`, phase by phase, once per trophy, matched by unique exact name |
 | Suggested next trophy | `todaysFocus`, the same target the session and trophy notices name |
 | Tips for a trophy | `tricks`, `missables`, `onlineTrophies`, `buggy` and the `milestones` tips that name it |
-| Goal of the stretch | `goal` of the trophy's first phase |
+| Steps that name the trophy | The lines of `roadmap.goal`, `earlyTips`, `collectibles` and general `milestones` tips that name it, at most three |
+| Phase plan | `goal` of the selected trophy's first phase, in one folded block apart from the trophy's advice |
 | "Along the way" | Repeated in several phases or stretches, a campaign-long warning, a PSN counter above one or an early tip that names it |
 | Confirmed history | Earned trophies by PSN timestamp, oldest first; undated ones grouped after them |
 
@@ -21,7 +22,7 @@ Trophies do not say where the player is in the game. The route is a suggestion: 
 
 ## What it does not invent
 
-A trophy with no tip in the guide shows its PSN description, the goal of its phase and the link to ask Nexo, who searches the deep guide. There is no filler text. A name that matches more than one trophy stays out of the route's phases. DLC stays on its own track, outside the platinum route. Hidden trophies keep their name, art and tips protected until the player reveals that game's hidden trophies, a choice saved per account in `user.revealed_trophy_games`.
+A trophy the guide does not explain shows its PSN description and the link to ask Nexo, who searches the deep guide. There is no filler text, and a phase's plan never appears as a trophy's advice. A one-word name only counts as a mention in bold, since it may be an ordinary word, and a step or a line of the phase plan that names a trophy still hidden stays out. A name that matches more than one trophy stays out of the route's phases. DLC stays on its own track, outside the platinum route. Hidden trophies keep their name, art and tips protected until the player reveals that game's hidden trophies, a choice saved per account in `user.revealed_trophy_games`.
 
 ## Coverage
 
@@ -30,10 +31,13 @@ Measured on 2026-11-04 on a local copy of 1,137 guides, dated 2026-10-21, agains
 | Measure | Result |
 |---|---|
 | Base trophies with a place on the route | median 100%, 99.5% of all trophies |
-| Trophies with a tip of their own | median 39%; 20% at the 10th percentile, 76% at the 90th |
+| Trophies with a tip of their own | 40% |
+| Trophies with no tip, but named in a guide step | 36% |
+| Trophies with neither, mostly story ones | 24% |
+| Share of a game's trophies with specific text | median 84%; 48% at the 10th percentile, 100% at the 90th |
 | Route plus tips on at least 40% of trophies | 421 games |
 | Route with fewer tips | 483 games |
 | Only phases, fewer than 3 story milestones | 226 games |
 | Fewer than 90% of trophies placed | 7 games |
 
-The share of trophies with a tip is what a content round can raise: it needs the writing step only, since the passages are already indexed.
+The share of trophies with specific text is what a content round can raise: it needs the writing step only, since the passages are already indexed.
