@@ -1017,7 +1017,7 @@ function RoadmapVisibility({
       aria-pressed={revealed}
       disabled={saving}
       aria-busy={saving}
-      title={t('revealScope')}
+      title={`${t(revealed ? 'hide' : 'reveal')}: ${t('revealScope')}`}
       onClick={async () => {
         try {
           await setRevealed(!revealed)
@@ -1027,7 +1027,7 @@ function RoadmapVisibility({
       }}
     >
       <Icon name={revealed ? 'eye-off' : 'eye'} />
-      {t(revealed ? 'hide' : 'reveal')}
+      <span className="roadmap-visibility-label">{t(revealed ? 'hide' : 'reveal')}</span>
     </button>
   )
 }
