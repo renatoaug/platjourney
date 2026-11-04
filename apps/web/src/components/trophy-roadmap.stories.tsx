@@ -166,3 +166,16 @@ export const ReviewedOdysseyDlc: Story = {
     },
   },
 }
+
+export const ConfirmedChronology: Story = {
+  args: {
+    game: {
+      ...requiemGame(['chapter-1', 'chapter-8', 'perfect-shot']),
+      trophies: requiemGame(['chapter-1', 'chapter-8', 'perfect-shot']).trophies.map((t) => ({
+        ...t,
+        earnedAt:
+          t.id === 1 ? '2024-01-03T12:00:00Z' : t.id === 8 ? '2024-01-02T12:00:00Z' : undefined,
+      })),
+    },
+  },
+}

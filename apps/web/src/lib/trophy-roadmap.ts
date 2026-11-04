@@ -1,4 +1,16 @@
+import { achievementHistory } from '../../../../shared/journey/history'
 import type { GuideDetail, Trophy } from './types'
+
+/** Base and extra-content tracks remain separate. Priority only affects unfinished work. */
+export function personalRoadmap(reference: Trophy[], remaining: Trophy[] = []) {
+  return [false, true].flatMap((extra) => {
+    const track = reference.filter((t) => (t.groupId !== 'default') === extra)
+    const history = achievementHistory(track)
+    const priority = remaining.filter((t) => !t.earned && track.includes(t))
+    const pending = [...priority, ...track.filter((t) => !t.earned && !priority.includes(t))]
+    return [...history.dated, ...history.undated, ...pending]
+  })
+}
 
 const normalized = (name: string) =>
   name

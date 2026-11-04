@@ -1,6 +1,11 @@
 import { expect, test } from 'bun:test'
 import { current } from '../../src/fixtures'
-import { ongoingObjectives, trophyAdvice, trophyRoadmap } from '../../src/lib/trophy-roadmap'
+import {
+  ongoingObjectives,
+  personalRoadmap,
+  trophyAdvice,
+  trophyRoadmap,
+} from '../../src/lib/trophy-roadmap'
 import type { GuideDetail, Trophy } from '../../src/lib/types'
 
 const trophy = (id: number, name: string, extra: Partial<Trophy> = {}): Trophy => ({
@@ -130,4 +135,23 @@ test('start guidance links explicit unique trophy names without matching parts o
   ])
   expect(result[0].early).toBe(g.earlyTips[0])
   expect(ongoingObjectives([items[0], { ...items[0], id: 9 }], g)).toEqual([])
+})
+
+test('personal route separates confirmed dates, undated history, pending priorities and DLC', () => {
+  const a = trophy(1, 'Later achievement', { earned: true, earnedAt: '2024-01-03T12:00:00Z' })
+  const b = trophy(9, 'Earlier achievement', { earned: true, earnedAt: '2024-01-02T12:00:00Z' })
+  const unknown = trophy(2, 'Undated', { earned: true })
+  const next = trophy(5, 'Next')
+  const future = trophy(4, 'Future')
+  const extra = trophy(1, 'Extra', {
+    earned: true,
+    groupId: '001',
+    earnedAt: '2024-01-01T12:00:00Z',
+  })
+  const source = [a, future, unknown, b, next, extra]
+  const before = structuredClone(source)
+  expect(personalRoadmap(source, [next, future])).toEqual([b, a, unknown, next, future, extra])
+  expect(source).toEqual(before)
+  const preview = source.map((t) => ({ ...t, earned: false, earnedAt: undefined }))
+  expect(personalRoadmap(preview)).toEqual(preview)
 })

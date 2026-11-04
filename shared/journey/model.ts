@@ -5,6 +5,7 @@ export interface JourneyTrophy {
   name: string
   nameEn?: string
   earned: boolean
+  earnedAt?: string
   type: string
   hidden?: boolean
 }
@@ -140,6 +141,20 @@ export function evaluateJourney<T extends JourneyTrophy>(model: JourneyModel, tr
     .filter((x) => rank(x) < 100)
     .sort((a, b) => rank(a) - rank(b) || a.objective.order - b.objective.order)
   const next = candidates[0]
+  // Rebase the unfinished route on the same next action used by sessions. Preserve
+  // source order for the horizon; missing earlier story records need verification,
+  // not a claim that the player must repeat them before continuing.
+  const remaining = [
+    ...(next ? [next] : []),
+    ...items.filter(
+      (x) =>
+        !x.trophy.earned && x !== next && x.state !== 'verify' && x.objective.kind !== 'platinum',
+    ),
+    ...items.filter(
+      (x) => !x.trophy.earned && x.state === 'verify' && x.objective.kind !== 'platinum',
+    ),
+    ...items.filter((x) => !x.trophy.earned && x.objective.kind === 'platinum'),
+  ]
   const ongoing = items.filter(
     (x) =>
       x.state !== 'complete' &&
@@ -156,6 +171,7 @@ export function evaluateJourney<T extends JourneyTrophy>(model: JourneyModel, tr
     next,
     // Deterministic candidates for a future time-budget selector; not a session plan.
     candidates,
+    remaining,
     ongoing,
     confirmedChapter,
     storyComplete,

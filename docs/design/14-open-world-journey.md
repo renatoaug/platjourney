@@ -14,7 +14,7 @@ The stored guide contains 11 phases: four cover the 51 base trophies, while the 
 
 `requires` represents hard completion dependencies (the platinum requires the other 50 base objectives). `evidenceAny` instead records sufficient evidence that a related system was unlocked; missing evidence means **check**, not blocked. An available action still requires checking the current save’s resources, equipment, journal and level. Unlock evidence does not prove current inventory or a fresh save’s state.
 
-The path keeps a stable editorial order. The next suggestion prioritizes the next story reference, then actions with supporting unlock evidence, parallel preparation, and actions whose availability must be checked. This is a deterministic starting policy, not a shortest route or a claim of optimal efficiency. No travel distance, duration, remaining count or character level is invented. Completion always comes from the supplied earned flag, never a full counter or an inferred prerequisite.
+The pending horizon keeps an editorial reference order, but refreshed progress moves the next recommended action to its front; confirmed achievements form a separate timestamp-ordered history. The next suggestion prioritizes the next story reference, then actions with supporting unlock evidence, parallel preparation, and actions whose availability must be checked. This is a deterministic starting policy, not a shortest route or a claim of optimal efficiency. No travel distance, duration, remaining count or character level is invented. Completion always comes from the supplied earned flag, never a full counter or an inferred prerequisite.
 
 ## Continuous attention
 
@@ -45,3 +45,6 @@ The story spine retains the prologue and nine episodes. Five opportunities are i
 Other activities explicitly display flexible order. Their ordering remains editorial until individual availability or dependency relationships have supporting evidence; nothing implies they must wait until after the story. Eleven continuous objectives remain visible independently of map position. No location, level, lost opportunity or remaining count is inferred. DLC stays on the separate extra-content track and never enters base platinum requirements or the reviewed session candidate set.
 
 This is a bounded evidence improvement, not a complete mission graph. The secondary PlayStationTrophies guide was inaccessible during this review; no new facts were accepted from it. Future additions need edition-specific identity, claim-level evidence, explicit unknowns and tests of out-of-order progress before receiving personalized guidance.
+
+
+Confirmed-history and remainder behavior is shared with Requiem; see [Confirmed history and adaptive remainder](13-reviewed-journey.md#confirmed-history-and-adaptive-remainder). Obtaining an optional objective ahead of its reference position does not imply a location, quest state or completion of intervening objectives. It moves only that confirmed achievement into history and updates eligible next actions.

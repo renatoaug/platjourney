@@ -30,6 +30,14 @@ test('one continuous route includes confirmed past and opens on the next suggest
 
 test('origin and arrows navigate past milestones on the same route and resume the suggestion', () => {
   const data = requiemGame(['chapter-1', 'perfect-shot'])
+  data.trophies = data.trophies.map((t) => ({
+    ...t,
+    earnedAt: t.earned
+      ? t.id === 32
+        ? '2024-01-01T10:00:00Z'
+        : '2024-01-01T11:00:00Z'
+      : undefined,
+  }))
   const before = structuredClone(data.trophies)
   const { container } = renderApp(<TrophyRoadmap game={data} />)
   const current = container.querySelector('.roadmap-destination h3')?.textContent
@@ -627,12 +635,11 @@ test('mounted Requiem roadmap shows reviewed chronology, preparation and no infe
   expect(screen.getByText(/Capítulo 3 concluído na PSN/)).toBeTruthy()
   expect(screen.getAllByText(/preserve a vida do guarda/).length).toBeGreaterThan(0)
   expect(screen.getByText(/A oportunidade ocorre dentro do capítulo 4/)).toBeTruthy()
-  fireEvent.click(screen.getByText('Prepare enquanto avança'))
+  expect(screen.queryByText('Seu progresso e objetivos paralelos')).toBeNull()
   expect(
-    within(screen.getByRole('complementary', { name: 'Roteiro revisado · Requiem' })).getByRole(
-      'button',
-      { name: 'Exploradora' },
-    ),
+    within(screen.getByRole('region', { name: 'Enquanto avança' })).getByRole('button', {
+      name: 'Exploradora',
+    }),
   ).toBeTruthy()
   expect(screen.queryByText(/Feche o jogo imediatamente/)).toBeNull()
 })
@@ -681,9 +688,8 @@ test('the mounted Odyssey catalog preview uses reviewed base goals without chang
   const { container } = renderApp(
     <TrophyRoadmap preview game={{ ...data, np: data.game.id, edition: 'NPWR13822_00' }} />,
   )
-  const panel = screen.getByRole('complementary', { name: 'Roteiro revisado · Odyssey' })
-  expect(within(panel).getByText(/região, nível, inventário/)).toBeTruthy()
-  fireEvent.click(within(panel).getByText('Prepare enquanto avança'))
+  const panel = screen.getByRole('region', { name: 'Enquanto avança' })
+  expect(screen.getByText(/região, nível, inventário/)).toBeTruthy()
   expect(within(panel).getAllByRole('button')).toHaveLength(11)
   fireEvent.click(within(panel).getByRole('button', { name: 'Cria de Poseidon' }))
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Cria de Poseidon')
@@ -707,8 +713,7 @@ test('Odyssey preparation removes only earned base objectives, protecting hidden
     earned: false,
   })
   const { container } = renderApp(<TrophyRoadmap game={data} />)
-  const panel = screen.getByRole('complementary', { name: 'Roteiro revisado · Odyssey' })
-  fireEvent.click(within(panel).getByText('Prepare enquanto avança'))
+  const panel = screen.getByRole('region', { name: 'Enquanto avança' })
   expect(within(panel).queryByRole('button', { name: 'Cria de Poseidon' })).toBeNull()
   expect(within(panel).queryByRole('button', { name: 'Nos Braços de Afrodite' })).toBeNull()
   expect(within(panel).queryByRole('button', { name: 'DLC illustration' })).toBeNull()
@@ -793,4 +798,66 @@ test('campaign ends at the base platinum while additional trophies remain availa
     'true',
   )
   expect(data.trophies[3].earned).toBe(false)
+})
+
+test('mounted sync moves out-of-order achievements into timestamp history and rebases the next action', () => {
+  const original = requiemGame(['chapter-1'])
+  original.trophies = original.trophies.map((t) => ({
+    ...t,
+    earnedAt: t.earned ? '2024-01-03T12:00:00Z' : undefined,
+  }))
+  function LiveSync() {
+    const [data, setData] = useState(original)
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() =>
+            setData({
+              ...data,
+              trophies: data.trophies.map((t) =>
+                t.id === 8 ? { ...t, earned: true, earnedAt: '2024-01-02T12:00:00Z' } : t,
+              ),
+            })
+          }
+        >
+          Receive sync
+        </button>
+        <TrophyRoadmap game={data} />
+      </>
+    )
+  }
+  const { container } = renderApp(<LiveSync />)
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Recém-chegados')
+  fireEvent.click(screen.getByRole('button', { name: 'Receive sync' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Antiga protetora')
+  const names = [...container.querySelectorAll('.roadmap-route-name')].map((e) => e.textContent)
+  expect(names.slice(0, 3)).toEqual(['Mar de Promessas', 'Sob um Novo Sol', 'Antiga protetora'])
+  expect(
+    [...container.querySelectorAll('.roadmap-past time')].map((e) => e.getAttribute('datetime')),
+  ).toEqual(['2024-01-02T12:00:00.000Z', '2024-01-03T12:00:00.000Z'])
+  fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Sob um Novo Sol')
+  expect([...container.querySelectorAll('.roadmap-route-name')].map((e) => e.textContent)).toEqual(
+    names,
+  )
+  expect(original.trophies.filter((t) => t.earned)).toHaveLength(1)
+})
+
+test('undated achievements remain explicit and start preview discards personal chronology', () => {
+  const data = requiemGame(['chapter-8'])
+  const { container, unmount } = renderApp(<TrophyRoadmap game={data} />)
+  expect(container.querySelector('.roadmap-route > li:first-child')?.textContent).toContain(
+    'Data indisponível',
+  )
+  expect(container.querySelector('.roadmap-past')?.textContent).toContain(
+    'sem ordem cronológica conhecida',
+  )
+  expect(container.querySelector('.roadmap-past time')).toBeNull()
+  unmount()
+  renderApp(<TrophyRoadmap preview game={data} />)
+  expect(screen.getByRole('heading', { name: 'Mira perfeita', level: 3 })).toBeTruthy()
+  expect(document.querySelectorAll('.roadmap-route [data-earned="true"]')).toHaveLength(0)
+  expect(document.querySelector('.roadmap-past')).toBeNull()
+  expect(screen.getByText(/Comparação sem progresso pessoal/)).toBeTruthy()
 })

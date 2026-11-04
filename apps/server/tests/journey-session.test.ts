@@ -205,3 +205,26 @@ for (const model of [requiem, odyssey])
     expect(result.steps.every((x) => x.objective.groupId === 'default')).toBe(true)
     expect(result.steps.every((x) => !x.trophy.earned)).toBe(true)
   })
+
+for (const model of [requiem, odyssey])
+  test(`${model.name} sync rebases pending route and session on the same next action`, () => {
+    const before = context(model)
+    const earned = model === requiem ? ['chapter-8'] : ['episode-6', 'contracts']
+    const after = context(model, earned)
+    const initial = selectJourneySession(model, before.trophies, 60, true)
+    const next = selectJourneySession(model, after.trophies, 60, true)
+    expect(next.journey.remaining[0]).toBe(next.journey.next)
+    expect(next.steps[0].objective.key).toBe(next.journey.remaining[0].objective.key)
+    expect(next.journey.remaining[0].objective.key).not.toBe(
+      initial.journey.remaining[0].objective.key,
+    )
+    expect(next.journey.remaining.every((x) => !x.trophy.earned)).toBe(true)
+    expect(next.journey.remaining.at(-1)?.objective.kind).toBe('platinum')
+    const firstVerify = next.journey.remaining.findIndex((x) => x.state === 'verify')
+    expect(firstVerify).toBeGreaterThan(0)
+    expect(
+      next.journey.remaining
+        .slice(firstVerify)
+        .every((x) => x.state === 'verify' || x.objective.kind === 'platinum'),
+    ).toBe(true)
+  })

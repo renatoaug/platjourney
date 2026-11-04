@@ -7,11 +7,17 @@ import {
   useRef,
   useState,
 } from 'react'
+import { achievementHistory, earnedTimestamp } from '../../../../shared/journey/history'
 import { evaluateJourney } from '../../../../shared/journey/model'
 import { reviewedJourney } from '../../../../shared/journey/registry'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
-import { ongoingObjectives, trophyAdvice, trophyRoadmap } from '../lib/trophy-roadmap'
+import {
+  ongoingObjectives,
+  personalRoadmap,
+  trophyAdvice,
+  trophyRoadmap,
+} from '../lib/trophy-roadmap'
 import type { CurrentGame, Trophy } from '../lib/types'
 import { useGameSpoilers } from '../lib/use-game-spoilers'
 import { Icon } from '../ui/icon'
@@ -37,6 +43,10 @@ const messages = defineMessages({
     confirmedCount: '{count} conquistados',
     destination: 'Destino',
     mapNote: 'Rota sugerida, não sua localização no jogo.',
+    historyMapNote: 'Conquistas confirmadas · próximos objetivos recalculados.',
+    undated: 'Data indisponível',
+    undatedNote:
+      'Conquistas sem data aparecem agrupadas após as datadas, sem ordem cronológica conhecida. Datas iguais não informam a ordem entre si.',
     parallelTrail: 'Enquanto avança',
     extraRoute: 'Conteúdo adicional · {count}',
     baseRoute: 'Voltar ao jogo base',
@@ -59,7 +69,7 @@ const messages = defineMessages({
     unknownWhen: 'Conferir disponibilidade no jogo',
     quickNote: 'Isto organiza suas opções, sem prometer quando cada troféu será desbloqueado.',
     reviewedBasis:
-      'Base revisada para esta edição: oportunidades por capítulo, preparação e recuperação. Novas conquistas reavaliam a sugestão, sem mudar a ordem de referência nem inferir sua posição. ',
+      'Base revisada para esta edição: oportunidades por capítulo, preparação e recuperação. Conquistas seguem as datas informadas pela PSN. O restante se reajusta à próxima ação sugerida, sem inferir sua posição. ',
     known:
       'Capítulo {chapter} concluído na PSN. Sua posição atual e o estado do save não são informados.',
     unknown:
@@ -67,7 +77,7 @@ const messages = defineMessages({
     incomplete:
       'A lista recebida não corresponde a todos os objetivos revisados. A sugestão personalizada ficará disponível quando estiver completa.',
     openWorldBasis:
-      'Objetivos paralelos do jogo base. Novas conquistas atualizam a sugestão; a ordem é uma referência, não um trajeto obrigatório. DLC fica separado.',
+      'Conquistas seguem as datas da PSN. A próxima ação e o percurso restante se reajustam; atividades paralelas continuam flexíveis. DLC fica separado.',
     openWorldKnown:
       'Conquistas confirmadas orientam a sugestão. Sua região, nível, inventário e missões abertas continuam desconhecidos.',
     checkState:
@@ -165,6 +175,10 @@ const messages = defineMessages({
     confirmedCount: '{count} earned',
     destination: 'Destination',
     mapNote: 'Suggested route, not your location in the game.',
+    historyMapNote: 'Confirmed achievements · next objectives recalculated.',
+    undated: 'Date unavailable',
+    undatedNote:
+      'Undated achievements are grouped after dated ones, without a known chronological order. Equal timestamps do not establish order between them.',
     parallelTrail: 'Along the way',
     extraRoute: 'Additional content · {count}',
     baseRoute: 'Back to the base game',
@@ -187,7 +201,7 @@ const messages = defineMessages({
     unknownWhen: 'Check availability in your game',
     quickNote: 'This organizes your options without promising when each trophy will unlock.',
     reviewedBasis:
-      'Reviewed knowledge for this edition: chapter opportunities, preparation and recovery. New unlocks re-evaluate the suggestion without changing the reference order or inferring your location. ',
+      'Reviewed knowledge for this edition: chapter opportunities, preparation and recovery. Achievements follow PSN timestamps. The remaining path rebases on the next suggested action without inferring your location. ',
     known:
       'Chapter {chapter} completed on PSN. Your current location and save state are not reported.',
     unknown:
@@ -195,7 +209,7 @@ const messages = defineMessages({
     incomplete:
       'The received list does not match all reviewed objectives. Personalized guidance will be available once it is complete.',
     openWorldBasis:
-      'Parallel base-game objectives. New unlocks update the suggestion; the order is a reference, not a mandatory route. DLC stays separate.',
+      'Achievements follow PSN timestamps. The next action and remaining path adapt; parallel activities remain flexible. DLC stays separate.',
     openWorldKnown:
       'Confirmed unlocks inform the suggestion. Your region, level, inventory and open quests remain unknown.',
     checkState: 'Check availability in your journal or game menu before planning this action.',
@@ -628,7 +642,7 @@ function RoadmapNavigation({
         choose={choose}
       />
       <div className="roadmap-map-note">
-        <p>{t('mapNote')}</p>
+        <p>{t(route.some((x) => x.earned) ? 'historyMapNote' : 'mapNote')}</p>
         <a href="#roadmap-focus" className="roadmap-map-advice">
           <Icon name="chevron-down" />
           {t('readAdvice')}
@@ -662,6 +676,18 @@ function RouteNumber({ trophy, index }: { trophy: Trophy; index: number }) {
   if (trophy.earned) return <Icon name="check" />
   if (trophy.type === 'platinum') return <Icon name="trophy" />
   return String(index + 1).padStart(2, '0')
+}
+
+function EarnedDate({ trophy }: { trophy: Trophy }) {
+  const t = useMessages(messages)
+  const time = earnedTimestamp(trophy)
+  return time === undefined ? (
+    <small>{t('undated')}</small>
+  ) : (
+    <time dateTime={new Date(time).toISOString()}>
+      {new Date(time).toLocaleString(getLocale())}
+    </time>
+  )
 }
 
 function RoadmapTiming({ game, trophy }: { game: RoadmapGame; trophy: Trophy }) {
@@ -725,6 +751,8 @@ function RoadmapForward({
   const rail = useRef<HTMLOListElement>(null)
   const position = useRef<number | null>(null)
   const at = pending.indexOf(selected)
+  const signature = pending.map(anchor).join('|')
+  const previousRoute = useRef(signature)
   useLayoutEffect(() => {
     const track = rail.current
     if (!track) return
@@ -774,7 +802,8 @@ function RoadmapForward({
       paint(from, scrollFrom)
       frame = requestAnimationFrame(tick)
     }
-    place()
+    place(previousRoute.current !== signature)
+    previousRoute.current = signature
     let measured = `${track.clientWidth}:${track.querySelector<HTMLElement>('li')?.offsetWidth}`
     const observer =
       typeof ResizeObserver === 'undefined'
@@ -796,7 +825,7 @@ function RoadmapForward({
       observer?.disconnect()
       motion.removeEventListener('change', reduce)
     }
-  }, [at, pending.length])
+  }, [at, pending.length, signature])
   return (
     <div className="roadmap-forward">
       <div className="roadmap-forward-heading">
@@ -886,7 +915,10 @@ function RoadmapForward({
                     )}
                     <RoadmapTiming game={game} trophy={trophy} />
                     {trophy.earned ? (
-                      <span className="roadmap-route-finale">{t('routeEarned')}</span>
+                      <>
+                        <span className="roadmap-route-finale">{t('routeEarned')}</span>
+                        {earnedTimestamp(trophy) === undefined && <small>{t('undated')}</small>}
+                      </>
                     ) : (
                       <RoadmapSignal missable={missable} final={final} />
                     )}
@@ -898,72 +930,6 @@ function RoadmapForward({
         </ol>
       )}
     </div>
-  )
-}
-
-function ReviewedPreparation({
-  game,
-  choose,
-}: {
-  game: RoadmapGame
-  choose: (trophy: Trophy) => void
-}) {
-  const t = useMessages(messages)
-  const plan = game.journey
-  if (!plan) return null
-  const groups = ['quest', 'collectible', 'upgrade', 'skill', 'counter'] as const
-  const language = getLocale() === Language.En ? 'en' : 'pt'
-  const preparation =
-    !plan.storyComplete &&
-    plan.ongoing.find((x) => x.objective.key === 'explorer' && !x.trophy.hidden)
-  return (
-    <aside className="roadmap-reviewed" aria-label={t('reviewed', { name: plan.name })}>
-      <strong>{t('reviewed', { name: plan.name })}</strong>
-      <p>
-        {plan.mode === 'open-world'
-          ? t('openWorldKnown')
-          : plan.confirmedChapter
-            ? t('known', { chapter: plan.confirmedChapter })
-            : t('unknown')}
-      </p>
-      {(plan.covered !== plan.expected || !!plan.unmatched.length) && <p>{t('incomplete')}</p>}
-      {preparation && <p>{preparation.objective.action[language]}</p>}
-      {plan.ongoing.some((x) => !x.trophy.hidden) && (
-        <details>
-          <summary>{t('preparation')}</summary>
-          <p>{t('preparationNote')}</p>
-          {groups.map((kind) => {
-            const items = plan.ongoing.filter((x) => x.objective.kind === kind && !x.trophy.hidden)
-            if (!items.length) return null
-            return (
-              <div className="roadmap-preparation-group" key={kind}>
-                <h4>{t(kind === 'counter' ? 'counterGroup' : kind)}</h4>
-
-                <div>
-                  {items.map(({ trophy }) => (
-                    <button
-                      key={anchor(trophy)}
-                      type="button"
-                      className="quiet"
-                      onClick={() => choose(trophy)}
-                    >
-                      {trophy.name}
-                      {plan.items.find((x) => x.trophy === trophy)?.objective.risk ===
-                        'opportunity' && (
-                        <span className="roadmap-preparation-risk">
-                          <Icon name="warning" />
-                          {t('missable')}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </details>
-      )}
-    </aside>
   )
 }
 
@@ -1100,6 +1066,40 @@ function roadmapFocus(game: RoadmapGame, done: boolean) {
   return plan.covered === plan.expected && !plan.unmatched.length ? plan.next?.trophy : undefined
 }
 
+function roadmapOrder(game: RoadmapGame, reference: Trophy[], focus?: Trophy) {
+  const plan = game.journey
+  if (plan && plan.covered === plan.expected && !plan.unmatched.length)
+    return personalRoadmap(
+      reference,
+      plan.remaining.map((x) => x.trophy),
+    )
+  return personalRoadmap(
+    reference,
+    focus ? reference.filter((x) => x.id === focus.id && x.groupId === focus.groupId) : [],
+  )
+}
+
+function RoadmapBasis({ game }: { game: RoadmapGame }) {
+  const t = useMessages(messages)
+  const plan = game.journey
+  const context =
+    plan?.mode === 'open-world'
+      ? t('openWorldKnown')
+      : plan?.confirmedChapter
+        ? t('known', { chapter: plan.confirmedChapter })
+        : t('unknown')
+  return (
+    <details className="roadmap-basis">
+      <summary>{t('order')}</summary>
+      <p>{t(roadmapBasis(game))}</p>
+      {plan && <p>{context}</p>}
+      {plan && (plan.covered !== plan.expected || !!plan.unmatched.length) && (
+        <p>{t('incomplete')}</p>
+      )}
+    </details>
+  )
+}
+
 export function TrophyRoadmap({
   game: source,
   preview = false,
@@ -1142,7 +1142,8 @@ export function TrophyRoadmap({
   const base = game.trophies.filter((x) => x.groupId === 'default')
   const done = base.some((x) => x.type === 'platinum' && x.earned)
   const focus = roadmapFocus(game, done)
-  const ordered = stages.flatMap((s) => s.trophies)
+  const reference = stages.flatMap((s) => s.trophies)
+  const ordered = roadmapOrder(game, reference, focus)
   const suggested = ordered.find(
     (x) => !x.earned && x.id === focus?.id && x.groupId === focus.groupId,
   )
@@ -1150,12 +1151,14 @@ export function TrophyRoadmap({
     suggested ??
     ordered.find((x) => !x.earned && x.type !== 'platinum') ??
     ordered.find((x) => !x.earned) ??
+    ordered.find((x) => x.type === 'platinum' && x.groupId === 'default') ??
     ordered.at(-1)
   const [selection, setSelection] = useState<string | null>(null)
   const selected = ordered.find((x) => anchor(x) === selection) ?? target
   const stageIndex = stages.findIndex((s) => selected && s.trophies.includes(selected))
   const stage = stages[stageIndex]
-  const past = ordered.filter((x) => x.earned)
+  const history = achievementHistory(ordered)
+  const past = [...history.dated, ...history.undated]
   const choose = useCallback((trophy: Trophy) => {
     setSelection(anchor(trophy))
   }, [])
@@ -1206,6 +1209,9 @@ export function TrophyRoadmap({
                   {t('past', { count: past.length })}
                   <Icon name="chevron-down" />
                 </summary>
+                <p className="roadmap-context-note" hidden={!history.uncertain}>
+                  {t('undatedNote')}
+                </p>
                 <ul>
                   {past.map((trophy) => (
                     <li key={anchor(trophy)}>
@@ -1226,6 +1232,7 @@ export function TrophyRoadmap({
                         </span>
                         <span className="roadmap-earned-copy">
                           <strong>{trophy.name}</strong>
+                          <EarnedDate trophy={trophy} />
                           {trophy.detail && (
                             <span id={`${anchor(trophy)}-earned-detail`}>{trophy.detail}</span>
                           )}
@@ -1237,14 +1244,12 @@ export function TrophyRoadmap({
                 </ul>
               </details>
             )}
-            <details className="roadmap-context-details">
-              <summary>{t('progressContext')}</summary>
-              {game.journey ? (
-                <ReviewedPreparation game={game} choose={inspect} />
-              ) : (
+            {!game.journey && (
+              <details className="roadmap-context-details">
+                <summary>{t('progressContext')}</summary>
                 <RoadmapOngoing game={game} choose={inspect} />
-              )}
-            </details>
+              </details>
+            )}
           </div>
           {stage.kind !== 'phase' && (
             <p className="roadmap-context-note">{t(`${stage.kind}Note`)}</p>
@@ -1279,10 +1284,7 @@ export function TrophyRoadmap({
                 )}
               </div>
             </details>
-            <details className="roadmap-basis">
-              <summary>{t('order')}</summary>
-              <p>{t(roadmapBasis(game))}</p>
-            </details>
+            <RoadmapBasis game={game} />
           </footer>
         </>
       )}
@@ -1359,7 +1361,6 @@ export function TrophyRoadmapSkeleton() {
         </div>
         <div className="roadmap-loading-disclosures">
           <Sk w="100%" h={64} />
-          <Sk w="70%" h={44} />
         </div>
       </div>
     </section>
