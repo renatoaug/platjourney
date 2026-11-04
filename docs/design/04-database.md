@@ -518,7 +518,15 @@ erDiagram
 
 - `db/migrations` has one `.surql` per table, applied in order by `bun run migrate` and on every server start.
 - Every statement is idempotent (`DEFINE … IF NOT EXISTS`), so they run any number of times.
-- Before a production database exists, a change to a table goes into that table's migration file. A database that already has the table gets the change with `DEFINE FIELD OVERWRITE`.
+- Additive optional fields go in the existing table file with `DEFINE FIELD IF NOT EXISTS`. Because every file is reapplied on startup (there is no migration-version ledger), this adds a missing field to existing databases as well as clean ones. Changing the definition of an existing field requires an explicit, reviewed `DEFINE FIELD OVERWRITE` and any necessary data conversion; replaying `IF NOT EXISTS` does not change an existing definition.
+
+The per-game trophy visibility preference is defined in `011_user.surql`. Normal startup applies it automatically. If an operator needs to prepare an existing database before starting the new server, the exact idempotent statement, in that instance's namespace/database, is:
+
+```surql
+DEFINE FIELD IF NOT EXISTS revealed_trophy_games ON user TYPE option<array<string>>;
+```
+
+This statement adds only the schema field, without populating or replacing account preferences. Missing values mean hidden. A database that already received the same definition keeps it and its values; no separate numbered migration or manual operation is required for normal startup. This documentation does not execute the statement.
 
 ## Seeds and catalog
 

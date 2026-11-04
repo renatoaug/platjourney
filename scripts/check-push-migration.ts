@@ -19,6 +19,7 @@ Object.assign(process.env, {
 const { migrate, q, closeDb } = await import('../apps/server/src/db.ts')
 const web = await import('../apps/server/src/repository/push-subscription.ts')
 const apns = await import('../apps/server/src/repository/native-push.ts')
+const { setTrophyVisibility } = await import('../apps/server/src/repository/user.ts')
 const { createSession, deleteSession } = await import('../apps/server/src/repository/auth.ts')
 const migrations = new URL('../db/migrations/', import.meta.url)
 const one = 'user:one'
@@ -42,6 +43,11 @@ try {
     .filter((f) => f.endsWith('.surql') && f < '028')
     .sort())
     await q(readFileSync(new URL(file, migrations), 'utf8'))
+  // The user table file supports a clean database. Simulate an existing installation
+  // without the new optional field before applying the normal startup migration path.
+  const cleanUserSchema = await q<{ fields: Record<string, string> }>('INFO FOR TABLE user')
+  assert.ok(cleanUserSchema.fields.revealed_trophy_games)
+  await q('REMOVE FIELD IF EXISTS revealed_trophy_games ON user')
   await q(
     "CREATE user:one SET psn_online_id = 'push-one', psn_online_id_lower = 'push-one', psn_account_id = 'one'; CREATE user:two SET psn_online_id = 'push-two', psn_online_id_lower = 'push-two', psn_account_id = 'two';",
   )
@@ -52,6 +58,18 @@ try {
   const legacyBefore = await q<Record<string, unknown>[]>('SELECT * FROM push_subscription:legacy')
   await migrate()
   await migrate()
+  const beforePreference = await q<Record<string, unknown>[]>('SELECT * FROM user:one')
+  assert.equal(beforePreference[0].revealed_trophy_games, undefined)
+  assert.deepEqual(await setTrophyVisibility(one, 'game:101', true), ['game:101'])
+  assert.deepEqual(await setTrophyVisibility(one, 'game:101', true), ['game:101'])
+  await setTrophyVisibility(one, 'game:202', true)
+  const preferencesBeforeReplay = await q('SELECT * FROM user ORDER BY id')
+  await migrate()
+  assert.deepEqual(await q('SELECT * FROM user ORDER BY id'), preferencesBeforeReplay)
+  assert.deepEqual(await setTrophyVisibility(one, 'game:101', false), ['game:202'])
+  const otherPreference = await q<Record<string, unknown>[]>('SELECT * FROM user:two')
+  assert.equal(otherPreference[0].revealed_trophy_games, undefined)
+  await assert.rejects(q('UPDATE user:one SET revealed_trophy_games = [123]'))
   assert.deepEqual(await web.pushSubscriptions(one), [browser])
   const legacyAfter = await q<Record<string, unknown>[]>('SELECT * FROM push_subscription:legacy')
   for (const field of ['id', 'user', 'endpoint', 'p256dh', 'auth', 'created_at'])
