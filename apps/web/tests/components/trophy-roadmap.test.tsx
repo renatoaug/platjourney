@@ -16,7 +16,7 @@ test('full route exposes confirmed past without resetting progress; pending view
   const data = requiemGame(['chapter-1', 'perfect-shot'])
   const before = structuredClone(data.trophies)
   renderApp(<TrophyRoadmap game={data} />)
-  expect(screen.getByRole('region', { name: 'Outras oportunidades' })).toBeTruthy()
+  expect(screen.getByRole('region', { name: 'Caminho até a platina' })).toBeTruthy()
   const pendingRoute = screen.getByRole('list', { name: 'Caminho à frente' })
   expect(within(pendingRoute).queryByRole('button', { name: /Sob um Novo Sol/ })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Rota completa · 36' }))
@@ -239,8 +239,8 @@ test('next and previous select pending milestones while completion opens the ear
     <TrophyRoadmap game={{ ...game, trophies: items.map((x) => ({ ...x, earned: true })) }} />,
   )
   expect(screen.getByRole('heading', { name: 'Complete' })).toBeTruthy()
-  expect(screen.getByText('Caminho concluído')).toBeTruthy()
-  expect(document.querySelectorAll('.roadmap-route li')).toHaveLength(0)
+  expect(screen.getByRole('list', { name: 'Rota completa' })).toBeTruthy()
+  expect(document.querySelectorAll('.roadmap-route li[data-earned="true"]')).toHaveLength(3)
 })
 
 test('an unavailable landscape falls back without broken artwork or losing the objective', () => {
@@ -295,7 +295,7 @@ test('route artwork and missable signals use exact guide facts, with no hidden t
   expect(stops[1]?.textContent).toContain('Troféu oculto')
   expect(stops[2]?.getAttribute('data-final')).toBe('true')
   expect(screen.queryByText('Secret warning')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: /First step Perdível/ }))
+  fireEvent.click(screen.getByRole('button', { name: /First step.*Perdível/ }))
   expect(screen.getByText('Check the objective')).toBeTruthy()
   const art = stops[0]?.querySelector('img')
   if (!art) throw new Error('missing trophy artwork')
@@ -708,24 +708,83 @@ test('Odyssey preparation removes only earned base objectives, protecting hidden
   expect(container.textContent).not.toContain('Capítulo 17')
 })
 
-test('first visit puts the chosen action before navigation and progressively reveals the full route', () => {
+test('campaign is visible first, with origin and destination, while guidance follows selection without writing progress', () => {
   const data = requiemGame(['chapter-1', 'perfect-shot'])
   const before = structuredClone(data.trophies)
   const { container } = renderApp(<TrophyRoadmap game={data} />)
-  const expedition = container.querySelector('.roadmap-expedition')!
-  expect(expedition.firstElementChild?.className).toBe('roadmap-focus')
-  const focus = container.querySelector('.roadmap-focus')!
+  const expedition = container.querySelector('.roadmap-expedition')
+  if (!expedition) throw new Error('campaign container missing')
+  expect(expedition.firstElementChild?.className).toBe('roadmap-campaign')
+  expect(container.querySelector('.roadmap-explore')).toBeNull()
+  const focus = container.querySelector('.roadmap-focus')
+  if (!focus) throw new Error('guidance missing')
   expect(focus.querySelector('.roadmap-advice > p')?.textContent?.length).toBeGreaterThan(20)
-  const map = container.querySelector<HTMLDetailsElement>('.roadmap-explore')!
-  expect(map.open).toBe(false)
-  const options = container.querySelector<HTMLDetailsElement>('.roadmap-options')!
-  expect(options.open).toBe(false)
-  fireEvent.click(within(map).getByText('Explorar o caminho'))
-  expect(map.open).toBe(true)
-  fireEvent.click(screen.getByRole('button', { name: 'Rota completa · 36' }))
-  expect(screen.getByRole('combobox', { name: 'Explorar objetivo' })).toBeTruthy()
+  expect(container.querySelector<HTMLDetailsElement>('.roadmap-map-tools')?.open).toBe(false)
+  const initial = focus.querySelector('h3')?.textContent
+  const order = [...container.querySelectorAll('.roadmap-route li')].map((x) =>
+    x.getAttribute('data-trophy'),
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
+  expect(focus.querySelector('h3')?.textContent).not.toBe(initial)
+  expect(
+    [...container.querySelectorAll('.roadmap-route li')].map((x) => x.getAttribute('data-trophy')),
+  ).toEqual(order)
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
+  expect(focus.querySelector('h3')?.textContent).toBe(initial)
+  fireEvent.click(screen.getByRole('button', { name: 'Destino Platina' }))
+  expect(focus.querySelector('h3')?.textContent).toBe(
+    data.trophies.find((x) => x.type === 'platinum')?.name,
+  )
+  fireEvent.click(screen.getByRole('button', { name: /Início da rota/ }))
+  expect(screen.getByRole('list', { name: 'Rota completa' })).toBeTruthy()
+  expect(data.trophies).toEqual(before)
+})
+
+test('parallel objectives select existing milestones and history selection keeps its map marker', () => {
+  const data = requiemGame(['chapter-1', 'perfect-shot'])
+  const { container } = renderApp(<TrophyRoadmap game={data} />)
+  const parallel = container.querySelector('.roadmap-parallel')
+  if (!parallel) throw new Error('parallel route missing')
+  fireEvent.click(within(parallel as HTMLElement).getByText(/Enquanto avança/))
+  const button = within(parallel as HTMLElement).getAllByRole('button')[0]
+  fireEvent.click(button)
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(button.textContent)
+  expect(container.querySelector('.roadmap-route .is-current')?.textContent).toContain(
+    button.textContent,
+  )
+  const history = container.querySelector('.roadmap-past')
+  if (!history) throw new Error('history missing')
+  fireEvent.click(within(history as HTMLElement).getByText(/Conquistas anteriores/))
+  fireEvent.click(within(history as HTMLElement).getByRole('button', { name: 'Mira perfeita' }))
+  expect(container.querySelector('.roadmap-route .is-current')?.getAttribute('data-earned')).toBe(
+    'true',
+  )
+  expect(container.querySelector('.roadmap-route .is-current')?.textContent).toContain(
+    'Mira perfeita',
+  )
   expect(screen.getByRole('link', { name: 'Ler dica deste objetivo' }).getAttribute('href')).toBe(
     '#roadmap-focus',
   )
-  expect(data.trophies).toEqual(before)
+})
+
+test('campaign ends at the base platinum while additional trophies remain available through exploration', () => {
+  const dlc = { ...game.trophies[1], id: 99, groupId: '1', name: 'Extra objective', earned: false }
+  const data = { ...game, trophies: [...game.trophies, dlc] }
+  const { container } = renderApp(<TrophyRoadmap game={data} />)
+  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
+  expect(container.querySelector('.roadmap-route li:last-child')?.getAttribute('data-final')).toBe(
+    'true',
+  )
+  const select = screen.getByRole('combobox', { name: 'Explorar objetivo' }) as HTMLSelectElement
+  const extra = [...select.options].find((x) => x.textContent?.includes('Extra objective'))
+  if (!extra) throw new Error('additional content not reachable')
+  fireEvent.change(select, { target: { value: extra.value } })
+  expect(container.querySelector('.roadmap-route')?.textContent).toContain('Extra objective')
+  expect(container.querySelector('.roadmap-route')?.textContent).not.toContain('Complete')
+  expect(screen.getByRole('heading', { name: 'Além do jogo base' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Destino Platina' }))
+  expect(container.querySelector('.roadmap-route li:last-child')?.getAttribute('data-final')).toBe(
+    'true',
+  )
+  expect(data.trophies[3].earned).toBe(false)
 })

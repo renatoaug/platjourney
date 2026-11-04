@@ -1,4 +1,12 @@
-import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  type CSSProperties,
+  memo,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { evaluateJourney } from '../../../../shared/journey/model'
 import { reviewedJourney } from '../../../../shared/journey/registry'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
@@ -24,6 +32,13 @@ type RoadmapGame = Pick<CurrentGame, 'game' | 'name' | 'np' | 'trophies' | 'guid
 
 const messages = defineMessages({
   [Language.PtBR]: {
+    campaign: 'Caminho até a platina',
+    origin: 'Início da rota',
+    confirmedCount: '{count} conquistados',
+    destination: 'Destino',
+    mapNote: 'Rota sugerida, não sua localização no jogo.',
+    parallelTrail: 'Enquanto avança',
+    mapTools: 'Ver toda a rota e conquistas',
     reviewed: 'Roteiro revisado · {name}',
     routeView: 'Visualização da rota',
     routeJump: 'Explorar objetivo',
@@ -154,6 +169,13 @@ const messages = defineMessages({
     platinumType: 'Platina',
   },
   [Language.En]: {
+    campaign: 'Path to platinum',
+    origin: 'Route beginning',
+    confirmedCount: '{count} earned',
+    destination: 'Destination',
+    mapNote: 'Suggested route, not your location in the game.',
+    parallelTrail: 'Along the way',
+    mapTools: 'Full route and achievements',
     reviewed: 'Reviewed roadmap · {name}',
     routeView: 'Route view',
     routeJump: 'Explore objective',
@@ -406,6 +428,23 @@ function TrophyStep({
   )
 }
 
+function RoadmapBackdrop({ game }: { game: RoadmapGame }) {
+  const art =
+    game.game.art_url ??
+    (game.game.screenshot_ids?.[0]
+      ? image(game.game.screenshot_ids[0], 't_1080p')
+      : game.game.cover_url)
+  const [failedArt, setFailedArt] = useState<string | null>(null)
+  return (
+    <>
+      {art && failedArt !== art && (
+        <img className="roadmap-scene" src={art} alt="" onError={() => setFailedArt(art)} />
+      )}
+      <div className="roadmap-horizon" aria-hidden="true" />
+    </>
+  )
+}
+
 function RoadmapLandscape({
   game,
   selected,
@@ -417,18 +456,8 @@ function RoadmapLandscape({
 }) {
   const t = useMessages(messages)
   const hidden = selected.hidden && !selected.earned
-  const art =
-    game.game.art_url ??
-    (game.game.screenshot_ids?.[0]
-      ? image(game.game.screenshot_ids[0], 't_1080p')
-      : game.game.cover_url)
-  const [failedArt, setFailedArt] = useState<string | null>(null)
   return (
     <div className="roadmap-landscape">
-      {art && failedArt !== art && (
-        <img className="roadmap-scene" src={art} alt="" onError={() => setFailedArt(art)} />
-      )}
-      <div className="roadmap-horizon" aria-hidden="true" />
       <div className="roadmap-destination" key={anchor(selected)}>
         <span className="roadmap-destination-art">
           <TrophyArt url={hidden ? undefined : selected.iconUrl} />
@@ -462,14 +491,11 @@ function RoadmapFocus({
   game,
   selected,
   target,
-  choose,
 }: {
   game: RoadmapGame
   selected: Trophy
   target?: Trophy
-  choose: (trophy: Trophy) => void
 }) {
-  const t = useMessages(messages)
   return (
     <div id="roadmap-focus" className="roadmap-focus">
       <RoadmapLandscape game={game} selected={selected} suggested={target === selected} />
@@ -479,12 +505,6 @@ function RoadmapFocus({
         game={game}
         suggested={target === selected}
       />
-      {target && selected !== target && (
-        <button type="button" className="roadmap-resume quiet" onClick={() => choose(target)}>
-          <Icon name="target" />
-          {t('resume')}
-        </button>
-      )}
     </div>
   )
 }
@@ -508,110 +528,155 @@ function RoadmapSignal({ missable, final }: { missable: boolean; final: boolean 
   return null
 }
 
-function RoadmapOverview({
+function RoadmapParallel({
   game,
-  selected,
   choose,
 }: {
   game: RoadmapGame
-  selected: Trophy
   choose: (trophy: Trophy) => void
 }) {
   const t = useMessages(messages)
-  const plan = game.journey
-  if (!plan || plan.covered !== plan.expected || plan.unmatched.length) return null
-  const candidates = plan.candidates
-    .filter((x) => !x.trophy.hidden && x.trophy !== selected)
-    .slice(0, 3)
-  if (!candidates.length) return null
-  const when = (item: (typeof candidates)[number]) => {
-    const o = item.objective
-    if (o.chapter)
-      return t(item.state === 'recover' ? 'recoverWhen' : 'chapterWhen', { chapter: o.chapter })
-    if (o.kind === 'skill' && plan.storyComplete) return t('postWhen')
-    if (item.state === 'prepare') return t('parallelWhen')
-    return t('unknownWhen')
-  }
+  const items = useMemo(
+    () =>
+      game.journey
+        ? game.journey.ongoing.map((x) => x.trophy).filter((x) => !x.hidden && !x.earned)
+        : ongoingObjectives(game.trophies, game.guide).map((x) => x.trophy),
+    [game.journey, game.trophies, game.guide],
+  )
+  if (!items.length) return null
   return (
-    <section className="roadmap-overview" aria-label={t('quickRead')}>
-      <h3>{t('quickRead')}</h3>
-      <ol>
-        {candidates.map((item) => (
-          <li key={item.objective.key}>
-            <button
-              type="button"
-              aria-label={t('viewObjective', { name: item.trophy.name })}
-              onClick={() => choose(item.trophy)}
-            >
-              <span className="roadmap-overview-art">
-                <TrophyArt url={item.trophy.iconUrl} />
-              </span>
-              <span>
-                <strong>{item.trophy.name}</strong>
-                <span>{when(item)}</span>
-              </span>
-              <Icon name="chevron-right" />
-            </button>
-          </li>
+    <details className="roadmap-parallel">
+      <summary>
+        <Icon name="target" />
+        <span>
+          {t('parallelTrail')} <small>· {items.length}</small>
+        </span>
+        <Icon name="chevron-down" />
+      </summary>
+      <p>{t('ongoingNote')}</p>
+      <div>
+        {items.map((trophy) => (
+          <button
+            type="button"
+            className="quiet"
+            key={anchor(trophy)}
+            onClick={() => choose(trophy)}
+          >
+            <TrophyArt url={trophy.iconUrl} />
+            <span>{trophy.name}</span>
+          </button>
         ))}
-      </ol>
-    </section>
+      </div>
+    </details>
   )
 }
 
 function RoadmapNavigation({
   game,
   ordered,
-  pending,
   selected,
   target,
   choose,
 }: {
   game: RoadmapGame
   ordered: Trophy[]
-  pending: Trophy[]
   selected: Trophy
   target?: Trophy
   choose: (trophy: Trophy) => void
 }) {
   const t = useMessages(messages)
   const [complete, setComplete] = useState(false)
+  const platinum = ordered.find((x) => x.groupId === 'default' && x.type === 'platinum')
+  const first = ordered[0]
+  const full = complete || selected.earned
+  const extra = selected.groupId !== 'default'
+  const route = ordered.filter((x) => (x.groupId !== 'default') === extra)
+  const remaining = route.filter((x) => !x.earned)
+  const select = (trophy: Trophy) => {
+    if (trophy.earned) setComplete(true)
+    choose(trophy)
+  }
   return (
-    <>
-      <RoadmapViewControls
-        complete={complete}
-        pending={pending.length}
-        total={ordered.length}
-        onChange={(full) => {
-          setComplete(full)
-          if (!full && target) choose(target)
-        }}
-      />
-      <RoadmapJump
-        route={complete ? ordered : pending}
-        ordered={ordered}
+    <section className="roadmap-campaign" aria-label={t('campaign')}>
+      <RoadmapBackdrop game={game} />
+      <div className="roadmap-endpoints">
+        <button
+          type="button"
+          className="roadmap-origin"
+          onClick={() => {
+            setComplete(true)
+            if (first) choose(first)
+          }}
+        >
+          <Icon name="compass" />
+          <span>
+            {t('origin')}
+            <small>
+              {t('confirmedCount', {
+                count: ordered.filter((x) => x.earned && x.groupId === 'default').length,
+              })}
+            </small>
+          </span>
+        </button>
+        <span className="roadmap-endpoint-line" aria-hidden="true" />
+        {platinum && (
+          <button type="button" className="roadmap-finish" onClick={() => select(platinum)}>
+            <span>
+              <small>{t('destination')}</small>
+              <strong>{t('finale')}</strong>
+            </span>
+            <TrophyArt url={platinum.hidden && !platinum.earned ? undefined : platinum.iconUrl} />
+          </button>
+        )}
+      </div>
+      <RoadmapForward
+        key={String(full)}
+        game={game}
+        pending={full ? route : remaining}
+        order={ordered}
+        complete={full}
         selected={selected}
         target={target}
         choose={choose}
-        resume={() => {
-          setComplete(false)
-          if (target) choose(target)
-        }}
       />
-      <a className="roadmap-read-advice" href="#roadmap-focus">
-        <Icon name="chevron-up" />
-        {t('readAdvice')}
-      </a>
-      <RoadmapForward
-        key={String(complete)}
-        game={game}
-        pending={complete ? ordered : pending}
-        order={ordered}
-        complete={complete}
-        selected={selected}
-        choose={choose}
-      />
-    </>
+      <div className="roadmap-map-note">
+        <p>{t('mapNote')}</p>
+        <a href="#roadmap-focus" className="roadmap-map-advice">
+          <Icon name="chevron-down" />
+          {t('readAdvice')}
+        </a>
+        {target && selected !== target && (
+          <button type="button" className="quiet" onClick={() => choose(target)}>
+            <Icon name="target" />
+            {t('resume')}
+          </button>
+        )}
+      </div>
+      <RoadmapParallel game={game} choose={select} />
+      <details className="roadmap-map-tools">
+        <summary>{t('mapTools')}</summary>
+        <RoadmapViewControls
+          complete={full}
+          pending={remaining.length}
+          total={route.length}
+          onChange={(full) => {
+            setComplete(full)
+            if (!full && target) choose(target)
+          }}
+        />
+        <RoadmapJump
+          route={full ? ordered : ordered.filter((x) => !x.earned)}
+          ordered={ordered}
+          selected={selected}
+          target={target}
+          choose={choose}
+          resume={() => {
+            setComplete(false)
+            if (target) choose(target)
+          }}
+        />
+      </details>
+    </section>
   )
 }
 
@@ -715,6 +780,27 @@ function RouteNumber({ trophy, index }: { trophy: Trophy; index: number }) {
   return String(index + 1).padStart(2, '0')
 }
 
+function RoadmapTiming({ game, trophy }: { game: RoadmapGame; trophy: Trophy }) {
+  const t = useMessages(messages)
+  const reviewed = game.journey?.items.find((x) => x.trophy === trophy)
+  if (trophy.earned || trophy.hidden || !reviewed?.objective.chapter) return null
+  return (
+    <small>
+      {t(reviewed.state === 'recover' ? 'recoverWhen' : 'chapterWhen', {
+        chapter: reviewed.objective.chapter,
+      })}
+    </small>
+  )
+}
+
+function roadmapRisk(game: RoadmapGame, trophy: Trophy) {
+  if (trophy.hidden || trophy.earned) return false
+  const reviewed = game.journey?.items.find((x) => x.trophy === trophy)
+  return reviewed
+    ? reviewed.objective.risk === 'opportunity'
+    : !!trophyAdvice(trophy, game.guide).warning
+}
+
 function RoadmapForward({
   pending,
   selected,
@@ -722,7 +808,9 @@ function RoadmapForward({
   game,
   complete = false,
   order,
+  target,
 }: {
+  target?: Trophy
   game: RoadmapGame
   pending: Trophy[]
   selected: Trophy
@@ -809,8 +897,15 @@ function RoadmapForward({
     <div className="roadmap-forward">
       <div className="roadmap-forward-heading">
         <div>
-          <h4>{complete ? t('routeComplete') : pending.length ? t('ahead') : t('stageDone')}</h4>
-          <p>{t('explore')}</p>
+          <h4>
+            {pending[0]?.groupId !== 'default' && pending.length
+              ? t('dlc')
+              : complete
+                ? t('routeComplete')
+                : pending.length
+                  ? t('ahead')
+                  : t('stageDone')}
+          </h4>
         </div>
         <div className="roadmap-route-controls">
           <button
@@ -836,13 +931,14 @@ function RoadmapForward({
       {!!pending.length && (
         <ol
           className="roadmap-route"
+          style={{ '--roadmap-stops': Math.min(5, pending.length) } as CSSProperties}
           ref={rail}
           aria-label={t(complete ? 'routeComplete' : 'ahead')}
         >
           {pending.map((trophy, i) => {
             const hidden = trophy.hidden && !trophy.earned
             const current = selected === trophy
-            const missable = !hidden && !trophy.earned && !!trophyAdvice(trophy, game.guide).warning
+            const missable = roadmapRisk(game, trophy)
             const final = trophy.type === 'platinum'
             const path = roadSegment(i, 180)
             return (
@@ -853,6 +949,7 @@ function RoadmapForward({
                 data-missable={missable}
                 data-final={final}
                 data-earned={trophy.earned}
+                data-suggested={target === trophy}
               >
                 <svg
                   className="roadmap-route-line"
@@ -880,6 +977,10 @@ function RoadmapForward({
                   </span>
                   <span className="roadmap-route-caption">
                     <span className="roadmap-route-name">{hidden ? t('secret') : trophy.name}</span>
+                    {target === trophy && !trophy.earned && (
+                      <small className="roadmap-suggested-label">{t('suggestion')}</small>
+                    )}
+                    <RoadmapTiming game={game} trophy={trophy} />
                     {trophy.earned ? (
                       <span className="roadmap-route-finale">{t('routeEarned')}</span>
                     ) : (
@@ -1150,7 +1251,6 @@ export function TrophyRoadmap({
   const selected = ordered.find((x) => anchor(x) === selection) ?? target
   const stageIndex = stages.findIndex((s) => selected && s.trophies.includes(selected))
   const stage = stages[stageIndex]
-  const pending = ordered.filter((x) => !x.earned)
   const past = ordered.filter((x) => x.earned)
   const choose = useCallback((trophy: Trophy) => {
     setSelection(anchor(trophy))
@@ -1186,64 +1286,52 @@ export function TrophyRoadmap({
       ) : (
         <>
           <div className="roadmap-expedition">
-            <RoadmapFocus game={game} selected={selected} target={target} choose={choose} />
-            <RoadmapOverview game={game} selected={selected} choose={inspect} />
-            <details className="roadmap-explore">
-              <summary>
-                <Icon name="compass" />
-                <span>
-                  <strong>{t('exploreRoute')}</strong>
-                  <small>{t('exploreRouteNote')}</small>
-                </span>
-                <Icon name="chevron-down" />
-              </summary>
-              <RoadmapNavigation
-                game={game}
-                ordered={ordered}
-                pending={pending}
-                selected={selected}
-                target={target}
-                choose={choose}
-              />
-              {!!past.length && (
-                <details className="roadmap-past">
-                  <summary>
-                    <Icon name="check" />
-                    {t('past', { count: past.length })}
-                    <Icon name="chevron-down" />
-                  </summary>
-                  <ul>
-                    {past.map((trophy) => (
-                      <li key={anchor(trophy)}>
-                        <button
-                          type="button"
-                          aria-pressed={selected === trophy}
-                          aria-label={trophy.name}
-                          aria-describedby={
-                            trophy.detail ? `${anchor(trophy)}-earned-detail` : undefined
-                          }
-                          onClick={() => choose(trophy)}
-                        >
-                          <span className="roadmap-earned-art">
-                            <TrophyArt url={trophy.iconUrl} />
-                            <span className="roadmap-earned-check">
-                              <Icon name="check" />
-                            </span>
+            <RoadmapNavigation
+              game={game}
+              ordered={ordered}
+              selected={selected}
+              target={target}
+              choose={choose}
+            />
+            <RoadmapFocus game={game} selected={selected} target={target} />
+            {!!past.length && (
+              <details className="roadmap-past">
+                <summary>
+                  <Icon name="check" />
+                  {t('past', { count: past.length })}
+                  <Icon name="chevron-down" />
+                </summary>
+                <ul>
+                  {past.map((trophy) => (
+                    <li key={anchor(trophy)}>
+                      <button
+                        type="button"
+                        aria-pressed={selected === trophy}
+                        aria-label={trophy.name}
+                        aria-describedby={
+                          trophy.detail ? `${anchor(trophy)}-earned-detail` : undefined
+                        }
+                        onClick={() => choose(trophy)}
+                      >
+                        <span className="roadmap-earned-art">
+                          <TrophyArt url={trophy.iconUrl} />
+                          <span className="roadmap-earned-check">
+                            <Icon name="check" />
                           </span>
-                          <span className="roadmap-earned-copy">
-                            <strong>{trophy.name}</strong>
-                            {trophy.detail && (
-                              <span id={`${anchor(trophy)}-earned-detail`}>{trophy.detail}</span>
-                            )}
-                          </span>
-                          <Icon name="chevron-right" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-            </details>
+                        </span>
+                        <span className="roadmap-earned-copy">
+                          <strong>{trophy.name}</strong>
+                          {trophy.detail && (
+                            <span id={`${anchor(trophy)}-earned-detail`}>{trophy.detail}</span>
+                          )}
+                        </span>
+                        <Icon name="chevron-right" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
             <details className="roadmap-context-details">
               <summary>{t('progressContext')}</summary>
               {game.journey ? (
@@ -1308,6 +1396,25 @@ export function TrophyRoadmapSkeleton() {
         <Sk w="150px" h={14} />
       </header>
       <div className="roadmap-expedition">
+        <div className="roadmap-campaign roadmap-campaign-loading">
+          <div className="roadmap-endpoints">
+            <Sk w="95px" h={44} />
+            <Sk w="95px" h={44} />
+          </div>
+          <div className="roadmap-forward-heading">
+            <Sk w="130px" h={20} />
+            <Sk w="92px" h={44} />
+          </div>
+          <div className="roadmap-loading-path">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="roadmap-loading-stop">
+                <Sk w="80px" h={80} />
+                <Sk w="85%" h={18} />
+              </div>
+            ))}
+          </div>
+          <Sk w="75%" h={14} />
+        </div>
         <div className="roadmap-focus">
           <div className="roadmap-landscape">
             <div className="roadmap-destination">
@@ -1326,12 +1433,6 @@ export function TrophyRoadmapSkeleton() {
             <Sk w="75%" h={16} />
             <Sk w="180px" h={44} />
           </div>
-        </div>
-        <div className="roadmap-overview">
-          <Sk w="190px" h={24} />
-          {[0, 1].map((i) => (
-            <Sk key={i} w="100%" h={64} />
-          ))}
         </div>
         <div className="roadmap-loading-disclosures">
           <Sk w="100%" h={64} />
