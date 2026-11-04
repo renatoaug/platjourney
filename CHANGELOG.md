@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.47.0](https://github.com/renatoaug/platjourney/compare/v0.46.0...v0.47.0) (2026-11-04)
+
+### Features
+
+* **server:** interactive mcp app views and cards in nexo answers ([#135](https://github.com/renatoaug/platjourney/issues/135)) ([6046104](https://github.com/renatoaug/platjourney/commit/60461049c4480d25db0daabf6b5df58cdea8a271))
+
 ## [0.46.0](https://github.com/renatoaug/platjourney/compare/v0.45.4...v0.46.0) (2026-11-04)
 
 ### Features
