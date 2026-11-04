@@ -3,6 +3,7 @@ import { aiContext } from './ai-context.ts'
 import { tagged } from './costs.ts'
 import { DemoReadOnly, isDemo } from './demo.ts'
 import { DEFAULT_LOCALE, defineMessages, Language, type Locale, translator } from './i18n.ts'
+import { withJourneyModel } from './journey-context.ts'
 import { isJourneySession, journeySession, refreshJourneySession } from './journey-session.ts'
 import type { GameContext } from './nexo.ts'
 import { aroundModel } from './plugins.ts'
@@ -128,6 +129,7 @@ export async function planSession(
     current?.status === 'active' && current.game === ctx.game.id
       ? current.steps.map((s) => s.trophy)
       : []
+  ctx = await withJourneyModel(ctx)
   const reviewed = journeySession(user, ctx, minutes, avoid)
   const plan =
     reviewed ??
@@ -357,6 +359,7 @@ function view(plan: SessionPlan, ctx: GameContext | undefined, user: User): Plan
 export async function currentPlan(user: User, ctx?: GameContext): Promise<PlanView | null> {
   const stored = (await activePlan(user.id)) ?? null
   if (!stored || (ctx && stored.game !== ctx.game.id)) return null
+  if (ctx && isJourneySession(stored)) ctx = await withJourneyModel(ctx)
   // The demo's stored plan is always the one being played: it never expires.
   const plan = isDemo(user)
     ? { ...stored, createdAt: new Date(Date.now() - DEMO_PLAN_AGE).toISOString() }

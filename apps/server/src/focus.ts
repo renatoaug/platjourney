@@ -37,7 +37,7 @@ interface Focus {
 }
 
 type FocusContext = Pick<GameContext, 'trophies' | 'guide'> &
-  Partial<Pick<GameContext, 'game' | 'title'>>
+  Partial<Pick<GameContext, 'game' | 'title' | 'journeyModel'>>
 
 // PSN sometimes writes a name with a double space ("Caçador de  Emboscadas"); the guide copies it.
 // Compared and shown with single spaces.
@@ -122,7 +122,7 @@ function reviewedFocus(ctx: FocusContext): Focus | undefined {
   // A catalog can group reviewed and unreviewed releases. Only the opened PSN list
   // identifies the model; a missing edition must not borrow another release's rules.
   const reviewed = ctx.title?.npCommunicationId
-    ? reviewedJourney({ np: ctx.title.npCommunicationId })
+    ? reviewedJourney({ np: ctx.title.npCommunicationId }, ctx.journeyModel)
     : undefined
   if (reviewed) {
     if (ctx.guide?.unobtainable) return { phases: [] }

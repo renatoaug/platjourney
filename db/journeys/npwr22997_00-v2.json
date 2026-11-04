@@ -1,0 +1,1323 @@
+{
+  "schemaVersion": 1,
+  "edition": "NPWR22997_00",
+  "name": "Requiem",
+  "version": 2,
+  "reviewedAt": "2026-11-04",
+  "planning": {
+    "kind": "chapters",
+    "finalChapter": 17
+  },
+  "objectives": [
+    {
+      "key": "chapter-1",
+      "names": ["Sob um Novo Sol", "Under a New Sun"],
+      "kind": "story",
+      "chapter": 1,
+      "order": 10,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 1 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 1 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 1,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "label": {
+          "pt": "Capítulo 1",
+          "en": "Chapter 1"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 1, não a posição atual do save.",
+          "en": "This trophy confirms chapter 1 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-2",
+      "names": ["Recém-chegados", "Newcomers"],
+      "kind": "story",
+      "chapter": 2,
+      "order": 20,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 2 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 2 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 2,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-1",
+        "label": {
+          "pt": "Capítulo 2",
+          "en": "Chapter 2"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 2, não a posição atual do save.",
+          "en": "This trophy confirms chapter 2 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-3",
+      "names": ["Fardo de Sangue", "A Burden of Blood"],
+      "kind": "story",
+      "chapter": 3,
+      "order": 30,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 3 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 3 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 3,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-2",
+        "label": {
+          "pt": "Capítulo 3",
+          "en": "Chapter 3"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 3, não a posição atual do save.",
+          "en": "This trophy confirms chapter 3 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-4",
+      "names": ["Dever da Protetora", "Protector’s Duty"],
+      "kind": "story",
+      "chapter": 4,
+      "order": 40,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 4 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 4 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 4,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-3",
+        "label": {
+          "pt": "Capítulo 4",
+          "en": "Chapter 4"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 4, não a posição atual do save.",
+          "en": "This trophy confirms chapter 4 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-5",
+      "names": ["Em Nosso Encalço", "In our Wake"],
+      "kind": "story",
+      "chapter": 5,
+      "order": 50,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 5 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 5 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 5,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-4",
+        "label": {
+          "pt": "Capítulo 5",
+          "en": "Chapter 5"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 5, não a posição atual do save.",
+          "en": "This trophy confirms chapter 5 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-6",
+      "names": ["Tudo para Trás", "Leaving all Behind"],
+      "kind": "story",
+      "chapter": 6,
+      "order": 60,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 6 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 6 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 6,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-5",
+        "label": {
+          "pt": "Capítulo 6",
+          "en": "Chapter 6"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 6, não a posição atual do save.",
+          "en": "This trophy confirms chapter 6 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-7",
+      "names": ["Malfeitores", "Felons"],
+      "kind": "story",
+      "chapter": 7,
+      "order": 70,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 7 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 7 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 7,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-6",
+        "label": {
+          "pt": "Capítulo 7",
+          "en": "Chapter 7"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 7, não a posição atual do save.",
+          "en": "This trophy confirms chapter 7 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-8",
+      "names": ["Mar de Promessas", "A Sea of Promises"],
+      "kind": "story",
+      "chapter": 8,
+      "order": 80,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 8 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 8 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 8,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-7",
+        "label": {
+          "pt": "Capítulo 8",
+          "en": "Chapter 8"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 8, não a posição atual do save.",
+          "en": "This trophy confirms chapter 8 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-9",
+      "names": ["Contos e Revelações", "Tales and Revelations"],
+      "kind": "story",
+      "chapter": 9,
+      "order": 90,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 9 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 9 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 9,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-8",
+        "label": {
+          "pt": "Capítulo 9",
+          "en": "Chapter 9"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 9, não a posição atual do save.",
+          "en": "This trophy confirms chapter 9 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-10",
+      "names": ["Linhagem", "Bloodline"],
+      "kind": "story",
+      "chapter": 10,
+      "order": 100,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 10 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 10 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 10,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-9",
+        "label": {
+          "pt": "Capítulo 10",
+          "en": "Chapter 10"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 10, não a posição atual do save.",
+          "en": "This trophy confirms chapter 10 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-11",
+      "names": ["Berço Secular", "The Cradle of Centuries"],
+      "kind": "story",
+      "chapter": 11,
+      "order": 110,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 11 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 11 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 11,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-10",
+        "label": {
+          "pt": "Capítulo 11",
+          "en": "Chapter 11"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 11, não a posição atual do save.",
+          "en": "This trophy confirms chapter 11 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-12",
+      "names": ["A Vida que Merecemos", "The Life We Deserve"],
+      "kind": "story",
+      "chapter": 12,
+      "order": 120,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 12 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 12 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 12,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-11",
+        "label": {
+          "pt": "Capítulo 12",
+          "en": "Chapter 12"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 12, não a posição atual do save.",
+          "en": "This trophy confirms chapter 12 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-13",
+      "names": ["Não Sobrou Nada", "Nothing Left"],
+      "kind": "story",
+      "chapter": 13,
+      "order": 130,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 13 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 13 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 13,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-12",
+        "label": {
+          "pt": "Capítulo 13",
+          "en": "Chapter 13"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 13, não a posição atual do save.",
+          "en": "This trophy confirms chapter 13 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-14",
+      "names": ["Feridas Curadas", "Healing our Wounds"],
+      "kind": "story",
+      "chapter": 14,
+      "order": 140,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 14 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 14 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 14,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-13",
+        "label": {
+          "pt": "Capítulo 14",
+          "en": "Chapter 14"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 14, não a posição atual do save.",
+          "en": "This trophy confirms chapter 14 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-15",
+      "names": ["Sol Mortiço", "Dying Sun"],
+      "kind": "story",
+      "chapter": 15,
+      "order": 150,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 15 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 15 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 15,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-14",
+        "label": {
+          "pt": "Capítulo 15",
+          "en": "Chapter 15"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 15, não a posição atual do save.",
+          "en": "This trophy confirms chapter 15 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-16",
+      "names": ["Rei Hugo", "King Hugo"],
+      "kind": "story",
+      "chapter": 16,
+      "order": 160,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 16 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 16 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 16,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-15",
+        "label": {
+          "pt": "Capítulo 16",
+          "en": "Chapter 16"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 16, não a posição atual do save.",
+          "en": "This trophy confirms chapter 16 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "chapter-17",
+      "names": ["Cavaleiros!", "Knights!"],
+      "kind": "story",
+      "chapter": 17,
+      "order": 170,
+      "action": {
+        "pt": "Para continuar a campanha, confira as oportunidades do capítulo 17 antes de encerrá-lo. A ordem é uma referência, não uma indicação de onde você está.",
+        "en": "To continue the campaign, check chapter 17 opportunities before finishing it. This order is a reference, not your current location."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 17,
+      "groupId": "default",
+      "placement": {
+        "kind": "story",
+        "after": "chapter-16",
+        "label": {
+          "pt": "Capítulo 17",
+          "en": "Chapter 17"
+        },
+        "evidence": {
+          "pt": "Este troféu confirma a conclusão do capítulo 17, não a posição atual do save.",
+          "en": "This trophy confirms chapter 17 completion, not the current save location."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "perfect-shot",
+      "names": ["Mira perfeita", "Perfect shot"],
+      "chapter": 1,
+      "action": {
+        "pt": "No desafio das pinhas, conclua os disparos exigidos. Confira a dica específica antes de encerrar o trecho.",
+        "en": "Complete the required shots in the pinecone challenge. Check its specific instructions before leaving."
+      },
+      "kind": "chapter",
+      "order": 9,
+      "risk": "replay",
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 32,
+      "groupId": "default",
+      "placement": {
+        "kind": "window",
+        "before": "chapter-1",
+        "label": {
+          "pt": "Oportunidade · cap. 1",
+          "en": "Opportunity · ch. 1"
+        },
+        "evidence": {
+          "pt": "A oportunidade ocorre dentro do capítulo 1, antes do troféu de encerramento. Pode ser recuperada depois por seleção de capítulos.",
+          "en": "This opportunity occurs within chapter 1, before its completion trophy. It can be recovered later through chapter select."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "mercy",
+      "names": ["Piedade", "Mercy"],
+      "chapter": 4,
+      "action": {
+        "pt": "No encontro das docas, preserve a vida do guarda. Consulte a orientação antes de usar munição nele.",
+        "en": "At the docks encounter, keep the guard alive. Check the instructions before using ammunition on him."
+      },
+      "kind": "chapter",
+      "order": 39,
+      "risk": "replay",
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 35,
+      "groupId": "default",
+      "placement": {
+        "kind": "window",
+        "after": "chapter-3",
+        "before": "chapter-4",
+        "label": {
+          "pt": "Oportunidade · cap. 4",
+          "en": "Opportunity · ch. 4"
+        },
+        "evidence": {
+          "pt": "A oportunidade ocorre dentro do capítulo 4, antes do troféu de encerramento. Pode ser recuperada depois por seleção de capítulos.",
+          "en": "This opportunity occurs within chapter 4, before its completion trophy. It can be recovered later through chapter select."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "perfect-throw",
+      "names": ["Arremesso perfeito", "Perfect throw"],
+      "chapter": 8,
+      "action": {
+        "pt": "No minijogo das coroas, complete todos os arremessos. É uma oportunidade do trecho, não uma tarefa para depois da história.",
+        "en": "Complete every throw in the crowns minigame. This is a section opportunity rather than a post-story task."
+      },
+      "kind": "chapter",
+      "order": 79,
+      "risk": "replay",
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 33,
+      "groupId": "default",
+      "placement": {
+        "kind": "window",
+        "after": "chapter-7",
+        "before": "chapter-8",
+        "label": {
+          "pt": "Oportunidade · cap. 8",
+          "en": "Opportunity · ch. 8"
+        },
+        "evidence": {
+          "pt": "A oportunidade ocorre dentro do capítulo 8, antes do troféu de encerramento. Pode ser recuperada depois por seleção de capítulos.",
+          "en": "This opportunity occurs within chapter 8, before its completion trophy. It can be recovered later through chapter select."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "old-protector",
+      "names": ["Antiga protetora", "Old protector"],
+      "chapter": 9,
+      "action": {
+        "pt": "No santuário, examine os itens opcionais antes de avançar a conversa que encerra a visita.",
+        "en": "In the sanctuary, examine the optional items before advancing the conversation that ends the visit."
+      },
+      "kind": "chapter",
+      "order": 89,
+      "risk": "replay",
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 34,
+      "groupId": "default",
+      "placement": {
+        "kind": "window",
+        "after": "chapter-8",
+        "before": "chapter-9",
+        "label": {
+          "pt": "Oportunidade · cap. 9",
+          "en": "Opportunity · ch. 9"
+        },
+        "evidence": {
+          "pt": "A oportunidade ocorre dentro do capítulo 9, antes do troféu de encerramento. Pode ser recuperada depois por seleção de capítulos.",
+          "en": "This opportunity occurs within chapter 9, before its completion trophy. It can be recovered later through chapter select."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "herbalist",
+      "names": ["Herbalista", "Herbalist"],
+      "kind": "collectible",
+      "order": 159,
+      "prepareFrom": 1,
+      "action": {
+        "pt": "Aproveite a exploração para procurar os itens deste objetivo. Consulte as indicações por capítulo; não é necessário marcar cada item no app.",
+        "en": "Look for this objective’s items as you explore. Consult chapter guidance; there is no need to check off each item in the app."
+      },
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 18,
+      "groupId": "default",
+      "completionChapter": 16,
+      "placement": {
+        "kind": "window",
+        "after": "chapter-15",
+        "before": "chapter-16",
+        "label": {
+          "pt": "Pode concluir no cap. 16",
+          "en": "Can finish in ch. 16"
+        },
+        "evidence": {
+          "pt": "O último item deste conjunto está no capítulo 16. Esta posição só representa a conclusão possível se os anteriores foram obtidos; a preparação começa antes e itens perdidos podem ser recuperados.",
+          "en": "The last item in this set is in chapter 16. This is only a possible completion point if earlier items were collected; preparation starts earlier and missing items can be recovered."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-all-collectibles-locations-guide/"
+        ]
+      }
+    },
+    {
+      "key": "ornithologist",
+      "names": ["Ornitóloga", "Ornithologist"],
+      "kind": "collectible",
+      "order": 127,
+      "prepareFrom": 1,
+      "action": {
+        "pt": "Aproveite a exploração para procurar os itens deste objetivo. Consulte as indicações por capítulo; não é necessário marcar cada item no app.",
+        "en": "Look for this objective’s items as you explore. Consult chapter guidance; there is no need to check off each item in the app."
+      },
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 19,
+      "groupId": "default",
+      "completionChapter": 13,
+      "placement": {
+        "kind": "window",
+        "after": "chapter-12",
+        "before": "chapter-13",
+        "label": {
+          "pt": "Pode concluir no cap. 13",
+          "en": "Can finish in ch. 13"
+        },
+        "evidence": {
+          "pt": "O último item deste conjunto está no capítulo 13. Esta posição só representa a conclusão possível se os anteriores foram obtidos; a preparação começa antes e itens perdidos podem ser recuperados.",
+          "en": "The last item in this set is in chapter 13. This is only a possible completion point if earlier items were collected; preparation starts earlier and missing items can be recovered."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-all-collectibles-locations-guide/"
+        ]
+      }
+    },
+    {
+      "key": "explorer",
+      "names": ["Exploradora", "Explorer"],
+      "kind": "collectible",
+      "order": 128,
+      "prepareFrom": 1,
+      "action": {
+        "pt": "Reserve uma faca para abrir baús secretos. Usá-la em combate pode exigir voltar a um trecho anterior para buscar outra.",
+        "en": "Keep a knife for secret chests. Using it in combat may require returning to an earlier section for another."
+      },
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 20,
+      "groupId": "default",
+      "completionChapter": 13,
+      "placement": {
+        "kind": "window",
+        "after": "chapter-12",
+        "before": "chapter-13",
+        "label": {
+          "pt": "Pode concluir no cap. 13",
+          "en": "Can finish in ch. 13"
+        },
+        "evidence": {
+          "pt": "O último item deste conjunto está no capítulo 13. Esta posição só representa a conclusão possível se os anteriores foram obtidos; a preparação começa antes e itens perdidos podem ser recuperados.",
+          "en": "The last item in this set is in chapter 13. This is only a possible completion point if earlier items were collected; preparation starts earlier and missing items can be recovered."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-all-collectibles-locations-guide/"
+        ]
+      }
+    },
+    {
+      "key": "memories",
+      "names": ["Memórias imortais", "Immortal memories"],
+      "kind": "collectible",
+      "order": 126,
+      "prepareFrom": 1,
+      "action": {
+        "pt": "Aproveite a exploração para procurar os itens deste objetivo. Consulte as indicações por capítulo; não é necessário marcar cada item no app.",
+        "en": "Look for this objective’s items as you explore. Consult chapter guidance; there is no need to check off each item in the app."
+      },
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 21,
+      "groupId": "default",
+      "completionChapter": 13,
+      "placement": {
+        "kind": "window",
+        "after": "chapter-12",
+        "before": "chapter-13",
+        "label": {
+          "pt": "Pode concluir no cap. 13",
+          "en": "Can finish in ch. 13"
+        },
+        "evidence": {
+          "pt": "O último item deste conjunto está no capítulo 13. Esta posição só representa a conclusão possível se os anteriores foram obtidos; a preparação começa antes e itens perdidos podem ser recuperados.",
+          "en": "The last item in this set is in chapter 13. This is only a possible completion point if earlier items were collected; preparation starts earlier and missing items can be recovered."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-all-collectibles-locations-guide/"
+        ]
+      }
+    },
+    {
+      "key": "sling",
+      "names": ["Brinquedo nada", "Not a toy anymore"],
+      "kind": "upgrade",
+      "order": 190,
+      "prepareFrom": 1,
+      "action": {
+        "pt": "Recolha ferramentas e peças ao explorar e confira as melhorias restantes nas bancadas. Continue com recursos obtidos no jogo; este roteiro não depende de fechar o app para desfazer compras.",
+        "en": "Collect tools and pieces while exploring and check remaining workbench upgrades. Use resources earned in the game; this route does not rely on closing the app to undo purchases."
+      },
+      "recovery": {
+        "pt": "Confira os recursos e melhorias mantidos no seu save antes de escolher continuar ou usar New Game+.",
+        "en": "Check the resources and upgrades retained in your save before choosing to continue or use New Game+."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 22,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "crossbow",
+      "names": ["Balestra aprimorada", "Improved crossbow"],
+      "kind": "upgrade",
+      "order": 191,
+      "prepareFrom": 5,
+      "action": {
+        "pt": "Recolha ferramentas e peças ao explorar e confira as melhorias restantes nas bancadas. Continue com recursos obtidos no jogo; este roteiro não depende de fechar o app para desfazer compras.",
+        "en": "Collect tools and pieces while exploring and check remaining workbench upgrades. Use resources earned in the game; this route does not rely on closing the app to undo purchases."
+      },
+      "recovery": {
+        "pt": "Confira os recursos e melhorias mantidos no seu save antes de escolher continuar ou usar New Game+.",
+        "en": "Check the resources and upgrades retained in your save before choosing to continue or use New Game+."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 23,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "gear",
+      "names": ["Bolsos e mais bolsos", "Handful of pockets"],
+      "kind": "upgrade",
+      "order": 192,
+      "prepareFrom": 1,
+      "action": {
+        "pt": "Recolha ferramentas e peças ao explorar e confira as melhorias restantes nas bancadas. Continue com recursos obtidos no jogo; este roteiro não depende de fechar o app para desfazer compras.",
+        "en": "Collect tools and pieces while exploring and check remaining workbench upgrades. Use resources earned in the game; this route does not rely on closing the app to undo purchases."
+      },
+      "recovery": {
+        "pt": "Confira os recursos e melhorias mantidos no seu save antes de escolher continuar ou usar New Game+.",
+        "en": "Check the resources and upgrades retained in your save before choosing to continue or use New Game+."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 24,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "instruments",
+      "names": ["Instrumentos eficazes", "Effective instruments"],
+      "kind": "upgrade",
+      "order": 193,
+      "prepareFrom": 1,
+      "action": {
+        "pt": "Recolha ferramentas e peças ao explorar e confira as melhorias restantes nas bancadas. Continue com recursos obtidos no jogo; este roteiro não depende de fechar o app para desfazer compras.",
+        "en": "Collect tools and pieces while exploring and check remaining workbench upgrades. Use resources earned in the game; this route does not rely on closing the app to undo purchases."
+      },
+      "recovery": {
+        "pt": "Confira os recursos e melhorias mantidos no seu save antes de escolher continuar ou usar New Game+.",
+        "en": "Check the resources and upgrades retained in your save before choosing to continue or use New Game+."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 25,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "alchemy",
+      "names": ["Laboratório de bolso", "Pocket laboratory"],
+      "kind": "upgrade",
+      "order": 194,
+      "prepareFrom": 1,
+      "action": {
+        "pt": "Recolha ferramentas e peças ao explorar e confira as melhorias restantes nas bancadas. Continue com recursos obtidos no jogo; este roteiro não depende de fechar o app para desfazer compras.",
+        "en": "Collect tools and pieces while exploring and check remaining workbench upgrades. Use resources earned in the game; this route does not rely on closing the app to undo purchases."
+      },
+      "recovery": {
+        "pt": "Confira os recursos e melhorias mantidos no seu save antes de escolher continuar ou usar New Game+.",
+        "en": "Check the resources and upgrades retained in your save before choosing to continue or use New Game+."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 26,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "prudence",
+      "names": ["Discreta", "Sneaky"],
+      "kind": "skill",
+      "order": 210,
+      "prepareFrom": 2,
+      "risk": "skill-carryover",
+      "action": {
+        "pt": "Quando o menu de habilidades estiver disponível, confira esta barra antes de escolher como abordar o próximo encontro. Não é possível deduzir a barra pela ausência do troféu. Na New Game+, priorize as habilidades que ainda faltam.",
+        "en": "Once the skills menu is available, check this bar before choosing how to approach the next encounter. A missing trophy does not reveal its progress. In New Game+, prioritize the skills still missing."
+      },
+      "approach": {
+        "pt": "Para desenvolver prudência, atravesse os encontros evitando eliminar inimigos. Confira a barra após o encontro antes de repetir a abordagem.",
+        "en": "To develop Prudence, pass encounters while avoiding enemy kills. Check the bar afterward before repeating the approach."
+      },
+      "recovery": {
+        "pt": "Antes de avançar muito na segunda campanha, confira as barras restantes. Voltar por seleção de capítulo restaura o estado daquele ponto e pode exigir rejogar os trechos seguintes.",
+        "en": "Before advancing far into the second campaign, check remaining skill bars. Chapter select restores the state at that point and may require replaying subsequent sections."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 29,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "aggressive",
+      "names": ["Lutadora", "Fighter"],
+      "kind": "skill",
+      "order": 211,
+      "prepareFrom": 2,
+      "risk": "skill-carryover",
+      "action": {
+        "pt": "Quando o menu de habilidades estiver disponível, confira esta barra antes de escolher como abordar o próximo encontro. Não é possível deduzir a barra pela ausência do troféu. Na New Game+, priorize as habilidades que ainda faltam.",
+        "en": "Once the skills menu is available, check this bar before choosing how to approach the next encounter. A missing trophy does not reveal its progress. In New Game+, prioritize the skills still missing."
+      },
+      "approach": {
+        "pt": "Para desenvolver combate, priorize eliminar os inimigos do encontro. Confira a barra depois; não estimamos o avanço restante.",
+        "en": "To develop Aggressive, prioritize eliminating the encounter’s enemies. Check the bar afterward; we do not estimate the remaining progress."
+      },
+      "recovery": {
+        "pt": "Antes de avançar muito na segunda campanha, confira as barras restantes. Voltar por seleção de capítulo restaura o estado daquele ponto e pode exigir rejogar os trechos seguintes.",
+        "en": "Before advancing far into the second campaign, check remaining skill bars. Chapter select restores the state at that point and may require replaying subsequent sections."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 30,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "opportunism",
+      "names": ["Maligna", "Malignant"],
+      "kind": "skill",
+      "order": 212,
+      "prepareFrom": 2,
+      "risk": "skill-carryover",
+      "action": {
+        "pt": "Quando o menu de habilidades estiver disponível, confira esta barra antes de escolher como abordar o próximo encontro. Não é possível deduzir a barra pela ausência do troféu. Na New Game+, priorize as habilidades que ainda faltam.",
+        "en": "Once the skills menu is available, check this bar before choosing how to approach the next encounter. A missing trophy does not reveal its progress. In New Game+, prioritize the skills still missing."
+      },
+      "approach": {
+        "pt": "Para desenvolver oportunismo, procure eliminar aproximadamente metade dos inimigos de cada encontro e deixe os demais vivos. Confira a barra após concluir o encontro.",
+        "en": "To develop Opportunism, aim to eliminate roughly half the enemies in each encounter and leave the others alive. Check the bar after completing the encounter."
+      },
+      "recovery": {
+        "pt": "Antes de avançar muito na segunda campanha, confira as barras restantes. Voltar por seleção de capítulo restaura o estado daquele ponto e pode exigir rejogar os trechos seguintes.",
+        "en": "Before advancing far into the second campaign, check remaining skill bars. Chapter select restores the state at that point and may require replaying subsequent sections."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 31,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "night-guard",
+      "names": ["Guarda noturna", "Night guard"],
+      "kind": "counter",
+      "order": 200,
+      "prepareFrom": 3,
+      "action": {
+        "pt": "Quando Extinguis estiver disponível, aproveite os fogos que encontrar para avançar este objetivo. Sem contador confirmado, não estimamos quantos faltam.",
+        "en": "Once Extinguis is available, use fires you encounter to advance this objective. Without a confirmed counter, we do not estimate how many remain."
+      },
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 27,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "alchemist",
+      "names": ["Alquimista", "Alchemist"],
+      "kind": "counter",
+      "order": 201,
+      "prepareFrom": 3,
+      "action": {
+        "pt": "Fabrique munições com os recursos encontrados: o objetivo exige 100 fabricações, não uma combinação de tipos. Sem contador confirmado, não estimamos quantas faltam.",
+        "en": "Craft ammunition using resources you find: the objective requires 100 crafts, not a combination of types. Without a confirmed counter, we do not estimate how many remain."
+      },
+      "recovery": {
+        "pt": "Se esse trecho já passou, consulte a seleção de capítulos. A conquista só será concluída após confirmação da PSN.",
+        "en": "If you have passed this section, check chapter select. Only PSN confirmation completes the trophy."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 28,
+      "groupId": "default",
+      "placement": {
+        "kind": "parallel",
+        "label": {
+          "pt": "Em paralelo",
+          "en": "In parallel"
+        },
+        "evidence": {
+          "pt": "A ordem entre estes objetivos depende da exploração, recursos e estilo de jogo. A posição no mapa não é uma previsão de desbloqueio.",
+          "en": "Order depends on exploration, resources and playstyle. Map position is not an unlock prediction."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    },
+    {
+      "key": "platinum",
+      "names": ["Réquiem", "Requiem"],
+      "kind": "platinum",
+      "order": 999,
+      "requires": [
+        "chapter-1",
+        "chapter-2",
+        "chapter-3",
+        "chapter-4",
+        "chapter-5",
+        "chapter-6",
+        "chapter-7",
+        "chapter-8",
+        "chapter-9",
+        "chapter-10",
+        "chapter-11",
+        "chapter-12",
+        "chapter-13",
+        "chapter-14",
+        "chapter-15",
+        "chapter-16",
+        "chapter-17",
+        "perfect-shot",
+        "mercy",
+        "perfect-throw",
+        "old-protector",
+        "herbalist",
+        "ornithologist",
+        "explorer",
+        "memories",
+        "sling",
+        "crossbow",
+        "gear",
+        "instruments",
+        "alchemy",
+        "prudence",
+        "aggressive",
+        "opportunism",
+        "night-guard",
+        "alchemist"
+      ],
+      "action": {
+        "pt": "Conclua os demais troféus do jogo base e aguarde a confirmação da platina pela PSN.",
+        "en": "Complete the other base-game trophies and wait for PSN to confirm the platinum."
+      },
+      "sources": [
+        "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+        "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+      ],
+      "trophyId": 0,
+      "groupId": "default",
+      "placement": {
+        "kind": "destination",
+        "label": {
+          "pt": "Destino",
+          "en": "Destination"
+        },
+        "evidence": {
+          "pt": "Exige os demais troféus do jogo base, sem DLC.",
+          "en": "Requires the other base-game trophies, without DLC."
+        },
+        "sources": [
+          "https://www.powerpyx.com/a-plague-tale-requiem-trophy-guide-roadmap/",
+          "https://platget.com/guides/a-plague-tale-requiem-trophy-guide/"
+        ]
+      }
+    }
+  ]
+}

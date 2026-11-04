@@ -1,4 +1,7 @@
-import { odyssey } from '../../../../shared/journey/odyssey'
+import data from '../../../../db/journeys/npwr13822_00-v2.json'
+import { parseJourneyModel } from '../../../../shared/journey/validation'
+export const odyssey = parseJourneyModel(data)
+
 import type { CurrentGame } from '../lib/types'
 import { current } from './index'
 
@@ -6,6 +9,7 @@ import { current } from './index'
 export function odysseyGame(earned: string[] = []): CurrentGame {
   return {
     ...current,
+    journeyModel: odyssey,
     game: {
       id: 'game:103054',
       name: "Assassin's Creed Odyssey",

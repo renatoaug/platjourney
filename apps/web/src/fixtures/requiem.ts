@@ -1,4 +1,8 @@
-import { requiem } from '../../../../shared/journey/requiem'
+import data from '../../../../db/journeys/npwr22997_00-v2.json'
+import { parseJourneyModel } from '../../../../shared/journey/validation'
+
+const requiem = parseJourneyModel(data)
+
 import type { CurrentGame } from '../lib/types'
 import { current } from './index'
 
@@ -6,6 +10,7 @@ import { current } from './index'
 export function requiemGame(earned: string[] = []): CurrentGame {
   return {
     ...current,
+    journeyModel: requiem,
     game: {
       id: 'game:152242',
       name: 'A Plague Tale: Requiem',

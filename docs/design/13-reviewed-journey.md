@@ -1,6 +1,6 @@
 # Reviewed journey pilot
 
-The pilot applies only to A Plague Tale: Requiem's PSN list `NPWR22997_00`. It does not activate from a similar title or catalog id. `shared/journey/requiem.ts` contains 36 objective definitions and `shared/journey/model.ts` evaluates them against the supplied trophy list without writes, network access or model calls.
+The pilot applies only to A Plague Tale: Requiem's PSN list `NPWR22997_00`. It does not activate from a similar title or catalog id. `db/journeys/npwr22997_00-v2.json` is the initial import artifact with 36 objective definitions (runtime reads the active database publication through the API) and `shared/journey/model.ts` evaluates them against the supplied trophy list without writes, network access or model calls.
 
 ## Evidence and limits
 

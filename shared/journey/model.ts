@@ -10,12 +10,12 @@ export interface JourneyTrophy {
   hidden?: boolean
 }
 
-export interface JourneyText {
+interface JourneyText {
   pt: string
   en: string
 }
 
-export interface JourneyObjective {
+interface JourneyObjective {
   key: string
   /** Identity is scoped by JourneyModel.edition, never by translated display names. */
   trophyId: number
@@ -60,9 +60,8 @@ export interface JourneyObjective {
   sources: string[]
 }
 
-export type JourneyDraft = Omit<JourneyObjective, 'trophyId' | 'groupId' | 'placement'>
-
 export interface JourneyModel {
+  schemaVersion: 1
   edition: string
   name: string
   version: number

@@ -1,5 +1,6 @@
+import * as journeyModels from '../src/repository/journey-model.ts'
 import './env.ts'
-import { afterEach, expect, mock, spyOn, test } from 'bun:test'
+import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
 import { currentTag } from '../src/costs.ts'
 import {
@@ -356,4 +357,8 @@ test('discarding a selected journey never closes another game’s active plan', 
   const close = spyOn(plans, 'closePlan').mockResolvedValue()
   expect(await discardPlan(user, ctx)).toBeNull()
   expect(close).not.toHaveBeenCalled()
+})
+
+beforeEach(() => {
+  spyOn(journeyModels, 'getJourneyModel').mockResolvedValue(undefined)
 })

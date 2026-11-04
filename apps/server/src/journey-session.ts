@@ -81,7 +81,7 @@ function guidance(item: JourneyItem<TrophyStatus>, user: User) {
 /** Reviewed editions use deterministic selection; other editions keep the existing generator. */
 export function journeySession(user: User, ctx: GameContext, minutes: number, avoid: string[]) {
   const edition = ctx.title.npCommunicationId
-  const model = reviewedJourney({ ...ctx.game, np: edition })
+  const model = reviewedJourney({ np: edition }, ctx.journeyModel)
   if (!model) return undefined
   const t = translator(messages, user)
   if (ctx.guide?.unobtainable) throw new JourneySessionUnavailable(t('unobtainable'))
@@ -129,7 +129,7 @@ export const isJourneySession = (plan: Pick<SessionPlan, 'steps'>) =>
 export function refreshJourneySession(plan: SessionPlan, ctx: GameContext | undefined, user: User) {
   const t = translator(messages, user)
   const edition = plan.npCommunicationId
-  const model = edition ? reviewedJourney({ np: edition }) : undefined
+  const model = edition ? reviewedJourney({ np: edition }, ctx?.journeyModel) : undefined
   const same = ctx?.game.id === plan.game && ctx.title.npCommunicationId === edition
   const journey = model && same ? evaluateJourney(model, ctx.trophies) : undefined
   const complete = !!journey && journey.covered === journey.expected && !journey.unmatched.length

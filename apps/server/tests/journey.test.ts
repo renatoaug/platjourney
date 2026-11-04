@@ -1,9 +1,9 @@
 import { expect, test } from 'bun:test'
 import { evaluateJourney, type JourneyTrophy } from '../../../shared/journey/model.ts'
 import { reviewedJourney } from '../../../shared/journey/registry.ts'
-import { requiem } from '../../../shared/journey/requiem.ts'
 import { todaysFocus } from '../src/focus.ts'
 import { makeContext, makeTrophy } from './fixtures.ts'
+import { requiem } from './journey-fixtures.ts'
 
 // Public trophy metadata, synthetic progress only. No player records in fixtures.
 const list = (earned: string[] = []): JourneyTrophy[] =>
@@ -33,9 +33,9 @@ test('reviewed Requiem catalogue covers 36 unique objectives, with sources and v
 })
 
 test('the pilot is scoped to the PSN edition, never just a similar catalog name or id', () => {
-  expect(reviewedJourney({ id: 'game:152242' })).toBeUndefined()
-  expect(reviewedJourney({ np: 'UNKNOWN' })).toBeUndefined()
-  expect(reviewedJourney({ np: 'NPWR22997_00' })).toBe(requiem)
+  expect(reviewedJourney({ id: 'game:152242' }, requiem)).toBeUndefined()
+  expect(reviewedJourney({ np: 'UNKNOWN' }, requiem)).toBeUndefined()
+  expect(reviewedJourney({ np: 'NPWR22997_00' }, requiem)).toBe(requiem)
 })
 
 test('opening opportunity precedes chapter completion, preparation does not fabricate progress', () => {
@@ -108,6 +108,7 @@ test('server focus consumes the same reviewed recommendation rather than the leg
   })
   ctx.game.np_communication_ids = ['NPWR22997_00']
   ctx.title.npCommunicationId = 'NPWR22997_00'
+  ctx.journeyModel = requiem
   expect(todaysFocus(ctx).trophy?.name).toBe('Antiga protetora')
   ctx.title.npCommunicationId = 'OTHER'
   expect(todaysFocus(ctx).trophy?.name).not.toBe('Antiga protetora')
@@ -119,6 +120,7 @@ test('an incomplete reviewed edition does not fall back to an unreviewed focus',
   })
   ctx.game.np_communication_ids = ['NPWR22997_00']
   ctx.title.npCommunicationId = 'NPWR22997_00'
+  ctx.journeyModel = requiem
   expect(todaysFocus(ctx)).toEqual({ phases: [] })
 })
 
@@ -151,6 +153,7 @@ test('an unobtainable guide suppresses the reviewed server recommendation', () =
   })
   ctx.game.np_communication_ids = ['NPWR22997_00']
   ctx.title.npCommunicationId = 'NPWR22997_00'
+  ctx.journeyModel = requiem
   expect(todaysFocus(ctx)).toEqual({ phases: [] })
 })
 
@@ -196,6 +199,7 @@ test('server focus follows the opened edition in a multi-edition catalog, includ
   })
   ctx.game.np_communication_ids = ['OTHER', 'NPWR22997_00', 'NPWR13822_00']
   ctx.title.npCommunicationId = 'NPWR22997_00'
+  ctx.journeyModel = requiem
   expect(todaysFocus(ctx).trophy?.name).toBe('Antiga protetora')
   ctx.title.npCommunicationId = 'OTHER'
   ctx.guide = {
@@ -206,6 +210,7 @@ test('server focus follows the opened edition in a multi-edition catalog, includ
     todaysFocus({ game: ctx.game, trophies: ctx.trophies, guide: ctx.guide }).trophy?.name,
   ).toBe('Mira perfeita')
   ctx.title.npCommunicationId = 'NPWR22997_00'
+  ctx.journeyModel = requiem
   ctx.trophies = ctx.trophies.slice(0, 3)
   expect(todaysFocus(ctx)).toEqual({ phases: [] })
 })

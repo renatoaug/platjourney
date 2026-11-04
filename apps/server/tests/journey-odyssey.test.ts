@@ -1,9 +1,9 @@
 import { expect, test } from 'bun:test'
 import { evaluateJourney, type JourneyTrophy } from '../../../shared/journey/model.ts'
-import { odyssey } from '../../../shared/journey/odyssey.ts'
 import { reviewedJourney } from '../../../shared/journey/registry.ts'
 import { todaysFocus } from '../src/focus.ts'
 import { makeContext, makeTrophy } from './fixtures.ts'
+import { odyssey } from './journey-fixtures.ts'
 
 const list = (earned: string[] = []): JourneyTrophy[] =>
   odyssey.objectives.map((o) => ({
@@ -33,10 +33,12 @@ test('Odyssey has 51 reviewed base objectives with valid references, not DLC pre
 })
 
 test('explicit edition wins and ambiguous catalog identities do not activate a model', () => {
-  expect(reviewedJourney({ np: 'NPWR13822_00' })).toBe(odyssey)
-  expect(reviewedJourney({ np: 'OTHER', np_communication_ids: ['NPWR13822_00'] })).toBeUndefined()
+  expect(reviewedJourney({ np: 'NPWR13822_00' }, odyssey)).toBe(odyssey)
   expect(
-    reviewedJourney({ np_communication_ids: ['NPWR13822_00', 'NPWR22997_00'] }),
+    reviewedJourney({ np: 'OTHER', np_communication_ids: ['NPWR13822_00'] }, odyssey),
+  ).toBeUndefined()
+  expect(
+    reviewedJourney({ np_communication_ids: ['NPWR13822_00', 'NPWR22997_00'] }, odyssey),
   ).toBeUndefined()
 })
 
@@ -113,6 +115,7 @@ test('server and UI share focus; missing or ambiguous lists withhold personalize
   const ctx = makeContext({ trophies: list(['episode-6']).map((t) => makeTrophy(t)) })
   ctx.game.np_communication_ids = ['NPWR13822_00']
   ctx.title.npCommunicationId = 'NPWR13822_00'
+  ctx.journeyModel = odyssey
   expect(todaysFocus(ctx).trophy?.name).toBe(plan(['episode-6']).next?.trophy.name)
   ctx.trophies.push({ ...ctx.trophies[0], id: 999 })
   expect(todaysFocus(ctx)).toEqual({ phases: [] })

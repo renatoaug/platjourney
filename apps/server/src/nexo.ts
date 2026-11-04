@@ -1,9 +1,11 @@
+import type { JourneyModel } from '../../../shared/journey/model.ts'
 import { AiError, ai } from './ai.ts'
 import { aiContext } from './ai-context.ts'
 import { tagged } from './costs.ts'
 import { focusAfter, storyTrophy, tidy } from './focus.ts'
 import type { Guide } from './guide.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
+import { withJourneyModel } from './journey-context.ts'
 import { markCheer, progressMark } from './marks.ts'
 import { aroundModel } from './plugins.ts'
 import type { TitleGroups, TitleProgress, TrophyStatus } from './psn.ts'
@@ -30,6 +32,7 @@ const messages = defineMessages({
 })
 
 export interface GameContext {
+  journeyModel?: JourneyModel
   game: Game
   title: TitleProgress
   trophies: TrophyStatus[]
@@ -97,6 +100,7 @@ export async function proactiveTip(
   /** Sent as written after Nexo's words: the stretch's collectibles (watcher.ts). */
   after?: string,
 ): Promise<string> {
+  ctx = await withJourneyModel(ctx)
   const said = await ask(user, 'tip', '/nexo/tip', {
     kind: 'start',
     context: aiContext(ctx, user),
@@ -121,6 +125,7 @@ export async function unlockReaction(
   // The target is the server's, the same the session notice named: Nexo does not pick another.
   // When it is only the next chapter's story trophy and the checklist of that chapter follows, the
   // checklist is the guidance: "finish chapter 5" says nothing the player does not know.
+  ctx = await withJourneyModel(ctx)
   const target = focusAfter(ctx, unlocked)
   const focus =
     after && storyTrophy(ctx.guide, target.trophy?.name)
@@ -185,6 +190,7 @@ export function withoutTitle(text: string, names: string[]): string {
 // Help for one trophy the player has not earned yet, asked from the trophy list.
 export function trophyHelp(user: User, ctx: GameContext, trophy: TrophyStatus): Promise<string> {
   return tagged({ user: user.id, action: 'chat' }, async () => {
+    ctx = await withJourneyModel(ctx)
     const text = await ask(user, 'chat', '/nexo/trophy-help', {
       context: aiContext(ctx, user),
       trophy,
@@ -205,6 +211,7 @@ export function trophyHelp(user: User, ctx: GameContext, trophy: TrophyStatus): 
 export function reply(user: User, userText: string, ctx?: GameContext): Promise<string> {
   // The guide lookup is part of the answer's cost.
   return tagged({ user: user.id, action: 'chat' }, async () => {
+    if (ctx) ctx = await withJourneyModel(ctx)
     let text: string
     try {
       text = await ask(

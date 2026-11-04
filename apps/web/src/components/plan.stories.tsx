@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { odyssey } from '../../../../shared/journey/odyssey'
 import { selectJourneySession } from '../../../../shared/journey/session'
-import { odysseyGame } from '../fixtures/odyssey'
+import { odyssey, odysseyGame } from '../fixtures/odyssey'
 import { Plan, type PlanProps, type SessionPlan } from './plan'
 
 // samplePlan is shared with the game screen's stories, not a story itself.

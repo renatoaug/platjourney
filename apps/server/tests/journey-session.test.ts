@@ -1,8 +1,7 @@
+import * as journeyModels from '../src/repository/journey-model.ts'
 import './env.ts'
-import { afterEach, expect, mock, spyOn, test } from 'bun:test'
+import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import type { JourneyModel } from '../../../shared/journey/model.ts'
-import { odyssey } from '../../../shared/journey/odyssey.ts'
-import { requiem } from '../../../shared/journey/requiem.ts'
 import { selectJourneySession } from '../../../shared/journey/session.ts'
 import * as aiModule from '../src/ai.ts'
 import { DemoReadOnly } from '../src/demo.ts'
@@ -16,6 +15,7 @@ import {
 } from '../src/planner.ts'
 import * as plans from '../src/repository/session-plan.ts'
 import { makeContext, makeTrophy, makeUser } from './fixtures.ts'
+import { odyssey, requiem } from './journey-fixtures.ts'
 
 const editions = new Map([
   [requiem, 'NPWR22997_00'],
@@ -23,6 +23,7 @@ const editions = new Map([
 ])
 function context(model: JourneyModel, earned: string[] = [], hidden: string[] = []) {
   const ctx = makeContext({
+    journeyModel: model,
     trophies: model.objectives.map((o) =>
       makeTrophy({
         id: o.trophyId,
@@ -228,3 +229,28 @@ for (const model of [requiem, odyssey])
         .every((x) => x.state === 'verify' || x.objective.kind === 'platinum'),
     ).toBe(true)
   })
+
+beforeEach(() => {
+  spyOn(journeyModels, 'getJourneyModel').mockImplementation(async (_game, edition) =>
+    [requiem, odyssey].find((m) => m.edition === edition),
+  )
+})
+
+test('publication changes refresh an existing context and block old pending steps without rewriting history', async () => {
+  const ctx = context(requiem)
+  const { save } = storage()
+  await planSession(user, ctx, 120)
+  const stored = structuredClone(save.mock.calls[0][1])
+  spyOn(journeyModels, 'getJourneyModel').mockResolvedValue({ ...requiem, version: 3 })
+  const view = await currentPlan(user, ctx)
+  expect(view?.steps.every((step) => step.blocked)).toBe(true)
+  expect(view?.nextIndex).toBe(-1)
+  expect(save).toHaveBeenCalledTimes(1)
+  expect(save.mock.calls[0][1]).toEqual(stored)
+  spyOn(journeyModels, 'getJourneyModel').mockResolvedValue(requiem)
+  const restored = await currentPlan(user, ctx)
+  expect(restored?.steps.some((step) => !step.blocked)).toBe(true)
+  spyOn(journeyModels, 'getJourneyModel').mockRejectedValue(new Error('Database unavailable'))
+  await expect(currentPlan(user, ctx)).rejects.toThrow('Database unavailable')
+  expect(save).toHaveBeenCalledTimes(1)
+})

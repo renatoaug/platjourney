@@ -1,3 +1,4 @@
+import type { JourneyModel } from '../../../../shared/journey/model'
 import type { Locale } from '../i18n/locale'
 
 /** Shapes of the /api payloads the screens share. Screen-specific payloads are typed next to their screen. */
@@ -158,6 +159,7 @@ interface JourneyFocus {
 }
 
 export interface CurrentGame {
+  journeyModel?: JourneyModel
   focus?: JourneyFocus | null
   game: Game
   name: string

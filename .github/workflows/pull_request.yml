@@ -49,7 +49,7 @@ jobs:
         run: bun run test:coverage
 
   push-migration:
-    name: Push migration on SurrealDB 3.0.5
+    name: Database integration on SurrealDB 3.0.5
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -69,6 +69,7 @@ jobs:
           done
           exit 1
       - run: bun scripts/check-push-migration.ts
+      - run: bun scripts/check-journey-storage.ts
       - name: Stop disposable database
         if: always()
         run: docker rm -f push-migration || true

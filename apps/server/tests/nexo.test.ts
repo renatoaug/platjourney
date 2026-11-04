@@ -1,3 +1,4 @@
+import * as journeyModels from '../src/repository/journey-model.ts'
 import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
@@ -171,4 +172,8 @@ test('a message moderation refuses gets a notice, nothing stored', async () => {
 test('any other failure of the service still fails the reply', async () => {
   ai.mockRejectedValue(new aiModule.AiError(500, 'down'))
   await expect(reply(user, 'oi', ctx)).rejects.toThrow('down')
+})
+
+beforeEach(() => {
+  spyOn(journeyModels, 'getJourneyModel').mockResolvedValue(undefined)
 })

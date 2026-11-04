@@ -1,6 +1,6 @@
 # Open-world journey pilot
 
-Assassin’s Creed Odyssey (`NPWR13822_00`) tests the shared journey against parallel objectives rather than a chapter route. `shared/journey/odyssey.ts` inventories 51 base trophies. Additional tales and expansion groups remain visible separately but never enter the base recommendation, ongoing goals or platinum dependencies. The stored guide is unchanged.
+Assassin’s Creed Odyssey (`NPWR13822_00`) tests the shared journey against parallel objectives rather than a chapter route. `db/journeys/npwr13822_00-v2.json` is the initial import artifact for 51 base trophies; runtime reads the active database publication through the API. Additional tales and expansion groups remain visible separately but never enter the base recommendation, ongoing goals or platinum dependencies. The stored guide is unchanged.
 
 ## Reviewed evidence
 

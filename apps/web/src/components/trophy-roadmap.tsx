@@ -30,7 +30,10 @@ import { JourneyLink } from './journey-link'
 import { nexoHref } from './tip'
 import './trophy-roadmap.css'
 
-type RoadmapGame = Pick<CurrentGame, 'game' | 'name' | 'np' | 'trophies' | 'guide' | 'focus'> & {
+type RoadmapGame = Pick<
+  CurrentGame,
+  'game' | 'name' | 'np' | 'trophies' | 'guide' | 'focus' | 'journeyModel'
+> & {
   /** Catalog chat keeps game:id; the PSN edition is a separate identity. */
   edition?: string
   journey?: ReturnType<typeof evaluateJourney<Trophy>>
@@ -1111,10 +1114,13 @@ export function TrophyRoadmap({
     [source, inspecting, revealed],
   )
   const game = useMemo(() => {
-    const model = reviewedJourney({
-      ...projected.game,
-      np: projected.edition ?? (projected.np.startsWith('game:') ? undefined : projected.np),
-    })
+    const model = reviewedJourney(
+      {
+        ...projected.game,
+        np: projected.edition ?? (projected.np.startsWith('game:') ? undefined : projected.np),
+      },
+      projected.journeyModel,
+    )
     return model ? { ...projected, journey: evaluateJourney(model, projected.trophies) } : projected
   }, [projected])
   const stages = useMemo(() => {

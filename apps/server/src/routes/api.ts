@@ -6,6 +6,7 @@ import { isDemo } from '../demo.ts'
 import { todaysFocus } from '../focus.ts'
 import { getCurrent } from '../game-context.ts'
 import { defineMessages, fromAcceptLanguage, Language, type Locale, userLocale } from '../i18n.ts'
+import { withJourneyModel } from '../journey-context.ts'
 import type { library } from '../library.ts'
 import { secureUrl } from '../psn.ts'
 import { pushEnabled } from '../push.ts'
@@ -89,8 +90,10 @@ export function heroArt(
 }
 
 export async function currentView(user: User, ctx = getCurrent(user)) {
+  if (ctx) ctx = await withJourneyModel(ctx)
   return (
     ctx && {
+      journeyModel: ctx.journeyModel,
       deepGuide: await deepGuideOf(user, ctx.game),
       game: (await withTints([ctx.game]))[0],
       name: ctx.title.name,

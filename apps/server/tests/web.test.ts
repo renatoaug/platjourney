@@ -1,3 +1,5 @@
+import * as journeyModels from '../src/repository/journey-model.ts'
+import { requiem } from './journey-fixtures.ts'
 import './env.ts'
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import * as fs from 'node:fs'
@@ -1684,6 +1686,9 @@ test('trophy visibility persists per authenticated owner and rejects stale accou
 })
 
 test('owned title focus uses the selected edition instead of another catalog release', async () => {
+  spyOn(journeyModels, 'getJourneyModel').mockImplementation(async (_game, edition) =>
+    edition === requiem.edition ? requiem : undefined,
+  )
   const found = makeGame({ np_communication_ids: ['NPWR1', 'NPWR22997_00'] })
   spyOn(games, 'getGame').mockResolvedValue(found)
   spyOn(lib, 'library').mockResolvedValue([
@@ -1698,4 +1703,31 @@ test('owned title focus uses the selected edition instead of another catalog rel
   expect(legacy.body.focus.trophy.name).toBe('Leitor')
   const incomplete = await send('GET', '/api/title?game=game:1&id=NPWR22997_00')
   expect(incomplete.body.focus).toEqual({ phases: [] })
+})
+
+beforeEach(() => {
+  spyOn(journeyModels, 'getJourneyModel').mockResolvedValue(undefined)
+})
+
+test('title API loads a generic published edition and preserves unowned preview state', async () => {
+  const model = { ...requiem, edition: 'NPWR55555_00', name: 'Another reviewed edition' }
+  const found = makeGame({ np_communication_ids: ['NPWR1', model.edition] })
+  spyOn(games, 'getGame').mockResolvedValue(found)
+  spyOn(lib, 'library').mockResolvedValue([])
+  spyOn(psn, 'catalogTrophies').mockResolvedValue({
+    np: model.edition,
+    platform: 'PS5',
+    trophies: [makeTrophy()],
+  })
+  const load = spyOn(journeyModels, 'getJourneyModel').mockResolvedValue(model)
+  const result = await send('GET', '/api/title?game=game:1')
+  expect(result.status).toBe(200)
+  expect(result.body.owned).toBe(false)
+  expect(result.body.journeyModel).toEqual(model)
+  expect(load).toHaveBeenCalledWith('game:1', model.edition)
+  expect(result.body.trophies[0].earned).toBe(false)
+  load.mockResolvedValue(undefined)
+  expect((await send('GET', '/api/title?game=game:1')).body.journeyModel).toBeUndefined()
+  load.mockRejectedValue(new Error('Journey model integrity check failed'))
+  expect((await send('GET', '/api/title?game=game:1')).status).toBe(500)
 })

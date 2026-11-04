@@ -1,3 +1,4 @@
+import * as journeyModels from '../src/repository/journey-model.ts'
 import './env.ts'
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import { config } from '../src/config.ts'
@@ -1026,3 +1027,7 @@ async function setChatFromCatalogStub(id = 'user:cc') {
   } as never
   return setChatFromCatalog({ id } as never, game)
 }
+
+beforeEach(() => {
+  spyOn(journeyModels, 'getJourneyModel').mockResolvedValue(undefined)
+})
