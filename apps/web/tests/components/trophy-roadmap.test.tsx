@@ -563,11 +563,16 @@ test('ongoing objectives stay present while browsing and never complete from a f
   expect(screen.queryByRole('complementary', { name: 'Ao longo da jornada' })).toBeNull()
 })
 
-test('start comparison uses the real list but never mutates account progress or counters', () => {
+test('catalog start preview preserves account data without an owned-game comparison toggle', () => {
   const items = [{ ...game.trophies[1], progressValue: 8, progressTarget: 10 }, game.trophies[0]]
-  const { container } = renderApp(<TrophyRoadmap game={{ ...game, trophies: items }} />)
-  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
-  fireEvent.click(screen.getByRole('button', { name: 'Ver desde o início' }))
+  const owned = renderApp(<TrophyRoadmap game={{ ...game, trophies: items }} />)
+  expect(owned.container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
+  expect(owned.container.querySelector('.roadmap-past')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Ver desde o início' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Marco anterior' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Próximo marco' })).toBeTruthy()
+  owned.unmount()
+  const { container } = renderApp(<TrophyRoadmap game={{ ...game, trophies: items }} preview />)
   expect(container.querySelector('.roadmap-preview-notice[role=status]')?.textContent).toContain(
     'PRÉVIA DO INÍCIO',
   )
@@ -577,9 +582,6 @@ test('start comparison uses the real list but never mutates account progress or 
   expect(container.querySelector('.roadmap-past')).toBeNull()
   expect(items[0].earned).toBe(true)
   expect(items[0].progressValue).toBe(8)
-  fireEvent.click(screen.getByRole('button', { name: 'Voltar ao meu progresso' }))
-  expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
-  expect(container.querySelector('.roadmap-past')).toBeTruthy()
 })
 
 test('movement starts on the next frame, follows the cubic road both ways and cancels on unmount', () => {

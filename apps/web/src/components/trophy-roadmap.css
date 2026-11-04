@@ -1158,8 +1158,12 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 12px 24px;
-    padding: 14px 0;
+    gap: 0 24px;
+    padding: 6px 0 0;
+  }
+
+  .roadmap-footer > .roadmap-basis {
+    flex-basis: 100%;
   }
 
   .roadmap-basis,
@@ -1172,6 +1176,12 @@
   .roadmap-basis summary {
     cursor: pointer;
     padding: 12px 0;
+  }
+
+  .roadmap-footer > .roadmap-basis > summary {
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 10px 0;
   }
 
   .roadmap-basis p {

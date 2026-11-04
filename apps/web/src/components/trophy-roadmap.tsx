@@ -110,8 +110,6 @@ const messages = defineMessages({
     duration: 'Acompanhamento durante a campanha',
     early: 'Orientação para o início',
     counterProgress: 'PSN: {value} / {target}',
-    previewStart: 'Ver desde o início',
-    previewBack: 'Voltar ao meu progresso',
     previewLabel: 'PRÉVIA DO INÍCIO',
     previewNote: 'Comparação sem progresso pessoal. Nenhuma conquista ou dado da conta é alterado.',
     catalogCount: '{total} troféus · sem progresso pessoal',
@@ -240,8 +238,6 @@ const messages = defineMessages({
     duration: 'Follow throughout the campaign',
     early: 'Guidance for the start',
     counterProgress: 'PSN: {value} / {target}',
-    previewStart: 'Preview from the start',
-    previewBack: 'Return to my progress',
     previewLabel: 'START PREVIEW',
     previewNote:
       'Comparison without personal progress. No achievements or account data are changed.',
@@ -1108,9 +1104,8 @@ export function TrophyRoadmap({
   preview?: boolean
 }) {
   const t = useMessages(messages)
-  const [fromStart, setFromStart] = useState(false)
   const { revealed, setRevealed, saving } = useGameSpoilers(source.game.id)
-  const inspecting = preview || fromStart
+  const inspecting = preview
   const projected = useMemo(
     () => roadmapView(source, inspecting, revealed),
     [source, inspecting, revealed],
@@ -1264,19 +1259,6 @@ export function TrophyRoadmap({
               <Icon name="nexo" />
               {t('talk')}
             </JourneyLink>
-            {!preview && (
-              <button
-                type="button"
-                className="roadmap-visibility"
-                aria-pressed={fromStart}
-                onClick={() => {
-                  setFromStart(!fromStart)
-                  setSelection(null)
-                }}
-              >
-                {t(fromStart ? 'previewBack' : 'previewStart')}
-              </button>
-            )}
             <RoadmapBasis game={game} />
           </footer>
         </>
