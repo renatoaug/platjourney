@@ -1013,7 +1013,7 @@ function RoadmapVisibility({
   return (
     <button
       type="button"
-      className="quiet"
+      className="roadmap-visibility"
       aria-pressed={revealed}
       disabled={saving}
       aria-busy={saving}
@@ -1176,12 +1176,17 @@ export function TrophyRoadmap({
           <span className="eyebrow">{t('map')}</span>
           <h2 id="roadmap-heading">{t('title')}</h2>
         </div>
-        <span className="roadmap-total">
-          <Icon name="trophy" />
-          {inspecting
-            ? t('catalogCount', { total: base.length })
-            : t('count', { earned: base.filter((x) => x.earned).length, total: base.length })}
-        </span>
+        <div className="roadmap-intro-actions">
+          <span className="roadmap-total">
+            <Icon name="trophy" />
+            {inspecting
+              ? t('catalogCount', { total: base.length })
+              : t('count', { earned: base.filter((x) => x.earned).length, total: base.length })}
+          </span>
+          {source.trophies.some((trophy) => trophy.hidden) && (
+            <RoadmapVisibility revealed={revealed} setRevealed={setRevealed} saving={saving} />
+          )}
+        </div>
       </header>
       {inspecting && (
         <p className="roadmap-preview-notice" role="status">
@@ -1259,31 +1264,19 @@ export function TrophyRoadmap({
               <Icon name="nexo" />
               {t('talk')}
             </JourneyLink>
-            <details className="roadmap-options">
-              <summary>{t('routeOptions')}</summary>
-              <div className="roadmap-preview-controls">
-                {source.trophies.some((trophy) => trophy.hidden) && (
-                  <RoadmapVisibility
-                    revealed={revealed}
-                    setRevealed={setRevealed}
-                    saving={saving}
-                  />
-                )}
-                {!preview && (
-                  <button
-                    type="button"
-                    className="quiet"
-                    aria-pressed={fromStart}
-                    onClick={() => {
-                      setFromStart(!fromStart)
-                      setSelection(null)
-                    }}
-                  >
-                    {t(fromStart ? 'previewBack' : 'previewStart')}
-                  </button>
-                )}
-              </div>
-            </details>
+            {!preview && (
+              <button
+                type="button"
+                className="roadmap-visibility"
+                aria-pressed={fromStart}
+                onClick={() => {
+                  setFromStart(!fromStart)
+                  setSelection(null)
+                }}
+              >
+                {t(fromStart ? 'previewBack' : 'previewStart')}
+              </button>
+            )}
             <RoadmapBasis game={game} />
           </footer>
         </>
@@ -1300,7 +1293,10 @@ export function TrophyRoadmapSkeleton() {
           <Sk w="110px" h={12} />
           <Sk w="200px" h={28} />
         </div>
-        <Sk w="150px" h={14} />
+        <div className="roadmap-intro-actions">
+          <Sk w="150px" h={14} />
+          <Sk w="120px" h={44} />
+        </div>
       </header>
       <div className="roadmap-expedition">
         <div className="roadmap-campaign roadmap-campaign-loading">
