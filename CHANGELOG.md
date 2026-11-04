@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.47.1](https://github.com/renatoaug/platjourney/compare/v0.47.0...v0.47.1) (2026-11-04)
+
+### Bug Fixes
+
+* **web:** stop repeating the phase goal on every journey trophy ([#134](https://github.com/renatoaug/platjourney/issues/134)) ([6d8558d](https://github.com/renatoaug/platjourney/commit/6d8558d033febd6bb46d4b15ff15ce181a97653c))
+
 ## [0.47.0](https://github.com/renatoaug/platjourney/compare/v0.46.0...v0.47.0) (2026-11-04)
 
 ### Features
