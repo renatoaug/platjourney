@@ -261,6 +261,7 @@ export type Target =
   | 'RoadmapNavigation'
   | 'RoadmapOngoing'
   | 'RoadmapParallel'
+  | 'RoadmapPhase'
   | 'RoadmapSignal'
   | 'RoadmapTips'
   | 'RoadmapVisibility'

@@ -13,6 +13,7 @@ const NAMES = [
   ['silver', 'Perito', 'Vença o duelo sem levar dano.'],
   ['bronze', 'Fim da Jornada', 'Termine a história.'],
   ['silver', 'Sem Atalho', 'Conclua uma tarefa que o guia só cita de passagem.'],
+  ['bronze', 'Só a Descrição', 'Faça algo que o guia não explica.'],
 ] as const
 
 const guide: GuideDetail = {
@@ -25,13 +26,13 @@ const guide: GuideDetail = {
     },
     {
       phase: 'Fase 2 — Reta final',
-      goal: 'Termine a história e feche os objetivos longos.',
+      goal: '1. Termine a história.\n2. Treine o bloqueio no modo arena. Isso adianta o troféu **Sem Atalho**.',
       trophies: ['Colecionador', 'Perito', 'Fim da Jornada'],
     },
     {
       phase: 'Fase 3 — Limpeza',
       goal: 'Volte pela seleção de capítulo para o que faltou.',
-      trophies: ['Colecionador', 'Sem Atalho'],
+      trophies: ['Colecionador', 'Sem Atalho', 'Só a Descrição'],
     },
   ],
   milestones: [

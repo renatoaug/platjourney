@@ -656,13 +656,35 @@ test('movement starts on the next frame, follows the cubic road both ways and ca
   }
 })
 
-test('a trophy shows the guide tips of its stretch and the goal of its phase', () => {
+test('a trophy shows its own tips, and its phase plan stays apart from them', () => {
   const { container } = renderApp(<TrophyRoadmap game={routeGame(['Primeiro Passo'])} />)
   expect(screen.getByRole('heading', { name: 'Mira Certeira', level: 3 })).toBeTruthy()
-  expect(container.querySelector('.roadmap-tips')?.textContent).toContain('Carregue cada disparo')
-  expect(container.querySelector('.roadmap-phase-goal')?.textContent).toContain(
-    'Avance pela história',
-  )
+  const advice = container.querySelector('.roadmap-advice')
+  expect(advice?.textContent).toContain('Carregue cada disparo')
+  expect(advice?.textContent).not.toContain('Avance pela história')
+  const phase = container.querySelector('.roadmap-phase')
+  expect(phase?.querySelector('summary')?.textContent).toContain('Fase 1 — História')
+  expect(phase?.textContent).toContain('Avance pela história')
+  expect(phase?.hasAttribute('open')).toBe(false)
+})
+
+test('a phase plan leaves out the step that names a trophy still hidden', () => {
+  const data = routeGame()
+  const trophies = data.trophies.map((t) => ({ ...t, hidden: t.name === 'Sem Atalho' }))
+  const { container } = renderApp(<TrophyRoadmap game={{ ...data, trophies }} />)
+  fireEvent.click(screen.getByRole('button', { name: /Fim da Jornada/ }))
+  expect(container.querySelector('.roadmap-phase')?.textContent).toContain('Termine a história')
+  expect(container.querySelector('.roadmap-phase')?.textContent).not.toContain('modo arena')
+})
+
+test('two trophies of a phase do not show the same text', () => {
+  const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
+  const advice = (name: RegExp) => {
+    fireEvent.click(screen.getByRole('button', { name }))
+    return container.querySelector('.roadmap-advice')?.textContent
+  }
+  expect(advice(/Sem Atalho/)).toContain('Treine o bloqueio no modo arena')
+  expect(advice(/Só a Descrição/)).not.toContain('Treine o bloqueio')
 })
 
 test('a tip that repeats the warning or the trick is not shown twice', () => {
@@ -685,16 +707,14 @@ test('a collection folds its checklist, keeps each step and stays visible along 
   expect(list?.textContent).toContain('Volte pela seleção de capítulo')
 })
 
-test('a trophy the guide only mentions gets its goal and Nexo, with no invented advice', () => {
+test('a trophy the guide does not explain gets its description and Nexo, with no invented advice', () => {
   const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
-  fireEvent.click(screen.getByRole('button', { name: /Sem Atalho/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Só a Descrição/ }))
+  expect(container.querySelector('.roadmap-objective')?.textContent).toContain('não explica')
   expect(container.querySelector('.roadmap-tips')).toBeNull()
   expect(container.querySelector('.roadmap-advice-label')).toBeNull()
-  expect(container.querySelector('.roadmap-phase-goal')?.textContent).toContain(
-    'Volte pela seleção',
-  )
   expect(container.querySelector('.roadmap-advice .roadmap-ask')?.getAttribute('href')).toContain(
-    'Sem+Atalho',
+    'trophy=',
   )
 })
 
@@ -725,7 +745,6 @@ test('hidden trophies keep guide tips and goals behind the account reveal prefer
   )
   expect(screen.getByRole('heading', { name: 'Troféu oculto', level: 3 })).toBeTruthy()
   expect(container.querySelector('.roadmap-tips')).toBeNull()
-  expect(container.querySelector('.roadmap-phase-goal')).toBeNull()
   expect(screen.queryByRole('button', { name: /Colecionador/ })).toBeNull()
 })
 
@@ -747,7 +766,7 @@ test('campaign is visible first, with origin and destination, while guidance fol
   expect(container.querySelector('.roadmap-explore')).toBeNull()
   const focus = container.querySelector('.roadmap-focus')
   if (!focus) throw new Error('guidance missing')
-  expect(focus.querySelector('.roadmap-advice > p')?.textContent?.length).toBeGreaterThan(20)
+  expect(focus.querySelector('.roadmap-objective')?.textContent?.length).toBeGreaterThan(10)
   expect(container.querySelector('.roadmap-map-tools')).toBeNull()
   const initial = focus.querySelector('h3')?.textContent
   const order = [...container.querySelectorAll('.roadmap-route li')].map((x) =>
@@ -909,10 +928,11 @@ test('a valid recommendation stays marked while inspecting another milestone', (
 
 test('the journey says it is in beta, also while it has no trophies to show', () => {
   const { container, unmount } = renderApp(<TrophyRoadmap game={routeGame()} />)
-  expect(container.querySelector('.roadmap-preview-notice')?.textContent).toContain('BETA')
+  expect(container.querySelector('.roadmap-preview-notice')?.textContent).toContain('BETA:')
+  expect(container.querySelector('.roadmap-preview-notice strong .icon')).toBeTruthy()
   unmount()
   const empty = renderApp(<TrophyRoadmap game={{ ...routeGame(), trophies: [] }} />)
   expect(empty.container.querySelector('.roadmap-preview-notice')?.textContent).toContain(
-    'ainda está em testes',
+    'avaliações de qualidade',
   )
 })

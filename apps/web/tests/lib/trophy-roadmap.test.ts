@@ -1,9 +1,10 @@
-import { expect, test } from 'bun:test'
+import { describe, expect, test } from 'bun:test'
 import { current } from '../../src/fixtures'
 import {
   ongoingObjectives,
   personalRoadmap,
   trophyAdvice,
+  trophyMentions,
   trophyRoadmap,
 } from '../../src/lib/trophy-roadmap'
 import type { GuideDetail, Trophy } from '../../src/lib/types'
@@ -154,4 +155,71 @@ test('personal route separates confirmed dates, undated history, pending priorit
   expect(source).toEqual(before)
   const preview = source.map((t) => ({ ...t, earned: false, earnedAt: undefined }))
   expect(personalRoadmap(preview)).toEqual(preview)
+})
+
+describe('trophyMentions', () => {
+  const trophy = (name: string, extra: Partial<Trophy> = {}) =>
+    ({
+      id: name.length,
+      groupId: 'default',
+      name,
+      earned: false,
+      type: 'bronze',
+      ...extra,
+    }) as Trophy
+  const guideWith = (goal: string, more: Partial<GuideDetail> = {}) =>
+    ({ roadmap: [{ phase: 'Fase 1', goal, trophies: [] }], earlyTips: [], ...more }) as GuideDetail
+
+  test('takes the numbered step that names the trophy, without its number', () => {
+    const a = trophy('Vantagens do trabalho')
+    const goal = '1. Termine a história.\n2. Alterne armas. Isso adianta **Vantagens do trabalho**.'
+    expect(trophyMentions(a, [a], guideWith(goal))).toEqual([
+      'Alterne armas. Isso adianta **Vantagens do trabalho**.',
+    ])
+  })
+
+  test('keeps the sentence a pointing sentence leans on', () => {
+    const a = trophy('Rato de biblioteca')
+    const goal = 'Leia todos os diários. Isso libera **Rato de biblioteca**. Depois volte ao hotel.'
+    expect(trophyMentions(a, [a], guideWith(goal))).toEqual([
+      'Leia todos os diários. Isso libera **Rato de biblioteca**.',
+    ])
+  })
+
+  test('a one-word name counts only in bold, a longer one also in plain text', () => {
+    const one = trophy('Piedade')
+    const two = trophy('Rato de biblioteca')
+    const goal = 'Tenha piedade dos guardas.\nProcure o rato de biblioteca no porão.'
+    expect(trophyMentions(one, [one, two], guideWith(goal))).toEqual([])
+    expect(trophyMentions(two, [one, two], guideWith(goal))).toEqual([
+      'Procure o rato de biblioteca no porão.',
+    ])
+  })
+
+  test('a step naming a trophy still hidden stays out until it is revealed', () => {
+    const a = trophy('Aberto')
+    const goal = 'Isso libera **Aberto** e **Segredo**.'
+    expect(trophyMentions(a, [a, trophy('Segredo', { hidden: true })], guideWith(goal))).toEqual([])
+    expect(trophyMentions(a, [a, trophy('Segredo')], guideWith(goal))).toEqual([goal])
+    expect(
+      trophyMentions(a, [a, trophy('Segredo', { hidden: true, earned: true })], guideWith(goal)),
+    ).toEqual([goal])
+  })
+
+  test('reads early tips, collectibles and general route tips, at most three, once each', () => {
+    const a = trophy('Aberto')
+    const step = (n: number) => `Passo ${n} de **Aberto**.`
+    const guide = guideWith(step(1), {
+      earlyTips: [step(2), step(1)],
+      collectibles: step(3),
+      milestones: [{ after: null, tips: [{ kind: 'item', trophy: null, text: step(4) }] }],
+    })
+    expect(trophyMentions(a, [a], guide)).toEqual([step(1), step(2), step(3)])
+  })
+
+  test('a name two trophies share is not attributed to either', () => {
+    const a = trophy('Igual')
+    const b = { ...trophy('Igual'), id: 99 }
+    expect(trophyMentions(a, [a, b], guideWith('Isso libera **Igual**.'))).toEqual([])
+  })
 })

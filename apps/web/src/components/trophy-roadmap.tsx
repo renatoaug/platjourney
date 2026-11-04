@@ -13,7 +13,9 @@ import { roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
 import {
   ongoingObjectives,
   personalRoadmap,
+  phasePlan,
   trophyAdvice,
+  trophyMentions,
   trophyRoadmap,
 } from '../lib/trophy-roadmap'
 import type { CurrentGame, RouteTip, Trophy } from '../lib/types'
@@ -42,10 +44,10 @@ const messages = defineMessages({
     undatedNote:
       'Conquistas sem data aparecem agrupadas após as datadas, sem ordem cronológica conhecida. Datas iguais não informam a ordem entre si.',
     parallelTrail: 'Enquanto avança',
-    phaseGoal: 'Neste trecho',
-    betaLabel: 'BETA',
+    phasePlan: 'Plano da fase',
+    betaLabel: 'BETA:',
     betaNote:
-      'A jornada ainda está em testes. A ordem e as dicas vêm do guia e podem não ser as ideais para o seu jogo.',
+      'A jornada ainda está em testes. A ordem e as dicas ainda estão passando por avaliações de qualidade.',
     tipsCount: { one: 'Ver {count} ponto do roteiro', other: 'Ver os {count} pontos do roteiro' },
     extraRoute: 'Conteúdo adicional · {count}',
     baseRoute: 'Voltar ao jogo base',
@@ -120,10 +122,10 @@ const messages = defineMessages({
     undatedNote:
       'Undated achievements are grouped after dated ones, without a known chronological order. Equal timestamps do not establish order between them.',
     parallelTrail: 'Along the way',
-    phaseGoal: 'In this stretch',
-    betaLabel: 'BETA',
+    phasePlan: 'Phase plan',
+    betaLabel: 'BETA:',
     betaNote:
-      'The journey is still being tested. Its order and tips come from the guide and may not be ideal for your game.',
+      'The journey is still being tested. The order and tips are still going through quality reviews.',
     tipsCount: { one: 'See {count} route point', other: 'See all {count} route points' },
     extraRoute: 'Additional content · {count}',
     baseRoute: 'Back to the base game',
@@ -199,7 +201,11 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
     (tip) =>
       !(tip.kind === 'missable' && advice.warning) && !(advice.trick && advice.tips.length === 1),
   )
-  const hasAdvice = advice.trick || advice.warning || advice.online || advice.bug || !!tips.length
+  // Steps that repeat a tip or a trick add nothing; the guide's other steps often name the trophy.
+  const said = [advice.trick, ...tips.map((tip) => tip.text)].join(' ')
+  const steps = trophyMentions(trophy, game.trophies, game.guide).filter((s) => !said.includes(s))
+  const hasAdvice =
+    advice.trick || advice.warning || advice.online || advice.bug || !!tips.length || !!steps.length
   return (
     <div className="roadmap-advice">
       {hasAdvice && (
@@ -214,6 +220,11 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
         </p>
       )}
       <RoadmapTips tips={tips} />
+      {steps.map((step) => (
+        <p key={step}>
+          <GuideText text={step} />
+        </p>
+      ))}
       {advice.warning && (
         <div className="roadmap-caution">
           <b>
@@ -238,12 +249,6 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
         <p>
           <b>{t('bug')}: </b>
           <GuideText text={[advice.bug.issue, advice.bug.workaround].filter(Boolean).join('\n')} />
-        </p>
-      )}
-      {advice.phase?.goal && (
-        <p className="roadmap-phase-goal">
-          <b>{t('phaseGoal')}: </b>
-          <GuideText text={advice.phase.goal} />
         </p>
       )}
       <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
@@ -289,6 +294,22 @@ function RoadmapTips({ tips }: { tips: RouteTip[] }) {
     <details className="roadmap-advice-details">
       <summary>{t('tipsCount', { count: tips.length })}</summary>
       {list}
+    </details>
+  )
+}
+
+/** What the whole phase is about, apart from any trophy; it changes only with the phase. */
+function RoadmapPhase({ game, trophy }: { game: RoadmapGame; trophy: Trophy }) {
+  const t = useMessages(messages)
+  const phase = trophyAdvice(trophy, game.guide).phase
+  const plan = phase ? phasePlan(phase.goal, game.trophies) : ''
+  if (!phase || !plan) return null
+  return (
+    <details className="roadmap-phase" key={phase.phase}>
+      <summary>
+        <span>{t('phasePlan')}</span> {phase.phase}
+      </summary>
+      <GuideText text={plan} />
     </details>
   )
 }
@@ -1014,7 +1035,10 @@ export function TrophyRoadmap({
         </div>
       </header>
       <p className="roadmap-preview-notice">
-        <strong>{t('betaLabel')}</strong> {t('betaNote')}
+        <strong>
+          <Icon name="warning" /> {t('betaLabel')}
+        </strong>{' '}
+        {t('betaNote')}
       </p>
       {inspecting && (
         <p className="roadmap-preview-notice" role="status">
@@ -1034,6 +1058,7 @@ export function TrophyRoadmap({
               choose={choose}
             />
             <RoadmapFocus game={game} selected={selected} target={suggested} />
+            <RoadmapPhase game={game} trophy={selected} />
             <RoadmapParallel game={game} choose={inspect} />
             {!!past.length && (
               <details className="roadmap-past">

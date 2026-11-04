@@ -16,4 +16,4 @@ Derive the journey at read time from the guide and the PSN list, with no table o
 - A graph database: the data has almost no hard dependencies; only the platinum depends on other trophies.
 
 ## Consequences
-Every game with a guide has the journey on release, and a better guide makes a better journey. Trophies are matched by name, as the rest of the guide already is, so a name shared by two trophies stays out of the phases. Chapter windows and recovery are only as good as the guide's milestones, and games with few tips show the phase goal and the link to Nexo instead.
+Every game with a guide has the journey on release, and a better guide makes a better journey. Trophies are matched by name, as the rest of the guide already is, so a name shared by two trophies stays out of the phases. Chapter windows and recovery are only as good as the guide's milestones, and a trophy the guide does not explain shows its description and the link to Nexo instead.
