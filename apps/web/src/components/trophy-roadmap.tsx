@@ -728,7 +728,7 @@ function RoadmapForward({
         track.scrollTo?.({ left: scroll, behavior: 'auto' })
         track.dataset.positioned = 'true'
       }
-      const destination = roadStop(Math.max(0, at), width, pending.length)
+      const destination = roadStop(Math.max(0, at), columns)
       const targetScroll = page * columns * width
       if (position.current === null || resizing || motion.matches) {
         paint(destination, targetScroll)

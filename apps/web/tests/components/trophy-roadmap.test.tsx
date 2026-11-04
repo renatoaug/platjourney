@@ -582,8 +582,8 @@ test('movement starts on the next frame, follows the cubic road both ways and ca
     Object.defineProperty(track.querySelector('li'), 'offsetWidth', { value: 100 })
     track.scrollTo = mock(() => {})
     resize()
-    const start = roadStop(0, 100, 4)
-    const end = roadStop(1, 100, 4)
+    const start = roadStop(0, 3)
+    const end = roadStop(1, 3)
     const cursor = () => ({
       x: Number.parseFloat(track.style.getPropertyValue('--roadmap-cursor-x')) + 6,
       y: Number.parseFloat(track.style.getPropertyValue('--roadmap-cursor-y')) + 6,
@@ -597,7 +597,7 @@ test('movement starts on the next frame, follows the cubic road both ways and ca
     expect(cursor()).toEqual(roadPoint((start + end) / 2, 100))
     frame(240)
     expect(cursor()).toEqual(roadPoint(end, 100))
-    expect(track.querySelector('path')?.getAttribute('d')).toContain('148 56')
+    expect(track.querySelector('path')?.getAttribute('d')).toContain('102 56')
     fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
     frame(120)
     expect(cursor()).toEqual(roadPoint((start + end) / 2, 100))
