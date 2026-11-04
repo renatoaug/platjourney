@@ -11,6 +11,8 @@ export interface Me {
   avatarUrl?: string
   telegramLinked: boolean
   includeDlcProgress: boolean
+  /** Catalog game ids whose hidden trophies this account chose to reveal. */
+  revealedTrophyGames?: string[]
   /** The PS Plus tier the player says they have. */
   psPlus?: 'none' | 'essential' | 'extra' | 'deluxe'
   /** Nexo writes this player's automatic notices; off, they are plain and free. */
@@ -105,6 +107,17 @@ interface KeyTrophy {
 }
 
 /** A platinum guide as the API sends it. */
+/** One point of the guide's route; a checklist item has its steps, an older tip only its text. */
+export interface RouteTip {
+  kind: string
+  text: string
+  trophy: string | null
+  name?: string | null
+  where?: string | null
+  steps?: string[] | null
+  ifMissed?: string | null
+}
+
 export interface GuideDetail {
   version?: number
   overview: string
@@ -128,6 +141,7 @@ export interface GuideDetail {
     status?: string | null
   }[]
   roadmap: { phase: string; goal: string; trophies: string[] }[]
+  milestones?: { after: string | null; tips: RouteTip[] }[]
   glossary: { term: string; meaning: string }[]
   collectibles?: string | null
   pointOfNoReturn?: string | null

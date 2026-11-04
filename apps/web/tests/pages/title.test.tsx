@@ -102,7 +102,7 @@ test('a game the player does not own: its list by tier, its facts and saving it'
     'De raspão',
   )
   // Nexo can talk about it before the player buys it.
-  expect(screen.getByRole('link', { name: /Perguntar ao Nexo sobre/ }).getAttribute('href')).toBe(
+  expect(screen.getByRole('link', { name: 'Perguntar ao Nexo' }).getAttribute('href')).toBe(
     `/nexo?game=${encodeURIComponent(recommendedData.game.id)}&name=${encodeURIComponent(recommendedData.name).replace(/%20/g, '+')}`,
   )
   fireEvent.click(screen.getByRole('button', { name: /Salvar nos interesses/ }))
@@ -268,4 +268,15 @@ test('the tab shows the game’s name while the page is open', async () => {
   await waitFor(() => expect(document.title).toBe('Days Gone · PlatJourney'))
   unmount()
   expect(document.title).toBe('Jogo')
+})
+
+test('a catalog game offers a roadmap preview without asserting ownership or personal progress', async () => {
+  open('/title/game/game%3A19561', recommendedData)
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
+  expect(document.querySelector('.roadmap-preview-notice[role=status]')?.textContent).toContain(
+    'PRÉVIA DO INÍCIO',
+  )
+  expect(document.querySelector('.roadmap-total')?.textContent).toContain('sem progresso pessoal')
+  expect(screen.queryByRole('button', { name: 'Voltar ao meu progresso' })).toBeNull()
+  expect(document.querySelector('.roadmap-past')).toBeNull()
 })

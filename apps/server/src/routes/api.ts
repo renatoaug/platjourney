@@ -50,6 +50,7 @@ export const publicUser = (u: User) => ({
   avatarUrl: secureUrl(u.avatar_url),
   telegramLinked: !!u.telegram_chat_id,
   includeDlcProgress: u.include_dlc_progress === true,
+  revealedTrophyGames: u.revealed_trophy_games ?? [],
   psPlus: u.ps_plus ?? 'none',
   aiNotices: u.ai_notices !== false,
   notifyTelegram: u.notify_telegram !== false,

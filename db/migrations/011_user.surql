@@ -17,6 +17,8 @@ DEFINE FIELD IF NOT EXISTS taste_profile ON user TYPE option<object> FLEXIBLE;
 DEFINE FIELD IF NOT EXISTS taste_prefs ON user TYPE option<object> FLEXIBLE;
 -- Show progress with DLC trophies counted in; off means the base game only (what the platinum needs).
 DEFINE FIELD IF NOT EXISTS include_dlc_progress ON user TYPE bool DEFAULT false;
+-- Per-game display preference; absent means hidden. Existing accounts are not rewritten.
+DEFINE FIELD IF NOT EXISTS revealed_trophy_games ON user TYPE option<array<string>>;
 -- The player's PS Plus tier, as they say (PSN does not tell): deals count the games its catalog includes.
 DEFINE FIELD IF NOT EXISTS ps_plus ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['none', 'essential', 'extra', 'deluxe'];
 -- Nexo writes this player's automatic notices (when the instance allows it); off, they are plain

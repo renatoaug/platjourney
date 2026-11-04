@@ -36,12 +36,14 @@ for (const includeDlcProgress of [false, true]) {
 
 test('journey prioritizes progress and server focus; plan and guide remain available', () => {
   mockApi({})
-  renderApp(<GameScreen current={game} plan={<p>plano</p>} />)
+  renderApp(<GameScreen current={game} plan={<p>plano</p>} />, {
+    value: { me: { ...SAMPLE_ME, revealedTrophyGames: [game.game.id] } },
+  })
   expect(screen.getByRole('heading', { level: 1, name: 'DAYS GONE' })).toBeTruthy()
   expect(screen.getByRole('progressbar', { name: 'Progresso do jogo' })).toBeTruthy()
-  expect(screen.getByRole('link', { name: 'Me ajuda com isso' }).getAttribute('href')).toContain(
-    'trophy=',
-  )
+  expect(
+    document.querySelector('.roadmap-step.is-suggested .roadmap-ask')?.getAttribute('href'),
+  ).toContain('trophy=')
   expect(document.getElementById('journey-session')?.hasAttribute('open')).toBe(false)
   fireEvent.click(screen.getByText('Planejar minha sessão'))
   expect(screen.getByText('plano')).toBeTruthy()

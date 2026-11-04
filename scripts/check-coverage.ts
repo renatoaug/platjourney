@@ -15,7 +15,7 @@ interface Suite {
   name: string
   tests: string
   preload?: string
-  sources: string
+  sources: string[]
   // Files with nothing to test on their own: entry points that only start the app, and stories.
   skip: RegExp
   // Test files per Bun process. One process for the whole web suite grows until Bun stalls for
@@ -29,14 +29,14 @@ const SUITES: Suite[] = [
     tests: 'apps/server/tests',
     // Every server test file runs with tests/env.ts first, so none can reach a real database.
     preload: './apps/server/tests/env.ts',
-    sources: 'apps/server/src',
+    sources: ['apps/server/src', 'shared'],
     skip: /\/index\.ts$/,
   },
   {
     name: 'web',
     tests: 'apps/web/tests',
     preload: './apps/web/tests/setup.ts',
-    sources: 'apps/web/src',
+    sources: ['apps/web/src'],
     skip: /(\.stories\.tsx$|\/stories\/|\/main\.tsx$|\.d\.ts$|\/fixtures\.ts$)/,
     chunk: 12,
   },
@@ -125,7 +125,8 @@ try {
       }
     }
 
-    const sources = walk(join(ROOT, suite.sources))
+    const sources = suite.sources
+      .flatMap((source) => walk(join(ROOT, source)))
       .map((f) => relative(ROOT, f))
       .filter((f) => /\.(ts|tsx)$/.test(f) && !suite.skip.test(`/${f}`))
       .filter((f) => hits.has(f) || !typesOnly(join(ROOT, f)))

@@ -9,6 +9,13 @@ import { type TitleDetail, TitleScreen } from './title'
 const meta: Meta = {
   title: 'Pages/Title',
   parameters: { layout: 'fullscreen' },
+  decorators: [
+    (Story) => (
+      <main className="content">
+        <Story />
+      </main>
+    ),
+  ],
   excludeStories: /Data$/,
 }
 export default meta
@@ -39,6 +46,9 @@ export const recommendedData: TitleDetail = {
   owned: false,
   np: undefined,
   hoursPlayed: null,
+  progress: undefined,
+  earned: undefined,
+  total: undefined,
   trophies: trophies.map(({ rarity, earnedRate, earnedAt, ...t }) => ({ ...t, earned: false })),
 }
 
@@ -119,6 +129,34 @@ export const CompactTrophyCounts: Story = {
             earned: false,
             earnedRate: 0,
           })),
+        },
+      }}
+    />
+  ),
+}
+
+export const SubscriptionActions: Story = {
+  render: () => (
+    <TitleScreen
+      owned={false}
+      load={{
+        kind: 'ready',
+        d: {
+          ...recommendedData,
+          store: {
+            url: 'https://store.playstation.com/',
+            deal: {
+              price: 0,
+              base: 20000,
+              discount: 0,
+              endsAt: null,
+              plus: true,
+              plusTier: 'extra',
+              mine: true,
+              currency: 'BRL',
+              storeUrl: 'https://store.playstation.com/',
+            },
+          },
         },
       }}
     />

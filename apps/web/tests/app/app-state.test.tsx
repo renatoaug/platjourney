@@ -128,7 +128,7 @@ test('setData does nothing before the first state, and setMe changes the player'
   expect(out('who')).toBe('outro')
 })
 
-test('MockAppState serves the sample data, or what the story passes', () => {
+test('MockAppState serves sample data and allows account preferences to update', () => {
   render(
     <MockAppState>
       <Probe />
@@ -139,7 +139,7 @@ test('MockAppState serves the sample data, or what the story passes', () => {
   fireEvent.click(screen.getByRole('button', { name: 'recarregar' }))
   fireEvent.click(screen.getByRole('button', { name: 'trocar' }))
   fireEvent.click(screen.getByRole('button', { name: 'ler' }))
-  expect(out('who')).toBe('jogador')
+  expect(out('who')).toBe('outro')
 })
 
 test('MockAppState with no data stays loading', () => {

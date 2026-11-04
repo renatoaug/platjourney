@@ -56,3 +56,4 @@ What this makes easier, what it makes harder, what to watch. (bullets)
 | [ADR-011](ADR-011-mcp-server.md) | Assistants use the player's PlatJourney through an MCP server that never calls the model | Accepted |
 
 | [ADR-012](ADR-012-ios-native-push.md) | Session-bound APNs alongside Web Push | Accepted |
+| [ADR-013](ADR-013-journey-from-guide.md) | The trophy journey is derived from the guide | Accepted |

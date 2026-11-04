@@ -143,6 +143,7 @@ export function MockAppState({
   value?: Partial<AppState>
   children: ReactNode
 }) {
+  const [me, setMe] = useState(value.me ?? SAMPLE_ME)
   const [data, setDataState] = useState<AppStateData | null>(
     value.data === undefined ? SAMPLE_DATA : value.data,
   )
@@ -156,8 +157,8 @@ export function MockAppState({
   return (
     <Ctx.Provider
       value={{
-        me: SAMPLE_ME,
-        setMe: () => {},
+        me,
+        setMe,
         loadState: noop,
         loading: false,
         sync: 'connected',

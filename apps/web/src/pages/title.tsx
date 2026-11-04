@@ -24,6 +24,7 @@ import {
 import { NextTrophy } from '../components/next-trophy'
 import { SimilarGamesSection, similarGames } from '../components/similar-games'
 import { TrophyList } from '../components/trophy-list'
+import { TrophyRoadmap } from '../components/trophy-roadmap'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { fmtHours } from '../lib/format'
@@ -57,7 +58,7 @@ const messages = defineMessages({
     trophies: 'Troféus',
     inLibrary: 'NA SUA BIBLIOTECA',
     talkToNexo: 'Conversar com o Nexo',
-    askNexo: 'Perguntar ao Nexo sobre',
+    askNexo: 'Perguntar ao Nexo',
     trophiesPendingTitle: 'Buscando a lista de troféus',
     trophiesPending:
       'A lista deste jogo ainda está chegando da PSN. Volte em breve para ver cada troféu.',
@@ -85,7 +86,7 @@ const messages = defineMessages({
     trophies: 'Trophies',
     inLibrary: 'IN YOUR LIBRARY',
     talkToNexo: 'Talk to Nexo',
-    askNexo: 'Ask Nexo about it',
+    askNexo: 'Ask Nexo',
     trophiesPendingTitle: 'Fetching the trophy list',
     trophiesPending:
       "This game's list is still on its way from PSN. Come back soon to see each trophy.",
@@ -225,8 +226,8 @@ function TitleSkeleton({ owned = true }: { owned?: boolean }) {
             <>
               <Sk w="100%" h={44} />
               <div className="title-secondary-actions">
-                <Sk w="100%" h={60} />
-                <Sk w="100%" h={60} />
+                <Sk w="100%" h={48} />
+                <Sk w="100%" h={48} />
               </div>
             </>
           }
@@ -282,6 +283,7 @@ function HeroBottom({ d }: { d: TitleDetail }) {
 }
 
 const TITLE_SECTIONS: [GameSection, string][] = [
+  ['route', 'journey-roadmap'],
   ['guide', 'title-guide'],
   ['trophies', 'title-trophies'],
   ['similar', 'similar-games'],
@@ -370,6 +372,19 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
         </div>
       </div>
       <GameNav sections={TITLE_SECTIONS} hero="title-hero" name={d.name} progress={d.progress} />
+      {!owned && !!d.trophies?.length && (
+        <TrophyRoadmap
+          key={d.game.id}
+          preview
+          game={{
+            game: d.game,
+            name: d.name,
+            np: d.game.id,
+            trophies: d.trophies,
+            guide: d.guide,
+          }}
+        />
+      )}
       {/* Every game gets the same two columns as the current game: the guide on the left,
           the trophies beside it. A game whose PSN list is not known yet says so where the list goes. */}
       <GameColumns
