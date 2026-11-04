@@ -44,8 +44,7 @@ const messages = defineMessages({
     parallelTrail: 'Enquanto avança',
     phaseGoal: 'Neste trecho',
     betaLabel: 'BETA',
-    betaNote:
-      'A jornada ainda está em testes. A ordem e as dicas vêm do guia e podem não ser as ideais para o seu jogo.',
+    betaNote: 'A ordem e as dicas ainda estão passando por avaliações de qualidade.',
     tipsCount: { one: 'Ver {count} ponto do roteiro', other: 'Ver os {count} pontos do roteiro' },
     extraRoute: 'Conteúdo adicional · {count}',
     baseRoute: 'Voltar ao jogo base',
@@ -122,8 +121,7 @@ const messages = defineMessages({
     parallelTrail: 'Along the way',
     phaseGoal: 'In this stretch',
     betaLabel: 'BETA',
-    betaNote:
-      'The journey is still being tested. Its order and tips come from the guide and may not be ideal for your game.',
+    betaNote: 'The order and tips are still going through quality reviews.',
     tipsCount: { one: 'See {count} route point', other: 'See all {count} route points' },
     extraRoute: 'Additional content · {count}',
     baseRoute: 'Back to the base game',

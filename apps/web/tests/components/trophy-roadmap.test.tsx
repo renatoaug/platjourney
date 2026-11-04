@@ -913,6 +913,6 @@ test('the journey says it is in beta, also while it has no trophies to show', ()
   unmount()
   const empty = renderApp(<TrophyRoadmap game={{ ...routeGame(), trophies: [] }} />)
   expect(empty.container.querySelector('.roadmap-preview-notice')?.textContent).toContain(
-    'ainda está em testes',
+    'avaliações de qualidade',
   )
 })
