@@ -1030,3 +1030,56 @@ test('a trick of several lines reads as numbered steps, and the player can say w
   )
   expect(screen.queryByRole('group', { name: 'Essa dica ajudou?' })).toBeNull()
 })
+
+test('a dislike counts at once, then asks why, and Other opens a short note', () => {
+  const game = routeGame()
+  const first = game.trophies[0]
+  const guide = {
+    ...(game.guide as GuideDetail),
+    tricks: [{ trophy: first.name, trick: 'Vá até a ponte.\nSegure o botão.' }],
+  }
+  const pending = { ...first, earned: false, earnedAt: undefined }
+  const { container } = renderApp(
+    <TrophyRoadmap game={{ ...game, guide, trophies: [pending, ...game.trophies.slice(1)] }} />,
+  )
+  fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
+  const rate = () => container.querySelector('.roadmap-rate') as HTMLElement
+  fireEvent.click(within(rate()).getByRole('button', { name: 'Não' }))
+  const why = within(rate()).getByRole('group', { name: 'Valeu! O que faltou?' })
+  expect(
+    within(why)
+      .getAllByRole('button')
+      .map((b) => b.dataset.reason),
+  ).toEqual(['detail', 'wrong', 'unclear', 'other'])
+  fireEvent.click(within(why).getByRole('button', { name: 'Outro' }))
+  const field = within(rate()).getByRole('textbox', { name: 'Conte o que faltou' })
+  const send = within(rate()).getByRole('button', { name: 'Enviar' }) as HTMLButtonElement
+  expect(send.disabled).toBe(true)
+  fireEvent.change(field, { target: { value: 'Não diz em qual capítulo' } })
+  expect(send.disabled).toBe(false)
+  fireEvent.click(send)
+  expect(rate().querySelector('[role="status"]')?.textContent).toBe(
+    'Valeu! Isso ajuda a melhorar as dicas.',
+  )
+})
+
+test('a reason other than Other closes the rating with thanks', () => {
+  const game = routeGame()
+  const first = game.trophies[0]
+  const guide = {
+    ...(game.guide as GuideDetail),
+    tricks: [{ trophy: first.name, trick: 'Vá até a ponte.\nSegure o botão.' }],
+  }
+  const pending = { ...first, earned: false, earnedAt: undefined }
+  const { container } = renderApp(
+    <TrophyRoadmap game={{ ...game, guide, trophies: [pending, ...game.trophies.slice(1)] }} />,
+  )
+  fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
+  const rate = () => container.querySelector('.roadmap-rate') as HTMLElement
+  fireEvent.click(within(rate()).getByRole('button', { name: 'Não' }))
+  fireEvent.click(within(rate()).getByRole('button', { name: 'Está errada' }))
+  expect(rate().querySelector('[role="status"]')?.textContent).toBe(
+    'Valeu! Isso ajuda a melhorar as dicas.',
+  )
+  expect(within(rate()).queryByRole('textbox')).toBeNull()
+})

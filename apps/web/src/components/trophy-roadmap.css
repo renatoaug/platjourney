@@ -1453,7 +1453,7 @@
     border: 0;
   }
 
-  .roadmap-rate .chip {
+  .roadmap-rate .chip[data-rate] {
     width: 36px;
     height: 32px;
     padding: 0;
@@ -1479,6 +1479,33 @@
 
   .roadmap-rate p {
     margin: 0;
+  }
+
+  .roadmap-rate .roadmap-rate-why {
+    flex-wrap: wrap;
+  }
+
+  .roadmap-rate-why .chip,
+  .roadmap-rate-note .chip {
+    height: 32px;
+    padding: 0 12px;
+    align-items: center;
+    border-radius: var(--radius-control);
+  }
+
+  .roadmap-rate-note {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: min(100%, 420px);
+  }
+
+  .roadmap-rate-note input {
+    flex: 1 1 200px;
+    min-width: 0;
+    height: 32px;
+    padding: 0 10px;
+    font-size: var(--text-base);
   }
 
   .roadmap-tips {
