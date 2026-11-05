@@ -190,16 +190,20 @@ const anchor = (trophy: Trophy) => `roadmap-${encodeURIComponent(trophy.groupId)
 function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const t = useMessages(messages)
   const advice = trophyAdvice(trophy, game.guide)
-  // One tip beside a trick or a warning says the same thing; a checklist of several does not.
-  const tips = advice.tips.filter(
-    (tip) =>
-      !(tip.kind === 'missable' && advice.warning) && !(advice.trick && advice.tips.length === 1),
-  )
-  // Steps that repeat a tip or a trick add nothing; the guide's other steps often name the trophy.
-  const said = [advice.trick, ...tips.map((tip) => tip.text)].join(' ')
-  const steps = trophyMentions(trophy, game.trophies, game.guide).filter((s) => !said.includes(s))
+  // A trophy's own trick already says how: the guide's other mentions of it only repeat it. Without
+  // one, a tip beside the warning says the same thing, and steps that repeat a tip add nothing.
+  const trick = advice.trick
+  const tips = trick
+    ? []
+    : advice.tips.filter((tip) => !(tip.kind === 'missable' && advice.warning))
+  const said = tips.map((tip) => tip.text).join(' ')
+  const steps = trick
+    ? []
+    : trophyMentions(trophy, game.trophies, game.guide).filter((s) => !said.includes(s))
+  // Once earned there is nothing left to lose.
+  const warning = trophy.earned ? undefined : advice.warning
   const hasAdvice =
-    advice.trick || advice.warning || advice.online || advice.bug || !!tips.length || !!steps.length
+    trick || warning || advice.online || advice.bug || !!tips.length || !!steps.length
   return (
     <div className="roadmap-advice">
       {hasAdvice && (
@@ -208,9 +212,9 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           {t('note')}
         </span>
       )}
-      {advice.trick && (
+      {trick && (
         <p>
-          <GuideText text={advice.trick} />
+          <GuideText text={trick} />
         </p>
       )}
       <RoadmapTips tips={tips} />
@@ -219,18 +223,20 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           <GuideText text={step} />
         </p>
       ))}
-      {advice.warning && (
+      {warning && (
         <div className="roadmap-caution">
           <b>
             <Icon name="warning" />
             {t('warning')}
           </b>
           <p>
-            <GuideText text={advice.warning.when} />
+            <GuideText text={warning.when} />
           </p>
-          <p>
-            <GuideText text={advice.warning.how} />
-          </p>
+          {!trick && (
+            <p>
+              <GuideText text={warning.how} />
+            </p>
+          )}
         </div>
       )}
       {advice.online && (

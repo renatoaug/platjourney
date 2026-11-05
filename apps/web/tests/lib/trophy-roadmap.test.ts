@@ -196,14 +196,12 @@ describe('trophyMentions', () => {
     ])
   })
 
-  test('a step naming a trophy still hidden stays out until it is revealed', () => {
+  test('a step that names another trophy stays in the phase plan, hidden or not', () => {
     const a = trophy('Aberto')
     const goal = 'Isso libera **Aberto** e **Segredo**.'
     expect(trophyMentions(a, [a, trophy('Segredo', { hidden: true })], guideWith(goal))).toEqual([])
-    expect(trophyMentions(a, [a, trophy('Segredo')], guideWith(goal))).toEqual([goal])
-    expect(
-      trophyMentions(a, [a, trophy('Segredo', { hidden: true, earned: true })], guideWith(goal)),
-    ).toEqual([goal])
+    expect(trophyMentions(a, [a, trophy('Segredo')], guideWith(goal))).toEqual([])
+    expect(trophyMentions(a, [a], guideWith(goal))).toEqual([goal])
   })
 
   test('reads early tips, collectibles and general route tips, at most three, once each', () => {
@@ -222,4 +220,19 @@ describe('trophyMentions', () => {
     const b = { ...trophy('Igual'), id: 99 }
     expect(trophyMentions(a, [a, b], guideWith('Isso libera **Igual**.'))).toEqual([])
   })
+})
+
+test('the platinum closes the route, even earned at the same moment as the last trophy', () => {
+  const at = '2026-01-01T10:00:00Z'
+  const route = personalRoadmap([
+    trophy(0, 'Platina', { type: 'platinum', earned: true, earnedAt: at }),
+    trophy(1, 'Primeiro', { earned: true, earnedAt: '2025-12-01T10:00:00Z' }),
+    trophy(2, 'Último', { earned: true, earnedAt: at }),
+  ])
+  expect(route.map((t) => t.name)).toEqual(['Primeiro', 'Último', 'Platina'])
+  const pending = personalRoadmap(
+    [trophy(0, 'Platina', { type: 'platinum' }), trophy(1, 'Falta')],
+    [trophy(0, 'Platina', { type: 'platinum' })],
+  )
+  expect(pending.map((t) => t.name)).toEqual(['Falta', 'Platina'])
 })

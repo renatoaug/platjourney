@@ -1,14 +1,19 @@
 import { achievementHistory } from '../../../../shared/journey/history'
 import type { GuideDetail, Trophy } from './types'
 
-/** Base and extra-content tracks remain separate. Priority only affects unfinished work. */
+/** Base and extra-content tracks remain separate. Priority only affects unfinished work, and the
+ * platinum closes the route even when PSN dates it with, or before, the trophy that unlocked it. */
 export function personalRoadmap(reference: Trophy[], remaining: Trophy[] = []) {
   return [false, true].flatMap((extra) => {
     const track = reference.filter((t) => (t.groupId !== 'default') === extra)
     const history = achievementHistory(track)
     const priority = remaining.filter((t) => !t.earned && track.includes(t))
     const pending = [...priority, ...track.filter((t) => !t.earned && !priority.includes(t))]
-    return [...history.dated, ...history.undated, ...pending]
+    const route = [...history.dated, ...history.undated, ...pending]
+    return [
+      ...route.filter((t) => t.type !== 'platinum'),
+      ...route.filter((t) => t.type === 'platinum'),
+    ]
   })
 }
 
@@ -106,9 +111,10 @@ export function phasePlan(goal: string, trophies: Trophy[]) {
     .join('\n')
 }
 
-/** The guide's steps that name this trophy. One that names a trophy still hidden would spoil it. */
+/** The guide's steps that name this trophy and no other. */
 export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: GuideDetail | null) {
-  const hidden = trophies.filter((t) => t !== trophy && t.hidden && !t.earned)
+  // A step that names another trophy belongs to the phase's plan, not to this trophy's tip.
+  const others = trophies.filter((t) => t !== trophy)
   const shared = trophies.some(
     (o) => o !== trophy && (o.name === trophy.name || (!!o.nameEn && o.nameEn === trophy.nameEn)),
   )
@@ -122,7 +128,7 @@ export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: Guide
     ),
   ]
   return [...new Set(steps)]
-    .filter((step) => mentions(step, trophy) && !hidden.some((t) => mentions(step, t)))
+    .filter((step) => mentions(step, trophy) && !others.some((t) => mentions(step, t)))
     .slice(0, MAX_MENTIONS)
 }
 

@@ -312,7 +312,9 @@ test('route artwork and missable signals use exact guide facts, with no hidden t
   expect(stops[2]?.getAttribute('data-final')).toBe('true')
   expect(screen.queryByText('Secret warning')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: /First step.*Perdível/ }))
-  expect(screen.getByText('Check the objective')).toBeTruthy()
+  expect(screen.getByText('Before moving on')).toBeTruthy()
+  // The trophy's own trick already says how.
+  expect(screen.queryByText('Check the objective')).toBeNull()
   const art = stops[0]?.querySelector('img')
   if (!art) throw new Error('missing trophy artwork')
   fireEvent.error(art)
@@ -694,6 +696,34 @@ test('a tip that repeats the warning or the trick is not shown twice', () => {
   expect(container.querySelector('.roadmap-tips')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: /Perito/ }))
   expect(container.querySelector('.roadmap-advice')?.textContent).toContain('Use o bloqueio')
+})
+
+test('a trick stands alone: no guide mentions beside it, and no warning once earned', () => {
+  const game = routeGame()
+  const first = game.trophies[0]
+  const guide = {
+    ...(game.guide as GuideDetail),
+    tricks: [{ trophy: first.name, trick: 'O macete completo' }],
+    earlyTips: [`Antes de tudo, pegue **${first.name}** no primeiro capítulo.`],
+    missables: [{ trophy: first.name, when: 'Antes do portão', how: 'Faça assim' }],
+  }
+  const pending = { ...first, earned: false, earnedAt: undefined }
+  const { container, unmount } = renderApp(
+    <TrophyRoadmap game={{ ...game, guide, trophies: [pending, ...game.trophies.slice(1)] }} />,
+  )
+  fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
+  const advice = () => container.querySelector('.roadmap-advice')?.textContent ?? ''
+  expect(advice()).toContain('O macete completo')
+  expect(advice()).toContain('Antes do portão')
+  expect(advice()).not.toContain('Faça assim')
+  expect(advice()).not.toContain('primeiro capítulo')
+  unmount()
+  const earned = { ...first, earned: true, earnedAt: '2026-01-01T10:00:00Z' }
+  const again = renderApp(
+    <TrophyRoadmap game={{ ...game, guide, trophies: [earned, ...game.trophies.slice(1)] }} />,
+  )
+  fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
+  expect(again.container.querySelector('.roadmap-caution')).toBeNull()
 })
 
 test('a collection folds its checklist, keeps each step and stays visible along the way', () => {

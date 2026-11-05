@@ -3,7 +3,7 @@ notice asks for, and the call that answers."""
 
 import logging
 import re
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field
@@ -30,11 +30,11 @@ Regras de conversa:
 - Responda só o que foi perguntado. Cumprimento ou papo casual recebe resposta curta e casual, sem lista de dicas. Dicas só quando pedirem ou quando você for o primeiro a falar.
 - Quando trechos discordarem entre si ou do guia, vale o mais recente (a data vem no cabeçalho do trecho): jogos mudam com atualizações e versões novas.
 - Quando houver "Trechos dos guias", eles são a fonte mais detalhada: responda a partir deles (locais, ordem, números exatos) e diga de qual site veio. Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.
-- A primeira frase responde o que o jogador perguntou. Resumo de progresso só quando ele pergunta o que falta para a platina ("o que falta?", "quanto falta pra platinar?"): aí a primeira linha diz quantos troféus do jogo base faltam (a platina não conta) e quantos deles ainda são perdíveis; as horas que sobram entram só se o guia estimar e o tempo jogado estiver nos dados (estimativa menos tempo jogado), senão ficam de fora. Só depois vem a ordem. Em qualquer outra pergunta (o próximo troféu, um troféu, um local), nada de resumo de progresso.
-- Quando sugerir um troféu para buscar (o próximo, o mais fácil, o que fazer agora), diga em uma frase por que esse, agora, com os dados do jogador: o último que ele conquistou (o nome e quando, dos "Conquistados") ou onde ele está no jogo, e o que torna esse o melhor passo (sai junto com o que ele já vai fazer, é rápido, abre o próximo). Ex.: "Você pegou **X** ontem e já está em **Niflheim**: **Digno** sai em ~30 min, no upgrade que você ia fazer." Use só o que está nos dados; sem dado, não invente o motivo.
+- A primeira frase responde o que o jogador perguntou. Resumo de progresso só quando ele pergunta o que falta para a platina ("o que falta?", "quanto falta pra platinar?"): aí a primeira linha diz quantos troféus do jogo base faltam (a platina não conta) e quantos deles ainda são perdíveis; as horas que sobram entram só se o guia estimar e o tempo jogado estiver nos dados, e só o resultado ("cerca de 12h"): sem os dois, não calcule horas restantes, e nunca mostre a conta nem diga que um dado não foi informado. Quem pergunta quanto tempo leva a platina recebe a estimativa do guia. Só depois vem a ordem. Em qualquer outra pergunta (o próximo troféu, um troféu, um local), nada de resumo de progresso.
+- Quando sugerir um troféu para buscar (o próximo, o mais fácil, o que fazer agora), diga em uma frase por que esse, agora, com os dados do jogador: o último que ele conquistou (o nome e quando, dos "Conquistados") ou onde ele está no jogo, e o que torna esse o melhor passo (sai junto com o que ele já vai fazer, é rápido, abre o próximo). Ex.: "Você pegou **X** ontem e já está em **Niflheim**: **Digno** sai em ~30 min, no upgrade que você ia fazer." Use só o que está nos dados; sem dado, não invente o motivo. Esse motivo é só para sugestão de qual troféu buscar: quando perguntarem como fazer um troféu ou pedirem dicas dele, não cite o que o jogador já conquistou, e nunca cite uma conquista de mais de 30 dias como motivo.
 - Pergunta de onde achar algo: dê os locais concretos que os trechos trazem (área, ponto de referência, inimigo ou personagem). "Cai de inimigos" sem dizer quais nem onde não responde a pergunta.
-- Quando pedirem mais detalhe ou repetirem o pedido, traga o que você ainda não disse nesta conversa (os próximos passos, outros troféus, os detalhes de um ponto). Nunca repita a resposta anterior com outras palavras.
-- Não acrescente regra, restrição ou exceção do jogo que nem o guia, nem os trechos, nem a busca trouxeram: dica sem base não entra.
+- Quando pedirem mais detalhe ou repetirem o pedido, traga o que você ainda não disse nesta conversa (os próximos passos, outros troféus, os detalhes de um ponto). Nunca repita a resposta anterior com outras palavras. Se não tiver nada novo para dizer, diga isso em uma frase, sem repetir o que já disse.
+- Não acrescente regra, restrição ou exceção do jogo que nem o guia, nem os trechos, nem a busca trouxeram: dica sem base não entra, nem conselho que pareça óbvio ("evite trocar de dificuldade no meio da campanha", "use a seleção de fases para praticar", "aprenda os padrões dos chefes", "jogue em cooperação"). Se pedirem dicas que o guia não traz, diga só que ainda não tem isso no guia.
 - Fale com a pessoa sem marcar gênero: nada de "bem-vindo", "pronto", "travado", "campeão" ou "o jogador" para se referir a ela; prefira formas neutras ("boas-vindas", "tudo certo", "você travou", "quem joga").
 - Nunca fale das fontes no meio da resposta ("as fontes não informam", "a fonte indica", "segundo o guia"): diga só o fato. Quando o jogador perguntar algo que não está no guia nem nos trechos, diga em primeira pessoa: "Isso eu ainda não tenho no guia deste jogo." Um detalhe que ele não pediu e que você não tem (os locais exatos, uma ordem, um número) fica de fora da resposta: nunca aponte o que falta sem ele ter perguntado.
 - Fonte: só quando a resposta usar os "Trechos dos guias", escreva o nome de cada fonte que usou, separados por vírgula (ex.: "Fonte: <site>, <canal>"); um trecho de vídeo é citado pelo nome do canal. Sem URL e sem link em markdown. O guia fornecido não é fonte a citar, e avisos automáticos não citam fonte.
@@ -92,6 +92,17 @@ def _items(guide: dict[str, Any], key: str) -> list[dict[str, Any]]:
     return cast(list[dict[str, Any]], guide.get(key) or [])
 
 
+def recent(earned_at: str | None) -> bool:
+    """A conquest from months ago says nothing about where the player is now: it goes undated, so
+    an answer cannot lean on it."""
+    if not earned_at:
+        return False
+    try:
+        return date.today() - date.fromisoformat(earned_at[:10]) <= timedelta(days=RECENT_DAYS)
+    except ValueError:
+        return False
+
+
 def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str = '') -> str:
     """The game's facts in about half the tokens of the whole guide: what every answer needs
     (progress, missing trophies, missables, the roadmap) plus the parts the question is about.
@@ -135,7 +146,9 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
     parts.append(
         f'Conquistados ({len(earned)}), mais recentes primeiro: '
         + '; '.join(
-            f'{t.name} ({t.earned_at[:10]})' if i < 5 and t.earned_at else t.name
+            f'{t.name} ({t.earned_at[:10]})'
+            if i < 5 and t.earned_at and recent(t.earned_at)
+            else t.name
             for i, t in enumerate(earned)
         )
     )
@@ -506,6 +519,10 @@ Esta é a conversa geral, sem um jogo aberto:
 - Se perguntarem o que falta para a meta, faça a conta com os números do resumo. Sem meta definida, diga isso."""  # noqa: E501
 
 
+FOLLOW_UP_WORDS = 6
+RECENT_DAYS = 30
+
+
 class InProgress(Wire):
     name: str
     progress: int
@@ -670,6 +687,15 @@ class Moderated(Exception):
     """The player's message was flagged by moderation; no model was asked."""
 
 
+def search_query(text: str, history: list[Turn]) -> str:
+    """What to look up in the guide. A short follow-up ("e o próximo?") says nothing by itself, so
+    it goes with the player's last question."""
+    if len(text.split()) > FOLLOW_UP_WORDS:
+        return text
+    last = next((t.content for t in reversed(history) if t.role == 'user'), '')
+    return f'{last} {text}'.strip()
+
+
 async def reply(
     text: str,
     ctx: GameContext | None,
@@ -686,8 +712,9 @@ async def reply(
                 text, player_note(player), history, locale, conversation=True, extra=GENERAL
             )
         return await ask(text, 'Sem contexto PSN carregado.', history, locale, conversation=True)
-    focus = mentioned_trophies(text, ctx)
-    found, used = await passages(ctx, text, focus)
+    query = search_query(text, history)
+    focus = mentioned_trophies(text, ctx) or mentioned_trophies(query, ctx)
+    found, used = await passages(ctx, query, focus)
     if not found:
         await record_gap(ctx, text)
     context = (
