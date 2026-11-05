@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.48.0](https://github.com/renatoaug/platjourney/compare/v0.47.2...v0.48.0) (2026-11-05)
+
+### Features
+
+* **web:** add a general conversation to nexo and simplify the game pages ([#137](https://github.com/renatoaug/platjourney/issues/137)) ([4e39c1b](https://github.com/renatoaug/platjourney/commit/4e39c1b9a0e91cd02932967b053567011654e203))
+
 ## [0.47.2](https://github.com/renatoaug/platjourney/compare/v0.47.1...v0.47.2) (2026-11-04)
 
 ### Bug Fixes
