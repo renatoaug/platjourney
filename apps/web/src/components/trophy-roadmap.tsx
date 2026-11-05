@@ -78,9 +78,6 @@ const messages = defineMessages({
     map: 'MAPA DA JORNADA',
     missable: 'Perdível',
     finale: 'Platina',
-    order: 'Como este caminho é definido',
-    basis:
-      'Ordem sugerida pelo guia, não uma sequência garantida. Objetivos podem ser feitos em paralelo; sua posição no jogo não é confirmada pelos troféus.',
     count: '{earned} de {total} conquistados',
     unplacedNote:
       'Estes troféus não têm uma correspondência única nas fases do guia. Esses marcos seguem a lista PSN, não uma recomendação.',
@@ -157,9 +154,6 @@ const messages = defineMessages({
     map: 'JOURNEY MAP',
     missable: 'Missable',
     finale: 'Platinum',
-    order: 'How this path is defined',
-    basis:
-      'Suggested guide order, not a guaranteed sequence. Objectives can run in parallel; trophies do not confirm your location in the game.',
     count: '{earned} of {total} earned',
     unplacedNote:
       'These trophies do not have a unique match in the guide phases. These milestones follow the PSN list, not a recommendation.',
@@ -307,7 +301,10 @@ function RoadmapPhase({ game, trophy }: { game: RoadmapGame; trophy: Trophy }) {
   return (
     <details className="roadmap-phase" key={phase.phase}>
       <summary>
-        <span>{t('phasePlan')}</span> {phase.phase}
+        <span className="roadmap-phase-title">
+          <b>{t('phasePlan')}</b> {phase.phase}
+        </span>
+        <Icon name="chevron-down" />
       </summary>
       <GuideText text={plan} />
     </details>
@@ -379,7 +376,7 @@ function RoadmapLandscape({
   const hidden = selected.hidden && !selected.earned
   return (
     <div className="roadmap-landscape">
-      <div className="roadmap-destination" key={anchor(selected)}>
+      <div className="roadmap-destination" data-tier={selected.type} key={anchor(selected)}>
         <span className="roadmap-destination-art">
           <TrophyArt url={hidden ? undefined : selected.iconUrl} />
         </span>
@@ -388,15 +385,18 @@ function RoadmapLandscape({
             {selected.earned ? t('earned') : suggested ? t('suggestion') : t('selected')}
           </span>
           <h3>{hidden ? t('secret') : selected.name}</h3>
-          <span className="roadmap-destination-type">
-            {t(selected.type === 'platinum' ? 'platinumType' : selected.type)}
+          <span className="roadmap-destination-meta">
+            <span className="roadmap-destination-type">
+              <Icon name="trophy" />
+              {t(selected.type === 'platinum' ? 'platinumType' : selected.type)}
+            </span>
+            {!hidden && !selected.earned && (
+              <RoadmapSignal
+                missable={!!trophyAdvice(selected, game.guide).warning}
+                final={selected.type === 'platinum'}
+              />
+            )}
           </span>
-          {!hidden && !selected.earned && (
-            <RoadmapSignal
-              missable={!!trophyAdvice(selected, game.guide).warning}
-              final={selected.type === 'platinum'}
-            />
-          )}
         </span>
       </div>
     </div>
@@ -955,16 +955,6 @@ function roadmapOrder(reference: Trophy[], focus?: Trophy) {
   )
 }
 
-function RoadmapBasis() {
-  const t = useMessages(messages)
-  return (
-    <details className="roadmap-basis">
-      <summary>{t('order')}</summary>
-      <p>{t('basis')}</p>
-    </details>
-  )
-}
-
 export function TrophyRoadmap({
   game: source,
   preview = false,
@@ -1115,7 +1105,6 @@ export function TrophyRoadmap({
               <Icon name="nexo" />
               {t('talk')}
             </JourneyLink>
-            <RoadmapBasis />
           </footer>
         </>
       )}

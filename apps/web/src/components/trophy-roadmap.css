@@ -382,6 +382,25 @@
     padding: 26px 0 20px;
   }
 
+  /* Under the section navigation: the same space below it as above it. */
+  .game-nav:has(+ .trophy-roadmap) {
+    margin-bottom: 0;
+  }
+
+  .game-nav + .trophy-roadmap .roadmap-intro {
+    padding-top: 24px;
+  }
+
+  .journey > .game-nav + .trophy-roadmap .roadmap-intro {
+    padding-top: 0;
+  }
+
+  @media (max-width: 760px) {
+    .game-nav + .trophy-roadmap .roadmap-intro {
+      padding-top: 20px;
+    }
+  }
+
   .roadmap-intro h2 {
     margin: 7px 0 0;
     font: var(--weight-semibold) var(--text-3xl) / var(--leading-tight) var(--font-display);
@@ -529,59 +548,64 @@
   }
 
   .roadmap-destination {
+    --destination-tier: var(--color-trophy-bronze);
     display: flex;
-    gap: 30px;
+    gap: 20px;
     align-items: center;
     margin-top: 10px;
     max-width: 680px;
   }
 
+  .roadmap-destination[data-tier="silver"] {
+    --destination-tier: var(--color-trophy-silver);
+  }
+
+  .roadmap-destination[data-tier="gold"] {
+    --destination-tier: var(--color-trophy-gold);
+  }
+
+  .roadmap-destination[data-tier="platinum"] {
+    --destination-tier: var(--color-trophy-platinum);
+  }
+
+  /* The whole trophy art, on a frame in its tier's color: nothing is cropped by a ring. */
   .roadmap-destination-art {
-    position: relative;
-    isolation: isolate;
     display: grid;
     place-items: center;
-    width: 80px;
-    height: 80px;
+    overflow: hidden;
+    width: 96px;
+    height: 96px;
     flex-shrink: 0;
+    border: 2px solid var(--destination-tier);
+    border-radius: var(--radius-control);
+    background: var(--color-bg);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--destination-tier) 24%, transparent);
   }
 
-  .roadmap-destination-art::before {
-    content: "";
-    position: absolute;
-    inset: -9px;
-    z-index: -1;
-    pointer-events: none;
-    border-radius: var(--radius-round);
-    border: 1px solid color-mix(in srgb, var(--color-trophy-gold) 65%, transparent);
-    background: radial-gradient(
-      circle,
-      color-mix(in srgb, var(--color-trophy-gold) 16%, var(--color-bg-subtle)),
-      color-mix(in srgb, var(--color-bg-subtle) 85%, transparent)
-    );
-    box-shadow:
-      0 0 0 5px color-mix(in srgb, var(--color-trophy-gold) 7%, transparent),
-      0 0 0 6px color-mix(in srgb, var(--color-trophy-gold) 22%, transparent),
-      0 0 30px color-mix(in srgb, var(--color-trophy-gold) 28%, transparent);
-  }
-
-  .roadmap-destination-art > img,
-  .roadmap-destination-art > .icon {
+  .roadmap-destination-art > img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 18px var(--color-bg));
+    object-fit: cover;
+  }
+
+  .roadmap-destination-art > .icon {
+    width: 44%;
+    height: 44%;
+    color: var(--destination-tier);
   }
 
   .roadmap-destination-copy {
     display: grid;
     flex: 1;
     min-width: 0;
-    gap: 8px;
+    gap: 6px;
   }
 
   .roadmap-state {
-    font-size: var(--text-base);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
     color: var(--color-trophy-gold);
     line-height: var(--leading-snug);
   }
@@ -594,9 +618,36 @@
     text-wrap: balance;
   }
 
+  .roadmap-destination-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .roadmap-destination-type,
+  .roadmap-destination-meta .roadmap-route-risk,
+  .roadmap-destination-meta .roadmap-route-finale {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 26px;
+    padding-inline: 8px;
+    border: 1px solid color-mix(in srgb, currentcolor 40%, transparent);
+    border-radius: var(--radius-tag);
+    font-size: var(--text-sm);
+    line-height: var(--leading-none);
+  }
+
   .roadmap-destination-type {
-    font-size: var(--text-base);
-    color: var(--color-fg-muted);
+    color: var(--destination-tier);
+  }
+
+  .roadmap-destination-type > .icon,
+  .roadmap-destination-meta .roadmap-route-risk > .icon,
+  .roadmap-destination-meta .roadmap-route-finale > .icon {
+    width: 14px;
+    height: 14px;
   }
 
   .roadmap-preview-controls {
@@ -1066,6 +1117,11 @@
 
   .roadmap-past > summary > .icon:last-child {
     margin-left: auto;
+    transition: transform 0.15s;
+  }
+
+  .roadmap-past[open] > summary > .icon:last-child {
+    transform: rotate(180deg);
   }
 
   .roadmap-past button {
@@ -1162,31 +1218,10 @@
     padding: 6px 0 0;
   }
 
-  .roadmap-footer > .roadmap-basis {
-    flex-basis: 100%;
-  }
-
-  .roadmap-basis,
   .roadmap-context-note {
     color: var(--color-fg-muted);
     font-size: var(--text-base);
     line-height: var(--leading-body);
-  }
-
-  .roadmap-basis summary {
-    cursor: pointer;
-    padding: 12px 0;
-  }
-
-  .roadmap-footer > .roadmap-basis > summary {
-    min-height: 44px;
-    box-sizing: border-box;
-    padding: 10px 0;
-  }
-
-  .roadmap-basis p {
-    max-width: 640px;
-    margin: 0 0 12px;
   }
 
   .roadmap-trophy-heading {
@@ -1275,12 +1310,32 @@
   }
 
   .roadmap-phase > summary {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
     cursor: pointer;
     color: var(--color-fg);
+    list-style: none;
   }
 
-  .roadmap-phase > summary span {
+  .roadmap-phase > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .roadmap-phase > summary > .icon {
+    flex: none;
+    align-self: center;
+    margin-left: auto;
+    transition: transform 0.15s;
+  }
+
+  .roadmap-phase[open] > summary > .icon {
+    transform: rotate(180deg);
+  }
+
+  .roadmap-phase-title b {
     color: var(--color-trophy-gold);
+    font-weight: inherit;
   }
 
   .roadmap-caution {
@@ -1350,14 +1405,13 @@
     }
 
     .roadmap-destination {
-      gap: 20px;
-      padding-inline-start: 16px;
+      gap: 16px;
       margin-top: 8px;
     }
 
     .roadmap-destination-art {
-      width: 56px;
-      height: 56px;
+      width: 76px;
+      height: 76px;
     }
 
     .roadmap-destination h3 {

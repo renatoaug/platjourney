@@ -7,6 +7,8 @@ import * as nexo from '../src/nexo.ts'
 import * as nextPicks from '../src/next-pick.ts'
 import * as activity from '../src/repository/activity.ts'
 import * as games from '../src/repository/game.ts'
+import * as interests from '../src/repository/interest.ts'
+import * as platinums from '../src/repository/platinum.ts'
 import * as similar from '../src/repository/similar.ts'
 import { CHAT_ROUTES } from '../src/routes/chat.ts'
 import * as watcher from '../src/watcher.ts'
@@ -27,7 +29,7 @@ const pick = {
   at: '',
 } as never
 
-async function send(text: string) {
+async function send(text: string, general?: boolean) {
   let body: Record<string, unknown> = {}
   const res = Object.assign(
     {
@@ -42,7 +44,7 @@ async function send(text: string) {
     {},
   )
   await CHAT_ROUTES['POST /api/chat']({
-    req: Object.assign(Readable.from([JSON.stringify({ text })]), { headers: {} }),
+    req: Object.assign(Readable.from([JSON.stringify({ text, general })]), { headers: {} }),
     res,
     me: makeUser(),
     titles: async () => [makeTitle({ npCommunicationId: 'NP9', progress: 30 })],
@@ -66,6 +68,8 @@ beforeEach(() => {
   spyOn(similar, 'guideFacts').mockResolvedValue([{ game: 'game:9', difficulty: 2, hours: 10 }])
   answer = spyOn(nexo, 'reply').mockResolvedValue('resposta normal')
   picks = spyOn(nextPicks, 'nextPick').mockResolvedValue(pick)
+  spyOn(platinums, 'listPlatinums').mockResolvedValue([])
+  spyOn(interests, 'listInterests').mockResolvedValue([])
 })
 
 for (const question of [
@@ -100,6 +104,33 @@ for (const question of [
     expect((await send(question)).text).toBe('resposta normal')
     expect(picks).not.toHaveBeenCalled()
   })
+
+test('the pick goes to the general conversation even from a game', async () => {
+  const body = await send('o que platinar agora?')
+  expect(body.general).toBe(true)
+  expect(append.mock.calls[0][3]).toBeUndefined()
+  expect(append.mock.calls[1][3]).toBeUndefined()
+  expect(watcher.chatOrCheck).not.toHaveBeenCalled()
+})
+
+test('a general message goes with the facts about the player and no game', async () => {
+  const year = new Date().getFullYear()
+  spyOn(platinums, 'listPlatinums').mockResolvedValue([
+    { game: { name: 'Stray' }, trophy_name: 'Fim', earned_at: `${year}-01-02` },
+    { game: { name: 'Hades' }, trophy_name: 'Fim', earned_at: `${year - 1}-01-02` },
+  ] as never)
+  spyOn(interests, 'listInterests').mockResolvedValue([{ game: { name: 'Celeste' } }] as never)
+  const body = await send('como está minha meta?', true)
+  expect(body.general).toBe(true)
+  expect(watcher.chatOrCheck).not.toHaveBeenCalled()
+  expect(answer.mock.calls[0][2]).toBeUndefined()
+  expect(answer.mock.calls[0][3]).toMatchObject({
+    platinums: 2,
+    platinumsThisYear: 1,
+    latestPlatinums: ['Stray', 'Hades'],
+    interests: ['Celeste'],
+  })
+})
 
 test('with no saved game it picks from any game', async () => {
   picks.mockResolvedValueOnce(null)

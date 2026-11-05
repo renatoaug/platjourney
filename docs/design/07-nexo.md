@@ -8,7 +8,7 @@ Where Nexo talks:
 
 | Surface | What happens |
 |---|---|
-| Web chat | One conversation per game. The current game is the one PSN shows being played; the player can switch to any game of theirs, or to a game they do not own, to talk about its platinum before buying |
+| Web chat | A general conversation, about the player, and one conversation per game. The current game is the one PSN shows being played; the player can switch to any game of theirs, or to a game they do not own, to talk about its platinum before buying. With no game open, the chat opens on the general one |
 | Telegram | Any free text sent to the bot is a chat message about the current game; the commands (`/plan`, `/next`, `/game`…) are in [features](02-features.md) |
 | Notices | Nexo's comment on a game start or a trophy, when the instance and the player allow the model ([notifications](05-notifications.md)) |
 | Connected assistants | Claude, ChatGPT and others read the same data and get the same method for picking a game, planning a session and giving a trophy tip, through MCP ([MCP](11-mcp.md)). Nothing calls the model on PlatJourney's side |
@@ -43,6 +43,8 @@ The system prompt fixes who Nexo is and what it never does:
 - A **Fonte:** line names the sites or channels of the passages the answer used, by name only. The model cannot write links: every URL in its output is stripped, and the links the player sees are added afterwards from the passages themselves (a video opens at the minute the passage comes from).
 
 In a conversation (the chat and a trophy tip asked from the list), a quick question ends at its answer. A last line that pulls the next step is added only when the data holds a real hook: a missable from the guide still open nearby, few trophies left for the platinum, an open trophy the answer just made easy, or a conversation being picked up. It names the concrete fact, is never generic, comes at most once per answer, does not insist after an unanswered one, and follows the rule of nothing without a source. It is left out when the player says goodbye or thanks to end the subject, or when the question is out of scope. Notices do not get it: they arrive while the player is playing.
+
+The general conversation has no guide and no trophy list. It gets a summary of the player (platinums in total and this year, the latest ones, the year's goal, games in progress and interests), read by `playerFacts` in `apps/server/src/routes/chat.ts`, and answers from it. Asked how to get a trophy in a specific game, it points to that game's conversation instead of answering from memory. "What should I platinum next?" always lands here, with the game's card and a button to open that game's conversation, because it is not about the open game. Its messages are the ones stored with no game.
 
 When a player comes back to a game's conversation after six hours or more, and they brought up a trophy in its last messages, the chat also sends a `resume`: how long ago it was, which of those trophies were earned since and which are still open (`resumeFrom` in `apps/server/src/nexo.ts`, from the stored messages and PSN's `earnedAt`). A trophy only listed in an answer does not count, and a hidden one still locked is never named. Nexo answers first and then picks it up in one sentence: it celebrates a trophy earned, or asks how an open one went.
 

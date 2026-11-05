@@ -111,10 +111,11 @@
   }
 
   .game-nav a {
+    position: relative;
     display: flex;
     align-items: center;
-    min-height: 44px;
-    padding: 6px 12px;
+    min-height: 36px;
+    padding: 4px 12px;
     line-height: 1.2;
     border-radius: var(--radius-pill);
     color: var(--color-fg-muted);
@@ -123,6 +124,13 @@
     transition:
       background-color 0.2s,
       color 0.2s;
+  }
+
+  /* Shorter to the eye, the same finger's reach. */
+  .game-nav a::after {
+    content: "";
+    position: absolute;
+    inset: -4px 0;
   }
 
   .game-nav a:hover,
@@ -155,7 +163,6 @@
     #trophies-card,
     #title-guide,
     #title-trophies,
-    .game-columns-wrap,
     #journey-session,
     #journey-trophies,
     #journey-guide-section,

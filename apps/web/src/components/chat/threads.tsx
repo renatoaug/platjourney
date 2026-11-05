@@ -9,7 +9,7 @@ import './threads.css'
 
 /** What /api/chat/threads sends for each conversation. */
 export interface ChatThread {
-  /** The game's id, or null for the messages without a game. */
+  /** The game's id, or null for the general conversation. */
   game: string | null
   /** The player's PSN list for the game; null when it is not in the library (read only). */
   np: string | null
@@ -26,7 +26,7 @@ const messages = defineMessages({
   [Language.PtBR]: {
     title: 'Conversas',
     general: 'Geral',
-    generalHint: 'Conversas antigas, sem jogo',
+    generalHint: 'Platinas, metas e próximos jogos',
     count: { one: '{count} mensagem', other: '{count} mensagens' },
     newConversation: 'Nova conversa',
     emptyTitle: 'Nenhuma conversa ainda',
@@ -40,7 +40,7 @@ const messages = defineMessages({
   [Language.En]: {
     title: 'Conversations',
     general: 'General',
-    generalHint: 'Older conversations, no game',
+    generalHint: 'Platinums, goals and next games',
     count: { one: '{count} message', other: '{count} messages' },
     newConversation: 'New conversation',
     emptyTitle: 'No conversations yet',
@@ -106,7 +106,9 @@ function ThreadRow({
         <span className="nexo-thread-text">
           <b>{thread.game ? thread.name : t('general')}</b>
           {thread.draft ? (
-            <small className="nexo-thread-draft">{t('newConversation')}</small>
+            <small className="nexo-thread-draft">
+              {thread.game ? t('newConversation') : t('generalHint')}
+            </small>
           ) : (
             <>
               <span>{bare(thread.last_question) || (thread.game ? '' : t('generalHint'))}</span>

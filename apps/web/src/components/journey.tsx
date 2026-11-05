@@ -8,7 +8,6 @@ import { Icon } from '../ui/icon'
 import { GuideText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
 import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
-import { GameColumns } from './game-columns'
 import { GameNav, type GameSection } from './game-nav'
 import { Guide, GuideSkeleton } from './guide'
 import { Hero, HeroSkeleton } from './hero'
@@ -30,11 +29,10 @@ const messages = defineMessages({
     done: 'Platina conquistada.',
     doneBody: 'Sua jornada está registrada. Os troféus e o guia continuam aqui.',
     talk: 'Conversar com Nexo',
-    trophies: 'Seus troféus',
     guide: 'Consultar o guia completo',
     plan: 'Planejar minha sessão',
     session: 'Roteiro da sessão',
-    remaining: '{count} pendentes no jogo base',
+    remaining: { one: 'Falta {count}', other: 'Faltam {count}' },
     source: 'Do guia',
     sync: 'Atualizado pela PSN',
     unavailable: 'O progresso aparece após a sincronização.',
@@ -54,11 +52,10 @@ const messages = defineMessages({
     done: 'Platinum earned.',
     doneBody: 'Your journey is recorded. Your trophies and the guide stay here.',
     talk: 'Talk to Nexo',
-    trophies: 'Your trophies',
     guide: 'Read the complete guide',
     plan: 'Plan my session',
     session: 'Session route',
-    remaining: '{count} left in the base game',
+    remaining: { one: '{count} left', other: '{count} left' },
     source: 'From the guide',
     sync: 'Updated from PSN',
     unavailable: 'Progress appears after syncing.',
@@ -124,9 +121,7 @@ export function Journey({
   const [scene, setScene] = useScene(shots.length)
   const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
   const focus = done || c.guide?.unobtainable ? null : c.focus
-  const missing = c.trophies.filter(
-    (x) => !x.earned && x.type !== 'platinum' && x.groupId === 'default',
-  ).length
+  const missing = c.trophies.filter((x) => !x.earned && x.groupId === 'default').length
   return (
     <div className="journey">
       <GameBackdrop src={c.game.art_url ?? c.icon} shots={shots} at={scene} tint={c.game.tint} />
@@ -156,35 +151,27 @@ export function Journey({
         <p>{t('onePlan')}</p>
         {plan}
       </details>
-      <GameColumns
-        tabs
-        trophies={
-          <section className="journey-trophies" id="journey-trophies">
-            <TrophyList
-              trophies={c.trophies}
-              np={c.np}
-              prefix="journey-t"
-              heading={t('trophies')}
-              note={t('remaining', { count: missing })}
-            />
-          </section>
-        }
-        guide={
-          <section className="journey-guide" id="journey-guide-section">
-            <Guide
-              id="journey-guide"
-              game={{
-                name: c.name,
-                guide: c.guide ?? null,
-                trophies: c.trophies,
-                np: c.np,
-                deepGuide: c.deepGuide,
-                queued: c.queued,
-              }}
-            />
-          </section>
-        }
-      />
+      <section className="card journey-trophies" id="journey-trophies">
+        <TrophyList
+          trophies={c.trophies}
+          np={c.np}
+          prefix="journey-t"
+          note={t('remaining', { count: missing })}
+        />
+      </section>
+      <section className="card journey-guide" id="journey-guide-section">
+        <Guide
+          id="journey-guide"
+          game={{
+            name: c.name,
+            guide: c.guide ?? null,
+            trophies: c.trophies,
+            np: c.np,
+            deepGuide: c.deepGuide,
+            queued: c.queued,
+          }}
+        />
+      </section>
       {similar}
     </div>
   )
@@ -214,22 +201,12 @@ export function JourneySkeleton({ gallery = true }: { gallery?: boolean }) {
           <Icon name="chevron-down" />
         </summary>
       </details>
-      <GameColumns
-        tabs
-        trophies={
-          <section className="journey-trophies">
-            <div className="trophy-section-heading">
-              <h2>{t('trophies')}</h2>
-            </div>
-            <TrophyListSkeleton />
-          </section>
-        }
-        guide={
-          <section className="journey-guide">
-            <GuideSkeleton />
-          </section>
-        }
-      />
+      <section className="card journey-trophies">
+        <TrophyListSkeleton />
+      </section>
+      <section className="card journey-guide">
+        <GuideSkeleton />
+      </section>
     </div>
   )
 }

@@ -222,3 +222,8 @@ export const LongConversation: Story = {
     })),
   },
 }
+
+/** The general conversation before its first message: the suggestions are about the player. */
+export const General: Story = {
+  args: { chat: [], general: true, subtitle: 'Suas platinas, metas e próximos jogos.' },
+}

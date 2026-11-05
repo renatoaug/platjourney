@@ -1,5 +1,6 @@
 """Nexo: the game context it reads, the trophies a message names and what each notice asks."""
 
+from datetime import date
 from types import SimpleNamespace
 from typing import Any
 
@@ -618,3 +619,35 @@ def test_a_resume_names_the_trophies_and_when() -> None:
     note = nexo.resume_note(nexo.Resume(hours_ago=72, earned=['Maligna'], open=['Discreta']))
     assert 'foi há 3 dias' in note
     assert 'conquistados depois dela: Maligna; ainda em aberto: Discreta.' in note
+
+
+async def test_the_general_conversation_knows_the_player_and_sends_game_questions_away(
+    model: Model,
+) -> None:
+    player = nexo.PlayerFacts(
+        platinums=12,
+        platinums_this_year=3,
+        latest_platinums=['Stray'],
+        yearly_goal=10,
+        in_progress=[nexo.InProgress(name='Days Gone', progress=80)],
+        interests=['Hades'],
+    )
+    await nexo.reply('como está minha meta?', None, [], 'pt-BR', None, player)
+    call = model.calls[-1]
+    assert 'Esta é a conversa geral' in call['instructions']
+    content = call['input'][-1]['content']
+    assert '12 no total, 3 este ano' in content
+    assert 'Meta de platinas do ano: 10' in content
+    assert 'Days Gone (80%)' in content
+
+
+def test_a_player_without_a_goal_or_games_reads_as_such() -> None:
+    note = nexo.player_note(nexo.PlayerFacts())
+    assert 'Meta de platinas do ano: não definida' in note
+    assert f'ano atual: {date.today().year}' in note
+    assert 'Em andamento, sem platina: nenhum' in note
+
+
+async def test_a_game_conversation_is_not_told_it_is_general(model: Model) -> None:
+    await nexo.ask('oi', 'ctx', conversation=True)
+    assert 'Esta é a conversa geral' not in model.calls[-1]['instructions']

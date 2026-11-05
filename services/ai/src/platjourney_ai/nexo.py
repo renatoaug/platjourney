@@ -3,6 +3,7 @@ notice asks for, and the call that answers."""
 
 import logging
 import re
+from datetime import date
 from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field
@@ -496,6 +497,46 @@ Retomada (exceção à regra de responder só o que foi perguntado):
 - Não comente quanto tempo passou. Sem "Retomada" no contexto, não pergunte como foi nada."""  # noqa: E501
 
 
+# The conversation with no game open: it knows the player, not any game's guide.
+GENERAL = """
+
+Esta é a conversa geral, sem um jogo aberto:
+- Responda sobre o jogador a partir do "Resumo do jogador": platinas, jogos em andamento, interesses e meta do ano. Sobre a conta dele, nada além disso.
+- Aqui você não tem guia nem lista de troféus. Se perguntarem como pegar um troféu ou passar de um trecho de um jogo específico, não responda de memória nem pesquise: diga em uma frase que a conversa daquele jogo tem o guia e que dá para abri-la na lista de conversas ou pelo /game.
+- Se perguntarem o que falta para a meta, faça a conta com os números do resumo. Sem meta definida, diga isso."""  # noqa: E501
+
+
+class InProgress(Wire):
+    name: str
+    progress: int
+
+
+class PlayerFacts(Wire):
+    """The player, for the conversation with no game open."""
+
+    platinums: int = 0
+    platinums_this_year: int = 0
+    latest_platinums: list[str] = Field(default_factory=list[str])
+    yearly_goal: int | None = None
+    in_progress: list[InProgress] = Field(default_factory=list[InProgress])
+    interests: list[str] = Field(default_factory=list[str])
+
+
+def player_note(player: PlayerFacts) -> str:
+    goal = player.yearly_goal if player.yearly_goal is not None else 'não definida'
+    playing = ', '.join(f'{g.name} ({g.progress}%)' for g in player.in_progress)
+    return '\n'.join(
+        [
+            f'Resumo do jogador (ano atual: {date.today().year}):',
+            f'- Platinas: {player.platinums} no total, {player.platinums_this_year} este ano.',
+            f'- Meta de platinas do ano: {goal}.',
+            f'- Últimas platinas: {", ".join(player.latest_platinums) or "nenhuma"}.',
+            f'- Em andamento, sem platina: {playing or "nenhum"}.',
+            f'- Interesses: {", ".join(player.interests) or "nenhum"}.',
+        ]
+    )
+
+
 class Resume(Wire):
     """The player back at a game's conversation, with the trophies they brought up in it."""
 
@@ -532,10 +573,13 @@ async def ask(
     history: list[Turn] | None = None,
     locale: str = 'pt-BR',
     conversation: bool = False,
+    extra: str = '',
 ) -> str:
     turns = [t.model_dump() for t in history or []]
     response = await llm.respond(
-        instructions=system_prompt() + (CLOSING if conversation else '') + LANGUAGE.get(locale, ''),
+        instructions=(
+            system_prompt() + (CLOSING if conversation else '') + extra + LANGUAGE.get(locale, '')
+        ),
         tools=[{'type': 'web_search'}],
         reasoning={'effort': 'low'},
         max_output_tokens=settings.chat_max_output_tokens,
@@ -632,10 +676,15 @@ async def reply(
     history: list[Turn],
     locale: str = 'pt-BR',
     resume: Resume | None = None,
+    player: PlayerFacts | None = None,
 ) -> str:
     if await llm.flagged(text):
         raise Moderated
     if not ctx:
+        if player:
+            return await ask(
+                text, player_note(player), history, locale, conversation=True, extra=GENERAL
+            )
         return await ask(text, 'Sem contexto PSN carregado.', history, locale, conversation=True)
     focus = mentioned_trophies(text, ctx)
     found, used = await passages(ctx, text, focus)

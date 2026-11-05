@@ -347,6 +347,7 @@
       background: color-mix(in srgb, var(--color-bg-subtle) var(--alpha-heavy), transparent);
       backdrop-filter: blur(15px);
       padding: 4px 8px var(--bottom-bar-space);
+      transform: translateY(calc(-1 * var(--bar-lift, 0px)));
     }
 
     .nav {

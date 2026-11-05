@@ -233,26 +233,43 @@ export function resumeFrom(
   return { hoursAgo, earned: earned.map((t) => t.name), open: open.map((t) => t.name) }
 }
 
-export function reply(user: User, userText: string, ctx?: GameContext): Promise<string> {
+/** What the general conversation knows about the player: see playerFacts in routes/chat.ts. */
+export interface PlayerFacts {
+  platinums: number
+  platinumsThisYear: number
+  latestPlatinums: string[]
+  yearlyGoal: number | null
+  inProgress: { name: string; progress: number }[]
+  interests: string[]
+}
+
+async function replyBody(user: User, text: string, ctx?: GameContext, player?: PlayerFacts) {
+  const resume = ctx
+    ? resumeFrom(await recentMessages(user.id, RESUME_MESSAGES, ctx.game.id), ctx.trophies)
+    : null
+  return {
+    text,
+    context: ctx ? aiContext(ctx, user) : null,
+    locale: user.locale === 'en' ? 'en' : 'pt-BR',
+    ...(resume ? { resume } : {}),
+    ...(player ? { player } : {}),
+  }
+}
+
+export function reply(
+  user: User,
+  userText: string,
+  ctx?: GameContext,
+  player?: PlayerFacts,
+): Promise<string> {
   // The guide lookup is part of the answer's cost.
   return tagged({ user: user.id, action: 'chat' }, async () => {
     let text: string
     try {
-      const resume = ctx
-        ? resumeFrom(await recentMessages(user.id, RESUME_MESSAGES, ctx.game.id), ctx.trophies)
-        : null
-      text = await ask(
-        user,
-        'chat',
-        '/nexo/reply',
-        {
-          text: userText,
-          context: ctx ? aiContext(ctx, user) : null,
-          locale: user.locale === 'en' ? 'en' : 'pt-BR',
-          ...(resume ? { resume } : {}),
-        },
-        { text: userText, game: ctx?.game.id },
-      )
+      text = await ask(user, 'chat', '/nexo/reply', await replyBody(user, userText, ctx, player), {
+        text: userText,
+        game: ctx?.game.id,
+      })
     } catch (e) {
       // A message moderation refused: no answer was made, so nothing is stored.
       if (e instanceof AiError && e.status === 422) return translator(messages, user)('moderated')

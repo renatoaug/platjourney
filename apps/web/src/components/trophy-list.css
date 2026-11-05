@@ -1,28 +1,6 @@
 @layer screens {
-  .trophy-section-heading {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    margin-bottom: 16px;
-  }
-
-  .trophy-section-heading .trophy-heading {
-    flex: 1;
-    gap: 8px;
-    height: auto;
-    min-height: 32px;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: none;
-    font-size: var(--text-xl);
-    letter-spacing: var(--tracking-snug);
-    text-transform: none;
-  }
-
-  .trophy-section-heading p {
-    margin: 0;
+  .trophy-heading-note {
+    margin: 0 0 12px;
     color: var(--color-fg-muted);
     font-size: var(--text-sm);
   }
@@ -408,25 +386,6 @@
     border-bottom: 1px solid var(--color-border);
   }
 
-  /* The platinum stands out from the list: a platinum glow that fades to the right, no border, and
-     its metal as a badge. */
-  .trophy-row.is-platinum {
-    margin: 10px 0;
-    padding: 16px;
-    border-bottom: 0;
-    border-radius: var(--radius-tag);
-    background: linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-soft), transparent),
-      transparent 85%
-    );
-  }
-
-  .trophy-row.is-platinum .trophy-art {
-    box-shadow: 0 0 22px
-      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
-  }
-
   .trophy-row.is-platinum h4 {
     color: var(--color-trophy-platinum);
   }
@@ -690,10 +649,8 @@
     color: var(--color-trophy-platinum);
   }
 
-  /* The platinum lines up with the rest: same padding, its glow drawn behind the row instead. */
+  /* The platinum lines up with the rest. */
   .trophy-row.is-platinum {
-    position: relative;
-    isolation: isolate;
     margin: 0;
     padding: 12px 0;
     border-bottom: 1px solid var(--color-border);
@@ -701,17 +658,14 @@
     background: none;
   }
 
-  .trophy-row.is-platinum::after {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    inset: 6px -12px;
-    border-radius: var(--radius-control);
-    background: linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-soft), transparent),
-      transparent 85%
-    );
+  /* The art alive and bright, its light following the trophy's shape, as at the journey's destination. */
+  .trophy-row.is-platinum .trophy-art {
+    background: none;
+  }
+
+  .trophy-row.is-platinum .trophy-art > img {
+    filter: saturate(1.25) brightness(1.15)
+      drop-shadow(0 0 10px color-mix(in srgb, var(--color-trophy-gold) 55%, transparent));
   }
 
   /* The card's title as a HUD band: a label in capitals over the card's top, the count as a chip. */

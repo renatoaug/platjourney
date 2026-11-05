@@ -15,6 +15,7 @@ const messages = defineMessages({
     add: 'Adicionar aos interesses',
     added: 'Nos seus interesses',
     open: 'Ver no jogo',
+    talk: 'Conversar sobre este jogo',
     difficulty: 'Dificuldade',
     hours: 'Tempo até a platina',
     hoursUnit: ' horas',
@@ -35,6 +36,7 @@ const messages = defineMessages({
     add: 'Add to interests',
     added: 'In your interests',
     open: 'See in the game',
+    talk: 'Talk about this game',
     difficulty: 'Difficulty',
     hours: 'Time to platinum',
     hoursUnit: ' hours',
@@ -112,7 +114,7 @@ function AnswerHero({ art, children }: { art?: string | null; children: React.Re
 }
 
 /** The game an answer recommends: its art, what the platinum takes and the way to it. */
-export function AnswerGame({ card }: { card: ChatGameCard }) {
+export function AnswerGame({ card, onTalk }: { card: ChatGameCard; onTalk?: () => void }) {
   const t = useMessages(messages)
   const { find, toggle } = useInterests()
   const demo = useDemo()
@@ -146,6 +148,12 @@ export function AnswerGame({ card }: { card: ChatGameCard }) {
             <Icon name="arrow" />
             {t('open')}
           </Link>
+          {onTalk && (
+            <button type="button" className="answer-link" onClick={onTalk}>
+              <Icon name="nexo" />
+              {t('talk')}
+            </button>
+          )}
         </div>
       </AnswerHero>
       {(!!card.difficulty || !!card.hours || card.progress != null) && (

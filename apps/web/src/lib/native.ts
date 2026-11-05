@@ -72,3 +72,43 @@ export function tickOnChoices(): void {
     if ((e.target as Element | null)?.closest?.(TICKS)) tick()
   })
 }
+
+/** How far the bottom bar's bottom edge sits below what the screen shows, in pixels. */
+export function barOverflow(
+  barBottom: number,
+  visibleBottom: number,
+  screenHeight: number,
+): number {
+  return Math.max(0, Math.round(barBottom - Math.min(visibleBottom, screenHeight)))
+}
+
+/**
+ * The iOS app's web view can lay the page out taller than the screen, which leaves the fixed bottom
+ * bar below the edge with nothing to bring it back. This measures the bar and lifts it by what is
+ * hidden. In portrait only, since `screen.height` does not follow the rotation.
+ */
+export function keepBottomBarOnScreen(bar: HTMLElement): () => void {
+  if (!isNative()) return () => {}
+  let lift = 0
+  const check = () => {
+    const viewport = window.visualViewport
+    const visible = viewport ? viewport.offsetTop + viewport.height : window.innerHeight
+    const portrait = window.innerHeight >= window.innerWidth
+    const next = portrait
+      ? barOverflow(bar.getBoundingClientRect().bottom + lift, visible, window.screen.height)
+      : 0
+    if (next === lift) return
+    lift = next
+    bar.style.setProperty('--bar-lift', `${lift}px`)
+  }
+  check()
+  const targets: EventTarget[] = [window, window.visualViewport].filter((x) => !!x) as EventTarget[]
+  for (const target of targets) target.addEventListener('resize', check)
+  window.addEventListener('scroll', check, { passive: true })
+  document.addEventListener('visibilitychange', check)
+  return () => {
+    for (const target of targets) target.removeEventListener('resize', check)
+    window.removeEventListener('scroll', check)
+    document.removeEventListener('visibilitychange', check)
+  }
+}
