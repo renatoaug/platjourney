@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.50.1](https://github.com/renatoaug/platjourney/compare/v0.50.0...v0.50.1) (2026-11-05)
+
+### Bug Fixes
+
+* **web:** keep only lasting trophies under along the way ([#141](https://github.com/renatoaug/platjourney/issues/141)) ([2ab743b](https://github.com/renatoaug/platjourney/commit/2ab743b8af5ffee63e8d227c5ca5ae882e7ada96))
+
 ## [0.50.0](https://github.com/renatoaug/platjourney/compare/v0.49.0...v0.50.0) (2026-11-05)
 
 ### Features
