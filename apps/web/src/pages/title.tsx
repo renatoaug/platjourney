@@ -407,6 +407,7 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
             // Nexo talks about them by the catalog game.
             <TrophyList
               trophies={d.trophies ?? []}
+              guide={d.guide}
               prefix="title-t"
               np={owned ? d.np : null}
               askGame={owned ? undefined : { id: d.game.id, name: d.name }}

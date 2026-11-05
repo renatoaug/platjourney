@@ -68,6 +68,8 @@ export interface Guide {
   hardest: KeyTrophy | null
   mostTedious: KeyTrophy | null
   tricks: { trophy: string; trick: string; source: string }[]
+  // What each base-game trophy asks of the player: natural, hunt or grind. Older guides have none.
+  trophyKinds?: { trophy: string; kind: 'natural' | 'hunt' | 'grind' }[]
   // One entry per trophy. Guides from before 2026-09-29 have no date or status.
   buggy: {
     trophy: string

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
 import { current } from '../fixtures'
-import type { Trophy } from '../lib/types'
+import type { GuideDetail, Trophy } from '../lib/types'
 import { TrophyList } from './trophy-list'
 
 const meta: Meta = { title: 'Game/TrophyList' }
@@ -65,5 +65,24 @@ export const Loading: Story = {
         <h2>Troféus</h2>
         <TrophyList trophies={null} />
       </>,
+    ),
+}
+
+const kindOf = ['natural', 'hunt', 'grind'] as const
+
+/** With trophy kinds in the guide: a filter by kind, and a tag on each row. */
+export const WithKinds: Story = {
+  render: () =>
+    card(
+      <TrophyList
+        trophies={many}
+        guide={
+          {
+            trophyKinds: many
+              .filter((x) => x.type !== 'platinum')
+              .map((x, i) => ({ trophy: x.name, kind: kindOf[i % 3] })),
+          } as GuideDetail
+        }
+      />,
     ),
 }

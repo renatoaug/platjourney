@@ -9,16 +9,17 @@ import {
 } from 'react'
 import { achievementHistory, earnedTimestamp } from '../../../../shared/journey/history'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
-import { roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
+import { type RoadStopGeometry, roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
 import {
   ongoingObjectives,
   personalRoadmap,
   phasePlan,
   trophyAdvice,
+  trophyKind,
   trophyMentions,
   trophyRoadmap,
 } from '../lib/trophy-roadmap'
-import type { CurrentGame, RouteTip, Trophy } from '../lib/types'
+import type { CurrentGame, RouteTip, Trophy, TrophyKind } from '../lib/types'
 import { useGameSpoilers } from '../lib/use-game-spoilers'
 import { Icon } from '../ui/icon'
 import { GuideText } from '../ui/markdown'
@@ -64,9 +65,7 @@ const messages = defineMessages({
     duration: 'Acompanhamento durante a campanha',
     early: 'Orientação para o início',
     counterProgress: 'PSN: {value} / {target}',
-    previewLabel: 'PRÉVIA DO INÍCIO',
-    previewNote: 'Comparação sem progresso pessoal. Nenhuma conquista ou dado da conta é alterado.',
-    catalogCount: '{total} troféus · sem progresso pessoal',
+    catalogCount: '{total} troféus',
     ahead: 'Caminho à frente',
     past: 'Conquistas anteriores ({count})',
     stageDone: 'Caminho concluído',
@@ -74,10 +73,17 @@ const messages = defineMessages({
     next: 'Próximo marco',
     resume: 'Voltar à sugestão',
     selected: 'Desafio em foco',
-    guidance: 'Seu objetivo',
+    guidance: 'Objetivo',
     map: 'MAPA DA JORNADA',
     missable: 'Perdível',
     finale: 'Platina',
+    kind: { natural: 'Natural', hunt: 'Caçada', grind: 'Grind' },
+    kindCount: {
+      platinum: { one: '{count} platina', other: '{count} platinas' },
+      natural: { one: '{count} natural', other: '{count} naturais' },
+      hunt: { one: '{count} caçada', other: '{count} caçadas' },
+      grind: { one: '{count} grind', other: '{count} grinds' },
+    },
     count: '{earned} de {total} conquistados',
     unplacedNote:
       'Estes troféus não têm uma correspondência única nas fases do guia. Esses marcos seguem a lista PSN, não uma recomendação.',
@@ -88,7 +94,11 @@ const messages = defineMessages({
       'Troféus adicionais, separados da rota da platina. Sua preferência de progresso continua valendo no resumo do jogo.',
     earned: 'Conquistado',
     suggestion: 'Sugestão para agora',
-    note: 'Orientação do Nexo',
+    note: 'Como fazer',
+    helpful: 'Essa dica ajudou?',
+    helpfulYes: 'Sim',
+    helpfulNo: 'Não',
+    helpfulThanks: 'Valeu! Isso ajuda a melhorar as dicas.',
     talk: 'Conversar com Nexo',
     ask: 'Perguntar ao Nexo',
     warning: 'Atenção antes de avançar',
@@ -139,10 +149,7 @@ const messages = defineMessages({
     duration: 'Follow throughout the campaign',
     early: 'Guidance for the start',
     counterProgress: 'PSN: {value} / {target}',
-    previewLabel: 'START PREVIEW',
-    previewNote:
-      'Comparison without personal progress. No achievements or account data are changed.',
-    catalogCount: '{total} trophies · no personal progress',
+    catalogCount: '{total} trophies',
     ahead: 'The road ahead',
     past: 'Previous achievements ({count})',
     stageDone: 'Path complete',
@@ -150,10 +157,17 @@ const messages = defineMessages({
     next: 'Next milestone',
     resume: 'Return to suggestion',
     selected: 'Challenge in focus',
-    guidance: 'Your objective',
+    guidance: 'Objective',
     map: 'JOURNEY MAP',
     missable: 'Missable',
     finale: 'Platinum',
+    kind: { natural: 'Natural', hunt: 'Hunt', grind: 'Grind' },
+    kindCount: {
+      platinum: { one: '{count} platinum', other: '{count} platinums' },
+      natural: { one: '{count} natural', other: '{count} natural' },
+      hunt: { one: '{count} hunt', other: '{count} hunts' },
+      grind: { one: '{count} grind', other: '{count} grinds' },
+    },
     count: '{earned} of {total} earned',
     unplacedNote:
       'These trophies do not have a unique match in the guide phases. These milestones follow the PSN list, not a recommendation.',
@@ -164,7 +178,11 @@ const messages = defineMessages({
       'Additional trophies, separate from the platinum route. Your progress preference still applies to the game summary.',
     earned: 'Earned',
     suggestion: 'Suggested for now',
-    note: 'Nexo guidance',
+    note: 'How to do it',
+    helpful: 'Did this tip help?',
+    helpfulYes: 'Yes',
+    helpfulNo: 'No',
+    helpfulThanks: 'Thanks! This helps us improve the tips.',
     talk: 'Talk to Nexo',
     ask: 'Ask Nexo',
     warning: 'Before moving on',
@@ -212,11 +230,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           {t('note')}
         </span>
       )}
-      {trick && (
-        <p>
-          <GuideText text={trick} />
-        </p>
-      )}
+      {trick && <TrickSteps text={trick} />}
       <RoadmapTips tips={tips} />
       {steps.map((step) => (
         <p key={step}>
@@ -251,10 +265,69 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           <GuideText text={[advice.bug.issue, advice.bug.workaround].filter(Boolean).join('\n')} />
         </p>
       )}
+      {hasAdvice && <TipRating trophy={trophy} />}
       <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
         <Icon name="nexo" />
         {t('ask')}
       </JourneyLink>
+    </div>
+  )
+}
+
+/** A trick written one step per line reads as a numbered list; a single line stays a paragraph. */
+function TrickSteps({ text }: { text: string }) {
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+  if (lines.length < 2)
+    return (
+      <p>
+        <GuideText text={text} />
+      </p>
+    )
+  return (
+    <ol className="roadmap-steps">
+      {lines.map((line) => (
+        <li key={line}>
+          <GuideText text={line} />
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+/**
+ * Whether the tip helped. The answer only lives on the page: the usage plugin reads the click from
+ * `data-rate` and `data-trophy`, so nothing here talks to the server.
+ */
+function TipRating({ trophy }: { trophy: Trophy }) {
+  const t = useMessages(messages)
+  const [rated, setRated] = useState<'yes' | 'no' | null>(null)
+  return (
+    <div className="roadmap-rate" data-trophy={`${trophy.groupId}:${trophy.id}`}>
+      {rated ? (
+        <p role="status">{t('helpfulThanks')}</p>
+      ) : (
+        <>
+          <span id={`roadmap-rate-${trophy.id}`}>{t('helpful')}</span>
+          <fieldset aria-labelledby={`roadmap-rate-${trophy.id}`}>
+            {(['yes', 'no'] as const).map((answer) => (
+              <button
+                key={answer}
+                type="button"
+                className="chip"
+                data-rate={answer}
+                aria-label={t(answer === 'yes' ? 'helpfulYes' : 'helpfulNo')}
+                title={t(answer === 'yes' ? 'helpfulYes' : 'helpfulNo')}
+                onClick={() => setRated(answer)}
+              >
+                <Icon name={answer === 'yes' ? 'thumbs-up' : 'thumbs-down'} />
+              </button>
+            ))}
+          </fieldset>
+        </>
+      )}
     </div>
   )
 }
@@ -333,11 +406,12 @@ function TrophyStep({
       className={`roadmap-content roadmap-step${suggested ? ' is-suggested' : ''}`}
       id="roadmap-advice"
     >
-      <header className="roadmap-trophy-heading">
+      <p className="roadmap-objective">
         <Icon name="target" />
-        <h4>{t('guidance')}</h4>
-      </header>
-      <p className="roadmap-objective">{hidden ? t('secretNote') : trophy.detail}</p>
+        <span>
+          <b>{t('guidance')}</b> {hidden ? t('secretNote') : trophy.detail}
+        </span>
+      </p>
       {!hidden && (
         <>
           {trophy.progressValue != null && trophy.progressTarget != null && (
@@ -380,6 +454,7 @@ function RoadmapLandscape({
 }) {
   const t = useMessages(messages)
   const hidden = selected.hidden && !selected.earned
+  const kind = trophyKind(selected, game.guide)
   return (
     <div className="roadmap-landscape">
       <div className="roadmap-destination" data-tier={selected.type} key={anchor(selected)}>
@@ -396,6 +471,7 @@ function RoadmapLandscape({
               <Icon name="trophy" />
               {t(selected.type === 'platinum' ? 'platinumType' : selected.type)}
             </span>
+            {!hidden && kind && <span className={`roadmap-kind ${kind}`}>{t(`kind.${kind}`)}</span>}
             {!hidden && !selected.earned && (
               <RoadmapSignal
                 missable={!!trophyAdvice(selected, game.guide).warning}
@@ -625,8 +701,40 @@ function measuredRoadGeometry(first: HTMLElement | null) {
           secondPin && second
             ? secondPin.top - second.getBoundingClientRect().top + secondPin.height / 2
             : pin.top - firstRect.top + pin.height / 2,
+        stops: measuredStops(first?.parentElement ?? null),
       }
     : undefined
+}
+
+/**
+ * Every stop's centre and rim inside its own column, since natural trophies are drawn smaller. The
+ * road ends at a natural stop's border; the marker (`ring`) always goes round the outer ring line,
+ * which a natural stop shows once selected.
+ */
+function measuredStops(track: HTMLElement | null, ring = false): RoadStopGeometry[] | undefined {
+  const items = track ? [...track.querySelectorAll<HTMLElement>(':scope > li')] : []
+  const stops = items.map((item) => {
+    const box = item.getBoundingClientRect()
+    const pin = item.querySelector('.roadmap-route-pin')?.getBoundingClientRect()
+    // Big stops wear a 6px halo outside their border; small natural ones end at the border. It goes
+    // by the kind, not the selection, so the road holds still while the selection moves along it.
+    const halo = ring || item.dataset.kind !== 'natural' ? 6 : 0
+    return pin?.width
+      ? {
+          x: pin.left - box.left + pin.width / 2,
+          y: pin.top - box.top + pin.height / 2,
+          rim: pin.width / 2 + halo,
+        }
+      : undefined
+  })
+  return stops.length && stops.every(Boolean) ? (stops as RoadStopGeometry[]) : undefined
+}
+
+/** Under a stop's name: what the trophy asks of the player. */
+function RouteKind({ kind }: { kind?: TrophyKind }) {
+  const t = useMessages(messages)
+  if (!kind) return null
+  return <small className="roadmap-route-kind">{t(`kind.${kind}`)}</small>
 }
 
 function RoadmapForward({
@@ -673,9 +781,10 @@ function RoadmapForward({
           path.setAttribute('d', roadSegment(index, width, geometry))
         })
       })
+      const marker = geometry && { ...geometry, stops: measuredStops(track, true) }
       const paint = (value: number, scroll: number) => {
         position.current = value
-        const point = roadPoint(value, width, geometry)
+        const point = roadPoint(value, width, marker)
         track.style.setProperty('--roadmap-cursor-x', `${point.x - 6}px`)
         track.style.setProperty('--roadmap-cursor-y', `${point.y - 6}px`)
         track.scrollTo?.({ left: scroll, behavior: 'auto' })
@@ -772,6 +881,7 @@ function RoadmapForward({
             const current = selected === trophy
             const missable = roadmapRisk(game, trophy)
             const final = trophy.type === 'platinum'
+            const kind = hidden ? undefined : trophyKind(trophy, game.guide)
             const path = roadSegment(i, 180)
             return (
               <li
@@ -782,6 +892,7 @@ function RoadmapForward({
                 data-final={final}
                 data-earned={trophy.earned}
                 data-suggested={target === trophy}
+                data-kind={kind}
               >
                 <svg
                   className="roadmap-route-line"
@@ -809,12 +920,13 @@ function RoadmapForward({
                   </span>
                   <span className="roadmap-route-caption">
                     <span className="roadmap-route-name">{hidden ? t('secret') : trophy.name}</span>
+                    <RouteKind kind={kind} />
                     {target === trophy && !trophy.earned && (
                       <small className="roadmap-suggested-label">{t('suggestion')}</small>
                     )}
                     {trophy.earned ? (
                       <>
-                        <span className="roadmap-route-finale">{t('routeEarned')}</span>
+                        <span className="sr-only">{t('routeEarned')}</span>
                         {earnedTimestamp(trophy) === undefined && <small>{t('undated')}</small>}
                       </>
                     ) : (
@@ -912,6 +1024,7 @@ function RoadmapVisibility({
     <button
       type="button"
       className="roadmap-visibility"
+      aria-label={t(revealed ? 'hide' : 'reveal')}
       aria-pressed={revealed}
       disabled={saving}
       aria-busy={saving}
@@ -980,6 +1093,15 @@ export function TrophyRoadmap({
     [game.trophies, game.guide],
   )
   const base = game.trophies.filter((x) => x.groupId === 'default')
+  // The platinum counts too, so the numbers add up to the total just above them.
+  const parts = (['hunt', 'grind', 'natural', 'platinum'] as const).flatMap((kind) => {
+    const count = base.filter((x) =>
+      kind === 'platinum' ? x.type === 'platinum' : trophyKind(x, game.guide) === kind,
+    ).length
+    return count ? [t(`kindCount.${kind}`, { count })] : []
+  })
+  const classified = base.some((x) => trophyKind(x, game.guide))
+  const kindCounts = classified ? parts.join(' · ') : ''
   const done = base.some((x) => x.type === 'platinum' && x.earned)
   const focus = roadmapFocus(game, done)
   const reference = stages.flatMap((s) => s.trophies)
@@ -1028,6 +1150,7 @@ export function TrophyRoadmap({
           {source.trophies.some((trophy) => trophy.hidden) && (
             <RoadmapVisibility revealed={revealed} setRevealed={setRevealed} saving={saving} />
           )}
+          {!!kindCounts && <p className="roadmap-kinds">{kindCounts}</p>}
         </div>
       </header>
       <p className="roadmap-preview-notice">
@@ -1036,11 +1159,6 @@ export function TrophyRoadmap({
         </strong>{' '}
         {t('betaNote')}
       </p>
-      {inspecting && (
-        <p className="roadmap-preview-notice" role="status">
-          <strong>{t('previewLabel')}</strong> {t('previewNote')}
-        </p>
-      )}
       {!selected || !stage ? (
         <p>{t('empty')}</p>
       ) : (

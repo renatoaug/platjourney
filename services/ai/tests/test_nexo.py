@@ -678,3 +678,36 @@ def test_only_a_recent_conquest_keeps_its_date() -> None:
     assert not nexo.recent((today - timedelta(days=45)).isoformat())
     assert not nexo.recent(None)
     assert not nexo.recent('sem data')
+
+
+def test_the_next_action_comes_after_the_natural_trophies() -> None:
+    guide: dict[str, Any] = {
+        'roadmap': [
+            {'phase': 'Fase 1', 'trophies': ['Capítulo 1', 'Capítulo 2', 'Piedade', 'Fim']}
+        ],
+        'trophyKinds': [
+            {'trophy': 'Capítulo 1', 'kind': 'natural'},
+            {'trophy': 'Capítulo 2', 'kind': 'natural'},
+            {'trophy': 'Piedade', 'kind': 'hunt'},
+            {'trophy': 'Fim', 'kind': 'grind'},
+        ],
+    }
+    names = ['Capítulo 1', 'Capítulo 2', 'Piedade']
+    open_all = [Trophy.model_validate(trophy(id=i, name=n)) for i, n in enumerate(names)]
+    note = nexo.next_on_route(guide, open_all)
+    assert '2 natural(is)' in note
+    assert 'o próximo que exige ação é Piedade (caçada)' in note
+    assert nexo.next_on_route(guide, open_all[2:]) == (
+        'Próximos troféus na rota: o próximo que exige ação é Piedade (caçada).'
+    )
+    assert 'nenhum outro exige ação' in nexo.next_on_route(guide, open_all[:1])
+    assert nexo.next_on_route({'roadmap': guide['roadmap']}, open_all) == ''
+
+
+def test_a_hidden_trophy_stays_out_of_the_route_note() -> None:
+    guide: dict[str, Any] = {
+        'roadmap': [{'phase': 'Fase 1', 'trophies': ['Segredo']}],
+        'trophyKinds': [{'trophy': 'Segredo', 'kind': 'hunt'}],
+    }
+    secret = Trophy.model_validate(trophy(id=1, name='Segredo', hidden=True))
+    assert nexo.next_on_route(guide, [secret]) == ''
