@@ -21,6 +21,8 @@ import {
   recentMessages,
 } from '../repository/activity.ts'
 import { gamesForTitles, getGame, searchCatalog } from '../repository/game.ts'
+import { listInterests } from '../repository/interest.ts'
+import { listPlatinums } from '../repository/platinum.ts'
 import { guideFacts } from '../repository/similar.ts'
 import type { User } from '../repository/user.ts'
 import { chatOrCheck } from '../watcher.ts'
@@ -96,8 +98,9 @@ const asksNextPick = (text: string) =>
   )
 
 // Nexo's normal recommendation, charged and recorded as one: among the saved games, or any game
-// when there is none to choose from. Null when nothing can be picked, and the chat answers instead.
-async function pickAnswer(me: User, text: string, titles: Api['titles'], game?: string) {
+// when there is none to choose from. It is not about the open game, so it goes to the general
+// conversation. Null when nothing can be picked, and the chat answers instead.
+async function pickAnswer(me: User, text: string, titles: Api['titles']) {
   const library = await titles()
   const locale = userLocale(me)
   const pick =
@@ -122,21 +125,58 @@ async function pickAnswer(me: User, text: string, titles: Api['titles'], game?: 
   const answer = [pick.why, pick.firstStep ? t('firstStep', { step: pick.firstStep }) : '']
     .filter(Boolean)
     .join('\n\n')
-  await appendMessage(me.id, 'user', text, game)
-  await appendMessage(me.id, 'assistant', answer, game, card)
-  await logTip(me.id, 'chat', answer, game)
+  await appendMessage(me.id, 'user', text)
+  await appendMessage(me.id, 'assistant', answer, undefined, card)
+  await logTip(me.id, 'chat', answer)
   return answer
 }
 
+// What the general conversation knows about the player, with no game open. Facts only: the words
+// are the AI service's.
+async function playerFacts(me: User, titles: Api['titles']) {
+  const year = new Date().getFullYear()
+  const [library, platinums, interests] = await Promise.all([
+    titles(),
+    listPlatinums(me.id),
+    listInterests(me.id, year),
+  ])
+  return {
+    platinums: platinums.length,
+    platinumsThisYear: platinums.filter((p) => new Date(p.earned_at).getFullYear() === year).length,
+    latestPlatinums: platinums.slice(0, 5).map((p) => p.game?.name ?? p.trophy_name),
+    yearlyGoal: me.goal_targets?.[String(year)] ?? null,
+    inProgress: library
+      .filter(
+        (t) => t.progress > 0 && t.earnedByType.platinum === 0 && t.definedByType.platinum > 0,
+      )
+      .sort((a, b) => b.progress - a.progress)
+      .slice(0, 8)
+      .map((t) => ({ name: t.name, progress: t.progress })),
+    interests: interests.slice(0, 8).flatMap((i) => (i.game?.name ? [i.game.name] : [])),
+  }
+}
+
 async function chatSend({ req, res, me, titles }: Api) {
-  const { text } = await readBody(req)
+  const { text, general } = await readBody(req)
   if (typeof text !== 'string' || !text.trim()) return json(res, 400, { error: 'text required' })
-  const ctx = await chatOrCheck(me)
   const question = text.trim().slice(0, config.chat.maxChars)
-  const picked = asksNextPick(question)
-    ? await pickAnswer(me, question, titles, ctx?.game.id)
-    : null
-  const response = picked ?? (await reply(me, question, ctx))
+  const picked = asksNextPick(question) ? await pickAnswer(me, question, titles) : null
+  if (picked)
+    return json(res, 200, {
+      text: picked,
+      general: true,
+      messages: await recentMessages(me.id, 40, null),
+    })
+  if (general === true) {
+    const response = await reply(me, question, undefined, await playerFacts(me, titles))
+    return json(res, 200, {
+      text: response,
+      general: true,
+      messages: await recentMessages(me.id, 40, null),
+    })
+  }
+  const ctx = await chatOrCheck(me)
+  const response = await reply(me, question, ctx)
   return json(res, 200, {
     text: response,
     messages: withTrophyCards(await recentMessages(me.id, 40, ctx?.game.id ?? null), me, ctx),

@@ -1,4 +1,4 @@
-/** Chat with Nexo, one conversation per game. Each conversation is fetched once and kept in the app cache, so navigating away and back keeps it (and an answer still in flight). */
+/** Chat with Nexo: a general conversation and one per game. Each conversation is fetched once and kept in the app cache, so navigating away and back keeps it (and an answer still in flight). */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
@@ -24,27 +24,21 @@ const messages = defineMessages({
     sendFailed: 'Não conseguimos falar com o Nexo. Tenta de novo.',
     subtitleLoading: 'Um passo mais perto da platina.',
     subtitleGame: '{name} · {progress}%',
-    subtitleNoGame: 'Escolha um jogo para começar a conversa.',
+    subtitleGeneral: 'Suas platinas, metas e próximos jogos.',
     subtitleNotOwned: 'Falando sobre {name}, antes de você comprar.',
     switchFailed: 'Não consegui trocar o jogo. Tenta de novo.',
-    readOnlyGeneral: 'Conversas de antes de o Nexo separar por jogo.',
-    backToCurrent: 'Voltar para {name}',
-    backToChat: 'Voltar para a conversa',
   },
   [Language.En]: {
     sendFailed: 'Could not reach Nexo. Try again.',
     subtitleLoading: 'One step closer to the platinum.',
     subtitleGame: '{name} · {progress}%',
-    subtitleNoGame: 'Pick a game to start the conversation.',
+    subtitleGeneral: 'Your platinums, goals and next games.',
     subtitleNotOwned: 'Talking about {name}, before you buy it.',
     switchFailed: 'Could not switch the game. Try again.',
-    readOnlyGeneral: 'Conversations from before Nexo kept one per game.',
-    backToCurrent: 'Back to {name}',
-    backToChat: 'Back to the conversation',
   },
 })
 
-type ChatReply = { text?: string; error?: string; messages?: ChatMessage[] }
+type ChatReply = { text?: string; error?: string; messages?: ChatMessage[]; general?: boolean }
 
 function hasReply({ error, text, messages }: ChatReply) {
   if (error) return false
@@ -115,9 +109,10 @@ function subtitleOf(
   loaded: boolean,
   current: CurrentGame | null | undefined,
   includeDlc: boolean,
+  general: boolean,
 ) {
   if (!loaded) return t('subtitleLoading')
-  if (!current) return t('subtitleNoGame')
+  if (general || !current) return t('subtitleGeneral')
   if (current.owned === false) return t('subtitleNotOwned', { name: current.name })
   return t('subtitleGame', {
     name: current.name,
@@ -180,22 +175,19 @@ function markedKey(
   return draft ? threadKey(draft) : key
 }
 
-/** Over the box of an old conversation: it is read only, with the way back to the chat. */
-function ReadOnlyBar({
-  current,
-  onBack,
-}: {
-  current: CurrentGame | null | undefined
-  onBack: () => void
-}) {
-  const t = useMessages(messages)
+/** The general conversation, always on top of the list, even before its first message. */
+function generalThread(threads: ChatThread[]): ChatThread {
   return (
-    <>
-      <span>{t('readOnlyGeneral')}</span>
-      <button type="button" className="button ghost sm" onClick={onBack}>
-        {current ? t('backToCurrent', { name: current.name }) : t('backToChat')}
-      </button>
-    </>
+    threads.find((x) => !x.game) ?? {
+      game: null,
+      np: null,
+      name: null,
+      cover_url: null,
+      messages: 0,
+      last_at: new Date().toISOString(),
+      last_question: null,
+      draft: true,
+    }
   )
 }
 
@@ -266,17 +258,32 @@ function LiveNexo() {
       .catch(() => shown.current === key && setChat('error'))
   }, [data, key, chats, write])
 
+  // What to platinum next is not about this game: its answer lives in the general conversation.
+  const landReply = (r: ChatReply, k: string) => {
+    if (r.general && r.messages && k !== 'none') {
+      write(
+        k,
+        (chats[k] ?? []).filter((m) => !m.optimistic),
+      )
+      write('none', r.messages)
+      if (shown.current === k) setViewing('none')
+      return
+    }
+    write(
+      k,
+      r.messages ?? [...(chats[k] ?? []), { role: 'assistant', content: r.text ?? r.error ?? '' }],
+    )
+  }
+
   const send = async (text: string) => {
     if (cache.chatSending === true) return
-    const k = currentKey
+    const k = key
     cache.chatSending = true
     setSending(true)
     write(k, [...(chats[k] ?? []), { role: 'user', content: text, optimistic: true }])
     try {
-      const r = await api<ChatReply>('/api/chat', { text })
-      const messages = r.messages
-      if (messages) write(k, messages)
-      else write(k, [...(chats[k] ?? []), { role: 'assistant', content: r.text ?? r.error ?? '' }])
+      const r = await api<ChatReply>('/api/chat', k === 'none' ? { text, general: true } : { text })
+      landReply(r, k)
       if (hasReply(r) && shown.current === k && leaving.current !== k) {
         setReplyVersion((version) => version + 1)
       }
@@ -290,7 +297,8 @@ function LiveNexo() {
   }
 
   const current = chatGame
-  const subtitle = subtitleOf(t, !!data, current, me.includeDlcProgress)
+  const general = key === 'none'
+  const subtitle = subtitleOf(t, !!data, current, me.includeDlcProgress, general)
 
   // The chat's game, as /game in Telegram: the server loads that game's context, then the screen
   // reloads its state so the subtitle and the next answers follow it.
@@ -352,8 +360,8 @@ function LiveNexo() {
     } as LibraryGame)
   })
 
-  // A conversation from the list: the chat's game is just shown; another game of the library becomes
-  // the chat's game; one outside the library, or the old messages without a game, is read only.
+  // A conversation from the list: the chat's game is just shown; another game becomes the chat's
+  // game; the general one is opened in place, keeping the chat's game for when the player returns.
   // A game the player chose here (a command or the list): the trophy and the way back no longer apply.
   const chooseGame = (game: LibraryGame) => {
     setTrophy(null)
@@ -374,18 +382,18 @@ function LiveNexo() {
   // the player leaves without writing, since nothing is stored until a message is sent.
   const heading = target ? threadFor(target, threads) : undefined
   const draft = draftThread(target, heading, current, threads)
-  const listed = threads && (draft ? [draft, ...threads] : threads)
+  const listed = threads && [
+    generalThread(threads),
+    ...(draft ? [draft] : []),
+    ...threads.filter((x) => x.game),
+  ]
   // While switching, the conversation heading for the new game is the one marked.
   const marked = markedKey(target, heading, draft, key)
-  const reading = viewing !== null && viewing !== currentKey
-  const readOnly = reading ? (
-    <ReadOnlyBar current={current} onBack={() => setViewing(null)} />
-  ) : undefined
 
   return (
     <Page path="/nexo">
       <div className="nexo-layout nexo-conversation">
-        {/* The list shows once there is a conversation, or the chat's game waits for its first. */}
+        {/* The general conversation is always there, so the list shows as soon as it loads. */}
         {listed?.length ? (
           <>
             <ChatThreads
@@ -402,7 +410,7 @@ function LiveNexo() {
           historyControl={
             listed?.length ? <ChatThreadsToggle onOpen={() => setSheet(true)} /> : undefined
           }
-          readOnly={readOnly}
+          general={general}
           chat={chat}
           sending={sending}
           subtitle={subtitle}

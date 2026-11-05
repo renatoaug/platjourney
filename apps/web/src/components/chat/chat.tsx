@@ -1,9 +1,11 @@
 /** Nexo: a quiet header, the conversation log and the message box. Presentational; the /nexo screen fetches and sends. */
 import {
+  createContext,
   type FormEvent,
   type KeyboardEvent,
   type ReactNode,
   type RefObject,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -33,6 +35,18 @@ import './chat.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
+    general: {
+      pick: { q: 'O que platinar agora?', label: 'O que platinar agora?' },
+      goal: { q: 'Como está minha meta de platinas este ano?', label: 'Como está minha meta?' },
+      closest: {
+        q: 'Quais jogos meus estão mais perto da platina?',
+        label: 'Mais perto da platina',
+      },
+      latest: {
+        q: 'Quantas platinas eu já fiz e quais foram as últimas?',
+        label: 'Minhas platinas',
+      },
+    },
     suggestions: {
       remaining: {
         q: 'O que falta pra platina e qual a ordem mais eficiente?',
@@ -117,6 +131,18 @@ const messages = defineMessages({
     },
   },
   [Language.En]: {
+    general: {
+      pick: { q: 'What should I platinum now?', label: 'What to platinum now?' },
+      goal: { q: 'How is my platinum goal this year?', label: 'How is my goal?' },
+      closest: {
+        q: 'Which of my games are closest to the platinum?',
+        label: 'Closest to platinum',
+      },
+      latest: {
+        q: 'How many platinums do I have and which were the latest?',
+        label: 'My platinums',
+      },
+    },
     suggestions: {
       remaining: {
         q: 'What is left for the platinum, and what is the most efficient order?',
@@ -216,6 +242,14 @@ export interface ChatMessage {
 export type ChatLoad = ChatMessage[] | 'loading' | 'error'
 
 const SUGGESTIONS = ['remaining', 'missable', 'easiest', 'stuck'] as const
+const GENERAL_SUGGESTIONS = ['pick', 'goal', 'closest', 'latest'] as const
+
+/** Opens the conversation of a game a card recommended. */
+const TalkAboutGame = createContext<((card: ChatGameCard) => void) | null>(null)
+const talkFrom = (onPickGame?: (game: LibraryGame) => void) =>
+  onPickGame
+    ? (card: ChatGameCard) => onPickGame({ game: card.game, name: card.name } as LibraryGame)
+    : null
 
 // The demo's examples are about its current game.
 const DEMO_GAME = {
@@ -270,6 +304,8 @@ function AssistantMessage({
 }) {
   const t = useMessages(messages)
   const [body, source] = splitSource(message?.content ?? '')
+  const talk = useContext(TalkAboutGame)
+  const card = message?.card
   return (
     <div
       className={`msg assistant${pending ? ' pending' : ''}`}
@@ -277,7 +313,9 @@ function AssistantMessage({
     >
       {!pending && message && <MessageMeta message={message} />}
       {!pending && message?.trophy && <AnswerTrophy trophy={message.trophy} game={message.game} />}
-      {!pending && message?.card?.kind === 'game' && <AnswerGame card={message.card} />}
+      {!pending && card?.kind === 'game' && (
+        <AnswerGame card={card} onTalk={talk ? () => talk(card) : undefined} />
+      )}
       {pending ? (
         <div className="message-content">
           <span className="typing" role="img" aria-label={t('typing')}>
@@ -522,10 +560,12 @@ function ChatBottom({
 /** Ready questions above the log: about the trophy when there is one, general ones otherwise. */
 function ChatChips({
   trophy,
+  general,
   sending,
   onSend,
 }: {
   trophy: string | null
+  general: boolean
   sending: boolean
   onSend: (text: string) => void
 }) {
@@ -544,21 +584,34 @@ function ChatChips({
               {t(`trophy.${k}`)}
             </button>
           ))
-        : SUGGESTIONS.map((s) => {
-            const q = t(`suggestions.${s}.q`)
-            return (
+        : general
+          ? GENERAL_SUGGESTIONS.map((s) => (
               <button
                 key={s}
                 type="button"
                 className="chip"
-                data-q={q}
+                data-q={t(`general.${s}.q`)}
                 disabled={sending}
-                onClick={() => onSend(q)}
+                onClick={() => onSend(t(`general.${s}.q`))}
               >
-                {t(`suggestions.${s}.label`)}
+                {t(`general.${s}.label`)}
               </button>
-            )
-          })}
+            ))
+          : SUGGESTIONS.map((s) => {
+              const q = t(`suggestions.${s}.q`)
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  className="chip"
+                  data-q={q}
+                  disabled={sending}
+                  onClick={() => onSend(q)}
+                >
+                  {t(`suggestions.${s}.label`)}
+                </button>
+              )
+            })}
     </div>
   )
 }
@@ -669,6 +722,7 @@ export function NexoChat({
   trophy = null,
   onClearTrophy,
   note,
+  general = false,
   historyControl,
   replyVersion = 0,
 }: {
@@ -691,6 +745,8 @@ export function NexoChat({
   /** A trophy the player came to ask about: it sits on the box and every question names it. */
   trophy?: string | null
   onClearTrophy?: () => void
+  /** The conversation with no game open: its suggestions are about the player. */
+  general?: boolean
   /** A discreet line under the subtitle (the game the player was on before a link switched it). */
   note?: ReactNode
   historyControl?: ReactNode
@@ -816,7 +872,7 @@ export function NexoChat({
         </div>
         {note && <p className="nexo-note">{note}</p>}
         {!demo && Array.isArray(chat) && !chat.length && !sending && (
-          <ChatChips trophy={trophy} sending={sending} onSend={send} />
+          <ChatChips trophy={trophy} general={general} sending={sending} onSend={send} />
         )}
       </div>
       <div
@@ -828,7 +884,13 @@ export function NexoChat({
         // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable log must be reachable by keyboard (WCAG 2.1.1)
         tabIndex={0}
       >
-        {demo ? <DemoExamples /> : <ChatLog chat={chat} sending={sending} />}
+        {demo ? (
+          <DemoExamples />
+        ) : (
+          <TalkAboutGame.Provider value={talkFrom(onPickGame)}>
+            <ChatLog chat={chat} sending={sending} />
+          </TalkAboutGame.Provider>
+        )}
       </div>
       <ChatBottom demo={demo} onConnect={onConnect} readOnly={readOnly}>
         <ChatForm

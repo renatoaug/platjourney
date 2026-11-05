@@ -43,6 +43,8 @@ class ReplyRequest(Wire):
     # The app's language, for a reply with no game context.
     locale: Literal['pt-BR', 'en'] = 'pt-BR'
     resume: nexo.Resume | None = None
+    # The general conversation, with no game open.
+    player: nexo.PlayerFacts | None = None
 
 
 @router.post('/tip')
@@ -62,7 +64,9 @@ async def trophy_help(body: TrophyHelpRequest) -> Answer:
 async def reply(body: ReplyRequest) -> Answer:
     try:
         return Answer(
-            text=await nexo.reply(body.text, body.context, body.history, body.locale, body.resume)
+            text=await nexo.reply(
+                body.text, body.context, body.history, body.locale, body.resume, body.player
+            )
         )
     except nexo.Moderated:
         # 422 tells the server the message itself was refused, not that the model failed.

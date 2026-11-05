@@ -40,7 +40,7 @@ test('the subtitle names the current game', () => {
   expect(screen.getByText('DAYS GONE · 26%')).toBeTruthy()
   unmount()
   const second = renderApp(<Nexo />)
-  expect(screen.getByText('Escolha um jogo para começar a conversa.')).toBeTruthy()
+  expect(screen.getByText('Suas platinas, metas e próximos jogos.')).toBeTruthy()
   second.unmount()
   renderApp(<Nexo />, { value: { data: null } })
   expect(screen.getByText('Um passo mais perto da platina.')).toBeTruthy()
@@ -69,7 +69,7 @@ test('sending shows the message at once and then the whole conversation back', a
   type('E agora?')
   expect(within(log()).getByText('E agora?')).toBeTruthy()
   expect(await within(log()).findByText('Siga com as hordas.')).toBeTruthy()
-  expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ text: 'E agora?' })
+  expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ text: 'E agora?', general: true })
   expect(document.querySelector('.nexo-chat-heading .nexo-hero.received')).toBeTruthy()
   expect(done).toHaveBeenCalled()
   window.removeEventListener(MODEL_WORK_DONE, done)
@@ -267,7 +267,7 @@ test('a conversation about a game outside the library switches by the game', asy
   )
 })
 
-test('the older messages without a game are read only, with a way back', async () => {
+test('the general conversation stays open to write, without leaving the game', async () => {
   const calls = mockApi({
     '/api/chat/threads': [
       thread({}),
@@ -278,19 +278,63 @@ test('the older messages without a game are read only, with a way back', async (
   const game = current as unknown as CurrentGame
   renderApp(<Nexo />, { value: { data: { ...SAMPLE_DATA, current: game } } })
   fireEvent.click(await screen.findByRole('button', { name: /Geral/ }))
-  expect(await screen.findByText('Conversas de antes de o Nexo separar por jogo.')).toBeTruthy()
-  expect(calls.some((c) => c.path === '/api/chat?game=none')).toBe(true)
-  expect(screen.queryByRole('combobox', { name: 'Mensagem para Nexo' })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: `Voltar para ${game.name}` }))
-  expect(await screen.findByRole('combobox', { name: 'Mensagem para Nexo' })).toBeTruthy()
+  expect(await screen.findByText('Suas platinas, metas e próximos jogos.')).toBeTruthy()
+  await waitFor(() => expect(calls.some((c) => c.path === '/api/chat?game=none')).toBe(true))
+  expect(screen.getByRole('combobox', { name: 'Mensagem para Nexo' })).toBeTruthy()
 })
 
-test('without any conversation the list stays hidden', async () => {
-  const calls = mockApi({ '/api/chat/threads': [], '/api/chat': [] })
+test('a message in the general conversation is sent as general', async () => {
+  const calls = mockApi({
+    '/api/chat/threads': [thread({ game: null, np: null })],
+    '/api/chat': [],
+    'POST /api/chat': {
+      text: 'Faltam 7.',
+      general: true,
+      messages: [
+        { role: 'user', content: 'minha meta?' },
+        { role: 'assistant', content: 'Faltam 7.' },
+      ],
+    },
+  })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, { value: { data: { ...SAMPLE_DATA, current: game } } })
+  fireEvent.click(await screen.findByRole('button', { name: /Geral/ }))
+  await screen.findByText('Suas platinas, metas e próximos jogos.')
+  type('minha meta?')
+  await within(log()).findByText('Faltam 7.')
+  expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
+    text: 'minha meta?',
+    general: true,
+  })
+})
+
+test('what to platinum next, asked in a game, opens in the general conversation', async () => {
+  mockApi({
+    '/api/chat/threads': [thread({ game: null, np: null })],
+    '/api/chat': messages,
+    'POST /api/chat': {
+      text: 'Vai de Stray.',
+      general: true,
+      messages: [
+        { role: 'user', content: 'o que platinar agora?' },
+        { role: 'assistant', content: 'Vai de Stray.' },
+      ],
+    },
+  })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, { value: { data: { ...SAMPLE_DATA, current: game } } })
+  await within(log()).findByText('E depois disso?')
+  type('o que platinar agora?')
+  await within(log()).findByText('Vai de Stray.')
+  expect(screen.getByText('Suas platinas, metas e próximos jogos.')).toBeTruthy()
+  expect(within(log()).queryByText('E depois disso?')).toBeNull()
+})
+
+test('without any conversation the list still offers the general one', async () => {
+  mockApi({ '/api/chat/threads': [], '/api/chat': [] })
   renderApp(<Nexo />)
-  await waitFor(() => expect(calls.some((c) => c.path === '/api/chat/threads')).toBe(true))
-  expect(screen.queryByRole('complementary', { name: 'Conversas' })).toBeNull()
-  expect(screen.queryByRole('button', { name: 'Conversas' })).toBeNull()
+  expect(await screen.findByRole('button', { name: /Geral/ })).toBeTruthy()
+  expect(await screen.findByRole('button', { name: 'O que platinar agora?' })).toBeTruthy()
 })
 
 test('a game outside the library says the conversation is before buying it', () => {
@@ -327,9 +371,10 @@ test("the chat's game without a conversation shows on top as a new conversation"
   renderApp(<Nexo />, { value: { data: { ...SAMPLE_DATA, current: game } } })
   const list = await screen.findByRole('complementary', { name: 'Conversas' })
   const items = within(list).getAllByRole('listitem')
-  expect(items[0].textContent).toContain(game.name)
-  expect(items[0].textContent).toContain('Nova conversa')
-  expect(within(items[0]).getByRole('button').getAttribute('aria-current')).toBe('true')
+  expect(items[0].textContent).toContain('Geral')
+  expect(items[1].textContent).toContain(game.name)
+  expect(items[1].textContent).toContain('Nova conversa')
+  expect(within(items[1]).getByRole('button').getAttribute('aria-current')).toBe('true')
 })
 
 test('opening Nexo from a game page never flashes the previous game conversation', async () => {
@@ -440,10 +485,10 @@ test('a reply arriving while reading another conversation does not react there o
   await within(log()).findByText('E depois disso?')
   type('O que vem depois?')
   fireEvent.click(await screen.findByRole('button', { name: /Geral/ }))
-  await screen.findByText('Conversas de antes de o Nexo separar por jogo.')
+  await screen.findByText('Suas platinas, metas e próximos jogos.')
   await act(async () => answer({ text: 'Uma resposta nova para o jogo.' }))
   expect(reacted()).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: `Voltar para ${game.name}` }))
+  fireEvent.click(await screen.findByRole('button', { name: new RegExp(game.name) }))
   await within(log()).findByText('Uma resposta nova para o jogo.')
   expect(reacted()).toBeNull()
 })
@@ -511,7 +556,7 @@ test('the latest general conversation remains readable without changing game con
     route: '/nexo',
     value: { data: { ...SAMPLE_DATA, current: game } },
   })
-  expect(await screen.findByText('Conversas de antes de o Nexo separar por jogo.')).toBeTruthy()
+  expect(await screen.findByText('Suas platinas, metas e próximos jogos.')).toBeTruthy()
   expect(await screen.findByText('E depois disso?')).toBeTruthy()
   expect(calls.some((c) => c.path === '/api/chat?game=none')).toBe(true)
   expect(calls.some((c) => c.method === 'POST')).toBe(false)
