@@ -10,7 +10,6 @@ import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
 import { DifficultyMeter } from '../components/difficulty-meter'
 import { GameBackdrop, ScenesButton, useScene } from '../components/game-backdrop'
-import { GameColumns } from '../components/game-columns'
 import { GameNav, type GameSection } from '../components/game-nav'
 import { GameAbout, type GameStore, StoreOffer } from '../components/game-showcase'
 import { Guide, GuideSkeleton } from '../components/guide'
@@ -239,21 +238,14 @@ function TitleSkeleton({ owned = true }: { owned?: boolean }) {
         <Sk w="186px" h={52} style={{ borderRadius: 'var(--radius-pill)' }} />
       </div>
       <TrophyRoadmapSkeleton />
-      <GameColumns
-        style={{ marginTop: 20 }}
-        trophies={
-          <div className="card">
-            <TrophyListSkeleton />
-          </div>
-        }
-        guide={
-          <div className="stack">
-            <div className="card">
-              <GuideSkeleton />
-            </div>
-          </div>
-        }
-      />
+      <div className="stack title-columns">
+        <div className="card">
+          <TrophyListSkeleton />
+        </div>
+        <div className="card">
+          <GuideSkeleton />
+        </div>
+      </div>
     </>
   )
 }
@@ -302,8 +294,8 @@ function HeroBottom({ d }: { d: TitleDetail }) {
 
 const TITLE_SECTIONS: [GameSection, string][] = [
   ['route', 'journey-roadmap'],
-  ['guide', 'title-guide'],
   ['trophies', 'title-trophies'],
+  ['guide', 'title-guide'],
   ['similar', 'similar-games'],
 ]
 
@@ -403,50 +395,42 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
           }}
         />
       )}
-      {/* Every game gets the same two columns as the current game: the guide on the left,
-          the trophies beside it. A game whose PSN list is not known yet says so where the list goes. */}
-      <GameColumns
-        id="game-columns"
-        style={{ marginTop: 20 }}
-        trophies={
-          <div
-            className={`card${owned || d.trophies?.length ? '' : ' title-trophies-pending'}`}
-            id="title-trophies"
-          >
-            {owned || d.trophies?.length ? (
-              // Games not owned list their trophies from the catalog, without the player's progress.
-              // Nexo talks about them by the catalog game.
-              <TrophyList
-                trophies={d.trophies ?? []}
-                prefix="title-t"
-                np={owned ? d.np : null}
-                askGame={owned ? undefined : { id: d.game.id, name: d.name }}
-              />
-            ) : (
-              <>
-                <h2 className="trophy-heading">
-                  <Icon name="trophy" />
-                  {t('trophies')}
-                </h2>
-                <EmptyState
-                  className="title-trophies-wait"
-                  icon="clock"
-                  title={t('trophiesPendingTitle')}
-                >
-                  {t('trophiesPending')}
-                </EmptyState>
-              </>
-            )}
-          </div>
-        }
-        guide={
-          <div className="stack">
-            <div className="card" id="title-guide">
-              {guide}
-            </div>
-          </div>
-        }
-      />
+      {/* Trophies first, then the guide; the section navigation reaches both. A game whose PSN
+          list is not known yet says so. */}
+      <div className="stack title-columns" id="game-columns">
+        <div
+          className={`card${owned || d.trophies?.length ? '' : ' title-trophies-pending'}`}
+          id="title-trophies"
+        >
+          {owned || d.trophies?.length ? (
+            // Games not owned list their trophies from the catalog, without the player's progress.
+            // Nexo talks about them by the catalog game.
+            <TrophyList
+              trophies={d.trophies ?? []}
+              prefix="title-t"
+              np={owned ? d.np : null}
+              askGame={owned ? undefined : { id: d.game.id, name: d.name }}
+            />
+          ) : (
+            <>
+              <h2 className="trophy-heading">
+                <Icon name="trophy" />
+                {t('trophies')}
+              </h2>
+              <EmptyState
+                className="title-trophies-wait"
+                icon="clock"
+                title={t('trophiesPendingTitle')}
+              >
+                {t('trophiesPending')}
+              </EmptyState>
+            </>
+          )}
+        </div>
+        <div className="card" id="title-guide">
+          {guide}
+        </div>
+      </div>
       {similar}
     </>
   )

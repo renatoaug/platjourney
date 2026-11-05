@@ -869,6 +869,20 @@
     color: var(--color-fg);
   }
 
+  /* On a phone the difficulty takes its whole line, the bar reaching the edge, and the short facts
+     share the next one. */
+  @media (max-width: 760px) {
+    .hero.immersive .hero-top .meta > .dm {
+      display: flex;
+      flex: 1 0 100%;
+      box-sizing: border-box;
+    }
+
+    .hero.immersive .hero-top .meta > .dm .dm-body {
+      flex: 1;
+    }
+  }
+
   .hero.immersive .meta > .ok {
     border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
     color: var(--color-accent);

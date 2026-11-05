@@ -420,27 +420,25 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
  * `title-t` on a title page); `np` turns on "Pedir dica", which needs the player's progress.
  */
 function TrophyHeading({
-  heading,
   note,
   prefix,
   count,
 }: {
-  heading?: string
   note?: string
   prefix: string
   count: string | number
 }) {
   const t = useMessages(messages)
   return (
-    <header className={heading ? 'trophy-section-heading' : undefined}>
+    <header>
       <h2 className="trophy-heading">
         <Icon name="trophy" />
-        {heading ?? t('heading')}{' '}
+        {t('heading')}{' '}
         <span id={`${prefix}-count`} className="heading-count">
           {count}
         </span>
       </h2>
-      {note && <p>{note}</p>}
+      {note && <p className="trophy-heading-note">{note}</p>}
     </header>
   )
 }
@@ -450,7 +448,6 @@ export function TrophyList({
   prefix = 't',
   np,
   askGame,
-  heading,
   note,
 }: {
   trophies: Trophy[] | null
@@ -458,7 +455,6 @@ export function TrophyList({
   np?: string | null
   /** A catalog game the player does not own: Nexo can still talk about its trophies. */
   askGame?: { id: string; name: string }
-  heading?: string
   note?: string
 }) {
   const t = useMessages(messages)
@@ -531,7 +527,6 @@ export function TrophyList({
   return (
     <>
       <TrophyHeading
-        heading={heading}
         note={note}
         prefix={prefix}
         count={catalogOnly ? scope.length : `${earned}/${scope.length}`}

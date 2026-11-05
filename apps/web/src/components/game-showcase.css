@@ -298,11 +298,13 @@
 
   .game-about-facts {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
     margin: 0;
   }
 
   .game-about-facts > div {
+    min-width: 0;
     display: flex;
     align-items: baseline;
     gap: 10px;
@@ -333,15 +335,15 @@
     overflow-wrap: anywhere;
   }
 
+  /* Takes only its text's width, on the right like the other values; a long list scrolls. */
   .game-about-modes dd {
-    width: 0;
     min-width: 0;
-    flex: 2;
+    flex: 0 1 auto;
   }
 
   .game-modes-window {
     position: relative;
-    text-align: left;
+    text-align: right;
   }
 
   .game-modes-scroll {
@@ -349,7 +351,6 @@
     white-space: nowrap;
     scrollbar-width: none;
     overscroll-behavior-x: contain;
-    text-align: left;
   }
 
   .game-modes-scroll::-webkit-scrollbar {

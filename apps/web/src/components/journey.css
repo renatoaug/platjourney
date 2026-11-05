@@ -17,15 +17,6 @@
     margin-bottom: 0;
   }
 
-  .journey-guide > .guide-heading {
-    margin: 8px 0 18px;
-    padding: 0;
-    height: auto;
-    min-height: 44px;
-    border: 0;
-    background: none;
-  }
-
   .journey-focus.card {
     padding: 28px;
     border-color: var(--color-border-strong);
@@ -113,26 +104,17 @@
 
   .journey > details > summary > .icon:last-child {
     margin-left: auto;
+    transition: transform 0.15s;
+  }
+
+  .journey > details[open] > summary > .icon:last-child {
+    transform: rotate(180deg);
   }
 
   .journey > details {
     border-top: 1px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);
     padding: 4px 0;
-  }
-
-  .journey-trophies .trophy-section-heading {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 18px;
-  }
-
-  .journey-trophies h2 {
-    margin: 0;
-    font-size: var(--text-2xl);
   }
 
   .journey :is(button, .button, input, select) {

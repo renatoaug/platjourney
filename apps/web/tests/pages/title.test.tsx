@@ -34,7 +34,6 @@ test('a game from the library: progress, the guide numbers and the trophies', as
   expect(await screen.findByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
   expect(calls[0].path).toBe('/api/title?game=game%3A19561')
   expect(screen.getByRole('heading', { name: 'DAYS GONE' })).toBeTruthy()
-  fireEvent.click(screen.getByRole('tab', { name: /^Guia$/ }))
   expect(screen.getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(meta()).toContain('18h jogadas de ~70h')
   expect(meta()).toContain('1 jornada')
@@ -70,11 +69,11 @@ test('a game by name asks with its platform, PS5 by default', async () => {
 test('loading: the journey for a library game, the catalog page for any other link', () => {
   mockApi({ '/api/title': never })
   const { unmount } = renderApp(<Title />, { path: '/title/id/NPWR1_00', route: '/title/*' })
-  expect(screen.getByRole('heading', { name: 'Seus troféus' })).toBeTruthy()
+  expect(document.querySelector('.journey-trophies')).toBeTruthy()
   unmount()
   for (const path of ['/title/game/game%3A1', '/title/name/Hades']) {
     const view = renderApp(<Title />, { path, route: '/title/*' })
-    expect(screen.queryByRole('heading', { name: 'Seus troféus' })).toBeNull()
+    expect(document.querySelector('.journey-trophies')).toBeNull()
     expect(view.container.querySelector('.trophy-roadmap')).toBeTruthy()
     expect(view.container.querySelector('.guide-heading')).toBeTruthy()
     expect(view.container.querySelector('.trophy-controls')).toBeTruthy()
@@ -160,7 +159,6 @@ test('a guide being researched: polls until it lands', async () => {
     jest.advanceTimersByTime(6000)
   })
   expect(titleCalls(calls)).toHaveLength(2)
-  fireEvent.click(screen.getByRole('tab', { name: /^Guia$/ }))
   expect(screen.getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   await act(async () => {
     jest.advanceTimersByTime(12_000)

@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import {
+  barOverflow,
   handoffLaunchScreen,
   hideLaunchScreen,
   isNative,
+  keepBottomBarOnScreen,
   tick,
   tickOnChoices,
 } from '../../src/lib/native'
@@ -131,4 +133,36 @@ test('cleanup cancels the old mount while a replacement can finish without a boo
   paint()
   expect(hide).toHaveBeenCalledTimes(1)
   current()
+})
+
+describe('the bottom bar in the app', () => {
+  const bar = (bottom: number) => {
+    const el = document.createElement('aside')
+    el.getBoundingClientRect = () => ({ bottom }) as DOMRect
+    return el
+  }
+
+  test('the overflow is what sits below the screen or the visible area', () => {
+    expect(barOverflow(852, 852, 852)).toBe(0)
+    expect(barOverflow(800, 852, 852)).toBe(0)
+    expect(barOverflow(911, 911, 852)).toBe(59)
+    expect(barOverflow(852, 800, 852)).toBe(52)
+  })
+
+  test('in a browser it does nothing', () => {
+    const el = bar(5000)
+    keepBottomBarOnScreen(el)()
+    expect(el.style.getPropertyValue('--bar-lift')).toBe('')
+  })
+
+  test('in the app it lifts a bar left below the screen and listens until cleaned up', () => {
+    w.Capacitor = { isNativePlatform: () => true }
+    const el = bar(window.screen.height + 59)
+    const off = spyOn(window, 'removeEventListener')
+    const stop = keepBottomBarOnScreen(el)
+    const lift = el.style.getPropertyValue('--bar-lift')
+    if (window.innerHeight >= window.innerWidth) expect(lift).toMatch(/^\d+px$/)
+    stop()
+    expect(off).toHaveBeenCalledWith('scroll', expect.any(Function))
+  })
 })

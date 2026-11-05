@@ -48,9 +48,7 @@ test('journey prioritizes progress and server focus; plan and guide remain avail
   fireEvent.click(screen.getByText('Planejar minha sessão'))
   expect(screen.getByText('plano')).toBeTruthy()
   expect(document.getElementById('journey-trophies')?.textContent).toContain('De raspão')
-  expect(screen.getByRole('heading', { name: /Seus troféus/ })).toBeTruthy()
-  expect(screen.queryByRole('heading', { name: /^Troféus/ })).toBeNull()
-  fireEvent.click(screen.getByRole('tab', { name: /^Guia$/ }))
+  expect(screen.getByRole('heading', { name: /^Troféus/ })).toBeTruthy()
   expect(document.querySelector('.journey-guide')?.textContent).toContain('Burnout Apocalipse')
 })
 
@@ -79,4 +77,14 @@ test('before first state skeletons remain; a sync failure is explicit', () => {
   unmount()
   renderApp(<Game />, { value: { data: null, sync: 'failed' } })
   expect(screen.getByRole('alert').textContent).toContain('sincronizar')
+})
+
+test('the journey shows the trophies above the guide, with no tabs between them', () => {
+  mockApi({})
+  const { container } = renderApp(
+    <GameScreen current={current as unknown as CurrentGame} plan={null} />,
+  )
+  const order = [...container.querySelectorAll('.journey-trophies, .journey-guide')]
+  expect(order.map((x) => x.className.split(' ')[1])).toEqual(['journey-trophies', 'journey-guide'])
+  expect(container.querySelector('.game-switch')).toBeNull()
 })

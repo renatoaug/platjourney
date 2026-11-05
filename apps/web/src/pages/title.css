@@ -1,4 +1,8 @@
 @layer screens {
+  .title-columns {
+    margin-top: 20px;
+  }
+
   .back-link .icon {
     transform: rotate(-135deg);
   }

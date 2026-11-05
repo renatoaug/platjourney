@@ -28,6 +28,7 @@ import {
   useMessages,
 } from '../i18n/i18n'
 import { number } from '../lib/format'
+import { keepBottomBarOnScreen } from '../lib/native'
 import { Discover } from '../pages/discover'
 import { Game } from '../pages/game'
 import { Games } from '../pages/games'
@@ -297,9 +298,12 @@ export function Shell() {
     return () => document.removeEventListener('api:private-profile', show)
   }, [])
 
+  const sidebar = useRef<HTMLElement>(null)
+  useEffect(() => (sidebar.current ? keepBottomBarOnScreen(sidebar.current) : undefined), [])
+
   return (
     <div className="app" id="app" data-arrival={arrival}>
-      <aside className="sidebar">
+      <aside className="sidebar" ref={sidebar}>
         <Link className="logo" to="/" aria-label={t('logoLabel')}>
           <img className="brand-mark" src="/logo.svg" alt="" width="40" height="40" />
           <span className="brand-name">
