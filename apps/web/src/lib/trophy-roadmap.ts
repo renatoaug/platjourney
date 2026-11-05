@@ -1,5 +1,5 @@
 import { achievementHistory } from '../../../../shared/journey/history'
-import type { GuideDetail, Trophy } from './types'
+import type { GuideDetail, Trophy, TrophyKind } from './types'
 
 /** Base and extra-content tracks remain separate. Priority only affects unfinished work, and the
  * platinum closes the route even when PSN dates it with, or before, the trophy that unlocked it. */
@@ -57,6 +57,11 @@ export function trophyRoadmap(trophies: Trophy[], guide?: GuideDetail | null): T
   const dlc = trophies.filter((t) => t.groupId !== 'default')
   if (dlc.length) stages.push({ kind: 'dlc', trophies: dlc })
   return stages
+}
+
+/** What a trophy asks of the player, when the guide says. */
+export function trophyKind(trophy: Trophy, guide?: GuideDetail | null): TrophyKind | undefined {
+  return guide?.trophyKinds?.find((x) => trophyMatches(trophy, x.trophy))?.kind
 }
 
 export function trophyAdvice(trophy: Trophy, guide?: GuideDetail | null) {

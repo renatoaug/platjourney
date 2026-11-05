@@ -263,6 +263,7 @@ export type Target =
   | 'RoadmapTips'
   | 'RoadmapVisibility'
   | 'Route'
+  | 'RouteKind'
   | 'RouteNumber'
   | 'Row'
   | 'SaveButton'

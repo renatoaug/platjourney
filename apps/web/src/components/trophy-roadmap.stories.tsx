@@ -173,3 +173,23 @@ export const ConfirmedChronology: Story = {
     },
   },
 }
+
+/** With trophy kinds in the guide: natural ones step back, hunts and grinds stand out. */
+export const WithKinds: Story = {
+  args: {
+    game: (() => {
+      const game = routeGame()
+      const kinds = ['natural', 'hunt', 'natural', 'grind'] as const
+      return {
+        ...game,
+        trophies: game.trophies.map((x, i) => (i === 3 ? { ...x, hidden: true } : x)),
+        guide: {
+          ...game.guide,
+          trophyKinds: game.trophies
+            .filter((x) => x.type !== 'platinum')
+            .map((x, i) => ({ trophy: x.name, kind: kinds[i % 4] })),
+        },
+      } as typeof game
+    })(),
+  },
+}

@@ -159,6 +159,7 @@ erDiagram
         difficulty option(float)
         hours option(float)
         has_missables bool
+        trophy_kinds option(array(object))
         playthroughs option(int)
         has_difficulty_trophy option(bool)
         why string

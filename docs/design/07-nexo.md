@@ -46,6 +46,8 @@ In a conversation (the chat and a trophy tip asked from the list), a quick quest
 
 The general conversation has no guide and no trophy list. It gets a summary of the player (platinums in total and this year, the latest ones, the year's goal, games in progress and interests), read by `playerFacts` in `apps/server/src/routes/chat.ts`, and answers from it. Asked how to get a trophy in a specific game, it points to that game's conversation instead of answering from memory. "What should I platinum next?" always lands here, with the game's card and a button to open that game's conversation, because it is not about the open game. Its messages are the ones stored with no game.
 
+With trophy kinds in the guide (`trophy_kinds`), the context says how many natural trophies come before the next one that asks for action, in the roadmap's order, so "what's next?" can answer "the next 3 come by themselves, the next action is X". Hidden trophies stay unnamed.
+
 When a player comes back to a game's conversation after six hours or more, and they brought up a trophy in its last messages, the chat also sends a `resume`: how long ago it was, which of those trophies were earned since and which are still open (`resumeFrom` in `apps/server/src/nexo.ts`, from the stored messages and PSN's `earnedAt`). A trophy only listed in an answer does not count, and a hidden one still locked is never named. Nexo answers first and then picks it up in one sentence: it celebrates a trophy earned, or asks how an open one went.
 
 The way Nexo thinks for a trophy tip, a session plan and a game pick is kept as three shared texts, used by Nexo's own prompts and handed as they are to the assistants connected through MCP, so a change reaches both.

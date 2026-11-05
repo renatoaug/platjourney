@@ -1,6 +1,7 @@
 """Nexo, the trophy companion: its persona, how a game's facts are shown to it, what each automatic
 notice asks for, and the call that answers."""
 
+import itertools
 import logging
 import re
 from datetime import date, timedelta
@@ -31,7 +32,7 @@ Regras de conversa:
 - Quando trechos discordarem entre si ou do guia, vale o mais recente (a data vem no cabeçalho do trecho): jogos mudam com atualizações e versões novas.
 - Quando houver "Trechos dos guias", eles são a fonte mais detalhada: responda a partir deles (locais, ordem, números exatos) e diga de qual site veio. Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.
 - A primeira frase responde o que o jogador perguntou. Resumo de progresso só quando ele pergunta o que falta para a platina ("o que falta?", "quanto falta pra platinar?"): aí a primeira linha diz quantos troféus do jogo base faltam (a platina não conta) e quantos deles ainda são perdíveis; as horas que sobram entram só se o guia estimar e o tempo jogado estiver nos dados, e só o resultado ("cerca de 12h"): sem os dois, não calcule horas restantes, e nunca mostre a conta nem diga que um dado não foi informado. Quem pergunta quanto tempo leva a platina recebe a estimativa do guia. Só depois vem a ordem. Em qualquer outra pergunta (o próximo troféu, um troféu, um local), nada de resumo de progresso.
-- Quando sugerir um troféu para buscar (o próximo, o mais fácil, o que fazer agora), diga em uma frase por que esse, agora, com os dados do jogador: o último que ele conquistou (o nome e quando, dos "Conquistados") ou onde ele está no jogo, e o que torna esse o melhor passo (sai junto com o que ele já vai fazer, é rápido, abre o próximo). Ex.: "Você pegou **X** ontem e já está em **Niflheim**: **Digno** sai em ~30 min, no upgrade que você ia fazer." Use só o que está nos dados; sem dado, não invente o motivo. Esse motivo é só para sugestão de qual troféu buscar: quando perguntarem como fazer um troféu ou pedirem dicas dele, não cite o que o jogador já conquistou, e nunca cite uma conquista de mais de 30 dias como motivo.
+- Quando sugerir um troféu para buscar (o próximo, o mais fácil, o que fazer agora), diga em uma frase por que esse, agora, com os dados do jogador: o último que ele conquistou (o nome e quando, dos "Conquistados") ou onde ele está no jogo, e o que torna esse o melhor passo (sai junto com o que ele já vai fazer, é rápido, abre o próximo). Ex.: "Você pegou **X** ontem e já está em **Niflheim**: **Digno** sai em ~30 min, no upgrade que você ia fazer." Use só o que está nos dados; sem dado, não invente o motivo. Quando o contexto trouxer "Próximos troféus na rota" e perguntarem o que fazer agora ou qual o próximo troféu, diga quantos vêm naturalmente e siga para o próximo que exige ação, com a dica dele ("Os próximos 3 são naturais, é só seguir a história. O próximo que exige ação é **X**: ..."). Esse motivo é só para sugestão de qual troféu buscar: quando perguntarem como fazer um troféu ou pedirem dicas dele, não cite o que o jogador já conquistou, e nunca cite uma conquista de mais de 30 dias como motivo.
 - Pergunta de onde achar algo: dê os locais concretos que os trechos trazem (área, ponto de referência, inimigo ou personagem). "Cai de inimigos" sem dizer quais nem onde não responde a pergunta.
 - Quando pedirem mais detalhe ou repetirem o pedido, traga o que você ainda não disse nesta conversa (os próximos passos, outros troféus, os detalhes de um ponto). Nunca repita a resposta anterior com outras palavras. Se não tiver nada novo para dizer, diga isso em uma frase, sem repetir o que já disse.
 - Não acrescente regra, restrição ou exceção do jogo que nem o guia, nem os trechos, nem a busca trouxeram: dica sem base não entra, nem conselho que pareça óbvio ("evite trocar de dificuldade no meio da campanha", "use a seleção de fases para praticar", "aprenda os padrões dos chefes", "jogue em cooperação"). Se pedirem dicas que o guia não traz, diga só que ainda não tem isso no guia.
@@ -101,6 +102,36 @@ def recent(earned_at: str | None) -> bool:
         return date.today() - date.fromisoformat(earned_at[:10]) <= timedelta(days=RECENT_DAYS)
     except ValueError:
         return False
+
+
+def next_on_route(guide: dict[str, Any], missing: list[Trophy]) -> str:
+    """How many trophies come by themselves before the next one that asks for action. Comes from
+    the guide's order, so the model does not have to work it out. Hidden trophies stay unnamed."""
+    kinds = {str(x.get('trophy')): str(x.get('kind')) for x in _items(guide, 'trophyKinds')}
+    if not kinds:
+        return ''
+    open_names = {t.name for t in missing if not t.hidden}
+    order = [
+        str(n)
+        for step in _items(guide, 'roadmap')
+        for n in cast(list[object], step.get('trophies') or [])
+    ]
+    route = [n for n in dict.fromkeys(order) if n in open_names and n in kinds]
+    natural = list(itertools.takewhile(lambda n: kinds[n] == 'natural', route))
+    following = route[len(natural)] if len(natural) < len(route) else None
+    if not route:
+        return ''
+    action = (
+        f'o próximo que exige ação é {following} ({KIND_NAMES.get(kinds[following], "caçada")})'
+        if following
+        else 'nenhum outro exige ação'
+    )
+    if not natural:
+        return f'Próximos troféus na rota: {action}.'
+    return (
+        f'Próximos troféus na rota: {len(natural)} natural(is), que saem só seguindo o jogo '
+        f'({", ".join(natural[:5])}); {action}.'
+    )
 
 
 def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str = '') -> str:
@@ -199,6 +230,9 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
     parts.append('Roadmap:')
     for step in _items(guide, 'roadmap'):
         parts.append(f'- {step.get("phase")}: {_words(step.get("goal"))}')
+    upcoming = next_on_route(guide, missing)
+    if upcoming:
+        parts.append(upcoming)
     for key, label in (
         ('easiest', 'Mais fácil'),
         ('hardest', 'Mais difícil'),
@@ -520,6 +554,7 @@ Esta é a conversa geral, sem um jogo aberto:
 
 
 FOLLOW_UP_WORDS = 6
+KIND_NAMES = {'hunt': 'caçada', 'grind': 'grind'}
 RECENT_DAYS = 30
 
 

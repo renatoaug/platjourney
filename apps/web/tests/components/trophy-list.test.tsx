@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { MockAppState, SAMPLE_ME } from '../../src/app/app-state'
 import { TrophyList, TrophyListSkeleton } from '../../src/components/trophy-list'
 import { current } from '../../src/fixtures'
-import type { Trophy } from '../../src/lib/types'
+import type { GuideDetail, Trophy } from '../../src/lib/types'
 import { ToastHost } from '../../src/ui/toast'
 
 const base = current.trophies as unknown as Trophy[]
@@ -219,4 +219,32 @@ test('DLC preference chooses the initial group, but an explicit saved filter win
   unmount()
   showWithDlc()
   expect(results()).toContain('16 troféus')
+})
+
+test('trophy kinds filter the list and tag the rows; a guide without them shows neither', () => {
+  const guide = {
+    trophyKinds: [
+      { trophy: base[0].name, kind: 'hunt' },
+      { trophy: base[1].name, kind: 'natural' },
+    ],
+  } as GuideDetail
+  const { unmount } = render(
+    <MemoryRouter>
+      <MockAppState>
+        <TrophyList trophies={base.slice(0, 3)} guide={guide} />
+      </MockAppState>
+    </MemoryRouter>,
+  )
+  expect(document.querySelectorAll('.trophy-kind')).toHaveLength(2)
+  fireEvent.change(screen.getByLabelText('Tipo'), { target: { value: 'hunt' } })
+  expect(document.querySelectorAll('.trophy-rows .trophy-row')).toHaveLength(1)
+  unmount()
+  render(
+    <MemoryRouter>
+      <MockAppState>
+        <TrophyList trophies={base.slice(0, 3)} />
+      </MockAppState>
+    </MemoryRouter>,
+  )
+  expect(screen.queryByLabelText('Tipo')).toBeNull()
 })

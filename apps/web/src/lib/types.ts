@@ -118,6 +118,9 @@ export interface RouteTip {
   ifMissed?: string | null
 }
 
+/** natural: comes by itself. hunt: a specific action. grind: long repetition or count. */
+export type TrophyKind = 'natural' | 'hunt' | 'grind'
+
 export interface GuideDetail {
   version?: number
   overview: string
@@ -133,6 +136,8 @@ export interface GuideDetail {
   hardest?: KeyTrophy | null
   mostTedious?: KeyTrophy | null
   tricks?: { trophy: string; trick: string; source?: string | null }[]
+  /** What each base-game trophy asks of the player; older guides do not have it. */
+  trophyKinds?: { trophy: string; kind: TrophyKind }[]
   buggy?: {
     trophy: string
     issue: string

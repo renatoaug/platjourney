@@ -19,7 +19,7 @@ test('one continuous route includes confirmed past and opens on the next suggest
   const { container } = renderApp(<TrophyRoadmap game={data} />)
   const route = screen.getByRole('list', { name: 'Rota completa' })
   expect(within(route).getByRole('button', { name: /Primeiro Passo Conquistado/ })).toBeTruthy()
-  expect(within(route).getAllByText('Conquistado')).toHaveLength(2)
+  expect(container.querySelectorAll('.roadmap-route [data-earned="true"]')).toHaveLength(2)
   expect(container.querySelector('.roadmap-route .is-current')?.getAttribute('data-earned')).toBe(
     'false',
   )
@@ -577,9 +577,6 @@ test('catalog start preview preserves account data without an owned-game compari
   expect(screen.getByRole('button', { name: 'Próximo marco' })).toBeTruthy()
   owned.unmount()
   const { container } = renderApp(<TrophyRoadmap game={{ ...game, trophies: items }} preview />)
-  expect(container.querySelector('.roadmap-preview-notice[role=status]')?.textContent).toContain(
-    'PRÉVIA DO INÍCIO',
-  )
   expect(container.querySelectorAll('.roadmap-route li')).toHaveLength(2)
   expect(screen.queryByText('Progresso não informado pela PSN')).toBeNull()
   expect(screen.queryByText('PSN: 8 / 10')).toBeNull()
@@ -724,6 +721,29 @@ test('a trick stands alone: no guide mentions beside it, and no warning once ear
   )
   fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
   expect(again.container.querySelector('.roadmap-caution')).toBeNull()
+})
+
+test('trophy kinds count what is left, mark the route and tag the focus trophy', () => {
+  const game = routeGame()
+  const open = game.trophies.filter((x) => !x.earned && x.groupId === 'default' && !x.hidden)
+  const guide = {
+    ...(game.guide as GuideDetail),
+    trophyKinds: [
+      { trophy: open[0].name, kind: 'natural' as const },
+      { trophy: open[1].name, kind: 'hunt' as const },
+    ],
+  }
+  const { container } = renderApp(<TrophyRoadmap game={{ ...game, guide }} />)
+  expect(container.querySelector('.roadmap-kinds')?.textContent).toContain('1 caçada · 1 natural')
+  expect(container.querySelector('[data-kind="natural"]')).toBeTruthy()
+  fireEvent.click(screen.getAllByRole('button', { name: new RegExp(open[1].name) })[0])
+  expect(container.querySelector('.roadmap-destination .roadmap-kind')?.textContent).toBe('Caçada')
+})
+
+test('a guide without kinds shows none of it', () => {
+  const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
+  expect(container.querySelector('.roadmap-kinds')).toBeNull()
+  expect(container.querySelector('[data-kind]')).toBeNull()
 })
 
 test('a collection folds its checklist, keeps each step and stays visible along the way', () => {
@@ -923,7 +943,6 @@ test('undated achievements remain explicit and start preview discards personal c
   renderApp(<TrophyRoadmap preview game={data} />)
   expect(document.querySelectorAll('.roadmap-route [data-earned="true"]')).toHaveLength(0)
   expect(document.querySelector('.roadmap-past')).toBeNull()
-  expect(screen.getByText(/Comparação sem progresso pessoal/)).toBeTruthy()
 })
 
 test('fallback inspection never becomes advice when focus is missing or platinum is unobtainable', () => {
@@ -965,4 +984,19 @@ test('the journey says it is in beta, also while it has no trophies to show', ()
   expect(empty.container.querySelector('.roadmap-preview-notice')?.textContent).toContain(
     'avaliações de qualidade',
   )
+})
+
+test('with every trophy earned, the kinds still count the whole game', () => {
+  const game = routeGame()
+  const trophies = game.trophies.map((x) => ({
+    ...x,
+    earned: true,
+    earnedAt: '2026-01-01T10:00:00Z',
+  }))
+  const guide = {
+    ...(game.guide as GuideDetail),
+    trophyKinds: [{ trophy: trophies[0].name, kind: 'hunt' as const }],
+  }
+  const { container } = renderApp(<TrophyRoadmap game={{ ...game, trophies, guide }} />)
+  expect(container.querySelector('.roadmap-kinds')?.textContent).toContain('1 caçada')
 })

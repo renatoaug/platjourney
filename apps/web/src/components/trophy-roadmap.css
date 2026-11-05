@@ -356,19 +356,6 @@
     gap: 16px;
   }
 
-  .roadmap-route > [data-earned="true"] {
-    --roadmap-marker-color: var(--color-fg-muted);
-  }
-
-  .roadmap-route > [data-earned="true"]:not(.is-current) .roadmap-route-art {
-    opacity: 0.55;
-  }
-
-  .roadmap-route > [data-earned="true"]:not(.is-current) .roadmap-route-name,
-  .roadmap-route > [data-earned="true"]:not(.is-current) .roadmap-route-finale {
-    color: var(--color-fg-muted);
-  }
-
   .trophy-roadmap {
     min-width: 0;
     scroll-margin-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 130px);
@@ -411,12 +398,23 @@
     color: var(--color-fg-muted);
   }
 
+  /* The total and its counts are one block, with the action beside the whole of it. */
   .roadmap-intro-actions {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto auto;
     align-items: center;
-    justify-content: flex-end;
-    gap: 4px 12px;
+    justify-content: end;
+    gap: 2px 12px;
+  }
+
+  .roadmap-total {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .roadmap-intro-actions .roadmap-visibility {
+    grid-column: 2;
+    grid-row: 1 / span 2;
   }
 
   .roadmap-visibility {
@@ -937,6 +935,81 @@
     margin-top: 48px;
   }
 
+  /* What comes with the story stays on the route but steps back: what asks for action stands out. */
+  .roadmap-route > [data-kind="hunt"] {
+    --roadmap-marker-color: var(--color-accent);
+  }
+
+  .roadmap-route > [data-kind="grind"] {
+    --roadmap-marker-color: var(--color-highlight-warm);
+  }
+
+  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-pin {
+    width: 52px;
+    height: 52px;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-art {
+    width: 40px;
+    height: 40px;
+  }
+
+  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-number {
+    display: none;
+  }
+
+  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-name {
+    color: var(--color-fg-muted);
+  }
+
+  .roadmap-route-kind {
+    font-size: var(--text-sm);
+  }
+
+  [data-kind="hunt"] .roadmap-route-kind {
+    color: var(--color-accent);
+  }
+
+  [data-kind="grind"] .roadmap-route-kind {
+    color: var(--color-highlight-warm);
+  }
+
+  /* 25px: the total's icon and its gap. */
+  .roadmap-kinds {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0;
+    padding-left: 25px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+  }
+
+  .roadmap-kind {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding-inline: 8px;
+    border: 1px solid color-mix(in srgb, currentcolor 40%, transparent);
+    border-radius: var(--radius-tag);
+    font-size: var(--text-sm);
+    line-height: var(--leading-none);
+  }
+
+  .roadmap-kind.natural {
+    color: var(--color-fg-muted);
+  }
+
+  .roadmap-kind.hunt {
+    color: var(--color-accent);
+  }
+
+  .roadmap-kind.grind {
+    color: var(--color-highlight-warm);
+  }
+
   .roadmap-route-art {
     display: grid;
     place-items: center;
@@ -1050,6 +1123,38 @@
   .roadmap-route .is-current .roadmap-route-number {
     background: var(--color-trophy-gold);
     color: var(--color-on-accent);
+  }
+
+  /* What is done is green, all of it: ring, badge and name. It comes after the kinds and the
+     selection so it wins over them; the selected one only keeps its stronger ring. */
+  .roadmap-route > [data-earned="true"] {
+    --roadmap-marker-color: var(--color-accent);
+  }
+
+  .roadmap-route > [data-earned="true"] .roadmap-route-name,
+  .roadmap-route > [data-earned="true"] button[aria-pressed="true"] .roadmap-route-name {
+    color: var(--color-accent);
+  }
+
+  .roadmap-route > [data-earned="true"] .roadmap-route-number {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+
+  .roadmap-route > [data-earned="true"].is-current .roadmap-route-pin {
+    box-shadow:
+      0 0 0 5px var(--color-bg-subtle),
+      0 0 0 6px var(--color-accent),
+      0 0 32px color-mix(in srgb, var(--color-accent) 18%, transparent);
+  }
+
+  .roadmap-route > [data-earned="true"][data-kind="natural"]:not(.is-current) .roadmap-route-pin {
+    opacity: 1;
+  }
+
+  .roadmap-route > [data-earned="true"][data-kind="natural"]:not(.is-current) .roadmap-route-name {
+    color: var(--color-accent);
   }
 
   .roadmap-route button[aria-pressed="true"] {
@@ -1388,15 +1493,21 @@
       gap: 12px;
     }
 
+    /* The block on the left and only the eye on the right: it all fits, with nothing left over. */
     .roadmap-intro-actions {
-      flex-wrap: nowrap;
-      justify-content: flex-start;
+      width: 100%;
+      grid-template-columns: minmax(0, 1fr) auto;
+      justify-content: stretch;
     }
 
     .roadmap-intro-actions .roadmap-visibility {
       padding-inline: 8px;
       border: 0;
       gap: 8px;
+    }
+
+    .roadmap-visibility-label {
+      display: none;
     }
 
     .roadmap-landscape {
@@ -1446,6 +1557,16 @@
     .roadmap-route-art {
       width: 44px;
       height: 44px;
+    }
+
+    .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-pin {
+      width: 36px;
+      height: 36px;
+    }
+
+    .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-art {
+      width: 28px;
+      height: 28px;
     }
 
     .roadmap-route > li:nth-child(odd) .roadmap-route-pin {

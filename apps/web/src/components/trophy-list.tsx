@@ -9,7 +9,8 @@ import {
   useMessages,
 } from '../i18n/i18n'
 import { fmtDate, fmtRate } from '../lib/format'
-import type { Trophy } from '../lib/types'
+import { trophyKind } from '../lib/trophy-roadmap'
+import type { GuideDetail, Trophy, TrophyKind } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState } from '../ui/states'
@@ -44,6 +45,9 @@ const messages = defineMessages({
     search: 'Buscar troféu',
     searchPlaceholder: 'Buscar troféu',
     statusLabel: 'Status dos troféus',
+    kindLabel: 'Tipo',
+    kind: { natural: 'Natural', hunt: 'Caçada', grind: 'Grind' },
+    kinds: { all: 'Todos', natural: 'Naturais', hunt: 'Caçadas', grind: 'Grinds' },
     status: {
       all: 'Todos',
       pending: 'Pendentes',
@@ -100,6 +104,9 @@ const messages = defineMessages({
     search: 'Search trophies',
     searchPlaceholder: 'Search trophies',
     statusLabel: 'Trophy status',
+    kindLabel: 'Type',
+    kind: { natural: 'Natural', hunt: 'Hunt', grind: 'Grind' },
+    kinds: { all: 'All', natural: 'Natural', hunt: 'Hunts', grind: 'Grinds' },
     status: {
       all: 'All',
       pending: 'Pending',
@@ -295,9 +302,11 @@ function TrophyRarity({ t }: { t: Trophy }) {
 function TrophyCard({
   t,
   ask,
+  kind,
 }: {
   t: Trophy /** Nexo with this trophy attached; none in the demo. */
   ask: string | null
+  kind?: TrophyKind
 }) {
   const tr = useMessages(messages)
   const help = ask && !t.earned
@@ -321,6 +330,7 @@ function TrophyCard({
             <Icon name="trophy" />
             {TYPES[t.type] ? tr(TYPES[t.type]) : t.type}
           </span>
+          {kind && <span className={`trophy-kind ${kind}`}>{tr(`kind.${kind}`)}</span>}
           <TrophyRarity t={t} />
           {t.earned && (
             <span className="trophy-earned-date">
@@ -419,15 +429,7 @@ export function TrophyListSkeleton({ rows = 6 }: { rows?: number }) {
  * `trophies` null is still loading. `prefix` keeps the control ids apart (`t` on the game screen,
  * `title-t` on a title page); `np` turns on "Pedir dica", which needs the player's progress.
  */
-function TrophyHeading({
-  note,
-  prefix,
-  count,
-}: {
-  note?: string
-  prefix: string
-  count: string | number
-}) {
+function TrophyHeading({ prefix, count }: { prefix: string; count: string | number }) {
   const t = useMessages(messages)
   return (
     <header>
@@ -438,7 +440,6 @@ function TrophyHeading({
           {count}
         </span>
       </h2>
-      {note && <p className="trophy-heading-note">{note}</p>}
     </header>
   )
 }
@@ -448,14 +449,15 @@ export function TrophyList({
   prefix = 't',
   np,
   askGame,
-  note,
+  guide,
 }: {
   trophies: Trophy[] | null
   prefix?: string
   np?: string | null
   /** A catalog game the player does not own: Nexo can still talk about its trophies. */
   askGame?: { id: string; name: string }
-  note?: string
+  /** Its trophy kinds split the list; a guide without them shows the plain list. */
+  guide?: GuideDetail | null
 }) {
   const t = useMessages(messages)
   const { me } = useApp()
@@ -466,6 +468,7 @@ export function TrophyList({
   // A sort picked by hand sticks, here and on the next games; until then it follows the game.
   const [chosenSort, setChosenSort] = useState<string | null>(null)
   const [q, setQ] = useState('')
+  const [kind, setKind] = useState<TrophyKind | 'all'>('all')
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [page, setPage] = useState(1)
   const controlsRef = useRef<HTMLDivElement>(null)
@@ -501,7 +504,16 @@ export function TrophyList({
   if (!trophies) return <TrophyListSkeleton />
 
   const scope = hasDlc ? inGroup(list, group) : list
-  const shown = filtered(scope, { status, onlyProgress, q, sort })
+  const kindOf = (x: Trophy) => trophyKind(x, guide)
+  const kinds = (['hunt', 'grind', 'natural'] as const).filter((k) =>
+    scope.some((x) => kindOf(x) === k),
+  )
+  const shown = filtered(kind === 'all' ? scope : scope.filter((x) => kindOf(x) === kind), {
+    status,
+    onlyProgress,
+    q,
+    sort,
+  })
   const pages = Math.max(1, Math.ceil(shown.length / TROPHY_PAGE_SIZE))
   const current = Math.max(1, Math.min(pages, page))
   const start = (current - 1) * TROPHY_PAGE_SIZE
@@ -509,7 +521,10 @@ export function TrophyList({
   // A list from the catalog (game not owned) has no rarity and no progress to count.
   const catalogOnly = scope.every((t) => !t.rarity && t.rarityTier == null)
   const filterCount =
-    Number(sort !== 'pending') + Number(hasDlc && group !== 'base') + Number(onlyProgress)
+    Number(sort !== 'pending') +
+    Number(hasDlc && group !== 'base') +
+    Number(onlyProgress) +
+    Number(kind !== 'all')
 
   // Any filter change goes back to the first page.
   const refilter =
@@ -527,7 +542,6 @@ export function TrophyList({
   return (
     <>
       <TrophyHeading
-        note={note}
         prefix={prefix}
         count={catalogOnly ? scope.length : `${earned}/${scope.length}`}
       />
@@ -593,6 +607,23 @@ export function TrophyList({
                     ))}
                   </select>
                 </label>
+                {!!kinds.length && (
+                  <label>
+                    {t('kindLabel')}
+                    <select
+                      id={`${prefix}-kind`}
+                      value={kind}
+                      onChange={(e) => refilter(setKind)(e.target.value as TrophyKind | 'all')}
+                    >
+                      <option value="all">{t('kinds.all')}</option>
+                      {kinds.map((value) => (
+                        <option key={value} value={value}>
+                          {t(`kinds.${value}`)} ({scope.filter((x) => kindOf(x) === value).length})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <label id={`${prefix}-group-label`} hidden={!hasDlc}>
                   {t('content')}
                   <select
@@ -624,7 +655,9 @@ export function TrophyList({
             {shown.length ? (
               shown
                 .slice(start, start + TROPHY_PAGE_SIZE)
-                .map((t) => <TrophyCard key={t.id} t={t} ask={askHref(t.name)} />)
+                .map((x) => (
+                  <TrophyCard key={x.id} t={x} ask={askHref(x.name)} kind={trophyKind(x, guide)} />
+                ))
             ) : (
               <div className="trophy-empty">{t('noResultsHint')}</div>
             )}

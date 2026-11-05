@@ -32,7 +32,6 @@ const messages = defineMessages({
     guide: 'Consultar o guia completo',
     plan: 'Planejar minha sessão',
     session: 'Roteiro da sessão',
-    remaining: { one: 'Falta {count}', other: 'Faltam {count}' },
     source: 'Do guia',
     sync: 'Atualizado pela PSN',
     unavailable: 'O progresso aparece após a sincronização.',
@@ -55,7 +54,6 @@ const messages = defineMessages({
     guide: 'Read the complete guide',
     plan: 'Plan my session',
     session: 'Session route',
-    remaining: { one: '{count} left', other: '{count} left' },
     source: 'From the guide',
     sync: 'Updated from PSN',
     unavailable: 'Progress appears after syncing.',
@@ -121,7 +119,6 @@ export function Journey({
   const [scene, setScene] = useScene(shots.length)
   const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
   const focus = done || c.guide?.unobtainable ? null : c.focus
-  const missing = c.trophies.filter((x) => !x.earned && x.groupId === 'default').length
   return (
     <div className="journey">
       <GameBackdrop src={c.game.art_url ?? c.icon} shots={shots} at={scene} tint={c.game.tint} />
@@ -152,12 +149,7 @@ export function Journey({
         {plan}
       </details>
       <section className="card journey-trophies" id="journey-trophies">
-        <TrophyList
-          trophies={c.trophies}
-          np={c.np}
-          prefix="journey-t"
-          note={t('remaining', { count: missing })}
-        />
+        <TrophyList trophies={c.trophies} np={c.np} prefix="journey-t" guide={c.guide} />
       </section>
       <section className="card journey-guide" id="journey-guide-section">
         <Guide

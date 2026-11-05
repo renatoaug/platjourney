@@ -1,10 +1,4 @@
 @layer screens {
-  .trophy-heading-note {
-    margin: 0 0 12px;
-    color: var(--color-fg-muted);
-    font-size: var(--text-sm);
-  }
-
   .trophy-heading {
     display: flex;
     align-items: center;
@@ -141,6 +135,25 @@
     align-items: center;
     gap: 16px 12px;
     padding: 4px 0 16px;
+  }
+
+  .trophy-kind {
+    padding: 1px 6px;
+    border: 1px solid color-mix(in srgb, currentcolor 40%, transparent);
+    border-radius: var(--radius-tag);
+    font-size: var(--text-sm);
+  }
+
+  .trophy-kind.natural {
+    color: var(--color-fg-muted);
+  }
+
+  .trophy-kind.hunt {
+    color: var(--color-accent);
+  }
+
+  .trophy-kind.grind {
+    color: var(--color-highlight-warm);
   }
 
   .trophy-status {
