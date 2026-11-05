@@ -137,11 +137,13 @@ export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: Guide
     .slice(0, MAX_MENTIONS)
 }
 
-function ongoingBasis(early: boolean, duration: boolean, repeated: boolean) {
+function ongoingBasis(early: boolean, duration: boolean, repeated: boolean, counter: boolean) {
   if (early) return 'early' as const
   if (duration) return 'duration' as const
   if (repeated) return 'repeated' as const
-  return 'counter' as const
+  if (counter) return 'counter' as const
+  // Only the guide's kind says so: a grind with no other sign in the guide.
+  return 'long' as const
 }
 
 const words = (value: string) =>
@@ -164,7 +166,25 @@ function earlyAdvice(trophy: Trophy, trophies: Trophy[], tips: string[]) {
   })
 }
 
-/** A conservative view over existing evidence, not a position or completion predictor. */
+/**
+ * With the guide's kinds, only what keeps going: a grind always, a hunt only when it is counted (a
+ * PSN counter) or lasts the campaign, a natural trophy or a one-off hunt never. Without them, any
+ * sign in the guide.
+ */
+function keepsGoing(
+  kind: TrophyKind | undefined,
+  sign: { repeated: boolean; duration: boolean; counter: boolean; early: boolean },
+) {
+  if (kind === 'natural') return false
+  if (kind === 'grind') return true
+  if (kind === 'hunt') return sign.counter || sign.duration
+  return sign.repeated || sign.duration || sign.counter || sign.early
+}
+
+/**
+ * A conservative view over existing evidence, not a position or completion predictor: what to keep
+ * an eye on for a while (collections, counts, spending), not a single moment of the campaign.
+ */
 export function ongoingObjectives(trophies: Trophy[], guide?: GuideDetail | null) {
   const campaignWindow =
     /^(?:durante (?:toda )?a campanha|ao longo (?:de toda )?da campanha|throughout (?:the )?(?:campaign|game)|during (?:the )?campaign)\b/i
@@ -192,11 +212,12 @@ export function ongoingObjectives(trophies: Trophy[], guide?: GuideDetail | null
       m.tips.some((tip) => !!tip.trophy && trophyMatches(trophy, tip.trophy) && unique(tip.trophy)),
     )
     const repeated = phases.length > 1 || stretches.length > 1
-    if (!repeated && !duration && !counter && !early) return []
+    const kind = guide?.trophyKinds?.length ? trophyKind(trophy, guide) : undefined
+    if (!keepsGoing(kind, { repeated, duration: !!duration, counter, early: !!early })) return []
     return [
       {
         trophy,
-        basis: ongoingBasis(!!early, !!duration, repeated),
+        basis: ongoingBasis(!!early, !!duration, repeated, counter),
         warning,
         early,
       },
