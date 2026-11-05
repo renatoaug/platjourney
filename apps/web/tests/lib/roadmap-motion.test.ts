@@ -53,3 +53,25 @@ for (const width of [82.6667, 101, 180])
       expect(midpoint.x).toBeCloseTo((i + 1) * width, 8)
     }
   })
+
+test('a smaller stop pulls the road in to its own rim', () => {
+  const width = 200
+  const stops = [
+    { x: 100, y: 96, rim: 62 },
+    { x: 100, y: 56, rim: 32 },
+    { x: 100, y: 96, rim: 62 },
+  ]
+  const geometry = { x: 100, rim: 62, low: 96, high: 56, stops }
+  expect(roadSegment(0, width, geometry)).toStartWith('M162 96 C')
+  expect(roadSegment(0, width, geometry)).toEndWith(' 268 56')
+  expect(roadSegment(1, width, geometry)).toStartWith('M132 56 C')
+  expect(roadSegment(1, width, geometry)).toEndWith(' 238 96')
+  for (const [at, x, y] of [
+    [1, 268, 56],
+    [1.5, 332, 56],
+    [2, 438, 96],
+  ]) {
+    expect(roadPoint(at, width, geometry).x).toBeCloseTo(x, 8)
+    expect(roadPoint(at, width, geometry).y).toBeCloseTo(y, 8)
+  }
+})

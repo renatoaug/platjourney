@@ -185,6 +185,14 @@ export const WithKinds: Story = {
         trophies: game.trophies.map((x, i) => (i === 3 ? { ...x, hidden: true } : x)),
         guide: {
           ...game.guide,
+          tricks: [
+            ...(game.guide?.tricks ?? []),
+            {
+              trophy: 'Primeiro Passo',
+              trick:
+                'Logo no começo, siga a estrada até a ponte velha.\nSegure o botão de interação na alavanca até a barra encher.\nO troféu sai assim que a ponte baixar.',
+            },
+          ],
           trophyKinds: game.trophies
             .filter((x) => x.type !== 'platinum')
             .map((x, i) => ({ trophy: x.name, kind: kinds[i % 4] })),

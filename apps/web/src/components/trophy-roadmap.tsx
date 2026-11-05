@@ -9,7 +9,7 @@ import {
 } from 'react'
 import { achievementHistory, earnedTimestamp } from '../../../../shared/journey/history'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
-import { roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
+import { type RoadStopGeometry, roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
 import {
   ongoingObjectives,
   personalRoadmap,
@@ -73,7 +73,7 @@ const messages = defineMessages({
     next: 'Próximo marco',
     resume: 'Voltar à sugestão',
     selected: 'Desafio em foco',
-    guidance: 'Seu objetivo',
+    guidance: 'Objetivo',
     map: 'MAPA DA JORNADA',
     missable: 'Perdível',
     finale: 'Platina',
@@ -94,7 +94,11 @@ const messages = defineMessages({
       'Troféus adicionais, separados da rota da platina. Sua preferência de progresso continua valendo no resumo do jogo.',
     earned: 'Conquistado',
     suggestion: 'Sugestão para agora',
-    note: 'Orientação do Nexo',
+    note: 'Como fazer',
+    helpful: 'Essa dica ajudou?',
+    helpfulYes: 'Sim',
+    helpfulNo: 'Não',
+    helpfulThanks: 'Valeu! Isso ajuda a melhorar as dicas.',
     talk: 'Conversar com Nexo',
     ask: 'Perguntar ao Nexo',
     warning: 'Atenção antes de avançar',
@@ -153,7 +157,7 @@ const messages = defineMessages({
     next: 'Next milestone',
     resume: 'Return to suggestion',
     selected: 'Challenge in focus',
-    guidance: 'Your objective',
+    guidance: 'Objective',
     map: 'JOURNEY MAP',
     missable: 'Missable',
     finale: 'Platinum',
@@ -174,7 +178,11 @@ const messages = defineMessages({
       'Additional trophies, separate from the platinum route. Your progress preference still applies to the game summary.',
     earned: 'Earned',
     suggestion: 'Suggested for now',
-    note: 'Nexo guidance',
+    note: 'How to do it',
+    helpful: 'Did this tip help?',
+    helpfulYes: 'Yes',
+    helpfulNo: 'No',
+    helpfulThanks: 'Thanks! This helps us improve the tips.',
     talk: 'Talk to Nexo',
     ask: 'Ask Nexo',
     warning: 'Before moving on',
@@ -222,11 +230,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           {t('note')}
         </span>
       )}
-      {trick && (
-        <p>
-          <GuideText text={trick} />
-        </p>
-      )}
+      {trick && <TrickSteps text={trick} />}
       <RoadmapTips tips={tips} />
       {steps.map((step) => (
         <p key={step}>
@@ -261,10 +265,69 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           <GuideText text={[advice.bug.issue, advice.bug.workaround].filter(Boolean).join('\n')} />
         </p>
       )}
+      {hasAdvice && <TipRating trophy={trophy} />}
       <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
         <Icon name="nexo" />
         {t('ask')}
       </JourneyLink>
+    </div>
+  )
+}
+
+/** A trick written one step per line reads as a numbered list; a single line stays a paragraph. */
+function TrickSteps({ text }: { text: string }) {
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+  if (lines.length < 2)
+    return (
+      <p>
+        <GuideText text={text} />
+      </p>
+    )
+  return (
+    <ol className="roadmap-steps">
+      {lines.map((line) => (
+        <li key={line}>
+          <GuideText text={line} />
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+/**
+ * Whether the tip helped. The answer only lives on the page: the usage plugin reads the click from
+ * `data-rate` and `data-trophy`, so nothing here talks to the server.
+ */
+function TipRating({ trophy }: { trophy: Trophy }) {
+  const t = useMessages(messages)
+  const [rated, setRated] = useState<'yes' | 'no' | null>(null)
+  return (
+    <div className="roadmap-rate" data-trophy={`${trophy.groupId}:${trophy.id}`}>
+      {rated ? (
+        <p role="status">{t('helpfulThanks')}</p>
+      ) : (
+        <>
+          <span id={`roadmap-rate-${trophy.id}`}>{t('helpful')}</span>
+          <fieldset aria-labelledby={`roadmap-rate-${trophy.id}`}>
+            {(['yes', 'no'] as const).map((answer) => (
+              <button
+                key={answer}
+                type="button"
+                className="chip"
+                data-rate={answer}
+                aria-label={t(answer === 'yes' ? 'helpfulYes' : 'helpfulNo')}
+                title={t(answer === 'yes' ? 'helpfulYes' : 'helpfulNo')}
+                onClick={() => setRated(answer)}
+              >
+                <Icon name={answer === 'yes' ? 'thumbs-up' : 'thumbs-down'} />
+              </button>
+            ))}
+          </fieldset>
+        </>
+      )}
     </div>
   )
 }
@@ -343,11 +406,12 @@ function TrophyStep({
       className={`roadmap-content roadmap-step${suggested ? ' is-suggested' : ''}`}
       id="roadmap-advice"
     >
-      <header className="roadmap-trophy-heading">
+      <p className="roadmap-objective">
         <Icon name="target" />
-        <h4>{t('guidance')}</h4>
-      </header>
-      <p className="roadmap-objective">{hidden ? t('secretNote') : trophy.detail}</p>
+        <span>
+          <b>{t('guidance')}</b> {hidden ? t('secretNote') : trophy.detail}
+        </span>
+      </p>
       {!hidden && (
         <>
           {trophy.progressValue != null && trophy.progressTarget != null && (
@@ -637,14 +701,39 @@ function measuredRoadGeometry(first: HTMLElement | null) {
           secondPin && second
             ? secondPin.top - second.getBoundingClientRect().top + secondPin.height / 2
             : pin.top - firstRect.top + pin.height / 2,
+        stops: measuredStops(first?.parentElement ?? null),
       }
     : undefined
 }
 
-/** Under a stop's name: only what asks for action says so; natural trophies stay quiet. */
+/**
+ * Every stop's centre and rim inside its own column, since natural trophies are drawn smaller. The
+ * road ends at a natural stop's border; the marker (`ring`) always goes round the outer ring line,
+ * which a natural stop shows once selected.
+ */
+function measuredStops(track: HTMLElement | null, ring = false): RoadStopGeometry[] | undefined {
+  const items = track ? [...track.querySelectorAll<HTMLElement>(':scope > li')] : []
+  const stops = items.map((item) => {
+    const box = item.getBoundingClientRect()
+    const pin = item.querySelector('.roadmap-route-pin')?.getBoundingClientRect()
+    // Big stops wear a 6px halo outside their border; small natural ones end at the border. It goes
+    // by the kind, not the selection, so the road holds still while the selection moves along it.
+    const halo = ring || item.dataset.kind !== 'natural' ? 6 : 0
+    return pin?.width
+      ? {
+          x: pin.left - box.left + pin.width / 2,
+          y: pin.top - box.top + pin.height / 2,
+          rim: pin.width / 2 + halo,
+        }
+      : undefined
+  })
+  return stops.length && stops.every(Boolean) ? (stops as RoadStopGeometry[]) : undefined
+}
+
+/** Under a stop's name: what the trophy asks of the player. */
 function RouteKind({ kind }: { kind?: TrophyKind }) {
   const t = useMessages(messages)
-  if (kind !== 'hunt' && kind !== 'grind') return null
+  if (!kind) return null
   return <small className="roadmap-route-kind">{t(`kind.${kind}`)}</small>
 }
 
@@ -692,9 +781,10 @@ function RoadmapForward({
           path.setAttribute('d', roadSegment(index, width, geometry))
         })
       })
+      const marker = geometry && { ...geometry, stops: measuredStops(track, true) }
       const paint = (value: number, scroll: number) => {
         position.current = value
-        const point = roadPoint(value, width, geometry)
+        const point = roadPoint(value, width, marker)
         track.style.setProperty('--roadmap-cursor-x', `${point.x - 6}px`)
         track.style.setProperty('--roadmap-cursor-y', `${point.y - 6}px`)
         track.scrollTo?.({ left: scroll, behavior: 'auto' })

@@ -314,7 +314,7 @@
 
   .roadmap-focus {
     display: grid;
-    grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr);
+    grid-template-columns: minmax(280px, 0.6fr) minmax(0, 1.4fr);
     align-items: start;
     scroll-margin-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 120px);
   }
@@ -944,19 +944,23 @@
     --roadmap-marker-color: var(--color-highlight-warm);
   }
 
-  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-pin {
+  /* A natural stop keeps its size when selected: only its ring lights up, so the route holds still. */
+  .roadmap-route > [data-kind="natural"] .roadmap-route-pin {
     width: 52px;
     height: 52px;
+  }
+
+  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-pin {
     box-shadow: none;
     opacity: 0.7;
   }
 
-  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-art {
+  .roadmap-route > [data-kind="natural"] .roadmap-route-art {
     width: 40px;
     height: 40px;
   }
 
-  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-number {
+  .roadmap-route > [data-kind="natural"] .roadmap-route-number {
     display: none;
   }
 
@@ -966,6 +970,10 @@
 
   .roadmap-route-kind {
     font-size: var(--text-sm);
+  }
+
+  [data-kind="natural"] .roadmap-route-kind {
+    color: var(--color-fg-muted);
   }
 
   [data-kind="hunt"] .roadmap-route-kind {
@@ -1329,23 +1337,9 @@
     line-height: var(--leading-body);
   }
 
-  .roadmap-trophy-heading {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .roadmap-trophy-heading > .icon {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-    color: var(--color-accent);
-  }
-
-  .roadmap-trophy-heading h4 {
-    margin: 5px 0 0;
-    font: var(--weight-semibold) var(--text-xl) / var(--leading-snug) var(--font-display);
-    overflow-wrap: anywhere;
+  /* The tip reads as a column of text: long lines across a wide screen are hard to follow. */
+  .roadmap-step > * {
+    max-width: 72ch;
   }
 
   .roadmap-objective,
@@ -1353,8 +1347,43 @@
     font-size: var(--text-body);
     line-height: var(--leading-body);
     color: var(--color-fg-soft);
-    margin: 14px 0 0;
+    margin: 0;
     overflow-wrap: anywhere;
+  }
+
+  .roadmap-progress {
+    margin-top: 8px;
+  }
+
+  .roadmap-objective {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .roadmap-objective > .icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 3px;
+    color: var(--color-accent);
+  }
+
+  .roadmap-objective b {
+    color: var(--color-fg);
+    font-weight: var(--weight-semibold);
+  }
+
+  /* Without a tip there is nothing to separate: the objective and the Nexo link sit together, and
+     the column centres on the trophy beside it. */
+  .roadmap-focus:not(:has(.roadmap-advice-label)) {
+    align-items: center;
+  }
+
+  .roadmap-advice:not(:has(.roadmap-advice-label)) {
+    margin-top: 4px;
+    padding-top: 0;
+    border-top: 0;
   }
 
   .roadmap-advice {
@@ -1383,6 +1412,73 @@
     font-size: var(--text-body);
     line-height: var(--leading-relaxed);
     overflow-wrap: anywhere;
+  }
+
+  .roadmap-steps {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding-inline-start: 24px;
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+  }
+
+  .roadmap-steps > li {
+    margin: 0;
+    padding-left: 4px;
+    overflow-wrap: anywhere;
+  }
+
+  .roadmap-steps > li::marker {
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  .roadmap-rate {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-top: 6px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-base);
+  }
+
+  .roadmap-rate fieldset {
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .roadmap-rate .chip {
+    width: 36px;
+    height: 32px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-control);
+  }
+
+  .roadmap-rate .chip .icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .roadmap-rate .chip[data-rate="yes"]:hover {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .roadmap-rate .chip[data-rate="no"]:hover {
+    color: var(--color-highlight-warm);
+    border-color: var(--color-highlight-warm);
+  }
+
+  .roadmap-rate p {
+    margin: 0;
   }
 
   .roadmap-tips {
@@ -1559,12 +1655,12 @@
       height: 44px;
     }
 
-    .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-pin {
+    .roadmap-route > [data-kind="natural"] .roadmap-route-pin {
       width: 36px;
       height: 36px;
     }
 
-    .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-art {
+    .roadmap-route > [data-kind="natural"] .roadmap-route-art {
       width: 28px;
       height: 28px;
     }

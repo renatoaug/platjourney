@@ -374,10 +374,10 @@ test('objective and stored guidance have distinct icons, while missing advice ad
   const { container, unmount } = renderApp(
     <TrophyRoadmap game={{ ...game, trophies: [{ ...game.trophies[1], earned: false }] }} />,
   )
-  expect(container.querySelector('.roadmap-trophy-heading use')?.getAttribute('href')).toBe(
+  expect(container.querySelector('.roadmap-objective use')?.getAttribute('href')).toBe(
     '/icons.svg#target',
   )
-  expect(screen.getByText('Orientação do Nexo')).toBeTruthy()
+  expect(screen.getByText('Como fazer')).toBeTruthy()
   expect(container.querySelector('.roadmap-advice-label use')?.getAttribute('href')).toBe(
     '/icons.svg#nexo',
   )
@@ -388,7 +388,8 @@ test('objective and stored guidance have distinct icons, while missing advice ad
       game={{ ...game, guide: null, trophies: [{ ...game.trophies[1], earned: false }] }}
     />,
   )
-  expect(screen.queryByText('Orientação do Nexo')).toBeNull()
+  expect(screen.queryByText('Como fazer')).toBeNull()
+  expect(screen.queryByRole('group', { name: 'Essa dica ajudou?' })).toBeNull()
   expect(screen.queryByText('Sem dica específica no guia.')).toBeNull()
   expect(screen.getByRole('link', { name: 'Perguntar ao Nexo' })).toBeTruthy()
 })
@@ -999,4 +1000,33 @@ test('with every trophy earned, the kinds still count the whole game', () => {
   }
   const { container } = renderApp(<TrophyRoadmap game={{ ...game, trophies, guide }} />)
   expect(container.querySelector('.roadmap-kinds')?.textContent).toContain('1 caçada')
+})
+
+test('a trick of several lines reads as numbered steps, and the player can say whether it helped', () => {
+  const game = routeGame()
+  const first = game.trophies[0]
+  const guide = {
+    ...(game.guide as GuideDetail),
+    tricks: [
+      { trophy: first.name, trick: 'Vá até a ponte.\nSegure o botão.\n\nO troféu sai na hora.' },
+    ],
+  }
+  const pending = { ...first, earned: false, earnedAt: undefined }
+  const { container } = renderApp(
+    <TrophyRoadmap game={{ ...game, guide, trophies: [pending, ...game.trophies.slice(1)] }} />,
+  )
+  fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
+  const steps = [...container.querySelectorAll('.roadmap-steps > li')].map((li) => li.textContent)
+  expect(steps).toEqual(['Vá até a ponte.', 'Segure o botão.', 'O troféu sai na hora.'])
+  const rating = screen.getByRole('group', { name: 'Essa dica ajudou?' })
+  expect(container.querySelector('.roadmap-rate')?.getAttribute('data-trophy')).toBe(
+    `${first.groupId}:${first.id}`,
+  )
+  const yes = within(rating).getByRole('button', { name: 'Sim' })
+  expect(yes.dataset.rate).toBe('yes')
+  fireEvent.click(yes)
+  expect(container.querySelector('.roadmap-rate [role="status"]')?.textContent).toBe(
+    'Valeu! Isso ajuda a melhorar as dicas.',
+  )
+  expect(screen.queryByRole('group', { name: 'Essa dica ajudou?' })).toBeNull()
 })
