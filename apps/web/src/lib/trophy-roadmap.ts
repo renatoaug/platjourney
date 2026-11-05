@@ -111,9 +111,10 @@ export function phasePlan(goal: string, trophies: Trophy[]) {
     .join('\n')
 }
 
-/** The guide's steps that name this trophy. One that names a trophy still hidden would spoil it. */
+/** The guide's steps that name this trophy and no other. */
 export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: GuideDetail | null) {
-  const hidden = trophies.filter((t) => t !== trophy && t.hidden && !t.earned)
+  // A step that names another trophy belongs to the phase's plan, not to this trophy's tip.
+  const others = trophies.filter((t) => t !== trophy)
   const shared = trophies.some(
     (o) => o !== trophy && (o.name === trophy.name || (!!o.nameEn && o.nameEn === trophy.nameEn)),
   )
@@ -127,7 +128,7 @@ export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: Guide
     ),
   ]
   return [...new Set(steps)]
-    .filter((step) => mentions(step, trophy) && !hidden.some((t) => mentions(step, t)))
+    .filter((step) => mentions(step, trophy) && !others.some((t) => mentions(step, t)))
     .slice(0, MAX_MENTIONS)
 }
 

@@ -196,14 +196,12 @@ describe('trophyMentions', () => {
     ])
   })
 
-  test('a step naming a trophy still hidden stays out until it is revealed', () => {
+  test('a step that names another trophy stays in the phase plan, hidden or not', () => {
     const a = trophy('Aberto')
     const goal = 'Isso libera **Aberto** e **Segredo**.'
     expect(trophyMentions(a, [a, trophy('Segredo', { hidden: true })], guideWith(goal))).toEqual([])
-    expect(trophyMentions(a, [a, trophy('Segredo')], guideWith(goal))).toEqual([goal])
-    expect(
-      trophyMentions(a, [a, trophy('Segredo', { hidden: true, earned: true })], guideWith(goal)),
-    ).toEqual([goal])
+    expect(trophyMentions(a, [a, trophy('Segredo')], guideWith(goal))).toEqual([])
+    expect(trophyMentions(a, [a], guideWith(goal))).toEqual([goal])
   })
 
   test('reads early tips, collectibles and general route tips, at most three, once each', () => {
