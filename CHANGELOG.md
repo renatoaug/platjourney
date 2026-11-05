@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.48.1](https://github.com/renatoaug/platjourney/compare/v0.48.0...v0.48.1) (2026-11-05)
+
+### Bug Fixes
+
+* **ai:** keep nexo's answers on point and the platinum last on the route ([#138](https://github.com/renatoaug/platjourney/issues/138)) ([849c23a](https://github.com/renatoaug/platjourney/commit/849c23af99c713c06b542c62c3bde4d4b825b3ec))
+
 ## [0.48.0](https://github.com/renatoaug/platjourney/compare/v0.47.2...v0.48.0) (2026-11-05)
 
 ### Features
