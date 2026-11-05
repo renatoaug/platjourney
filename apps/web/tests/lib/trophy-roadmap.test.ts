@@ -102,6 +102,33 @@ test('ongoing objectives require explicit evidence and preserve unknown progress
   expect(items.every((t) => !t.earned)).toBe(true)
 })
 
+test('with kinds, only what keeps going stays: grinds, and hunts that are counted or last the campaign', () => {
+  const items = [
+    trophy(1, 'Flight'),
+    trophy(2, 'Weapons', { progressTarget: 11, progressValue: 3 }),
+    trophy(3, 'Headshots'),
+    trophy(4, 'Soldier', { progressTarget: 100, progressValue: 10 }),
+    trophy(5, 'Stealth'),
+  ]
+  const g = guide([
+    { phase: 'A', goal: '', trophies: ['Flight', 'Weapons', 'Soldier'] },
+    { phase: 'B', goal: '', trophies: ['Flight', 'Weapons', 'Soldier'] },
+  ])
+  g.missables = [{ trophy: 'Stealth', when: 'Durante a campanha.', how: 'Keep the habit.' }]
+  g.trophyKinds = [
+    { trophy: 'Flight', kind: 'hunt' },
+    { trophy: 'Weapons', kind: 'hunt' },
+    { trophy: 'Headshots', kind: 'grind' },
+    { trophy: 'Soldier', kind: 'natural' },
+    { trophy: 'Stealth', kind: 'hunt' },
+  ]
+  expect(ongoingObjectives(items, g).map((x) => [x.trophy.name, x.basis])).toEqual([
+    ['Weapons', 'repeated'],
+    ['Headshots', 'long'],
+    ['Stealth', 'duration'],
+  ])
+})
+
 test('ambiguous matches and incidental campaign text do not create ongoing objectives', () => {
   const g = guide([{ phase: 'A', goal: '', trophies: ['Same', 'Same'] }])
   g.missables = [
