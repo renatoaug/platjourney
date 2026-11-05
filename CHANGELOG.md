@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.50.0](https://github.com/renatoaug/platjourney/compare/v0.49.0...v0.50.0) (2026-11-05)
+
+### Features
+
+* **web:** ask why after a tip dislike ([#140](https://github.com/renatoaug/platjourney/issues/140)) ([15b1745](https://github.com/renatoaug/platjourney/commit/15b1745094f6f98cdc71cca8ddef017629eba441))
+
 ## [0.49.0](https://github.com/renatoaug/platjourney/compare/v0.48.1...v0.49.0) (2026-11-05)
 
 ### Features
