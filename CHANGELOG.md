@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.49.0](https://github.com/renatoaug/platjourney/compare/v0.48.1...v0.49.0) (2026-11-05)
+
+### Features
+
+* **web:** sort trophies into natural, hunt and grind on the journey ([#139](https://github.com/renatoaug/platjourney/issues/139)) ([5552262](https://github.com/renatoaug/platjourney/commit/555226254acc2c171ae0d31bde7729d200676675))
+
 ## [0.48.1](https://github.com/renatoaug/platjourney/compare/v0.48.0...v0.48.1) (2026-11-05)
 
 ### Bug Fixes
