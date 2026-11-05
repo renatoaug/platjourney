@@ -99,6 +99,15 @@ const messages = defineMessages({
     helpfulYes: 'Sim',
     helpfulNo: 'Não',
     helpfulThanks: 'Valeu! Isso ajuda a melhorar as dicas.',
+    whyTitle: 'Valeu! O que faltou?',
+    why: {
+      detail: 'Faltou detalhe',
+      wrong: 'Está errada',
+      unclear: 'Não entendi',
+      own: 'Outro',
+    },
+    whyNote: 'Conte o que faltou',
+    whySend: 'Enviar',
     talk: 'Conversar com Nexo',
     ask: 'Perguntar ao Nexo',
     warning: 'Atenção antes de avançar',
@@ -183,6 +192,15 @@ const messages = defineMessages({
     helpfulYes: 'Yes',
     helpfulNo: 'No',
     helpfulThanks: 'Thanks! This helps us improve the tips.',
+    whyTitle: 'Thanks! What was missing?',
+    why: {
+      detail: 'Not enough detail',
+      wrong: 'It is wrong',
+      unclear: 'Hard to follow',
+      own: 'Other',
+    },
+    whyNote: 'Tell us what was missing',
+    whySend: 'Send',
     talk: 'Talk to Nexo',
     ask: 'Ask Nexo',
     warning: 'Before moving on',
@@ -297,21 +315,28 @@ function TrickSteps({ text }: { text: string }) {
   )
 }
 
+// "other" is also a plural category, so its text sits under another key.
+const REASONS = ['detail', 'wrong', 'unclear', 'other'] as const
+/** Room for the note inside a usage event, after its name and the trophy. */
+const NOTE_LIMIT = 80
+
 /**
- * Whether the tip helped. The answer only lives on the page: the usage plugin reads the click from
- * `data-rate` and `data-trophy`, so nothing here talks to the server.
+ * Whether the tip helped. Nothing here talks to the server: the usage plugin reads each click from
+ * `data-rate`, `data-reason` and the note form, with the trophy in `data-trophy`. A dislike counts on
+ * its own; the reason after it is optional.
  */
 function TipRating({ trophy }: { trophy: Trophy }) {
   const t = useMessages(messages)
-  const [rated, setRated] = useState<'yes' | 'no' | null>(null)
+  const [step, setStep] = useState<'ask' | 'why' | 'note' | 'done'>('ask')
+  const [note, setNote] = useState('')
+  const label = `roadmap-rate-${trophy.id}`
   return (
     <div className="roadmap-rate" data-trophy={`${trophy.groupId}:${trophy.id}`}>
-      {rated ? (
-        <p role="status">{t('helpfulThanks')}</p>
-      ) : (
+      {step === 'done' && <p role="status">{t('helpfulThanks')}</p>}
+      {step === 'ask' && (
         <>
-          <span id={`roadmap-rate-${trophy.id}`}>{t('helpful')}</span>
-          <fieldset aria-labelledby={`roadmap-rate-${trophy.id}`}>
+          <span id={label}>{t('helpful')}</span>
+          <fieldset aria-labelledby={label}>
             {(['yes', 'no'] as const).map((answer) => (
               <button
                 key={answer}
@@ -320,13 +345,56 @@ function TipRating({ trophy }: { trophy: Trophy }) {
                 data-rate={answer}
                 aria-label={t(answer === 'yes' ? 'helpfulYes' : 'helpfulNo')}
                 title={t(answer === 'yes' ? 'helpfulYes' : 'helpfulNo')}
-                onClick={() => setRated(answer)}
+                onClick={() => setStep(answer === 'yes' ? 'done' : 'why')}
               >
                 <Icon name={answer === 'yes' ? 'thumbs-up' : 'thumbs-down'} />
               </button>
             ))}
           </fieldset>
         </>
+      )}
+      {step === 'why' && (
+        <>
+          <span id={label} role="status">
+            {t('whyTitle')}
+          </span>
+          <fieldset aria-labelledby={label} className="roadmap-rate-why">
+            {REASONS.map((reason) => (
+              <button
+                key={reason}
+                type="button"
+                className="chip"
+                data-reason={reason}
+                onClick={() => setStep(reason === 'other' ? 'note' : 'done')}
+              >
+                {t(`why.${reason === 'other' ? 'own' : reason}`)}
+              </button>
+            ))}
+          </fieldset>
+        </>
+      )}
+      {step === 'note' && (
+        <form
+          className="roadmap-rate-note"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (note.trim()) setStep('done')
+          }}
+        >
+          <input
+            type="text"
+            aria-label={t('whyNote')}
+            placeholder={t('whyNote')}
+            maxLength={NOTE_LIMIT}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            // biome-ignore lint/a11y/noAutofocus: the field opens because the player asked to type
+            autoFocus
+          />
+          <button type="submit" className="chip" disabled={!note.trim()}>
+            {t('whySend')}
+          </button>
+        </form>
       )}
     </div>
   )
