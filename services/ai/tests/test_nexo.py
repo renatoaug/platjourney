@@ -1,6 +1,6 @@
 """Nexo: the game context it reads, the trophies a message names and what each notice asks."""
 
-from datetime import date
+from datetime import date, timedelta
 from types import SimpleNamespace
 from typing import Any
 
@@ -41,7 +41,7 @@ def context(**over: Any) -> GameContext:
                 rarity='Comum',
                 earnedRate=80.0,
                 earned=True,
-                earnedAt='2026-09-01',
+                earnedAt=date.today().isoformat(),
             ),
             trophy(id=2, progressValue=3, progressTarget=10, progressRate=30),
             trophy(id=3, name='Colecionador', nameEn='Collector', detail='Ache tudo'),
@@ -54,7 +54,8 @@ def test_context_lists_progress_earned_and_missing() -> None:
     assert nexo.lean_context(context()) == '\n'.join(
         [
             'Jogo: Days Gone (PS4) — 20% — 1/3 troféus',
-            'Conquistados (1), mais recentes primeiro: Primeiro Passo (2026-09-01)',
+            'Conquistados (1), mais recentes primeiro: '
+            f'Primeiro Passo ({date.today().isoformat()})',
             'Faltando (2):',
             '- [gold] Sobrevivente (Survivor): Sobreviva à horda — progresso 3/10',
             '- [gold] Colecionador (Collector): Ache tudo',
@@ -254,7 +255,7 @@ GUIDE: dict[str, Any] = {
 
 def test_lean_context_keeps_what_every_answer_needs() -> None:
     text = nexo.lean_context(context(guide=GUIDE))
-    assert 'Primeiro Passo (2026-09-01)' in text
+    assert f'Primeiro Passo ({date.today().isoformat()})' in text
     assert '- [gold] Sobrevivente (Survivor): Sobreviva à horda — progresso 3/10' in text
     assert 'Perdíveis:\n- Sobrevivente: Antes do capítulo 3. Fale com X.' in text
     assert '- Fase 1: Zere a história.' in text
@@ -280,7 +281,7 @@ def test_the_guide_marks_trophies_the_player_already_has() -> None:
         in text
     )
     # The player's own list stays as it is; only the guide's text is marked.
-    assert 'Primeiro Passo (2026-09-01)' in text
+    assert f'Primeiro Passo ({date.today().isoformat()})' in text
     assert 'Sobrevivente (já conquistado)' not in text
 
 
@@ -651,3 +652,29 @@ def test_a_player_without_a_goal_or_games_reads_as_such() -> None:
 async def test_a_game_conversation_is_not_told_it_is_general(model: Model) -> None:
     await nexo.ask('oi', 'ctx', conversation=True)
     assert 'Esta é a conversa geral' not in model.calls[-1]['instructions']
+
+
+def test_a_short_follow_up_searches_with_the_last_question() -> None:
+    history = [
+        nexo.Turn(role='user', content='como faço o Maligna?'),
+        nexo.Turn(role='assistant', content='Elimine metade dos inimigos.'),
+    ]
+    assert nexo.search_query('e o próximo?', history) == 'como faço o Maligna? e o próximo?'
+    assert nexo.search_query('e o próximo?', []) == 'e o próximo?'
+    long = 'qual é a melhor ordem para pegar os colecionáveis deste jogo?'
+    assert nexo.search_query(long, history) == long
+
+
+def test_the_rules_hold_back_filler_and_unsourced_advice() -> None:
+    assert 'não cite o que o jogador já conquistou' in nexo.SYSTEM
+    assert 'nem conselho que pareça óbvio' in nexo.SYSTEM
+    assert 'nunca mostre a conta' in nexo.SYSTEM
+    assert 'Se não tiver nada novo para dizer' in nexo.SYSTEM
+
+
+def test_only_a_recent_conquest_keeps_its_date() -> None:
+    today = date.today()
+    assert nexo.recent(today.isoformat())
+    assert not nexo.recent((today - timedelta(days=45)).isoformat())
+    assert not nexo.recent(None)
+    assert not nexo.recent('sem data')
