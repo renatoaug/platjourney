@@ -8,6 +8,7 @@ import {
   saveEarnedIds,
   saveGroups,
   sharedGroups,
+  titleOfGame,
   upsertTitle,
 } from '../../src/repository/title.ts'
 import { makeGame, makeGroups, makeTitle } from '../fixtures.ts'
@@ -107,4 +108,13 @@ test('a title row reads its split and stored list in camelCase', async () => {
     groups: { base: { definedByType: { gold: 1 } }, dlcNames: {} },
     trophies: [{ earnedAt: 'x', iconUrl: 'i' }],
   })
+})
+
+test('a title row is also found by its catalog game', async () => {
+  const one = spyOn(db, 'one').mockResolvedValue(undefined)
+  expect(await titleOfGame('user:u1', 'game:1')).toBeUndefined()
+  expect(one.mock.calls[0]).toEqual([
+    'SELECT * FROM title WHERE user = $user AND game = $game LIMIT 1',
+    { user, game },
+  ])
 })

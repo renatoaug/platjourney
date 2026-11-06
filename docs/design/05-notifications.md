@@ -21,6 +21,7 @@ flowchart LR
     tpl --> msg
     store[("store_price")] --> deals["Daily deals job"] --> msg
     servers[("server_status")] --> shut["Daily server job"] --> msg
+    gaps[("guide_request<br/>questions")] --> follow["answer-question script<br/>run by hand"] --> msg
     msg --> web["Web: bell and history"]
     msg --> tg["Telegram"]
     msg --> push["Push"]
@@ -48,6 +49,7 @@ Web Push encrypts each message for the browser and signs it with the instance's 
 | `session` | The player opens a game (PSN presence), at most once every 6 hours | What is left for the platinum, the suggested next trophy and its tip, the checklist of the stretch the player is in, a missable still open and a trophy almost done. Opening the same game again within a day with nothing earned since gets one line (the game and the suggestion) and the checklist | Template |
 | `route` | A roadmap step reached without new trophies (a sync that caught up) | The guide's note on what comes next and the chapter's checklist | Template |
 | `deal` | Daily PlayStation Store check: a saved game goes on sale or its sale gets deeper, or enters the PS Plus catalog of the tier the player picked; owned games are left out | One notice a day per player: one game as a sentence (price and until when, or that it entered PS Plus), several as a list | Template |
+| `answer` | Whoever runs the instance filled the deep guide with the answer to a question Nexo could not answer (it said it would look into it) and sent it with `scripts/answer-question.ts` | The answer Nexo wrote from the guide, opening with a line that it came back with it, reviewed before sending; also added to that game's conversation | Nexo |
 | `server` | A game in the library has its online servers shutting down (daily check, only with `AI_RESEARCH` on) | The warning with the date and the stored note | Template |
 
 One sweep sends at most one message per player: what happened, then what comes next, in the same text.

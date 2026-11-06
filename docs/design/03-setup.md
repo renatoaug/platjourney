@@ -84,6 +84,7 @@ By default the app also calls the model without a player asking. Each switch tur
 | `AI_RESEARCH` | 1 | No guide research for games without one, no deep guide page search, no server checks. Games opened without a guide are recorded in `guide_request`; `bun run check-servers` checks servers on demand |
 | `AI_NOTICES` | 1 | Plain notices on game start and trophies, nothing at session end. With `1`, each player can still turn Nexo's notices off on the profile page |
 | `AI_WEB_SEARCH` | 1 | No web search inside answers: Nexo answers from the guide and the deep guide passages, recommendations use the numbers of the guides already written, and uncovered questions are recorded in `guide_request` |
+| `AI_GAP_SEARCH_DAILY` | 0 | With `AI_WEB_SEARCH=0`, how many chat questions without a deep guide passage may still search the web per day, for the whole instance. Each is recorded in `guide_request` with `searched` and the pages cited |
 
 With all three off, the instance only spends when a player chats, asks for a plan or for recommendations.
 

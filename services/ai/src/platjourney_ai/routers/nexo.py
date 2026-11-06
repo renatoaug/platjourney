@@ -31,6 +31,15 @@ class TipRequest(Wire):
     recommended: nexo.Recommended | None = None
 
 
+class FollowUpRequest(Wire):
+    context: GameContext
+    question: str = Field(max_length=4000)
+
+
+class MaybeAnswer(Wire):
+    text: str | None
+
+
 class TrophyHelpRequest(Wire):
     context: GameContext
     trophy: Trophy
@@ -58,6 +67,12 @@ async def tip(body: TipRequest) -> Answer:
 @router.post('/trophy-help')
 async def trophy_help(body: TrophyHelpRequest) -> Answer:
     return Answer(text=await nexo.trophy_help(body.context, body.trophy))
+
+
+@router.post('/follow-up')
+async def follow_up(body: FollowUpRequest) -> MaybeAnswer:
+    """A question Nexo could not answer before, asked again now that the deep guide may have it."""
+    return MaybeAnswer(text=await nexo.follow_up(body.context, body.question))
 
 
 @router.post('/reply')

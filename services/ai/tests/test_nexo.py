@@ -331,15 +331,19 @@ async def test_a_question_without_passages_is_recorded_as_a_gap(
     async def no_passages(*_: Any, **__: Any) -> list[Any]:
         return []
 
-    async def record(ctx: Any, question: str) -> None:
+    async def record(ctx: Any, question: str, **found: Any) -> None:
         recorded.append(question)
 
     async def answer(*_: Any, **__: Any) -> str:
         return 'resposta'
 
+    async def answer_reply(*_: Any, **__: Any) -> llm.Reply:
+        return llm.Reply(await answer())
+
     monkeypatch.setattr(nexo.deepguide, 'retrieve', no_passages)
     monkeypatch.setattr(nexo, 'record_gap', record)
     monkeypatch.setattr(nexo, 'ask', answer)
+    monkeypatch.setattr(nexo, 'ask_reply', answer_reply)
     await nexo.reply('onde fica o arco?', context(), [])
     assert recorded == ['onde fica o arco?']
 
@@ -711,3 +715,187 @@ def test_a_hidden_trophy_stays_out_of_the_route_note() -> None:
     }
     secret = Trophy.model_validate(trophy(id=1, name='Segredo', hidden=True))
     assert nexo.next_on_route(guide, [secret]) == ''
+
+
+def _with_platinum(*extra: dict[str, Any], **over: Any) -> GameContext:
+    """A game with a platinum still missing, the base trophies of `context()` and `extra` ones."""
+    base = context().model_dump(by_alias=True)
+    base['trophies'] += [trophy(id=99, name='Platina', nameEn='Platinum', type='platinum'), *extra]
+    return GameContext.model_validate(base | over)
+
+
+def test_context_counts_what_is_left_for_the_platinum_without_dlc_and_platinum() -> None:
+    dlc = trophy(id=10, name='Extra', nameEn='Extra', groupId='001')
+    guide = {'missables': [{'trophy': 'Colecionador'}, {'trophy': 'Extra'}], 'hours': 30}
+    lines = nexo.lean_context(_with_platinum(dlc, hoursPlayed=12.0, guide=guide)).splitlines()
+    # Two base trophies missing (the DLC one and the platinum do not count); one of them missable.
+    assert lines[1] == (
+        'Para a platina: faltam 2 troféus do jogo base (sem contar a platina), '
+        '1 deles ainda perdíveis, cerca de 18h pelas contas do guia.'
+    )
+
+
+def test_context_counts_no_missables_when_the_guide_has_none_or_they_are_earned() -> None:
+    assert nexo.lean_context(_with_platinum(guide={})).splitlines()[1] == (
+        'Para a platina: faltam 2 troféus do jogo base (sem contar a platina), '
+        '0 deles ainda perdíveis.'
+    )
+    earned = {'missables': [{'trophy': 'Primeiro Passo'}]}
+    assert '0 deles ainda perdíveis' in nexo.lean_context(_with_platinum(guide=earned))
+
+
+def test_context_has_no_platinum_count_once_it_is_earned() -> None:
+    ctx = _with_platinum()
+    for t in ctx.trophies:
+        if t.type == 'platinum':
+            t.earned = True
+    assert 'Para a platina' not in nexo.lean_context(ctx)
+
+
+def test_the_prompt_orders_its_rules_and_shows_both_kinds_of_answer() -> None:
+    text = nexo.SYSTEM
+    heads = ['vale esta ordem', '\nEscopo:\n', '\nExatidão:\n', '\nO que responder:\n']
+    heads += ['\nForma:\n', '\nExemplos']
+    places = [text.index(h) for h in heads]
+    assert places == sorted(places)
+    examples = text.split('Exemplos')[1]
+    assert 'Essa me pegou! Ainda não tenho isso mapeado em Ecos de Vidro' in examples
+    # Each example keeps to the six-bold limit it asks for.
+    assert all(part.count('**') // 2 <= 6 for part in examples.split('Pessoa:'))
+    assert 'com os números da linha "Para a platina"' in text
+
+
+async def _gap_reply(
+    monkeypatch: pytest.MonkeyPatch, searched_today: int
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Asks a question the deep guide has no passage for, with web search off for the instance and
+    a budget of 20 searches a day, `searched_today` of them already used."""
+    calls: list[dict[str, Any]] = []
+    recorded: list[dict[str, Any]] = []
+
+    async def no_passages(*_: Any, **__: Any) -> list[Any]:
+        return []
+
+    async def clean(_: str) -> bool:
+        return False
+
+    async def used(*_: Any, **__: Any) -> list[Any]:
+        return [searched_today]
+
+    async def respond(step: str | None = None, search: bool = False, **params: Any) -> llm.Reply:
+        calls.append({'search': search, 'instructions': params['instructions']})
+        return llm.Reply('Fica no norte.', searches=int(search), urls=('https://a.example/x',))
+
+    async def record(ctx: Any, question: str, **found: Any) -> None:
+        recorded.append(found)
+
+    monkeypatch.setattr(settings, 'ai_web_search', False)
+    monkeypatch.setattr(settings, 'ai_gap_search_daily', 20)
+    monkeypatch.setattr(nexo.deepguide, 'retrieve', no_passages)
+    monkeypatch.setattr(llm, 'flagged', clean)
+    monkeypatch.setattr(llm, 'respond', respond)
+    monkeypatch.setattr(nexo.db, 'query', used)
+    monkeypatch.setattr(nexo, 'record_gap', record)
+    await nexo.reply('onde fica o arco?', context(), [])
+    return calls, recorded
+
+
+async def test_a_gap_searches_the_web_once_within_the_day_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls, recorded = await _gap_reply(monkeypatch, searched_today=3)
+    assert calls[0]['search'] is True
+    assert 'pesquise na web' in calls[0]['instructions']
+    assert recorded == [{'searched': True, 'urls': ['https://a.example/x'], 'answered': True}]
+
+
+async def test_a_gap_past_the_day_budget_does_not_search(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls, recorded = await _gap_reply(monkeypatch, searched_today=20)
+    assert calls[0]['search'] is False
+    assert 'Você não pesquisa na web' in calls[0]['instructions']
+    assert recorded[0]['searched'] is False
+
+
+async def test_an_answer_that_does_not_have_it_yet_keeps_the_question(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    recorded: list[str] = []
+
+    async def passages(*_: Any, **__: Any) -> tuple[str, list[Any]]:
+        return ('\nTrechos dos guias: algo', [])
+
+    async def answer(*_: Any, **__: Any) -> str:
+        return f'{nexo.NOT_YET} Ainda não tenho isso mapeado em Days Gone.'
+
+    async def record(ctx: Any, question: str, **found: Any) -> None:
+        recorded.append(question)
+
+    async def clean(_: str) -> bool:
+        return False
+
+    monkeypatch.setattr(llm, 'flagged', clean)
+    monkeypatch.setattr(nexo, 'passages', passages)
+    monkeypatch.setattr(nexo, 'ask', answer)
+    monkeypatch.setattr(nexo, 'record_gap', record)
+    await nexo.reply('qual a melhor build?', context(), [])
+    assert recorded == ['qual a melhor build?']
+
+
+async def test_one_call_may_search_with_web_search_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    sent: list[dict[str, Any]] = []
+
+    async def create(**params: Any) -> Any:
+        sent.append(params)
+        return SimpleNamespace(output_text='ok', output=[], usage=None, model='m')
+
+    async def no_record(*_: Any, **__: Any) -> None:
+        return None
+
+    monkeypatch.setattr(settings, 'ai_web_search', False)
+    monkeypatch.setattr(llm.openai.responses, 'create', create)
+    monkeypatch.setattr(llm, 'record_call', no_record)
+    tools = [{'type': 'web_search'}]
+    await llm.respond(tools=tools, input='x')
+    await llm.respond(search=True, tools=tools, input='x')
+    assert 'tools' not in sent[0]
+    assert sent[1]['tools'] == tools
+
+
+async def _follow_up(
+    monkeypatch: pytest.MonkeyPatch, found: str, answer: str
+) -> tuple[str | None, list[str]]:
+    asked: list[str] = []
+
+    async def passages(*_: Any, **__: Any) -> tuple[str, list[Any]]:
+        return (found, [])
+
+    async def ask(prompt: str, *_: Any, **__: Any) -> str:
+        asked.append(prompt)
+        return answer
+
+    monkeypatch.setattr(nexo, 'passages', passages)
+    monkeypatch.setattr(nexo, 'ask', ask)
+    return await nexo.follow_up(context(), 'onde fica o arco?'), asked
+
+
+async def test_a_follow_up_waits_until_the_guide_has_passages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    text, asked = await _follow_up(monkeypatch, '', 'Fica no norte.')
+    assert text is None
+    assert asked == []
+
+
+async def test_a_follow_up_answers_once_the_guide_has_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    text, asked = await _follow_up(
+        monkeypatch, '\nTrechos dos guias: o arco', 'Voltei! Fica no norte.'
+    )
+    assert text == 'Voltei! Fica no norte.'
+    assert 'onde fica o arco?' in asked[0]
+
+
+async def test_a_follow_up_that_still_has_no_answer_says_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    text, _ = await _follow_up(monkeypatch, '\nTrechos dos guias: outra coisa', nexo.NOT_YET)
+    assert text is None
