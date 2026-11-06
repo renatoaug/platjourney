@@ -7,8 +7,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
 
-        window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = CAPBridgeViewController()
+        // UIKit has already loaded MainViewController from the scene storyboard. Keep that
+        // bridge: replacing it creates another WebView and discards the app's setup.
+        if window == nil {
+            window = UIWindow(windowScene: windowScene)
+            window?.rootViewController = MainViewController()
+        }
+        window?.backgroundColor = MainViewController.launchBackground
         window?.makeKeyAndVisible()
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
