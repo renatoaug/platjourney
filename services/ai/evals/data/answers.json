@@ -190,6 +190,33 @@
       "game": "Dark Souls III",
       "question": "vou começar Dark Souls III agora, alguma dica pra não me arrepender?",
       "reference": "Recrute Yoel no Foot of the High Wall e use Draw Out True Strength cinco vezes antes de entrar nas Catacombs of Carthus; não cure o Dark Sigil se estiver seguindo A Usurpação do Fogo. Conclua a história de Sirris no NG antes de entregar uma Pale Tongue para aumentar o rank de Rosaria. Deixe Yellowfinger Heysel e Proper Bow para o NG+. Guarde almas de chefes até conferir as transposições de Ludleth, pois várias coleções exigem magias obtidas dessa forma."
+    },
+    {
+      "game": "Resident Evil 7: Biohazard",
+      "question": "o que falta pra platina?",
+      "earned": [
+        "Ela Está Viva",
+        "Bem-Vindo à Família, Filho",
+        "Ocê Não Vai Escapar",
+        "A Cova Vai Revelar A Verdade",
+        "É Melhor Começar a Correr",
+        "Dentro das Profundezas",
+        "Agindo Com Cautela",
+        "A-há!",
+        "Mestre do Arrombamento",
+        "Boa Tentativa",
+        "Na Mochila",
+        "Abra os Olhos",
+        "Menos é Mais",
+        "Atrás de Portas Fechadas",
+        "Braços Para o Alto",
+        "Agora é Pessoal",
+        "Mata-Moscas",
+        "Corte, Corte, Recorte!",
+        "Quem é Seu Papai Agora?"
+      ],
+      "reference": "A primeira linha diz que faltam 18 troféus do jogo base para a platina (sem contar a platina) e que 14 deles ainda são perdíveis; depois vem a ordem.",
+      "avoid": ["19 troféus", "faltam 19"]
     }
   ]
 }

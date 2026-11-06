@@ -711,3 +711,51 @@ def test_a_hidden_trophy_stays_out_of_the_route_note() -> None:
     }
     secret = Trophy.model_validate(trophy(id=1, name='Segredo', hidden=True))
     assert nexo.next_on_route(guide, [secret]) == ''
+
+
+def _with_platinum(*extra: dict[str, Any], **over: Any) -> GameContext:
+    """A game with a platinum still missing, the base trophies of `context()` and `extra` ones."""
+    base = context().model_dump(by_alias=True)
+    base['trophies'] += [trophy(id=99, name='Platina', nameEn='Platinum', type='platinum'), *extra]
+    return GameContext.model_validate(base | over)
+
+
+def test_context_counts_what_is_left_for_the_platinum_without_dlc_and_platinum() -> None:
+    dlc = trophy(id=10, name='Extra', nameEn='Extra', groupId='001')
+    guide = {'missables': [{'trophy': 'Colecionador'}, {'trophy': 'Extra'}], 'hours': 30}
+    lines = nexo.lean_context(_with_platinum(dlc, hoursPlayed=12.0, guide=guide)).splitlines()
+    # Two base trophies missing (the DLC one and the platinum do not count); one of them missable.
+    assert lines[1] == (
+        'Para a platina: faltam 2 troféus do jogo base (sem contar a platina), '
+        '1 deles ainda perdíveis, cerca de 18h pelas contas do guia.'
+    )
+
+
+def test_context_counts_no_missables_when_the_guide_has_none_or_they_are_earned() -> None:
+    assert nexo.lean_context(_with_platinum(guide={})).splitlines()[1] == (
+        'Para a platina: faltam 2 troféus do jogo base (sem contar a platina), '
+        '0 deles ainda perdíveis.'
+    )
+    earned = {'missables': [{'trophy': 'Primeiro Passo'}]}
+    assert '0 deles ainda perdíveis' in nexo.lean_context(_with_platinum(guide=earned))
+
+
+def test_context_has_no_platinum_count_once_it_is_earned() -> None:
+    ctx = _with_platinum()
+    for t in ctx.trophies:
+        if t.type == 'platinum':
+            t.earned = True
+    assert 'Para a platina' not in nexo.lean_context(ctx)
+
+
+def test_the_prompt_orders_its_rules_and_shows_both_kinds_of_answer() -> None:
+    text = nexo.SYSTEM
+    heads = ['vale esta ordem', '\nEscopo:\n', '\nExatidão:\n', '\nO que responder:\n']
+    heads += ['\nForma:\n', '\nExemplos']
+    places = [text.index(h) for h in heads]
+    assert places == sorted(places)
+    examples = text.split('Exemplos')[1]
+    assert 'Isso eu ainda não tenho no guia deste jogo.' in examples
+    # Each example keeps to the six-bold limit it asks for.
+    assert all(part.count('**') // 2 <= 6 for part in examples.split('Pessoa:'))
+    assert 'com os números da linha "Para a platina"' in text
