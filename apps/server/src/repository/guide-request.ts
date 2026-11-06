@@ -15,50 +15,47 @@ export async function requestGuide(game: string, user: string): Promise<void> {
   )
 }
 
-/** A question Nexo could not answer, still waiting for the deep guide to have it. */
+/** A question Nexo could not answer and told the player it would look into. */
 export interface WaitingQuestion {
   game: string
+  /** The game's name, for whoever answers it. */
+  name?: string
   user: string
   question: string
   asked_at: string
-  /** When it was last asked again without an answer, so the same passages are not asked twice. */
-  checked_at?: string | null
 }
-
-// Followed up for this long after it was asked; after that the player has moved on.
-const WAIT_DAYS = 30
 
 /**
  * The questions Nexo told a player it would look into (`answered: false`, with who asked) and has
- * not answered since, whose game's deep guide was indexed again after it was asked, or after it was last
- * asked again. Older questions, from before this was recorded, carry neither field and stay out.
+ * not answered since, oldest first. Older questions, from before this was recorded, carry neither
+ * field and stay out.
  */
 export async function waitingQuestions(): Promise<WaitingQuestion[]> {
   const rows = plain(
-    await q<{ game: string; newest: string | null; questions: WaitingQuestion[] }[]>(
-      `SELECT game,
-         (SELECT VALUE indexed_at FROM guide WHERE game = $parent.game LIMIT 1)[0] AS newest,
-         questions[WHERE answered = false AND notified_at = NONE AND user != NONE
-           AND asked_at > time::now() - ${WAIT_DAYS}d] AS questions
+    await q<{ game: string; name: string | null; questions: WaitingQuestion[] }[]>(
+      `SELECT game, game.name AS name,
+         questions[WHERE answered = false AND notified_at = NONE AND user != NONE] AS questions
        FROM guide_request WHERE questions != NONE`,
     ),
   )
-  return rows.flatMap((r) =>
-    (r.questions ?? [])
-      .filter((x) => r.newest && Date.parse(r.newest) > Date.parse(x.checked_at ?? x.asked_at))
-      .map((x) => ({ ...x, game: String(r.game), user: String(x.user) })),
-  )
+  return rows
+    .flatMap((r) =>
+      (r.questions ?? []).map((x) => ({
+        ...x,
+        game: String(r.game),
+        name: r.name ?? undefined,
+        user: String(x.user),
+      })),
+    )
+    .sort((a, b) => Date.parse(a.asked_at) - Date.parse(b.asked_at))
 }
 
-/** Marks a waiting question: `notified_at` once the player got the answer, else `checked_at`. */
-export async function markQuestion(
-  w: WaitingQuestion,
-  field: 'notified_at' | 'checked_at',
-): Promise<void> {
+/** Marks a waiting question once the player got its answer. */
+export async function markAnswered(w: WaitingQuestion): Promise<void> {
   await q(
     `UPDATE guide_request SET questions = questions.map(|$x|
        IF $x.asked_at = <datetime> $at AND $x.question = $question AND $x.user = $user
-       THEN $x + { ${field}: time::now() } ELSE $x END)
+       THEN $x + { notified_at: time::now() } ELSE $x END)
      WHERE game = $game`,
     { game: gameRef(w.game), at: w.asked_at, question: w.question, user: userRef(w.user) },
   )

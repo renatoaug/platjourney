@@ -1,7 +1,7 @@
 import '../env.ts'
 import { afterEach, expect, mock, spyOn, test } from 'bun:test'
 import * as db from '../../src/db.ts'
-import { markQuestion, requestGuide, waitingQuestions } from '../../src/repository/guide-request.ts'
+import { markAnswered, requestGuide, waitingQuestions } from '../../src/repository/guide-request.ts'
 
 const game = new db.RecordId('game', 7)
 const user = new db.RecordId('user', 'ana')
@@ -19,34 +19,38 @@ test('a request is one per player: the count is the players who asked', async ()
   expect(q.mock.calls[0][1]).toEqual({ game, user })
 })
 
-test('a waiting question comes back only when its game got passages after it was last tried', async () => {
-  spyOn(db, 'q').mockResolvedValue([
+test('the open questions come oldest first, with their game and who asked', async () => {
+  const q = spyOn(db, 'q').mockResolvedValue([
     {
       game,
-      newest: '2026-11-05T10:00:00Z',
+      name: 'Ecos de Vidro',
       questions: [
         { question: 'onde fica a chave?', user, asked_at: '2026-11-04T10:00:00Z' },
-        {
-          question: 'quantas moedas?',
-          user,
-          asked_at: '2026-11-01T10:00:00Z',
-          checked_at: '2026-11-05T12:00:00Z',
-        },
+        { question: 'quantas moedas?', user, asked_at: '2026-11-01T10:00:00Z' },
       ],
     },
-    { game: new db.RecordId('game', 8), newest: null, questions: [{ question: 'x', user }] },
+    { game: new db.RecordId('game', 8), name: null, questions: null },
   ] as never)
   expect(await waitingQuestions()).toEqual([
     {
       game: 'game:7',
+      name: 'Ecos de Vidro',
+      user: 'user:ana',
+      question: 'quantas moedas?',
+      asked_at: '2026-11-01T10:00:00Z',
+    },
+    {
+      game: 'game:7',
+      name: 'Ecos de Vidro',
       user: 'user:ana',
       question: 'onde fica a chave?',
       asked_at: '2026-11-04T10:00:00Z',
     },
   ])
+  expect(q.mock.calls[0][0]).toContain('answered = false AND notified_at = NONE')
 })
 
-test('a question is marked by its time, text and player inside its game', async () => {
+test('an answered question is marked by its time, text and player inside its game', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   const w = {
     game: 'game:7',
@@ -54,7 +58,7 @@ test('a question is marked by its time, text and player inside its game', async 
     question: 'onde?',
     asked_at: '2026-11-04T10:00:00Z',
   }
-  await markQuestion(w, 'notified_at')
+  await markAnswered(w)
   expect(q.mock.calls[0][0]).toContain('$x + { notified_at: time::now() }')
   expect(q.mock.calls[0][1]).toEqual({ game, user, question: 'onde?', at: w.asked_at })
 })

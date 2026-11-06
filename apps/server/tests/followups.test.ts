@@ -1,7 +1,7 @@
 import './env.ts'
 import { afterEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
-import { followUp, followUps } from '../src/followups.ts'
+import { followUpAnswer, sendFollowUp } from '../src/followups.ts'
 import * as contexts from '../src/game-context.ts'
 import * as notify from '../src/notify.ts'
 import * as plugins from '../src/plugins.ts'
@@ -28,60 +28,38 @@ function setup(text: string | null) {
   spyOn(contexts, 'contextForGame').mockResolvedValue(makeContext({ game }))
   spyOn(plugins, 'aroundModel').mockImplementation((_work, run) => run())
   const ai = spyOn(aiModule, 'ai').mockResolvedValue({ text } as never)
+  return { user, ai }
+}
+
+test("Nexo writes the answer from the game's guide, or nothing while it has none", async () => {
+  const { ai } = setup('Voltei com a chave: fica no porão.')
+  expect(await followUpAnswer(waiting)).toBe('Voltei com a chave: fica no porão.')
+  expect(ai.mock.calls[0][0]).toBe('/nexo/follow-up')
+  expect(ai.mock.calls[0][1]).toMatchObject({ question: 'onde fica a chave?' })
+  ai.mockResolvedValue({ text: null } as never)
+  expect(await followUpAnswer(waiting)).toBeNull()
+})
+
+test('a player or game gone, or a game with no list, gets no answer', async () => {
+  const { ai } = setup('x')
+  spyOn(contexts, 'contextForGame').mockResolvedValue(null)
+  expect(await followUpAnswer(waiting)).toBeNull()
+  spyOn(users, 'getUser').mockResolvedValue(undefined)
+  expect(await followUpAnswer(waiting)).toBeNull()
+  expect(ai).not.toHaveBeenCalled()
+})
+
+test('a sent answer is a notice, joins the conversation and closes the question', async () => {
+  const { user } = setup(null)
   const tip = spyOn(activity, 'logTip').mockResolvedValue()
   const message = spyOn(activity, 'appendMessage').mockResolvedValue()
   const deliver = spyOn(notify, 'deliver').mockResolvedValue()
-  const mark = spyOn(requests, 'markQuestion').mockResolvedValue()
-  return { user, ai, tip, message, deliver, mark }
-}
-
-test('an answer the guide now has reaches the player and closes the question', async () => {
-  const { user, ai, tip, message, deliver, mark } = setup('Voltei com a chave: fica no porão.')
-  expect(await followUp(waiting)).toBe(true)
-  expect(ai.mock.calls[0][0]).toBe('/nexo/follow-up')
-  expect(ai.mock.calls[0][1]).toMatchObject({ question: 'onde fica a chave?' })
-  expect(tip).toHaveBeenCalledWith(
-    'user:ana',
-    'answer',
-    'Voltei com a chave: fica no porão.',
-    'game:7',
-  )
-  expect(message).toHaveBeenCalledWith(
-    'user:ana',
-    'assistant',
-    'Voltei com a chave: fica no porão.',
-    'game:7',
-  )
-  expect(deliver).toHaveBeenCalledWith(user, 'Voltei com a chave: fica no porão.')
-  expect(mark).toHaveBeenCalledWith(waiting, 'notified_at')
-})
-
-test('with nothing to say yet, the question waits for the next passages', async () => {
-  const { tip, deliver, mark } = setup(null)
-  expect(await followUp(waiting)).toBe(false)
-  expect(tip).not.toHaveBeenCalled()
-  expect(deliver).not.toHaveBeenCalled()
-  expect(mark).toHaveBeenCalledWith(waiting, 'checked_at')
-})
-
-test('a player or game gone, or a game with no list, is left alone', async () => {
-  const { ai, mark } = setup('x')
-  spyOn(contexts, 'contextForGame').mockResolvedValue(null)
-  expect(await followUp(waiting)).toBe(false)
+  const mark = spyOn(requests, 'markAnswered').mockResolvedValue()
+  await sendFollowUp(waiting, 'Fica no porão.')
+  expect(tip).toHaveBeenCalledWith('user:ana', 'answer', 'Fica no porão.', 'game:7')
+  expect(message).toHaveBeenCalledWith('user:ana', 'assistant', 'Fica no porão.', 'game:7')
+  expect(deliver).toHaveBeenCalledWith(user, 'Fica no porão.')
+  expect(mark).toHaveBeenCalledWith(waiting)
   spyOn(users, 'getUser').mockResolvedValue(undefined)
-  expect(await followUp(waiting)).toBe(false)
-  expect(ai).not.toHaveBeenCalled()
-  expect(mark).not.toHaveBeenCalled()
-})
-
-test('a pass counts the answers sent and a failure does not stop the others', async () => {
-  const { ai } = setup('Achei.')
-  spyOn(requests, 'waitingQuestions').mockResolvedValue([
-    waiting,
-    { ...waiting, question: 'e a outra?' },
-  ])
-  ai.mockRejectedValueOnce(new Error('down'))
-  const error = spyOn(console, 'error').mockImplementation(() => {})
-  expect(await followUps()).toBe(1)
-  expect(error).toHaveBeenCalledTimes(1)
+  expect(sendFollowUp(waiting, 'x')).rejects.toThrow('no player')
 })

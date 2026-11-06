@@ -6,21 +6,19 @@ import { deliver } from './notify.ts'
 import { aroundModel } from './plugins.ts'
 import { appendMessage, logTip } from './repository/activity.ts'
 import { getGame } from './repository/game.ts'
-import { markQuestion, type WaitingQuestion, waitingQuestions } from './repository/guide-request.ts'
+import { markAnswered, type WaitingQuestion } from './repository/guide-request.ts'
 import { getUser } from './repository/user.ts'
 
-const EVERY = 30 * 60_000
-
 /**
- * Keeps Nexo's "I'll let you know": a question it could not answer is asked again once the game's
- * deep guide gets new passages, and the answer goes to the player as a notice and into that game's
- * conversation. With nothing to say yet, the question waits for the next passages.
+ * Keeps Nexo's "I'll let you know", run by whoever fills the guide (`scripts/answer-question.ts`):
+ * once the game's deep guide has the answer, Nexo writes it from the guide. Null while the guide
+ * still has nothing to say, or the player, the game or its list is gone.
  */
-export async function followUp(w: WaitingQuestion): Promise<boolean> {
+export async function followUpAnswer(w: WaitingQuestion): Promise<string | null> {
   const [user, game] = await Promise.all([getUser(w.user), getGame(w.game)])
-  if (!user || !game) return false
+  if (!user || !game) return null
   const ctx = await contextForGame(user, game)
-  if (!ctx) return false
+  if (!ctx) return null
   const { text } = await aroundModel({ user, action: 'chat' }, () =>
     tagged({ user: user.id, action: 'chat' }, () =>
       ai<{ text: string | null }>('/nexo/follow-up', {
@@ -29,35 +27,16 @@ export async function followUp(w: WaitingQuestion): Promise<boolean> {
       }),
     ),
   )
-  if (!text) {
-    await markQuestion(w, 'checked_at')
-    return false
-  }
-  await logTip(user.id, 'answer', text, game.id)
-  await appendMessage(user.id, 'assistant', text, game.id)
+  return text
+}
+
+/** Sends the answer as an `answer` notice on every channel and into that game's conversation, and
+ * closes the question. */
+export async function sendFollowUp(w: WaitingQuestion, text: string): Promise<void> {
+  const user = await getUser(w.user)
+  if (!user) throw new Error(`no player ${w.user}`)
+  await logTip(user.id, 'answer', text, w.game)
+  await appendMessage(user.id, 'assistant', text, w.game)
   await deliver(user, text)
-  await markQuestion(w, 'notified_at')
-  return true
-}
-
-/** One pass over the waiting questions, one at a time; a failure leaves its question for later. */
-export async function followUps(): Promise<number> {
-  let sent = 0
-  for (const w of await waitingQuestions()) {
-    try {
-      if (await followUp(w)) sent++
-    } catch (e) {
-      console.error(`follow-up ${w.game} failed:`, (e as Error).message)
-    }
-  }
-  return sent
-}
-
-export function startFollowUps(): void {
-  const run = () =>
-    followUps()
-      .then((n) => n && console.log(`follow-ups: ${n} answers sent`))
-      .catch((e) => console.error('follow-ups failed:', e.message))
-  setTimeout(run, 5 * 60_000).unref()
-  setInterval(run, EVERY).unref()
+  await markAnswered(w)
 }
