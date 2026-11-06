@@ -11,8 +11,8 @@ afterEach(() => mock.restore())
 test('a request is one per player: the count is the players who asked', async () => {
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   await requestGuide('game:7', 'user:ana')
-  expect(q.mock.calls[0][0]).toContain('users = array::union(users, [$user])')
-  expect(q.mock.calls[0][0]).toContain('requests = array::len(array::union(users, [$user]))')
+  expect(q.mock.calls[0][0]).toContain('users = array::union(users ?? [], [$user])')
+  expect(q.mock.calls[0][0]).toContain('requests = array::len(array::union(users ?? [], [$user]))')
   expect(q.mock.calls[0][0]).toContain(
     'CREATE guide_request SET game = $game, users = [$user], requests = 1',
   )

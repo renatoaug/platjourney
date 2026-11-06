@@ -7,7 +7,7 @@ import { userRef } from './user.ts'
 export async function requestGuide(game: string, user: string): Promise<void> {
   await q(
     `IF (SELECT id FROM guide_request WHERE game = $game) {
-       UPDATE guide_request SET users = array::union(users, [$user]), requests = array::len(array::union(users, [$user])) WHERE game = $game
+       UPDATE guide_request SET users = array::union(users ?? [], [$user]), requests = array::len(array::union(users ?? [], [$user])) WHERE game = $game
      } ELSE {
        CREATE guide_request SET game = $game, users = [$user], requests = 1
      }`,
@@ -53,7 +53,7 @@ export async function waitingQuestions(): Promise<WaitingQuestion[]> {
 /** Marks a waiting question once the player got its answer. */
 export async function markAnswered(w: WaitingQuestion): Promise<void> {
   await q(
-    `UPDATE guide_request SET questions = questions.map(|$x|
+    `UPDATE guide_request SET users = users ?? [], questions = questions.map(|$x|
        IF $x.asked_at = <datetime> $at AND $x.question = $question AND $x.user = $user
        THEN $x + { notified_at: time::now() } ELSE $x END)
      WHERE game = $game`,
