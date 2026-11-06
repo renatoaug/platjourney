@@ -15,7 +15,7 @@ export function pickHook(ctx: GameContext): string | null {
   const missing = base.filter((t) => !t.earned && t.type !== 'platinum')
   const missable = nextMissable(ctx, missing)
   if (missable)
-    return `ainda falta o perdível ${missable.trophy} (${missable.when}): ofereça avisar o que fazer antes de chegar lá, se o jogador te chamar quando estiver perto`
+    return `ainda falta o perdível ${missable.trophy} (${missable.when.replace(/\*\*/g, '').replace(/\.$/, '')}): ofereça avisar o que fazer antes de chegar lá, se o jogador te chamar quando estiver perto`
   const counted = base.filter((t) => t.type !== 'platinum')
   const earned = counted.length - missing.length
   const mark = [25, 50, 75].find((m) => earned < (counted.length * m) / 100)
