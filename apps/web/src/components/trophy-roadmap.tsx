@@ -324,8 +324,8 @@ const NOTE_LIMIT = 80
 
 /**
  * Whether the tip helped. Nothing here talks to the server: the usage plugin reads each click from
- * `data-rate`, `data-reason` and the note form, with the trophy in `data-trophy`. A dislike counts on
- * its own; the reason after it is optional.
+ * `data-rate`, `data-reason` and the note form, with the trophy in `data-trophy` and the game in the
+ * roadmap's `data-game`. A dislike counts on its own; the reason after it is optional.
  */
 function TipRating({ trophy }: { trophy: Trophy }) {
   const t = useMessages(messages)
@@ -1204,7 +1204,13 @@ export function TrophyRoadmap({
     [choose],
   )
   return (
-    <section className="trophy-roadmap" id="journey-roadmap" aria-labelledby="roadmap-heading">
+    // data-game lets the usage plugin tell which game a tip rating is about, on any screen.
+    <section
+      className="trophy-roadmap"
+      id="journey-roadmap"
+      aria-labelledby="roadmap-heading"
+      data-game={source.game.id}
+    >
       <header className="roadmap-intro">
         <div>
           <span className="eyebrow">{t('map')}</span>

@@ -1083,3 +1083,9 @@ test('a reason other than Other closes the rating with thanks', () => {
   )
   expect(within(rate()).queryByRole('textbox')).toBeNull()
 })
+
+test('the roadmap names its game, so a tip rating can say which game it is about', () => {
+  const data = routeGame(['Primeiro Passo'])
+  const { container } = renderApp(<TrophyRoadmap game={data} />)
+  expect(container.querySelector('.trophy-roadmap')?.getAttribute('data-game')).toBe(data.game.id)
+})
