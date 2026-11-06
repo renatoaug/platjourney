@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.51.0](https://github.com/renatoaug/platjourney/compare/v0.50.2...v0.51.0) (2026-11-06)
+
+### Features
+
+* **web:** name the game on the trophy journey for tip ratings ([#143](https://github.com/renatoaug/platjourney/issues/143)) ([13c1b35](https://github.com/renatoaug/platjourney/commit/13c1b353e7f5a2005d07e4886acfa96d9e6f4bc4))
+
 ## [0.50.2](https://github.com/renatoaug/platjourney/compare/v0.50.1...v0.50.2) (2026-11-06)
 
 ### Bug Fixes
