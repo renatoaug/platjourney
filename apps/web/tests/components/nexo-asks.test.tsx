@@ -4,8 +4,10 @@ import {
   askMessages,
   askText,
   ExplainAsk,
+  FirstAsks,
   nexoHref,
   TrophyAsks,
+  trophyAsks,
 } from '../../src/components/nexo-asks'
 import { Language, translator } from '../../src/i18n/i18n'
 import { renderApp } from '../support/web'
@@ -27,7 +29,8 @@ test('the chat link carries the game, the trophy and the question', () => {
 test('each question key reads as what the player would have typed', () => {
   const t = translator(askMessages, Language.En)
   expect(askText(t, 'missable')).toBe('Can I miss it?')
-  expect(askText(t, 'notice')).toContain('last notice')
+  expect(askText(t, 'notice')).toContain('next step')
+  expect(askText(t, 'farm')).toBe('Where do I farm it fastest?')
   expect(askText(t, 'explain', 'Chapter 2')).toContain('Chapter 2')
   expect(askText(t, 'explain')).toBeNull()
   expect(askText(t, 'left')).toContain('platinum')
@@ -35,15 +38,34 @@ test('each question key reads as what the player would have typed', () => {
   expect(askText(t, null)).toBeNull()
 })
 
-test('"can I miss it" shows only for a trophy the guide says can be missed', () => {
-  const { unmount } = renderApp(<TrophyAsks np="NP" trophy="Mestre" />)
+test('the questions add to what the screen already says', () => {
+  expect(trophyAsks({})).toEqual(['how', 'when'])
+  expect(trophyAsks({ advice: true })).toEqual(['faster', 'together'])
+  expect(trophyAsks({ advice: true, counter: true, missable: true })).toEqual([
+    'farm',
+    'together',
+    'missable',
+  ])
+  const { unmount } = renderApp(<TrophyAsks np="NP" trophy="Mestre" advice missable />)
   expect(screen.getAllByRole('link').map((a) => a.textContent)).toEqual([
-    'Como pegar?',
-    'Quando fazer?',
+    'Tem jeito mais rápido?',
+    'Dá pra fazer junto com outros?',
+    'Dá pra perder?',
   ])
   unmount()
-  renderApp(<TrophyAsks np="NP" trophy="Mestre" missable />)
-  expect(screen.getByRole('link', { name: 'Dá pra perder?' })).toBeTruthy()
+})
+
+test('first questions: where to start on a game not begun, what is next on one in progress', () => {
+  const { unmount } = renderApp(<FirstAsks np="NP" progress={0} />)
+  expect(screen.getAllByRole('link').map((a) => a.textContent)).toEqual(['Por onde eu começo?'])
+  unmount()
+  renderApp(<FirstAsks np="NP" progress={40} />)
+  expect(screen.getAllByRole('link')).toHaveLength(3)
+})
+
+test('a finished game has no first questions', () => {
+  const { container } = renderApp(<FirstAsks np="NP" progress={100} />)
+  expect(container.querySelector('.nexo-asks')).toBeNull()
 })
 
 test('the guide offer asks about its part', () => {

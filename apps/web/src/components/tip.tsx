@@ -168,7 +168,8 @@ export function TipItem({
 }
 
 // The notices about playing a game: a question about them goes to that game's conversation.
-const ABOUT_THE_GAME = ['start', 'unlock', 'session', 'route', 'answer', 'chat']
+// A chat tip is already Nexo's answer to the player, so it gets none.
+const ABOUT_THE_GAME = ['start', 'unlock', 'session', 'route', 'answer']
 
 /** Loading layout of a TipItem. */
 export function TipSkeleton({ compact = false }: { compact?: boolean }) {

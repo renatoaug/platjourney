@@ -318,7 +318,9 @@ function Focus({
           </JourneyLink>
         )}
       </div>
-      {firstAsks && item.kind === 'current' && <FirstAsks np={item.context} name={item.name} />}
+      {firstAsks && item.kind === 'current' && (
+        <FirstAsks np={item.context} name={item.name} progress={item.progress} />
+      )}
     </div>
   )
 }

@@ -5,19 +5,33 @@ const meta: Meta = { title: 'Components/NexoAsks' }
 export default meta
 type Story = StoryObj
 
-// A trophy the guide says can be missed: all three questions.
-export const MissableTrophy: Story = {
-  render: () => <TrophyAsks np="NPWR00001_00" name="Ecos de Vidro" trophy="Sem Rastro" missable />,
+// The guide's advice is on screen: what goes beyond it, and "can I miss it" for a missable.
+export const TrophyWithAdvice: Story = {
+  render: () => (
+    <TrophyAsks np="NPWR00001_00" name="Ecos de Vidro" trophy="Sem Rastro" advice missable />
+  ),
 }
 
-// Any other trophy: no "can I miss it".
-export const Trophy: Story = {
+// A counter trophy with advice: where to farm it.
+export const CounterTrophy: Story = {
+  render: () => (
+    <TrophyAsks np="NPWR00001_00" name="Ecos de Vidro" trophy="Soldado" advice counter />
+  ),
+}
+
+// No advice in the guide: how and when.
+export const TrophyWithoutAdvice: Story = {
   render: () => <TrophyAsks np="NPWR00001_00" name="Ecos de Vidro" trophy="Primeiro Passo" />,
 }
 
-// A player who never wrote to Nexo, on the home.
+// A player who never wrote to Nexo, on a game in progress.
 export const FirstQuestions: Story = {
-  render: () => <FirstAsks np="NPWR00001_00" name="Ecos de Vidro" />,
+  render: () => <FirstAsks np="NPWR00001_00" name="Ecos de Vidro" progress={40} />,
+}
+
+// The same player on a game not begun: one question.
+export const FirstQuestionNotStarted: Story = {
+  render: () => <FirstAsks np="NPWR00001_00" name="Ecos de Vidro" progress={0} />,
 }
 
 // Under a notice in the history.

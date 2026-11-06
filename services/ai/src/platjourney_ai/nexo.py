@@ -674,8 +674,8 @@ def hook_note(hook: str | None) -> str:
         'mais de uma frase, termine com UMA frase curta, no tom de parceiro, usando só esse fato '
         'e convidando o jogador a voltar a falar com você na hora certa (exemplo do tom: "Quando '
         'chegar no capítulo 7, me chama que eu te passo o caminho antes."). É um convite, não um '
-        'lembrete solto. Nada de pergunta genérica como "travou em algo?". Se a pergunta for de sim '
-        'ou não, ou se você não souber responder, deixe o gancho de fora.'
+        'lembrete solto. Nada de pergunta genérica como "travou em algo?". Se a pergunta for de '
+        'sim ou não, ou se você não souber responder, deixe o gancho de fora.'
     )
 
 

@@ -293,6 +293,8 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           np={game.np}
           name={game.name}
           trophy={trophy.name}
+          advice={!!hasAdvice}
+          counter={(trophy.progressTarget ?? 0) > 1}
           missable={!!warning}
           className="roadmap-ask"
         />

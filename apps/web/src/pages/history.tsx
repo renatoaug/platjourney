@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
+import { useProfile } from '../app/use-profile'
 import { PageTop } from '../components/page-top'
 import { TipItem, TipSkeleton } from '../components/tip'
 import { defineMessages, Language, type MessageKey, useMessages } from '../i18n/i18n'
@@ -126,6 +127,7 @@ function byDay(list: Tip[]) {
 
 function Timeline({ tips, kind, onAll }: { tips: Tip[]; kind: string; onAll: () => void }) {
   const t = useMessages(messages)
+  const profile = useProfile()
   if (!tips.length)
     return (
       <EmptyState icon="history" title={t('emptyTitle')}>
@@ -149,13 +151,15 @@ function Timeline({ tips, kind, onAll }: { tips: Tip[]; kind: string; onAll: () 
         {t('emptyKindHint')}
       </EmptyState>
     )
-  // "Tell me more" only on each game's latest notice: the older ones are already behind the player.
+  // "What do I do now?" only on each game's latest notice (the older ones are behind the player),
+  // and not on a game already platinum: there is no next step. Until the platinums are known, none.
+  const done = profile ? new Set(profile.platinums.map((p) => p.game.id)) : null
   const latest = new Set<string>()
   const seen = new Set<string>()
   for (const tip of filtered)
-    if (tip.game?.id && !seen.has(tip.game.id)) {
+    if (done && tip.game?.id && !seen.has(tip.game.id)) {
       seen.add(tip.game.id)
-      latest.add(tip.id)
+      if (!done.has(tip.game.id)) latest.add(tip.id)
     }
   return (
     <>
