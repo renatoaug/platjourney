@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.52.0](https://github.com/renatoaug/platjourney/compare/v0.51.0...v0.52.0) (2026-11-06)
+
+### Features
+
+* **ai:** give nexo the platinum counts and a prompt that admits gaps ([#144](https://github.com/renatoaug/platjourney/issues/144)) ([2f6f62a](https://github.com/renatoaug/platjourney/commit/2f6f62a4dc9a6cb36e8c155e0d9e60a591dd1f51))
+
 ## [0.51.0](https://github.com/renatoaug/platjourney/compare/v0.50.2...v0.51.0) (2026-11-06)
 
 ### Features
