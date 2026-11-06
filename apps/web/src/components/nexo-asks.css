@@ -1,17 +1,41 @@
 @layer screens {
   .nexo-asks {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 8px;
+    min-width: 0;
+  }
+
+  /* One line that slides sideways, like the chat's chips: it never wraps and never widens the
+     card around it. */
+  .nexo-asks-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    contain: inline-size;
+    padding-block: 2px;
+    scrollbar-width: none;
+  }
+
+  .nexo-asks-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* On a phone the row usually runs past the edge: the fade says there is more to slide. */
+  @media (max-width: 560px) {
+    .nexo-asks-row {
+      mask-image: linear-gradient(90deg, var(--color-fg) calc(100% - 28px), transparent);
+    }
   }
 
   .nexo-ask {
+    flex: none;
+    white-space: nowrap;
     text-decoration: none;
   }
 
   .nexo-asks-label {
     display: inline-flex;
-    flex-basis: 100%;
     gap: 6px;
     align-items: center;
     color: var(--color-accent);

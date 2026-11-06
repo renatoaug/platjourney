@@ -171,15 +171,17 @@ export function TrophyAsks({
       <span className="nexo-asks-label" aria-hidden="true">
         <Icon name="nexo" /> {t('label')}
       </span>
-      {asks.map((k) => (
-        <JourneyLink
-          key={k}
-          className={`chip nexo-ask ${className}`.trim()}
-          to={nexoHref(np, name, trophy, k)}
-        >
-          {t(`trophy.${k}`)}
-        </JourneyLink>
-      ))}
+      <div className="nexo-asks-row">
+        {asks.map((k) => (
+          <JourneyLink
+            key={k}
+            className={`chip nexo-ask ${className}`.trim()}
+            to={nexoHref(np, name, trophy, k)}
+          >
+            {t(`trophy.${k}`)}
+          </JourneyLink>
+        ))}
+      </div>
     </nav>
   )
 }
@@ -200,11 +202,13 @@ export function FirstAsks({
   const asks = progress > 0 ? FIRST_ASKS.filter((k) => k !== 'start') : (['start'] as FirstAsk[])
   return (
     <nav className="nexo-asks" aria-label={t('label')}>
-      {asks.map((k) => (
-        <JourneyLink key={k} className="chip nexo-ask" to={nexoHref(np, name, null, k)}>
-          {t(`first.${k}.label`)}
-        </JourneyLink>
-      ))}
+      <div className="nexo-asks-row">
+        {asks.map((k) => (
+          <JourneyLink key={k} className="chip nexo-ask" to={nexoHref(np, name, null, k)}>
+            {t(`first.${k}.label`)}
+          </JourneyLink>
+        ))}
+      </div>
     </nav>
   )
 }
