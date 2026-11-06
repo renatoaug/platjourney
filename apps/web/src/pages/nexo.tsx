@@ -11,6 +11,7 @@ import {
   threadKey,
 } from '../components/chat/threads'
 import { connectAccount, useDemo } from '../components/demo'
+import { askMessages, askText } from '../components/nexo-asks'
 import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import { shownProgress } from '../lib/progress'
@@ -321,6 +322,9 @@ function LiveNexo() {
   )
   // The trophy the player came to ask about.
   const [trophy, setTrophy] = useState<string | null>(null)
+  // A question a link brought, sent once the game's conversation is on screen.
+  const asks = useMessages(askMessages)
+  const [autoAsk, setAutoAsk] = useState<string | null>(null)
   const pickGame = async (game: LibraryGame) => {
     setSwitching(game.name)
     setTarget(game)
@@ -350,6 +354,7 @@ function LiveNexo() {
     if (!wanted || asked.current || !data) return
     asked.current = true
     setTrophy(params.get('trophy'))
+    setAutoAsk(askText(asks, params.get('ask'), params.get('part')))
     setParams({}, { replace: true, state: location.state })
     // A PSN list id for a game in the library, a game id for one outside it.
     const byGame = wanted.startsWith('game:')
@@ -420,6 +425,8 @@ function LiveNexo() {
           switching={switching}
           trophy={trophy}
           onClearTrophy={() => setTrophy(null)}
+          autoAsk={autoAsk}
+          onAutoAsked={() => setAutoAsk(null)}
         />
       </div>
     </Page>

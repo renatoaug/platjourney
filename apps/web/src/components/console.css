@@ -589,3 +589,14 @@
     }
   }
 }
+
+@layer screens {
+  /* The first questions sit on the game's art: a backing keeps them readable. */
+  .console-focus .nexo-asks {
+    margin-top: 12px;
+  }
+
+  .console-focus .nexo-ask {
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-dim), transparent);
+  }
+}

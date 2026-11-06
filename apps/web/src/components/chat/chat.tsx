@@ -26,6 +26,7 @@ import { ErrorState } from '../../ui/states'
 import { toast } from '../../ui/toast'
 import { VoiceWave, WAVE_SAMPLES } from '../../ui/voice-wave'
 import { DemoConnectButton } from '../demo'
+import { askMessages, TROPHY_ASKS } from '../nexo-asks'
 import { NexoHero } from '../nexo-hero'
 import { titleHref } from '../tip'
 import '../demo.css'
@@ -85,9 +86,6 @@ const messages = defineMessages({
       placeholder: 'Pergunte sobre o troféu…',
       label: 'Perguntando sobre o troféu',
       remove: 'Tirar o troféu {trophy} da pergunta',
-      how: 'Como pegar?',
-      missable: 'Dá pra perder?',
-      when: 'Quando fazer?',
     },
     placeholderCommands: 'Nexo, qual é o próximo passo? Digite / para ver os comandos',
     send: 'Enviar',
@@ -181,9 +179,6 @@ const messages = defineMessages({
       placeholder: 'Ask about this trophy…',
       label: 'Asking about the trophy',
       remove: 'Take the trophy {trophy} out of the question',
-      how: 'How do I get it?',
-      missable: 'Can I miss it?',
-      when: 'When should I do it?',
     },
     placeholderCommands: 'Nexo, what is the next step? Type / for commands',
     send: 'Send',
@@ -570,18 +565,19 @@ function ChatChips({
   onSend: (text: string) => void
 }) {
   const t = useMessages(messages)
+  const ask = useMessages(askMessages)
   return (
     <div className="chips" id="chat-chips">
       {trophy
-        ? (['how', 'missable', 'when'] as const).map((k) => (
+        ? TROPHY_ASKS.map((k) => (
             <button
               key={k}
               type="button"
               className="chip"
               disabled={sending}
-              onClick={() => onSend(t(`trophy.${k}`))}
+              onClick={() => onSend(ask(`trophy.${k}`))}
             >
-              {t(`trophy.${k}`)}
+              {ask(`trophy.${k}`)}
             </button>
           ))
         : general
@@ -725,6 +721,8 @@ export function NexoChat({
   general = false,
   historyControl,
   replyVersion = 0,
+  autoAsk = null,
+  onAutoAsked,
 }: {
   chat: ChatLoad
   /** A question is out: the pending bubble shows and the send controls are disabled. */
@@ -752,6 +750,9 @@ export function NexoChat({
   historyControl?: ReactNode
   /** Increment only when a new reply arrives in the visible conversation, never on history loads. */
   replyVersion?: number
+  /** A question a link brought (nexo-asks.tsx): sent once the conversation is there. */
+  autoAsk?: string | null
+  onAutoAsked?: () => void
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
@@ -780,6 +781,15 @@ export function NexoChat({
     // The trophy goes in the message itself, so Nexo focuses on it and the log says what was asked.
     onSend(trophy ? t('trophy.about', { trophy, text: value }) : value)
   }
+
+  // A question a link brought goes out as soon as the game's conversation is on screen, the way
+  // the player would have sent it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per question, when it can go
+  useEffect(() => {
+    if (!autoAsk || sending || switching || !Array.isArray(chat)) return
+    onAutoAsked?.()
+    send(autoAsk)
+  }, [autoAsk, sending, switching, chat])
 
   // Commands, as in Telegram: "/" lists them, "/game <name>" lists the player's games. A command
   // is never sent to Nexo.

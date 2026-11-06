@@ -2,6 +2,7 @@ import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
 import { currentTag } from '../src/costs.ts'
+import { forgetHooks } from '../src/hooks.ts'
 import type { GameContext } from '../src/nexo.ts'
 import {
   proactiveTip,
@@ -69,7 +70,10 @@ beforeEach(() => {
   ])
 })
 
-afterEach(() => mock.restore())
+afterEach(() => {
+  mock.restore()
+  forgetHooks()
+})
 
 test('a start tip goes through the plugins, tagged and logged', async () => {
   expect(await proactiveTip(user, ctx)).toBe('Resposta')
@@ -155,11 +159,15 @@ test('a reply carries the conversation with notices in time order', async () => 
       { role: 'assistant', content: 'olá' },
     ],
     locale: 'pt-BR',
+    // The game's one reason to come back today; the next answer goes without it.
+    hook: 'falta 1 troféu pra 25% da platina: ofereça ajudar a fechar esse marco',
   })
   expect(append.mock.calls).toEqual([
     ['user:u1', 'user', 'e agora?', 'game:1'],
     ['user:u1', 'assistant', 'Resposta', 'game:1'],
   ])
+  await reply(user, 'e depois?', ctx)
+  expect((ai.mock.calls.at(-1)?.[1] as { hook?: string } | undefined)?.hook).toBeUndefined()
 })
 
 test('a conversation picks up the trophies the player brought up, after six hours', () => {

@@ -1,5 +1,5 @@
-import { expect, test } from 'bun:test'
-import { fireEvent, screen } from '@testing-library/react'
+import { beforeEach, expect, test } from 'bun:test'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { SAMPLE_DATA } from '../../src/app/app-state'
 import type { Tip } from '../../src/lib/types'
 import { History } from '../../src/pages/history'
@@ -32,6 +32,10 @@ const TIPS: Tip[] = [
     game: null,
   },
 ]
+
+beforeEach(() => {
+  mockApi({ '/api/profile': { platinums: [] } })
+})
 
 const filters = () => screen.getAllByRole('button').filter((b) => b.classList.contains('chip'))
 
@@ -142,6 +146,7 @@ test('past four games, the last cover of the mosaic says how many more', () => {
 
 test('a push opens the selected old tip even when it is absent from the loaded history and filter', async () => {
   const calls = mockApi({
+    '/api/profile': { platinums: [] },
     '/api/tip': { ...TIPS[0], id: 'tip:old', content: 'Take the missable before chapter three' },
   })
   renderApp(<History />, {
@@ -154,21 +159,42 @@ test('a push opens the selected old tip even when it is absent from the loaded h
 })
 
 test('a deleted tip or a tip of another account has a safe empty state', async () => {
-  mockApi({ '/api/tip': reply(404) })
+  mockApi({ '/api/profile': { platinums: [] }, '/api/tip': reply(404) })
   renderApp(<History />, { path: '/history?tip=tip%3Aother' })
   expect(await screen.findByText('Esta dica não está disponível para esta conta.')).toBeTruthy()
 })
 
 test('the selected tip has a skeleton and a retryable failure', async () => {
-  mockApi({ '/api/tip': never })
+  mockApi({ '/api/profile': { platinums: [] }, '/api/tip': never })
   const first = renderApp(<History />, { path: '/history?tip=tip%3Aold' })
   expect(first.container.querySelector('.sk')).toBeTruthy()
   first.unmount()
   let failed = true
-  mockApi({ '/api/tip': () => (failed ? reply(500) : { ...TIPS[0], content: 'Recovered tip' }) })
+  mockApi({
+    '/api/profile': { platinums: [] },
+    '/api/tip': () => (failed ? reply(500) : { ...TIPS[0], content: 'Recovered tip' }),
+  })
   renderApp(<History />, { path: '/history?tip=tip%3Aold' })
   const retry = await screen.findByRole('button', { name: 'Tentar novamente' })
   failed = false
   fireEvent.click(retry)
   expect(await screen.findByText('Recovered tip')).toBeTruthy()
+})
+
+test("only each game's latest notice asks what is next; a chat tip or a server notice does not", async () => {
+  mockApi({ '/api/profile': { platinums: [] } })
+  renderApp(<History />, { value: { data: { ...SAMPLE_DATA, tips: TIPS } } })
+  const asks = await screen.findAllByRole('link', { name: /E agora, o que eu faço/ })
+  expect(asks).toHaveLength(1)
+  const href = new URL(asks[0].getAttribute('href') ?? '', 'http://x')
+  expect(href.searchParams.get('game')).toBe('game:19561')
+  expect(href.searchParams.get('ask')).toBe('notice')
+})
+
+test('a game already platinum has no next step to ask about', async () => {
+  const calls = mockApi({ '/api/profile': { platinums: [{ game }] } })
+  renderApp(<History />, { value: { data: { ...SAMPLE_DATA, tips: TIPS } } })
+  await waitFor(() => expect(calls.some((c) => c.path === '/api/profile')).toBe(true))
+  await new Promise((r) => setTimeout(r, 20))
+  expect(screen.queryByRole('link', { name: /E agora, o que eu faço/ })).toBeNull()
 })

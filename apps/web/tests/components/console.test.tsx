@@ -69,3 +69,15 @@ for (const includeDlcProgress of [false, true]) {
     )
   })
 }
+
+test('a player who never wrote to Nexo gets questions to start with, on the game played', () => {
+  const { unmount } = renderApp(
+    <Console data={{ ...data, askedNexo: false, current: { ...currentData, progress: 40 } }} />,
+  )
+  const first = screen.getByRole('link', { name: 'Próximo troféu fácil' })
+  expect(first.getAttribute('href')).toContain('ask=next')
+  expect(screen.getByRole('link', { name: 'Tem perdível?' })).toBeTruthy()
+  unmount()
+  renderApp(<Console data={{ ...data, askedNexo: true }} />)
+  expect(screen.queryByRole('link', { name: 'Próximo troféu fácil' })).toBeNull()
+})

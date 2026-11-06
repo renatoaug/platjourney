@@ -18,6 +18,7 @@ import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
 import { DifficultyMeter } from './difficulty-meter'
 import { JourneyLink } from './journey-link'
+import { FirstAsks } from './nexo-asks'
 import { nexoHref, titleHref } from './tip'
 import './console.css'
 
@@ -260,7 +261,18 @@ function NexoLine({ item, platinums }: { item: Item; platinums: number }) {
 }
 
 /** What the stage says about the focused game, replayed in when the focus moves. */
-function Focus({ item, platinums, onOpen }: { item: Item; platinums: number; onOpen: () => void }) {
+function Focus({
+  item,
+  platinums,
+  onOpen,
+  firstAsks = false,
+}: {
+  item: Item
+  platinums: number
+  onOpen: () => void
+  /** The player never wrote to Nexo: questions to start with, for the game being played. */
+  firstAsks?: boolean
+}) {
   const t = useMessages(messages)
   return (
     <div className="console-focus">
@@ -306,6 +318,9 @@ function Focus({ item, platinums, onOpen }: { item: Item; platinums: number; onO
           </JourneyLink>
         )}
       </div>
+      {firstAsks && item.kind === 'current' && (
+        <FirstAsks np={item.context} name={item.name} progress={item.progress} />
+      )}
     </div>
   )
 }
@@ -396,6 +411,7 @@ export function Console({ data }: { data: AppStateData }) {
         ))}
       </div>
       <Focus
+        firstAsks={data.askedNexo === false}
         key={item.key}
         item={item}
         platinums={profile?.platinums.length ?? 1}

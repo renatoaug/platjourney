@@ -4,6 +4,7 @@ import * as db from '../../src/db.ts'
 import {
   appendMessage,
   chatThreads,
+  hasAskedNexo,
   logAssistantTip,
   logTip,
   markNotificationsRead,
@@ -217,4 +218,11 @@ test('focused tips enforce ownership and reject malformed ids before querying', 
     id: new db.RecordId('tip', 'old'),
     user: new db.RecordId('user', 'u1'),
   })
+})
+
+test('a player asked Nexo once they wrote any message', async () => {
+  const q = spyOn(db, 'q').mockResolvedValueOnce([]).mockResolvedValueOnce(['message:1'])
+  expect(await hasAskedNexo('user:u1')).toBe(false)
+  expect(await hasAskedNexo('user:u1')).toBe(true)
+  expect(q.mock.calls[0][0]).toContain("role = 'user' LIMIT 1")
 })

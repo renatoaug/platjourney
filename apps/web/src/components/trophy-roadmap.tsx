@@ -28,6 +28,7 @@ import { toast } from '../ui/toast'
 import { TrophyArt } from '../ui/trophy-art'
 import { image } from './game-showcase'
 import { JourneyLink } from './journey-link'
+import { TrophyAsks } from './nexo-asks'
 import { nexoHref } from './tip'
 import './trophy-roadmap.css'
 
@@ -286,10 +287,23 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
         </p>
       )}
       {hasAdvice && <TipRating trophy={trophy} />}
-      <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
-        <Icon name="nexo" />
-        {t('ask')}
-      </JourneyLink>
+      {/* A trophy still to get: the questions about it, sent from here. */}
+      {game.np && !trophy.earned ? (
+        <TrophyAsks
+          np={game.np}
+          name={game.name}
+          trophy={trophy.name}
+          advice={!!hasAdvice}
+          counter={(trophy.progressTarget ?? 0) > 1}
+          missable={!!warning}
+          className="roadmap-ask"
+        />
+      ) : (
+        <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
+          <Icon name="nexo" />
+          {t('ask')}
+        </JourneyLink>
+      )}
     </div>
   )
 }

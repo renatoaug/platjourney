@@ -158,6 +158,49 @@ test('a trophy tip link attaches the trophy to the box', async () => {
   )
 })
 
+test('a question a link brings is sent once, with its trophy', async () => {
+  const calls = mockApi({ 'GET /api/chat': messages, 'POST /api/chat': { text: 'No capítulo 3.' } })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, {
+    path: `/nexo?game=${game.np}&trophy=Mestre&ask=how`,
+    route: '/nexo',
+    value: { data: { ...SAMPLE_DATA, current: game } },
+  })
+  await waitFor(() =>
+    expect(calls.filter((c) => c.method === 'POST' && c.path === '/api/chat')).toHaveLength(1),
+  )
+  const sent = calls.find((c) => c.method === 'POST' && c.path === '/api/chat')
+  expect(sent?.body).toEqual({ text: 'Sobre o troféu **Mestre**: Como pegar?' })
+  expect(await screen.findByText('No capítulo 3.')).toBeTruthy()
+  expect(calls.filter((c) => c.method === 'POST' && c.path === '/api/chat')).toHaveLength(1)
+})
+
+test('a guide part is asked about by name, and an unknown question is not sent', async () => {
+  const calls = mockApi({ 'GET /api/chat': messages, 'POST /api/chat': { text: 'Claro.' } })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, {
+    path: `/nexo?game=${game.np}&ask=explain&part=O%20por%C3%A3o`,
+    route: '/nexo',
+    value: { data: { ...SAMPLE_DATA, current: game } },
+  })
+  await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true))
+  expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
+    text: 'Me explica esta parte do guia, sem spoiler: O porão',
+  })
+})
+
+test('a link with a question the app does not know sends nothing', async () => {
+  const calls = mockApi({ 'GET /api/chat': messages })
+  const game = current as unknown as CurrentGame
+  renderApp(<Nexo />, {
+    path: `/nexo?game=${game.np}&ask=whatever`,
+    route: '/nexo',
+    value: { data: { ...SAMPLE_DATA, current: game } },
+  })
+  expect(await screen.findByText('E depois disso?')).toBeTruthy()
+  expect(calls.some((c) => c.method === 'POST')).toBe(false)
+})
+
 test('another game keeps its selector without the removed current-game notice', async () => {
   mockApi({ '/api/chat': messages })
   const game = current as unknown as CurrentGame

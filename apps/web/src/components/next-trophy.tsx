@@ -9,8 +9,8 @@ import type { GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { TrophyArt } from '../ui/trophy-art'
 import { JourneyLink as Link } from './journey-link'
+import { TrophyAsks } from './nexo-asks'
 import type { SessionPlan } from './plan'
-import { nexoHref } from './tip'
 import './next-trophy.css'
 
 // Trophy names compared without accents, case or punctuation: the guide writes them its own way.
@@ -157,12 +157,13 @@ export function NextTrophy({
           </span>
         </div>
       </div>
-      <Link
-        className="button secondary sm"
-        to={np && !me.demo ? nexoHref(np, null, trophy.name) : '/nexo'}
-      >
-        <Icon name="nexo" /> {t('ask')}
-      </Link>
+      {np && !me.demo ? (
+        <TrophyAsks np={np} trophy={trophy.name} />
+      ) : (
+        <Link className="button secondary sm" to="/nexo">
+          <Icon name="nexo" /> {t('ask')}
+        </Link>
+      )}
     </aside>
   )
 }
