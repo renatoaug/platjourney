@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # Hosted web search (OpenAI only). Off, every answer comes from the stored guides, the deep
     # guide passages and the catalog, which is cheaper and faster; a local model never searches.
     ai_web_search: bool = True
+    # With web search off, a chat question the deep guide has no passage for may still search the
+    # web, up to this many times a day for the whole instance. 0 turns it off.
+    ai_gap_search_daily: int = 0
 
     openai_api_key: str = ''
     openai_model: str = 'gpt-5.5'

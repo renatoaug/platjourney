@@ -33,6 +33,9 @@ local = AsyncOpenAI(
 @dataclass(frozen=True)
 class Reply:
     output_text: str
+    # How many web searches the call made, and the pages its answer cited.
+    searches: int = 0
+    urls: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -63,16 +66,17 @@ def web_search_on() -> bool:
     return settings.ai_web_search and route().provider in ('openai', 'codex')
 
 
-async def respond(step: str | None = None, **params: Any) -> Reply:
+async def respond(step: str | None = None, search: bool = False, **params: Any) -> Reply:
     """A Responses API call (instructions, input, tools, reasoning, text); the model comes
-    from the feature's route, or the step's."""
+    from the feature's route, or the step's. Web search stays off unless the instance turns it on,
+    or `search` asks for it on this one call (only OpenAI can search)."""
     chosen = route(step)
     if chosen.provider == 'local':
         return await _respond_locally(params, chosen.model)
     if chosen.provider == 'codex':
         return await _respond_with_codex(params, chosen.model)
     params = params | {'model': chosen.model}
-    if not web_search_on() and params.get('tools'):
+    if not (web_search_on() or search) and params.get('tools'):
         tools = [t for t in params['tools'] if t.get('type') != 'web_search']
         params = {k: v for k, v in params.items() if k != 'tools'} | (
             {'tools': tools} if tools else {}
@@ -91,7 +95,27 @@ async def respond(step: str | None = None, **params: Any) -> Reply:
         ),
         int((time.monotonic() - started) * 1000),
     )
-    return Reply(response.output_text)
+    return Reply(
+        response.output_text,
+        searches=sum(1 for item in response.output if item.type == 'web_search_call'),
+        urls=cited_urls(response),
+    )
+
+
+def cited_urls(response: Response) -> tuple[str, ...]:
+    """The pages the answer cites, in order, each once."""
+    urls: list[str] = []
+    for item in response.output:
+        if item.type != 'message':
+            continue
+        for part in item.content:
+            notes = cast(list[object], getattr(part, 'annotations', None) or [])
+            for note in notes:
+                url = cast(str | None, getattr(note, 'url', None))
+                kind = cast(str, getattr(note, 'type', ''))
+                if kind == 'url_citation' and url and url not in urls:
+                    urls.append(url)
+    return tuple(urls)
 
 
 # What a message is refused for, and from which score. Violence and "illicit" are left out:

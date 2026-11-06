@@ -1,7 +1,7 @@
 import { config } from './config.ts'
 import { tagged } from './costs.ts'
 import { ensureDeepGuide } from './deepguide.ts'
-import { isDemo, trophiesFor } from './demo.ts'
+import { isDemo, storedProgress, trophiesFor } from './demo.ts'
 import { ensureGuide, type Guide } from './guide.ts'
 import { library } from './library.ts'
 import type { GameContext } from './nexo.ts'
@@ -11,6 +11,7 @@ import { loadGroups } from './ranking.ts'
 import { type Game, gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { requestGuide } from './repository/guide-request.ts'
+import { titleOfGame } from './repository/title.ts'
 import type { User } from './repository/user.ts'
 
 // The game each user is playing: the last one PSN shows. It drives the notices, the session plan
@@ -77,6 +78,21 @@ export async function setChat(user: User, title: TitleProgress): Promise<GameCon
 // A game the player does not own, for the chat: its official list with nothing earned and the
 // stored guide (asked for, not researched, when there is none). Null when it has no trophy list.
 export async function setChatFromCatalog(user: User, game: Game): Promise<GameContext | null> {
+  const ctx = await catalogContext(user, game)
+  if (ctx) chatContexts.set(user.id, ctx)
+  return ctx
+}
+
+// A game's context for a player away from the chat (an answer Nexo owed them): their own title
+// when they have one, else the catalog list with nothing earned. Neither the current nor the chat
+// game changes.
+export async function contextForGame(user: User, game: Game): Promise<GameContext | null> {
+  const row = await titleOfGame(user.id, game.id)
+  if (row) return loadContext(user, storedProgress(row))
+  return catalogContext(user, game)
+}
+
+async function catalogContext(user: User, game: Game): Promise<GameContext | null> {
   const list = await catalogTrophies(game.np_communication_ids ?? [])
   if (!list) return null
   const count = (type: string) => list.trophies.filter((t) => t.type === type).length
@@ -107,7 +123,6 @@ export async function setChatFromCatalog(user: User, game: Game): Promise<GameCo
     groups: null,
     owned: false,
   }
-  chatContexts.set(user.id, ctx)
   return ctx
 }
 
