@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.50.2](https://github.com/renatoaug/platjourney/compare/v0.50.1...v0.50.2) (2026-11-06)
+
+### Bug Fixes
+
+* preserve ios storyboard bridge and launch background ([#142](https://github.com/renatoaug/platjourney/issues/142)) ([e0bbacf](https://github.com/renatoaug/platjourney/commit/e0bbacf9a47f1bbf1afa92a7202f4db3f7ef7e7e))
+
 ## [0.50.1](https://github.com/renatoaug/platjourney/compare/v0.50.0...v0.50.1) (2026-11-05)
 
 ### Bug Fixes
