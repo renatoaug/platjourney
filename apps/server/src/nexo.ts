@@ -3,6 +3,7 @@ import { aiContext } from './ai-context.ts'
 import { tagged } from './costs.ts'
 import { focusAfter, storyTrophy, tidy } from './focus.ts'
 import type { Guide } from './guide.ts'
+import { hookFor } from './hooks.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
 import { markCheer, progressMark } from './marks.ts'
 import { aroundModel } from './plugins.ts'
@@ -247,12 +248,14 @@ async function replyBody(user: User, text: string, ctx?: GameContext, player?: P
   const resume = ctx
     ? resumeFrom(await recentMessages(user.id, RESUME_MESSAGES, ctx.game.id), ctx.trophies)
     : null
+  const hook = ctx ? hookFor(user.id, ctx) : null
   return {
     text,
     context: ctx ? aiContext(ctx, user) : null,
     locale: user.locale === 'en' ? 'en' : 'pt-BR',
     ...(resume ? { resume } : {}),
     ...(player ? { player } : {}),
+    ...(hook ? { hook } : {}),
   }
 }
 

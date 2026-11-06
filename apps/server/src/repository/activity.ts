@@ -257,6 +257,15 @@ export async function recentMessages(
   return rows.reverse().map((row) => (row.card ? { ...row, card: camelKeys(row.card) } : row))
 }
 
+/** Whether the player ever wrote to Nexo, for the first questions shown to who never did. */
+export async function hasAskedNexo(user: string): Promise<boolean> {
+  const rows = await q<unknown[]>(
+    "SELECT VALUE id FROM message WHERE user = $user AND role = 'user' LIMIT 1",
+    { user: userRef(user) },
+  )
+  return rows.length > 0
+}
+
 /** One conversation per game the player talked about, the latest first. */
 export interface ChatThread {
   /** The game's id, or null for the messages without a game. */

@@ -292,6 +292,8 @@ export interface AppStateData {
   ranking: RankingItem[]
   goals: YearGoals
   servers: ServerStatus[]
+  /** False until the player first writes to Nexo; missing on an older server. */
+  askedNexo?: boolean
 }
 
 /** A game the chat's game switch lists: the player's own titles first (by their PSN list), then

@@ -22,3 +22,15 @@ export const FromTheGuide: Story = {
 export const WithoutAGuide: Story = {
   render: () => <NextTrophy trophies={current.trophies} game={current.game.id} />,
 }
+
+// With the game's PSN list: the questions about the trophy, sent to Nexo from here.
+export const WithQuestions: Story = {
+  render: () => (
+    <NextTrophy
+      trophies={current.trophies}
+      guide={current.guide as GuideDetail}
+      game={current.game.id}
+      np={current.np}
+    />
+  ),
+}

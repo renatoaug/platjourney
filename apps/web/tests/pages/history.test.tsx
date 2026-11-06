@@ -172,3 +172,12 @@ test('the selected tip has a skeleton and a retryable failure', async () => {
   fireEvent.click(retry)
   expect(await screen.findByText('Recovered tip')).toBeTruthy()
 })
+
+test("only each game's latest notice can be asked about, and never a server notice", () => {
+  renderApp(<History />, { value: { data: { ...SAMPLE_DATA, tips: TIPS } } })
+  const asks = screen.getAllByRole('link', { name: /Me explica melhor/ })
+  expect(asks).toHaveLength(1)
+  const href = new URL(asks[0].getAttribute('href') ?? '', 'http://x')
+  expect(href.searchParams.get('game')).toBe('game:19561')
+  expect(href.searchParams.get('ask')).toBe('notice')
+})

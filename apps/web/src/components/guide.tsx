@@ -12,6 +12,7 @@ import { defineMessages, getLocale, Language, type MessageKey, useMessages } fro
 import { fmtDate, fmtPlayTime, fmtRate } from '../lib/format'
 import { nameText } from '../lib/text'
 import type { DeepGuideStats, GuideDetail, Trophy } from '../lib/types'
+import { useLingered } from '../lib/use-lingered'
 import { Icon } from '../ui/icon'
 import { GuideText, UserText } from '../ui/markdown'
 import { repeat, Sk } from '../ui/skeleton'
@@ -20,6 +21,7 @@ import { EmptyState } from '../ui/states'
 import { TrophyArt } from '../ui/trophy-art'
 import { bandOf } from './difficulty-meter'
 import { JourneyLink as Link } from './journey-link'
+import { ExplainAsk } from './nexo-asks'
 import { NexoHero } from './nexo-hero'
 import { nexoHref } from './tip'
 import '../ui/section-tabs.css'
@@ -768,6 +770,42 @@ function AskNexo({ c, trophy, earned }: { c: GuideGame; trophy: string; earned?:
   )
 }
 
+// Reading one phase this long is reading it slowly, or being stuck on it.
+const LINGER_MS = 40_000
+
+/** A roadmap phase; after a long stay on it, Nexo offers to explain it. */
+function GuidePhase({
+  c,
+  phase,
+  n,
+}: {
+  c: GuideGame
+  phase: GuideDetail['roadmap'][number]
+  n: number
+}) {
+  const tr = useMessages(messages)
+  const ref = useRef<HTMLLIElement>(null)
+  const lingered = useLingered(ref, LINGER_MS)
+  const name = nameText(phase.phase)
+  return (
+    <li ref={ref} style={{ margin: '0 0 14px' }}>
+      <b className="display" style={{ color: 'var(--color-accent)' }}>
+        {n}. {name}
+      </b>
+      <PhaseGoal text={phase.goal} />
+      {phase.trophies.length > 0 && (
+        <p className="phase-trophies">
+          <Icon name="trophy" />
+          <span>
+            <b>{tr('phaseTrophies')}</b> {phase.trophies.join(' · ')}
+          </span>
+        </p>
+      )}
+      {lingered && c.np && <ExplainAsk np={c.np} name={c.name} part={name} />}
+    </li>
+  )
+}
+
 /** The guide skeleton, also shown (with a pending line) while the guide is being researched. */
 /** A roadmap phase: a line of context, numbered steps, then tips and warnings set apart. */
 function PhaseGoal({ text }: { text: string }) {
@@ -1077,20 +1115,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
     </Fragment>,
     <ul key="roadmap" className="clean guide-roadmap">
       {roadmap.map((r, i) => (
-        <li key={r.phase} style={{ margin: '0 0 14px' }}>
-          <b className="display" style={{ color: 'var(--color-accent)' }}>
-            {i + 1}. {nameText(r.phase)}
-          </b>
-          <PhaseGoal text={r.goal} />
-          {r.trophies.length > 0 && (
-            <p className="phase-trophies">
-              <Icon name="trophy" />
-              <span>
-                <b>{tr('phaseTrophies')}</b> {r.trophies.join(' · ')}
-              </span>
-            </p>
-          )}
-        </li>
+        <GuidePhase key={r.phase} c={c} phase={r} n={i + 1} />
       ))}
     </ul>,
     <KeyTrophies key="key" c={c} g={g} />,

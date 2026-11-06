@@ -54,6 +54,8 @@ class ReplyRequest(Wire):
     resume: nexo.Resume | None = None
     # The general conversation, with no game open.
     player: nexo.PlayerFacts | None = None
+    # A fact from the player's game to close with, picked by the server at most once a day per game.
+    hook: str | None = Field(default=None, max_length=300)
 
 
 @router.post('/tip')
@@ -80,7 +82,13 @@ async def reply(body: ReplyRequest) -> Answer:
     try:
         return Answer(
             text=await nexo.reply(
-                body.text, body.context, body.history, body.locale, body.resume, body.player
+                body.text,
+                body.context,
+                body.history,
+                body.locale,
+                body.resume,
+                body.player,
+                body.hook,
             )
         )
     except nexo.Moderated:

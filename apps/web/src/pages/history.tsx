@@ -149,6 +149,14 @@ function Timeline({ tips, kind, onAll }: { tips: Tip[]; kind: string; onAll: () 
         {t('emptyKindHint')}
       </EmptyState>
     )
+  // "Tell me more" only on each game's latest notice: the older ones are already behind the player.
+  const latest = new Set<string>()
+  const seen = new Set<string>()
+  for (const tip of filtered)
+    if (tip.game?.id && !seen.has(tip.game.id)) {
+      seen.add(tip.game.id)
+      latest.add(tip.id)
+    }
   return (
     <>
       {byDay(filtered).map((group) => (
@@ -158,7 +166,7 @@ function Timeline({ tips, kind, onAll }: { tips: Tip[]; kind: string; onAll: () 
             <span>{group.length}</span>
           </h3>
           {group.map((t, i) => (
-            <TipItem key={t.id ?? i} tip={t} />
+            <TipItem key={t.id ?? i} tip={t} ask={latest.has(t.id)} />
           ))}
         </section>
       ))}
@@ -210,7 +218,7 @@ export function SelectedTipView({
           </button>
         </ErrorState>
       ) : (
-        <TipItem tip={tip} />
+        <TipItem tip={tip} ask />
       )}
       <Link className="text-link" to="/history">
         {t('seeAll')}

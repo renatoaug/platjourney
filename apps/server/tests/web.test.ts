@@ -127,6 +127,7 @@ beforeEach(() => {
   spyOn(recommend, 'dismissRecommendation').mockResolvedValue()
   spyOn(activity, 'recentTips').mockResolvedValue([])
   spyOn(activity, 'unreadNotifications').mockResolvedValue(0)
+  spyOn(activity, 'hasAskedNexo').mockResolvedValue(true)
   spyOn(activity, 'recentMessages').mockResolvedValue([])
   spyOn(games, 'getGame').mockResolvedValue(game)
   spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())

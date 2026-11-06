@@ -1,0 +1,38 @@
+@layer screens {
+  .nexo-asks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .nexo-ask {
+    text-decoration: none;
+  }
+
+  .nexo-asks-label {
+    display: inline-flex;
+    flex-basis: 100%;
+    gap: 6px;
+    align-items: center;
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+  }
+}
+
+@layer screens {
+  /* A finger needs the room; a mouse is fine with the chip's own size. */
+  @media (pointer: coarse) {
+    .nexo-ask {
+      min-height: 44px;
+      align-items: center;
+    }
+  }
+}
+
+@layer screens {
+  .tip-ask {
+    gap: 6px;
+    align-items: center;
+    margin-top: 10px;
+  }
+}

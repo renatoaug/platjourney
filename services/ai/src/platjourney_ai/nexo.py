@@ -665,6 +665,18 @@ def resume_note(resume: Resume | None) -> str:
     )
 
 
+def hook_note(hook: str | None) -> str:
+    """A reason for the player to come back, said once at the end of a full answer."""
+    if not hook:
+        return ''
+    return (
+        f'\n\nGancho para fechar (opcional): {hook}. Se a sua resposta resolve a pergunta e tem '
+        'mais de uma frase, termine com UMA frase curta, no tom de parceiro, usando só esse fato. '
+        'Nada de pergunta genérica como "travou em algo?". Se a pergunta for de sim ou não, ou se '
+        'você não souber responder, deixe o gancho de fora.'
+    )
+
+
 # Without it, a short message after the long context reads as a fragment: the model asked the
 # player to finish a sentence that was already the request.
 ASKED = 'Mensagem do jogador (é a isto que você responde; o que vem acima é só dado de consulta):'
@@ -795,7 +807,7 @@ async def record_gap(
             '   user: IF $user THEN type::record($user) ELSE NONE END,'
             '   searched: $searched, urls: $urls, answered: $answered };'
             ' IF (SELECT id FROM guide_request WHERE game = $game) {'
-            '   UPDATE guide_request SET questions += $asked'
+            '   UPDATE guide_request SET users = users ?? [], questions += $asked'
             '   WHERE game = $game'
             ' } ELSE {'
             '   CREATE guide_request SET game = $game, questions = [$asked]'
@@ -833,6 +845,7 @@ async def reply(
     locale: str = 'pt-BR',
     resume: Resume | None = None,
     player: PlayerFacts | None = None,
+    hook: str | None = None,
 ) -> str:
     if await llm.flagged(text):
         raise Moderated
@@ -846,7 +859,8 @@ async def reply(
     focus = mentioned_trophies(text, ctx) or mentioned_trophies(query, ctx)
     found, used = await passages(ctx, query, focus)
     context = (
-        f'Contexto PSN do jogo atual:\n{lean_context(ctx, focus, text)}{resume_note(resume)}{found}'
+        f'Contexto PSN do jogo atual:\n{lean_context(ctx, focus, text)}{resume_note(resume)}'
+        f'{hook_note(hook)}{found}'
     )
     if found:
         answered = await ask(text, context, history, ctx.locale, conversation=True)

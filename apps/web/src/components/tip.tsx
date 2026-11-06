@@ -14,6 +14,7 @@ import { Icon } from '../ui/icon'
 import { Markdown } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
 import { AppLogo, assistantName } from './app-logo'
+import { NoticeAsk } from './nexo-asks'
 import './tip.css'
 
 /** Also read by the notifications panel, which shows the same items. */
@@ -79,13 +80,7 @@ export const KIND_ICON: Record<string, string> = {
 
 export const titleHref = (gameId: string) => `/title/game/${encodeURIComponent(gameId)}`
 
-/** The chat, opening on a game: a PSN list id for one in the player's library, a game id
- * (`game:…`) for one outside it. */
-/** Nexo on a game; with a trophy, the chat opens with it attached to the question box. */
-export const nexoHref = (np?: string | null, name?: string | null, trophy?: string | null) =>
-  np
-    ? `/nexo?${new URLSearchParams({ game: np, ...(name ? { name } : {}), ...(trophy ? { trophy } : {}) })}`
-    : '/nexo'
+export { nexoHref } from './nexo-asks'
 
 /** The item's mark: the assistant's logo for a tip it saved, else the kind's icon. */
 function KindMark({ tip }: { tip: Tip }) {
@@ -93,7 +88,16 @@ function KindMark({ tip }: { tip: Tip }) {
   return <Icon name={KIND_ICON[tip.kind] ?? 'nexo'} />
 }
 
-export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?: boolean }) {
+export function TipItem({
+  tip: tipItem,
+  compact = false,
+  ask = false,
+}: {
+  tip: Tip
+  compact?: boolean
+  /** Offers "tell me more" when it is a notice about playing a game (the latest of its game). */
+  ask?: boolean
+}) {
   const tr = useMessages(messages)
   const t = tipItem
   // A tip an assistant saved carries its name instead of the kind.
@@ -154,11 +158,17 @@ export function TipItem({ tip: tipItem, compact = false }: { tip: Tip; compact?:
             <span className={`k kind-${t.kind}`}>{kind}</span>
           </div>
           <Markdown className="tip-content" text={t.content} />
+          {ask && t.game?.id && ABOUT_THE_GAME.includes(t.kind) && (
+            <NoticeAsk game={t.game.id} name={t.game.name} />
+          )}
         </div>
       </div>
     </article>
   )
 }
+
+// The notices about playing a game: a question about them goes to that game's conversation.
+const ABOUT_THE_GAME = ['start', 'unlock', 'session', 'route', 'answer', 'chat']
 
 /** Loading layout of a TipItem. */
 export function TipSkeleton({ compact = false }: { compact?: boolean }) {

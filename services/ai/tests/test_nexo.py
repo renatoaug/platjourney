@@ -899,3 +899,31 @@ async def test_a_follow_up_that_still_has_no_answer_says_nothing(
 ) -> None:
     text, _ = await _follow_up(monkeypatch, '\nTrechos dos guias: outra coisa', nexo.NOT_YET)
     assert text is None
+
+
+def test_a_hook_is_offered_once_and_only_for_a_full_answer() -> None:
+    assert nexo.hook_note(None) == ''
+    note = nexo.hook_note('faltam 2 troféus pra 50% da platina')
+    assert 'faltam 2 troféus pra 50% da platina' in note
+    assert 'UMA frase curta' in note
+    assert 'travou em algo?' in note
+
+
+async def test_the_hook_reaches_the_answer_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[str] = []
+
+    async def no_passages(*_: Any, **__: Any) -> list[Any]:
+        return []
+
+    async def answer_reply(_text: str, context: str, *_: Any, **__: Any) -> llm.Reply:
+        seen.append(context)
+        return llm.Reply('Fica no porão.')
+
+    async def record(*_: Any, **__: Any) -> None:
+        return None
+
+    monkeypatch.setattr(nexo.deepguide, 'retrieve', no_passages)
+    monkeypatch.setattr(nexo, 'record_gap', record)
+    monkeypatch.setattr(nexo, 'ask_reply', answer_reply)
+    await nexo.reply('onde fica o arco?', context(), [], hook='o perdível Arco ainda falta')
+    assert 'Gancho para fechar (opcional): o perdível Arco ainda falta.' in seen[0]
