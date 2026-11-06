@@ -10,7 +10,9 @@ import {
 } from 'react'
 import { defineMessages, Language, translator } from '../i18n/i18n'
 import { api } from '../lib/api'
+import { isAppleBilling, watchAppleTransactions } from '../lib/apple-billing'
 import type { AppStateData, Me } from '../lib/types'
+import { MODEL_WORK_DONE } from '../plugins'
 import { toast } from '../ui/toast'
 
 const messages = defineMessages({
@@ -94,6 +96,31 @@ export function AppStateProvider({ me: initial, children }: { me: Me; children: 
       document.removeEventListener('preferences:changed', loadState)
     }
   }, [loadState])
+
+  // Pending approvals and interrupted deliveries must complete even away from the billing screen.
+  useEffect(() => {
+    if (!me.id || me.demo || !isAppleBilling()) return
+    let disposed = false
+    let stop: (() => void) | undefined
+    void watchAppleTransactions(
+      () => {
+        if (disposed) return
+        void loadState()
+        document.dispatchEvent(new Event('apple-billing:updated'))
+        window.dispatchEvent(new Event(MODEL_WORK_DONE))
+      },
+      () => {}, // Keep unfinished purchases queued; the billing screen exposes actionable errors.
+    )
+      .then((cleanup) => {
+        if (disposed) cleanup()
+        else stop = cleanup
+      })
+      .catch(() => {}) // An old native build has no billing bridge.
+    return () => {
+      disposed = true
+      stop?.()
+    }
+  }, [me.id, me.demo, loadState])
 
   // Signing in starts a PSN sync on the server that takes a few seconds; until the current game
   // arrives, ask again every 3 s for up to 30 s instead of waiting for the next minute.

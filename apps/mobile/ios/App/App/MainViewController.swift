@@ -7,6 +7,7 @@ class MainViewController: CAPBridgeViewController {
     static let launchBackground = UIColor(red: 16.0 / 255, green: 18.0 / 255, blue: 15.0 / 255, alpha: 1)
 
     override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(AppleBillingPlugin())
         // Keep the window, bridge and transparent WebView on the same surface while the remote
         // page loads. The splash and the web boot screen use this same background.
         view.backgroundColor = Self.launchBackground

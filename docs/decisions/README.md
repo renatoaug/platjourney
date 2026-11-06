@@ -57,3 +57,4 @@ What this makes easier, what it makes harder, what to watch. (bullets)
 
 | [ADR-012](ADR-012-ios-native-push.md) | Session-bound APNs alongside Web Push | Accepted |
 | [ADR-013](ADR-013-journey-from-guide.md) | The trophy journey is derived from the guide | Accepted |
+| [ADR-014](ADR-014-storekit-server-ack.md) | Finish StoreKit purchases only after server acceptance | Accepted |

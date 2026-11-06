@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
 import { ApiError, api, del } from '../lib/api'
+import { isAppleBilling, manageAppleSubscriptions } from '../lib/apple-billing'
 import type { Me } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
@@ -57,6 +58,10 @@ const messages = defineMessages({
       submit: 'Salvar nova senha',
     },
     delete: {
+      appleWarning:
+        'Se você tem uma assinatura pela Apple, excluir sua conta não a cancela. Cancele pela Apple para evitar novas cobranças. Você pode excluir sua conta sem cancelar antes.',
+      appleManage: 'Gerenciar assinaturas da Apple',
+      appleFailed: 'Não foi possível abrir. Gerencie em Ajustes > Conta Apple > Assinaturas.',
       open: 'Excluir minha conta',
       hint: 'Apaga tudo que é seu aqui. Dá para criar a conta de novo depois, com o mesmo PSN ID, começando do zero.',
       lead: 'Apaga sua conversa com o Nexo, interesses, histórico e a conexão com o Telegram. Não dá para desfazer.',
@@ -106,6 +111,11 @@ const messages = defineMessages({
       submit: 'Save new password',
     },
     delete: {
+      appleWarning:
+        'If you have an Apple subscription, deleting your account does not cancel it. Cancel with Apple to avoid future charges. You can delete your account without cancelling first.',
+      appleManage: 'Manage Apple subscriptions',
+      appleFailed:
+        'Could not open subscriptions. Manage them in Settings > Apple Account > Subscriptions.',
       open: 'Delete my account',
       hint: 'Deletes everything of yours here. You can create the account again later, with the same PSN ID, from scratch.',
       lead: 'Deletes your chat with Nexo, interests, history and the Telegram connection. This cannot be undone.',
@@ -451,6 +461,18 @@ function AccountCard({ user, onEditing }: { user: Me; onEditing?: (editing: bool
           }, delPanel.onError)}
         >
           <p className="muted">{t('delete.lead')}</p>
+          <p>{t('delete.appleWarning')}</p>
+          {isAppleBilling() && (
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => {
+                void manageAppleSubscriptions().catch(() => toast(t('delete.appleFailed')))
+              }}
+            >
+              {t('delete.appleManage')}
+            </button>
+          )}
           <label htmlFor="delete-confirm">
             {t('delete.typeBefore')}
             <b>{user.onlineId}</b>
