@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.53.0](https://github.com/renatoaug/platjourney/compare/v0.52.0...v0.53.0) (2026-11-06)
+
+### Features
+
+* **web:** bring players to nexo with ready questions and a reason to come back ([#146](https://github.com/renatoaug/platjourney/issues/146)) ([47f96b4](https://github.com/renatoaug/platjourney/commit/47f96b41c86dbb2608e1123e03d882b44a3f6178))
+
 ## [0.52.0](https://github.com/renatoaug/platjourney/compare/v0.51.0...v0.52.0) (2026-11-06)
 
 ### Features
