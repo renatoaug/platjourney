@@ -3,6 +3,7 @@ import { commandMenu, handleCommand, help } from './commands.ts'
 import { config, version } from './config.ts'
 import { migrate } from './db.ts'
 import { startDeals } from './deals.ts'
+import { startFollowUps } from './followups.ts'
 import {
   DEFAULT_LOCALE,
   fromLanguage,
@@ -49,6 +50,7 @@ async function main(): Promise<void> {
   console.log(`platjourney ${version} up — sweeping users every ${config.pollMinutes} min`)
   startWatcher(config.pollMinutes)
   startReleaseSync()
+  startFollowUps()
   startDeals()
   startSimilarSync()
   startWeb()

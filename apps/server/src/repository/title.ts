@@ -39,6 +39,18 @@ export async function getTitle(user: string, np: string): Promise<TitleRow | und
   )
 }
 
+/** The player's title for a catalog game, when they have one. */
+export async function titleOfGame(user: string, game: string): Promise<TitleRow | undefined> {
+  return fromRow(
+    plain(
+      await one<TitleRow>('SELECT * FROM title WHERE user = $user AND game = $game LIMIT 1', {
+        user: userRef(user),
+        game: gameRef(game),
+      }),
+    ),
+  )
+}
+
 // Every title of an account, most recently played first (the demo player's library).
 export async function titlesOfAccount(accountId: string): Promise<TitleRow[]> {
   return plain(

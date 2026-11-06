@@ -806,7 +806,7 @@ async def test_a_gap_searches_the_web_once_within_the_day_budget(
     calls, recorded = await _gap_reply(monkeypatch, searched_today=3)
     assert calls[0]['search'] is True
     assert 'pesquise na web' in calls[0]['instructions']
-    assert recorded == [{'searched': True, 'urls': ['https://a.example/x']}]
+    assert recorded == [{'searched': True, 'urls': ['https://a.example/x'], 'answered': True}]
 
 
 async def test_a_gap_past_the_day_budget_does_not_search(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -859,3 +859,43 @@ async def test_one_call_may_search_with_web_search_off(monkeypatch: pytest.Monke
     await llm.respond(search=True, tools=tools, input='x')
     assert 'tools' not in sent[0]
     assert sent[1]['tools'] == tools
+
+
+async def _follow_up(
+    monkeypatch: pytest.MonkeyPatch, found: str, answer: str
+) -> tuple[str | None, list[str]]:
+    asked: list[str] = []
+
+    async def passages(*_: Any, **__: Any) -> tuple[str, list[Any]]:
+        return (found, [])
+
+    async def ask(prompt: str, *_: Any, **__: Any) -> str:
+        asked.append(prompt)
+        return answer
+
+    monkeypatch.setattr(nexo, 'passages', passages)
+    monkeypatch.setattr(nexo, 'ask', ask)
+    return await nexo.follow_up(context(), 'onde fica o arco?'), asked
+
+
+async def test_a_follow_up_waits_until_the_guide_has_passages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    text, asked = await _follow_up(monkeypatch, '', 'Fica no norte.')
+    assert text is None
+    assert asked == []
+
+
+async def test_a_follow_up_answers_once_the_guide_has_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    text, asked = await _follow_up(
+        monkeypatch, '\nTrechos dos guias: o arco', 'Voltei! Fica no norte.'
+    )
+    assert text == 'Voltei! Fica no norte.'
+    assert 'onde fica o arco?' in asked[0]
+
+
+async def test_a_follow_up_that_still_has_no_answer_says_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    text, _ = await _follow_up(monkeypatch, '\nTrechos dos guias: outra coisa', nexo.NOT_YET)
+    assert text is None

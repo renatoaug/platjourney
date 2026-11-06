@@ -16,6 +16,8 @@ export type TipKind =
   | 'route'
   | 'deal'
   | 'assistant'
+  /** An answer Nexo owed: a question it could not answer, once the guide had it. */
+  | 'answer'
 export interface Tip {
   id: string
   kind: TipKind

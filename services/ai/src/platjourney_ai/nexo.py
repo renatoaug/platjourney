@@ -772,11 +772,16 @@ async def trophy_help(ctx: GameContext, trophy: Trophy) -> str:
 
 
 async def record_gap(
-    ctx: GameContext, question: str, searched: bool = False, urls: list[str] | None = None
+    ctx: GameContext,
+    question: str,
+    searched: bool = False,
+    urls: list[str] | None = None,
+    answered: bool = False,
 ) -> None:
     """A question the deep guide had no passage for: what the guides should cover next. Who asked
-    (to tell them once the guide answers), whether the web was searched for it and the pages the
-    answer cited (where to start filling the guide)."""
+    (to tell them once the guide answers), whether the web was searched for it, the pages the
+    answer cited (where to start filling the guide) and whether the player got an answer anyway
+    (one that did not is followed up once the guide has it)."""
     # An eval's questions are not players' questions, and an eval writes nothing.
     if costs.collected.get() is not None:
         return
@@ -788,7 +793,7 @@ async def record_gap(
             'LET $game = type::record($id);'
             ' LET $asked = { question: $question, asked_at: time::now(),'
             '   user: IF $user THEN type::record($user) ELSE NONE END,'
-            '   searched: $searched, urls: $urls };'
+            '   searched: $searched, urls: $urls, answered: $answered };'
             ' IF (SELECT id FROM guide_request WHERE game = $game) {'
             '   UPDATE guide_request SET questions += $asked'
             '   WHERE game = $game'
@@ -801,6 +806,7 @@ async def record_gap(
                 'user': user,
                 'searched': searched,
                 'urls': urls or [],
+                'answered': answered,
             },
         )
     except Exception as e:
@@ -847,14 +853,41 @@ async def reply(
         # Passages came back but did not cover it: the answer promised to look into it, so the
         # question is kept like any other gap.
         if NOT_YET in answered:
-            await record_gap(ctx, text)
+            await record_gap(ctx, text, answered=False)
         return cite(answered, used)
     # The deep guide has nothing on this: one web search, within the day's budget, then the
     # question is kept for the guides either way, with what the search found.
     search = await gap_search_left()
     answer = await ask_reply(text, context, history, ctx.locale, conversation=True, search=search)
-    await record_gap(ctx, text, searched=answer.searches > 0, urls=list(answer.urls))
+    await record_gap(
+        ctx,
+        text,
+        searched=answer.searches > 0,
+        urls=list(answer.urls),
+        answered=NOT_YET not in answer.output_text,
+    )
     return answer.output_text
+
+
+FOLLOW_UP = (
+    'Uns dias atrás o jogador perguntou: "{question}". Você ainda não tinha a resposta e prometeu '
+    'avisar. Agora o guia tem. Abra com uma linha curta dizendo que voltou com a resposta dessa '
+    'pergunta (cite o assunto, não repita a pergunta inteira) e responda. Se nem agora o guia e os '
+    'trechos responderem, responda só "{not_yet}".'
+)
+
+
+async def follow_up(ctx: GameContext, question: str) -> str | None:
+    """The answer to a question Nexo could not answer before, now that the deep guide has
+    passages for it; None while it still has nothing to say."""
+    focus = mentioned_trophies(question, ctx)
+    found, used = await passages(ctx, question, focus)
+    if not found:
+        return None
+    prompt = FOLLOW_UP.format(question=question, not_yet=NOT_YET)
+    context = f'Contexto PSN do jogo atual:\n{lean_context(ctx, focus, question)}{found}'
+    text = await ask(prompt, context, locale=ctx.locale, conversation=True)
+    return None if NOT_YET in text else cite(text, used)
 
 
 async def gap_search_left() -> bool:
