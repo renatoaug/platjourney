@@ -35,8 +35,8 @@ Escopo:
 Exatidão:
 - Quando trechos discordarem entre si ou do guia, vale o mais recente (a data vem no cabeçalho do trecho): jogos mudam com atualizações e versões novas.
 - Quando houver "Trechos dos guias", eles são a fonte mais detalhada: responda a partir deles (locais, ordem, números exatos) e diga de qual site veio. Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.
-- Não acrescente regra, restrição ou exceção do jogo que nem o guia, nem os trechos, nem a busca trouxeram: dica sem base não entra, nem conselho que pareça óbvio ("evite trocar de dificuldade no meio da campanha", "use a seleção de fases para praticar", "aprenda os padrões dos chefes", "jogue em cooperação"). Se pedirem dicas que o guia não traz, diga só que ainda não tem isso no guia.
-- Nunca fale das fontes no meio da resposta ("as fontes não informam", "a fonte indica", "segundo o guia"): diga só o fato. Quando o jogador perguntar algo que não está no guia nem nos trechos, diga em primeira pessoa: "Isso eu ainda não tenho no guia deste jogo." Um detalhe que ele não pediu e que você não tem (os locais exatos, uma ordem, um número) fica de fora da resposta: nunca aponte o que falta sem ele ter perguntado.
+- Não acrescente regra, restrição ou exceção do jogo que nem o guia, nem os trechos, nem a busca trouxeram: dica sem base não entra, nem conselho que pareça óbvio ("evite trocar de dificuldade no meio da campanha", "use a seleção de fases para praticar", "aprenda os padrões dos chefes", "jogue em cooperação"). Se pedirem dicas que o guia não traz, use a frase de quando não tem a resposta, abaixo.
+- Nunca fale das fontes no meio da resposta ("as fontes não informam", "a fonte indica", "segundo o guia"): diga só o fato. Quando o jogador perguntar algo que não está no guia nem nos trechos, diga em primeira pessoa: "Essa me pegou! Ainda não tenho isso mapeado em <nome do jogo>, mas deixei anotado pra investigar. Assim que descobrir, te chamo." Um detalhe que ele não pediu e que você não tem (os locais exatos, uma ordem, um número) fica de fora da resposta: nunca aponte o que falta sem ele ter perguntado.
 
 O que responder:
 - A primeira frase responde o que o jogador perguntou. Resumo de progresso só quando ele pergunta o que falta para a platina ("o que falta?", "quanto falta pra platinar?"): aí a primeira linha diz quantos troféus do jogo base faltam (a platina não conta) e quantos deles ainda são perdíveis, com os números da linha "Para a platina" do contexto, como estão, sem recontar; as horas que sobram entram só se o guia estimar e o tempo jogado estiver nos dados, e só o resultado ("cerca de 12h"): sem os dois, não calcule horas restantes, e nunca mostre a conta nem diga que um dado não foi informado. Quem pergunta quanto tempo leva a platina recebe a estimativa do guia. Só depois vem a ordem. Em qualquer outra pergunta (o próximo troféu, um troféu, um local), nada de resumo de progresso.
@@ -52,7 +52,7 @@ Forma:
 - Fale com a pessoa sem marcar gênero: nada de "bem-vindo", "pronto", "travado", "campeão" ou "o jogador" para se referir a ela; prefira formas neutras ("boas-vindas", "tudo certo", "você travou", "quem joga").
 - Fonte: só quando a resposta usar os "Trechos dos guias", escreva o nome de cada fonte que usou, separados por vírgula (ex.: "Fonte: <site>, <canal>"); um trecho de vídeo é citado pelo nome do canal. Sem URL e sem link em markdown. O guia fornecido não é fonte a citar, e avisos automáticos não citam fonte.
 
-Exemplos (jogo fictício; o que importa é o formato):
+Exemplos (jogo fictício, Ecos de Vidro; o que importa é o formato):
 
 Pessoa: o que falta pra platina?
 Nexo: Faltam 9 troféus do jogo base, 2 ainda perdíveis, cerca de 11h.
@@ -61,7 +61,10 @@ Nexo: Faltam 9 troféus do jogo base, 2 ainda perdíveis, cerca de 11h.
 - Depois, a segunda jogada no Difícil para o resto.
 
 Pessoa: qual a melhor build pro chefe final no difícil?
-Nexo: Isso eu ainda não tenho no guia deste jogo. Do que tenho desse trecho: salve antes da **Torre do Relógio**, porque o **Sem Testemunhas** se perde lá."""  # noqa: E501
+Nexo: Essa me pegou! Ainda não tenho isso mapeado em Ecos de Vidro, mas deixei anotado pra investigar. Assim que descobrir, te chamo. Do que já tenho desse trecho: salve antes da **Torre do Relógio**, porque o **Sem Testemunhas** se perde lá."""  # noqa: E501
+
+# The start of the answer when Nexo does not have it yet; the question is then kept for the guides.
+NOT_YET = 'Essa me pegou!'
 
 # The trophy-tip rules are the shared method, the same text connected assistants get.
 SYSTEM = _SYSTEM.replace('{tip}', method.TIP)
@@ -70,12 +73,12 @@ SYSTEM = _SYSTEM.replace('{tip}', method.TIP)
 # Without web search the model must not promise one, nor fill a gap with a guess.
 NO_SEARCH = {
     'Use os dados PSN fornecidos como verdade sobre o progresso do jogador e o guia fornecido como base das dicas; pesquise na web só quando o guia não cobrir a pergunta.': 'Use os dados PSN fornecidos como verdade sobre o progresso do jogador e o guia fornecido como base das dicas. Você não pesquisa na web.',  # noqa: E501
-    'Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.': 'Se nem o guia nem os trechos cobrirem a pergunta: sobre o funcionamento do jogo (menus, controles, como criar ou melhorar itens e armas, sistemas), responda com o que você sabe do jogo, em poucas linhas, e diga quando não tiver certeza; locais exatos, números e passos de troféu você nunca inventa: diga "Isso eu ainda não tenho no guia deste jogo."',  # noqa: E501
+    'Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.': 'Se nem o guia nem os trechos cobrirem a pergunta: sobre o funcionamento do jogo (menus, controles, como criar ou melhorar itens e armas, sistemas), responda com o que você sabe do jogo, em poucas linhas, e diga quando não tiver certeza; locais exatos, números e passos de troféu você nunca inventa: diga "Essa me pegou! Ainda não tenho isso mapeado em <nome do jogo>, mas deixei anotado pra investigar. Assim que descobrir, te chamo."',  # noqa: E501
 }
 
 
-def system_prompt() -> str:
-    if llm.web_search_on():
+def system_prompt(search: bool = False) -> str:
+    if llm.web_search_on() or search:
         return SYSTEM
     text = SYSTEM
     for old, new in NO_SEARCH.items():
@@ -675,17 +678,40 @@ async def ask(
     conversation: bool = False,
     extra: str = '',
 ) -> str:
+    reply = await ask_reply(user_text, context, history, locale, conversation, extra)
+    return reply.output_text
+
+
+async def ask_reply(
+    user_text: str,
+    context: str,
+    history: list[Turn] | None = None,
+    locale: str = 'pt-BR',
+    conversation: bool = False,
+    extra: str = '',
+    search: bool = False,
+) -> llm.Reply:
+    """The answer, with whether it searched the web and what it cited. `search` lets this one
+    call search even when the instance has web search off."""
     turns = [t.model_dump() for t in history or []]
     response = await llm.respond(
+        search=search,
         instructions=(
-            system_prompt() + (CLOSING if conversation else '') + extra + LANGUAGE.get(locale, '')
+            system_prompt(search)
+            + (CLOSING if conversation else '')
+            + extra
+            + LANGUAGE.get(locale, '')
         ),
         tools=[{'type': 'web_search'}],
         reasoning={'effort': 'low'},
         max_output_tokens=settings.chat_max_output_tokens,
         input=[*turns, {'role': 'user', 'content': f'{context}\n\n---\n{ASKED}\n{user_text}'}],
     )
-    return llm.strip_urls(response.output_text)
+    return llm.Reply(
+        llm.strip_urls(response.output_text),
+        searches=getattr(response, 'searches', 0),
+        urls=tuple(getattr(response, 'urls', ())),
+    )
 
 
 ROUTE_PROMPT = (
@@ -745,22 +771,37 @@ async def trophy_help(ctx: GameContext, trophy: Trophy) -> str:
     )
 
 
-async def record_gap(ctx: GameContext, question: str) -> None:
-    """A question the deep guide had no passage for: what the guides should cover next."""
+async def record_gap(
+    ctx: GameContext, question: str, searched: bool = False, urls: list[str] | None = None
+) -> None:
+    """A question the deep guide had no passage for: what the guides should cover next. Who asked
+    (to tell them once the guide answers), whether the web was searched for it and the pages the
+    answer cited (where to start filling the guide)."""
     # An eval's questions are not players' questions, and an eval writes nothing.
     if costs.collected.get() is not None:
         return
+    user = costs.current_tag.get().user
+    if user and ':' not in user:
+        user = f'user:{user}'
     try:
         await db.query(
             'LET $game = type::record($id);'
-            ' LET $asked = { question: $question, asked_at: time::now() };'
+            ' LET $asked = { question: $question, asked_at: time::now(),'
+            '   user: IF $user THEN type::record($user) ELSE NONE END,'
+            '   searched: $searched, urls: $urls };'
             ' IF (SELECT id FROM guide_request WHERE game = $game) {'
             '   UPDATE guide_request SET questions += $asked'
             '   WHERE game = $game'
             ' } ELSE {'
             '   CREATE guide_request SET game = $game, questions = [$asked]'
             ' }',
-            {'id': ctx.game.id, 'question': question},
+            {
+                'id': ctx.game.id,
+                'question': question,
+                'user': user,
+                'searched': searched,
+                'urls': urls or [],
+            },
         )
     except Exception as e:
         log.error('guide question not recorded: %s', e)
@@ -798,9 +839,38 @@ async def reply(
     query = search_query(text, history)
     focus = mentioned_trophies(text, ctx) or mentioned_trophies(query, ctx)
     found, used = await passages(ctx, query, focus)
-    if not found:
-        await record_gap(ctx, text)
     context = (
         f'Contexto PSN do jogo atual:\n{lean_context(ctx, focus, text)}{resume_note(resume)}{found}'
     )
-    return cite(await ask(text, context, history, ctx.locale, conversation=True), used)
+    if found:
+        answered = await ask(text, context, history, ctx.locale, conversation=True)
+        # Passages came back but did not cover it: the answer promised to look into it, so the
+        # question is kept like any other gap.
+        if NOT_YET in answered:
+            await record_gap(ctx, text)
+        return cite(answered, used)
+    # The deep guide has nothing on this: one web search, within the day's budget, then the
+    # question is kept for the guides either way, with what the search found.
+    search = await gap_search_left()
+    answer = await ask_reply(text, context, history, ctx.locale, conversation=True, search=search)
+    await record_gap(ctx, text, searched=answer.searches > 0, urls=list(answer.urls))
+    return answer.output_text
+
+
+async def gap_search_left() -> bool:
+    """Whether a question the deep guide cannot answer may still search the web today: only with
+    web search off for the instance (on, every answer may search anyway), on OpenAI, and while the
+    day's searches for such questions stay under AI_GAP_SEARCH_DAILY."""
+    if not settings.ai_gap_search_daily or llm.web_search_on():
+        return False
+    if llm.route().provider != 'openai' or costs.collected.get() is not None:
+        return False
+    try:
+        result = await db.query(
+            'RETURN math::sum((SELECT VALUE array::len(questions[WHERE searched = true'
+            ' AND asked_at >= time::floor(time::now(), 1d)]) FROM guide_request));'
+        )
+        return int(cast(int, result[0] or 0)) < settings.ai_gap_search_daily
+    except Exception as e:
+        log.error('gap search budget not read: %s', e)
+        return False

@@ -10,6 +10,7 @@ def default_providers(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, 'ai_provider', 'openai')
     monkeypatch.setattr(settings, 'embedding_provider', 'openai')
     monkeypatch.setattr(settings, 'ai_web_search', True)
+    monkeypatch.setattr(settings, 'ai_gap_search_daily', 0)
     for name in type(settings).model_fields:
         if name.startswith('ai_model_'):
             monkeypatch.setattr(settings, name, '')
