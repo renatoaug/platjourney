@@ -186,6 +186,7 @@ def test_the_start_notice_skips_the_first_trophy_title_and_names_the_server_s_ne
     assert 'UM próximo troféu' not in prompt
     # Short, and nothing about stretches far ahead: no tips past the next trophy.
     assert 'no máximo 3 linhas' in prompt
+    assert 'com dois-pontos e nunca ponto e vírgula' in prompt
     assert 'Sem dicas além disso e sem falar de trechos mais adiante' in prompt
     assert 'listas nossas' not in prompt
     kept = nexo.start_prompt(context(), [first], focus, ['Colecionador'], ['Voo'])

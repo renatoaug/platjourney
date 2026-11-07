@@ -431,9 +431,10 @@ def start_prompt(
         f'{opening} Mande uma mensagem bem curta, de no máximo 3 linhas: o jogador lê no '
         'celular, no meio do jogo. Primeiro, a sua opinião sincera sobre a platina em uma '
         'linha: dificuldade, horas, se tem perdível, e o que ela tem de bom ou de chato pelo '
-        'guia (o grind, um troféu que pede paciência). Não pergunte o que o jogador achou do '
-        f'jogo. {target} Sem dicas além disso e sem falar de trechos mais adiante no jogo.'
-        f'{later} Ele ainda não conhece os termos do jogo.'
+        'guia (o grind, um troféu que pede paciência), com dois-pontos e nunca ponto e vírgula '
+        '("Platina tranquila, cerca de 30h, com 2 perdíveis: o chato é a coleta espalhada."). '
+        f'Não pergunte o que o jogador achou do jogo. {target} Sem dicas além disso e sem falar '
+        f'de trechos mais adiante no jogo.{later} Ele ainda não conhece os termos do jogo.'
     )
 
 
