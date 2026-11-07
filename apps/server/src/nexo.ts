@@ -41,6 +41,8 @@ export interface GameContext {
   hoursPlayed?: number | null
   // False for a game outside the player's library, chosen to talk about before buying it.
   owned?: boolean
+  /** Picked from PSN presence: the player's profile does not list the game yet (watcher.ts). */
+  unlisted?: boolean
 }
 
 type Turn = { role: 'user' | 'assistant'; content: string }

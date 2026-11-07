@@ -102,6 +102,7 @@ beforeEach(() => {
   recent = spyOn(psn, 'recentTitles').mockResolvedValue([makeTitle()])
   spyOn(psn, 'titleTrophies').mockResolvedValue(trophies)
   spyOn(games, 'gameForTitle').mockResolvedValue(game)
+  spyOn(games, 'gameByName').mockResolvedValue(undefined)
   spyOn(ranking, 'loadGroups').mockResolvedValue(null)
   getGuide = spyOn(guides, 'getGuide').mockResolvedValue(routeGuide)
   spyOn(deepguide, 'ensureDeepGuide').mockResolvedValue(null)
@@ -237,12 +238,13 @@ describe('session start', () => {
     )
   })
 
-  test(`within ${SESSION_NOTICE_HOURS} hours of the last one, presence is not even asked`, async () => {
+  test(`within ${SESSION_NOTICE_HOURS} hours of the last one, no session notice`, async () => {
     unchanged()
+    playing.mockResolvedValue('DAYS GONE')
     await checkUser({ ...user, session_notice_at: new Date(Date.now() - 3_600_000) })
-    expect(playing).not.toHaveBeenCalled()
+    expect(logTip.mock.calls.some((c) => c[1] === 'session')).toBe(false)
     await checkUser({ ...user, session_notice_at: new Date(Date.now() - 7 * 3_600_000) })
-    expect(playing).toHaveBeenCalledTimes(1)
+    expect(logTip.mock.calls.some((c) => c[1] === 'session')).toBe(true)
   })
 
   test('a check queued behind one that just sent the notice reads the stamp it left', async () => {
@@ -250,7 +252,6 @@ describe('session start', () => {
     playing.mockResolvedValue('DAYS GONE')
     getUser.mockResolvedValue({ ...user, session_notice_at: new Date() })
     await checkUser(user)
-    expect(playing).not.toHaveBeenCalled()
     expect(send).not.toHaveBeenCalled()
   })
 
@@ -1029,3 +1030,104 @@ async function setChatFromCatalogStub(id = 'user:cc') {
   } as never
   return setChatFromCatalog({ id } as never, game)
 }
+
+describe('a game the profile does not list yet', () => {
+  const newGame = makeGame({
+    id: 'game:mind',
+    name: 'MindsEye',
+    np_communication_ids: ['NPWR_MIND'],
+  })
+  const list = [
+    makeTrophy({ id: 1, name: 'Paus e Pedras' }),
+    makeTrophy({ id: 2, name: 'Pá, Pum' }),
+    makeTrophy({ id: 3, name: 'Final', type: 'gold' }),
+  ]
+  // The platinum game the player just finished is the last one the profile lists.
+  const finished = makeTitle({ lastUpdated: '2026-11-05T14:00:00.000Z' })
+
+  beforeEach(() => {
+    config.automatic.notices = false
+    recent.mockResolvedValue([finished])
+    spyOn(games, 'gameByName').mockImplementation(async (name) =>
+      name === 'MindsEye' ? newGame : undefined,
+    )
+    spyOn(psn, 'catalogTrophies').mockResolvedValue({
+      np: 'NPWR_MIND',
+      platform: 'PS5',
+      trophies: list,
+    })
+    spyOn(guides, 'getGuide').mockResolvedValue(undefined)
+    spyOn(requests, 'requestGuide').mockResolvedValue(undefined)
+  })
+
+  test('is picked from presence: the journey moves to it and its start notice goes out once', async () => {
+    playing.mockResolvedValue('MindsEye')
+    await checkUser(user)
+    const ctx = getCurrent(user)
+    expect(ctx?.game.id).toBe('game:mind')
+    expect(ctx?.unlisted).toBe(true)
+    // The player has it: not shown as a game outside the library.
+    expect(ctx?.owned).not.toBe(false)
+    const starts = () => logTip.mock.calls.filter((c) => c[1] === 'start')
+    expect(starts()).toHaveLength(1)
+    expect(starts()[0][3]).toBe('game:mind')
+    expect(saveEarned).not.toHaveBeenCalled()
+
+    // Next sweep, still playing: no second start notice.
+    lastTip.mockResolvedValue({ game: 'game:mind', created_at: new Date().toISOString() })
+    await checkUser(user)
+    expect(starts()).toHaveLength(1)
+
+    // Offline, nothing played since: the journey stays on it.
+    playing.mockResolvedValue(null)
+    await checkUser(user)
+    expect(getCurrent(user)?.game.id).toBe('game:mind')
+  })
+
+  test('its first listing brings the first trophy as an unlock, not a second start', async () => {
+    playing.mockResolvedValue('MindsEye')
+    await checkUser(user)
+    lastTip.mockResolvedValue({ game: 'game:mind', created_at: new Date().toISOString() })
+    logTip.mockClear()
+    // PSN lists it with its first trophy.
+    spyOn(games, 'gameForTitle').mockResolvedValue(newGame)
+    getTitle.mockResolvedValue(undefined)
+    recent.mockResolvedValue([
+      makeTitle({
+        npCommunicationId: 'NPWR_MIND',
+        name: 'MindsEye',
+        earned: 1,
+        progress: 3,
+        lastUpdated: new Date().toISOString(),
+      }),
+      finished,
+    ])
+    spyOn(psn, 'titleTrophies').mockResolvedValue([{ ...list[0], earned: true }, list[1], list[2]])
+    await checkUser(user)
+    const kinds = logTip.mock.calls.map((c) => c[1])
+    expect(kinds).toContain('unlock')
+    expect(kinds).not.toContain('start')
+    expect(markTip).toHaveBeenCalledWith(user.id, 'NPWR_MIND')
+    expect(getCurrent(user)?.unlisted).toBeUndefined()
+  })
+
+  test('a game the catalog does not know, or the profile already lists, goes the usual way', async () => {
+    playing.mockResolvedValue('Jogo Desconhecido')
+    await checkUser(user)
+    expect(getCurrent(user)?.unlisted).toBeUndefined()
+    playing.mockResolvedValue('Days Gone')
+    await checkUser(user)
+    expect(getCurrent(user)?.game.id).toBe(game.id)
+  })
+
+  test('playing the listed game again after the pick takes the journey back', async () => {
+    playing.mockResolvedValue('MindsEye')
+    await checkUser(user)
+    playing.mockResolvedValue(null)
+    recent.mockResolvedValue([
+      makeTitle({ lastUpdated: new Date(Date.now() + 60_000).toISOString() }),
+    ])
+    await checkUser(user)
+    expect(getCurrent(user)?.game.id).toBe(game.id)
+  })
+})

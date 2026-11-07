@@ -6,6 +6,8 @@ What PlatJourney sends a player without being asked: when each notice is sent, w
 
 A background job, the **watcher**, visits every player every `POLL_MINUTES` (15 by default), reads their PSN title list and compares it with the last visit. What changed decides the notice: a game started, trophies earned, a game opened. Two daily jobs add the notices about sales and about online servers shutting down.
 
+The current game is the last one the title list shows. PSN lists a game only once the console syncs its trophies, often with the first one, so the watcher also reads the player's presence on every visit: a game the player is in that the list does not show yet, and that the catalog knows with its trophy list, becomes the current game at once (nothing earned, owned), and its start notice goes out then. Nothing is stored for it until PSN lists it; that first listing is not a start again, its trophies come as an unlock. With the player offline, the picked game stays until the list shows something played after it. Players who hide their online status keep the list's game.
+
 Every notice is written to the web first (the bell and the history), then sent to the channels the player turned on: Telegram and push.
 
 Most of a notice needs no model at the moment it is sent. The data comes from PSN and from the game's structured guide ([features](02-features.md)), which was written once, when the guide was researched. The model writes only Nexo's comment on a start or an unlock, and only when the instance and the player allow it. No notice uses the deep guide or hybrid search ([retrieval](07-nexo.md)): those serve the chat.
