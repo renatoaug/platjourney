@@ -160,7 +160,7 @@ export const startNotice = (user: User, ctx: GameContext, firsts: GameContext['t
 }
 
 // A handful, so the first notice stays short; the journey lists them all.
-const ONGOING_MAX = 4
+const ONGOING_MAX = 3
 
 /** The trophies to keep at the whole game (counters, collections, grinds), by the same pick as the
  * journey's "Throughout the journey". Without the trophy the next-trophy line already names. */

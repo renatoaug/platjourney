@@ -406,7 +406,7 @@ def start_prompt(
     )
     if focus and focus.trophy:
         m = focus.missable
-        warn = f'Avise em uma linha: {m.trophy} é perdível ({m.when}). ' if m else ''
+        warn = f'Avise junto: {m.trophy} é perdível ({m.when}). ' if m else ''
         trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
         target = (
             f'{warn}Depois, aponte como próximo troféu {focus.trophy} ({focus.detail}), em '
@@ -425,11 +425,12 @@ def start_prompt(
         else ''
     )
     return (
-        f'{opening} Mande uma mensagem curta. Primeiro, a sua opinião sincera sobre a platina '
-        'em uma ou duas linhas: dificuldade, horas, se tem perdível, e o que ela tem de bom ou '
-        'de chato pelo guia (o grind, um troféu que pede paciência). Não pergunte o que o '
-        f'jogador achou do jogo. {target} Feche com até 2 dicas concretas para as primeiras '
-        'horas, principalmente perdíveis e o que economiza tempo depois.'
+        f'{opening} Mande uma mensagem bem curta, de no máximo 4 linhas: o jogador lê '
+        'no celular, no meio do jogo. Primeiro, a sua opinião sincera sobre a platina em uma '
+        'linha: dificuldade, horas, se tem perdível, e o que ela tem de bom ou de chato pelo '
+        'guia (o grind, um troféu que pede paciência). Não pergunte o que o jogador achou do '
+        f'jogo. {target} Feche com UMA dica, a que mais importa nas primeiras horas: um '
+        'perdível ou o que economiza tempo depois. Sem lista.'
         f'{kept} Ele ainda não conhece os termos do jogo.'
     )
 
