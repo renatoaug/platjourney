@@ -177,24 +177,21 @@ async def test_start_tip_asks_with_the_context_and_no_history(model: Model) -> N
 
 def test_the_start_notice_skips_the_first_trophy_title_and_names_the_server_s_next_trophy() -> None:
     first = context().trophies[0]
-    focus = nexo.Focus(
-        trophy='Pá, Pum',
-        detail='50 tiros na cabeça',
-        trick='Mire no capacete',
-        missable=nexo.Missable(trophy='Voo', when='na missão 10'),
-    )
+    focus = nexo.Focus(trophy='Pá, Pum', detail='50 tiros na cabeça', trick='Mire no capacete')
     prompt = nexo.start_prompt(context(), [first], focus)
     assert f'já desbloqueou: {first.name}' in prompt
     assert 'não comemore de novo' in prompt
     assert 'aponte como próximo troféu Pá, Pum (50 tiros na cabeça)' in prompt
     assert 'Macete do guia: Mire no capacete' in prompt
-    assert 'Voo é perdível (na missão 10)' in prompt
     assert 'UM próximo troféu' not in prompt
-    assert 'lista nossa' not in prompt
-    assert 'no máximo 4 linhas' in prompt and 'UMA dica' in prompt
-    kept = nexo.start_prompt(context(), [first], focus, ['Pá, Pum', 'Colecionador'])
-    assert '(Pá, Pum, Colecionador) vão numa lista nossa' in kept
-    assert 'não os use nas dicas' in kept
+    # Short, and nothing about stretches far ahead: no tips past the next trophy.
+    assert 'no máximo 3 linhas' in prompt
+    assert 'Sem dicas além disso e sem falar de trechos mais adiante' in prompt
+    assert 'listas nossas' not in prompt
+    kept = nexo.start_prompt(context(), [first], focus, ['Colecionador'], ['Voo'])
+    assert 'Os perdíveis (Voo) e os troféus para ir fazendo a jornada inteira' in kept
+    assert '(Colecionador) vão em listas nossas' in kept
+    assert 'vão em listas nossas logo depois da sua mensagem: não fale deles.' in kept
 
 
 async def test_a_game_nexo_recommended_opens_glad_the_player_followed_it(model: Model) -> None:

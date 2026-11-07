@@ -31,6 +31,8 @@ class TipRequest(Wire):
     recommended: nexo.Recommended | None = None
     # The trophies to keep at the whole game, listed by the server after Nexo's words ("start").
     ongoing: list[str] = Field(default_factory=list[str], max_length=10)
+    # The guide's missables still open, listed by the server after Nexo's words ("start").
+    missables: list[str] = Field(default_factory=list[str], max_length=50)
 
 
 class FollowUpRequest(Wire):
@@ -71,6 +73,7 @@ async def tip(body: TipRequest) -> Answer:
         body.mark,
         body.recommended,
         body.ongoing,
+        body.missables,
     )
     return Answer(text=text)
 

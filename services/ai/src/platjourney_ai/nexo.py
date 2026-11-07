@@ -391,6 +391,7 @@ def start_prompt(
     unlocked: list[Trophy] | None = None,
     focus: Focus | None = None,
     ongoing: list[str] | None = None,
+    missables: list[str] | None = None,
 ) -> str:
     """The notice for a game just started. PSN lists a game only once its first trophy pops, so the
     notice usually comes with it: the trophy is the message's title and our cheer opens it. It gives
@@ -405,33 +406,34 @@ def start_prompt(
         else f'O jogador acabou de começar {ctx.title.name}.'
     )
     if focus and focus.trophy:
-        m = focus.missable
-        warn = f'Avise junto: {m.trophy} é perdível ({m.when}). ' if m else ''
         trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
         target = (
-            f'{warn}Depois, aponte como próximo troféu {focus.trophy} ({focus.detail}), em '
-            f'negrito, e diga em uma linha como pegar.{trick} Não sugira outro troféu como '
-            'próximo alvo.'
+            f'Depois, aponte como próximo troféu {focus.trophy} ({focus.detail}), em negrito, e '
+            f'diga em uma linha como pegar.{trick} Não sugira outro troféu como próximo alvo.'
         )
     else:
         target = (
             'Depois, aponte UM próximo troféu da lista, em negrito, que faz sentido no começo '
             'do jogo, e diga em uma linha como pegar.'
         )
-    kept = (
-        f' Os troféus para ir fazendo a jornada inteira ({", ".join(ongoing)}) vão numa lista '
-        'nossa logo depois da sua mensagem: não os use nas dicas.'
-        if ongoing
+    lists = [
+        f'os perdíveis ({", ".join(missables)})' if missables else '',
+        f'os troféus para ir fazendo a jornada inteira ({", ".join(ongoing)})' if ongoing else '',
+    ]
+    kept = ' e '.join(x for x in lists if x)
+    later = (
+        f' {kept[0].upper()}{kept[1:]} vão em listas nossas logo depois da sua mensagem: não '
+        'fale deles.'
+        if kept
         else ''
     )
     return (
-        f'{opening} Mande uma mensagem bem curta, de no máximo 4 linhas: o jogador lê '
-        'no celular, no meio do jogo. Primeiro, a sua opinião sincera sobre a platina em uma '
+        f'{opening} Mande uma mensagem bem curta, de no máximo 3 linhas: o jogador lê no '
+        'celular, no meio do jogo. Primeiro, a sua opinião sincera sobre a platina em uma '
         'linha: dificuldade, horas, se tem perdível, e o que ela tem de bom ou de chato pelo '
         'guia (o grind, um troféu que pede paciência). Não pergunte o que o jogador achou do '
-        f'jogo. {target} Feche com UMA dica, a que mais importa nas primeiras horas: um '
-        'perdível ou o que economiza tempo depois. Sem lista.'
-        f'{kept} Ele ainda não conhece os termos do jogo.'
+        f'jogo. {target} Sem dicas além disso e sem falar de trechos mais adiante no jogo.'
+        f'{later} Ele ainda não conhece os termos do jogo.'
     )
 
 
@@ -789,6 +791,7 @@ async def tip(
     mark: Mark | None = None,
     recommended: Recommended | None = None,
     ongoing: list[str] | None = None,
+    missables: list[str] | None = None,
 ) -> str:
     """An automatic notice: the player started a game or unlocked trophies.
     With `route`, the guide's note on what comes next goes into the same message; with `mark`, the
@@ -796,7 +799,7 @@ async def tip(
     `recommended`, the game started was Nexo's recommendation and the notice says it is glad."""
     match kind:
         case 'start':
-            prompt = start_prompt(ctx, unlocked, focus, ongoing)
+            prompt = start_prompt(ctx, unlocked, focus, ongoing, missables)
             if recommended:
                 prompt += recommended_prompt(recommended)
         case 'unlock':

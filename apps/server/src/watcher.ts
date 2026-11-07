@@ -109,7 +109,7 @@ async function plainNews({
       'start',
       together(
         followed ? followedNotice(user, ctx.game.id) : undefined,
-        startNotice(user, ctx, firsts),
+        startNotice(user, ctx, firsts, route?.collectibles),
         route?.text,
         route?.collectibles,
       ),

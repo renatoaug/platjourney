@@ -1,7 +1,7 @@
 import './env.ts'
 import { expect, test } from 'bun:test'
 import type { GameContext } from '../src/nexo.ts'
-import { ongoingBlock, ongoingTrophies, startNotice } from '../src/notices.ts'
+import { ongoingTrophies, openMissables, startLists, startNotice } from '../src/notices.ts'
 import { makeContext, makeTrophy, makeUser } from './fixtures.ts'
 
 const user = makeUser()
@@ -55,5 +55,34 @@ test('a start notice lists what to keep at the whole game, without the next trop
   expect(text).toEndWith(
     '🔁 **Pra ir fazendo ao longo da jornada**\n• **Colecionador**: Ache 30 discos',
   )
-  expect(ongoingBlock(user, [])).toBeUndefined()
+  expect(startLists(user, ctx, [])).toBeUndefined()
+})
+
+test('a start notice lists the open missables, without hidden ones or those the checklist names', () => {
+  const ctx = makeContext({
+    trophies: [
+      makeTrophy({ id: 1, name: 'Paus e Pedras', earned: true }),
+      makeTrophy({ id: 2, name: 'Pá, Pum' }),
+      makeTrophy({ id: 3, name: 'Voo' }),
+      makeTrophy({ id: 4, name: 'Segredo', hidden: true }),
+      makeTrophy({ id: 5, name: 'Já Foi', earned: true }),
+      ...['A', 'B', 'C'].map((n, i) => makeTrophy({ id: 10 + i, name: n })),
+    ],
+    guide: {
+      ...guide,
+      missables: [
+        { trophy: 'Voo', when: 'na missão 10', how: '' },
+        { trophy: 'Segredo', when: 'no fim', how: '' },
+        { trophy: 'Já Foi', when: 'no começo', how: '' },
+        ...['A', 'B', 'C'].map((n) => ({ trophy: n, when: `antes de ${n}`, how: '' })),
+      ],
+    } as unknown as GameContext['guide'],
+  })
+  expect(openMissables(ctx).map((m) => m.trophy)).toEqual(['Voo', 'Segredo', 'A', 'B', 'C'])
+  expect(openMissables(ctx, '• **Voo** na fábrica').map((m) => m.trophy)).not.toContain('Voo')
+  // The hidden one is only counted, with the ones past the first three; Voo is not listed twice.
+  expect(startLists(user, ctx, [ctx.trophies[2], ctx.trophies[1]])).toBe(
+    '⚠️ **Perdíveis: fique de olho**\n• **Voo**: na missão 10\n• **A**: antes de A\n• **B**: antes de B\nE mais 2 no guia.\n\n🔁 **Pra ir fazendo ao longo da jornada**\n• **Pá, Pum**: ' +
+      ctx.trophies[1].detail,
+  )
 })
