@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.55.0](https://github.com/renatoaug/platjourney/compare/v0.54.0...v0.55.0) (2026-11-07)
+
+### Features
+
+* **server:** let plugins shape a player's game views and follow each notice ([#149](https://github.com/renatoaug/platjourney/issues/149)) ([fe07b92](https://github.com/renatoaug/platjourney/commit/fe07b922b8ca9d3a5a2c92e360e4dbe79d29da78))
+
 ## [0.54.0](https://github.com/renatoaug/platjourney/compare/v0.53.0...v0.54.0) (2026-11-07)
 
 ### Features
