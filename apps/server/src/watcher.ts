@@ -1,7 +1,14 @@
 import { config } from './config.ts'
 import { tagged } from './costs.ts'
 import { isDemo } from './demo.ts'
-import { demoContext, dropChat, getChat, getCurrent, setCurrent } from './game-context.ts'
+import {
+  demoContext,
+  dropChat,
+  getChat,
+  getCurrent,
+  setCurrent,
+  setCurrentFromPresence,
+} from './game-context.ts'
 import { library } from './library.ts'
 import { type GameContext, proactiveTip, unlockReaction } from './nexo.ts'
 import {
@@ -22,6 +29,7 @@ import { Refused } from './plugins.ts'
 import { nowPlaying, PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
 import { lastTip, logTip, type TipKind } from './repository/activity.ts'
 import { pruneExpired } from './repository/auth.ts'
+import { gameByName } from './repository/game.ts'
 import { pruneOauth } from './repository/oauth.ts'
 import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
 import { getUser, listUsers, type User, updateUser } from './repository/user.ts'
@@ -86,12 +94,22 @@ interface News {
   latest: TitleProgress
   justStarted: boolean
   unlocked: GameContext['trophies']
+  /** On a game just started, the trophies it came with: PSN lists a game only once one pops. */
+  firsts: GameContext['trophies']
   route: ReturnType<typeof routeFor>
 }
 
 // One message per sweep: what happened, then the guide's note on what comes next.
 // Without Nexo's notices the player still hears about it, from a plain template.
-async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: News): Promise<void> {
+async function plainNews({
+  user,
+  ctx,
+  latest,
+  justStarted,
+  unlocked,
+  firsts,
+  route,
+}: News): Promise<void> {
   if (justStarted) {
     const followed = await followedRecommendation(user, ctx.game.id)
     await plainNotice(
@@ -99,7 +117,7 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
       'start',
       together(
         followed ? followedNotice(user, ctx.game.id) : undefined,
-        startNotice(user, ctx),
+        startNotice(user, ctx, firsts, route?.collectibles),
         route?.text,
         route?.collectibles,
       ),
@@ -114,7 +132,7 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
         unlockNotice(user, ctx, unlocked),
         missableCheer(user, ctx, unlocked),
         markNotice(user, ctx, unlocked),
-        focusNotice(user, ctx, unlocked, !!route?.collectibles),
+        focusNotice(user, ctx, unlocked),
         route?.text,
         route?.collectibles,
       ),
@@ -124,13 +142,28 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
     await plainNotice(user, 'route', together(route.text, route.collectibles), ctx.game.id)
 }
 
-async function nexoNews({ user, ctx, latest, justStarted, unlocked, route }: News): Promise<void> {
+async function nexoNews({
+  user,
+  ctx,
+  latest,
+  justStarted,
+  unlocked,
+  firsts,
+  route,
+}: News): Promise<void> {
   if (justStarted) {
     console.log(`${user.psn_online_id}: new game ${latest.name}`)
     const followed = await followedRecommendation(user, ctx.game.id)
     await notify(
       user,
-      await proactiveTip(user, ctx, route?.text, followed ?? undefined, route?.collectibles),
+      await proactiveTip(
+        user,
+        ctx,
+        route?.text,
+        followed ?? undefined,
+        route?.collectibles,
+        firsts,
+      ),
     )
     await markTipSent(user.id, latest.npCommunicationId)
   } else if (unlocked.length > 0) {
@@ -175,6 +208,87 @@ function logFallback(user: User, e: unknown): void {
   )
 }
 
+// When the current game was picked from presence, per player: the profile's titles played before
+// then do not take it back (the player closed the new game, nothing else happened).
+const pickedAt = new Map<string, number>()
+
+// The game the player is in, from PSN presence, when the profile does not list it yet: PSN lists a
+// game only once the console syncs its trophies, often with the first one. A game the profile
+// lists goes the usual way. With the player offline, a game picked earlier stays until the profile
+// shows something played after it.
+async function playingUnlisted(
+  user: User,
+  titles: TitleProgress[],
+  playing: string | null,
+): Promise<GameContext | undefined> {
+  const current = getCurrent(user)
+  const listedAfter = (picked: number) =>
+    titles.some((t) => new Date(t.lastUpdated).getTime() > picked)
+  if (!playing) {
+    const picked = pickedAt.get(user.id)
+    return current?.unlisted && picked && !listedAfter(picked) ? current : undefined
+  }
+  if (titles.some((t) => comparable(t.name) === comparable(playing))) return undefined
+  const game = await gameByName(playing)
+  if (!game) return undefined
+  if (current?.unlisted && current.game.id === game.id) return current
+  // A game the profile already lists under another name goes the usual way.
+  if (titles.some((t) => game.np_communication_ids?.includes(t.npCommunicationId))) return undefined
+  const ctx = await setCurrentFromPresence(user, game)
+  if (ctx) pickedAt.set(user.id, Date.now())
+  return ctx ?? undefined
+}
+
+// Whether the start notice for this game already went out: one picked from presence gets it
+// before PSN lists the game, so its first listing is not a start again.
+async function announced(user: User, ctx: GameContext): Promise<boolean> {
+  return (await lastTip(user.id, 'start'))?.game === ctx.game.id
+}
+
+// A game picked from presence: its start notice once, then the session notice. Nothing is stored
+// for it: the profile's title, when PSN lists it, is the one that counts.
+async function checkUnlisted(
+  user: User,
+  ctx: GameContext,
+  before: GameContext | undefined,
+  titles: TitleProgress[],
+  playing: string | null,
+): Promise<void> {
+  for (const t of titles) await upsertTitle(user.id, t)
+  const justStarted = !(await announced(user, ctx))
+  if (justStarted) {
+    console.log(`${user.psn_online_id}: playing ${ctx.game.name}, not listed yet`)
+    const route = routeFor(user, ctx, [], true)
+    await tellNews({ user, ctx, latest: ctx.title, justStarted, unlocked: [], firsts: [], route })
+  }
+  // Playing another game brings the chat to it too.
+  if (before && before.game.id !== ctx.game.id) dropChat(user.id)
+  await sessionStart(user, ctx, justStarted, playing)
+}
+
+// What this check found on the title against its stored snapshot: a start, or trophies to tell.
+async function whatIsNew(
+  user: User,
+  ctx: GameContext,
+  latest: TitleProgress,
+  prev: Awaited<ReturnType<typeof getTitle>>,
+) {
+  const knownIds = new Set<number>(prev?.earned_ids ?? [])
+  // A game picked from presence already had its start notice: its first listing brings trophies.
+  const told = !prev && (await announced(user, ctx))
+  // A first sync of an account must not greet every old game as new.
+  const firstSync = !prev && latest.earned > 0 && latest.progress >= 10
+  const justStarted = !firstSync && !told && !prev?.last_tip_at && latest.progress < 10
+  // The ids seen are trusted when there are some, or when the stored title had none earned: the
+  // first trophy of a game is news too. A title stored with trophies but no ids was never watched
+  // (another game was in front then), and announcing its old trophies would be wrong.
+  const watched = knownIds.size > 0 || prev?.earned === 0 || told
+  const unlocked = watched ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
+  // The start notice celebrates them: no trophy goes unannounced because it came with the game.
+  const firsts = justStarted ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
+  return { told, justStarted, unlocked, firsts }
+}
+
 // Compares the user's PSN title list against the stored snapshot. A title we
 // have never tipped that is still early triggers the intro; newly earned trophies
 // on the current title trigger a reaction.
@@ -183,6 +297,11 @@ async function check(user: User): Promise<void> {
   if (isDemo(user)) return
   const titles = await recentTitles(user.psn_account_id, 5)
   if (titles.length === 0) return
+  const playing = await nowPlaying(user.psn_account_id)
+  const before = getCurrent(user)
+  const unlisted = await playingUnlisted(user, titles, playing)
+  if (unlisted) return checkUnlisted(user, unlisted, before, titles, playing)
+  pickedAt.delete(user.id)
 
   const latest = titles[0]
   const current = getCurrent(user)
@@ -192,21 +311,13 @@ async function check(user: User): Promise<void> {
     switched || titleChanged(prev, latest) || listStale(current, latest) || !current
       ? await setCurrent(user, latest)
       : current
-  // Playing another game brings the chat to it too.
-  if (switched && current) dropChat(user.id)
+  // Playing another game brings the chat to it too; one picked from presence already did.
+  if (switched && current && current.game.id !== ctx.game.id) dropChat(user.id)
 
   for (const t of titles) await upsertTitle(user.id, t)
 
   const earnedIds = ctx.trophies.filter((t) => t.earned).map((t) => t.id)
-  const knownIds = new Set<number>(prev?.earned_ids ?? [])
-  // A first sync of an account must not greet every old game as new.
-  const firstSync = !prev && latest.earned > 0 && latest.progress >= 10
-  const justStarted = !firstSync && !prev?.last_tip_at && latest.progress < 10
-  // The ids seen are trusted when there are some, or when the stored title had none earned: the
-  // first trophy of a game is news too. A title stored with trophies but no ids was never watched
-  // (another game was in front then), and announcing its old trophies would be wrong.
-  const watched = knownIds.size > 0 || prev?.earned === 0
-  const unlocked = watched ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
+  const { told, justStarted, unlocked, firsts } = await whatIsNew(user, ctx, latest, prev)
 
   const route = routeFor(
     user,
@@ -214,13 +325,13 @@ async function check(user: User): Promise<void> {
     unlocked.map((t) => t.name),
     justStarted,
   )
-  await tellNews({ user, ctx, latest, justStarted, unlocked, route })
+  await tellNews({ user, ctx, latest, justStarted, unlocked, firsts, route })
+  if (told) await markTipSent(user.id, latest.npCommunicationId)
   await saveEarnedIds(user.id, latest.npCommunicationId, earnedIds)
-  await sessionStart(user, ctx, justStarted)
+  await sessionStart(user, ctx, justStarted, playing)
 }
 
-// One session-start notice every few hours at most; until then the player's presence is not
-// even asked, which also spares PSN a call per sweep.
+// One session-start notice every few hours at most.
 export const SESSION_NOTICE_HOURS = 6
 
 const comparable = (name: string) =>
@@ -248,16 +359,21 @@ function recentNotice(user: User): boolean {
 
 // Tells the player once when they open a game, from PSN presence (players who hide their online
 // status never get it). The game they play is the one in context when the names match.
-async function sessionStart(user: User, ctx: GameContext, noticed: boolean): Promise<void> {
-  if (recentNotice(user)) return
+// `playing`: the presence this check already read.
+async function sessionStart(
+  user: User,
+  ctx: GameContext,
+  noticed: boolean,
+  playing: string | null,
+): Promise<void> {
+  if (!playing || recentNotice(user)) return
   // Checks queued behind each other (sign-up and the first home load) carry the user as it was
   // read before the first one ran: the stored stamp is the one that counts.
   if (recentNotice((await getUser(user.id)) ?? user)) return
-  const playing = await nowPlaying(user.psn_account_id)
-  if (!playing) return
   // The start notice of a new game already went out in this sweep: it counts as this one.
   if (!noticed) {
-    const same = comparable(playing) === comparable(ctx.title.name)
+    // A game picked from presence is the one being played, whatever the catalog calls it.
+    const same = !!ctx.unlisted || comparable(playing) === comparable(ctx.title.name)
     const text = sessionNotice(
       user,
       playing,

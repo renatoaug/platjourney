@@ -84,6 +84,37 @@ test('a start tip goes through the plugins, tagged and logged', async () => {
   expect(append).not.toHaveBeenCalled()
 })
 
+test('a game that came with its first trophy opens with it as the title, our cheer and the next trophy', async () => {
+  const started = makeContext({
+    trophies: [
+      makeTrophy({ id: 1, name: 'Paus e Pedras', earned: true }),
+      makeTrophy({ id: 2, name: 'Pá, Pum', detail: 'Faça 50 tiros na cabeça' }),
+      makeTrophy({ id: 3, name: 'Colecionador', detail: 'Ache 30 discos', progressTarget: 30 }),
+    ],
+    guide: {
+      roadmap: [{ phase: 'Campanha', goal: '', trophies: ['Paus e Pedras', 'Pá, Pum'] }],
+    } as unknown as GameContext['guide'],
+  })
+  ai.mockResolvedValueOnce({ text: '**Paus e Pedras**\nPlatina tranquila.' })
+  const firsts = [started.trophies[0]]
+  const text = await proactiveTip(user, started, undefined, undefined, undefined, firsts)
+  const body = ai.mock.calls[0][1] as {
+    unlocked?: unknown
+    ongoing?: string[]
+    focus?: { trophy?: string; detail?: string }
+  }
+  expect(body.unlocked).toEqual(firsts)
+  expect(body.ongoing).toEqual(['Colecionador'])
+  expect(body.focus).toMatchObject({ trophy: 'Pá, Pum', detail: 'Faça 50 tiros na cabeça' })
+  const [title, cheer, ...rest] = text.split('\n\n')
+  expect(title).toBe('🏆 **Paus e Pedras**')
+  expect(cheer).not.toContain('Paus e Pedras')
+  expect(rest.join('\n\n')).toBe(
+    'Platina tranquila.\n\n🔁 **Pra ir fazendo ao longo da jornada**\n• **Colecionador**: Ache 30 discos',
+  )
+  expect(logTip).toHaveBeenCalledWith('user:u1', 'start', text, 'game:1')
+})
+
 test('an unlock reaction sends the trophies just earned, and opens with them as its title', async () => {
   const unlocked = [makeTrophy({ earned: true })]
   const text = await unlockReaction(user, ctx, unlocked)
@@ -101,7 +132,7 @@ test('the collectibles go after Nexo’s words as written, never through the mod
   expect(await proactiveTip(user, ctx, undefined, undefined, block)).toBe(`Resposta\n\n${block}`)
 })
 
-test('with the next chapter’s checklist, a focus that is only its story trophy is left out; the relief goes under the trophy', async () => {
+test('with the next chapter’s checklist, a focus that is only its story trophy still goes, without a trick; the relief goes under the trophy', async () => {
   const chapters = makeContext({
     trophies: [
       makeTrophy({ id: 1, name: 'Capítulo 4', earned: true }),
@@ -122,7 +153,9 @@ test('with the next chapter’s checklist, a focus that is only its story trophy
   const unlocked = [chapters.trophies[0]]
   const relief = '🔒 **Capítulo 4** era perdível.'
   const text = await unlockReaction(user, chapters, unlocked, undefined, 'checklist', relief)
-  expect((ai.mock.calls[0][1] as { focus?: unknown }).focus).toBeUndefined()
+  const sent = (ai.mock.calls[0][1] as { focus?: { trophy?: string; trick?: string } }).focus
+  expect(sent?.trophy).toBe('Capítulo 5')
+  expect(sent?.trick).toBeUndefined()
   expect(text).toBe(`🏆 **Capítulo 4**\n\n${relief}\n\nResposta\n\nchecklist`)
   ai.mockClear()
   await unlockReaction(user, chapters, unlocked)

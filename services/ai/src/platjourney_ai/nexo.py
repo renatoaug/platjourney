@@ -386,8 +386,56 @@ def cite(text: str, used: list[Passage]) -> str:
     return re.sub(r'^([ \t]*(?:Fontes?|Sources?):[ \t]*)(.+)$', line, text, flags=re.M)
 
 
-def start_prompt(ctx: GameContext) -> str:
-    return f'O jogador acabou de começar {ctx.title.name} ({ctx.title.earned} troféus até agora). Mande uma mensagem curta e animada: pergunte o que ele achou até aqui, diga em uma linha como é a platina (dificuldade, horas, se tem missable) e dê 3 dicas concretas para quem está nas primeiras horas — principalmente missables e coisas que economizam tempo depois. Ele ainda não conhece os termos do jogo.'  # noqa: E501
+def start_prompt(
+    ctx: GameContext,
+    unlocked: list[Trophy] | None = None,
+    focus: Focus | None = None,
+    ongoing: list[str] | None = None,
+    missables: list[str] | None = None,
+) -> str:
+    """The notice for a game just started. PSN lists a game only once its first trophy pops, so the
+    notice usually comes with it: the trophy is the message's title and our cheer opens it. It gives
+    Nexo's take on the platinum, never asks what the player thought: minutes in, there is nothing
+    to say yet."""
+    names = ', '.join(t.name for t in unlocked or [])
+    opening = (
+        f'O jogador acabou de começar {ctx.title.name} e já desbloqueou: {names}. A mensagem '
+        'já abre com o nome do troféu como título e uma frase nossa comemorando o primeiro '
+        'troféu: não comemore de novo e não repita o nome, vá direto ao conteúdo.'
+        if names
+        else f'O jogador acabou de começar {ctx.title.name}.'
+    )
+    if focus and focus.trophy:
+        trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
+        target = (
+            f'Depois, aponte como próximo troféu {focus.trophy} ({focus.detail}), em negrito, e '
+            f'diga em uma linha como pegar.{trick} Não sugira outro troféu como próximo alvo.'
+        )
+    else:
+        target = (
+            'Depois, aponte UM próximo troféu da lista, em negrito, que faz sentido no começo '
+            'do jogo, e diga em uma linha como pegar.'
+        )
+    lists = [
+        f'os perdíveis ({", ".join(missables)})' if missables else '',
+        f'os troféus para ir fazendo a jornada inteira ({", ".join(ongoing)})' if ongoing else '',
+    ]
+    kept = ' e '.join(x for x in lists if x)
+    later = (
+        f' {kept[0].upper()}{kept[1:]} vão em listas nossas logo depois da sua mensagem: não '
+        'fale deles.'
+        if kept
+        else ''
+    )
+    return (
+        f'{opening} Mande uma mensagem bem curta, de no máximo 3 linhas: o jogador lê no '
+        'celular, no meio do jogo. Primeiro, a sua opinião sincera sobre a platina em uma '
+        'linha: dificuldade, horas, se tem perdível, e o que ela tem de bom ou de chato pelo '
+        'guia (o grind, um troféu que pede paciência), com dois-pontos e nunca ponto e vírgula '
+        '("Platina tranquila, cerca de 30h, com 2 perdíveis: o chato é a coleta espalhada."). '
+        f'Não pergunte o que o jogador achou do jogo. {target} Sem dicas além disso e sem falar '
+        f'de trechos mais adiante no jogo.{later} Ele ainda não conhece os termos do jogo.'
+    )
 
 
 # The guide's standout trophies, as the unlock notice calls them out.
@@ -743,6 +791,8 @@ async def tip(
     focus: Focus | None = None,
     mark: Mark | None = None,
     recommended: Recommended | None = None,
+    ongoing: list[str] | None = None,
+    missables: list[str] | None = None,
 ) -> str:
     """An automatic notice: the player started a game or unlocked trophies.
     With `route`, the guide's note on what comes next goes into the same message; with `mark`, the
@@ -750,7 +800,7 @@ async def tip(
     `recommended`, the game started was Nexo's recommendation and the notice says it is glad."""
     match kind:
         case 'start':
-            prompt = start_prompt(ctx)
+            prompt = start_prompt(ctx, unlocked, focus, ongoing, missables)
             if recommended:
                 prompt += recommended_prompt(recommended)
         case 'unlock':

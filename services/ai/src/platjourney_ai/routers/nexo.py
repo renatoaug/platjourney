@@ -19,16 +19,20 @@ class Answer(Wire):
 class TipRequest(Wire):
     kind: Literal['start', 'unlock']
     context: GameContext
-    # The trophies just unlocked ("unlock").
+    # The trophies just unlocked; on "start", the first ones, which came with the game.
     unlocked: list[Trophy] = Field(default_factory=list[Trophy])
     # The guide's note on what comes next, to fold into the same message.
     route: str | None = None
-    # The session's focus, the server's pick ("unlock"): the notice names it, never another.
+    # The session's focus, the server's pick: the notice names it as the next trophy, never another.
     focus: nexo.Focus | None = None
     # The point of the journey this unlock reached, the server's pick ("unlock").
     mark: nexo.Mark | None = None
     # The game started was Nexo's recommendation ("start").
     recommended: nexo.Recommended | None = None
+    # The trophies to keep at the whole game, listed by the server after Nexo's words ("start").
+    ongoing: list[str] = Field(default_factory=list[str], max_length=10)
+    # The guide's missables still open, listed by the server after Nexo's words ("start").
+    missables: list[str] = Field(default_factory=list[str], max_length=50)
 
 
 class FollowUpRequest(Wire):
@@ -61,7 +65,15 @@ class ReplyRequest(Wire):
 @router.post('/tip')
 async def tip(body: TipRequest) -> Answer:
     text = await nexo.tip(
-        body.kind, body.context, body.unlocked, body.route, body.focus, body.mark, body.recommended
+        body.kind,
+        body.context,
+        body.unlocked,
+        body.route,
+        body.focus,
+        body.mark,
+        body.recommended,
+        body.ongoing,
+        body.missables,
     )
     return Answer(text=text)
 

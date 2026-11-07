@@ -6,6 +6,8 @@ What PlatJourney sends a player without being asked: when each notice is sent, w
 
 A background job, the **watcher**, visits every player every `POLL_MINUTES` (15 by default), reads their PSN title list and compares it with the last visit. What changed decides the notice: a game started, trophies earned, a game opened. Two daily jobs add the notices about sales and about online servers shutting down.
 
+The current game is the last one the title list shows. PSN lists a game only once the console syncs its trophies, often with the first one, so the watcher also reads the player's presence on every visit: a game the player is in that the list does not show yet, and that the catalog knows with its trophy list, becomes the current game at once (nothing earned, owned), and its start notice goes out then. Nothing is stored for it until PSN lists it; that first listing is not a start again, its trophies come as an unlock. With the player offline, the picked game stays until the list shows something played after it. Players who hide their online status keep the list's game.
+
 Every notice is written to the web first (the bell and the history), then sent to the channels the player turned on: Telegram and push.
 
 Most of a notice needs no model at the moment it is sent. The data comes from PSN and from the game's structured guide ([features](02-features.md)), which was written once, when the guide was researched. The model writes only Nexo's comment on a start or an unlock, and only when the instance and the player allow it. No notice uses the deep guide or hybrid search ([retrieval](07-nexo.md)): those serve the chat.
@@ -44,8 +46,8 @@ Web Push encrypts each message for the browser and signs it with the instance's 
 
 | Kind | Trigger | Content | Written by |
 |---|---|---|---|
-| `start` | A game played for the first time, still early (under 10% of its trophies) | A welcome to the game and the first tips; the guide's note on what comes first and the first chapter's checklist | Nexo, or a template |
-| `unlock` | New trophies earned since the last visit on the game being played, the first one of a game included | The trophies as the title, then Nexo's comment, a line for a missable just earned, the progress mark, the suggested next trophy, the guide's note and the next chapter's checklist when a roadmap step was reached | Nexo, or a template |
+| `start` | A game played for the first time, still early (under 10% of its trophies). PSN lists a game only once its first trophy pops, so it usually comes with one | The trophies it came with as the title and the first-trophy mark, Nexo's take on the platinum (never a question about the game minutes in), the suggested next trophy, the guide's missables still open (up to three by name; hidden ones only counted), a list of what to keep at the whole game (the journey's "Throughout the journey", up to three, written by us after Nexo's words), the guide's note on what comes first and the first chapter's checklist | Nexo, or a template |
+| `unlock` | New trophies earned since the last visit on the game being played, after the start notice | The trophies as the title, then Nexo's comment, a line for a missable just earned, the progress mark, the suggested next trophy, the guide's note and the next chapter's checklist when a roadmap step was reached | Nexo, or a template |
 | `session` | The player opens a game (PSN presence), at most once every 6 hours | What is left for the platinum, the suggested next trophy and its tip, the checklist of the stretch the player is in, a missable still open and a trophy almost done. Opening the same game again within a day with nothing earned since gets one line (the game and the suggestion) and the checklist | Template |
 | `route` | A roadmap step reached without new trophies (a sync that caught up) | The guide's note on what comes next and the chapter's checklist | Template |
 | `deal` | Daily PlayStation Store check: a saved game goes on sale or its sale gets deeper, or enters the PS Plus catalog of the tier the player picked; owned games are left out | One notice a day per player: one game as a sentence (price and until when, or that it entered PS Plus), several as a list | Template |
@@ -74,7 +76,7 @@ Nexo writes the comment of a `start` or `unlock` notice when `AI_NOTICES` is on 
 What the model receives:
 
 - the player's progress on the game: earned trophies (most recent first), missing ones, the guide's missables and roadmap, and the tricks and bugs of the trophies the notice is about;
-- the instruction for the kind of notice: a start (what the platinum is like, three concrete tips for the first hours), an unlock (comment the trophies, keep the suggested next trophy the server chose, never pick another), a progress mark (first trophy, halfway, final stretch, platinum, each with its own ask);
+- the instruction for the kind of notice: a start (Nexo's take on the platinum and the suggested next trophy the server chose, at most three lines, no tips about stretches further ahead), an unlock (comment the trophies, keep the suggested next trophy the server chose, never pick another), a progress mark (first trophy, halfway, final stretch, platinum, each with its own ask);
 - the guide's note on what comes next, when a roadmap step was reached, to say in its own words without translating names.
 
 What it does not receive: the deep guide passages. Notices are short and about what the player just did; the structured guide covers that. Web search is available to the model when `AI_WEB_SEARCH` is on, as in the chat. The model cites no source in a notice; a source line it adds anyway is removed.
@@ -118,7 +120,7 @@ Rules:
 - **Earned items drop out.** A tip about a trophy the player already has is not shown; a milestone with nothing left is not shown.
 - **Missables by the guide's list.** A tip about a trophy the guide lists as missable is shown as missable whatever kind the milestone gave it.
 - **Guides without steps.** A milestone written before the checklist format has one-line tips; they are shown with the name in bold and the directions below.
-- **No "finish the chapter".** When the checklist of the next chapter is in the message, the suggested next trophy is left out if it is only that chapter's story trophy: the checklist says more.
+- **Always the next trophy.** Every start and unlock notice names the suggested next trophy, except the platinum's. When the checklist of the next chapter is in the message and the suggestion is only that chapter's story trophy, it goes without a trick: the checklist says more.
 - **A missable from a later phase is not news.** Only a missable in the roadmap phase the player is in is named as the session's missable; one planned for New Game+ waits for its phase.
 
 ## Progress marks

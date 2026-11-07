@@ -1,4 +1,5 @@
-import { focusAfter, storyTrophy, tidy, todaysFocus } from './focus.ts'
+import { ongoingObjectives } from '../../../shared/journey/ongoing.ts'
+import { focusAfter, tidy, todaysFocus } from './focus.ts'
 import {
   defineMessages,
   fmtRate,
@@ -50,6 +51,12 @@ const messages = defineMessages({
     tip: '**Dica**: {tip}',
     // The guide's tips for the stretch the player is in: a chapter's collectibles, a missable there.
     here: '📍 **Neste trecho do jogo**',
+    // The start notice's list of what keeps going the whole game: counters, collections, grinds.
+    ongoing: '🔁 **Pra ir fazendo ao longo da jornada**',
+    ongoingItem: '• **{trophy}**: {detail}',
+    // The start notice's list of the guide's missables still open.
+    missables: '⚠️ **Perdíveis: fique de olho**',
+    missablesMore: { one: 'E mais 1 no guia.', other: 'E mais {count} no guia.' },
     missable: '⚠️ **{trophy}** é perdível: {when}',
     almost: '**Quase lá**: {trophy}, {value} de {target}.',
     focusStill: 'A sugestão de próximo troféu continua sendo **{trophy}**.',
@@ -102,6 +109,10 @@ const messages = defineMessages({
       '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.',
     tip: '**Tip**: {tip}',
     here: '📍 **Where you are in the game**',
+    ongoing: '🔁 **Keep at these throughout the journey**',
+    ongoingItem: '• **{trophy}**: {detail}',
+    missables: '⚠️ **Missables: keep an eye out**',
+    missablesMore: { one: '1 more in the guide.', other: '{count} more in the guide.' },
     missable: '⚠️ **{trophy}** is missable: {when}',
     almost: '**Almost there**: {trophy}, {value} of {target}.',
     focusStill: 'The suggested next trophy is still **{trophy}**.',
@@ -139,8 +150,91 @@ type Named = Pick<GameContext, 'title'> & Partial<Pick<GameContext, 'game'>>
 // The catalog's name ("Days Gone"), not the trophy list's ("DAYS GONE").
 const gameName = (ctx: Named) => ctx.game?.name ?? ctx.title.name
 
-export const startNotice = (user: User, ctx: Named) =>
-  translator(messages, user)('started', { game: gameName(ctx) })
+/** The plain notice for a game just started: its first trophies when it came with some (PSN lists a
+ * game only once one pops), then the next trophy, the missables and what to keep at the whole game.
+ * `after`: the stretch's checklist that follows it, whose missables are not listed again. */
+export const startNotice = (
+  user: User,
+  ctx: GameContext,
+  firsts: GameContext['trophies'] = [],
+  after = '',
+) => {
+  const t = translator(messages, user)
+  const opening = firsts.length
+    ? together(unlockNotice(user, ctx, firsts), markNotice(user, ctx, firsts))
+    : t('started', { game: gameName(ctx) })
+  const { trophy, behind } = todaysFocus(ctx)
+  const next = trophy
+    ? t(behind ? 'focusNewBehind' : 'focusNew', { trophy: trophy.name, detail: trophy.detail })
+    : undefined
+  return together(opening, next, startLists(user, ctx, ongoingTrophies(ctx), after))
+}
+
+// A handful, so the first notice stays short; the guide lists them all.
+const MISSABLES_MAX = 3
+
+/** The guide's missables still open, in its order, without those the checklist after the notice
+ * already names. A hidden one is only counted (`hidden`): its name would be a spoiler. */
+export function openMissables(
+  ctx: GameContext,
+  after = '',
+): { trophy: string; when: string; hidden: boolean }[] {
+  const open = ctx.trophies.filter((x) => !x.earned)
+  const find = (name: string) =>
+    open.find((x) => [x.name, x.nameEn].some((n) => n && tidy(n).toLowerCase() === name))
+  return (ctx.guide?.missables ?? []).flatMap((m) => {
+    const trophy = tidy(m.trophy)
+    const found = find(trophy.toLowerCase())
+    if (!found || after.includes(`**${trophy}**`)) return []
+    return [{ trophy, when: m.when, hidden: !!found.hidden }]
+  })
+}
+
+/** The start notice's own lists, as written after Nexo's words (Nexo would shorten them): the open
+ * missables, then what to keep at the whole game. */
+export function startLists(
+  user: User,
+  ctx: GameContext,
+  ongoing: GameContext['trophies'],
+  after = '',
+): string | undefined {
+  const t = translator(messages, user)
+  const missables = openMissables(ctx, after)
+  const shown = missables.filter((m) => !m.hidden).slice(0, MISSABLES_MAX)
+  const more = missables.length - shown.length
+  const warn = shown.length
+    ? [
+        t('missables'),
+        ...shown.map((m) => t('ongoingItem', { trophy: m.trophy, detail: m.when })),
+        ...(more ? [t('missablesMore', { count: more })] : []),
+      ].join('\n')
+    : undefined
+  // A trophy in the missables list is not repeated in the next one.
+  const warned = new Set(shown.map((m) => m.trophy.toLowerCase()))
+  const keep = ongoing.filter((x) => !warned.has(tidy(x.name).toLowerCase()))
+  return together(warn, ongoingBlock(user, keep)) || undefined
+}
+
+// A handful, so the first notice stays short; the journey lists them all.
+const ONGOING_MAX = 3
+
+/** The trophies to keep at the whole game (counters, collections, grinds), by the same pick as the
+ * journey's "Throughout the journey". Without the trophy the next-trophy line already names. */
+export function ongoingTrophies(ctx: GameContext): GameContext['trophies'] {
+  const next = todaysFocus(ctx).trophy?.id
+  return ongoingObjectives(ctx.trophies, ctx.guide)
+    .map((x) => x.trophy)
+    .filter((t) => t.id !== next)
+    .slice(0, ONGOING_MAX)
+}
+
+/** The start notice's block with them, as written: Nexo would shorten it. */
+function ongoingBlock(user: User, trophies: GameContext['trophies']): string | undefined {
+  if (!trophies.length) return undefined
+  const t = translator(messages, user)
+  const items = trophies.map((x) => t('ongoingItem', { trophy: tidy(x.name), detail: x.detail }))
+  return [t('ongoing'), ...items].join('\n')
+}
 
 // A game Nexo recommended this long ago, in a batch or as a pick, still counts as followed.
 const FOLLOWED_DAYS = 30
@@ -218,19 +312,12 @@ export function routeFor(user: User, ctx: GameContext, unlocked: string[], start
 }
 
 // The session's focus after these unlocks, for the plain notice: the same target the session notice
-// named, or the next one when the player just earned it.
-// With the next chapter's checklist in the same message, a focus that is only that chapter's story
-// trophy is left out: the checklist says more than "finish chapter 5".
-export const focusNotice = (
-  user: User,
-  ctx: GameContext,
-  unlocked: GameContext['trophies'],
-  checklist = false,
-) => {
+// named, or the next one when the player just earned it. Every notice names it.
+export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
   const t = translator(messages, user)
   const focus = focusAfter(ctx, unlocked)
   const done = focus.completed ? t('phaseDone', { phase: focus.completed }) : undefined
-  if (!focus.trophy || (checklist && storyTrophy(ctx.guide, focus.trophy.name))) return done
+  if (!focus.trophy) return done
   const next = !focus.changed
     ? t('focusStill', { trophy: focus.trophy.name })
     : focus.behind

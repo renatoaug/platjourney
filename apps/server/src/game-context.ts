@@ -62,6 +62,17 @@ export async function setCurrent(user: User, title: TitleProgress): Promise<Game
   return ctx
 }
 
+// The game PSN presence shows the player in before its trophy list reaches their profile (a new
+// game, before its first trophy): the catalog's list with nothing earned, as the current game.
+// The player has it, so it is owned. Null when the catalog has no list for it.
+export async function setCurrentFromPresence(user: User, game: Game): Promise<GameContext | null> {
+  const found = await catalogContext(user, game)
+  if (!found) return null
+  const ctx: GameContext = { ...found, owned: undefined, unlisted: true }
+  contexts.set(user.id, ctx)
+  return ctx
+}
+
 // The chat's game, picked with /game or a link: the game being played stays as it is. Picking the
 // game being played again just drops the chat's own pick.
 export async function setChat(user: User, title: TitleProgress): Promise<GameContext> {
