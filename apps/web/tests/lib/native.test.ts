@@ -165,4 +165,31 @@ describe('the bottom bar in the app', () => {
     stop()
     expect(off).toHaveBeenCalledWith('scroll', expect.any(Function))
   })
+
+  test('while a field has the keyboard the bar stays put, and it is measured again when the field lets go', async () => {
+    w.Capacitor = { isNativePlatform: () => true }
+    if (window.innerHeight < window.innerWidth) return
+    let bottom = window.screen.height + 59
+    const el = document.createElement('aside')
+    el.getBoundingClientRect = () => ({ bottom }) as DOMRect
+    document.body.append(el)
+    const field = document.createElement('input')
+    document.body.append(field)
+    const stop = keepBottomBarOnScreen(el)
+    expect(el.style.getPropertyValue('--bar-lift')).toBe('59px')
+    field.focus()
+    window.dispatchEvent(new Event('resize'))
+    expect(el.style.getPropertyValue('--bar-lift')).toBe('0px')
+    // The keyboard went away with no resize of its own: the field letting go measures again.
+    field.blur()
+    bottom = window.screen.height
+    await new Promise((r) => setTimeout(r, 150))
+    expect(el.style.getPropertyValue('--bar-lift')).toBe('0px')
+    bottom = window.screen.height + 59
+    field.focus()
+    field.blur()
+    await new Promise((r) => setTimeout(r, 150))
+    expect(el.style.getPropertyValue('--bar-lift')).toBe('59px')
+    stop()
+  })
 })
