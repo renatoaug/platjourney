@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.54.0](https://github.com/renatoaug/platjourney/compare/v0.53.0...v0.54.0) (2026-11-07)
+
+### Features
+
+* **server:** announce the first trophy and follow the game being played ([#148](https://github.com/renatoaug/platjourney/issues/148)) ([244743f](https://github.com/renatoaug/platjourney/commit/244743f4ddbb4ad210df7cd63dac062098347ce0))
+
 ## [0.53.0](https://github.com/renatoaug/platjourney/compare/v0.52.0...v0.53.0) (2026-11-06)
 
 ### Features
