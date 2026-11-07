@@ -1,14 +1,18 @@
 import { afterEach, expect, mock, spyOn, test } from 'bun:test'
+import { noticeWritten } from '../src/notice-scope.ts'
 import * as notify from '../src/notify.ts'
 import type { Plugin, PluginContext } from '../src/plugins.ts'
 import {
   aroundModel,
+  aroundNotice,
   emit,
   loadPlugins,
   pluginRoute,
+  projectGame,
   Refused,
   registerPlugin,
   resetPlugins,
+  setHookTimeout,
 } from '../src/plugins.ts'
 import * as activity from '../src/repository/activity.ts'
 import type { User } from '../src/repository/user.ts'
@@ -75,7 +79,7 @@ test("a plugin gets the app's helpers through its context, so it imports nothing
       seen = ctx
     },
   })
-  expect(seen?.api).toBe(4)
+  expect(seen?.api).toBe(5)
   expect(seen?.Refused).toBe(Refused)
   expect(typeof seen?.db.q).toBe('function')
   expect(typeof seen?.json).toBe('function')
@@ -103,4 +107,98 @@ test('a plugin can notify a player like the app does, never the demo or a gone a
   await ctx?.notify('user:gone', 'oi')
   expect(log).toHaveBeenCalledTimes(1)
   expect(get).toHaveBeenCalledTimes(3)
+})
+
+test('game views keep source identity without a projector', async () => {
+  const source = { guide: { tips: ['one'] }, trophies: [{ earned: true }] }
+  expect(await projectGame({ user, game: 'game:one', surface: 'title' }, source)).toBe(source)
+})
+
+test('game projectors compose on a deep copy separately for each player', async () => {
+  const source = { guide: { tips: ['one'] }, trophies: [{ earned: true }] }
+  await registerPlugin({
+    name: 'first',
+    register(ctx) {
+      ctx.projectGame(async ({ user: player, value }) => {
+        const view = value as typeof source
+        if (player.id === user.id) view.guide.tips.length = 0
+        return view
+      })
+    },
+  })
+  await registerPlugin({
+    name: 'second',
+    register(ctx) {
+      ctx.projectGame(async ({ value }) => ({ ...(value as object), viewed: true }))
+    },
+  })
+  const projected = await projectGame({ user, game: 'game:one', surface: 'title' }, source)
+  expect(projected.guide.tips).toEqual([])
+  expect(projected.trophies).toEqual(source.trophies)
+  expect(source.guide.tips).toEqual(['one'])
+  const other = await projectGame(
+    { user: { ...user, id: 'user:other' }, game: 'game:one', surface: 'title' },
+    source,
+  )
+  expect(other.guide.tips).toEqual(['one'])
+  expect(other).toHaveProperty('viewed', true)
+})
+
+test('a failed or stalled projector never falls back to the source', async () => {
+  await registerPlugin({
+    name: 'broken',
+    register(ctx) {
+      ctx.projectGame(async () => {
+        throw new Error('view failed')
+      })
+    },
+  })
+  await expect(
+    projectGame({ user, game: 'game:one', surface: 'current' }, { guide: 'source' }),
+  ).rejects.toThrow('view failed')
+  resetPlugins()
+  setHookTimeout(5)
+  await registerPlugin({
+    name: 'stalled',
+    register(ctx) {
+      ctx.projectGame(async () => new Promise(() => {}))
+    },
+  })
+  await expect(
+    projectGame({ user, game: 'game:one', surface: 'current' }, { guide: 'source' }),
+  ).rejects.toBeInstanceOf(Refused)
+})
+
+test('a notice settles with whether anything in it was written, also when it throws', async () => {
+  const outcomes: boolean[] = []
+  const notice = { kind: 'unlock', key: 'unlock:game:one:NP:2' }
+  // Without a listener the notice just runs.
+  let ran = false
+  await aroundNotice(user, 'game:one', notice, async () => {
+    ran = true
+  })
+  expect(ran).toBe(true)
+  await registerPlugin({
+    name: 'ledger',
+    register(ctx) {
+      ctx.noticeSettled(async (outcome) => {
+        expect(outcome).toMatchObject({ ...notice, user, game: 'game:one' })
+        outcomes.push(outcome.written)
+      })
+    },
+  })
+  await aroundNotice(user, 'game:one', notice, async () => {
+    await Promise.resolve()
+    noticeWritten()
+  })
+  await aroundNotice(user, 'game:one', notice, async () => {})
+  await expect(
+    aroundNotice(user, 'game:one', notice, async () => {
+      noticeWritten()
+      throw new Error('send failed')
+    }),
+  ).rejects.toThrow('send failed')
+  // Written outside a notice: nothing to settle.
+  noticeWritten()
+  expect(outcomes).toEqual([true, false, true])
 })

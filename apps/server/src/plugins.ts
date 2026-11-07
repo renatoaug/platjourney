@@ -10,12 +10,13 @@ import { q } from './db.ts'
 import { isDemo } from './demo.ts'
 import { json, type PageDirective, pagePolicy, pageSourceProblem, readBody } from './http.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
+import { inNotice, type NoticeState } from './notice-scope.ts'
 import { deliver } from './notify.ts'
 import { logTip } from './repository/activity.ts'
 import { getUser, type User } from './repository/user.ts'
 
 /** @public part of the plugin API */
-export const PLUGIN_API = 4
+export const PLUGIN_API = 5
 
 /** How long a plugin's hook (beforeModel, an event listener, an interceptor) may take before the
  * app stops waiting for it: a hung plugin fails that one request instead of holding it forever. */
@@ -58,6 +59,7 @@ function withTimeout<T>(pending: Promise<T>, label: string, late?: () => void): 
 export interface ModelWork {
   user: User
   action: string
+  game?: string
 }
 
 /** A tool an assistant connected through MCP is about to run for the player (get_guide…). */
@@ -65,7 +67,39 @@ export interface ModelWork {
 export interface ToolWork {
   user: User
   tool: string
+  arguments?: Record<string, unknown>
 }
+
+/** A notice the app is preparing for a player: its kind (start, unlock, route, session) and a key
+ * that stays the same when the same news is prepared again (a retry, the next sweep). */
+/** @public part of the plugin API */
+export interface NoticeWork {
+  kind: string
+  key: string
+}
+
+/** How a notice ended: `written` once it reached the player's history (by Nexo, a template or the
+ * fallback after a failed model call), false when it was given up before that. */
+/** @public part of the plugin API */
+export interface NoticeOutcome extends NoticeWork {
+  user: User
+  game: string
+  written: boolean
+}
+
+/** A per-player view of game content, prepared separately from shared source data. On the
+ * `notice` surface, `notice` names the notice the view is for. */
+/** @public part of the plugin API */
+export interface GameProjection {
+  user: User
+  game: string
+  surface: 'title' | 'current' | 'session' | 'notice'
+  notice?: NoticeWork
+  value: unknown
+}
+
+type GameHook = (work: GameProjection) => Promise<unknown>
+type NoticeHook = (outcome: NoticeOutcome) => Promise<void>
 
 /** Thrown by a beforeModel hook to stop the work; the player gets `message` with `status`. */
 export class Refused extends Error {
@@ -127,6 +161,10 @@ export interface PluginContext {
   /** Runs before a connected assistant's tool call (MCP); throw Refused to stop it, and the
    * assistant gets the message to pass on (a rule of the instance, a limit). */
   beforeTool(hook: ToolHook): void
+  /** Transforms a player-facing game view without changing the shared source. */
+  projectGame(hook: GameHook): void
+  /** Runs once for each notice the app prepared for a game, after it was written or given up. */
+  noticeSettled(hook: NoticeHook): void
   on<E extends keyof Events>(event: E, listener: (payload: Events[E]) => Promise<void>): void
   /** Sends the player (`user`, the record id) a notice, like the app's own: in the notifications
    * and the history, and on push and Telegram where the player turned them on. `text` is markdown,
@@ -147,6 +185,8 @@ const pageSources: Partial<Record<PageDirective, string[]>> = {}
 const before: { plugin: string; hook: Hook }[] = []
 const failed: { plugin: string; hook: Hook }[] = []
 const tools: { plugin: string; hook: ToolHook }[] = []
+const projections: { plugin: string; hook: GameHook }[] = []
+const settled: { plugin: string; hook: NoticeHook }[] = []
 type Listener = (payload: never) => Promise<void>
 const listeners = new Map<keyof Events, { plugin: string; listener: Listener }[]>()
 
@@ -189,6 +229,8 @@ const context = (name: string): PluginContext => ({
   beforeModel: (hook) => before.push({ plugin: name, hook }),
   modelFailed: (hook) => failed.push({ plugin: name, hook }),
   beforeTool: (hook) => tools.push({ plugin: name, hook }),
+  projectGame: (hook) => projections.push({ plugin: name, hook }),
+  noticeSettled: (hook) => settled.push({ plugin: name, hook }),
   on(event, listener) {
     const list = listeners.get(event) ?? []
     listeners.set(event, [...list, { plugin: name, listener: listener as Listener }])
@@ -250,6 +292,44 @@ export async function aroundModel<T>(work: ModelWork, run: () => Promise<T>): Pr
   } catch (e) {
     await giveBack(work)
     throw e
+  }
+}
+
+/** Projects a fresh copy per player. A failed hook never returns the original content. */
+export async function projectGame<T>(work: Omit<GameProjection, 'value'>, source: T): Promise<T> {
+  if (!projections.length) return source
+  let value: unknown = structuredClone(source)
+  for (const { plugin, hook } of projections) {
+    try {
+      value = await withTimeout(hook({ ...work, value }), `${plugin}: projectGame`)
+    } catch (error) {
+      if (!(error instanceof PluginTimeout)) throw error
+      throw new Refused('plugin_timeout', translator(messages, work.user)('busy'), 503)
+    }
+  }
+  return value as T
+}
+
+/** Prepares one notice for a game with `run`, then tells the plugins whether it was written. A
+ * plugin's hook that fails or stalls is logged: the notice already reached the player, or never
+ * will, either way. A notice that throws still settles, as written or not, before the error goes
+ * on. */
+export async function aroundNotice(
+  user: User,
+  game: string,
+  notice: NoticeWork,
+  run: () => Promise<void>,
+): Promise<void> {
+  if (!settled.length) return run()
+  const state: NoticeState = { written: false }
+  try {
+    await inNotice(state, run)
+  } finally {
+    for (const { plugin, hook } of settled)
+      await withTimeout(
+        hook({ ...notice, user, game, written: state.written }),
+        `${plugin}: noticeSettled`,
+      ).catch((error) => console.error('plugin hook failed:', error))
   }
 }
 
@@ -318,5 +398,7 @@ export function resetPlugins(): void {
   before.length = 0
   failed.length = 0
   tools.length = 0
+  projections.length = 0
+  settled.length = 0
   listeners.clear()
 }

@@ -7,6 +7,7 @@ import { todaysFocus } from '../focus.ts'
 import { getCurrent } from '../game-context.ts'
 import { defineMessages, fromAcceptLanguage, Language, type Locale, userLocale } from '../i18n.ts'
 import type { library } from '../library.ts'
+import { projectGame } from '../plugins.ts'
 import { secureUrl } from '../psn.ts'
 import { pushEnabled } from '../push.ts'
 import type { Game } from '../repository/game.ts'
@@ -90,25 +91,29 @@ export function heroArt(
 
 export async function currentView(user: User, ctx = getCurrent(user)) {
   return (
-    ctx && {
-      deepGuide: await deepGuideOf(user, ctx.game),
-      game: (await withTints([ctx.game]))[0],
-      name: ctx.title.name,
-      platform: ctx.title.platform,
-      icon: heroArt(ctx.game, ctx.title),
-      progress: ctx.title.progress,
-      earned: ctx.title.earned,
-      total: ctx.title.total,
-      np: ctx.title.npCommunicationId,
-      // False for a game outside the library, chosen in the chat to talk about before buying.
-      owned: ctx.owned !== false,
-      groups: ctx.groups,
-      hoursPlayed: ctx.hoursPlayed ?? null,
-      guide: ctx.guide,
-      // No guide and nothing researching it: it waits in guide_request.
-      queued: !ctx.guide && !config.automatic.research,
-      trophies: ctx.trophies,
-      focus: ctx.owned === false ? null : todaysFocus(ctx),
-    }
+    ctx &&
+    projectGame(
+      { user, game: ctx.game.id, surface: 'current' },
+      {
+        deepGuide: await deepGuideOf(user, ctx.game),
+        game: (await withTints([ctx.game]))[0],
+        name: ctx.title.name,
+        platform: ctx.title.platform,
+        icon: heroArt(ctx.game, ctx.title),
+        progress: ctx.title.progress,
+        earned: ctx.title.earned,
+        total: ctx.title.total,
+        np: ctx.title.npCommunicationId,
+        // False for a game outside the library, chosen in the chat to talk about before buying.
+        owned: ctx.owned !== false,
+        groups: ctx.groups,
+        hoursPlayed: ctx.hoursPlayed ?? null,
+        guide: ctx.guide,
+        // No guide and nothing researching it: it waits in guide_request.
+        queued: !ctx.guide && !config.automatic.research,
+        trophies: ctx.trophies,
+        focus: ctx.owned === false ? null : todaysFocus(ctx),
+      },
+    )
   )
 }

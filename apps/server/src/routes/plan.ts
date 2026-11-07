@@ -4,6 +4,7 @@ import { json, readBody } from '../http.ts'
 import { trophyHelp } from '../nexo.ts'
 import { currentPlan, discardPlan, PLAN_REASONS, type PlanReason, planSession } from '../planner.ts'
 import { hours, playtimes } from '../playtime.ts'
+import { projectGame } from '../plugins.ts'
 import { titleTrophies } from '../psn.ts'
 import { loadGroups } from '../ranking.ts'
 import { gameForTitle } from '../repository/game.ts'
@@ -69,7 +70,12 @@ export const PLAN_ROUTES: Record<string, ApiHandler> = {
     const ctx = await planContext(a, a.url.searchParams.get('np'))
     if (!ctx && a.url.searchParams.has('np'))
       return json(a.res, 404, { error: 'game not available' })
-    return json(a.res, 200, { plan: await currentPlan(a.me, ctx ?? undefined) })
+    const value = { plan: await currentPlan(a.me, ctx ?? undefined) }
+    return json(
+      a.res,
+      200,
+      ctx ? await projectGame({ user: a.me, game: ctx.game.id, surface: 'session' }, value) : value,
+    )
   },
   // The answer says which plan closed and whether to ask why (no step was done).
   'DELETE /api/plan': async (a) => {

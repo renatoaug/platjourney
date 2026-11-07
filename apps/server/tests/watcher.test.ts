@@ -17,6 +17,7 @@ import type { Guide } from '../src/guide.ts'
 import * as guide from '../src/guide.ts'
 import * as lib from '../src/library.ts'
 import * as nexo from '../src/nexo.ts'
+import { noticeWritten } from '../src/notice-scope.ts'
 import {
   focusNotice,
   followedNotice,
@@ -25,7 +26,7 @@ import {
   unlockNotice,
 } from '../src/notices.ts'
 import * as playtime from '../src/playtime.ts'
-import { Refused } from '../src/plugins.ts'
+import { type NoticeOutcome, Refused, registerPlugin, resetPlugins } from '../src/plugins.ts'
 import * as psn from '../src/psn.ts'
 import * as ranking from '../src/ranking.ts'
 import * as activity from '../src/repository/activity.ts'
@@ -135,6 +136,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  resetPlugins()
   Object.assign(config.automatic, automatic)
   forgetUser(user.id)
   mock.restore()
@@ -1129,5 +1131,127 @@ describe('a game the profile does not list yet', () => {
     ])
     await checkUser(user)
     expect(getCurrent(user)?.game.id).toBe(game.id)
+  })
+})
+
+test('notice projection survives model fallback without changing cached context or earned progress', async () => {
+  await registerPlugin({
+    name: 'views',
+    register(ctx) {
+      ctx.projectGame(async ({ surface, value }) => {
+        if (surface !== 'notice') return value
+        const view = value as { ctx: nexo.GameContext; route?: unknown }
+        view.ctx.guide = undefined
+        view.route = undefined
+        return view
+      })
+    },
+  })
+  spyOn(nexo, 'unlockReaction').mockRejectedValue(new Refused('not_now', 'Later'))
+  await checkUser(user)
+  expect(send).toHaveBeenCalledTimes(1)
+  expect(send.mock.calls[0][1]).toContain('Segundo')
+  expect(send.mock.calls[0][1]).not.toContain('Compre o arco')
+  expect(logTip.mock.calls[0][2]).not.toContain('Compre o arco')
+  expect(getCurrent(user)?.guide).toBe(routeGuide)
+  expect(saveEarned).toHaveBeenCalled()
+})
+
+test('a failed notice projection does not send the original content', async () => {
+  await registerPlugin({
+    name: 'views',
+    register(ctx) {
+      ctx.projectGame(async () => {
+        throw new Error('view failed')
+      })
+    },
+  })
+  await expect(checkUser(user)).rejects.toThrow('view failed')
+  expect(send).not.toHaveBeenCalled()
+  expect(logTip).not.toHaveBeenCalled()
+})
+
+describe('the lifecycle of a notice', () => {
+  const outcomes: NoticeOutcome[] = []
+  const projected: unknown[] = []
+  const settles = async (fail = false) => {
+    outcomes.length = 0
+    projected.length = 0
+    await registerPlugin({
+      name: 'notices',
+      register(ctx) {
+        ctx.projectGame(async ({ notice, value }) => {
+          projected.push(notice)
+          return value
+        })
+        ctx.noticeSettled(async (outcome) => {
+          if (fail) throw new Error('ledger down')
+          outcomes.push(outcome)
+        })
+      },
+    })
+  }
+  // The tip log marks the notice written, as the real one does once it is stored.
+  const writes = () => logTip.mockImplementation(async () => noticeWritten())
+
+  test('a notice the plain fallback wrote settles once as written, with the key a retry repeats', async () => {
+    await settles()
+    writes()
+    spyOn(nexo, 'unlockReaction').mockRejectedValue(new Refused('not_now', 'Later'))
+    await checkUser(user)
+    const key = `unlock:${game.id}:NPWR1_00:2`
+    expect(outcomes).toEqual([
+      expect.objectContaining({ kind: 'unlock', key, game: game.id, written: true }),
+    ])
+    expect(projected).toEqual([{ kind: 'unlock', key }])
+    await checkUser(user)
+    expect(outcomes.map((o) => o.key)).toEqual([key, key])
+  })
+
+  test('a notice given up before the write settles as not written, and the error goes on', async () => {
+    await settles()
+    logTip.mockRejectedValue(new Error('db down'))
+    spyOn(nexo, 'unlockReaction').mockRejectedValue(new Refused('not_now', 'Later'))
+    await expect(checkUser(user)).rejects.toThrow('db down')
+    expect(outcomes).toEqual([expect.objectContaining({ kind: 'unlock', written: false })])
+  })
+
+  test('a sweep with nothing to tell prepares no notice', async () => {
+    await settles()
+    getTitle.mockResolvedValue(
+      row({ earned_ids: [1, 2], earned: 10, last_updated_at: '2026-05-01T10:00:00.000Z' }),
+    )
+    await checkUser(user)
+    expect(projected).toEqual([])
+    expect(outcomes).toEqual([])
+  })
+
+  test('a failing settle hook is logged and the sweep still saves what it saw', async () => {
+    await settles(true)
+    writes()
+    const error = spyOn(console, 'error').mockImplementation(() => {})
+    spyOn(nexo, 'unlockReaction').mockRejectedValue(new Refused('not_now', 'Later'))
+    await checkUser(user)
+    expect(send).toHaveBeenCalledTimes(1)
+    expect(saveEarned).toHaveBeenCalled()
+    expect(error).toHaveBeenCalledWith('plugin hook failed:', expect.any(Error))
+  })
+
+  test('the session notice of the game in context settles too, one key per window', async () => {
+    await settles()
+    writes()
+    getTitle.mockResolvedValue(
+      row({ earned_ids: [1, 2], earned: 10, last_updated_at: '2026-05-01T10:00:00.000Z' }),
+    )
+    playing.mockResolvedValue('Days Gone')
+    await checkUser(user)
+    const window = Math.floor(Date.now() / (SESSION_NOTICE_HOURS * 3_600_000))
+    expect(outcomes).toEqual([
+      expect.objectContaining({
+        kind: 'session',
+        key: `session:${game.id}:${window}`,
+        written: true,
+      }),
+    ])
   })
 })

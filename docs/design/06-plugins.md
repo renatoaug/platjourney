@@ -178,7 +178,7 @@ Relative paths in both settings start at the repository's root, and absolute pat
 
 ## The contract
 
-`PLUGIN_API` (in `apps/server/src/plugins.ts`) is `4`. What a plugin gets on the server:
+`PLUGIN_API` (in `apps/server/src/plugins.ts`) is `5`. What a plugin gets on the server:
 
 | | |
 |---|---|
@@ -190,9 +190,11 @@ Relative paths in both settings start at the repository's root, and absolute pat
 | `ctx.intercept(path, handler, { method })` | Runs before the app answers any request to `path`: exact (`/api/auth/login`, `/ads.txt`) or a prefix ending in `*` (`/api/auth/*`). The handler gets the same as a route, with `me` when signed in. If it answers, the request ends there; if not, it goes on to the next interceptor and then the app. |
 | `ctx.signIn(res, user)` | Signs `user` in on this response, with the same session the app's own sign-in opens: for single sign-on or any other way in. |
 | `ctx.allowOnPage(directive, ...sources)` | Lets the app's page load from more places in one directive of its content security policy (`script-src`, `frame-src`, `connect-src`, `img-src`, `style-src`, `font-src`), e.g. a provider's script and its frames. The other directives cannot be changed. Each source is checked when the plugin registers, which fails with the reason otherwise: an https host, optionally with a `*.` subdomain wildcard, a port and a path (`https://cdn.example`, `https://*.example.com/js/`), or `'self'`; `data:` also in `img-src` and `font-src`, `blob:` in `img-src`. Anything else (`'unsafe-inline'`, `'unsafe-eval'`, `*`, a bare scheme such as `https:`, `;`, `,`, spaces or quotes) is refused. |
-| `ctx.beforeModel(hook)` | Runs before model work with `{ user, action }`. Throwing `Refused(code, message, status)` stops it; the player gets `message` with `status`. |
+| `ctx.beforeModel(hook)` | Runs before model work with `{ user, action, game? }`. Throwing `Refused(code, message, status)` stops it; the player gets `message` with `status`. |
 | `ctx.modelFailed(hook)` | Runs when the work failed after every `beforeModel` let it through. |
-| `ctx.beforeTool(hook)` | Runs before a connected assistant's tool call on `/mcp` with `{ user, tool }`. Throwing `Refused(code, message)` stops it; the assistant gets `message` to pass on (a rule of the instance, a limit). |
+| `ctx.beforeTool(hook)` | Runs before a connected assistant's tool call on `/mcp` with `{ user, tool, arguments }`. Throwing `Refused(code, message)` stops it; the assistant gets `message` to pass on (a rule of the instance, a limit). |
+| `ctx.projectGame(hook)` | Changes a player's view of a game before the app uses it. See [Game views and notices](#game-views-and-notices). |
+| `ctx.noticeSettled(hook)` | Runs once for each notice prepared for a game, when it was written or given up. See [Game views and notices](#game-views-and-notices). |
 | `ctx.on('user:created', listener)` | Runs after a new account signs up. |
 | `ctx.on('user:deleted', listener)` | Runs before an account is deleted. A listener that throws stops the deletion; one that takes longer than 10 seconds is logged and the next one runs. |
 | `ctx.notify(user, text)` | Sends the player a notice like the app's own (kind `server`): it lands in the notifications and the history, and goes to push and Telegram where the player turned them on. `text` is markdown in the player's language. Nothing goes to the demo or to an account that is gone. |
@@ -218,3 +220,20 @@ A plugin keeps its own data in the same SurrealDB through `ctx.db.q`. Its tables
 - Every hook (`beforeModel`, `beforeTool`, event listeners, interceptors) has 10 seconds (`HOOK_TIMEOUT_MS` in `apps/server/src/plugins.ts`). The app stops waiting then, but cannot stop the hook itself.
 - An interceptor sees every matching request, the app's own included: it can answer in the app's place, so it must let through what it does not handle.
 - A plugin's component receives its target's props, nothing more. What else it needs (the player, the route, the plugin's own data) it reads itself, with the app's hooks or its own routes.
+
+## Game views and notices
+
+`ctx.projectGame(hook)` gets `{ user, game, surface, notice?, value }` and returns the value to use in its place. `game` is the catalog id (`game:...`). The surfaces:
+
+| Surface | `value` |
+|---|---|
+| `title` | A game's page (`/api/title`), owned or from the catalog. |
+| `current` | The game in context (`currentView`: the home and the chat). |
+| `session` | The saved session route (`/api/plan`). |
+| `notice` | The `{ ctx, route }` a new notice is written from, by Nexo or by a template, the fallback and the session notice included. `notice` is `{ kind, key }`. |
+
+The first hook gets a deep copy and each next one the previous result, so a hook can change what it gets without touching the cached context, the shared guide or another player's view. A hook that throws or takes longer than 10 seconds stops that request (a 503 for a timeout): the app never falls back to the view before it. A hook keeps the shape of the view. Without a hook nothing is copied and nothing changes. Projection never rewrites the history, the trophy progress or a guide; the messages already sent stay as they were.
+
+`ctx.noticeSettled(hook)` runs once for each notice the app prepared for a game (`start`, `unlock`, `route`, `session`), after it ended: `{ user, game, kind, key, written }`. `written` is true once the notice reached the player's history, whoever wrote it (Nexo, a template, the template after a failed model call), and false when it was given up before that. The `key` is the same one the `notice` projection got, and the same one again when the same news is prepared another time (a failed sweep followed by the next one): the game, its trophy list and how many trophies were earned, or the game and the session window. A plugin that keeps something per notice ties it to the key in the projection and settles it here. A sweep with nothing to tell prepares no notice. A settle hook that fails or stalls is logged; the notice already went out, or never will.
+
+Model hooks get the game for the work about one game (chat, trophy help, notices, session routes, follow-up answers); a recommendation has none. Tool hooks get the call's arguments, which the app does not log.

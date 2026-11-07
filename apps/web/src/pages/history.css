@@ -47,6 +47,11 @@
     border: 1px solid var(--color-border-strong);
   }
 
+  /* One notice opened from the bell: nothing follows it but the link to the rest. */
+  .history-selected .entry .entry-body {
+    border-bottom: 0;
+  }
+
   .day-label::after {
     content: "";
     flex: 1;

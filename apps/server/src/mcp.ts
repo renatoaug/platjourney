@@ -78,8 +78,8 @@ async function callTool({ user, connection, assistant }: Caller, params: Args, b
   if (tool.changes && isDemo(user))
     return text('This is the demo: it can be read, but nothing is saved.', true)
   try {
-    await beforeTool({ user, tool: tool.name })
     const args = (params.arguments ?? {}) as Args
+    await beforeTool({ user, tool: tool.name, arguments: args })
     const result = await tagged({ user: user.id }, () => tool.run(user, args, { assistant, base }))
     const value =
       tool.next && result && typeof result === 'object' ? { ...result, next: tool.next } : result

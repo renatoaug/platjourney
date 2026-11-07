@@ -82,33 +82,54 @@ export function barOverflow(
   return Math.max(0, Math.round(barBottom - Math.min(visibleBottom, screenHeight)))
 }
 
+/** A field the keyboard is open for. */
+const typing = () =>
+  !!document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]')
+
 /**
  * The iOS app's web view can lay the page out taller than the screen, which leaves the fixed bottom
  * bar below the edge with nothing to bring it back. This measures the bar and lifts it by what is
- * hidden. In portrait only, since `screen.height` does not follow the rotation.
+ * hidden. In portrait only, since `screen.height` does not follow the rotation. While a field has
+ * the keyboard the bar stays where it is, behind the keyboard: lifting it over the keyboard left it
+ * floating when iOS closed the keyboard without a last resize. When the field lets go, the bar is
+ * measured again once the keyboard has gone.
  */
 export function keepBottomBarOnScreen(bar: HTMLElement): () => void {
   if (!isNative()) return () => {}
   let lift = 0
+  const timers: ReturnType<typeof setTimeout>[] = []
   const check = () => {
     const viewport = window.visualViewport
     const visible = viewport ? viewport.offsetTop + viewport.height : window.innerHeight
     const portrait = window.innerHeight >= window.innerWidth
-    const next = portrait
-      ? barOverflow(bar.getBoundingClientRect().bottom + lift, visible, window.screen.height)
-      : 0
+    const next =
+      portrait && !typing()
+        ? barOverflow(bar.getBoundingClientRect().bottom + lift, visible, window.screen.height)
+        : 0
     if (next === lift) return
     lift = next
     bar.style.setProperty('--bar-lift', `${lift}px`)
   }
+  // The keyboard takes about a third of a second to leave; measure during and after it.
+  const settle = () => {
+    check()
+    for (const ms of [120, 400, 800]) timers.push(setTimeout(check, ms))
+  }
   check()
   const targets: EventTarget[] = [window, window.visualViewport].filter((x) => !!x) as EventTarget[]
   for (const target of targets) target.addEventListener('resize', check)
+  window.visualViewport?.addEventListener('scroll', check)
   window.addEventListener('scroll', check, { passive: true })
   document.addEventListener('visibilitychange', check)
+  document.addEventListener('focusin', check)
+  document.addEventListener('focusout', settle)
   return () => {
     for (const target of targets) target.removeEventListener('resize', check)
+    window.visualViewport?.removeEventListener('scroll', check)
     window.removeEventListener('scroll', check)
     document.removeEventListener('visibilitychange', check)
+    document.removeEventListener('focusin', check)
+    document.removeEventListener('focusout', settle)
+    for (const timer of timers) clearTimeout(timer)
   }
 }
