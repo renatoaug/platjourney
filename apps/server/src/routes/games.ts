@@ -9,6 +9,7 @@ import { translator } from '../i18n.ts'
 import { storeFor } from '../interests.ts'
 import { library } from '../library.ts'
 import { hours, playtimes } from '../playtime.ts'
+import { projectGame } from '../plugins.ts'
 import { catalogTrophies } from '../psn.ts'
 import { loadGroups } from '../ranking.ts'
 import { allow } from '../rate-limit.ts'
@@ -101,7 +102,10 @@ async function titleDetail(url: URL, user: User) {
   if (!game && title) game = await gameForTitle(title)
   if (!game) return null
   const [tinted] = await withTints([game])
-  return title ? ownedDetail(user, tinted, title) : catalogDetail(user, tinted, platform)
+  const detail = await (title
+    ? ownedDetail(user, tinted, title)
+    : catalogDetail(user, tinted, platform))
+  return projectGame({ user, game: game.id, surface: 'title' }, detail)
 }
 
 async function ownedDetail(

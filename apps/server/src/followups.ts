@@ -19,7 +19,7 @@ export async function followUpAnswer(w: WaitingQuestion): Promise<string | null>
   if (!user || !game) return null
   const ctx = await contextForGame(user, game)
   if (!ctx) return null
-  const { text } = await aroundModel({ user, action: 'chat' }, () =>
+  const { text } = await aroundModel({ user, action: 'chat', game: game.id }, () =>
     tagged({ user: user.id, action: 'chat' }, () =>
       ai<{ text: string | null }>('/nexo/follow-up', {
         context: aiContext(ctx, user),

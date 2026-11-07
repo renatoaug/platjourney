@@ -25,7 +25,7 @@ import {
 } from './notices.ts'
 import { deliver } from './notify.ts'
 import { expirePlans } from './planner.ts'
-import { Refused } from './plugins.ts'
+import { aroundNotice, projectGame, Refused } from './plugins.ts'
 import { nowPlaying, PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
 import { lastTip, logTip, type TipKind } from './repository/activity.ts'
 import { pruneExpired } from './repository/auth.ts'
@@ -183,14 +183,38 @@ async function nexoNews({
     await plainNotice(user, 'route', together(route.text, route.collectibles), ctx.game.id)
 }
 
-async function tellNews(news: News): Promise<void> {
-  if (!nexoNotices(news.user)) return plainNews(news)
-  try {
-    await nexoNews(news)
-  } catch (e) {
-    logFallback(news.user, e)
-    await plainNews(news)
+// What a sweep's news is, as its notice's kind; nothing when there is nothing to tell.
+function newsKind({ justStarted, unlocked, route }: News): TipKind | undefined {
+  if (justStarted) return 'start'
+  if (unlocked.length) return 'unlock'
+  return route ? 'route' : undefined
+}
+
+async function tellNews(source: News): Promise<void> {
+  const kind = newsKind(source)
+  if (!kind) return
+  const { user, ctx } = source
+  // The same news prepared again (the next sweep after a failed one) gets the same key: the game,
+  // its trophy list and how many trophies it had earned.
+  const earned = ctx.trophies.filter((t) => t.earned).length
+  const notice = {
+    kind,
+    key: `${kind}:${ctx.game.id}:${ctx.title.npCommunicationId ?? ''}:${earned}`,
   }
+  await aroundNotice(user, ctx.game.id, notice, async () => {
+    const view = await projectGame(
+      { user, game: ctx.game.id, surface: 'notice', notice },
+      { ctx, route: source.route },
+    )
+    const news = { ...source, ...view }
+    if (!nexoNotices(news.user)) return plainNews(news)
+    try {
+      await nexoNews(news)
+    } catch (e) {
+      logFallback(news.user, e)
+      await plainNews(news)
+    }
+  })
 }
 
 // Why Nexo's words gave way to the plain notice.
@@ -374,15 +398,24 @@ async function sessionStart(
   if (!noticed) {
     // A game picked from presence is the one being played, whatever the catalog calls it.
     const same = !!ctx.unlisted || comparable(playing) === comparable(ctx.title.name)
-    const text = sessionNotice(
-      user,
-      playing,
-      same ? ctx : undefined,
-      same && (await nothingNew(user, ctx)),
-    )
-    await plainNotice(user, 'session', text, same ? ctx.game.id : undefined)
+    if (same) await gameSession(user, ctx, playing)
+    else await plainNotice(user, 'session', sessionNotice(user, playing))
   }
   await updateUser(user.id, { session_notice_at: new Date() })
+}
+
+// The session notice for the game in context, one per window of SESSION_NOTICE_HOURS.
+async function gameSession(user: User, ctx: GameContext, playing: string): Promise<void> {
+  const window = Math.floor(Date.now() / (SESSION_NOTICE_HOURS * 3_600_000))
+  const notice = { kind: 'session', key: `session:${ctx.game.id}:${window}` }
+  await aroundNotice(user, ctx.game.id, notice, async () => {
+    const view = await projectGame(
+      { user, game: ctx.game.id, surface: 'notice', notice },
+      { ctx, route: undefined },
+    )
+    const again = await nothingNew(user, ctx)
+    await plainNotice(user, 'session', sessionNotice(user, playing, view.ctx, again), ctx.game.id)
+  })
 }
 
 // Users are visited one after the other so PSN sees a steady, modest stream.

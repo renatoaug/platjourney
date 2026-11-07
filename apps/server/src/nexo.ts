@@ -76,8 +76,9 @@ function ask(
   path: string,
   body: Record<string, unknown>,
   remember?: { text: string; game?: string },
+  game?: string,
 ): Promise<string> {
-  return aroundModel({ user, action }, () =>
+  return aroundModel({ user, action, game: game ?? remember?.game }, () =>
     tagged({ user: user.id, action }, async () => {
       const history = remember ? { history: await conversation(user, remember.game) } : {}
       const { text } = await ai<{ text: string }>(path, { ...body, ...history })
@@ -109,26 +110,33 @@ export async function proactiveTip(
   // leaves them out.
   const ongoing = ongoingTrophies(ctx)
   const missables = openMissables(ctx, after)
-  const said = await ask(user, 'tip', '/nexo/tip', {
-    kind: 'start',
-    context: aiContext(ctx, user),
-    ...(firsts.length ? { unlocked: firsts } : {}),
-    ...(ongoing.length ? { ongoing: ongoing.map((t) => t.name) } : {}),
-    ...(missables.length
-      ? { missables: missables.filter((m) => !m.hidden).map((m) => m.trophy) }
-      : {}),
-    ...(focus.trophy
-      ? {
-          focus: {
-            trophy: focus.trophy.name,
-            detail: focus.trophy.detail,
-            trick: focus.trick,
-          },
-        }
-      : {}),
-    ...(route ? { route } : {}),
-    ...(recommended ? { recommended } : {}),
-  })
+  const said = await ask(
+    user,
+    'tip',
+    '/nexo/tip',
+    {
+      kind: 'start',
+      context: aiContext(ctx, user),
+      ...(firsts.length ? { unlocked: firsts } : {}),
+      ...(ongoing.length ? { ongoing: ongoing.map((t) => t.name) } : {}),
+      ...(missables.length
+        ? { missables: missables.filter((m) => !m.hidden).map((m) => m.trophy) }
+        : {}),
+      ...(focus.trophy
+        ? {
+            focus: {
+              trophy: focus.trophy.name,
+              detail: focus.trophy.detail,
+              trick: focus.trick,
+            },
+          }
+        : {}),
+      ...(route ? { route } : {}),
+      ...(recommended ? { recommended } : {}),
+    },
+    undefined,
+    ctx.game.id,
+  )
   // The first trophy as the message's title with our cheer, as on any unlock notice.
   const names = firsts.map((t) => t.name)
   const titled = firsts.length
@@ -157,29 +165,36 @@ export async function unlockReaction(
     after && storyTrophy(ctx.guide, target.trophy?.name) ? { ...target, trick: undefined } : target
   // The first trophy, halfway, the final stretch or the platinum: the notice marks it.
   const mark = progressMark(ctx.trophies, unlocked)
-  const text = await ask(user, 'tip', '/nexo/tip', {
-    kind: 'unlock',
-    context: aiContext(ctx, user),
-    unlocked,
-    ...(mark ? { mark } : {}),
-    // Without a guide there is no focus to keep: Nexo then reads the context as before. No phase
-    // goes as where the player is (focus.ts): only whether the focus was left behind, and a phase
-    // these unlocks just closed.
-    ...(focus.trophy || focus.missable || focus.completed
-      ? {
-          focus: {
-            behind: focus.behind ?? false,
-            completed: focus.completed,
-            trophy: focus.trophy?.name,
-            detail: focus.trophy?.detail,
-            trick: focus.trick,
-            changed: focus.changed,
-            missable: focus.missable,
-          },
-        }
-      : {}),
-    ...(route ? { route } : {}),
-  })
+  const text = await ask(
+    user,
+    'tip',
+    '/nexo/tip',
+    {
+      kind: 'unlock',
+      context: aiContext(ctx, user),
+      unlocked,
+      ...(mark ? { mark } : {}),
+      // Without a guide there is no focus to keep: Nexo then reads the context as before. No phase
+      // goes as where the player is (focus.ts): only whether the focus was left behind, and a phase
+      // these unlocks just closed.
+      ...(focus.trophy || focus.missable || focus.completed
+        ? {
+            focus: {
+              behind: focus.behind ?? false,
+              completed: focus.completed,
+              trophy: focus.trophy?.name,
+              detail: focus.trophy?.detail,
+              trick: focus.trick,
+              changed: focus.changed,
+              missable: focus.missable,
+            },
+          }
+        : {}),
+      ...(route ? { route } : {}),
+    },
+    undefined,
+    ctx.game.id,
+  )
   // The trophy as the message's title, then Nexo's words: the same first line as a plain notice.
   const body = withoutTitle(
     text,
@@ -214,10 +229,17 @@ export function withoutTitle(text: string, names: string[]): string {
 // Help for one trophy the player has not earned yet, asked from the trophy list.
 export function trophyHelp(user: User, ctx: GameContext, trophy: TrophyStatus): Promise<string> {
   return tagged({ user: user.id, action: 'chat' }, async () => {
-    const text = await ask(user, 'chat', '/nexo/trophy-help', {
-      context: aiContext(ctx, user),
-      trophy,
-    })
+    const text = await ask(
+      user,
+      'chat',
+      '/nexo/trophy-help',
+      {
+        context: aiContext(ctx, user),
+        trophy,
+      },
+      undefined,
+      ctx.game.id,
+    )
     // Kept in the conversation so the player can follow up in the chat.
     await appendMessage(
       user.id,

@@ -1,4 +1,5 @@
 import { camelKeys, plain, q, RecordId, snakeKeys } from '../db.ts'
+import { noticeWritten } from '../notice-scope.ts'
 import type { Game } from './game.ts'
 import { gameRef } from './game.ts'
 import { userRef } from './user.ts'
@@ -56,6 +57,7 @@ export async function logTip(
       },
     },
   )
+  if (kind !== 'chat') noticeWritten()
 }
 
 /** A tip a connected assistant saved, for the history page under its name. Not a notification:

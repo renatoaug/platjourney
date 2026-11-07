@@ -77,7 +77,7 @@ afterEach(() => {
 
 test('a start tip goes through the plugins, tagged and logged', async () => {
   expect(await proactiveTip(user, ctx)).toBe('Resposta')
-  expect(around.mock.calls[0][0]).toEqual({ user, action: 'tip' })
+  expect(around.mock.calls[0][0]).toEqual({ user, action: 'tip', game: ctx.game.id })
   expect(ai).toHaveBeenCalledWith('/nexo/tip', { kind: 'start', context })
   expect(tags[0]).toEqual({ user: 'user:u1', action: 'tip' })
   expect(logTip).toHaveBeenCalledWith('user:u1', 'start', 'Resposta', 'game:1')
