@@ -387,7 +387,10 @@ def cite(text: str, used: list[Passage]) -> str:
 
 
 def start_prompt(
-    ctx: GameContext, unlocked: list[Trophy] | None = None, focus: Focus | None = None
+    ctx: GameContext,
+    unlocked: list[Trophy] | None = None,
+    focus: Focus | None = None,
+    ongoing: list[str] | None = None,
 ) -> str:
     """The notice for a game just started. PSN lists a game only once its first trophy pops, so the
     notice usually comes with it: the trophy is the message's title and our cheer opens it. It gives
@@ -415,13 +418,19 @@ def start_prompt(
             'Depois, aponte UM próximo troféu da lista, em negrito, que faz sentido no começo '
             'do jogo, e diga em uma linha como pegar.'
         )
+    kept = (
+        f' Os troféus para ir fazendo a jornada inteira ({", ".join(ongoing)}) vão numa lista '
+        'nossa logo depois da sua mensagem: não os use nas dicas.'
+        if ongoing
+        else ''
+    )
     return (
         f'{opening} Mande uma mensagem curta. Primeiro, a sua opinião sincera sobre a platina '
         'em uma ou duas linhas: dificuldade, horas, se tem perdível, e o que ela tem de bom ou '
         'de chato pelo guia (o grind, um troféu que pede paciência). Não pergunte o que o '
         f'jogador achou do jogo. {target} Feche com até 2 dicas concretas para as primeiras '
-        'horas, principalmente perdíveis e o que economiza tempo depois. Ele ainda não conhece '
-        'os termos do jogo.'
+        'horas, principalmente perdíveis e o que economiza tempo depois.'
+        f'{kept} Ele ainda não conhece os termos do jogo.'
     )
 
 
@@ -778,6 +787,7 @@ async def tip(
     focus: Focus | None = None,
     mark: Mark | None = None,
     recommended: Recommended | None = None,
+    ongoing: list[str] | None = None,
 ) -> str:
     """An automatic notice: the player started a game or unlocked trophies.
     With `route`, the guide's note on what comes next goes into the same message; with `mark`, the
@@ -785,7 +795,7 @@ async def tip(
     `recommended`, the game started was Nexo's recommendation and the notice says it is glad."""
     match kind:
         case 'start':
-            prompt = start_prompt(ctx, unlocked, focus)
+            prompt = start_prompt(ctx, unlocked, focus, ongoing)
             if recommended:
                 prompt += recommended_prompt(recommended)
         case 'unlock':

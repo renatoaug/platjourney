@@ -6,6 +6,7 @@ import type { Guide } from './guide.ts'
 import { hookFor } from './hooks.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
 import { markCheer, progressMark } from './marks.ts'
+import { ongoingBlock, ongoingTrophies } from './notices.ts'
 import { aroundModel } from './plugins.ts'
 import type { TitleGroups, TitleProgress, TrophyStatus } from './psn.ts'
 import {
@@ -102,10 +103,13 @@ export async function proactiveTip(
 ): Promise<string> {
   // The next trophy is the server's, the same the session notice names.
   const focus = todaysFocus(ctx)
+  // What keeps going the whole game goes as our own list after Nexo's words: Nexo leaves it out.
+  const ongoing = ongoingTrophies(ctx)
   const said = await ask(user, 'tip', '/nexo/tip', {
     kind: 'start',
     context: aiContext(ctx, user),
     ...(firsts.length ? { unlocked: firsts } : {}),
+    ...(ongoing.length ? { ongoing: ongoing.map((t) => t.name) } : {}),
     ...(focus.trophy
       ? {
           focus: {
@@ -124,7 +128,7 @@ export async function proactiveTip(
   const titled = firsts.length
     ? `${names.map((n) => `🏆 **${tidy(n)}**`).join('\n')}\n\n${markCheer(user, 'first')}\n\n${withoutTitle(said, names)}`
     : said
-  const text = after ? `${titled}\n\n${after}` : titled
+  const text = [titled, ongoingBlock(user, ongoing), after].filter(Boolean).join('\n\n')
   await logTip(user.id, 'start', text, ctx.game.id)
   return text
 }

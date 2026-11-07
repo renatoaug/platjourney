@@ -89,6 +89,7 @@ test('a game that came with its first trophy opens with it as the title, our che
     trophies: [
       makeTrophy({ id: 1, name: 'Paus e Pedras', earned: true }),
       makeTrophy({ id: 2, name: 'Pá, Pum', detail: 'Faça 50 tiros na cabeça' }),
+      makeTrophy({ id: 3, name: 'Colecionador', detail: 'Ache 30 discos', progressTarget: 30 }),
     ],
     guide: {
       roadmap: [{ phase: 'Campanha', goal: '', trophies: ['Paus e Pedras', 'Pá, Pum'] }],
@@ -99,14 +100,18 @@ test('a game that came with its first trophy opens with it as the title, our che
   const text = await proactiveTip(user, started, undefined, undefined, undefined, firsts)
   const body = ai.mock.calls[0][1] as {
     unlocked?: unknown
+    ongoing?: string[]
     focus?: { trophy?: string; detail?: string }
   }
   expect(body.unlocked).toEqual(firsts)
+  expect(body.ongoing).toEqual(['Colecionador'])
   expect(body.focus).toMatchObject({ trophy: 'Pá, Pum', detail: 'Faça 50 tiros na cabeça' })
   const [title, cheer, ...rest] = text.split('\n\n')
   expect(title).toBe('🏆 **Paus e Pedras**')
   expect(cheer).not.toContain('Paus e Pedras')
-  expect(rest.join('\n\n')).toBe('Platina tranquila.')
+  expect(rest.join('\n\n')).toBe(
+    'Platina tranquila.\n\n🔁 **Pra ir fazendo ao longo da jornada**\n• **Colecionador**: Ache 30 discos',
+  )
   expect(logTip).toHaveBeenCalledWith('user:u1', 'start', text, 'game:1')
 })
 

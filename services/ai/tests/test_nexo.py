@@ -190,6 +190,10 @@ def test_the_start_notice_skips_the_first_trophy_title_and_names_the_server_s_ne
     assert 'Macete do guia: Mire no capacete' in prompt
     assert 'Voo é perdível (na missão 10)' in prompt
     assert 'UM próximo troféu' not in prompt
+    assert 'lista' not in prompt
+    kept = nexo.start_prompt(context(), [first], focus, ['Pá, Pum', 'Colecionador'])
+    assert '(Pá, Pum, Colecionador) vão numa lista nossa' in kept
+    assert 'não os use nas dicas' in kept
 
 
 async def test_a_game_nexo_recommended_opens_glad_the_player_followed_it(model: Model) -> None:

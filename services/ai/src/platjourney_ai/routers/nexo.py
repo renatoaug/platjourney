@@ -29,6 +29,8 @@ class TipRequest(Wire):
     mark: nexo.Mark | None = None
     # The game started was Nexo's recommendation ("start").
     recommended: nexo.Recommended | None = None
+    # The trophies to keep at the whole game, listed by the server after Nexo's words ("start").
+    ongoing: list[str] = Field(default_factory=list[str], max_length=10)
 
 
 class FollowUpRequest(Wire):
@@ -61,7 +63,14 @@ class ReplyRequest(Wire):
 @router.post('/tip')
 async def tip(body: TipRequest) -> Answer:
     text = await nexo.tip(
-        body.kind, body.context, body.unlocked, body.route, body.focus, body.mark, body.recommended
+        body.kind,
+        body.context,
+        body.unlocked,
+        body.route,
+        body.focus,
+        body.mark,
+        body.recommended,
+        body.ongoing,
     )
     return Answer(text=text)
 

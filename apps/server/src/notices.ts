@@ -1,3 +1,4 @@
+import { ongoingObjectives } from '../../../shared/journey/ongoing.ts'
 import { focusAfter, tidy, todaysFocus } from './focus.ts'
 import {
   defineMessages,
@@ -50,6 +51,9 @@ const messages = defineMessages({
     tip: '**Dica**: {tip}',
     // The guide's tips for the stretch the player is in: a chapter's collectibles, a missable there.
     here: '📍 **Neste trecho do jogo**',
+    // The start notice's list of what keeps going the whole game: counters, collections, grinds.
+    ongoing: '🔁 **Pra ir fazendo ao longo da jornada**',
+    ongoingItem: '• **{trophy}**: {detail}',
     missable: '⚠️ **{trophy}** é perdível: {when}',
     almost: '**Quase lá**: {trophy}, {value} de {target}.',
     focusStill: 'A sugestão de próximo troféu continua sendo **{trophy}**.',
@@ -102,6 +106,8 @@ const messages = defineMessages({
       '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.',
     tip: '**Tip**: {tip}',
     here: '📍 **Where you are in the game**',
+    ongoing: '🔁 **Keep at these throughout the journey**',
+    ongoingItem: '• **{trophy}**: {detail}',
     missable: '⚠️ **{trophy}** is missable: {when}',
     almost: '**Almost there**: {trophy}, {value} of {target}.',
     focusStill: 'The suggested next trophy is still **{trophy}**.',
@@ -150,7 +156,28 @@ export const startNotice = (user: User, ctx: GameContext, firsts: GameContext['t
   const next = trophy
     ? t(behind ? 'focusNewBehind' : 'focusNew', { trophy: trophy.name, detail: trophy.detail })
     : undefined
-  return together(opening, next)
+  return together(opening, next, ongoingBlock(user, ongoingTrophies(ctx)))
+}
+
+// A handful, so the first notice stays short; the journey lists them all.
+const ONGOING_MAX = 4
+
+/** The trophies to keep at the whole game (counters, collections, grinds), by the same pick as the
+ * journey's "Throughout the journey". Without the trophy the next-trophy line already names. */
+export function ongoingTrophies(ctx: GameContext): GameContext['trophies'] {
+  const next = todaysFocus(ctx).trophy?.id
+  return ongoingObjectives(ctx.trophies, ctx.guide)
+    .map((x) => x.trophy)
+    .filter((t) => t.id !== next)
+    .slice(0, ONGOING_MAX)
+}
+
+/** The start notice's block with them, as written: Nexo would shorten it. */
+export function ongoingBlock(user: User, trophies: GameContext['trophies']): string | undefined {
+  if (!trophies.length) return undefined
+  const t = translator(messages, user)
+  const items = trophies.map((x) => t('ongoingItem', { trophy: tidy(x.name), detail: x.detail }))
+  return [t('ongoing'), ...items].join('\n')
 }
 
 // A game Nexo recommended this long ago, in a batch or as a pick, still counts as followed.
