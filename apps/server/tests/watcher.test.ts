@@ -526,6 +526,8 @@ describe('checkUser', () => {
     const tip = spyOn(nexo, 'proactiveTip').mockResolvedValue('Bora!')
     await checkUser(user)
     expect(tip.mock.calls[0][2]).toBe('Antes de começar:\n• Jogue no Difícil.')
+    // PSN lists a game once its first trophy pops: the start notice carries it.
+    expect(tip.mock.calls[0][5]?.map((t) => t.id)).toEqual([1, 2])
     expect(markTip).toHaveBeenCalledWith(user.id, 'NPWR1_00')
     expect(send.mock.calls).toEqual([['42', 'Bora!']])
     expect(saveEarned).toHaveBeenCalledWith(user.id, 'NPWR1_00', [1, 2])
@@ -550,9 +552,8 @@ describe('checkUser', () => {
     config.automatic.notices = false
     await checkUser(user)
     const text = logTip.mock.calls.find((c) => c[1] === 'start')?.[2] ?? ''
-    expect(text).toEndWith(
-      'Você começou Days Gone. O guia da platina está no PlatJourney.\n\nAntes de começar:\n• Jogue no Difícil.',
-    )
+    expect(text.split('\n\n')[1]).toStartWith('🏆 **Primeiro**')
+    expect(text).toEndWith('Antes de começar:\n• Jogue no Difícil.')
     expect(text.split('\n\n')[0]).toBe(followedNotice(user, game.id))
     expect(followedNotice(user, game.id)).toBe(followedNotice(user, game.id))
     expect(
@@ -678,14 +679,16 @@ describe('checkUser', () => {
     expect(send.mock.calls[0][1]).toStartWith('🏆 **Segundo**')
   })
 
-  test('with notices off, a new game gets a plain start notice', async () => {
+  test('with notices off, a new game gets a plain start notice with the trophies it came with', async () => {
     config.automatic.notices = false
     getTitle.mockResolvedValue(undefined)
     recent.mockResolvedValue([started()])
     await checkUser(user)
-    const text =
-      'Você começou Days Gone. O guia da platina está no PlatJourney.\n\nAntes de começar:\n• Jogue no Difícil.'
-    expect(logTip).toHaveBeenCalledWith(user.id, 'start', text, game.id)
+    const text = logTip.mock.calls.find((c) => c[1] === 'start')?.[2] ?? ''
+    expect(text).toStartWith(
+      '🏆 **Primeiro** (bronze, 50% de quem joga) em **Days Gone**\n🏆 **Segundo** (ouro, 12,5% de quem joga) em **Days Gone**',
+    )
+    expect(text).toEndWith('Antes de começar:\n• Jogue no Difícil.')
     expect(markTip).toHaveBeenCalled()
   })
 

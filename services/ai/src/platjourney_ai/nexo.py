@@ -386,8 +386,43 @@ def cite(text: str, used: list[Passage]) -> str:
     return re.sub(r'^([ \t]*(?:Fontes?|Sources?):[ \t]*)(.+)$', line, text, flags=re.M)
 
 
-def start_prompt(ctx: GameContext) -> str:
-    return f'O jogador acabou de começar {ctx.title.name} ({ctx.title.earned} troféus até agora). Mande uma mensagem curta e animada: pergunte o que ele achou até aqui, diga em uma linha como é a platina (dificuldade, horas, se tem missable) e dê 3 dicas concretas para quem está nas primeiras horas — principalmente missables e coisas que economizam tempo depois. Ele ainda não conhece os termos do jogo.'  # noqa: E501
+def start_prompt(
+    ctx: GameContext, unlocked: list[Trophy] | None = None, focus: Focus | None = None
+) -> str:
+    """The notice for a game just started. PSN lists a game only once its first trophy pops, so the
+    notice usually comes with it: the trophy is the message's title and our cheer opens it. It gives
+    Nexo's take on the platinum, never asks what the player thought: minutes in, there is nothing
+    to say yet."""
+    names = ', '.join(t.name for t in unlocked or [])
+    opening = (
+        f'O jogador acabou de começar {ctx.title.name} e já desbloqueou: {names}. A mensagem '
+        'já abre com o nome do troféu como título e uma frase nossa comemorando o primeiro '
+        'troféu: não comemore de novo e não repita o nome, vá direto ao conteúdo.'
+        if names
+        else f'O jogador acabou de começar {ctx.title.name}.'
+    )
+    if focus and focus.trophy:
+        m = focus.missable
+        warn = f'Avise em uma linha: {m.trophy} é perdível ({m.when}). ' if m else ''
+        trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
+        target = (
+            f'{warn}Depois, aponte como próximo troféu {focus.trophy} ({focus.detail}), em '
+            f'negrito, e diga em uma linha como pegar.{trick} Não sugira outro troféu como '
+            'próximo alvo.'
+        )
+    else:
+        target = (
+            'Depois, aponte UM próximo troféu da lista, em negrito, que faz sentido no começo '
+            'do jogo, e diga em uma linha como pegar.'
+        )
+    return (
+        f'{opening} Mande uma mensagem curta. Primeiro, a sua opinião sincera sobre a platina '
+        'em uma ou duas linhas: dificuldade, horas, se tem perdível, e o que ela tem de bom ou '
+        'de chato pelo guia (o grind, um troféu que pede paciência). Não pergunte o que o '
+        f'jogador achou do jogo. {target} Feche com até 2 dicas concretas para as primeiras '
+        'horas, principalmente perdíveis e o que economiza tempo depois. Ele ainda não conhece '
+        'os termos do jogo.'
+    )
 
 
 # The guide's standout trophies, as the unlock notice calls them out.
@@ -750,7 +785,7 @@ async def tip(
     `recommended`, the game started was Nexo's recommendation and the notice says it is glad."""
     match kind:
         case 'start':
-            prompt = start_prompt(ctx)
+            prompt = start_prompt(ctx, unlocked, focus)
             if recommended:
                 prompt += recommended_prompt(recommended)
         case 'unlock':

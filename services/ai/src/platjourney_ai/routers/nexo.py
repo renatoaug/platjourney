@@ -19,11 +19,11 @@ class Answer(Wire):
 class TipRequest(Wire):
     kind: Literal['start', 'unlock']
     context: GameContext
-    # The trophies just unlocked ("unlock").
+    # The trophies just unlocked; on "start", the first ones, which came with the game.
     unlocked: list[Trophy] = Field(default_factory=list[Trophy])
     # The guide's note on what comes next, to fold into the same message.
     route: str | None = None
-    # The session's focus, the server's pick ("unlock"): the notice names it, never another.
+    # The session's focus, the server's pick: the notice names it as the next trophy, never another.
     focus: nexo.Focus | None = None
     # The point of the journey this unlock reached, the server's pick ("unlock").
     mark: nexo.Mark | None = None

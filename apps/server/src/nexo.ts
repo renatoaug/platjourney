@@ -1,7 +1,7 @@
 import { AiError, ai } from './ai.ts'
 import { aiContext } from './ai-context.ts'
 import { tagged } from './costs.ts'
-import { focusAfter, storyTrophy, tidy } from './focus.ts'
+import { focusAfter, storyTrophy, tidy, todaysFocus } from './focus.ts'
 import type { Guide } from './guide.ts'
 import { hookFor } from './hooks.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
@@ -97,14 +97,34 @@ export async function proactiveTip(
   recommended?: { daysAgo: number; why: string },
   /** Sent as written after Nexo's words: the stretch's collectibles (watcher.ts). */
   after?: string,
+  /** The trophies the game came with: PSN lists a game only once its first trophy pops. */
+  firsts: TrophyStatus[] = [],
 ): Promise<string> {
+  // The next trophy is the server's, the same the session notice names.
+  const focus = todaysFocus(ctx)
   const said = await ask(user, 'tip', '/nexo/tip', {
     kind: 'start',
     context: aiContext(ctx, user),
+    ...(firsts.length ? { unlocked: firsts } : {}),
+    ...(focus.trophy
+      ? {
+          focus: {
+            trophy: focus.trophy.name,
+            detail: focus.trophy.detail,
+            trick: focus.trick,
+            missable: focus.missable,
+          },
+        }
+      : {}),
     ...(route ? { route } : {}),
     ...(recommended ? { recommended } : {}),
   })
-  const text = after ? `${said}\n\n${after}` : said
+  // The first trophy as the message's title with our cheer, as on any unlock notice.
+  const names = firsts.map((t) => t.name)
+  const titled = firsts.length
+    ? `${names.map((n) => `🏆 **${tidy(n)}**`).join('\n')}\n\n${markCheer(user, 'first')}\n\n${withoutTitle(said, names)}`
+    : said
+  const text = after ? `${titled}\n\n${after}` : titled
   await logTip(user.id, 'start', text, ctx.game.id)
   return text
 }
@@ -120,13 +140,11 @@ export async function unlockReaction(
   relief?: string,
 ): Promise<string> {
   // The target is the server's, the same the session notice named: Nexo does not pick another.
-  // When it is only the next chapter's story trophy and the checklist of that chapter follows, the
-  // checklist is the guidance: "finish chapter 5" says nothing the player does not know.
+  // Every notice names the next trophy. When it is only the next chapter's story trophy and the
+  // checklist of that chapter follows, the checklist is the guidance: the trophy goes without a trick.
   const target = focusAfter(ctx, unlocked)
   const focus =
-    after && storyTrophy(ctx.guide, target.trophy?.name)
-      ? { ...target, trophy: undefined, trick: undefined }
-      : target
+    after && storyTrophy(ctx.guide, target.trophy?.name) ? { ...target, trick: undefined } : target
   // The first trophy, halfway, the final stretch or the platinum: the notice marks it.
   const mark = progressMark(ctx.trophies, unlocked)
   const text = await ask(user, 'tip', '/nexo/tip', {

@@ -1,4 +1,4 @@
-import { focusAfter, storyTrophy, tidy, todaysFocus } from './focus.ts'
+import { focusAfter, tidy, todaysFocus } from './focus.ts'
 import {
   defineMessages,
   fmtRate,
@@ -139,8 +139,19 @@ type Named = Pick<GameContext, 'title'> & Partial<Pick<GameContext, 'game'>>
 // The catalog's name ("Days Gone"), not the trophy list's ("DAYS GONE").
 const gameName = (ctx: Named) => ctx.game?.name ?? ctx.title.name
 
-export const startNotice = (user: User, ctx: Named) =>
-  translator(messages, user)('started', { game: gameName(ctx) })
+/** The plain notice for a game just started: its first trophies when it came with some (PSN lists a
+ * game only once one pops), then the next trophy. */
+export const startNotice = (user: User, ctx: GameContext, firsts: GameContext['trophies'] = []) => {
+  const t = translator(messages, user)
+  const opening = firsts.length
+    ? together(unlockNotice(user, ctx, firsts), markNotice(user, ctx, firsts))
+    : t('started', { game: gameName(ctx) })
+  const { trophy, behind } = todaysFocus(ctx)
+  const next = trophy
+    ? t(behind ? 'focusNewBehind' : 'focusNew', { trophy: trophy.name, detail: trophy.detail })
+    : undefined
+  return together(opening, next)
+}
 
 // A game Nexo recommended this long ago, in a batch or as a pick, still counts as followed.
 const FOLLOWED_DAYS = 30
@@ -218,19 +229,12 @@ export function routeFor(user: User, ctx: GameContext, unlocked: string[], start
 }
 
 // The session's focus after these unlocks, for the plain notice: the same target the session notice
-// named, or the next one when the player just earned it.
-// With the next chapter's checklist in the same message, a focus that is only that chapter's story
-// trophy is left out: the checklist says more than "finish chapter 5".
-export const focusNotice = (
-  user: User,
-  ctx: GameContext,
-  unlocked: GameContext['trophies'],
-  checklist = false,
-) => {
+// named, or the next one when the player just earned it. Every notice names it.
+export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
   const t = translator(messages, user)
   const focus = focusAfter(ctx, unlocked)
   const done = focus.completed ? t('phaseDone', { phase: focus.completed }) : undefined
-  if (!focus.trophy || (checklist && storyTrophy(ctx.guide, focus.trophy.name))) return done
+  if (!focus.trophy) return done
   const next = !focus.changed
     ? t('focusStill', { trophy: focus.trophy.name })
     : focus.behind

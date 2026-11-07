@@ -86,12 +86,22 @@ interface News {
   latest: TitleProgress
   justStarted: boolean
   unlocked: GameContext['trophies']
+  /** On a game just started, the trophies it came with: PSN lists a game only once one pops. */
+  firsts: GameContext['trophies']
   route: ReturnType<typeof routeFor>
 }
 
 // One message per sweep: what happened, then the guide's note on what comes next.
 // Without Nexo's notices the player still hears about it, from a plain template.
-async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: News): Promise<void> {
+async function plainNews({
+  user,
+  ctx,
+  latest,
+  justStarted,
+  unlocked,
+  firsts,
+  route,
+}: News): Promise<void> {
   if (justStarted) {
     const followed = await followedRecommendation(user, ctx.game.id)
     await plainNotice(
@@ -99,7 +109,7 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
       'start',
       together(
         followed ? followedNotice(user, ctx.game.id) : undefined,
-        startNotice(user, ctx),
+        startNotice(user, ctx, firsts),
         route?.text,
         route?.collectibles,
       ),
@@ -114,7 +124,7 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
         unlockNotice(user, ctx, unlocked),
         missableCheer(user, ctx, unlocked),
         markNotice(user, ctx, unlocked),
-        focusNotice(user, ctx, unlocked, !!route?.collectibles),
+        focusNotice(user, ctx, unlocked),
         route?.text,
         route?.collectibles,
       ),
@@ -124,13 +134,28 @@ async function plainNews({ user, ctx, latest, justStarted, unlocked, route }: Ne
     await plainNotice(user, 'route', together(route.text, route.collectibles), ctx.game.id)
 }
 
-async function nexoNews({ user, ctx, latest, justStarted, unlocked, route }: News): Promise<void> {
+async function nexoNews({
+  user,
+  ctx,
+  latest,
+  justStarted,
+  unlocked,
+  firsts,
+  route,
+}: News): Promise<void> {
   if (justStarted) {
     console.log(`${user.psn_online_id}: new game ${latest.name}`)
     const followed = await followedRecommendation(user, ctx.game.id)
     await notify(
       user,
-      await proactiveTip(user, ctx, route?.text, followed ?? undefined, route?.collectibles),
+      await proactiveTip(
+        user,
+        ctx,
+        route?.text,
+        followed ?? undefined,
+        route?.collectibles,
+        firsts,
+      ),
     )
     await markTipSent(user.id, latest.npCommunicationId)
   } else if (unlocked.length > 0) {
@@ -207,6 +232,8 @@ async function check(user: User): Promise<void> {
   // (another game was in front then), and announcing its old trophies would be wrong.
   const watched = knownIds.size > 0 || prev?.earned === 0
   const unlocked = watched ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
+  // The start notice celebrates them: no trophy goes unannounced because it came with the game.
+  const firsts = justStarted ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
 
   const route = routeFor(
     user,
@@ -214,7 +241,7 @@ async function check(user: User): Promise<void> {
     unlocked.map((t) => t.name),
     justStarted,
   )
-  await tellNews({ user, ctx, latest, justStarted, unlocked, route })
+  await tellNews({ user, ctx, latest, justStarted, unlocked, firsts, route })
   await saveEarnedIds(user.id, latest.npCommunicationId, earnedIds)
   await sessionStart(user, ctx, justStarted)
 }
