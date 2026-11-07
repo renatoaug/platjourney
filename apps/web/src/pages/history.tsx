@@ -209,7 +209,7 @@ export function SelectedTipView({
 }) {
   const t = useMessages(messages)
   return (
-    <section className="card" aria-label={t('selected')}>
+    <section className="card history-selected" aria-label={t('selected')}>
       <h2>{t('selected')}</h2>
       {!tip ? (
         <TipSkeleton />
