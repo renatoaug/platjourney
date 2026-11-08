@@ -263,6 +263,30 @@ export function titleTrophies(title: TitleProgress, accountId: string): Promise<
 /** For tests: forgets cached trophy lists. */
 export const forgetTrophyLists = () => trophyLists.clear()
 
+/** Where the player is on each of a title's trophies, by id: one PSN call, without the names. */
+export async function titleCounters(
+  title: TitleProgress,
+  accountId: string,
+): Promise<Map<number, { progressValue?: number; progressRate?: number }>> {
+  const a = await auth()
+  const npServiceName = title.platform.includes('PS5') ? 'trophy2' : 'trophy'
+  const earned = await getUserTrophiesEarnedForTitle(a, accountId, title.npCommunicationId, 'all', {
+    npServiceName,
+  }).then(checked)
+  return new Map(
+    earned.trophies.map((t) => {
+      const p = t as ProgressFields
+      return [
+        t.trophyId,
+        {
+          progressValue: p.progress != null ? Number(p.progress) : undefined,
+          progressRate: p.progressRate != null ? Number(p.progressRate) : undefined,
+        },
+      ]
+    }),
+  )
+}
+
 async function fetchTitleTrophies(
   title: TitleProgress,
   accountId: string,

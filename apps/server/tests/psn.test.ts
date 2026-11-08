@@ -13,6 +13,7 @@ import {
   playedGames,
   profileSummary,
   recentTitles,
+  titleCounters,
   titleGroups,
   titleTrophies,
   trophiesVisible,
@@ -253,6 +254,24 @@ test('title trophies merge pt-BR and English names with what the player earned',
     rarity: 'Comum',
     earnedRate: 0,
   })
+})
+
+test('the counters of a title come from one call, without the trophy names', async () => {
+  const defs = spyOn(api, 'getTitleTrophies')
+  const earned = spyOn(api, 'getUserTrophiesEarnedForTitle').mockResolvedValue({
+    trophies: [
+      { trophyId: 1, earned: true },
+      { trophyId: 2, earned: false, progress: '21', progressRate: '42' },
+    ],
+  } as never)
+  const counters = await titleCounters(
+    makeTitle({ platform: 'PS5', npCommunicationId: 'NPT' }),
+    'acc',
+  )
+  expect(defs).not.toHaveBeenCalled()
+  expect(earned.mock.calls[0].slice(1)).toEqual(['acc', 'NPT', 'all', { npServiceName: 'trophy2' }])
+  expect(counters.get(1)).toEqual({ progressValue: undefined, progressRate: undefined })
+  expect(counters.get(2)).toEqual({ progressValue: 21, progressRate: 42 })
 })
 
 test('PS4 titles read their trophies from the old service', async () => {

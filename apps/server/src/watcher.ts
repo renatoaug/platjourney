@@ -6,6 +6,7 @@ import {
   dropChat,
   getChat,
   getCurrent,
+  refreshCounters,
   setCurrent,
   setCurrentFromPresence,
 } from './game-context.ts'
@@ -334,7 +335,8 @@ async function check(user: User): Promise<void> {
   const ctx =
     switched || titleChanged(prev, latest) || listStale(current, latest) || !current
       ? await setCurrent(user, latest)
-      : current
+      : // A failed read keeps the counters as they were; the next check tries again.
+        await refreshCounters(user, current).catch(() => current)
   // Playing another game brings the chat to it too; one picked from presence already did.
   if (switched && current && current.game.id !== ctx.game.id) dropChat(user.id)
 
