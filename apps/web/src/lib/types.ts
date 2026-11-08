@@ -138,6 +138,8 @@ export interface GuideDetail {
   tricks?: { trophy: string; trick: string; source?: string | null }[]
   /** What each base-game trophy asks of the player; older guides do not have it. */
   trophyKinds?: { trophy: string; kind: TrophyKind }[]
+  storyline?: { unit: string; total: number } | null
+  trophyPlaces?: { trophy: string; from: number; to?: number }[]
   buggy?: {
     trophy: string
     issue: string

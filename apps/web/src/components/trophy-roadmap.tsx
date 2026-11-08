@@ -1182,7 +1182,7 @@ export function TrophyRoadmap({
   const done = base.some((x) => x.type === 'platinum' && x.earned)
   const focus = roadmapFocus(game, done)
   const reference = stages.flatMap((s) => s.trophies)
-  const ordered = personalRoadmap(reference)
+  const ordered = personalRoadmap(reference, game.guide)
   const suggested = ordered.find(
     (x) => !x.earned && x.id === focus?.id && x.groupId === focus.groupId,
   )

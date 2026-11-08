@@ -5,16 +5,19 @@ import {
   trophyMatches,
   words,
 } from '../../../../shared/journey/ongoing'
+import { placedOrder } from '../../../../shared/journey/places'
 import type { GuideDetail, Trophy, TrophyKind } from './types'
 
-/** Base and extra-content tracks remain separate. Unfinished work keeps the guide's order: the
- * suggestion is marked where it falls, never moved ahead of a trophy the game unlocks before it.
- * The platinum closes the route even when PSN dates it with, or before, the trophy that unlocked it. */
-export function personalRoadmap(reference: Trophy[]) {
+/** Base and extra-content tracks remain separate. Unfinished work keeps the guide's order, or, when
+ * the guide places trophies along the game, the order they are expected to fall: a count sits where
+ * it should close, not where it starts. The suggestion is marked where it falls, never moved. The
+ * platinum closes the route even when PSN dates it with, or before, the trophy that unlocked it. */
+export function personalRoadmap(reference: Trophy[], guide?: GuideDetail | null) {
   return [false, true].flatMap((extra) => {
     const track = reference.filter((t) => (t.groupId !== 'default') === extra)
     const history = achievementHistory(track)
-    const pending = track.filter((t) => !t.earned)
+    const open = track.filter((t) => !t.earned)
+    const pending = extra ? open : placedOrder(open, track, guide)
     const route = [...history.dated, ...history.undated, ...pending]
     return [
       ...route.filter((t) => t.type !== 'platinum'),

@@ -435,6 +435,33 @@ describe('session start', () => {
     ).toBe('Capítulo')
   })
 
+  test('with places in the guide, the focus is the nearest trophy ahead of the player', () => {
+    const roadmap = [
+      { phase: 'Fase 2', goal: '', trophies: ['Memória', 'Golpe', 'Café', 'Príncipe'] },
+    ]
+    const trophies = [
+      makeTrophy({ id: 1, name: 'Memória', earned: true }),
+      makeTrophy({ id: 2, name: 'Golpe', progressValue: 0, progressTarget: 50 }),
+      makeTrophy({ id: 3, name: 'Café' }),
+      makeTrophy({ id: 4, name: 'Príncipe' }),
+    ]
+    const places = {
+      storyline: { unit: 'Missão', total: 35 },
+      trophyPlaces: [
+        { trophy: 'Memória', from: 12 },
+        { trophy: 'Golpe', from: 12, to: 30 },
+        { trophy: 'Café', from: 16 },
+        { trophy: 'Príncipe', from: 13 },
+      ],
+    }
+    const focus = (guide: object) =>
+      focusAfter({ trophies, guide: { roadmap, ...guide } } as never, []).trophy?.name
+    // The roadmap alone: the phase's first open trophy that is not a count left for later.
+    expect(focus({})).toBe('Golpe')
+    // Placed: mission 13 comes before mission 16, and the count closes by mission 30.
+    expect(focus(places)).toBe('Príncipe')
+  })
+
   test('a trophy notice keeps the session focus, and names the next one when it was earned', () => {
     const guide = {
       roadmap: [{ phase: 'F', goal: '', trophies: ['Terceiro', 'Quarto', 'Quinto'] }],

@@ -6,7 +6,7 @@ The journey is a map of a game's trophies that follows the player's progress. It
 
 | What the player sees | Source |
 |---|---|
-| Order of the route | `roadmap`, phase by phase, once per trophy, matched by unique exact name |
+| Order of the route | `roadmap`, phase by phase, once per trophy, matched by unique exact name; with `storyline` and `trophyPlaces`, what is left goes by the step where each trophy should fall (`shared/journey/places.ts`) |
 | Suggested next trophy | `todaysFocus`, the same target the session and trophy notices name |
 | Tips for a trophy | `tricks`, `missables`, `onlineTrophies`, `buggy` and the `milestones` tips that name it |
 | Steps that name the trophy | The lines of `roadmap.goal`, `earlyTips`, `collectibles` and general `milestones` tips that name it, at most three |
@@ -41,3 +41,15 @@ Measured on 2026-11-04 on a local copy of 1,137 guides, dated 2026-10-21, agains
 | Fewer than 90% of trophies placed | 7 games |
 
 The share of trophies with specific text is what a content round can raise: it needs the writing step only, since the passages are already indexed.
+
+## Places along the game
+
+A guide can say where each base-game trophy sits: `storyline` names the game's steps (`{ unit: "Missão", total: 35 }`) and `trophyPlaces` gives each trophy the step where it unlocks (`from`) or, for a count or a collection, the range it is worked on (`from`, `to`). A step past `total` is after the story.
+
+- **Where the player is**: the furthest step among the earned trophies of a single moment. A count can close anywhere, so it does not count. It is an estimate, never a claim about the save.
+- **Where an open trophy falls**: a trophy of a single moment, where it unlocks. A count, where its PSN counter reaches the target at the pace so far (never before the player nor its own start, and after the story when that pace would not close it in time); with no counter or no pace yet, the end of its range.
+- **The route** orders what is left by that step, a trophy of the moment before a count on the same step. A trophy the guide does not place keeps its spot after the placed one before it.
+- **The suggestion** is the nearest trophy at or after the player's step, after a missable of the current phase and a counter at 80% or more. With nothing ahead, the first one left behind.
+
+Guides without places keep the roadmap's order and the phase rule above.
+
