@@ -16,7 +16,7 @@ The journey is a map of a game's trophies that follows the player's progress. It
 
 ## How it adapts
 
-A new sync changes the earned flags and the counters. The server recomputes the focus: a missable open in the first phase with something left, then a PSN counter at 80% or more of its target from any phase (one horde left beats the next story trophy), then the next trophy in the guide's order. A trick does not move a trophy ahead, since a phase can span half the story. The route keeps the guide's order and marks the focus where it falls. Earned trophies leave the route's pending part and go to the history. Selecting a milestone or using the arrows never reorders anything.
+A new sync changes the earned flags and the counters. The server recomputes the focus: a missable open in the first phase with something left, then a PSN counter at 80% or more of its target from any phase (one horde left beats the next story trophy), then, with a dependency graph, the trophy behind the step that opens the most others, then with places the nearest one ahead, then the next trophy in the guide's order. A trick does not move a trophy ahead, since a phase can span half the story. The route keeps the guide's order and marks the focus where it falls. Earned trophies leave the route's pending part and go to the history. Selecting a milestone or using the arrows never reorders anything.
 
 Trophies do not say where the player is in the game. The route is a suggestion: it never claims a location, a save state or a guaranteed unlock order. Only PSN completes a trophy, and a full counter alone does not.
 
@@ -105,3 +105,20 @@ The route reads Príncipe, Café, Golpe Final, Paus e Pedras, Sacrifício, and t
 ### Without places
 
 Guides without `storyline` and `trophyPlaces`, or with a unit the app does not know, keep the roadmap's order and the focus rule in "How it adapts". The only visible change there is that a natural trophy with no tip reads "Comes naturally with the story." under its objective.
+
+## Dependencies between trophies
+
+Some games hang their trophies on branching lines played in any order, where a line of steps cannot say what comes first. For those, a guide can carry `trophyGraph`: `nodes` (quests, choices and trophies, named as the guide names them) and `edges` of three kinds. The decision is [ADR-014](../decisions/ADR-014-trophy-dependencies.md); the code is `shared/journey/graph.ts`.
+
+| Edge | Means | Example (Cyberpunk 2077) |
+|---|---|---|
+| `unlocks` | `to` needs `from` | Amor Ardente unlocks Rogue's route |
+| `anyOf` | `to` needs one of its `anyOf` parents | Temperança needs Panam's line or Rogue's route |
+| `closes` | once `from` is done, `to` can no longer be earned | Nocturne Op55N1 closes the endings |
+
+- **What is done**: PSN only reports trophies, never quests. A step counts as done when an earned trophy needed it; a trophy with several `anyOf` parents does not say which one was taken, so none is marked.
+- **The trophy panel** lists the steps still before an open trophy, nearest the start first, and the point that closes it: "First, go through Amor Ardente and Rogue's route. Only until Nocturne Op55N1." When that point has passed and the trophy is still open: "Not in this save anymore: Nocturne Op55N1 has passed."
+- **The suggestion**: among the steps the player can do now, the one that leads to the most open trophies, two at least. It names the nearest of those trophies, so the player gets something earnable. It comes after a missable in the open phase and a counter at 80% or more, and before places.
+- **The route order** does not change with a graph: it keeps places or the phase order.
+
+A graph the app cannot read (an edge to a node it does not list, an unknown kind) is ignored as a whole.

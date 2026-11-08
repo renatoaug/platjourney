@@ -1138,3 +1138,39 @@ test('with places in the guide, a trophy says when it falls instead of leaving a
   expect(when()).toBeUndefined()
   expect(container.querySelector('#roadmap-advice .roadmap-ask')).toBeTruthy()
 })
+
+test('with a graph in the guide, a trophy says what it still depends on and until when', () => {
+  const base = routeGame(['Primeiro Passo'])
+  const data: CurrentGame = {
+    ...base,
+    guide: {
+      ...(base.guide as GuideDetail),
+      trophyGraph: {
+        nodes: [
+          { id: 'ponte', label: 'Missão da ponte' },
+          { id: 'norte', label: 'linha do norte' },
+          { id: 'sul', label: 'linha do sul' },
+          { id: 'final', label: 'Último capítulo' },
+          { id: 'terceiro', label: 'Terceiro Ato', trophy: 'Terceiro Ato' },
+          { id: 'colecionador', label: 'Colecionador', trophy: 'Colecionador' },
+        ],
+        edges: [
+          { from: 'ponte', to: 'terceiro', kind: 'unlocks' },
+          { from: 'norte', to: 'colecionador', kind: 'anyOf' },
+          { from: 'sul', to: 'colecionador', kind: 'anyOf' },
+          { from: 'final', to: 'terceiro', kind: 'closes' },
+        ],
+      },
+    },
+  }
+  const { container } = renderApp(<TrophyRoadmap game={data} />)
+  const needs = () => container.querySelector('.roadmap-needs')?.textContent
+  const route = screen.getByRole('list', { name: 'Rota completa' })
+  const pick = (name: RegExp) => fireEvent.click(within(route).getByRole('button', { name }))
+  pick(/^Terceiro Ato/)
+  expect(needs()).toBe('Antes, passe por Missão da ponte. Só dá até Último capítulo.')
+  pick(/^Colecionador/)
+  expect(needs()).toBe('Antes, passe por linha do norte ou linha do sul.')
+  pick(/^Perito/)
+  expect(needs()).toBeUndefined()
+})

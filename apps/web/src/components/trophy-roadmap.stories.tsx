@@ -230,3 +230,31 @@ export const PlacedAlongTheGame: Story = {
     },
   },
 }
+
+// A guide with a dependency graph: a trophy lists the steps still before it and where it closes.
+export const DependsOnOtherTrophies: Story = {
+  args: {
+    game: {
+      ...placed,
+      guide: placed.guide && {
+        ...placed.guide,
+        trophyGraph: {
+          nodes: [
+            { id: 'ponte', label: 'Missão da ponte' },
+            { id: 'norte', label: 'linha do norte' },
+            { id: 'sul', label: 'linha do sul' },
+            { id: 'final', label: 'Último capítulo' },
+            { id: 'terceiro', label: 'Terceiro Ato', trophy: 'Terceiro Ato' },
+            { id: 'colecionador', label: 'Colecionador', trophy: 'Colecionador' },
+          ],
+          edges: [
+            { from: 'ponte', to: 'terceiro', kind: 'unlocks' },
+            { from: 'norte', to: 'colecionador', kind: 'anyOf' },
+            { from: 'sul', to: 'colecionador', kind: 'anyOf' },
+            { from: 'final', to: 'terceiro', kind: 'closes' },
+          ],
+        },
+      },
+    },
+  },
+}
