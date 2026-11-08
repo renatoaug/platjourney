@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.56.0](https://github.com/renatoaug/platjourney/compare/v0.55.1...v0.56.0) (2026-11-08)
+
+### Features
+
+* **server:** suggest the next trophy in guide order or an almost full counter ([#151](https://github.com/renatoaug/platjourney/issues/151)) ([718c879](https://github.com/renatoaug/platjourney/commit/718c879c1ce517b33fa6ff06cdb484a2e5e193fa))
+
 ## [0.55.1](https://github.com/renatoaug/platjourney/compare/v0.55.0...v0.55.1) (2026-11-08)
 
 ### Bug Fixes
