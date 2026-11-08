@@ -375,7 +375,8 @@ export function sessionNotice(user: User, game: string, ctx?: GameContext, again
   // The tracked trophy closest to done, past halfway.
   const almost = missing
     .filter(
-      (x) => x.progressTarget && x !== focus && (x.progressValue ?? 0) / x.progressTarget >= 0.5,
+      (x) =>
+        x.progressTarget && x.id !== focus?.id && (x.progressValue ?? 0) / x.progressTarget >= 0.5,
     )
     .sort(
       (a, b) =>

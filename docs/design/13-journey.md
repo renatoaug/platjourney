@@ -16,7 +16,7 @@ The journey is a map of a game's trophies that follows the player's progress. It
 
 ## How it adapts
 
-A new sync changes the earned flags. The server recomputes the focus, the route moves that trophy to the front of what is left, and the rest keeps the guide's order. Earned trophies leave the route's pending part and go to the history. Selecting a milestone or using the arrows never reorders anything.
+A new sync changes the earned flags and the counters. The server recomputes the focus: a missable open in the first phase with something left, then a PSN counter at 80% or more of its target from any phase (one horde left beats the next story trophy), then the next trophy in the guide's order. A trick does not move a trophy ahead, since a phase can span half the story. The route keeps the guide's order and marks the focus where it falls. Earned trophies leave the route's pending part and go to the history. Selecting a milestone or using the arrows never reorders anything.
 
 Trophies do not say where the player is in the game. The route is a suggestion: it never claims a location, a save state or a guaranteed unlock order. Only PSN completes a trophy, and a full counter alone does not.
 

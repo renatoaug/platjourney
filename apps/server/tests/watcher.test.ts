@@ -366,7 +366,7 @@ describe('session start', () => {
     )
   })
 
-  test('the focus is a missable first, then a trophy with a trick, then the next in order', () => {
+  test('the focus is a missable first, then the next in order, even when a later one has a trick', () => {
     const base = [
       makeTrophy({ id: 3, name: 'Terceiro' }),
       makeTrophy({ id: 4, name: 'Quarto' }),
@@ -385,13 +385,54 @@ describe('session start', () => {
         .split('deve ser **')[1]
         .split('**')[0]
     expect(focusOf({})).toBe('Terceiro')
-    expect(focusOf({ tricks: [{ trophy: 'Quinto', trick: 't', source: '' }] })).toBe('Quinto')
+    // A phase can span half the story: a trick further down it is not something to do now.
+    expect(focusOf({ tricks: [{ trophy: 'Quinto', trick: 't', source: '' }] })).toBe('Terceiro')
     expect(
       focusOf({
         tricks: [{ trophy: 'Quinto', trick: 't', source: '' }],
         missables: [{ trophy: 'Quarto', when: 'já', how: '' }],
       }),
     ).toBe('Quarto')
+  })
+
+  test('a counter almost full is the focus, from any phase, unless a missable is open', () => {
+    const guide = {
+      roadmap: [
+        { phase: 'Fase 1 — História', goal: '', trophies: ['Capítulo', 'Atirador'] },
+        { phase: 'Fase 2 — Hordas', goal: '', trophies: ['Horda'] },
+      ],
+    }
+    const ctxWith = (horde: number, extra: object = {}) =>
+      ({
+        trophies: [
+          makeTrophy({ id: 1, name: 'Capítulo' }),
+          makeTrophy({ id: 2, name: 'Atirador', progressValue: 30, progressTarget: 50 }),
+          makeTrophy({ id: 3, name: 'Horda', progressValue: horde, progressTarget: 40 }),
+        ],
+        guide: { ...guide, ...extra },
+      }) as never as Parameters<typeof focusAfter>[0]
+    // One horde left: it beats the next story trophy, and its phase comes with it.
+    expect(focusAfter(ctxWith(39), [])).toMatchObject({
+      trophy: { name: 'Horda' },
+      phase: 'Fase 2',
+      behind: false,
+    })
+    // Halfway is not almost done: the guide's order holds (30/50 is not enough either).
+    expect(focusAfter(ctxWith(20), []).trophy?.name).toBe('Capítulo')
+    // The session notice names it once, as the suggestion, not again as almost done.
+    const notice = sessionNotice(user, 'x', {
+      game,
+      title: makeTitle(),
+      ...(ctxWith(39) as object),
+    } as never)
+    expect(notice).toContain('deve ser **Horda**')
+    expect(notice).not.toContain('**Quase lá**: Horda')
+    expect(notice).toContain('**Quase lá**: Atirador, 30 de 50.')
+    // A missable in the current phase is still first.
+    expect(
+      focusAfter(ctxWith(39, { missables: [{ trophy: 'Capítulo', when: 'já', how: '' }] }), [])
+        .trophy?.name,
+    ).toBe('Capítulo')
   })
 
   test('a trophy notice keeps the session focus, and names the next one when it was earned', () => {
@@ -416,25 +457,25 @@ describe('session start', () => {
           }),
         ),
       }) as never as Parameters<typeof focusNotice>[1]
-    // The session named Quarto (it has a trick). Earning Terceiro does not move it.
-    const other = ctxWith([3])
-    expect(focusAfter(other, [other.trophies[0]])).toMatchObject({
+    // The session named Terceiro, the first in order. Earning Quarto out of order does not move it.
+    const other = ctxWith([4])
+    expect(focusAfter(other, [other.trophies[1]])).toMatchObject({
       phase: 'F',
       changed: false,
+      trophy: { name: 'Terceiro' },
+    })
+    expect(focusNotice(user, other, [other.trophies[1]])).toBe(
+      'A sugestão de próximo troféu continua sendo **Terceiro**.',
+    )
+    // Earning Terceiro, the focus, names the next one by the same rule, with its trick.
+    const same = ctxWith([3])
+    expect(focusAfter(same, [same.trophies[0]])).toMatchObject({
+      changed: true,
       trophy: { name: 'Quarto' },
       trick: 'Use o arco.',
     })
-    expect(focusNotice(user, other, [other.trophies[0]])).toBe(
-      'A sugestão de próximo troféu continua sendo **Quarto**.',
-    )
-    // Earning Quarto, the focus, names the next one by the same rule.
-    const same = ctxWith([4])
-    expect(focusAfter(same, [same.trophies[1]])).toMatchObject({
-      changed: true,
-      trophy: { name: 'Quinto' },
-    })
-    expect(focusNotice(user, same, [same.trophies[1]])).toBe(
-      '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Quinto**.\nFaça o 5',
+    expect(focusNotice(user, same, [same.trophies[0]])).toContain(
+      '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **Quarto**.',
     )
     // Nothing left in the base game: no focus line, only the phase that just closed.
     const all = ctxWith([3, 4, 5])
