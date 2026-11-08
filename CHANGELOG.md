@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.57.0](https://github.com/renatoaug/platjourney/compare/v0.56.0...v0.57.0) (2026-11-08)
+
+### Features
+
+* **web:** place trophies along the game and suggest the nearest ahead ([#152](https://github.com/renatoaug/platjourney/issues/152)) ([7c2d16f](https://github.com/renatoaug/platjourney/commit/7c2d16ffd166b4c383efb0d1de6a29ae911c31ba))
+
 ## [0.56.0](https://github.com/renatoaug/platjourney/compare/v0.55.1...v0.56.0) (2026-11-08)
 
 ### Features
