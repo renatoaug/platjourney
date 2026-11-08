@@ -6,7 +6,7 @@ import { ensureGuide, type Guide } from './guide.ts'
 import { library } from './library.ts'
 import type { GameContext } from './nexo.ts'
 import { hours, playtimes } from './playtime.ts'
-import { catalogTrophies, type TitleProgress } from './psn.ts'
+import { catalogTrophies, type TitleProgress, titleCounters } from './psn.ts'
 import { loadGroups } from './ranking.ts'
 import { type Game, gameForTitle } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
@@ -60,6 +60,27 @@ export async function setCurrent(user: User, title: TitleProgress): Promise<Game
   const ctx = await loadContext(user, title)
   contexts.set(user.id, ctx)
   return ctx
+}
+
+// A counter (50 headshots) moves without a new trophy, and PSN's summary of the title stays the
+// same, so the loaded list would keep the old count. The counters still open on the game being
+// played are read again on each check; the rest of the context stays as it is.
+export async function refreshCounters(user: User, ctx: GameContext): Promise<GameContext> {
+  const open = (t: GameContext['trophies'][number]) => !!t.progressTarget && !t.earned
+  if (isDemo(user) || ctx.unlisted || !ctx.trophies.some(open)) return ctx
+  const counters = await titleCounters(ctx.title, user.psn_account_id)
+  let changed = false
+  const trophies = ctx.trophies.map((t) => {
+    const now = open(t) ? counters.get(t.id) : undefined
+    if (now?.progressValue === undefined || now.progressValue === t.progressValue) return t
+    changed = true
+    return { ...t, progressValue: now.progressValue, progressRate: now.progressRate }
+  })
+  // Another check may have loaded a new context meanwhile: that one is newer.
+  if (!changed || contexts.get(user.id) !== ctx) return ctx
+  const next = { ...ctx, trophies }
+  contexts.set(user.id, next)
+  return next
 }
 
 // The game PSN presence shows the player in before its trophy list reaches their profile (a new

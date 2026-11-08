@@ -121,6 +121,7 @@ beforeEach(() => {
       ],
     ]),
   )
+  spyOn(psn, 'titleCounters').mockResolvedValue(new Map())
   getTitle = spyOn(titles, 'getTitle').mockResolvedValue(row())
   spyOn(titles, 'upsertTitle').mockResolvedValue(row())
   saveEarned = spyOn(titles, 'saveEarnedIds').mockResolvedValue(undefined)
@@ -775,6 +776,54 @@ describe('checkUser', () => {
     await checkUser(user)
     expect(getCurrent(user)).toBe(ctx)
     expect(psn.titleTrophies).toHaveBeenCalledTimes(1)
+    // No counter is open, so PSN is not asked for them.
+    expect(psn.titleCounters).not.toHaveBeenCalled()
+  })
+
+  describe('a counter that moves without a new trophy', () => {
+    const counted = [
+      ...trophies.slice(0, 2),
+      makeTrophy({ id: 3, name: 'Pá, Pum', progressTarget: 50, progressValue: 4 }),
+    ]
+    const unchanged = () => {
+      spyOn(psn, 'titleTrophies').mockResolvedValue(counted)
+      recent.mockResolvedValue([makeTitle({ earned: 2 })])
+      getTitle.mockResolvedValue(
+        row({ earned_ids: [1, 2], earned: 2, last_updated_at: '2026-05-01T10:00:00.000Z' }),
+      )
+    }
+
+    test('is read again on the next check, with the rest of the context as it was', async () => {
+      unchanged()
+      await checkUser(user)
+      const before = getCurrent(user)
+      spyOn(psn, 'titleCounters').mockResolvedValue(
+        new Map([[3, { progressValue: 21, progressRate: 42 }]]),
+      )
+      await checkUser(user)
+      const after = getCurrent(user)
+      expect(after?.trophies.find((t) => t.id === 3)).toMatchObject({
+        progressValue: 21,
+        progressRate: 42,
+      })
+      expect(after?.guide).toBe(before?.guide)
+      expect(after?.trophies[0]).toBe(before?.trophies[0])
+      expect(psn.titleTrophies).toHaveBeenCalledTimes(1)
+      // The list loaded first is never changed in place.
+      expect(counted[2].progressValue).toBe(4)
+    })
+
+    test('the same count, or a failed read, keeps the context as it was', async () => {
+      unchanged()
+      await checkUser(user)
+      const ctx = getCurrent(user)
+      spyOn(psn, 'titleCounters').mockResolvedValue(new Map([[3, { progressValue: 4 }]]))
+      await checkUser(user)
+      expect(getCurrent(user)).toBe(ctx)
+      spyOn(psn, 'titleCounters').mockRejectedValue(new Error('PSN down'))
+      await checkUser(user)
+      expect(getCurrent(user)).toBe(ctx)
+    })
   })
 
   test('a route tip that fails to send is skipped', async () => {
