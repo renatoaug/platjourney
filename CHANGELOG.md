@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.58.0](https://github.com/renatoaug/platjourney/compare/v0.57.0...v0.58.0) (2026-11-08)
+
+### Features
+
+* **web:** say what a trophy depends on when the guide has a graph ([#153](https://github.com/renatoaug/platjourney/issues/153)) ([1fe0d27](https://github.com/renatoaug/platjourney/commit/1fe0d27e6fd16a32b2d920e2d07565a59bd1894e))
+
 ## [0.57.0](https://github.com/renatoaug/platjourney/compare/v0.56.0...v0.57.0) (2026-11-08)
 
 ### Features
