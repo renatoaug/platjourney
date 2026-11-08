@@ -20,9 +20,10 @@ interface PhaseLeft {
 interface Focus {
   // Base-game trophies still open in each roadmap phase, in the roadmap's order, open ones only.
   phases: PhaseLeft[]
-  // The first phase with a trophy open: a missable there first, then the next one in the guide's
-  // order. A phase can span half the story, so a trophy with a trick further down it is not
-  // something to do now. Trophies the roadmap leaves to a later phase wait for it.
+  // The first phase with a trophy open: a missable there first, then a counter almost full (one
+  // horde left), from any phase, then the next one in the guide's order. A phase can span half the
+  // story, so a trophy with a trick further down it is not something to do now. Trophies the
+  // roadmap leaves to a later phase wait for it.
   trophy?: TrophyStatus
   trick?: string
   // The short name of the phase the focus belongs to, and whether the player already has trophies
@@ -46,6 +47,43 @@ export function storyTrophy(guide: Pick<Guide, 'milestones'> | undefined, name?:
 }
 
 const shortName = (phase: string) => tidy(phase.split(/\s[—–-]\s/)[0])
+
+// A counter this close to its target is the trophy most likely to fall next, wherever the guide
+// places it: what is left is a few kills, not a stretch of the game.
+const ALMOST = 0.8
+
+// How full an open counter is, from 0 to 1; undefined when PSN gives no count for it.
+function fill(t: TrophyStatus): number | undefined {
+  if (!t.progressTarget || t.progressTarget <= 1 || t.progressValue === undefined) return undefined
+  return Math.min(t.progressValue / t.progressTarget, 1)
+}
+
+// The fullest open counter the roadmap places, when one is almost done. Hidden ones stay out:
+// naming them would spoil what the player chose not to see.
+function almostFull(roadmap: { trophies: string[] }[], open: Map<string, TrophyStatus>) {
+  const best = roadmap
+    .flatMap((r) => r.trophies)
+    .map((n) => open.get(n))
+    .filter((t): t is TrophyStatus => !!t && !t.hidden && (fill(t) ?? 0) >= ALMOST)
+    .sort((a, b) => (fill(b) ?? 0) - (fill(a) ?? 0))[0]
+  return best && tidy(best.name)
+}
+
+// The phase the focus belongs to (the first one open, unless an almost full counter came from
+// another), and whether the player already has trophies from a later phase.
+function placeOf<R extends { trophies: string[] }>(
+  roadmap: R[],
+  name: string | undefined,
+  at: number,
+  earned: Set<string>,
+) {
+  const owner = name ? roadmap.findIndex((r) => r.trophies.includes(name)) : -1
+  const index = owner >= at ? owner : at
+  const home = roadmap[index] as R | undefined
+  const behind =
+    !!home && roadmap.slice(index + 1).some((r) => r.trophies.some((n) => earned.has(n)))
+  return { home, behind }
+}
 
 export function todaysFocus(ctx: Pick<GameContext, 'trophies' | 'guide'>): Focus {
   const base = ctx.trophies.filter((x) => x.groupId === 'default' && x.type !== 'platinum')
@@ -74,16 +112,16 @@ export function todaysFocus(ctx: Pick<GameContext, 'trophies' | 'guide'>): Focus
   const missableNames = new Set((guide?.missables ?? []).map((m) => tidy(m.trophy)))
   const trickFor = (n: string) =>
     guide?.tricks?.find((x) => tidy(x.trophy) === n || x.trophy === open.get(n)?.nameEn)
-  const name = inPhase.find((n) => missableNames.has(n)) ?? inPhase[0]
+  const name = inPhase.find((n) => missableNames.has(n)) ?? almostFull(roadmap, open) ?? inPhase[0]
   const trophy = name ? open.get(name) : undefined
-  const behind = !!first && roadmap.slice(at + 1).some((r) => r.trophies.some((n) => earned.has(n)))
+  const { home, behind } = placeOf(roadmap, name, at, earned)
   const missables = (guide?.missables ?? []).filter((m) => open.has(tidy(m.trophy)))
   const missable = missables.find((m) => first?.trophies.includes(tidy(m.trophy)))
   return {
     phases,
     ...(trophy ? { trophy: { ...trophy, name: tidy(trophy.name) } } : {}),
     ...(trophy && name && trickFor(name) ? { trick: trickFor(name)?.trick } : {}),
-    ...(trophy && first ? { phase: shortName(first.phase), behind } : {}),
+    ...(trophy && home ? { phase: shortName(home.phase), behind } : {}),
     ...(missable ? { missable: { trophy: tidy(missable.trophy), when: missable.when } } : {}),
   }
 }

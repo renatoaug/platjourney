@@ -395,6 +395,46 @@ describe('session start', () => {
     ).toBe('Quarto')
   })
 
+  test('a counter almost full is the focus, from any phase, unless a missable is open', () => {
+    const guide = {
+      roadmap: [
+        { phase: 'Fase 1 — História', goal: '', trophies: ['Capítulo', 'Atirador'] },
+        { phase: 'Fase 2 — Hordas', goal: '', trophies: ['Horda'] },
+      ],
+    }
+    const ctxWith = (horde: number, extra: object = {}) =>
+      ({
+        trophies: [
+          makeTrophy({ id: 1, name: 'Capítulo' }),
+          makeTrophy({ id: 2, name: 'Atirador', progressValue: 30, progressTarget: 50 }),
+          makeTrophy({ id: 3, name: 'Horda', progressValue: horde, progressTarget: 40 }),
+        ],
+        guide: { ...guide, ...extra },
+      }) as never as Parameters<typeof focusAfter>[0]
+    // One horde left: it beats the next story trophy, and its phase comes with it.
+    expect(focusAfter(ctxWith(39), [])).toMatchObject({
+      trophy: { name: 'Horda' },
+      phase: 'Fase 2',
+      behind: false,
+    })
+    // Halfway is not almost done: the guide's order holds (30/50 is not enough either).
+    expect(focusAfter(ctxWith(20), []).trophy?.name).toBe('Capítulo')
+    // The session notice names it once, as the suggestion, not again as almost done.
+    const notice = sessionNotice(user, 'x', {
+      game,
+      title: makeTitle(),
+      ...(ctxWith(39) as object),
+    } as never)
+    expect(notice).toContain('deve ser **Horda**')
+    expect(notice).not.toContain('**Quase lá**: Horda')
+    expect(notice).toContain('**Quase lá**: Atirador, 30 de 50.')
+    // A missable in the current phase is still first.
+    expect(
+      focusAfter(ctxWith(39, { missables: [{ trophy: 'Capítulo', when: 'já', how: '' }] }), [])
+        .trophy?.name,
+    ).toBe('Capítulo')
+  })
+
   test('a trophy notice keeps the session focus, and names the next one when it was earned', () => {
     const guide = {
       roadmap: [{ phase: 'F', goal: '', trophies: ['Terceiro', 'Quarto', 'Quinto'] }],
