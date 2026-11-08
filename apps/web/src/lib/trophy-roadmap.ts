@@ -7,14 +7,14 @@ import {
 } from '../../../../shared/journey/ongoing'
 import type { GuideDetail, Trophy, TrophyKind } from './types'
 
-/** Base and extra-content tracks remain separate. Priority only affects unfinished work, and the
- * platinum closes the route even when PSN dates it with, or before, the trophy that unlocked it. */
-export function personalRoadmap(reference: Trophy[], remaining: Trophy[] = []) {
+/** Base and extra-content tracks remain separate. Unfinished work keeps the guide's order: the
+ * suggestion is marked where it falls, never moved ahead of a trophy the game unlocks before it.
+ * The platinum closes the route even when PSN dates it with, or before, the trophy that unlocked it. */
+export function personalRoadmap(reference: Trophy[]) {
   return [false, true].flatMap((extra) => {
     const track = reference.filter((t) => (t.groupId !== 'default') === extra)
     const history = achievementHistory(track)
-    const priority = remaining.filter((t) => !t.earned && track.includes(t))
-    const pending = [...priority, ...track.filter((t) => !t.earned && !priority.includes(t))]
+    const pending = track.filter((t) => !t.earned)
     const route = [...history.dated, ...history.undated, ...pending]
     return [
       ...route.filter((t) => t.type !== 'platinum'),

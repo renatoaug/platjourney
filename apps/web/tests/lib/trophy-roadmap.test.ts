@@ -165,7 +165,7 @@ test('start guidance links explicit unique trophy names without matching parts o
   expect(ongoingObjectives([items[0], { ...items[0], id: 9 }], g)).toEqual([])
 })
 
-test('personal route separates confirmed dates, undated history, pending priorities and DLC', () => {
+test('personal route separates confirmed dates, undated history, pending work in guide order and DLC', () => {
   const a = trophy(1, 'Later achievement', { earned: true, earnedAt: '2024-01-03T12:00:00Z' })
   const b = trophy(9, 'Earlier achievement', { earned: true, earnedAt: '2024-01-02T12:00:00Z' })
   const unknown = trophy(2, 'Undated', { earned: true })
@@ -178,7 +178,7 @@ test('personal route separates confirmed dates, undated history, pending priorit
   })
   const source = [a, future, unknown, b, next, extra]
   const before = structuredClone(source)
-  expect(personalRoadmap(source, [next, future])).toEqual([b, a, unknown, next, future, extra])
+  expect(personalRoadmap(source)).toEqual([b, a, unknown, future, next, extra])
   expect(source).toEqual(before)
   const preview = source.map((t) => ({ ...t, earned: false, earnedAt: undefined }))
   expect(personalRoadmap(preview)).toEqual(preview)
@@ -257,9 +257,6 @@ test('the platinum closes the route, even earned at the same moment as the last 
     trophy(2, 'Último', { earned: true, earnedAt: at }),
   ])
   expect(route.map((t) => t.name)).toEqual(['Primeiro', 'Último', 'Platina'])
-  const pending = personalRoadmap(
-    [trophy(0, 'Platina', { type: 'platinum' }), trophy(1, 'Falta')],
-    [trophy(0, 'Platina', { type: 'platinum' })],
-  )
+  const pending = personalRoadmap([trophy(0, 'Platina', { type: 'platinum' }), trophy(1, 'Falta')])
   expect(pending.map((t) => t.name)).toEqual(['Falta', 'Platina'])
 })

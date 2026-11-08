@@ -1151,13 +1151,6 @@ function roadmapFocus(game: RoadmapGame, done: boolean) {
   return game.focus?.trophy
 }
 
-function roadmapOrder(reference: Trophy[], focus?: Trophy) {
-  return personalRoadmap(
-    reference,
-    focus ? reference.filter((x) => x.id === focus.id && x.groupId === focus.groupId) : [],
-  )
-}
-
 export function TrophyRoadmap({
   game: source,
   preview = false,
@@ -1189,7 +1182,7 @@ export function TrophyRoadmap({
   const done = base.some((x) => x.type === 'platinum' && x.earned)
   const focus = roadmapFocus(game, done)
   const reference = stages.flatMap((s) => s.trophies)
-  const ordered = roadmapOrder(reference, focus)
+  const ordered = personalRoadmap(reference)
   const suggested = ordered.find(
     (x) => !x.earned && x.id === focus?.id && x.groupId === focus.groupId,
   )

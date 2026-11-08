@@ -20,9 +20,9 @@ interface PhaseLeft {
 interface Focus {
   // Base-game trophies still open in each roadmap phase, in the roadmap's order, open ones only.
   phases: PhaseLeft[]
-  // The first phase with a trophy open: a missable there first, then a trophy the guide has a
-  // trick for, then the next one in order (story trophies come by themselves and say little).
-  // Trophies the roadmap leaves to a later phase wait for it.
+  // The first phase with a trophy open: a missable there first, then the next one in the guide's
+  // order. A phase can span half the story, so a trophy with a trick further down it is not
+  // something to do now. Trophies the roadmap leaves to a later phase wait for it.
   trophy?: TrophyStatus
   trick?: string
   // The short name of the phase the focus belongs to, and whether the player already has trophies
@@ -74,8 +74,7 @@ export function todaysFocus(ctx: Pick<GameContext, 'trophies' | 'guide'>): Focus
   const missableNames = new Set((guide?.missables ?? []).map((m) => tidy(m.trophy)))
   const trickFor = (n: string) =>
     guide?.tricks?.find((x) => tidy(x.trophy) === n || x.trophy === open.get(n)?.nameEn)
-  const name =
-    inPhase.find((n) => missableNames.has(n)) ?? inPhase.find((n) => trickFor(n)) ?? inPhase[0]
+  const name = inPhase.find((n) => missableNames.has(n)) ?? inPhase[0]
   const trophy = name ? open.get(name) : undefined
   const behind = !!first && roadmap.slice(at + 1).some((r) => r.trophies.some((n) => earned.has(n)))
   const missables = (guide?.missables ?? []).filter((m) => open.has(tidy(m.trophy)))
