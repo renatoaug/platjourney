@@ -324,6 +324,7 @@ export type Target =
   | 'TrophyHeading'
   | 'TrophyList'
   | 'TrophyListSkeleton'
+  | 'TrophyNeedsLine'
   | 'TrophyPager'
   | 'TrophyRarity'
   | 'TrophyRoadmap'

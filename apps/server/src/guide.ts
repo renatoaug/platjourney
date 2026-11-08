@@ -1,3 +1,4 @@
+import type { TrophyGraph } from '../../../shared/journey/graph.ts'
 import type { StoryUnit } from '../../../shared/journey/places.ts'
 import { ai } from './ai.ts'
 import { tagged } from './costs.ts'
@@ -76,6 +77,9 @@ export interface Guide {
   // none, and the journey then follows the roadmap's order (shared/journey/places.ts).
   storyline?: { unit: StoryUnit; total: number } | null
   trophyPlaces?: { trophy: string; from: number; to?: number }[]
+  // What each trophy depends on, for games of branching lines played in any order: the quests and
+  // choices that lead to it and the point that closes it (shared/journey/graph.ts, ADR-014).
+  trophyGraph?: TrophyGraph | null
   // One entry per trophy. Guides from before 2026-09-29 have no date or status.
   buggy: {
     trophy: string

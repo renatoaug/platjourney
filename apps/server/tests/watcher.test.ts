@@ -460,6 +460,21 @@ describe('session start', () => {
     expect(focus({})).toBe('Golpe')
     // Placed: mission 13 comes before mission 16, and the count closes by mission 30.
     expect(focus(places)).toBe('Príncipe')
+    // A graph wins over places: Café sits behind a step that opens two trophies.
+    const graph = {
+      trophyGraph: {
+        nodes: [
+          { id: 'q', label: 'Missão do cofre' },
+          { id: 'c', label: 'Café', trophy: 'Café' },
+          { id: 'g', label: 'Golpe', trophy: 'Golpe' },
+        ],
+        edges: [
+          { from: 'q', to: 'c', kind: 'unlocks' },
+          { from: 'q', to: 'g', kind: 'unlocks' },
+        ],
+      },
+    }
+    expect(focus({ ...places, ...graph })).toBe('Café')
   })
 
   test('a trophy notice keeps the session focus, and names the next one when it was earned', () => {

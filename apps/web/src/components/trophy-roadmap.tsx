@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { trophyNeeds } from '../../../../shared/journey/graph'
 import { achievementHistory, earnedTimestamp } from '../../../../shared/journey/history'
 import { trophyWhen } from '../../../../shared/journey/places'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
@@ -131,6 +132,9 @@ const messages = defineMessages({
     whenBehindNoReplay: 'Acontecia {place}, que ficou para trás.',
     whenPace: 'No seu ritmo, fecha {place}.',
     whenLate: 'No seu ritmo atual, só fecha depois da história.',
+    needs: 'Antes, passe por {steps}.',
+    needsUntil: 'Só dá até {step}.',
+    needsLost: 'Não sai mais neste save: {step} já passou.',
     place: {
       mission: 'na missão {n}',
       chapter: 'no capítulo {n}',
@@ -255,6 +259,9 @@ const messages = defineMessages({
     whenBehindNoReplay: 'Happened {place}, which is behind you.',
     whenPace: 'At your pace, it closes {place}.',
     whenLate: 'At your current pace, it only closes after the story.',
+    needs: 'First, go through {steps}.',
+    needsUntil: 'Only until {step}.',
+    needsLost: 'Not in this save anymore: {step} has passed.',
     place: {
       mission: 'in mission {n}',
       chapter: 'in chapter {n}',
@@ -615,6 +622,25 @@ function TrophyWhen({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   return <p className="roadmap-progress roadmap-when">{parts.join(' ')}</p>
 }
 
+/** What an open trophy still depends on, from the guide's graph: the steps before it, in order. */
+function TrophyNeedsLine({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
+  const t = useMessages(messages)
+  if (trophy.groupId !== 'default' || trophy.type === 'platinum') return null
+  const needs = trophyNeeds(trophy, game.trophies, game.guide)
+  if (!needs) return null
+  if (needs.lost)
+    return <p className="roadmap-progress roadmap-needs">{t('needsLost', { step: needs.lost })}</p>
+  const or = new Intl.ListFormat(getLocale(), { type: 'disjunction' })
+  const and = new Intl.ListFormat(getLocale(), { type: 'conjunction' })
+  const parts = [
+    ...(needs.steps.length
+      ? [t('needs', { steps: and.format(needs.steps.map((s) => or.format(s))) })]
+      : []),
+    ...(needs.closesAt ? [t('needsUntil', { step: needs.closesAt })] : []),
+  ]
+  return <p className="roadmap-progress roadmap-needs">{parts.join(' ')}</p>
+}
+
 function TrophyStep({
   trophy,
   game,
@@ -645,6 +671,7 @@ function TrophyStep({
             </p>
           )}
           <TrophyWhen trophy={trophy} game={game} />
+          <TrophyNeedsLine trophy={trophy} game={game} />
           <TrophyAdvice trophy={trophy} game={game} />
         </>
       )}

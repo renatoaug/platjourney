@@ -1344,7 +1344,8 @@
     padding-left: 30px;
   }
 
-  .roadmap-when {
+  .roadmap-when,
+  .roadmap-needs {
     margin-top: 4px;
   }
 
