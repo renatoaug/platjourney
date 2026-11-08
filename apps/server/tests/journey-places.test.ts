@@ -18,7 +18,7 @@ const trophy = (name: string, extra: Partial<PlacedTrophy> = {}): PlacedTrophy =
 
 // A campaign of 35 missions, as MindsEye's.
 const guide: PlacedGuide = {
-  storyline: { unit: 'Missão', total: 35 },
+  storyline: { unit: 'mission', total: 35 },
   trophyPlaces: [
     { trophy: 'Voo', from: 10 },
     { trophy: 'Memória', from: 12 },
@@ -125,4 +125,10 @@ describe('trophies placed along the game', () => {
     const twins = [...list, trophy('Café')]
     expect(expectedStep(twins[4], twins, guide, 12)).toBeUndefined()
   })
+})
+
+test('a unit the app cannot name leaves the guide unplaced', () => {
+  const { list, open } = game()
+  const odd = { ...guide, storyline: { unit: 'Missão', total: 35 } } as unknown as PlacedGuide
+  expect(placedOrder(open, list, odd)).toBe(open)
 })

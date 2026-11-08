@@ -267,7 +267,7 @@ test('with places in the guide, what is left follows where each trophy should fa
   const safe = trophy(3, 'Príncipe')
   const coffee = trophy(4, 'Café')
   const placed = {
-    storyline: { unit: 'Missão', total: 35 },
+    storyline: { unit: 'mission', total: 35 },
     trophyPlaces: [
       { trophy: 'Memória', from: 12 },
       { trophy: 'Golpe Final', from: 12, to: 30 },

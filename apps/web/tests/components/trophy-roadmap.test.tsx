@@ -212,7 +212,7 @@ test('zero counter remains visible, unavailable counters are not invented and em
       }}
     />,
   )
-  expect(screen.getByText('Progresso informado pela PSN: 0 / 10')).toBeTruthy()
+  expect(screen.getByText('Progresso do troféu na PSN: 0 / 10')).toBeTruthy()
   expect(container.textContent).toContain('não têm uma correspondência única')
   unmount()
   renderApp(<TrophyRoadmap game={{ ...game, trophies: [] }} />)
@@ -1095,4 +1095,46 @@ test('the roadmap names its game, so a tip rating can say which game it is about
   const data = routeGame(['Primeiro Passo'])
   const { container } = renderApp(<TrophyRoadmap game={data} />)
   expect(container.querySelector('.trophy-roadmap')?.getAttribute('data-game')).toBe(data.game.id)
+})
+
+test('with places in the guide, a trophy says when it falls instead of leaving a gap', () => {
+  const base = routeGame(['Primeiro Passo', 'Segundo Ato'])
+  const data: CurrentGame = {
+    ...base,
+    guide: {
+      ...(base.guide as GuideDetail),
+      storyline: { unit: 'chapter', total: 3 },
+      trophyPlaces: [
+        { trophy: 'Primeiro Passo', from: 1 },
+        { trophy: 'Mira Certeira', from: 1 },
+        { trophy: 'Segundo Ato', from: 2 },
+        { trophy: 'Terceiro Ato', from: 3 },
+        { trophy: 'Colecionador', from: 1, to: 3 },
+      ],
+      trophyKinds: [
+        { trophy: 'Terceiro Ato', kind: 'natural' },
+        { trophy: 'Colecionador', kind: 'grind' },
+      ],
+    },
+  }
+  const { container } = renderApp(<TrophyRoadmap game={data} />)
+  const when = () => container.querySelector('.roadmap-when')?.textContent
+  const route = screen.getByRole('list', { name: 'Rota completa' })
+  const pick = (name: RegExp) => fireEvent.click(within(route).getByRole('button', { name }))
+  pick(/^Terceiro Ato/)
+  expect(when()).toBe(
+    'Acontece no capítulo 3, naturalmente pela história. 1 capítulo à frente de você.',
+  )
+  // A story trophy with no tip has nothing to ask the Nexo about.
+  expect(container.querySelector('#roadmap-advice .roadmap-ask')).toBeNull()
+  pick(/^Mira Certeira/)
+  expect(when()).toBe(
+    'Acontecia no capítulo 1, que ficou para trás. Dá para voltar pela seleção de capítulos.',
+  )
+  pick(/^Colecionador/)
+  expect(when()).toBe('Dá para fazer do capítulo 1 ao 3.')
+  // A trophy the guide does not place, and that does not come by itself, has no line.
+  pick(/^Perito/)
+  expect(when()).toBeUndefined()
+  expect(container.querySelector('#roadmap-advice .roadmap-ask')).toBeTruthy()
 })

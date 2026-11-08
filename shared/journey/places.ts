@@ -9,9 +9,12 @@
  */
 import { trophyMatches } from './ongoing'
 
+const UNITS = ['mission', 'chapter', 'episode', 'act', 'level'] as const
+export type StoryUnit = (typeof UNITS)[number]
+
 export interface Storyline {
-  // What one step of the game is called ("Missão", "Capítulo") and how many there are.
-  unit: string
+  // What one step of the game is (the app names it in the player's language) and how many there are.
+  unit: StoryUnit
   total: number
 }
 
@@ -41,7 +44,11 @@ export interface PlacedTrophy {
 }
 
 const usable = (g?: PlacedGuide | null): g is PlacedGuide & { storyline: Storyline } =>
-  !!g?.storyline && g.storyline.total > 0 && !!g.trophyPlaces?.length
+  !!g?.storyline &&
+  g.storyline.total > 0 &&
+  // A unit the app cannot name (an old or hand-written guide) leaves the guide unplaced.
+  (UNITS as readonly string[]).includes(g.storyline.unit) &&
+  !!g.trophyPlaces?.length
 
 /** The guide's place for a trophy, matched by a name no other trophy of the list shares. */
 function placeOf<T extends PlacedTrophy>(trophy: T, trophies: T[], guide?: PlacedGuide | null) {
@@ -140,4 +147,31 @@ export function nextPlaced<T extends PlacedTrophy>(
   return (
     placed.find((t) => (expectedStep(t, trophies, guide, at || undefined) ?? 0) >= at) ?? placed[0]
   )
+}
+
+/**
+ * When an open trophy falls, for its advice: its place in the guide, where the player is, where it
+ * is expected to fall (for a count, at the pace so far; `late` when not before the story ends), and
+ * whether it was left behind. Undefined when the guide does not place it.
+ */
+export function trophyWhen<T extends PlacedTrophy>(
+  trophy: T,
+  trophies: T[],
+  guide?: PlacedGuide | null,
+) {
+  if (!usable(guide)) return undefined
+  const place = placeOf(trophy, trophies, guide)
+  if (!place) return undefined
+  const at = playerStep(trophies, guide)
+  const expected = expectedStep(trophy, trophies, guide, at) ?? place.from
+  const keeps = keepsGoing(trophy, place, guide)
+  return {
+    unit: guide.storyline.unit,
+    from: place.from,
+    to: keeps ? (place.to ?? place.from) : undefined,
+    at,
+    expected,
+    late: expected > guide.storyline.total,
+    behind: !keeps && at !== undefined && place.from < at,
+  }
 }

@@ -1355,6 +1355,15 @@
     margin-top: 8px;
   }
 
+  /* The lines under the objective line up with its text, not its icon. */
+  .roadmap-objective ~ .roadmap-progress {
+    padding-left: 30px;
+  }
+
+  .roadmap-when {
+    margin-top: 4px;
+  }
+
   .roadmap-objective {
     display: flex;
     align-items: flex-start;
@@ -1365,7 +1374,8 @@
     width: 20px;
     height: 20px;
     flex-shrink: 0;
-    margin-top: 3px;
+    /* Centred on the first line of text, whatever its height. */
+    margin-top: calc((1lh - 20px) / 2);
     color: var(--color-accent);
   }
 

@@ -446,7 +446,7 @@ describe('session start', () => {
       makeTrophy({ id: 4, name: 'Príncipe' }),
     ]
     const places = {
-      storyline: { unit: 'Missão', total: 35 },
+      storyline: { unit: 'mission', total: 35 },
       trophyPlaces: [
         { trophy: 'Memória', from: 12 },
         { trophy: 'Golpe', from: 12, to: 30 },

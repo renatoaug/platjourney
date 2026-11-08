@@ -201,3 +201,32 @@ export const WithKinds: Story = {
     })(),
   },
 }
+
+// The guide places each trophy along the game: the route follows the chapters and the advice says
+// when each trophy falls.
+const placed = routeGame(['Primeiro Passo', 'Segundo Ato'])
+export const PlacedAlongTheGame: Story = {
+  args: {
+    game: {
+      ...placed,
+      guide: placed.guide && {
+        ...placed.guide,
+        storyline: { unit: 'chapter', total: 3 },
+        trophyPlaces: [
+          { trophy: 'Primeiro Passo', from: 1 },
+          { trophy: 'Mira Certeira', from: 1 },
+          { trophy: 'Segundo Ato', from: 2 },
+          { trophy: 'Piedade', from: 3 },
+          { trophy: 'Terceiro Ato', from: 3 },
+          { trophy: 'Colecionador', from: 1, to: 3 },
+          { trophy: 'Fim da Jornada', from: 3 },
+        ],
+        trophyKinds: [
+          { trophy: 'Terceiro Ato', kind: 'natural' },
+          { trophy: 'Fim da Jornada', kind: 'natural' },
+          { trophy: 'Colecionador', kind: 'grind' },
+        ],
+      },
+    },
+  },
+}
