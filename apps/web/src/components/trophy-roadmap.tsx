@@ -46,7 +46,6 @@ const messages = defineMessages({
     undated: 'Data indisponível',
     undatedNote:
       'Conquistas sem data aparecem agrupadas após as datadas, sem ordem cronológica conhecida. Datas iguais não informam a ordem entre si.',
-    parallelTrail: 'Enquanto avança',
     phasePlan: 'Plano da fase',
     betaLabel: 'BETA:',
     betaNote:
@@ -57,7 +56,6 @@ const messages = defineMessages({
     routeComplete: 'Rota completa',
     routeEarned: 'Conquistado',
     readAdvice: 'Ler dica deste objetivo',
-    progressContext: 'Seu progresso e objetivos paralelos',
     title: 'Sua jornada da platina',
     ongoing: 'Ao longo da jornada',
     ongoingNote:
@@ -76,7 +74,7 @@ const messages = defineMessages({
     next: 'Próximo marco',
     resume: 'Voltar à sugestão',
     selected: 'Desafio em foco',
-    guidance: 'Objetivo',
+    guidance: 'Objetivo:',
     map: 'MAPA DA JORNADA',
     missable: 'Perdível',
     finale: 'Platina',
@@ -171,7 +169,6 @@ const messages = defineMessages({
     undated: 'Date unavailable',
     undatedNote:
       'Undated achievements are grouped after dated ones, without a known chronological order. Equal timestamps do not establish order between them.',
-    parallelTrail: 'Along the way',
     phasePlan: 'Phase plan',
     betaLabel: 'BETA:',
     betaNote:
@@ -182,7 +179,6 @@ const messages = defineMessages({
     routeComplete: 'Full route',
     routeEarned: 'Earned',
     readAdvice: 'Read this objective’s advice',
-    progressContext: 'Your progress and parallel objectives',
     title: 'Your platinum journey',
     ongoing: 'Throughout the journey',
     ongoingNote:
@@ -201,7 +197,7 @@ const messages = defineMessages({
     next: 'Next milestone',
     resume: 'Return to suggestion',
     selected: 'Challenge in focus',
-    guidance: 'Objective',
+    guidance: 'Objective:',
     map: 'JOURNEY MAP',
     missable: 'Missable',
     finale: 'Platinum',
@@ -559,8 +555,6 @@ function RoadmapPhase({ game, trophy }: { game: RoadmapGame; trophy: Trophy }) {
   )
 }
 
-const capital = (text: string) => text.charAt(0).toLocaleUpperCase(getLocale()) + text.slice(1)
-
 // Guides that say a step can be played again (mission or chapter select).
 const REPLAY =
   /sele[cç][aã]o de (?:miss|cap[ií]t|epis|fase)|(?:mission|chapter|episode|level) select/i
@@ -756,52 +750,6 @@ function RoadmapSignal({ missable, final }: { missable: boolean; final: boolean 
       </span>
     )
   return null
-}
-
-function RoadmapParallel({
-  game,
-  choose,
-}: {
-  game: RoadmapGame
-  choose: (trophy: Trophy) => void
-}) {
-  const t = useMessages(messages)
-  const items = useMemo(
-    () => ongoingObjectives(game.trophies, game.guide).map((x) => x.trophy),
-    [game.trophies, game.guide],
-  )
-  if (!items.length) return null
-  return (
-    <section className="roadmap-parallel" aria-label={t('parallelTrail')}>
-      <h3>
-        <Icon name="target" />
-        <span>
-          {t('parallelTrail')} <small>· {items.length}</small>
-        </span>
-      </h3>
-      <p>{t('ongoingNote')}</p>
-      <div>
-        {items.map((trophy) => (
-          <button
-            type="button"
-            className="quiet"
-            key={anchor(trophy)}
-            onClick={() => choose(trophy)}
-          >
-            <TrophyArt url={trophy.iconUrl} />
-            <span>{trophy.name}</span>
-            {roadmapRisk(game, trophy) && (
-              <span className="roadmap-parallel-risk">
-                <Icon name="warning" />
-                {t('missable')}
-              </span>
-            )}
-            <Icon name="chevron-right" />
-          </button>
-        ))}
-      </div>
-    </section>
-  )
 }
 
 function RoadmapNavigation({
@@ -1404,7 +1352,7 @@ export function TrophyRoadmap({
             />
             <RoadmapFocus game={game} selected={selected} target={suggested} />
             <RoadmapPhase game={game} trophy={selected} />
-            <RoadmapParallel game={game} choose={inspect} />
+            <RoadmapOngoing game={game} choose={inspect} />
             {!!past.length && (
               <details className="roadmap-past">
                 <summary>
@@ -1447,10 +1395,6 @@ export function TrophyRoadmap({
                 </ul>
               </details>
             )}
-            <details className="roadmap-context-details">
-              <summary>{t('progressContext')}</summary>
-              <RoadmapOngoing game={game} choose={inspect} />
-            </details>
           </div>
           {stage.kind !== 'phase' && (
             <p className="roadmap-context-note">{t(`${stage.kind}Note`)}</p>

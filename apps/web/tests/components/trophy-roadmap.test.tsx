@@ -756,7 +756,7 @@ test('a guide without kinds shows none of it', () => {
 
 test('a collection folds its checklist, keeps each step and stays visible along the way', () => {
   const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
-  const along = screen.getByRole('region', { name: 'Enquanto avança' })
+  const along = screen.getByRole('complementary', { name: 'Ao longo da jornada' })
   fireEvent.click(within(along).getByRole('button', { name: /Colecionador/ }))
   const list = container.querySelector('.roadmap-advice-details')
   expect(list?.querySelector('summary')?.textContent).toBe('Ver os 3 pontos do roteiro')
@@ -849,16 +849,16 @@ test('campaign is visible first, with origin and destination, while guidance fol
 test('parallel objectives select existing milestones and history selection keeps its map marker', () => {
   const data = routeGame(['Primeiro Passo', 'Mira Certeira'])
   const { container } = renderApp(<TrophyRoadmap game={data} />)
-  const parallel = container.querySelector('.roadmap-parallel')
+  // One list of what to keep along the way, open, not inside a disclosure.
+  expect(container.querySelectorAll('.roadmap-parallel')).toHaveLength(0)
+  const parallel = container.querySelector('.roadmap-ongoing')
   if (!parallel) throw new Error('parallel route missing')
-  expect(parallel.tagName).toBe('SECTION')
-  expect(within(parallel as HTMLElement).queryByRole('group')).toBeNull()
+  expect(parallel.closest('details')).toBeNull()
   const button = within(parallel as HTMLElement).getAllByRole('button')[0]
+  const name = button.getAttribute('aria-label') ?? ''
   fireEvent.click(button)
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(button.textContent)
-  expect(container.querySelector('.roadmap-route .is-current')?.textContent).toContain(
-    button.textContent,
-  )
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(name)
+  expect(container.querySelector('.roadmap-route .is-current')?.textContent).toContain(name)
   const history = container.querySelector('.roadmap-past')
   if (!history) throw new Error('history missing')
   fireEvent.click(within(history as HTMLElement).getByText(/Conquistas anteriores/))
