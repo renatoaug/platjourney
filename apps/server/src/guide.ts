@@ -1,3 +1,4 @@
+import type { StoryUnit } from '../../../shared/journey/places.ts'
 import { ai } from './ai.ts'
 import { tagged } from './costs.ts'
 import { DEFAULT_LOCALE, defineMessages, Language, type Locale, translator } from './i18n.ts'
@@ -70,6 +71,11 @@ export interface Guide {
   tricks: { trophy: string; trick: string; source: string }[]
   // What each base-game trophy asks of the player: natural, hunt or grind. Older guides have none.
   trophyKinds?: { trophy: string; kind: 'natural' | 'hunt' | 'grind' }[]
+  // Where each base-game trophy sits along the game, in the steps of `storyline` (missions,
+  // chapters): where it unlocks, or the range a count or collection is worked on. Older guides have
+  // none, and the journey then follows the roadmap's order (shared/journey/places.ts).
+  storyline?: { unit: StoryUnit; total: number } | null
+  trophyPlaces?: { trophy: string; from: number; to?: number }[]
   // One entry per trophy. Guides from before 2026-09-29 have no date or status.
   buggy: {
     trophy: string

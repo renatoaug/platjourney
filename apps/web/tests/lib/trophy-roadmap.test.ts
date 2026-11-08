@@ -260,3 +260,28 @@ test('the platinum closes the route, even earned at the same moment as the last 
   const pending = personalRoadmap([trophy(0, 'Platina', { type: 'platinum' }), trophy(1, 'Falta')])
   expect(pending.map((t) => t.name)).toEqual(['Falta', 'Platina'])
 })
+
+test('with places in the guide, what is left follows where each trophy should fall', () => {
+  const memory = trophy(1, 'Memória', { earned: true, earnedAt: '2026-01-01T10:00:00Z' })
+  const finisher = trophy(2, 'Golpe Final', { progressValue: 0, progressTarget: 50 })
+  const safe = trophy(3, 'Príncipe')
+  const coffee = trophy(4, 'Café')
+  const placed = {
+    storyline: { unit: 'mission', total: 35 },
+    trophyPlaces: [
+      { trophy: 'Memória', from: 12 },
+      { trophy: 'Golpe Final', from: 12, to: 30 },
+      { trophy: 'Príncipe', from: 13 },
+      { trophy: 'Café', from: 16 },
+    ],
+  } as unknown as GuideDetail
+  const route = personalRoadmap([memory, finisher, safe, coffee], placed)
+  expect(route.map((t) => t.name)).toEqual(['Memória', 'Príncipe', 'Café', 'Golpe Final'])
+  // Without places, the roadmap's order.
+  expect(personalRoadmap([memory, finisher, safe, coffee]).map((t) => t.name)).toEqual([
+    'Memória',
+    'Golpe Final',
+    'Príncipe',
+    'Café',
+  ])
+})

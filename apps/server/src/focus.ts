@@ -6,6 +6,7 @@
 // the story and came back for the side activities has trophies open in several phases at once.
 // So nothing here says which phase the player is in. A phase describes trophies: how many are
 // left in it, which one the focus belongs to, and when the last one of a phase falls.
+import { nextPlaced } from '../../../shared/journey/places.ts'
 import type { Guide } from './guide.ts'
 import type { GameContext } from './nexo.ts'
 import type { TrophyStatus } from './psn.ts'
@@ -112,7 +113,12 @@ export function todaysFocus(ctx: Pick<GameContext, 'trophies' | 'guide'>): Focus
   const missableNames = new Set((guide?.missables ?? []).map((m) => tidy(m.trophy)))
   const trickFor = (n: string) =>
     guide?.tricks?.find((x) => tidy(x.trophy) === n || x.trophy === open.get(n)?.nameEn)
-  const name = inPhase.find((n) => missableNames.has(n)) ?? almostFull(roadmap, open) ?? inPhase[0]
+  // With places in the guide, the next one is the nearest ahead of the player, not the phase's first.
+  const ahead = nextPlaced([...open.values()], base, guide)
+  const name =
+    inPhase.find((n) => missableNames.has(n)) ??
+    almostFull(roadmap, open) ??
+    (ahead ? tidy(ahead.name) : inPhase[0])
   const trophy = name ? open.get(name) : undefined
   const { home, behind } = placeOf(roadmap, name, at, earned)
   const missables = (guide?.missables ?? []).filter((m) => open.has(tidy(m.trophy)))

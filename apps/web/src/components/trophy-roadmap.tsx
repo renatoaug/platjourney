@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react'
 import { achievementHistory, earnedTimestamp } from '../../../../shared/journey/history'
+import { trophyWhen } from '../../../../shared/journey/places'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { type RoadStopGeometry, roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
 import {
@@ -45,7 +46,6 @@ const messages = defineMessages({
     undated: 'Data indisponível',
     undatedNote:
       'Conquistas sem data aparecem agrupadas após as datadas, sem ordem cronológica conhecida. Datas iguais não informam a ordem entre si.',
-    parallelTrail: 'Enquanto avança',
     phasePlan: 'Plano da fase',
     betaLabel: 'BETA:',
     betaNote:
@@ -56,7 +56,6 @@ const messages = defineMessages({
     routeComplete: 'Rota completa',
     routeEarned: 'Conquistado',
     readAdvice: 'Ler dica deste objetivo',
-    progressContext: 'Seu progresso e objetivos paralelos',
     title: 'Sua jornada da platina',
     ongoing: 'Ao longo da jornada',
     ongoingNote:
@@ -75,7 +74,7 @@ const messages = defineMessages({
     next: 'Próximo marco',
     resume: 'Voltar à sugestão',
     selected: 'Desafio em foco',
-    guidance: 'Objetivo',
+    guidance: 'Objetivo:',
     map: 'MAPA DA JORNADA',
     missable: 'Perdível',
     finale: 'Platina',
@@ -121,7 +120,38 @@ const messages = defineMessages({
     hide: 'Ocultar segredos',
     revealScope: 'Preferência deste jogo salva na sua conta.',
     revealFailed: 'Não foi possível salvar a preferência. Tente novamente.',
-    progress: 'Progresso informado pela PSN: {value} / {target}',
+    progress: 'Progresso do troféu na PSN: {value} / {target}',
+    whenStory: 'Acontece naturalmente pela história.',
+    whenAt: 'Acontece {place}.',
+    whenAtNatural: 'Acontece {place}, naturalmente pela história.',
+    whenRange: 'Dá para fazer {span}.',
+    whenAhead: '{count} {unit} à frente de você.',
+    whenHere: 'É onde você está agora.',
+    whenBehind: 'Acontecia {place}, que ficou para trás. Dá para voltar pela seleção de {units}.',
+    whenBehindNoReplay: 'Acontecia {place}, que ficou para trás.',
+    whenPace: 'No seu ritmo, fecha {place}.',
+    whenLate: 'No seu ritmo atual, só fecha depois da história.',
+    place: {
+      mission: 'na missão {n}',
+      chapter: 'no capítulo {n}',
+      episode: 'no episódio {n}',
+      act: 'no ato {n}',
+      level: 'na fase {n}',
+    },
+    span: {
+      mission: 'da missão {from} à {to}',
+      chapter: 'do capítulo {from} ao {to}',
+      episode: 'do episódio {from} ao {to}',
+      act: 'do ato {from} ao {to}',
+      level: 'da fase {from} à {to}',
+    },
+    unit: {
+      mission: { one: 'missão', other: 'missões' },
+      chapter: { one: 'capítulo', other: 'capítulos' },
+      episode: { one: 'episódio', other: 'episódios' },
+      act: { one: 'ato', other: 'atos' },
+      level: { one: 'fase', other: 'fases' },
+    },
     empty:
       'Os troféus ainda não estão disponíveis. O roteiro aparece quando a sincronização os trouxer.',
     bronze: 'Bronze',
@@ -139,7 +169,6 @@ const messages = defineMessages({
     undated: 'Date unavailable',
     undatedNote:
       'Undated achievements are grouped after dated ones, without a known chronological order. Equal timestamps do not establish order between them.',
-    parallelTrail: 'Along the way',
     phasePlan: 'Phase plan',
     betaLabel: 'BETA:',
     betaNote:
@@ -150,7 +179,6 @@ const messages = defineMessages({
     routeComplete: 'Full route',
     routeEarned: 'Earned',
     readAdvice: 'Read this objective’s advice',
-    progressContext: 'Your progress and parallel objectives',
     title: 'Your platinum journey',
     ongoing: 'Throughout the journey',
     ongoingNote:
@@ -169,7 +197,7 @@ const messages = defineMessages({
     next: 'Next milestone',
     resume: 'Return to suggestion',
     selected: 'Challenge in focus',
-    guidance: 'Objective',
+    guidance: 'Objective:',
     map: 'JOURNEY MAP',
     missable: 'Missable',
     finale: 'Platinum',
@@ -215,7 +243,39 @@ const messages = defineMessages({
     hide: 'Hide secrets',
     revealScope: 'This game’s preference saved to your account.',
     revealFailed: 'Could not save this preference. Try again.',
-    progress: 'Progress reported by PSN: {value} / {target}',
+    progress: 'Trophy progress on PSN: {value} / {target}',
+    whenStory: 'Comes naturally with the story.',
+    whenAt: 'Happens {place}.',
+    whenAtNatural: 'Happens {place}, naturally with the story.',
+    whenRange: 'You can work on it {span}.',
+    whenAhead: '{count} {unit} ahead of you.',
+    whenHere: 'That is where you are now.',
+    whenBehind:
+      'Happened {place}, which is behind you. You can go back by picking {units} in the menu.',
+    whenBehindNoReplay: 'Happened {place}, which is behind you.',
+    whenPace: 'At your pace, it closes {place}.',
+    whenLate: 'At your current pace, it only closes after the story.',
+    place: {
+      mission: 'in mission {n}',
+      chapter: 'in chapter {n}',
+      episode: 'in episode {n}',
+      act: 'in act {n}',
+      level: 'in level {n}',
+    },
+    span: {
+      mission: 'from mission {from} to {to}',
+      chapter: 'from chapter {from} to {to}',
+      episode: 'from episode {from} to {to}',
+      act: 'from act {from} to {to}',
+      level: 'from level {from} to {to}',
+    },
+    unit: {
+      mission: { one: 'mission', other: 'missions' },
+      chapter: { one: 'chapter', other: 'chapters' },
+      episode: { one: 'episode', other: 'episodes' },
+      act: { one: 'act', other: 'acts' },
+      level: { one: 'level', other: 'levels' },
+    },
     empty: 'Trophies are not available yet. The roadmap appears once they have been synced.',
     bronze: 'Bronze',
     silver: 'Silver',
@@ -243,6 +303,8 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const warning = trophy.earned ? undefined : advice.warning
   const hasAdvice =
     trick || warning || advice.online || advice.bug || !!tips.length || !!steps.length
+  // A story trophy with nothing to watch for has nothing to ask: it comes by playing.
+  const quiet = !hasAdvice && trophyKind(trophy, game.guide) === 'natural'
   return (
     <div className="roadmap-advice">
       {hasAdvice && (
@@ -287,24 +349,43 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
         </p>
       )}
       {hasAdvice && <TipRating trophy={trophy} />}
-      {/* A trophy still to get: the questions about it, sent from here. */}
-      {game.np && !trophy.earned ? (
-        <TrophyAsks
-          np={game.np}
-          name={game.name}
-          trophy={trophy.name}
-          advice={!!hasAdvice}
-          counter={(trophy.progressTarget ?? 0) > 1}
-          missable={!!warning}
-          className="roadmap-ask"
-        />
-      ) : (
-        <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
-          <Icon name="nexo" />
-          {t('ask')}
-        </JourneyLink>
+      {!quiet && (
+        <AdviceAsk trophy={trophy} game={game} advice={!!hasAdvice} missable={!!warning} />
       )}
     </div>
+  )
+}
+
+/** A trophy still to get: the questions about it, sent from here; an earned one links the chat. */
+function AdviceAsk({
+  trophy,
+  game,
+  advice,
+  missable,
+}: {
+  trophy: Trophy
+  game: RoadmapGame
+  advice: boolean
+  missable: boolean
+}) {
+  const t = useMessages(messages)
+  if (game.np && !trophy.earned)
+    return (
+      <TrophyAsks
+        np={game.np}
+        name={game.name}
+        trophy={trophy.name}
+        advice={advice}
+        counter={(trophy.progressTarget ?? 0) > 1}
+        missable={missable}
+        className="roadmap-ask"
+      />
+    )
+  return (
+    <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
+      <Icon name="nexo" />
+      {t('ask')}
+    </JourneyLink>
   )
 }
 
@@ -474,6 +555,66 @@ function RoadmapPhase({ game, trophy }: { game: RoadmapGame; trophy: Trophy }) {
   )
 }
 
+// Guides that say a step can be played again (mission or chapter select).
+const REPLAY =
+  /sele[cç][aã]o de (?:miss|cap[ií]t|epis|fase)|(?:mission|chapter|episode|level) select/i
+
+function replayable(guide: RoadmapGame['guide']) {
+  const text = [guide?.overview, guide?.postgame, ...(guide?.roadmap ?? []).map((p) => p.goal)]
+  return text.some((x) => !!x && REPLAY.test(x))
+}
+
+type When = NonNullable<ReturnType<typeof trophyWhen>>
+type Translate = ReturnType<typeof useMessages<typeof messages>>
+
+// How far a step is from the player, when it is ahead: the counter the map also shows.
+function distance(t: Translate, when: When, step: number) {
+  if (when.at === undefined || step < when.at) return []
+  if (step === when.at) return [t('whenHere')]
+  const count = step - when.at
+  return [t('whenAhead', { count, unit: t(`unit.${when.unit}`, { count }) })]
+}
+
+// A count or a collection: its range, then where it closes at the player's pace.
+function rangeLine(t: Translate, when: When, counted: boolean) {
+  const end = when.to ?? when.from
+  const span = t(`span.${when.unit}`, { from: when.from, to: end })
+  // Inside the range already: no distance to tell.
+  const ahead = when.at !== undefined && when.at < when.from ? distance(t, when, when.from) : []
+  const first = [t('whenRange', { span }), ...ahead]
+  if (when.late) return [...first, t('whenLate')]
+  if (!counted || when.expected === end) return first
+  return [...first, t('whenPace', { place: t(`place.${when.unit}`, { n: when.expected }) })]
+}
+
+// A trophy of a single moment: where it happens, and how far it is from the player.
+function momentLine(t: Translate, when: When, natural: boolean, replay: boolean) {
+  const place = t(`place.${when.unit}`, { n: when.from })
+  if (when.behind)
+    return [
+      replay
+        ? t('whenBehind', { place, units: t(`unit.${when.unit}`, { count: 2 }) })
+        : t('whenBehindNoReplay', { place }),
+    ]
+  return [t(natural ? 'whenAtNatural' : 'whenAt', { place }), ...distance(t, when, when.from)]
+}
+
+/** When an open trophy happens along the game, from the guide's places; the map uses the same steps. */
+function TrophyWhen({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
+  const t = useMessages(messages)
+  if (trophy.earned || trophy.groupId !== 'default' || trophy.type === 'platinum') return null
+  const base = game.trophies.filter((x) => x.groupId === 'default')
+  const when = trophyWhen(trophy, base, game.guide)
+  const natural = trophyKind(trophy, game.guide) === 'natural'
+  if (!when && !natural) return null
+  const parts = !when
+    ? [t('whenStory')]
+    : when.to !== undefined && when.to > when.from
+      ? rangeLine(t, when, !!trophy.progressValue)
+      : momentLine(t, when, natural, replayable(game.guide))
+  return <p className="roadmap-progress roadmap-when">{parts.join(' ')}</p>
+}
+
 function TrophyStep({
   trophy,
   game,
@@ -503,6 +644,7 @@ function TrophyStep({
               {t('progress', { value: trophy.progressValue, target: trophy.progressTarget })}
             </p>
           )}
+          <TrophyWhen trophy={trophy} game={game} />
           <TrophyAdvice trophy={trophy} game={game} />
         </>
       )}
@@ -608,52 +750,6 @@ function RoadmapSignal({ missable, final }: { missable: boolean; final: boolean 
       </span>
     )
   return null
-}
-
-function RoadmapParallel({
-  game,
-  choose,
-}: {
-  game: RoadmapGame
-  choose: (trophy: Trophy) => void
-}) {
-  const t = useMessages(messages)
-  const items = useMemo(
-    () => ongoingObjectives(game.trophies, game.guide).map((x) => x.trophy),
-    [game.trophies, game.guide],
-  )
-  if (!items.length) return null
-  return (
-    <section className="roadmap-parallel" aria-label={t('parallelTrail')}>
-      <h3>
-        <Icon name="target" />
-        <span>
-          {t('parallelTrail')} <small>· {items.length}</small>
-        </span>
-      </h3>
-      <p>{t('ongoingNote')}</p>
-      <div>
-        {items.map((trophy) => (
-          <button
-            type="button"
-            className="quiet"
-            key={anchor(trophy)}
-            onClick={() => choose(trophy)}
-          >
-            <TrophyArt url={trophy.iconUrl} />
-            <span>{trophy.name}</span>
-            {roadmapRisk(game, trophy) && (
-              <span className="roadmap-parallel-risk">
-                <Icon name="warning" />
-                {t('missable')}
-              </span>
-            )}
-            <Icon name="chevron-right" />
-          </button>
-        ))}
-      </div>
-    </section>
-  )
 }
 
 function RoadmapNavigation({
@@ -1182,7 +1278,7 @@ export function TrophyRoadmap({
   const done = base.some((x) => x.type === 'platinum' && x.earned)
   const focus = roadmapFocus(game, done)
   const reference = stages.flatMap((s) => s.trophies)
-  const ordered = personalRoadmap(reference)
+  const ordered = personalRoadmap(reference, game.guide)
   const suggested = ordered.find(
     (x) => !x.earned && x.id === focus?.id && x.groupId === focus.groupId,
   )
@@ -1256,7 +1352,7 @@ export function TrophyRoadmap({
             />
             <RoadmapFocus game={game} selected={selected} target={suggested} />
             <RoadmapPhase game={game} trophy={selected} />
-            <RoadmapParallel game={game} choose={inspect} />
+            <RoadmapOngoing game={game} choose={inspect} />
             {!!past.length && (
               <details className="roadmap-past">
                 <summary>
@@ -1299,10 +1395,6 @@ export function TrophyRoadmap({
                 </ul>
               </details>
             )}
-            <details className="roadmap-context-details">
-              <summary>{t('progressContext')}</summary>
-              <RoadmapOngoing game={game} choose={inspect} />
-            </details>
           </div>
           {stage.kind !== 'phase' && (
             <p className="roadmap-context-note">{t(`${stage.kind}Note`)}</p>

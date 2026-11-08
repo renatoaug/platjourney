@@ -6,12 +6,12 @@ The journey is a map of a game's trophies that follows the player's progress. It
 
 | What the player sees | Source |
 |---|---|
-| Order of the route | `roadmap`, phase by phase, once per trophy, matched by unique exact name |
+| Order of the route | `roadmap`, phase by phase, once per trophy, matched by unique exact name; with `storyline` and `trophyPlaces`, what is left goes by the step where each trophy should fall (`shared/journey/places.ts`) |
 | Suggested next trophy | `todaysFocus`, the same target the session and trophy notices name |
 | Tips for a trophy | `tricks`, `missables`, `onlineTrophies`, `buggy` and the `milestones` tips that name it |
 | Steps that name the trophy | The lines of `roadmap.goal`, `earlyTips`, `collectibles` and general `milestones` tips that name it, at most three |
 | Phase plan | `goal` of the selected trophy's first phase, in one folded block apart from the trophy's advice |
-| "Along the way" | Repeated in several phases or stretches, a campaign-long warning, a PSN counter above one or an early tip that names it |
+| "Throughout the journey" | Repeated in several phases or stretches, a campaign-long warning, a PSN counter above one or an early tip that names it |
 | Confirmed history | Earned trophies by PSN timestamp, oldest first; undated ones grouped after them |
 
 ## How it adapts
@@ -41,3 +41,67 @@ Measured on 2026-11-04 on a local copy of 1,137 guides, dated 2026-10-21, agains
 | Fewer than 90% of trophies placed | 7 games |
 
 The share of trophies with specific text is what a content round can raise: it needs the writing step only, since the passages are already indexed.
+
+## Places along the game
+
+A guide can say where each base-game trophy sits along the game. Two optional fields carry it:
+
+- `storyline`: what one step of the game is and how many there are, as `{ unit: "mission", total: 35 }`. The unit is one of `mission`, `chapter`, `episode`, `act` or `level`; the app names it in the player's language.
+- `trophyPlaces`: for each trophy, the step where it unlocks (`from`) or, for a count or a collection, the range it is worked on (`from`, `to`). A step past `total` is after the story (mission select, free roam).
+
+With them, the journey is a line of steps. The player is a point on it, each open trophy is another point, and the route and the suggestion read the distance between them. The code is `shared/journey/places.ts`; the server's focus and the web map call the same functions.
+
+```mermaid
+flowchart LR
+  guide["Guide<br/>storyline · trophyPlaces · trophyKinds"]
+  psn["PSN<br/>earned · counters"]
+  usable{"Places usable?<br/>known unit, total > 0,<br/>at least one place"}
+  roadmap["Roadmap order<br/>(phases, as before)"]
+  player["Player step<br/>furthest place of an<br/>earned single-moment trophy"]
+  expected["Expected step<br/>of each open trophy"]
+  route["Route<br/>by expected step"]
+  next["Next placed<br/>first at or after the player"]
+  focus["Suggestion<br/>todaysFocus"]
+  when["When line<br/>under the objective"]
+
+  guide --> usable
+  usable -- no --> roadmap
+  usable -- yes --> player
+  psn -- "earned trophies" --> player
+  player -- "pace since its start" --> expected
+  psn -- "counter value / target" --> expected
+  expected -- "sorts" --> route
+  route -- "picks" --> next
+  next -- "3rd, after a missable<br/>and a counter at 80%" --> focus
+  expected -- "says where" --> when
+  player -- "says how far" --> when
+
+  classDef accent stroke:#c9e86a,stroke-width:1.5px
+  class expected accent
+```
+
+- **Where the player is**: the furthest `from` among the earned trophies of a single moment. A count can close anywhere, so it does not count. A trophy keeps going when its place has `to > from`, its kind is `grind`, or PSN gives it a counter above one. It is an estimate, never a claim about the save.
+- **Where an open trophy falls**: a trophy of a single moment, where it unlocks. A count, where its PSN counter reaches the target at the pace so far: `pace = value / (player − from + 1)`, then `player + ⌈(target − value) / pace⌉`, never before the player nor its own start, and `total + 1` (after the story) when that pace would not close it in time. With no counter or no pace yet, the end of its range.
+- **The route** orders what is left by that step, a trophy of the moment before a count on the same step. A trophy the guide does not place keeps its spot after the placed one before it.
+- **The suggestion** is a missable of the current phase first, then a counter at 80% or more of its target, then the nearest placed trophy at or after the player's step. With nothing ahead, the first one left behind.
+- **The when line** under a trophy's objective says it in plain words: "Happens in mission 31, naturally with the story. 19 missions ahead of you.", "You can work on it from mission 12 to 30.", "At your pace, it closes in mission 16.", or "Happened in chapter 1, which is behind you." The replay hint only appears when the guide mentions mission or chapter select.
+
+### An example
+
+A campaign of 35 missions. The player earned the trophies of missions 10 and 12, so the player step is 12.
+
+| Trophy | Place | PSN counter | Expected step | Why |
+|---|---|---|---|---|
+| Príncipe | 13 | | 13 | Single moment: where it unlocks |
+| Café | 16 | | 16 | Single moment |
+| Golpe Final | 12 to 30 | 0 / 50 | 30 | No pace yet: the end of its range |
+| Golpe Final | 12 to 30 | 10 / 50 | 16 | 10 in 1 mission: 4 more missions |
+| Golpe Final | 12 to 30 | 1 / 50 at mission 14 | 36 | Too slow: after the story |
+| Paus e Pedras | 3 to 33 | | 33 | A collection with no counter: the end of its range |
+| Sacrifício | 35 | | 35 | Single moment |
+
+The route reads Príncipe, Café, Golpe Final, Paus e Pedras, Sacrifício, and the suggestion is Príncipe. With Golpe Final at 10 / 50 it moves up to 16, right after Café (the trophy of the moment goes first on the same step).
+
+### Without places
+
+Guides without `storyline` and `trophyPlaces`, or with a unit the app does not know, keep the roadmap's order and the focus rule in "How it adapts". The only visible change there is that a natural trophy with no tip reads "Comes naturally with the story." under its objective.

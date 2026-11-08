@@ -1,3 +1,4 @@
+import type { StoryUnit } from '../../../../shared/journey/places'
 import type { Locale } from '../i18n/locale'
 
 /** Shapes of the /api payloads the screens share. Screen-specific payloads are typed next to their screen. */
@@ -138,6 +139,8 @@ export interface GuideDetail {
   tricks?: { trophy: string; trick: string; source?: string | null }[]
   /** What each base-game trophy asks of the player; older guides do not have it. */
   trophyKinds?: { trophy: string; kind: TrophyKind }[]
+  storyline?: { unit: StoryUnit; total: number } | null
+  trophyPlaces?: { trophy: string; from: number; to?: number }[]
   buggy?: {
     trophy: string
     issue: string
