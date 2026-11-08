@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.55.1](https://github.com/renatoaug/platjourney/compare/v0.55.0...v0.55.1) (2026-11-08)
+
+### Bug Fixes
+
+* **server:** follow trophy counters that move without a new trophy ([#150](https://github.com/renatoaug/platjourney/issues/150)) ([e3ebf8f](https://github.com/renatoaug/platjourney/commit/e3ebf8f4d6b08980fc278aa886607bfab80577c9))
+
 ## [0.55.0](https://github.com/renatoaug/platjourney/compare/v0.54.0...v0.55.0) (2026-11-07)
 
 ### Features
