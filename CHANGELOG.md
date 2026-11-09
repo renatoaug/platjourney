@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.60.0](https://github.com/renatoaug/platjourney/compare/v0.59.0...v0.60.0) (2026-11-09)
+
+### Features
+
+* **web:** open the journey's guide on About too ([#155](https://github.com/renatoaug/platjourney/issues/155)) ([ca3299c](https://github.com/renatoaug/platjourney/commit/ca3299c0f95ab52370fc3dd6c8cdf735b1e50dcc))
+
 ## [0.59.0](https://github.com/renatoaug/platjourney/compare/v0.58.0...v0.59.0) (2026-11-09)
 
 ### Features
