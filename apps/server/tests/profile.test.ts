@@ -6,6 +6,7 @@ import * as psn from '../src/psn.ts'
 import * as games from '../src/repository/game.ts'
 import * as platinums from '../src/repository/platinum.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
+import * as unlocks from '../src/repository/unlock.ts'
 import { makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
 
 const summary = { onlineId: 'Kratos', level: 300, levelProgress: 10, earned: {} as never }
@@ -131,6 +132,7 @@ test('platinums without a date are fetched in the background', async () => {
       }),
     ]
   })
+  const kept = spyOn(unlocks, 'saveUnlocks').mockResolvedValue()
   list.mockResolvedValue([plat('CACHED', '2025-01-01', 5)])
   const library = [
     platinumed('CACHED'),
@@ -153,6 +155,9 @@ test('platinums without a date are fetched in the background', async () => {
     rarity_rate: 3,
   })
   expect(console.error).toHaveBeenCalledWith('platinum lookup failed for BROKEN:', 'psn down')
+  // The list fetched for the platinum also keeps its unlock times; a list with none keeps nothing.
+  expect(kept).toHaveBeenCalledTimes(1)
+  expect(kept.mock.calls[0]?.slice(0, 2)).toEqual(['user:backfill', 'NEW'])
 })
 
 test('a failed backfill is logged and tried again on the next visit', async () => {
