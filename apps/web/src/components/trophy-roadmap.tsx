@@ -703,7 +703,7 @@ function RoadmapLandscape({
     <div className="roadmap-landscape">
       <div className="roadmap-destination" data-tier={selected.type} key={anchor(selected)}>
         <span className="roadmap-destination-art">
-          <TrophyArt url={hidden ? undefined : selected.iconUrl} />
+          <TrophyArt url={hidden ? undefined : selected.iconUrl} eager />
         </span>
         <span className="roadmap-destination-copy">
           <span className="roadmap-state">
@@ -817,7 +817,10 @@ function RoadmapNavigation({
               <small>{t('destination')}</small>
               <strong>{t('finale')}</strong>
             </span>
-            <TrophyArt url={platinum.hidden && !platinum.earned ? undefined : platinum.iconUrl} />
+            <TrophyArt
+              url={platinum.hidden && !platinum.earned ? undefined : platinum.iconUrl}
+              eager
+            />
           </button>
         )}
       </div>
@@ -1169,7 +1172,7 @@ function RoadmapForward({
                 >
                   <span className="roadmap-route-pin">
                     <span className="roadmap-route-art">
-                      <TrophyArt url={hidden ? undefined : trophy.iconUrl} />
+                      <TrophyArt url={hidden ? undefined : trophy.iconUrl} eager />
                     </span>
                     <span className="roadmap-route-number" aria-hidden="true">
                       <RouteNumber trophy={trophy} index={order.indexOf(trophy)} />
