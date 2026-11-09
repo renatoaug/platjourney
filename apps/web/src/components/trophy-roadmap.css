@@ -904,28 +904,15 @@
   }
 
   /* A natural stop keeps its size when selected: only its ring lights up, so the route holds still. */
+  /* A story trophy is the same stop, only smaller. */
   .roadmap-route > [data-kind="natural"] .roadmap-route-pin {
     width: 52px;
     height: 52px;
   }
 
-  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-pin {
-    box-shadow: none;
-    opacity: 0.7;
-  }
-
   .roadmap-route > [data-kind="natural"] .roadmap-route-art {
     width: 40px;
     height: 40px;
-  }
-
-  /* A story trophy drops its number, but an earned one keeps the check every earned stop has. */
-  .roadmap-route > [data-kind="natural"][data-earned="false"] .roadmap-route-number {
-    display: none;
-  }
-
-  .roadmap-route > [data-kind="natural"]:not(.is-current) .roadmap-route-name {
-    color: var(--color-fg-muted);
   }
 
   .roadmap-route-kind {
@@ -1161,14 +1148,6 @@
       0 0 0 5px var(--color-bg-subtle),
       0 0 0 6px var(--color-accent),
       0 0 32px color-mix(in srgb, var(--color-accent) 18%, transparent);
-  }
-
-  .roadmap-route > [data-earned="true"][data-kind="natural"]:not(.is-current) .roadmap-route-pin {
-    opacity: 1;
-  }
-
-  .roadmap-route > [data-earned="true"][data-kind="natural"]:not(.is-current) .roadmap-route-name {
-    color: var(--color-accent);
   }
 
   .roadmap-route button[aria-pressed="true"] {
