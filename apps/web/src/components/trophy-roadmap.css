@@ -102,15 +102,43 @@
     min-height: 44px;
   }
 
-  .roadmap-extra-route {
-    padding: 0 32px 20px;
+  .roadmap-tracks {
+    min-width: 0;
+    margin: 0 6px 0 0;
+    border: 0;
+    background: color-mix(in srgb, var(--color-bg-subtle) 80%, transparent);
   }
 
-  .roadmap-extra-route button {
-    min-height: 44px;
-    background: transparent;
-    color: var(--color-fg-muted);
-    border: 1px solid var(--color-border);
+  .roadmap-route-controls {
+    align-items: center;
+  }
+
+  .roadmap-forward-heading h4 {
+    white-space: nowrap;
+  }
+
+  /* On a phone, with a DLC track, the switch and the arrows take a line of their own. */
+  @media (max-width: 480px) {
+    .roadmap-forward-heading:has(.roadmap-tracks) {
+      flex-wrap: wrap;
+      row-gap: 10px;
+    }
+
+    .roadmap-route-controls:has(.roadmap-tracks) {
+      width: 100%;
+    }
+
+    .roadmap-route-controls .roadmap-tracks {
+      margin-right: auto;
+    }
+  }
+
+  /* Its own sizes, not the square arrows beside it. */
+  .roadmap-route-controls .roadmap-tracks button {
+    width: auto;
+    height: auto;
+    min-height: 36px;
+    padding: 8px 12px;
   }
 
   .roadmap-parallel {
@@ -290,7 +318,6 @@
       gap: 6px;
     }
 
-    .roadmap-extra-route,
     .roadmap-campaign-loading {
       padding-inline: 20px;
     }
@@ -388,50 +415,6 @@
   }
 
   /* On the total's line, with the breakdown below them both. */
-  .roadmap-intro-actions .roadmap-visibility {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .roadmap-visibility {
-    min-height: 44px;
-    padding: 8px;
-    gap: 6px;
-    background: transparent;
-    color: var(--color-fg-muted);
-    font-size: var(--text-base);
-    font-weight: var(--weight-regular);
-  }
-
-  .roadmap-visibility:hover,
-  .roadmap-visibility[aria-pressed="true"] {
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
-    color: var(--color-accent);
-  }
-
-  .roadmap-intro .roadmap-visibility {
-    position: relative;
-    isolation: isolate;
-    padding: 4px 8px;
-    min-width: 44px;
-    white-space: nowrap;
-    background: transparent;
-  }
-
-  .roadmap-intro .roadmap-visibility::before {
-    content: "";
-    position: absolute;
-    inset: 6px 0;
-    z-index: -1;
-    pointer-events: none;
-    border-radius: var(--radius-control);
-  }
-
-  .roadmap-intro .roadmap-visibility:hover::before,
-  .roadmap-intro .roadmap-visibility[aria-pressed="true"]::before {
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
-  }
-
   .roadmap-total {
     display: flex;
     align-items: center;
@@ -1673,16 +1656,6 @@
       justify-content: stretch;
     }
 
-    .roadmap-intro-actions .roadmap-visibility {
-      padding-inline: 8px;
-      border: 0;
-      gap: 8px;
-    }
-
-    .roadmap-visibility-label {
-      display: none;
-    }
-
     .roadmap-landscape {
       min-height: 150px;
       padding: 18px 20px 28px;
@@ -1798,14 +1771,6 @@
   }
 
   @media (max-width: 360px) {
-    .roadmap-visibility-label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {
