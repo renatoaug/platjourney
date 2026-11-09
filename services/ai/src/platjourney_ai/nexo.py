@@ -558,7 +558,15 @@ def focus_prompt(focus: Focus) -> str:
         ' de fechar.'
     )
     if focus.trophy and focus.changed:
-        trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
+        # A trophy the story hands over has no trick: say what it asks, never how to get it, or the
+        # model falls back on the chat's "not mapped yet" line in a notice nobody asked for.
+        trick = (
+            f' Macete do guia: {focus.trick}'
+            if focus.trick
+            else ' O guia não traz macete para ele: diga só o que ele pede, pela descrição, sem'
+            ' explicar como pegar.'
+        )
+        how = ' e como pegar' if focus.trick else ''
         where = (
             ' Ele ficou para trás: diga que, pelo momento do jogador, vale buscá-lo agora.'
             if focus.behind
@@ -567,7 +575,7 @@ def focus_prompt(focus: Focus) -> str:
         parts.append(
             f'O troféu sugerido antes acabou de sair: sugira o próximo, {focus.trophy}'
             f' ({focus.detail}), por que ele agora (pelo que o jogador acabou de conquistar ou'
-            f' pelo ponto do jogo em que está) e como pegar.{where}{trick}'
+            f' pelo ponto do jogo em que está){how}.{where}{trick}'
         )
     elif focus.trophy:
         parts.append(
@@ -814,7 +822,11 @@ async def tip(
         prompt += ROUTE_PROMPT.format(route=route)
     text = await ask(prompt, lean_context(ctx, [t.name_en for t in unlocked]), locale=ctx.locale)
     # Automatic notices cite no source; the model sometimes adds one anyway.
-    return re.sub(r'\n*^[ \t]*Fonte:.*$', '', text, flags=re.M).strip()
+    text = re.sub(r'\n*^[ \t]*Fonte:.*$', '', text, flags=re.M)
+    # Nor do they promise to look into something: "not mapped yet" answers a question, and nobody
+    # asked one here. The sentence goes, up to the promise that closes it.
+    promise = rf'[ \t]*{re.escape(NOT_YET)}.*?(?:te chamo\.|$)'
+    return re.sub(promise, '', text, flags=re.M | re.S).strip()
 
 
 async def trophy_help(ctx: GameContext, trophy: Trophy) -> str:

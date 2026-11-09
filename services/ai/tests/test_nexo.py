@@ -490,6 +490,19 @@ def test_an_unlock_notice_follows_the_servers_focus_instead_of_picking_one() -> 
     assert 'Macete do guia: Use nitro.' in moved
 
 
+def test_an_unlock_notice_asks_no_how_to_for_a_focus_without_a_trick() -> None:
+    unlocked = [Trophy.model_validate(trophy())]
+    prompt = nexo.unlock_prompt(
+        unlocked,
+        None,
+        nexo.Focus.model_validate(
+            {'trophy': 'No sigilo', 'detail': 'Entrar é mais fácil que sair', 'changed': True}
+        ),
+    )
+    assert 'diga só o que ele pede, pela descrição, sem explicar como pegar' in prompt
+    assert 'e como pegar' not in prompt
+
+
 def test_an_unlock_notice_never_places_the_player_in_a_phase() -> None:
     """Story done, a phase 3 trophy earned, phase 1's side activities still open: the prompt
     calls the focus something left behind, celebrates a phase just closed and never places the
@@ -521,6 +534,22 @@ async def test_an_automatic_notice_cites_no_source(
 
     monkeypatch.setattr(nexo, 'ask', answer)
     assert await nexo.tip('unlock', context(), []) == 'Boa! Próximo: Burnout.'
+
+
+async def test_an_automatic_notice_never_says_it_has_not_mapped_something(
+    model: Model, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def answer(*_args: Any, **_kw: Any) -> str:
+        return (
+            'Mandou bem!\nO próximo é **No sigilo**: entrar é mais fácil que sair.\n'
+            'Essa me pegou! Ainda não tenho isso mapeado em MindsEye, mas deixei anotado pra '
+            'investigar. Assim que descobrir, te chamo.'
+        )
+
+    monkeypatch.setattr(nexo, 'ask', answer)
+    assert await nexo.tip('unlock', context(), []) == (
+        'Mandou bem!\nO próximo é **No sigilo**: entrar é mais fácil que sair.'
+    )
 
 
 def test_the_cited_source_links_to_the_passage_it_came_from() -> None:
