@@ -54,6 +54,7 @@ const messages = defineMessages({
     saved: 'Nos interesses',
     remove: 'Remover dos interesses',
     save: 'Salvar nos interesses',
+    saveShort: 'Salvar',
     trophies: 'Troféus',
     inLibrary: 'NA SUA BIBLIOTECA',
     talkToNexo: 'Conversar com o Nexo',
@@ -82,6 +83,7 @@ const messages = defineMessages({
     saved: 'In interests',
     remove: 'Remove from interests',
     save: 'Save to interests',
+    saveShort: 'Save',
     trophies: 'Trophies',
     inLibrary: 'IN YOUR LIBRARY',
     talkToNexo: 'Talk to Nexo',
@@ -230,7 +232,8 @@ function SaveButton({ d }: { d: TitleDetail }) {
         setBusy(false)
       }}
     >
-      <Icon name={saved ? 'bookmark-filled' : 'bookmark'} /> {saved ? t('saved') : t('save')}
+      <Icon name={saved ? 'bookmark-filled' : 'bookmark'} />{' '}
+      {saved ? t('saved') : <Short long={t('save')} short={t('saveShort')} />}
     </button>
   )
 }
