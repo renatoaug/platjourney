@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.63.0](https://github.com/renatoaug/platjourney/compare/v0.62.0...v0.63.0) (2026-11-09)
+
+### Features
+
+* **server:** keep unlocks from every trophy list the server already fetches ([#160](https://github.com/renatoaug/platjourney/issues/160)) ([c57d32a](https://github.com/renatoaug/platjourney/commit/c57d32aa7779c564da96ca001cd2cb75579664fc))
+
 ## [0.62.0](https://github.com/renatoaug/platjourney/compare/v0.61.1...v0.62.0) (2026-11-09)
 
 ### Features
