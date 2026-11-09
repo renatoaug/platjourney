@@ -883,6 +883,23 @@
     .hero.immersive .meta > .dm .dm-body {
       flex: 1;
     }
+
+    /* Tighter chips, so four facts still share one line on a phone. */
+    .hero.immersive .meta {
+      column-gap: 6px;
+    }
+
+    .hero.immersive .meta > span {
+      gap: 4px;
+      height: 28px;
+      padding: 0 9px;
+      font-size: var(--text-xs);
+    }
+
+    .hero.immersive .meta > span .icon {
+      width: 13px;
+      height: 13px;
+    }
   }
 
   .hero.immersive .meta > .ok {
