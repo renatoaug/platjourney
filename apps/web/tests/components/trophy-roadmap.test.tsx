@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
-import { fireEvent, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import { SAMPLE_ME } from '../../src/app/app-state'
 import { Journey } from '../../src/components/journey'
@@ -1016,9 +1016,8 @@ test('with places in the guide, a trophy says when it falls instead of leaving a
   const route = screen.getByRole('list', { name: 'Rota completa' })
   const pick = (name: RegExp) => fireEvent.click(within(route).getByRole('button', { name }))
   pick(/^Terceiro Ato/)
-  expect(when()).toBe(
-    'Acontece no capítulo 3, naturalmente pela história. 1 capítulo à frente de você.',
-  )
+  // Where the player is now stays unsaid: their trophies only say where they have been at least.
+  expect(when()).toBe('Acontece no capítulo 3, naturalmente pela história.')
   // A story trophy with no tip has nothing to ask the Nexo about.
   expect(container.querySelector('#roadmap-advice .roadmap-ask')).toBeNull()
   pick(/^Mira Certeira/)
@@ -1031,6 +1030,29 @@ test('with places in the guide, a trophy says when it falls instead of leaving a
   pick(/^Perito/)
   expect(when()).toBeUndefined()
   expect(container.querySelector('#roadmap-advice .roadmap-ask')).toBeTruthy()
+  // A long trophy whose end nobody states says only where it can start.
+  cleanup()
+  const open = renderApp(
+    <TrophyRoadmap
+      game={{
+        ...data,
+        guide: {
+          ...(data.guide as GuideDetail),
+          trophyPlaces: [{ trophy: 'Colecionador', from: 2 }],
+        },
+      }}
+    />,
+  )
+  fireEvent.click(
+    within(screen.getByRole('list', { name: 'Rota completa' })).getByRole('button', {
+      name: /^Colecionador/,
+    }),
+  )
+  expect(open.container.querySelector('.roadmap-when')?.textContent).toBe(
+    'Dá para começar no capítulo 2.',
+  )
+  open.unmount()
+  // A trophy the guide does not place, and that does not come by itself, has no line.
 })
 
 test('with a graph in the guide, a trophy says what it still depends on and until when', () => {

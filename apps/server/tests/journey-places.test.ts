@@ -75,6 +75,18 @@ describe('trophies placed along the game', () => {
     expect(expectedStep(open[3], list, guide, 12)).toBe(33)
     // A trophy of a single moment: where it unlocks.
     expect(expectedStep(open[1], list, guide, 12)).toBe(13)
+    // A long trophy whose end the guide does not give does not order the route.
+    const startOnly = {
+      ...guide,
+      trophyPlaces: [...(guide.trophyPlaces ?? []), { trophy: 'Café', from: 3 }].filter(
+        (p, i, all) => all.findLastIndex((x) => x.trophy === p.trophy) === i,
+      ),
+    }
+    const grind = {
+      ...startOnly,
+      trophyKinds: [...(guide.trophyKinds ?? []), { trophy: 'Café', kind: 'grind' as const }],
+    }
+    expect(expectedStep(open[2], list, grind, 12)).toBeUndefined()
   })
 
   test('what is left goes in the order it should fall, and the next is the nearest ahead', () => {
