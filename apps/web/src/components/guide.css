@@ -1197,8 +1197,19 @@
     .title-guide-card > .game-about {
       display: grid;
       grid-template-columns: minmax(240px, 1fr) minmax(0, 1.4fr);
-      align-items: start;
+      align-items: stretch;
       gap: 32px;
+    }
+
+    /* The cover grows to the facts' height, its top on the first fact and its foot on the last. */
+    .guide-panel .game-about-cover,
+    .title-guide-card > .game-about .game-about-cover {
+      align-self: stretch;
+      width: auto;
+      height: auto;
+      aspect-ratio: 3 / 4;
+      /* Its own picture never sets the height: the facts do. */
+      contain: size;
     }
   }
 
