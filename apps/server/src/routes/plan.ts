@@ -1,3 +1,4 @@
+import { trophiesFor } from '../demo.ts'
 import { getCurrent } from '../game-context.ts'
 import type { Guide } from '../guide.ts'
 import { json, readBody } from '../http.ts'
@@ -5,7 +6,6 @@ import { trophyHelp } from '../nexo.ts'
 import { currentPlan, discardPlan, PLAN_REASONS, type PlanReason, planSession } from '../planner.ts'
 import { hours, playtimes } from '../playtime.ts'
 import { projectGame } from '../plugins.ts'
-import { titleTrophies } from '../psn.ts'
 import { loadGroups } from '../ranking.ts'
 import { gameForTitle } from '../repository/game.ts'
 import { getGuide } from '../repository/guide.ts'
@@ -22,7 +22,7 @@ async function planContext(a: Api, np: unknown) {
   if (playing?.title.npCommunicationId === np) return playing
   const game = await gameForTitle(title)
   const [trophies, groups, guide] = await Promise.all([
-    titleTrophies(title, a.me.psn_account_id),
+    trophiesFor(title, a.me),
     loadGroups(title, a.me),
     getGuide<Guide>(game.id),
   ])
@@ -45,7 +45,7 @@ async function trophyTip({ req, res, me, titles }: Api) {
   const title = (await titles()).find((t) => t.npCommunicationId === np)
   if (!title) return json(res, 404, { error: 'title not in your library' })
   const [trophies, groups, game] = await Promise.all([
-    titleTrophies(title, me.psn_account_id),
+    trophiesFor(title, me),
     loadGroups(title, me),
     gameForTitle(title),
   ])

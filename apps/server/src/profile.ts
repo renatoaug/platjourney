@@ -1,4 +1,5 @@
 import { isDemo, storedSummary } from './demo.ts'
+import { keepUnlocks } from './player-steps.ts'
 import { hours, playtimes } from './playtime.ts'
 import { type ProfileSummary, profileSummary, type TitleProgress, titleTrophies } from './psn.ts'
 import { type Game, gamesForTitles, getGame } from './repository/game.ts'
@@ -42,6 +43,8 @@ async function backfill(user: User, missing: TitleProgress[]): Promise<void> {
     for (let title = queue.shift(); title; title = queue.shift()) {
       try {
         const trophies = await titleTrophies(title, user.psn_account_id)
+        // The whole list is here already: its unlock times feed where long trophies close (ADR-015).
+        keepUnlocks(user.id, title.npCommunicationId, trophies)
         const plat = trophies.find((t) => t.type === 'platinum' && t.earned)
         if (!plat?.earnedAt) continue
         await savePlatinum(user.id, {
