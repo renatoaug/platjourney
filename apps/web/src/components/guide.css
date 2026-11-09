@@ -1182,7 +1182,8 @@
   /* The game's facts inside the guide's "About" tab (or above a guide still being written) lose their
      own frame and sit right above what follows. */
   .guide-panel .game-about,
-  .title-guide-card > .game-about {
+  .title-guide-card > .game-about,
+  .journey-guide > .game-about {
     padding: 0;
     margin-bottom: 20px;
     border: 0;
@@ -1194,7 +1195,8 @@
   /* On a wide screen the cover and genres sit beside the facts instead of above them. */
   @media (min-width: 900px) {
     .guide-panel .game-about,
-    .title-guide-card > .game-about {
+    .title-guide-card > .game-about,
+    .journey-guide > .game-about {
       display: grid;
       grid-template-columns: minmax(240px, 1fr) minmax(0, 1.4fr);
       align-items: stretch;
@@ -1203,7 +1205,8 @@
 
     /* The cover grows to the facts' height, its top on the first fact and its foot on the last. */
     .guide-panel .game-about-cover,
-    .title-guide-card > .game-about .game-about-cover {
+    .title-guide-card > .game-about .game-about-cover,
+    .journey-guide > .game-about .game-about-cover {
       align-self: stretch;
       width: auto;
       height: auto;
