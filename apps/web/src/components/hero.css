@@ -916,7 +916,15 @@
     color: var(--color-fg);
   }
 
-  /* Only the total is a chip; the tiers after it are plain text split by thin dividers. */
+  /* The total is plain text ending in a colon, and the tiers after it split by thin dividers. */
+  .hero.immersive .trophy-counts-row > b {
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+
   .hero.immersive .trophy-counts-row > :not(b) {
     height: auto;
     padding: 0;
