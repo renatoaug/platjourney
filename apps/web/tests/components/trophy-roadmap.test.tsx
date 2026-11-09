@@ -161,7 +161,7 @@ const game: CurrentGame = {
 test('mounted journey starts at a pending challenge and keeps completed trophies out of the foreground', async () => {
   const { container } = renderApp(<Journey game={game} plan={null} />, { path: '/game' })
   await screen.findByRole('link', { name: 'Roteiro' })
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Secret scene')
   expect(container.querySelector('.roadmap-past')?.hasAttribute('open')).toBe(false)
   expect(container.querySelectorAll('.roadmap-route li').length).toBe(3)
   expect(container.querySelector('.journey-trophies')).toBeTruthy()
@@ -169,27 +169,16 @@ test('mounted journey starts at a pending challenge and keeps completed trophies
   expect(screen.getByText('1 de 3 conquistados')).toBeTruthy()
 })
 
-test('hidden advice is opt in, guide markup is sanitized and links retain exact trophy context', async () => {
+test('hidden trophies show in full, guide markup is sanitized and links retain exact trophy context', async () => {
   const { container } = renderApp(<TrophyRoadmap game={game} />, { path: '/game' })
-  expect(screen.queryByText('Secret plot')).toBeNull()
-  expect(screen.queryByText('Secret advice')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Revelar ocultos' }))
-  await screen.findByRole('button', { name: 'Ocultar segredos' })
-  expect(
-    screen
-      .getByRole('button', { name: 'Ocultar segredos' })
-      .querySelector('use')
-      ?.getAttribute('href'),
-  ).toBe('/icons.svg#eye-off')
+  // As in the trophy list: hiding spoilers waits for a profile setting that covers every screen.
+  expect(screen.queryByRole('button', { name: 'Revelar ocultos' })).toBeNull()
   expect(screen.getByText('Secret advice')).toBeTruthy()
   expect(screen.getByRole('heading', { name: 'Secret scene' })).toBeTruthy()
   const link = [...container.querySelectorAll<HTMLAnchorElement>('.roadmap-ask')].find((a) =>
     a.href.includes('Secret'),
   )
   expect(new URL(link?.href ?? 'http://localhost/').searchParams.get('trophy')).toBe('Secret scene')
-  fireEvent.click(screen.getByRole('button', { name: 'Ocultar segredos' }))
-  await screen.findByRole('button', { name: 'Revelar ocultos' })
-  expect(screen.queryByText('Secret advice')).toBeNull()
   const past = container.querySelector<HTMLDetailsElement>('.roadmap-past')
   if (!past) throw new Error('earned history missing')
   past.open = true
@@ -198,8 +187,6 @@ test('hidden advice is opt in, guide markup is sanitized and links retain exact 
   expect(container.querySelector('script')).toBeNull()
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('First step')
   expect(screen.queryByRole('button', { name: 'Voltar à sugestão' })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Próximo marco' }))
-  expect(screen.queryByText('Secret advice')).toBeNull()
 })
 
 test('zero counter remains visible, unavailable counters are not invented and empty data is explicit', () => {
@@ -269,7 +256,7 @@ test('an unavailable landscape falls back without broken artwork or losing the o
   if (!art) throw new Error('landscape missing')
   fireEvent.error(art)
   expect(container.querySelector('.roadmap-scene')).toBeNull()
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Secret scene')
 })
 
 test('the route crosses guide stages while the history disclosure stays closed', () => {
@@ -278,11 +265,11 @@ test('the route crosses guide stages while the history disclosure stays closed',
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Complete')
   expect(container.querySelector('.roadmap-chapter-caption')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Marco anterior' }))
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
+  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Secret scene')
   expect(container.querySelector('.roadmap-past')?.hasAttribute('open')).toBe(false)
 })
 
-test('route artwork and missable signals use exact guide facts, with no hidden trophy spoilers', () => {
+test('route artwork and missable signals use exact guide facts', () => {
   const items = game.trophies.map((t, i) => ({
     ...t,
     earned: false,
@@ -302,15 +289,15 @@ test('route artwork and missable signals use exact guide facts, with no hidden t
   )
   const stops = container.querySelectorAll('.roadmap-route li')
   expect(stops).toHaveLength(3)
-  expect(container.querySelectorAll('.roadmap-route .roadmap-route-risk')).toHaveLength(1)
+  expect(container.querySelectorAll('.roadmap-route .roadmap-route-alert')).toHaveLength(2)
   expect(container.querySelector('.roadmap-destination .roadmap-route-risk')).toBeTruthy()
   expect(stops[0]?.getAttribute('data-missable')).toBe('true')
   expect(stops[0]?.querySelector('img')?.getAttribute('src')).toBe('/synthetic-trophy-1.png')
-  expect(stops[1]?.querySelector('img')).toBeNull()
-  expect(stops[1]?.getAttribute('data-missable')).toBe('false')
-  expect(stops[1]?.textContent).toContain('Troféu oculto')
+  // A hidden trophy shows its art, name and risk, as in the trophy list.
+  expect(stops[1]?.querySelector('img')?.getAttribute('src')).toBe('/synthetic-trophy-2.png')
+  expect(stops[1]?.getAttribute('data-missable')).toBe('true')
+  expect(stops[1]?.textContent).toContain('Secret scene')
   expect(stops[2]?.getAttribute('data-final')).toBe('true')
-  expect(screen.queryByText('Secret warning')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: /First step.*Perdível/ }))
   expect(screen.getByText('Before moving on')).toBeTruthy()
   // The trophy's own trick already says how.
@@ -466,68 +453,6 @@ test('selection stays on the visible page, crosses its boundary symmetrically an
   }
 })
 
-test('reveal applies to the whole game, reloads from the account and isolates other games and accounts', async () => {
-  const hiddenGame = {
-    ...game,
-    trophies: game.trophies.map((trophy) => ({ ...trophy, hidden: true, earned: false })),
-  }
-  let view = renderApp(<TrophyRoadmap game={hiddenGame} />)
-  expect(
-    screen
-      .getByRole('button', { name: 'Revelar ocultos' })
-      .querySelector('use')
-      ?.getAttribute('href'),
-  ).toBe('/icons.svg#eye')
-  fireEvent.click(screen.getByRole('button', { name: 'Revelar ocultos' }))
-  await screen.findByRole('button', { name: 'Ocultar segredos' })
-  expect(view.container.querySelector('.roadmap-route')?.textContent).not.toContain('Troféu oculto')
-  expect(screen.queryByRole('button', { name: 'Revelar este troféu' })).toBeNull()
-  expect(localStorage.length).toBe(0)
-  expect(
-    screen
-      .getByRole('button', { name: 'Ocultar segredos' })
-      .querySelector('use')
-      ?.getAttribute('href'),
-  ).toBe('/icons.svg#eye-off')
-  fireEvent.click(screen.getByRole('button', { name: 'Ocultar segredos' }))
-  const revealAgain = await screen.findByRole('button', { name: 'Revelar ocultos' })
-  expect(revealAgain.querySelector('use')?.getAttribute('href')).toBe('/icons.svg#eye')
-  fireEvent.click(revealAgain)
-  await screen.findByRole('button', { name: 'Ocultar segredos' })
-  view.unmount()
-  const account = { ...SAMPLE_ME, revealedTrophyGames: savedVisibility.get(SAMPLE_ME.id) }
-  view = renderApp(<TrophyRoadmap game={hiddenGame} />, { value: { me: account } })
-  expect(
-    screen.getByRole('button', { name: 'Ocultar segredos' }).getAttribute('aria-pressed'),
-  ).toBe('true')
-  view.unmount()
-  view = renderApp(
-    <TrophyRoadmap game={{ ...hiddenGame, game: { ...hiddenGame.game, id: 'game:another' } }} />,
-    { value: { me: account } },
-  )
-  expect(screen.getByRole('button', { name: 'Revelar ocultos' }).getAttribute('aria-pressed')).toBe(
-    'false',
-  )
-  view.unmount()
-  view = renderApp(<TrophyRoadmap game={hiddenGame} />, {
-    value: { me: { ...SAMPLE_ME, id: 'user:another' } },
-  })
-  expect(screen.getByRole('button', { name: 'Revelar ocultos' }).getAttribute('aria-pressed')).toBe(
-    'false',
-  )
-  expect(hiddenGame.trophies.every((trophy) => trophy.hidden)).toBe(true)
-})
-
-test('failed save keeps trophies hidden and reports the failure', async () => {
-  mockApi({ '/api/account/trophy-visibility': reply(500, { message: 'Unavailable' }) })
-  const { container } = renderApp(<TrophyRoadmap game={game} />)
-  fireEvent.click(screen.getByRole('button', { name: 'Revelar ocultos' }))
-  expect(
-    await screen.findByText('Não foi possível salvar a preferência. Tente novamente.'),
-  ).toBeTruthy()
-  expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Troféu oculto')
-})
-
 test('earned history shows trophy art and full descriptions without changing progress', () => {
   const earned = {
     ...game.trophies[1],
@@ -675,15 +600,6 @@ test('a trophy shows its own tips, and its phase plan stays apart from them', ()
   expect(phase?.hasAttribute('open')).toBe(false)
 })
 
-test('a phase plan leaves out the step that names a trophy still hidden', () => {
-  const data = routeGame()
-  const trophies = data.trophies.map((t) => ({ ...t, hidden: t.name === 'Sem Atalho' }))
-  const { container } = renderApp(<TrophyRoadmap game={{ ...data, trophies }} />)
-  fireEvent.click(screen.getByRole('button', { name: /Fim da Jornada/ }))
-  expect(container.querySelector('.roadmap-phase')?.textContent).toContain('Termine a história')
-  expect(container.querySelector('.roadmap-phase')?.textContent).not.toContain('modo arena')
-})
-
 test('two trophies of a phase do not show the same text', () => {
   const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
   const advice = (name: RegExp) => {
@@ -794,18 +710,6 @@ test('live progress moves the suggestion on an unselected route', () => {
   expect(screen.getByRole('heading', { name: 'Mira Certeira', level: 3 })).toBeTruthy()
 })
 
-test('hidden trophies keep guide tips and goals behind the account reveal preference', () => {
-  const data = routeGame()
-  const { container } = renderApp(
-    <TrophyRoadmap
-      game={{ ...data, trophies: data.trophies.map((x) => ({ ...x, hidden: true })) }}
-    />,
-  )
-  expect(screen.getByRole('heading', { name: 'Troféu oculto', level: 3 })).toBeTruthy()
-  expect(container.querySelector('.roadmap-tips')).toBeNull()
-  expect(screen.queryByRole('button', { name: /Colecionador/ })).toBeNull()
-})
-
 test('a catalog preview keeps the chat on the catalog game', () => {
   const data = routeGame()
   const { container } = renderApp(<TrophyRoadmap preview game={{ ...data, np: data.game.id }} />)
@@ -882,7 +786,8 @@ test('campaign ends at the base platinum while additional trophies remain availa
   expect(container.querySelector('.roadmap-route li:last-child')?.getAttribute('data-final')).toBe(
     'true',
   )
-  fireEvent.click(screen.getByRole('button', { name: 'Conteúdo adicional · 1' }))
+  expect(screen.getByRole('button', { name: 'Base' }).getAttribute('aria-pressed')).toBe('true')
+  fireEvent.click(screen.getByRole('button', { name: 'DLC 1' }))
   expect(container.querySelector('.roadmap-route')?.textContent).toContain('Extra objective')
   expect(container.querySelector('.roadmap-route')?.textContent).not.toContain('Complete')
   expect(screen.getByRole('heading', { name: 'Além do jogo base' })).toBeTruthy()
@@ -981,17 +886,6 @@ test('a valid recommendation stays marked while inspecting another milestone', (
   expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
   expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeTruthy()
-})
-
-test('the journey says it is in beta, also while it has no trophies to show', () => {
-  const { container, unmount } = renderApp(<TrophyRoadmap game={routeGame()} />)
-  expect(container.querySelector('.roadmap-preview-notice')?.textContent).toContain('BETA:')
-  expect(container.querySelector('.roadmap-preview-notice strong .icon')).toBeTruthy()
-  unmount()
-  const empty = renderApp(<TrophyRoadmap game={{ ...routeGame(), trophies: [] }} />)
-  expect(empty.container.querySelector('.roadmap-preview-notice')?.textContent).toContain(
-    'avaliações de qualidade',
-  )
 })
 
 test('with every trophy earned, the kinds still count the whole game', () => {

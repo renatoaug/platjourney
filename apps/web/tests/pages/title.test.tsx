@@ -288,3 +288,18 @@ test('a game the player does not own offers Nexo on its trophies, by the catalog
   expect(href).toContain(`game=${encodeURIComponent('game:19561')}`)
   expect(href).toContain('trophy=')
 })
+
+test('a game outside the library opens its guide on an About tab with the game facts', async () => {
+  open('/title/game/game%3A19561', {
+    ...ownedData,
+    owned: false,
+    game: { ...ownedData.game, released_at: '2019-04-26T00:00:00Z' },
+  })
+  const tab = await screen.findByRole('tab', { name: 'Sobre' })
+  expect(tab.getAttribute('aria-selected')).toBe('true')
+  const panel = document.getElementById(tab.getAttribute('aria-controls') ?? '')
+  expect(panel?.querySelector('.game-about')).toBeTruthy()
+  expect(panel?.querySelector('.quick-facts')).toBeTruthy()
+  // Not again beside the headline.
+  expect(document.querySelector('.hero-aside .game-about')).toBeNull()
+})

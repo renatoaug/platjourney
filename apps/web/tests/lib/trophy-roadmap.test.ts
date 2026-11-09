@@ -195,7 +195,13 @@ describe('trophyMentions', () => {
       ...extra,
     }) as Trophy
   const guideWith = (goal: string, more: Partial<GuideDetail> = {}) =>
-    ({ roadmap: [{ phase: 'Fase 1', goal, trophies: [] }], earlyTips: [], ...more }) as GuideDetail
+    ({
+      roadmap: [{ phase: 'Fase 1', goal, trophies: [] }],
+      earlyTips: [],
+      missables: [],
+      onlineTrophies: [],
+      ...more,
+    }) as GuideDetail
 
   test('takes the numbered step that names the trophy, without its number', () => {
     const a = trophy('Vantagens do trabalho')
@@ -223,12 +229,24 @@ describe('trophyMentions', () => {
     ])
   })
 
-  test('a step that names another trophy stays in the phase plan, hidden or not', () => {
+  test('a step that names another trophy stays in the phase plan while the trophy has advice', () => {
     const a = trophy('Aberto')
     const goal = 'Isso libera **Aberto** e **Segredo**.'
-    expect(trophyMentions(a, [a, trophy('Segredo', { hidden: true })], guideWith(goal))).toEqual([])
-    expect(trophyMentions(a, [a, trophy('Segredo')], guideWith(goal))).toEqual([])
+    const tip = { tricks: [{ trophy: 'Aberto', trick: 'Faça assim.' }] }
+    expect(trophyMentions(a, [a, trophy('Segredo')], guideWith(goal, tip))).toEqual([])
     expect(trophyMentions(a, [a], guideWith(goal))).toEqual([goal])
+  })
+
+  test('with no advice of its own, a step shared with other trophies is better than nothing', () => {
+    const a = trophy('Eu sou a lei')
+    const goal =
+      '3. Conclua os 17 avistamentos de ciberpsicopata. Isso libera os troféus **Senhores passageiros** e **Eu sou a lei**.'
+    expect(trophyMentions(a, [a, trophy('Senhores passageiros')], guideWith(goal))).toEqual([
+      'Conclua os 17 avistamentos de ciberpsicopata. Isso libera os troféus **Senhores passageiros** e **Eu sou a lei**.',
+    ])
+    // Never one that names a trophy still hidden.
+    const secret = trophy('Senhores passageiros', { hidden: true })
+    expect(trophyMentions(a, [a, secret], guideWith(goal))).toEqual([])
   })
 
   test('reads early tips, collectibles and general route tips, at most three, once each', () => {

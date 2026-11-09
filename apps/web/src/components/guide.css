@@ -1179,6 +1179,50 @@
   }
 
   /* Three investment metrics share a panel; conditions read as compact inline facts. */
+  /* The game's facts inside the guide's "About" tab (or above a guide still being written) lose their
+     own frame and sit right above what follows. */
+  .guide-panel .game-about,
+  .title-guide-card > .game-about {
+    padding: 0;
+    margin-bottom: 20px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  /* On a wide screen the cover and genres sit beside the facts instead of above them. */
+  @media (min-width: 900px) {
+    .guide-panel .game-about,
+    .title-guide-card > .game-about {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) minmax(0, 1.4fr);
+      align-items: stretch;
+      gap: 32px;
+    }
+
+    /* The cover grows to the facts' height, its top on the first fact and its foot on the last. */
+    .guide-panel .game-about-cover,
+    .title-guide-card > .game-about .game-about-cover {
+      align-self: stretch;
+      width: auto;
+      height: auto;
+      aspect-ratio: 3 / 4;
+      /* Its own picture never sets the height: the facts do. */
+      contain: size;
+    }
+  }
+
+  /* Last in the "About" tab, the quick facts leave the card's own padding to close it. */
+  .guide-panel > .quick-facts:last-child {
+    margin-bottom: 0;
+  }
+
+  /* With an "About" tab the quick facts live there, not again in the summary. */
+  .quick-facts.in-guide {
+    display: none;
+  }
+
   .quick-facts {
     container-type: inline-size;
     margin: 0 0 24px;

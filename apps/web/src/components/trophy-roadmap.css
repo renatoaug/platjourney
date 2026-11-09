@@ -102,15 +102,43 @@
     min-height: 44px;
   }
 
-  .roadmap-extra-route {
-    padding: 0 32px 20px;
+  .roadmap-tracks {
+    min-width: 0;
+    margin: 0 6px 0 0;
+    border: 0;
+    background: color-mix(in srgb, var(--color-bg-subtle) 80%, transparent);
   }
 
-  .roadmap-extra-route button {
-    min-height: 44px;
-    background: transparent;
-    color: var(--color-fg-muted);
-    border: 1px solid var(--color-border);
+  .roadmap-route-controls {
+    align-items: center;
+  }
+
+  .roadmap-forward-heading h4 {
+    white-space: nowrap;
+  }
+
+  /* On a phone, with a DLC track, the switch and the arrows take a line of their own. */
+  @media (max-width: 480px) {
+    .roadmap-forward-heading:has(.roadmap-tracks) {
+      flex-wrap: wrap;
+      row-gap: 10px;
+    }
+
+    .roadmap-route-controls:has(.roadmap-tracks) {
+      width: 100%;
+    }
+
+    .roadmap-route-controls .roadmap-tracks {
+      margin-right: auto;
+    }
+  }
+
+  /* Its own sizes, not the square arrows beside it. */
+  .roadmap-route-controls .roadmap-tracks button {
+    width: auto;
+    height: auto;
+    min-height: 36px;
+    padding: 8px 12px;
   }
 
   .roadmap-parallel {
@@ -290,7 +318,6 @@
       gap: 6px;
     }
 
-    .roadmap-extra-route,
     .roadmap-campaign-loading {
       padding-inline: 20px;
     }
@@ -323,15 +350,6 @@
     .roadmap-focus {
       grid-template-columns: minmax(0, 1fr);
     }
-  }
-
-  .roadmap-preview-notice {
-    margin: 0 0 16px;
-    color: var(--color-fg-muted);
-  }
-
-  .roadmap-preview-notice strong {
-    color: var(--color-trophy-gold);
   }
 
   .roadmap-loading-disclosures {
@@ -396,50 +414,7 @@
     grid-row: 1;
   }
 
-  .roadmap-intro-actions .roadmap-visibility {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-  }
-
-  .roadmap-visibility {
-    min-height: 44px;
-    padding: 8px;
-    gap: 6px;
-    background: transparent;
-    color: var(--color-fg-muted);
-    font-size: var(--text-base);
-    font-weight: var(--weight-regular);
-  }
-
-  .roadmap-visibility:hover,
-  .roadmap-visibility[aria-pressed="true"] {
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
-    color: var(--color-accent);
-  }
-
-  .roadmap-intro .roadmap-visibility {
-    position: relative;
-    isolation: isolate;
-    padding: 4px 8px;
-    min-width: 44px;
-    white-space: nowrap;
-    background: transparent;
-  }
-
-  .roadmap-intro .roadmap-visibility::before {
-    content: "";
-    position: absolute;
-    inset: 6px 0;
-    z-index: -1;
-    pointer-events: none;
-    border-radius: var(--radius-control);
-  }
-
-  .roadmap-intro .roadmap-visibility:hover::before,
-  .roadmap-intro .roadmap-visibility[aria-pressed="true"]::before {
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
-  }
-
+  /* On the total's line, with the breakdown below them both. */
   .roadmap-total {
     display: flex;
     align-items: center;
@@ -944,7 +919,8 @@
     height: 40px;
   }
 
-  .roadmap-route > [data-kind="natural"] .roadmap-route-number {
+  /* A story trophy drops its number, but an earned one keeps the check every earned stop has. */
+  .roadmap-route > [data-kind="natural"][data-earned="false"] .roadmap-route-number {
     display: none;
   }
 
@@ -1045,11 +1021,37 @@
 
   .roadmap-route-caption {
     display: grid;
-    gap: 8px;
+    gap: 4px;
   }
 
+  /* Up to two lines: a long name never pushes the route apart. */
   .roadmap-route-name {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     font-weight: var(--weight-medium);
+  }
+
+  /* A missable still open: a warning badge on the ring, opposite its number. */
+  .roadmap-route-alert {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-round);
+    color: var(--color-danger);
+    background: var(--color-danger-surface);
+  }
+
+  .roadmap-route-alert > .icon {
+    width: 13px;
+    height: 13px;
   }
 
   .roadmap-route-risk,
@@ -1080,7 +1082,10 @@
     --roadmap-marker-color: var(--color-trophy-platinum);
   }
 
-  .roadmap-route [data-final="true"] .roadmap-route-pin::after {
+  /* The platinum and a missable still open carry an orbit: the platinum's in its colour, a
+     missable's in red, a little faster, so it reads as something to act on before it closes. */
+  .roadmap-route [data-final="true"] .roadmap-route-pin::after,
+  .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin::after {
     content: "";
     position: absolute;
     inset: -8px;
@@ -1088,7 +1093,7 @@
     pointer-events: none;
     background: conic-gradient(
       transparent 20deg,
-      var(--color-trophy-platinum-light) 65deg,
+      var(--roadmap-orbit-color, var(--color-trophy-platinum-light)) 65deg,
       transparent 115deg
     );
     mask: radial-gradient(
@@ -1099,6 +1104,23 @@
       transparent 74%
     );
     animation: roadmap-platinum-orbit 8s linear infinite;
+  }
+
+  .roadmap-route > [data-missable="true"][data-earned="false"] {
+    --roadmap-marker-color: var(--color-danger);
+  }
+
+  .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin {
+    --roadmap-orbit-color: var(--color-danger);
+    /* The same frame as every stop, so the road still meets it, and a red glow. */
+    box-shadow:
+      0 0 0 5px var(--color-bg-subtle),
+      0 0 0 6px color-mix(in srgb, var(--color-danger) 35%, transparent),
+      0 0 28px color-mix(in srgb, var(--color-danger) 35%, transparent);
+  }
+
+  .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin::after {
+    animation-duration: 4s;
   }
 
   .roadmap-route > .is-current {
@@ -1634,16 +1656,6 @@
       justify-content: stretch;
     }
 
-    .roadmap-intro-actions .roadmap-visibility {
-      padding-inline: 8px;
-      border: 0;
-      gap: 8px;
-    }
-
-    .roadmap-visibility-label {
-      display: none;
-    }
-
     .roadmap-landscape {
       min-height: 150px;
       padding: 18px 20px 28px;
@@ -1759,14 +1771,6 @@
   }
 
   @media (max-width: 360px) {
-    .roadmap-visibility-label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1776,7 +1780,8 @@
     }
 
     .roadmap-horizon,
-    .roadmap-route [data-final="true"] .roadmap-route-pin::after {
+    .roadmap-route [data-final="true"] .roadmap-route-pin::after,
+    .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin::after {
       animation: none;
     }
   }

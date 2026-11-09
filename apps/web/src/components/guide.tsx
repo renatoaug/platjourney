@@ -113,6 +113,7 @@ const messages = defineMessages({
     },
     tabs: {
       label: 'Seções do guia',
+      about: 'Sobre',
       summary: 'Resumo',
       key: 'Macetes',
       missables: 'Perdíveis',
@@ -224,6 +225,7 @@ const messages = defineMessages({
     },
     tabs: {
       label: 'Guide sections',
+      about: 'About',
       summary: 'Summary',
       key: 'Tricks',
       missables: 'Missables',
@@ -575,7 +577,7 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
 
 // The first questions a hunter asks, answered at a glance. Older guides lack the
 // difficulty and post-game fields, so those pills only show when researched.
-function QuickFacts({ g }: { g: GuideDetail }) {
+function QuickFacts({ g, inGuide = false }: { g: GuideDetail; inGuide?: boolean }) {
   const t = useMessages(messages)
   const first = (text?: string | null) => (text ? text.split(/(?<=[.;])\s/)[0] : '')
   const online = g.onlineTrophies?.length ?? 0
@@ -637,7 +639,7 @@ function QuickFacts({ g }: { g: GuideDetail }) {
     </div>
   )
   return (
-    <div className="quick-facts">
+    <div className={inGuide ? 'quick-facts in-guide' : 'quick-facts'}>
       <dl className="quick-facts-primary">{facts.slice(0, 3).map(fact)}</dl>
       <dl className="quick-facts-conditions">{facts.slice(3).map(fact)}</dl>
     </div>
@@ -990,7 +992,16 @@ function GuideQueued({ heading, queued }: { heading: string; queued: boolean }) 
  * The inside of the guide card. `id` is the card's id, used for the tab ids. Give it `key={game.name}`
  * so another game opens on the first tab; the same game keeps its tab and open sections on refresh.
  */
-export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; id?: string }) {
+export function Guide({
+  game: c,
+  id = 'guide-card',
+  about,
+}: {
+  game: GuideGame | null
+  id?: string
+  /** The game's facts card: the first tab, "About", with the guide's quick facts under it. */
+  about?: ReactNode
+}) {
   const tr = useMessages(messages)
   const [selected, setSelectedState] = useState(0)
   // The missables a "see how" link pointed at: the Missables tab marks them and scrolls to the first.
@@ -1067,6 +1078,7 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
   const glossary = g.glossary ?? []
   const earlyTips = g.earlyTips ?? []
   const tabs: [string, number | null][] = [
+    ...(about ? [[tr('tabs.about'), null] as [string, null]] : []),
     [tr('tabs.summary'), null],
     [tr('tabs.roadmap'), roadmap.length],
     [tr('tabs.key'), keyTips(g).count],
@@ -1074,8 +1086,17 @@ export function Guide({ game: c, id = 'guide-card' }: { game: GuideGame | null; 
     [tr('tabs.glossary'), glossary.length],
   ]
   const panels = [
+    ...(about
+      ? [
+          <Fragment key="about">
+            {about}
+            <QuickFacts g={g} />
+          </Fragment>,
+        ]
+      : []),
     <Fragment key="summary">
-      <QuickFacts g={g} />
+      {/* With an "About" tab the quick facts are there; the summary starts at its text. */}
+      <QuickFacts g={g} inGuide={!!about} />
       <p style={{ margin: 0, color: 'var(--color-fg)' }}>
         <GuideText text={g.overview} />
       </p>

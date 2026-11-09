@@ -1,6 +1,7 @@
 import {
   type CSSProperties,
   memo,
+  type ReactNode,
   useCallback,
   useLayoutEffect,
   useMemo,
@@ -22,7 +23,6 @@ import {
   trophyRoadmap,
 } from '../lib/trophy-roadmap'
 import type { CurrentGame, RouteTip, Trophy, TrophyKind } from '../lib/types'
-import { useGameSpoilers } from '../lib/use-game-spoilers'
 import { Icon } from '../ui/icon'
 import { GuideText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
@@ -48,12 +48,10 @@ const messages = defineMessages({
     undatedNote:
       'Conquistas sem data aparecem agrupadas após as datadas, sem ordem cronológica conhecida. Datas iguais não informam a ordem entre si.',
     phasePlan: 'Plano da fase',
-    betaLabel: 'BETA:',
-    betaNote:
-      'A jornada ainda está em testes. A ordem e as dicas ainda estão passando por avaliações de qualidade.',
     tipsCount: { one: 'Ver {count} ponto do roteiro', other: 'Ver os {count} pontos do roteiro' },
-    extraRoute: 'Conteúdo adicional · {count}',
-    baseRoute: 'Voltar ao jogo base',
+    track: 'Trilha da rota',
+    baseTrack: 'Base',
+    dlcTrack: 'DLC {count}',
     routeComplete: 'Rota completa',
     routeEarned: 'Conquistado',
     readAdvice: 'Ler dica deste objetivo',
@@ -117,10 +115,6 @@ const messages = defineMessages({
     bug: 'Problema relatado no guia',
     secret: 'Troféu oculto',
     secretNote: 'Nome, descrição e dicas protegidos para evitar spoilers.',
-    reveal: 'Revelar ocultos',
-    hide: 'Ocultar segredos',
-    revealScope: 'Preferência deste jogo salva na sua conta.',
-    revealFailed: 'Não foi possível salvar a preferência. Tente novamente.',
     progress: 'Progresso do troféu na PSN: {value} / {target}',
     whenStory: 'Acontece naturalmente pela história.',
     whenAt: 'Acontece {place}.',
@@ -174,12 +168,10 @@ const messages = defineMessages({
     undatedNote:
       'Undated achievements are grouped after dated ones, without a known chronological order. Equal timestamps do not establish order between them.',
     phasePlan: 'Phase plan',
-    betaLabel: 'BETA:',
-    betaNote:
-      'The journey is still being tested. The order and tips are still going through quality reviews.',
     tipsCount: { one: 'See {count} route point', other: 'See all {count} route points' },
-    extraRoute: 'Additional content · {count}',
-    baseRoute: 'Back to the base game',
+    track: 'Route track',
+    baseTrack: 'Base',
+    dlcTrack: 'DLC {count}',
     routeComplete: 'Full route',
     routeEarned: 'Earned',
     readAdvice: 'Read this objective’s advice',
@@ -243,10 +235,6 @@ const messages = defineMessages({
     bug: 'Issue reported in the guide',
     secret: 'Hidden trophy',
     secretNote: 'Name, description and advice are protected to avoid spoilers.',
-    reveal: 'Reveal hidden trophies',
-    hide: 'Hide secrets',
-    revealScope: 'This game’s preference saved to your account.',
-    revealFailed: 'Could not save this preference. Try again.',
     progress: 'Trophy progress on PSN: {value} / {target}',
     whenStory: 'Comes naturally with the story.',
     whenAt: 'Happens {place}.',
@@ -839,6 +827,16 @@ function RoadmapNavigation({
         selected={selected}
         target={target}
         choose={choose}
+        tracks={
+          !!extras.length && (
+            <RouteTracks
+              extra={extra}
+              count={extras.length}
+              base={() => choose(target?.groupId === 'default' ? target : first)}
+              dlc={() => choose(extras[0])}
+            />
+          )
+        }
       />
       <div className="roadmap-map-note">
         <p>{t(route.some((x) => x.earned) ? 'historyMapNote' : 'mapNote')}</p>
@@ -853,22 +851,67 @@ function RoadmapNavigation({
           </button>
         )}
       </div>
-      {!!extras.length && (
-        <div className="roadmap-extra-route">
-          <button
-            type="button"
-            className="quiet"
-            onClick={() =>
-              choose(extra ? (target?.groupId === 'default' ? target : first) : extras[0])
-            }
-          >
-            <Icon name="compass" />
-            {extra ? t('baseRoute') : t('extraRoute', { count: extras.length })}
-          </button>
-        </div>
-      )}
     </section>
   )
+}
+
+/** The base game's route or the additional content's, beside the route's arrows. */
+function RouteTracks({
+  extra,
+  count,
+  base,
+  dlc,
+}: {
+  extra: boolean
+  count: number
+  base: () => void
+  dlc: () => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <fieldset className="segmented roadmap-tracks">
+      <legend className="sr-only">{t('track')}</legend>
+      <button type="button" aria-pressed={!extra} onClick={() => extra && base()}>
+        {t('baseTrack')}
+      </button>
+      <button type="button" aria-pressed={extra} onClick={() => !extra && dlc()}>
+        {t('dlcTrack', { count })}
+      </button>
+    </fieldset>
+  )
+}
+
+/** A missable still open: a warning badge on the ring. */
+function RouteAlert({ on }: { on: boolean }) {
+  if (!on) return null
+  return (
+    <span className="roadmap-route-alert" aria-hidden="true">
+      <Icon name="warning" />
+    </span>
+  )
+}
+
+/** Under a stop's name: earned (and when), the missable word for screen readers, or the finale. */
+function RouteStatus({
+  trophy,
+  missable,
+  final,
+}: {
+  trophy: Trophy
+  missable: boolean
+  final: boolean
+}) {
+  const t = useMessages(messages)
+  if (trophy.earned)
+    return (
+      <>
+        <span className="sr-only">{t('routeEarned')}</span>
+        {earnedTimestamp(trophy) === undefined && <small>{t('undated')}</small>}
+      </>
+    )
+  // The ring carries the warning; the word stays for screen readers.
+  if (missable) return <span className="sr-only">{t('missable')}</span>
+  return <RoadmapSignal missable={false} final={final} />
 }
 
 function RouteNumber({ trophy, index }: { trophy: Trophy; index: number }) {
@@ -952,8 +995,11 @@ function RoadmapForward({
   complete = false,
   order,
   target,
+  tracks,
 }: {
   target?: Trophy
+  /** Beside the arrows: the switch between the base game's route and the additional content's. */
+  tracks?: ReactNode
   game: RoadmapGame
   pending: Trophy[]
   selected: Trophy
@@ -1056,6 +1102,7 @@ function RoadmapForward({
           </h4>
         </div>
         <div className="roadmap-route-controls">
+          {tracks}
           <button
             className="quiet"
             type="button"
@@ -1124,6 +1171,7 @@ function RoadmapForward({
                     <span className="roadmap-route-number" aria-hidden="true">
                       <RouteNumber trophy={trophy} index={order.indexOf(trophy)} />
                     </span>
+                    <RouteAlert on={missable && !trophy.earned} />
                   </span>
                   <span className="roadmap-route-caption">
                     <span className="roadmap-route-name">{hidden ? t('secret') : trophy.name}</span>
@@ -1131,14 +1179,7 @@ function RoadmapForward({
                     {target === trophy && !trophy.earned && (
                       <small className="roadmap-suggested-label">{t('suggestion')}</small>
                     )}
-                    {trophy.earned ? (
-                      <>
-                        <span className="sr-only">{t('routeEarned')}</span>
-                        {earnedTimestamp(trophy) === undefined && <small>{t('undated')}</small>}
-                      </>
-                    ) : (
-                      <RoadmapSignal missable={missable} final={final} />
-                    )}
+                    <RouteStatus trophy={trophy} missable={missable} final={final} />
                   </span>
                 </button>
               </li>
@@ -1217,56 +1258,17 @@ const RoadmapOngoing = memo(function RoadmapOngoing({
   )
 })
 
-function RoadmapVisibility({
-  revealed,
-  setRevealed,
-  saving,
-}: {
-  revealed: boolean
-  setRevealed: (value: boolean) => Promise<void>
-  saving: boolean
-}) {
-  const t = useMessages(messages)
-  return (
-    <button
-      type="button"
-      className="roadmap-visibility"
-      aria-label={t(revealed ? 'hide' : 'reveal')}
-      aria-pressed={revealed}
-      disabled={saving}
-      aria-busy={saving}
-      title={`${t(revealed ? 'hide' : 'reveal')}: ${t('revealScope')}`}
-      onClick={async () => {
-        try {
-          await setRevealed(!revealed)
-        } catch {
-          toast(t('revealFailed'))
-        }
-      }}
-    >
-      <Icon name={revealed ? 'eye-off' : 'eye'} />
-      <span className="roadmap-visibility-label">{t(revealed ? 'hide' : 'reveal')}</span>
-    </button>
-  )
-}
-
-function roadmapView(source: RoadmapGame, inspecting: boolean, revealed: boolean): RoadmapGame {
-  const projected = inspecting
-    ? {
-        ...source,
-        focus: null,
-        trophies: source.trophies.map((trophy) => ({
-          ...trophy,
-          earned: false,
-          earnedAt: undefined,
-          progressValue: undefined,
-          progressRate: undefined,
-        })),
-      }
-    : source
-  return revealed
-    ? { ...projected, trophies: projected.trophies.map((trophy) => ({ ...trophy, hidden: false })) }
-    : projected
+// Hidden trophies show in full, as in the trophy list: hiding spoilers is for a profile setting that
+// covers every screen, not for this map alone.
+function roadmapView(source: RoadmapGame, inspecting: boolean): RoadmapGame {
+  const trophies = source.trophies.map((trophy) => ({
+    ...trophy,
+    hidden: false,
+    ...(inspecting
+      ? { earned: false, earnedAt: undefined, progressValue: undefined, progressRate: undefined }
+      : {}),
+  }))
+  return { ...source, ...(inspecting ? { focus: null } : {}), trophies }
 }
 
 function roadmapFocus(game: RoadmapGame, done: boolean) {
@@ -1282,12 +1284,8 @@ export function TrophyRoadmap({
   preview?: boolean
 }) {
   const t = useMessages(messages)
-  const { revealed, setRevealed, saving } = useGameSpoilers(source.game.id)
   const inspecting = preview
-  const game = useMemo(
-    () => roadmapView(source, inspecting, revealed),
-    [source, inspecting, revealed],
-  )
+  const game = useMemo(() => roadmapView(source, inspecting), [source, inspecting])
   const stages = useMemo(
     () => trophyRoadmap(game.trophies, game.guide),
     [game.trophies, game.guide],
@@ -1353,18 +1351,9 @@ export function TrophyRoadmap({
               ? t('catalogCount', { total: base.length })
               : t('count', { earned: base.filter((x) => x.earned).length, total: base.length })}
           </span>
-          {source.trophies.some((trophy) => trophy.hidden) && (
-            <RoadmapVisibility revealed={revealed} setRevealed={setRevealed} saving={saving} />
-          )}
           {!!kindCounts && <p className="roadmap-kinds">{kindCounts}</p>}
         </div>
       </header>
-      <p className="roadmap-preview-notice">
-        <strong>
-          <Icon name="warning" /> {t('betaLabel')}
-        </strong>{' '}
-        {t('betaNote')}
-      </p>
       {!selected || !stage ? (
         <p>{t('empty')}</p>
       ) : (

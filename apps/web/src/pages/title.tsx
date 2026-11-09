@@ -188,6 +188,28 @@ function TitleMeta({ d }: { d: TitleDetail }) {
   )
 }
 
+/** Beside the headline, for a game in the library: the next trophy to go for, else its facts card.
+ * A game outside the library has its facts in the guide's "About" tab below the section bar. */
+function TitleAside({ d }: { d: TitleDetail }) {
+  if (!d.owned) return null
+  const about = <GameAbout game={d.game} name={d.name} />
+  return (
+    <div className="hero-aside">
+      {d.trophies ? (
+        <NextTrophy
+          trophies={d.trophies}
+          guide={d.guide}
+          game={d.game.id}
+          np={d.np}
+          fallback={about}
+        />
+      ) : (
+        about
+      )}
+    </div>
+  )
+}
+
 function SaveButton({ d }: { d: TitleDetail }) {
   const t = useMessages(messages)
   const { find, toggle } = useInterests()
@@ -293,9 +315,9 @@ function HeroBottom({ d }: { d: TitleDetail }) {
 }
 
 const TITLE_SECTIONS: [GameSection, string][] = [
+  ['about', 'title-guide'],
   ['route', 'journey-roadmap'],
   ['trophies', 'title-trophies'],
-  ['guide', 'title-guide'],
   ['similar', 'similar-games'],
 ]
 
@@ -333,7 +355,8 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
   const guide = (
     <Guide
       key={d.name}
-      id="title-guide"
+      id="title-guide-tabs"
+      about={g ? <GameAbout game={d.game} name={d.name} /> : undefined}
       game={{
         name: d.name,
         guide: g,
@@ -366,22 +389,15 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
           </div>
           <HeroBottom d={d} />
           {/* The next trophy to go for; with nothing left to push, or outside the library, the facts. */}
-          <div className="hero-aside">
-            {owned && d.trophies ? (
-              <NextTrophy
-                trophies={d.trophies}
-                guide={g}
-                game={d.game.id}
-                np={d.np}
-                fallback={<GameAbout game={d.game} name={d.name} />}
-              />
-            ) : (
-              <GameAbout game={d.game} name={d.name} />
-            )}
-          </div>
+          <TitleAside d={d} />
         </div>
       </div>
       <GameNav sections={TITLE_SECTIONS} hero="title-hero" name={d.name} progress={d.progress} />
+      {/* About first: the game's facts as the guide's first tab, or above a guide still to come. */}
+      <section className="card title-guide-card" id="title-guide">
+        {!g && <GameAbout game={d.game} name={d.name} />}
+        {guide}
+      </section>
       {!owned && !!d.trophies?.length && (
         <TrophyRoadmap
           key={d.game.id}
@@ -427,9 +443,6 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
               </EmptyState>
             </>
           )}
-        </div>
-        <div className="card" id="title-guide">
-          {guide}
         </div>
       </div>
       {similar}
