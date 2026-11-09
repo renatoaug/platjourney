@@ -36,7 +36,7 @@ Exatidão:
 - Quando trechos discordarem entre si ou do guia, vale o mais recente (a data vem no cabeçalho do trecho): jogos mudam com atualizações e versões novas.
 - Quando houver "Trechos dos guias", eles são a fonte mais detalhada: responda a partir deles (locais, ordem, números exatos) e diga de qual site veio. Se os trechos não cobrirem a pergunta, diga que o guia não detalha e só então pesquise na web.
 - Não acrescente regra, restrição ou exceção do jogo que nem o guia, nem os trechos, nem a busca trouxeram: dica sem base não entra, nem conselho que pareça óbvio ("evite trocar de dificuldade no meio da campanha", "use a seleção de fases para praticar", "aprenda os padrões dos chefes", "jogue em cooperação"). Se pedirem dicas que o guia não traz, use a frase de quando não tem a resposta, abaixo.
-- Nunca fale das fontes no meio da resposta ("as fontes não informam", "a fonte indica", "segundo o guia"): diga só o fato. Quando o jogador perguntar algo que não está no guia nem nos trechos, diga em primeira pessoa: "Essa me pegou! Ainda não tenho isso mapeado em <nome do jogo>, mas deixei anotado pra investigar. Assim que descobrir, te chamo." Um detalhe que ele não pediu e que você não tem (os locais exatos, uma ordem, um número) fica de fora da resposta: nunca aponte o que falta sem ele ter perguntado.
+- Nunca fale das fontes no meio da resposta ("as fontes não informam", "a fonte indica", "segundo o guia"): diga só o fato. Quando o jogador perguntar algo que não está no guia nem nos trechos, diga em primeira pessoa: "Essa me pegou! Ainda não tenho isso mapeado em <nome do jogo>, mas deixei anotado pra investigar. Assim que descobrir, te chamo." Um detalhe que ele não pediu e que você não tem (os locais exatos, uma ordem, um número) fica de fora da resposta: nunca aponte o que falta sem ele ter perguntado. Troféu listado em "Naturais" não tem macete porque vem sozinho: responda que ele sai seguindo a história e onde (o capítulo, a missão ou a fase que o contexto dá), nunca com "Essa me pegou".
 
 O que responder:
 - A primeira frase responde o que o jogador perguntou. Resumo de progresso só quando ele pergunta o que falta para a platina ("o que falta?", "quanto falta pra platinar?"): aí a primeira linha diz quantos troféus do jogo base faltam (a platina não conta) e quantos deles ainda são perdíveis, com os números da linha "Para a platina" do contexto, como estão, sem recontar; as horas que sobram entram só se o guia estimar e o tempo jogado estiver nos dados, e só o resultado ("cerca de 12h"): sem os dois, não calcule horas restantes, e nunca mostre a conta nem diga que um dado não foi informado. Quem pergunta quanto tempo leva a platina recebe a estimativa do guia. Só depois vem a ordem. Em qualquer outra pergunta (o próximo troféu, um troféu, um local), nada de resumo de progresso.
@@ -298,9 +298,16 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
         return str(name or '').lower() in wanted or bool(name and str(name).lower() in asked)
 
     tricks = [t for t in _items(guide, 'tricks') if about(t.get('trophy'))]
+    tricked = {str(t.get('trophy')) for t in _items(guide, 'tricks')}
     if tricks:
         parts.append('Macetes:')
         parts += [f'- {t.get("trophy")}: {_words(t.get("trick"))}' for t in tricks]
+    # A natural trophy has no trick: the story hands it over. Saying where keeps a question about
+    # it from ending in "not mapped yet".
+    natural = natural_notes(guide, [t for t in kinds_of(guide) if about(t) and t not in tricked])
+    if natural:
+        parts.append('Naturais (saem só seguindo o jogo, sem passo extra):')
+        parts += natural
     bugs = [b for b in _items(guide, 'buggy') if about(b.get('trophy'))]
     if bugs:
         parts.append('Bugs conhecidos:')
@@ -558,7 +565,15 @@ def focus_prompt(focus: Focus) -> str:
         ' de fechar.'
     )
     if focus.trophy and focus.changed:
-        trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
+        # A trophy the story hands over has no trick: say what it asks, never how to get it, or the
+        # model falls back on the chat's "not mapped yet" line in a notice nobody asked for.
+        trick = (
+            f' Macete do guia: {focus.trick}'
+            if focus.trick
+            else ' O guia não traz macete para ele: diga só o que ele pede, pela descrição, sem'
+            ' explicar como pegar.'
+        )
+        how = ' e como pegar' if focus.trick else ''
         where = (
             ' Ele ficou para trás: diga que, pelo momento do jogador, vale buscá-lo agora.'
             if focus.behind
@@ -567,7 +582,7 @@ def focus_prompt(focus: Focus) -> str:
         parts.append(
             f'O troféu sugerido antes acabou de sair: sugira o próximo, {focus.trophy}'
             f' ({focus.detail}), por que ele agora (pelo que o jogador acabou de conquistar ou'
-            f' pelo ponto do jogo em que está) e como pegar.{where}{trick}'
+            f' pelo ponto do jogo em que está){how}.{where}{trick}'
         )
     elif focus.trophy:
         parts.append(
@@ -654,6 +669,45 @@ Esta é a conversa geral, sem um jogo aberto:
 
 FOLLOW_UP_WORDS = 6
 KIND_NAMES = {'hunt': 'caçada', 'grind': 'grind'}
+UNIT_NAMES = {
+    'mission': 'missão',
+    'chapter': 'capítulo',
+    'episode': 'episódio',
+    'act': 'ato',
+    'level': 'fase',
+}
+
+
+def kinds_of(guide: dict[str, Any]) -> list[str]:
+    """The guide's natural trophies, by name."""
+    return [
+        str(x.get('trophy')) for x in _items(guide, 'trophyKinds') if x.get('kind') == 'natural'
+    ]
+
+
+def natural_notes(guide: dict[str, Any], names: list[str]) -> list[str]:
+    """Where each natural trophy falls: its step on the storyline when the guide places it, else
+    the roadmap phase that lists it."""
+    line = cast(dict[str, Any] | None, guide.get('storyline'))
+    places = {str(p.get('trophy')): p for p in _items(guide, 'trophyPlaces')}
+    phases = {
+        str(n): str(r.get('phase'))
+        for r in _items(guide, 'roadmap')
+        for n in cast(list[object], r.get('trophies') or [])
+    }
+    out: list[str] = []
+    for name in names:
+        place = places.get(name)
+        if line and place and place.get('from'):
+            unit = UNIT_NAMES.get(str(line.get('unit')), 'parte')
+            out.append(f'- {name}: vem com a história, no(a) {unit} {place["from"]}.')
+        elif name in phases:
+            out.append(f'- {name}: vem com a história, na fase "{phases[name]}" do roteiro.')
+        else:
+            out.append(f'- {name}: vem com a história.')
+    return out
+
+
 RECENT_DAYS = 30
 
 
@@ -814,7 +868,11 @@ async def tip(
         prompt += ROUTE_PROMPT.format(route=route)
     text = await ask(prompt, lean_context(ctx, [t.name_en for t in unlocked]), locale=ctx.locale)
     # Automatic notices cite no source; the model sometimes adds one anyway.
-    return re.sub(r'\n*^[ \t]*Fonte:.*$', '', text, flags=re.M).strip()
+    text = re.sub(r'\n*^[ \t]*Fonte:.*$', '', text, flags=re.M)
+    # Nor do they promise to look into something: "not mapped yet" answers a question, and nobody
+    # asked one here. The sentence goes, up to the promise that closes it.
+    promise = rf'[ \t]*{re.escape(NOT_YET)}.*?(?:te chamo\.|$)'
+    return re.sub(promise, '', text, flags=re.M | re.S).strip()
 
 
 async def trophy_help(ctx: GameContext, trophy: Trophy) -> str:

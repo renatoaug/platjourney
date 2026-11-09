@@ -314,6 +314,33 @@ def test_lean_context_brings_tricks_and_bugs_only_for_the_trophies_in_focus() ->
     assert 'Macetes' not in nexo.lean_context(context(guide=GUIDE))
 
 
+def test_a_question_about_a_natural_trophy_gets_where_the_story_hands_it_over() -> None:
+    guide = GUIDE | {
+        'trophyKinds': [
+            {'trophy': 'Survivor', 'kind': 'natural'},
+            {'trophy': 'Collector', 'kind': 'natural'},
+            {'trophy': 'Sobrevivente', 'kind': 'natural'},
+            {'trophy': 'Colecionador', 'kind': 'natural'},
+        ],
+        'storyline': {'unit': 'chapter', 'total': 10},
+        'trophyPlaces': [{'trophy': 'Sobrevivente', 'from': 6}],
+        'roadmap': [{'phase': 'Fase 1', 'goal': 'Zere a história.', 'trophies': ['Colecionador']}],
+    }
+    # Placed on the storyline: the step it falls on.
+    text = nexo.lean_context(context(guide=guide), [], 'como pego o Sobrevivente?')
+    assert 'Naturais (saem só seguindo o jogo, sem passo extra):' in text
+    assert '- Sobrevivente: vem com a história, no(a) capítulo 6.' in text
+    # A natural trophy with a trick keeps the trick and gets no line here.
+    with_trick = nexo.lean_context(context(guide=guide), ['Survivor'])
+    assert '- Survivor: vem com a história' not in with_trick
+    # Not asked about: no line.
+    assert 'Naturais' not in nexo.lean_context(context(guide=guide))
+    # Not placed: the roadmap phase that lists it.
+    without = guide | {'tricks': []}
+    text = nexo.lean_context(context(guide=without), [], 'e o Colecionador?')
+    assert '- Colecionador: vem com a história, na fase "Fase 1" do roteiro.' in text
+
+
 def test_lean_context_explains_terms_to_beginners_or_when_asked() -> None:
     beginner = context(
         guide=GUIDE,
@@ -490,6 +517,19 @@ def test_an_unlock_notice_follows_the_servers_focus_instead_of_picking_one() -> 
     assert 'Macete do guia: Use nitro.' in moved
 
 
+def test_an_unlock_notice_asks_no_how_to_for_a_focus_without_a_trick() -> None:
+    unlocked = [Trophy.model_validate(trophy())]
+    prompt = nexo.unlock_prompt(
+        unlocked,
+        None,
+        nexo.Focus.model_validate(
+            {'trophy': 'No sigilo', 'detail': 'Entrar é mais fácil que sair', 'changed': True}
+        ),
+    )
+    assert 'diga só o que ele pede, pela descrição, sem explicar como pegar' in prompt
+    assert 'e como pegar' not in prompt
+
+
 def test_an_unlock_notice_never_places_the_player_in_a_phase() -> None:
     """Story done, a phase 3 trophy earned, phase 1's side activities still open: the prompt
     calls the focus something left behind, celebrates a phase just closed and never places the
@@ -521,6 +561,22 @@ async def test_an_automatic_notice_cites_no_source(
 
     monkeypatch.setattr(nexo, 'ask', answer)
     assert await nexo.tip('unlock', context(), []) == 'Boa! Próximo: Burnout.'
+
+
+async def test_an_automatic_notice_never_says_it_has_not_mapped_something(
+    model: Model, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def answer(*_args: Any, **_kw: Any) -> str:
+        return (
+            'Mandou bem!\nO próximo é **No sigilo**: entrar é mais fácil que sair.\n'
+            'Essa me pegou! Ainda não tenho isso mapeado em MindsEye, mas deixei anotado pra '
+            'investigar. Assim que descobrir, te chamo.'
+        )
+
+    monkeypatch.setattr(nexo, 'ask', answer)
+    assert await nexo.tip('unlock', context(), []) == (
+        'Mandou bem!\nO próximo é **No sigilo**: entrar é mais fácil que sair.'
+    )
 
 
 def test_the_cited_source_links_to_the_passage_it_came_from() -> None:
