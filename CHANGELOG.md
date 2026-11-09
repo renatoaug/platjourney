@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.61.1](https://github.com/renatoaug/platjourney/compare/v0.61.0...v0.61.1) (2026-11-09)
+
+### Bug Fixes
+
+* **ci:** run the label and assignee workflows on pull_request ([#158](https://github.com/renatoaug/platjourney/issues/158)) ([3ecf0b6](https://github.com/renatoaug/platjourney/commit/3ecf0b6d73b130d8e1079cdb6fe19f53a8b4bee3))
+
 ## [0.61.0](https://github.com/renatoaug/platjourney/compare/v0.60.1...v0.61.0) (2026-11-09)
 
 ### Features
