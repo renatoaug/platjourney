@@ -85,7 +85,7 @@ export function playerStep<T extends PlacedTrophy>(trophies: T[], guide?: Placed
  * Where an open trophy is expected to fall. One of a single moment: where it unlocks. One that keeps
  * going: where its counter, at the pace so far, reaches the target, never before the player nor
  * its own start, and after the story when the pace would not close it in time. Without a counter or
- * a pace yet, the guide's end.
+ * a pace yet, the guide's end, or undefined when the guide only gives its start.
  */
 export function expectedStep<T extends PlacedTrophy>(
   trophy: T,
@@ -97,11 +97,12 @@ export function expectedStep<T extends PlacedTrophy>(
   const place = placeOf(trophy, trophies, guide)
   if (!place) return undefined
   if (!keepsGoing(trophy, place, guide)) return place.from
-  const end = place.to ?? place.from
   const value = trophy.progressValue ?? 0
   const target = trophy.progressTarget ?? 0
+  // Without a pace, the guide's end; a guide that only says where it starts does not say where it
+  // falls, so the trophy does not order the route (it keeps its spot, as an unplaced one).
   if (at === undefined || at < place.from || value <= 0 || target <= 1)
-    return Math.max(end, at ?? 0)
+    return place.to === undefined ? undefined : Math.max(place.to, at ?? 0)
   const pace = value / (at - place.from + 1)
   const projected = at + Math.ceil((target - value) / pace)
   return Math.min(Math.max(projected, at, place.from), guide.storyline.total + 1)
@@ -169,6 +170,8 @@ export function trophyWhen<T extends PlacedTrophy>(
     unit: guide.storyline.unit,
     from: place.from,
     to: keeps ? (place.to ?? place.from) : undefined,
+    // A trophy that keeps going and whose end nobody states: only where it can start is known.
+    open: keeps && place.to === undefined,
     at,
     expected,
     late: expected > guide.storyline.total,

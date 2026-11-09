@@ -7,7 +7,7 @@
 // So nothing here says which phase the player is in. A phase describes trophies: how many are
 // left in it, which one the focus belongs to, and when the last one of a phase falls.
 import { keyStep } from '../../../shared/journey/graph.ts'
-import { nextPlaced } from '../../../shared/journey/places.ts'
+import { nextPlaced, trophyWhen } from '../../../shared/journey/places.ts'
 import type { Guide } from './guide.ts'
 import type { GameContext } from './nexo.ts'
 import type { TrophyStatus } from './psn.ts'
@@ -130,7 +130,10 @@ export function todaysFocus(ctx: Pick<GameContext, 'trophies' | 'guide'>): Focus
     almostFull(roadmap, open) ??
     along(base, guide, inPhase)
   const trophy = name ? open.get(name) : undefined
-  const { home, behind } = placeOf(roadmap, name, at, earned)
+  const { home, behind: phaseBehind } = placeOf(roadmap, name, at, earned)
+  // With places in the guide, "left behind" means a later story trophy was earned, not a later phase.
+  const placed = trophy ? trophyWhen(trophy, base, guide) : undefined
+  const behind = placed ? placed.behind : phaseBehind
   const missables = (guide?.missables ?? []).filter((m) => open.has(tidy(m.trophy)))
   const missable = missables.find((m) => first?.trophies.includes(tidy(m.trophy)))
   return {

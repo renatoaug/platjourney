@@ -120,8 +120,7 @@ const messages = defineMessages({
     whenAt: 'Acontece {place}.',
     whenAtNatural: 'Acontece {place}, naturalmente pela história.',
     whenRange: 'Dá para fazer {span}.',
-    whenAhead: '{count} {unit} à frente de você.',
-    whenHere: 'É onde você está agora.',
+    whenStart: 'Dá para começar {place}.',
     whenBehind: 'Acontecia {place}, que ficou para trás. Dá para voltar pela seleção de {units}.',
     whenBehindNoReplay: 'Acontecia {place}, que ficou para trás.',
     whenPace: 'No seu ritmo, fecha {place}.',
@@ -240,8 +239,7 @@ const messages = defineMessages({
     whenAt: 'Happens {place}.',
     whenAtNatural: 'Happens {place}, naturally with the story.',
     whenRange: 'You can work on it {span}.',
-    whenAhead: '{count} {unit} ahead of you.',
-    whenHere: 'That is where you are now.',
+    whenStart: 'You can start it {place}.',
     whenBehind:
       'Happened {place}, which is behind you. You can go back by picking {units} in the menu.',
     whenBehindNoReplay: 'Happened {place}, which is behind you.',
@@ -562,27 +560,18 @@ function replayable(guide: RoadmapGame['guide']) {
 type When = NonNullable<ReturnType<typeof trophyWhen>>
 type Translate = ReturnType<typeof useMessages<typeof messages>>
 
-// How far a step is from the player, when it is ahead: the counter the map also shows.
-function distance(t: Translate, when: When, step: number) {
-  if (when.at === undefined || step < when.at) return []
-  if (step === when.at) return [t('whenHere')]
-  const count = step - when.at
-  return [t('whenAhead', { count, unit: t(`unit.${when.unit}`, { count }) })]
-}
-
 // A count or a collection: its range, then where it closes at the player's pace.
 function rangeLine(t: Translate, when: When, counted: boolean) {
   const end = when.to ?? when.from
   const span = t(`span.${when.unit}`, { from: when.from, to: end })
-  // Inside the range already: no distance to tell.
-  const ahead = when.at !== undefined && when.at < when.from ? distance(t, when, when.from) : []
-  const first = [t('whenRange', { span }), ...ahead]
+  const first = [t('whenRange', { span })]
   if (when.late) return [...first, t('whenLate')]
   if (!counted || when.expected === end) return first
   return [...first, t('whenPace', { place: t(`place.${when.unit}`, { n: when.expected }) })]
 }
 
-// A trophy of a single moment: where it happens, and how far it is from the player.
+// A trophy of a single moment: where it happens, or that it is behind when a later one was earned.
+// Where the player is now stays unsaid: their trophies only say where they have been at least.
 function momentLine(t: Translate, when: When, natural: boolean, replay: boolean) {
   const place = t(`place.${when.unit}`, { n: when.from })
   if (when.behind)
@@ -591,7 +580,7 @@ function momentLine(t: Translate, when: When, natural: boolean, replay: boolean)
         ? t('whenBehind', { place, units: t(`unit.${when.unit}`, { count: 2 }) })
         : t('whenBehindNoReplay', { place }),
     ]
-  return [t(natural ? 'whenAtNatural' : 'whenAt', { place }), ...distance(t, when, when.from)]
+  return [t(natural ? 'whenAtNatural' : 'whenAt', { place })]
 }
 
 /** When an open trophy happens along the game, from the guide's places; the map uses the same steps. */
@@ -604,9 +593,11 @@ function TrophyWhen({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   if (!when && !natural) return null
   const parts = !when
     ? [t('whenStory')]
-    : when.to !== undefined && when.to > when.from
-      ? rangeLine(t, when, !!trophy.progressValue)
-      : momentLine(t, when, natural, replayable(game.guide))
+    : when.open
+      ? [t('whenStart', { place: t(`place.${when.unit}`, { n: when.from }) })]
+      : when.to !== undefined && when.to > when.from
+        ? rangeLine(t, when, !!trophy.progressValue)
+        : momentLine(t, when, natural, replayable(game.guide))
   return <p className="roadmap-progress roadmap-when">{parts.join(' ')}</p>
 }
 
