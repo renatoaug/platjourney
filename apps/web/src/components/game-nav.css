@@ -182,7 +182,13 @@
       display: none;
     }
 
-    .game-nav ul {
+    /* Centred on the page, and still centred in what is left when the bar carries a tool. */
+    .game-nav ul,
+    .game-nav:not(.stuck) ul {
+      margin-inline: auto;
+    }
+
+    .game-nav-tools {
       margin-left: 0;
     }
   }

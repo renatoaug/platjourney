@@ -48,9 +48,6 @@ const messages = defineMessages({
     undatedNote:
       'Conquistas sem data aparecem agrupadas após as datadas, sem ordem cronológica conhecida. Datas iguais não informam a ordem entre si.',
     phasePlan: 'Plano da fase',
-    betaLabel: 'BETA:',
-    betaNote:
-      'A jornada ainda está em testes. A ordem e as dicas ainda estão passando por avaliações de qualidade.',
     tipsCount: { one: 'Ver {count} ponto do roteiro', other: 'Ver os {count} pontos do roteiro' },
     extraRoute: 'Conteúdo adicional · {count}',
     baseRoute: 'Voltar ao jogo base',
@@ -86,6 +83,7 @@ const messages = defineMessages({
       hunt: { one: '{count} caçada', other: '{count} caçadas' },
       grind: { one: '{count} grind', other: '{count} grinds' },
     },
+    tierCount: { gold: '{count} ouro', silver: '{count} prata', bronze: '{count} bronze' },
     count: '{earned} de {total} conquistados',
     unplacedNote:
       'Estes troféus não têm uma correspondência única nas fases do guia. Esses marcos seguem a lista PSN, não uma recomendação.',
@@ -174,9 +172,6 @@ const messages = defineMessages({
     undatedNote:
       'Undated achievements are grouped after dated ones, without a known chronological order. Equal timestamps do not establish order between them.',
     phasePlan: 'Phase plan',
-    betaLabel: 'BETA:',
-    betaNote:
-      'The journey is still being tested. The order and tips are still going through quality reviews.',
     tipsCount: { one: 'See {count} route point', other: 'See all {count} route points' },
     extraRoute: 'Additional content · {count}',
     baseRoute: 'Back to the base game',
@@ -212,6 +207,7 @@ const messages = defineMessages({
       hunt: { one: '{count} hunt', other: '{count} hunts' },
       grind: { one: '{count} grind', other: '{count} grinds' },
     },
+    tierCount: { gold: '{count} gold', silver: '{count} silver', bronze: '{count} bronze' },
     count: '{earned} of {total} earned',
     unplacedNote:
       'These trophies do not have a unique match in the guide phases. These milestones follow the PSN list, not a recommendation.',
@@ -871,6 +867,39 @@ function RoadmapNavigation({
   )
 }
 
+/** A missable still open: a warning badge on the ring. */
+function RouteAlert({ on }: { on: boolean }) {
+  if (!on) return null
+  return (
+    <span className="roadmap-route-alert" aria-hidden="true">
+      <Icon name="warning" />
+    </span>
+  )
+}
+
+/** Under a stop's name: earned (and when), the missable word for screen readers, or the finale. */
+function RouteStatus({
+  trophy,
+  missable,
+  final,
+}: {
+  trophy: Trophy
+  missable: boolean
+  final: boolean
+}) {
+  const t = useMessages(messages)
+  if (trophy.earned)
+    return (
+      <>
+        <span className="sr-only">{t('routeEarned')}</span>
+        {earnedTimestamp(trophy) === undefined && <small>{t('undated')}</small>}
+      </>
+    )
+  // The ring carries the warning; the word stays for screen readers.
+  if (missable) return <span className="sr-only">{t('missable')}</span>
+  return <RoadmapSignal missable={false} final={final} />
+}
+
 function RouteNumber({ trophy, index }: { trophy: Trophy; index: number }) {
   if (trophy.earned) return <Icon name="check" />
   if (trophy.type === 'platinum') return <Icon name="trophy" />
@@ -1124,6 +1153,7 @@ function RoadmapForward({
                     <span className="roadmap-route-number" aria-hidden="true">
                       <RouteNumber trophy={trophy} index={order.indexOf(trophy)} />
                     </span>
+                    <RouteAlert on={missable && !trophy.earned} />
                   </span>
                   <span className="roadmap-route-caption">
                     <span className="roadmap-route-name">{hidden ? t('secret') : trophy.name}</span>
@@ -1131,14 +1161,7 @@ function RoadmapForward({
                     {target === trophy && !trophy.earned && (
                       <small className="roadmap-suggested-label">{t('suggestion')}</small>
                     )}
-                    {trophy.earned ? (
-                      <>
-                        <span className="sr-only">{t('routeEarned')}</span>
-                        {earnedTimestamp(trophy) === undefined && <small>{t('undated')}</small>}
-                      </>
-                    ) : (
-                      <RoadmapSignal missable={missable} final={final} />
-                    )}
+                    <RouteStatus trophy={trophy} missable={missable} final={final} />
                   </span>
                 </button>
               </li>
@@ -1274,6 +1297,17 @@ function roadmapFocus(game: RoadmapGame, done: boolean) {
   return game.focus?.trophy
 }
 
+/** The list by tier, for a guide that does not say what each trophy asks: the platinum first. */
+function tierParts(base: Trophy[], t: Translate) {
+  return (['platinum', 'gold', 'silver', 'bronze'] as const).flatMap((tier) => {
+    const count = base.filter((x) => x.type === tier).length
+    if (!count) return []
+    return [
+      tier === 'platinum' ? t('kindCount.platinum', { count }) : t(`tierCount.${tier}`, { count }),
+    ]
+  })
+}
+
 export function TrophyRoadmap({
   game: source,
   preview = false,
@@ -1301,7 +1335,7 @@ export function TrophyRoadmap({
     return count ? [t(`kindCount.${kind}`, { count })] : []
   })
   const classified = base.some((x) => trophyKind(x, game.guide))
-  const kindCounts = classified ? parts.join(' · ') : ''
+  const kindCounts = (classified ? parts : tierParts(base, t)).join(' · ')
   const done = base.some((x) => x.type === 'platinum' && x.earned)
   const focus = roadmapFocus(game, done)
   const reference = stages.flatMap((s) => s.trophies)
@@ -1359,12 +1393,6 @@ export function TrophyRoadmap({
           {!!kindCounts && <p className="roadmap-kinds">{kindCounts}</p>}
         </div>
       </header>
-      <p className="roadmap-preview-notice">
-        <strong>
-          <Icon name="warning" /> {t('betaLabel')}
-        </strong>{' '}
-        {t('betaNote')}
-      </p>
       {!selected || !stage ? (
         <p>{t('empty')}</p>
       ) : (

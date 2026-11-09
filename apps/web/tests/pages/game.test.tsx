@@ -79,12 +79,18 @@ test('before first state skeletons remain; a sync failure is explicit', () => {
   expect(screen.getByRole('alert').textContent).toContain('sincronizar')
 })
 
-test('the journey shows the trophies above the guide, with no tabs between them', () => {
+test('the journey opens on the guide, right under the section bar, then the route and the trophies', () => {
   mockApi({})
   const { container } = renderApp(
     <GameScreen current={current as unknown as CurrentGame} plan={null} />,
   )
-  const order = [...container.querySelectorAll('.journey-trophies, .journey-guide')]
-  expect(order.map((x) => x.className.split(' ')[1])).toEqual(['journey-trophies', 'journey-guide'])
+  const order = [
+    ...container.querySelectorAll('.journey-guide, .trophy-roadmap, .journey-trophies'),
+  ]
+  expect(order.map((x) => x.classList[x.classList.length > 1 ? 1 : 0])).toEqual([
+    'journey-guide',
+    'trophy-roadmap',
+    'journey-trophies',
+  ])
   expect(container.querySelector('.game-switch')).toBeNull()
 })

@@ -325,15 +325,6 @@
     }
   }
 
-  .roadmap-preview-notice {
-    margin: 0 0 16px;
-    color: var(--color-fg-muted);
-  }
-
-  .roadmap-preview-notice strong {
-    color: var(--color-trophy-gold);
-  }
-
   .roadmap-loading-disclosures {
     padding: 20px;
     display: grid;
@@ -396,9 +387,10 @@
     grid-row: 1;
   }
 
+  /* On the total's line, with the breakdown below them both. */
   .roadmap-intro-actions .roadmap-visibility {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1;
   }
 
   .roadmap-visibility {
@@ -1046,11 +1038,37 @@
 
   .roadmap-route-caption {
     display: grid;
-    gap: 8px;
+    gap: 4px;
   }
 
+  /* Up to two lines: a long name never pushes the route apart. */
   .roadmap-route-name {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     font-weight: var(--weight-medium);
+  }
+
+  /* A missable still open: a warning badge on the ring, opposite its number. */
+  .roadmap-route-alert {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-round);
+    color: var(--color-danger);
+    background: var(--color-danger-surface);
+  }
+
+  .roadmap-route-alert > .icon {
+    width: 13px;
+    height: 13px;
   }
 
   .roadmap-route-risk,
@@ -1111,7 +1129,11 @@
 
   .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin {
     --roadmap-orbit-color: var(--color-danger);
-    box-shadow: 0 0 28px color-mix(in srgb, var(--color-danger) 35%, transparent);
+    /* The same frame as every stop, so the road still meets it, and a red glow. */
+    box-shadow:
+      0 0 0 5px var(--color-bg-subtle),
+      0 0 0 6px color-mix(in srgb, var(--color-danger) 35%, transparent),
+      0 0 28px color-mix(in srgb, var(--color-danger) 35%, transparent);
   }
 
   .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin::after {

@@ -302,7 +302,7 @@ test('route artwork and missable signals use exact guide facts, with no hidden t
   )
   const stops = container.querySelectorAll('.roadmap-route li')
   expect(stops).toHaveLength(3)
-  expect(container.querySelectorAll('.roadmap-route .roadmap-route-risk')).toHaveLength(1)
+  expect(container.querySelectorAll('.roadmap-route .roadmap-route-alert')).toHaveLength(1)
   expect(container.querySelector('.roadmap-destination .roadmap-route-risk')).toBeTruthy()
   expect(stops[0]?.getAttribute('data-missable')).toBe('true')
   expect(stops[0]?.querySelector('img')?.getAttribute('src')).toBe('/synthetic-trophy-1.png')
@@ -748,9 +748,9 @@ test('trophy kinds count what is left, mark the route and tag the focus trophy',
   expect(container.querySelector('.roadmap-destination .roadmap-kind')?.textContent).toBe('Caçada')
 })
 
-test('a guide without kinds shows none of it', () => {
+test('a guide without kinds counts the list by tier instead, and marks no stop', () => {
   const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
-  expect(container.querySelector('.roadmap-kinds')).toBeNull()
+  expect(container.querySelector('.roadmap-kinds')?.textContent).toMatch(/^1 platina · /)
   expect(container.querySelector('[data-kind]')).toBeNull()
 })
 
@@ -981,17 +981,6 @@ test('a valid recommendation stays marked while inspecting another milestone', (
   expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Voltar à sugestão' }))
   expect(view.container.querySelector('.roadmap-step.is-suggested')).toBeTruthy()
-})
-
-test('the journey says it is in beta, also while it has no trophies to show', () => {
-  const { container, unmount } = renderApp(<TrophyRoadmap game={routeGame()} />)
-  expect(container.querySelector('.roadmap-preview-notice')?.textContent).toContain('BETA:')
-  expect(container.querySelector('.roadmap-preview-notice strong .icon')).toBeTruthy()
-  unmount()
-  const empty = renderApp(<TrophyRoadmap game={{ ...routeGame(), trophies: [] }} />)
-  expect(empty.container.querySelector('.roadmap-preview-notice')?.textContent).toContain(
-    'avaliações de qualidade',
-  )
 })
 
 test('with every trophy earned, the kinds still count the whole game', () => {

@@ -62,10 +62,10 @@ const messages = defineMessages({
 })
 
 const SECTIONS: [GameSection, string][] = [
+  ['guide', 'journey-guide-section'],
   ['route', 'journey-roadmap'],
   ['plan', 'journey-session'],
   ['trophies', 'journey-trophies'],
-  ['guide', 'journey-guide-section'],
   ['similar', 'similar-games'],
 ]
 
@@ -137,6 +137,20 @@ export function Journey({
           !back && <ScenesButton compact shots={shots} at={scene} name={c.name} onGo={setScene} />
         }
       />
+      {/* The guide first, right under the section bar: what hunters look for before the route. */}
+      <section className="card journey-guide" id="journey-guide-section">
+        <Guide
+          id="journey-guide"
+          game={{
+            name: c.name,
+            guide: c.guide ?? null,
+            trophies: c.trophies,
+            np: c.np,
+            deepGuide: c.deepGuide,
+            queued: c.queued,
+          }}
+        />
+      </section>
       <TrophyRoadmap key={c.np} game={c} />
       <JourneyWarning warning={focus?.missable} />
       <details className="journey-session" id="journey-session">
@@ -150,19 +164,6 @@ export function Journey({
       </details>
       <section className="card journey-trophies" id="journey-trophies">
         <TrophyList trophies={c.trophies} np={c.np} prefix="journey-t" guide={c.guide} />
-      </section>
-      <section className="card journey-guide" id="journey-guide-section">
-        <Guide
-          id="journey-guide"
-          game={{
-            name: c.name,
-            guide: c.guide ?? null,
-            trophies: c.trophies,
-            np: c.np,
-            deepGuide: c.deepGuide,
-            queued: c.queued,
-          }}
-        />
       </section>
       {similar}
     </div>
@@ -185,6 +186,9 @@ export function JourneySkeleton({ gallery = true }: { gallery?: boolean }) {
           </span>
         )}
       </div>
+      <section className="card journey-guide">
+        <GuideSkeleton />
+      </section>
       <TrophyRoadmapSkeleton />
       <details className="journey-session">
         <summary>
@@ -195,9 +199,6 @@ export function JourneySkeleton({ gallery = true }: { gallery?: boolean }) {
       </details>
       <section className="card journey-trophies">
         <TrophyListSkeleton />
-      </section>
-      <section className="card journey-guide">
-        <GuideSkeleton />
       </section>
     </div>
   )
