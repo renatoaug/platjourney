@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.64.1](https://github.com/renatoaug/platjourney/compare/v0.64.0...v0.64.1) (2026-11-09)
+
+### Bug Fixes
+
+* **web:** load the route's trophy icons before they slide into view ([#162](https://github.com/renatoaug/platjourney/issues/162)) ([1662a16](https://github.com/renatoaug/platjourney/commit/1662a165450e6c9e49ce7c27de98a1b1227cccaa))
+
 ## [0.64.0](https://github.com/renatoaug/platjourney/compare/v0.63.0...v0.64.0) (2026-11-09)
 
 ### Features
