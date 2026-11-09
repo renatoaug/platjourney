@@ -158,17 +158,6 @@
     }
   }
 
-  /* Outside the library the platform sits above the name, at every width. */
-  .hero.immersive.title-outside .hero-title-row {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .hero.immersive.title-outside .hero-title-row > .platform {
-    order: -1;
-    margin-top: 0;
-  }
-
   /* On a phone: saving and asking side by side, and the store as a quiet link under them. */
   @media (max-width: 760px) {
     .hero.immersive.title-outside .cta {
