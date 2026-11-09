@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.60.1](https://github.com/renatoaug/platjourney/compare/v0.60.0...v0.60.1) (2026-11-09)
+
+### Bug Fixes
+
+* **web:** say where a long trophy starts and stop guessing where the player is ([#156](https://github.com/renatoaug/platjourney/issues/156)) ([f5682b8](https://github.com/renatoaug/platjourney/commit/f5682b8f2804b6a822039f88e722e250567c8cf9))
+
 ## [0.60.0](https://github.com/renatoaug/platjourney/compare/v0.59.0...v0.60.0) (2026-11-09)
 
 ### Features
