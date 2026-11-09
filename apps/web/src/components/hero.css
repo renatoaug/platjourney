@@ -532,6 +532,17 @@
     align-self: start;
   }
 
+  /* The platform sits above the name, at every width, instead of floating over the art. */
+  .hero.immersive .hero-title-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .hero.immersive .hero-title-row > .platform {
+    order: -1;
+    margin-top: 0;
+  }
+
   /* The page says what it is already; the name and the platform are enough. */
   .hero.immersive .live-label {
     display: none;
@@ -728,17 +739,6 @@
     gap: 8px 16px;
   }
 
-  .hero.immersive .hero-top > .meta > span {
-    height: auto;
-    min-height: 24px;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    backdrop-filter: none;
-    white-space: normal;
-  }
-
   /* A chip keeps its whole text: the row wraps instead of squeezing one. */
   .hero.immersive .meta > * {
     flex: none;
@@ -840,9 +840,10 @@
     display: none;
   }
 
-  .hero.immersive .hero-top .meta > .dm {
+  .hero.immersive .meta > .dm {
     display: inline-flex;
     gap: 10px;
+    height: auto;
     padding: 8px 12px;
     border: 1px solid color-mix(in srgb, var(--dm-color) var(--alpha-line), transparent);
     border-radius: var(--radius-control);
@@ -850,37 +851,54 @@
     color: var(--dm-color);
   }
 
-  .hero.immersive .hero-top .meta > .dm .dm-number {
+  .hero.immersive .meta > .dm .dm-number {
     font-size: var(--text-3xl);
   }
 
-  .hero.immersive .hero-top .meta > .dm .dm-body {
+  .hero.immersive .meta > .dm .dm-body {
     display: grid;
     gap: 5px;
     width: auto;
     min-width: 96px;
   }
 
-  .hero.immersive .hero-top .meta > .dm .dm-segments {
+  .hero.immersive .meta > .dm .dm-segments {
     display: flex;
   }
 
-  .hero.immersive .hero-top .meta > .dm .dm-name {
+  .hero.immersive .meta > .dm .dm-name {
     overflow: visible;
     color: var(--color-fg);
   }
 
-  /* On a phone the difficulty takes its whole line, the bar reaching the edge, and the short facts
-     share the next one. */
+  /* Every game's hero, in the library or not: the difficulty with its bar, the facts as chips. On a
+     phone the difficulty takes its whole line, the bar reaching the edge, and the chips share the next. */
   @media (max-width: 760px) {
-    .hero.immersive .hero-top .meta > .dm {
+    .hero.immersive .meta > .dm {
       display: flex;
       flex: 1 0 100%;
       box-sizing: border-box;
     }
 
-    .hero.immersive .hero-top .meta > .dm .dm-body {
+    .hero.immersive .meta > .dm .dm-body {
       flex: 1;
+    }
+
+    /* Tighter chips, so four facts still share one line on a phone. */
+    .hero.immersive .meta {
+      column-gap: 6px;
+    }
+
+    .hero.immersive .meta > span {
+      gap: 4px;
+      height: 28px;
+      padding: 0 9px;
+      font-size: var(--text-xs);
+    }
+
+    .hero.immersive .meta > span .icon {
+      width: 13px;
+      height: 13px;
     }
   }
 
@@ -898,7 +916,15 @@
     color: var(--color-fg);
   }
 
-  /* Only the total is a chip; the tiers after it are plain text split by thin dividers. */
+  /* The total is plain text ending in a colon, and the tiers after it split by thin dividers. */
+  .hero.immersive .trophy-counts-row > b {
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+
   .hero.immersive .trophy-counts-row > :not(b) {
     height: auto;
     padding: 0;

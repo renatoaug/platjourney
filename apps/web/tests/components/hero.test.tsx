@@ -114,7 +114,7 @@ test('catalog tiers show exact compact counts with accessible names and keyboard
     type: (['platinum', 'gold', 'silver', 'bronze'] as const)[i],
   }))
   renderApp(<TrophyBreakdown trophies={trophies} />)
-  expect(screen.getByText('4 troféus')).toBeTruthy()
+  expect(screen.getByText('4 troféus:')).toBeTruthy()
   for (const tier of ['platina', 'ouro', 'prata', 'bronze']) {
     const el = screen.getByRole('img', { name: `1 ${tier}` })
     expect(el.textContent?.trim()).toBe('1')
