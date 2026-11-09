@@ -93,4 +93,7 @@ test('the journey opens on the guide, right under the section bar, then the rout
     'journey-trophies',
   ])
   expect(container.querySelector('.game-switch')).toBeNull()
+  // The guide opens on About, as on any game's page, and the section bar starts there.
+  expect(screen.getByRole('tab', { name: 'Sobre' }).getAttribute('aria-selected')).toBe('true')
+  expect(screen.getAllByRole('link', { name: 'Sobre' })[0]).toBeTruthy()
 })

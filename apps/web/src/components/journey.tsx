@@ -9,6 +9,7 @@ import { GuideText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
 import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
 import { GameNav, type GameSection } from './game-nav'
+import { GameAbout } from './game-showcase'
 import { Guide, GuideSkeleton } from './guide'
 import { Hero, HeroSkeleton } from './hero'
 import { TrophyList, TrophyListSkeleton } from './trophy-list'
@@ -62,7 +63,7 @@ const messages = defineMessages({
 })
 
 const SECTIONS: [GameSection, string][] = [
-  ['guide', 'journey-guide-section'],
+  ['about', 'journey-guide-section'],
   ['route', 'journey-roadmap'],
   ['plan', 'journey-session'],
   ['trophies', 'journey-trophies'],
@@ -139,8 +140,11 @@ export function Journey({
       />
       {/* The guide first, right under the section bar: what hunters look for before the route. */}
       <section className="card journey-guide" id="journey-guide-section">
+        {/* As on any game's page: the game's facts as the guide's first tab, or above a guide to come. */}
+        {!c.guide && <GameAbout game={c.game} name={c.name} />}
         <Guide
           id="journey-guide"
+          about={c.guide ? <GameAbout game={c.game} name={c.name} /> : undefined}
           game={{
             name: c.name,
             guide: c.guide ?? null,
