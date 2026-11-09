@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.61.0](https://github.com/renatoaug/platjourney/compare/v0.60.1...v0.61.0) (2026-11-09)
+
+### Features
+
+* **server:** work out where long trophies close from players' unlock times ([#157](https://github.com/renatoaug/platjourney/issues/157)) ([2c5819d](https://github.com/renatoaug/platjourney/commit/2c5819db28e874e17ed6f619350565975f2ebdd6))
+
 ## [0.60.1](https://github.com/renatoaug/platjourney/compare/v0.60.0...v0.60.1) (2026-11-09)
 
 ### Bug Fixes
