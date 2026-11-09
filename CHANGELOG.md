@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.62.0](https://github.com/renatoaug/platjourney/compare/v0.61.1...v0.62.0) (2026-11-09)
+
+### Features
+
+* **web:** number story trophies on the route like every stop ([#159](https://github.com/renatoaug/platjourney/issues/159)) ([b388164](https://github.com/renatoaug/platjourney/commit/b3881641179aeed71babd10fa15272db7f0aa4f3))
+
 ## [0.61.1](https://github.com/renatoaug/platjourney/compare/v0.61.0...v0.61.1) (2026-11-09)
 
 ### Bug Fixes
