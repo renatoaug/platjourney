@@ -435,6 +435,30 @@ describe('session start', () => {
     ).toBe('Capítulo')
   })
 
+  test('with places in the guide, a trophy ahead of the player is never said to be left behind', () => {
+    // The roadmap puts Café in an earlier phase than a trophy already earned; the places say it is ahead.
+    const roadmap = [
+      { phase: 'Fase 1', goal: '', trophies: ['Café'] },
+      { phase: 'Fase 2', goal: '', trophies: ['Memória', 'Contador'] },
+    ]
+    const trophies = [
+      makeTrophy({ id: 1, name: 'Memória', earned: true }),
+      makeTrophy({ id: 2, name: 'Contador', earned: true }),
+      makeTrophy({ id: 3, name: 'Café' }),
+    ]
+    const guide = {
+      roadmap,
+      storyline: { unit: 'mission', total: 35 },
+      trophyPlaces: [
+        { trophy: 'Memória', from: 13 },
+        { trophy: 'Café', from: 16 },
+      ],
+    }
+    const focus = focusAfter({ trophies, guide } as never, [])
+    expect(focus.trophy?.name).toBe('Café')
+    expect(focus.behind).toBe(false)
+  })
+
   test('with places in the guide, the focus is the nearest trophy ahead of the player', () => {
     const roadmap = [
       { phase: 'Fase 2', goal: '', trophies: ['Memória', 'Golpe', 'Café', 'Príncipe'] },
