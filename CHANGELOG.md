@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.59.0](https://github.com/renatoaug/platjourney/compare/v0.58.0...v0.59.0) (2026-11-09)
+
+### Features
+
+* **web:** open a game's page on its guide and mark open missables on the route ([#154](https://github.com/renatoaug/platjourney/issues/154)) ([4cd9707](https://github.com/renatoaug/platjourney/commit/4cd97072c3b0c01fd10af80081cac99dbe6318fb))
+
 ## [0.58.0](https://github.com/renatoaug/platjourney/compare/v0.57.0...v0.58.0) (2026-11-08)
 
 ### Features
