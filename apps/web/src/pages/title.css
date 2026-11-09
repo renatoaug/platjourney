@@ -169,29 +169,8 @@
     margin-top: 0;
   }
 
-  /* On a phone: the difficulty as a chip beside the facts, saving and asking side by side, and the
-   * store as a quiet link under them. */
+  /* On a phone: saving and asking side by side, and the store as a quiet link under them. */
   @media (max-width: 760px) {
-    .hero.immersive.title-outside .hero-top .meta > .dm {
-      display: inline-flex;
-      flex: none;
-      padding: 6px 10px;
-    }
-
-    .hero.immersive.title-outside .hero-top .meta > .dm .dm-number {
-      font-size: var(--text-2xl);
-    }
-
-    .hero.immersive.title-outside .hero-top .meta > .dm .dm-body {
-      flex: none;
-      min-width: 0;
-    }
-
-    /* The number says it already: the chip drops the dots to stay as small as the facts beside it. */
-    .hero.immersive.title-outside .hero-top .meta > .dm .dm-segments {
-      display: none;
-    }
-
     .hero.immersive.title-outside .cta {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
