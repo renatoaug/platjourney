@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.64.0](https://github.com/renatoaug/platjourney/compare/v0.63.0...v0.64.0) (2026-11-09)
+
+### Features
+
+* **web:** one hero for every game, with actions beside it on a wide screen ([#161](https://github.com/renatoaug/platjourney/issues/161)) ([2c952c2](https://github.com/renatoaug/platjourney/commit/2c952c2550cb1acfc4a5b05846657f844853d02c))
+
 ## [0.63.0](https://github.com/renatoaug/platjourney/compare/v0.62.0...v0.63.0) (2026-11-09)
 
 ### Features
