@@ -112,7 +112,10 @@ export function phasePlan(goal: string, trophies: Trophy[]) {
     .join('\n')
 }
 
-/** The guide's steps that name this trophy and no other. */
+/**
+ * The guide's steps that name this trophy and no other; with none and no tip of its own, the steps it
+ * shares with other trophies, never one that names a trophy still hidden.
+ */
 export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: GuideDetail | null) {
   // A step that names another trophy belongs to the phase's plan, not to this trophy's tip.
   const others = trophies.filter((t) => t !== trophy)
@@ -128,9 +131,20 @@ export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: Guide
       m.tips.filter((tip) => !tip.trophy).flatMap((tip) => guideSteps(tip.text)),
     ),
   ]
-  return [...new Set(steps)]
-    .filter((step) => mentions(step, trophy) && !others.some((t) => mentions(step, t)))
-    .slice(0, MAX_MENTIONS)
+  // A step that names a trophy still hidden would spoil it, so it never shows here.
+  const secret = others.filter((t) => t.hidden && !t.earned)
+  const naming = [...new Set(steps)].filter(
+    (step) => mentions(step, trophy) && !secret.some((t) => mentions(step, t)),
+  )
+  const own = naming.filter((step) => !others.some((t) => mentions(step, t)))
+  // With no step of its own, one shared with other trophies still says how, instead of nothing.
+  return (own.length || hasOwnAdvice(trophy, guide) ? own : naming).slice(0, MAX_MENTIONS)
+}
+
+/** Whether the guide has a tip, a trick, a warning, an online note or a bug for this trophy. */
+function hasOwnAdvice(trophy: Trophy, guide?: GuideDetail | null) {
+  const a = trophyAdvice(trophy, guide)
+  return !!(a.trick || a.warning || a.online || a.bug || a.tips.length)
 }
 
 /** The journey's "Throughout the journey" list (shared/journey/ongoing.ts). */

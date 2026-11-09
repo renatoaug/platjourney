@@ -944,7 +944,8 @@
     height: 40px;
   }
 
-  .roadmap-route > [data-kind="natural"] .roadmap-route-number {
+  /* A story trophy drops its number, but an earned one keeps the check every earned stop has. */
+  .roadmap-route > [data-kind="natural"][data-earned="false"] .roadmap-route-number {
     display: none;
   }
 
@@ -1080,7 +1081,10 @@
     --roadmap-marker-color: var(--color-trophy-platinum);
   }
 
-  .roadmap-route [data-final="true"] .roadmap-route-pin::after {
+  /* The platinum and a missable still open carry an orbit: the platinum's in its colour, a
+     missable's in red, a little faster, so it reads as something to act on before it closes. */
+  .roadmap-route [data-final="true"] .roadmap-route-pin::after,
+  .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin::after {
     content: "";
     position: absolute;
     inset: -8px;
@@ -1088,7 +1092,7 @@
     pointer-events: none;
     background: conic-gradient(
       transparent 20deg,
-      var(--color-trophy-platinum-light) 65deg,
+      var(--roadmap-orbit-color, var(--color-trophy-platinum-light)) 65deg,
       transparent 115deg
     );
     mask: radial-gradient(
@@ -1099,6 +1103,19 @@
       transparent 74%
     );
     animation: roadmap-platinum-orbit 8s linear infinite;
+  }
+
+  .roadmap-route > [data-missable="true"][data-earned="false"] {
+    --roadmap-marker-color: var(--color-danger);
+  }
+
+  .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin {
+    --roadmap-orbit-color: var(--color-danger);
+    box-shadow: 0 0 28px color-mix(in srgb, var(--color-danger) 35%, transparent);
+  }
+
+  .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin::after {
+    animation-duration: 4s;
   }
 
   .roadmap-route > .is-current {
@@ -1776,7 +1793,8 @@
     }
 
     .roadmap-horizon,
-    .roadmap-route [data-final="true"] .roadmap-route-pin::after {
+    .roadmap-route [data-final="true"] .roadmap-route-pin::after,
+    .roadmap-route [data-missable="true"][data-earned="false"] .roadmap-route-pin::after {
       animation: none;
     }
   }
