@@ -5,6 +5,7 @@ import { isDemo, storedProgress, trophiesFor } from './demo.ts'
 import { ensureGuide, type Guide } from './guide.ts'
 import { library } from './library.ts'
 import type { GameContext } from './nexo.ts'
+import { withPlayerSteps } from './player-steps.ts'
 import { hours, playtimes } from './playtime.ts'
 import { catalogTrophies, type TitleProgress, titleCounters } from './psn.ts'
 import { loadGroups } from './ranking.ts'
@@ -52,7 +53,8 @@ async function loadContext(user: User, title: TitleProgress): Promise<GameContex
   if (guide && !isDemo(user))
     ensureDeepGuide(game, title.total).catch((e) => console.error('deep guide failed:', e.message))
   const played = await playtimes(user).catch(() => new Map())
-  return { game, title, trophies, guide, groups, hoursPlayed: hours(played.get(game.id)) }
+  const placed = (await withPlayerSteps(guide, trophies, title.npCommunicationId)) ?? undefined
+  return { game, title, trophies, guide: placed, groups, hoursPlayed: hours(played.get(game.id)) }
 }
 
 // The game being played changes: the watcher's own switch.

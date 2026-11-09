@@ -8,6 +8,7 @@ import { json, readBody } from '../http.ts'
 import { translator } from '../i18n.ts'
 import { storeFor } from '../interests.ts'
 import { library } from '../library.ts'
+import { withPlayerSteps } from '../player-steps.ts'
 import { hours, playtimes } from '../playtime.ts'
 import { projectGame } from '../plugins.ts'
 import { catalogTrophies } from '../psn.ts'
@@ -114,9 +115,11 @@ async function ownedDetail(
   title: Awaited<ReturnType<typeof library>>[number],
 ) {
   const [trophies, groups] = await Promise.all([trophiesFor(title, user), loadGroups(title, user)])
-  const { guide, queued } = await guideOrBuild(user, found, () =>
+  const built = await guideOrBuild(user, found, () =>
     ensureGuide(found, trophies, { name: title.name, platform: title.platform }),
   )
+  const { queued } = built
+  const guide = await withPlayerSteps(built.guide, trophies, title.npCommunicationId)
   if (guide && !isDemo(user))
     ensureDeepGuide(found, title.total).catch((e) =>
       console.error('deep guide failed:', (e as Error).message),
@@ -149,13 +152,15 @@ async function catalogDetail(user: User, found: Game, platform: string) {
     found.np_communication_ids.length && !isDemo(user)
       ? await catalogTrophies(found.np_communication_ids)
       : null
-  const { guide, queued } = await guideOrBuild(user, found, () =>
+  const built = await guideOrBuild(user, found, () =>
     ensureGuide(
       found,
       list?.trophies,
       list ? { name: found.name, platform: list.platform } : undefined,
     ),
   )
+  const { queued } = built
+  const guide = await withPlayerSteps(built.guide, list?.trophies, list?.np)
   if (guide && !isDemo(user))
     ensureDeepGuide(found).catch((e) => console.error('deep guide failed:', (e as Error).message))
   return {

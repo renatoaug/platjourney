@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  closingSteps,
   expectedStep,
   nextPlaced,
   type PlacedGuide,
   type PlacedTrophy,
   placedOrder,
   playerStep,
+  trophyWhen,
 } from '../../../shared/journey/places.ts'
 
 const trophy = (name: string, extra: Partial<PlacedTrophy> = {}): PlacedTrophy => ({
@@ -143,4 +145,52 @@ test('a unit the app cannot name leaves the guide unplaced', () => {
   const { list, open } = game()
   const odd = { ...guide, storyline: { unit: 'Missão', total: 35 } } as unknown as PlacedGuide
   expect(placedOrder(open, list, odd)).toBe(open)
+})
+
+describe('where players usually close a long trophy', () => {
+  const ids = (list: PlacedTrophy[]) => list.map((t, i) => ({ ...t, id: i + 1 }))
+  // Voo (mission 10), Memória (12), Golpe Final, Príncipe (13), Café (16), Paus e Pedras, Sacrifício.
+  const startOnly: PlacedGuide = {
+    ...guide,
+    trophyPlaces: (guide.trophyPlaces ?? []).map((p) =>
+      p.trophy === 'Paus e Pedras' ? { trophy: p.trophy, from: 3 } : p,
+    ),
+  }
+  const at = (user: string, id: number, day: number) => ({
+    user,
+    trophyId: id,
+    at: `2026-01-${String(day).padStart(2, '0')}T00:00:00.000Z`,
+  })
+
+  test('the median step over players, from the story trophy each had when it closed', () => {
+    const { list } = game()
+    const all = ids(list)
+    const unlocks = [
+      ...['a', 'b'].flatMap((u) => [at(u, 1, 1), at(u, 6, 3)]), // after Voo (10)
+      at('c', 1, 1),
+      at('c', 5, 2),
+      at('c', 6, 3), // after Café (16)
+      at('d', 6, 1), // before any story trophy: says nothing
+    ]
+    expect(closingSteps(all, unlocks, startOnly)).toEqual([
+      { trophy: 'Paus e Pedras', step: 10, players: 3 },
+    ])
+  })
+
+  test('with three players or more it orders the route and says so; with fewer, only the start', () => {
+    const { list, open } = game()
+    const paus = open.find((t) => t.name === 'Paus e Pedras') as PlacedTrophy
+    const steps = (players: number): PlacedGuide => ({
+      ...startOnly,
+      trophySteps: [{ trophy: 'Paus e Pedras', step: 20, players }],
+    })
+    expect(expectedStep(paus, list, steps(3), 12)).toBe(20)
+    expect(trophyWhen(paus, list, steps(3))?.usually).toEqual({
+      trophy: 'Paus e Pedras',
+      step: 20,
+      players: 3,
+    })
+    expect(expectedStep(paus, list, steps(2), 12)).toBeUndefined()
+    expect(trophyWhen(paus, list, steps(2))?.usually).toBeUndefined()
+  })
 })

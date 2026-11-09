@@ -121,6 +121,7 @@ const messages = defineMessages({
     whenAtNatural: 'Acontece {place}, naturalmente pela história.',
     whenRange: 'Dá para fazer {span}.',
     whenStart: 'Dá para começar {place}.',
+    whenUsually: 'Quem já fez costuma fechar {place} ({count} jogadores).',
     whenBehind: 'Acontecia {place}, que ficou para trás. Dá para voltar pela seleção de {units}.',
     whenBehindNoReplay: 'Acontecia {place}, que ficou para trás.',
     whenPace: 'No seu ritmo, fecha {place}.',
@@ -240,6 +241,7 @@ const messages = defineMessages({
     whenAtNatural: 'Happens {place}, naturally with the story.',
     whenRange: 'You can work on it {span}.',
     whenStart: 'You can start it {place}.',
+    whenUsually: 'Players who did it usually close it {place} ({count} players).',
     whenBehind:
       'Happened {place}, which is behind you. You can go back by picking {units} in the menu.',
     whenBehindNoReplay: 'Happened {place}, which is behind you.',
@@ -594,7 +596,17 @@ function TrophyWhen({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const parts = !when
     ? [t('whenStory')]
     : when.open
-      ? [t('whenStart', { place: t(`place.${when.unit}`, { n: when.from }) })]
+      ? [
+          t('whenStart', { place: t(`place.${when.unit}`, { n: when.from }) }),
+          ...(when.usually
+            ? [
+                t('whenUsually', {
+                  place: t(`place.${when.unit}`, { n: when.usually.step }),
+                  count: when.usually.players,
+                }),
+              ]
+            : []),
+        ]
       : when.to !== undefined && when.to > when.from
         ? rangeLine(t, when, !!trophy.progressValue)
         : momentLine(t, when, natural, replayable(game.guide))

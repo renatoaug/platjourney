@@ -1052,6 +1052,28 @@ test('with places in the guide, a trophy says when it falls instead of leaving a
     'Dá para começar no capítulo 2.',
   )
   open.unmount()
+  // With enough players who earned it, where it usually closes.
+  const usual = renderApp(
+    <TrophyRoadmap
+      game={{
+        ...data,
+        guide: {
+          ...(data.guide as GuideDetail),
+          trophyPlaces: [{ trophy: 'Colecionador', from: 2 }],
+          trophySteps: [{ trophy: 'Colecionador', step: 3, players: 4 }],
+        },
+      }}
+    />,
+  )
+  fireEvent.click(
+    within(screen.getByRole('list', { name: 'Rota completa' })).getByRole('button', {
+      name: /^Colecionador/,
+    }),
+  )
+  expect(usual.container.querySelector('.roadmap-when')?.textContent).toBe(
+    'Dá para começar no capítulo 2. Quem já fez costuma fechar no capítulo 3 (4 jogadores).',
+  )
+  usual.unmount()
   // A trophy the guide does not place, and that does not come by itself, has no line.
 })
 

@@ -109,7 +109,7 @@ test('wiping deletes every personal table and resets the profile fields', async 
   const q = spyOn(db, 'q').mockResolvedValue(undefined)
   await wipeUserData('user:u1')
   const sqls = q.mock.calls.map(([sql]) => sql)
-  expect(sqls.slice(0, 9)).toEqual(
+  expect(sqls.slice(0, 10)).toEqual(
     [
       'title',
       'interest',
@@ -120,10 +120,11 @@ test('wiping deletes every personal table and resets the profile fields', async 
       'message',
       'playtime',
       'session_plan',
+      'unlock',
     ].map((t) => `DELETE ${t} WHERE user = $user`),
   )
-  expect(sqls[9]).toContain('goal_targets = {}')
-  expect(q.mock.calls.map(([, vars]) => vars)).toEqual(Array(10).fill({ user }))
+  expect(sqls[10]).toContain('goal_targets = {}')
+  expect(q.mock.calls.map(([, vars]) => vars)).toEqual(Array(11).fill({ user }))
 })
 
 test('deleting a user removes its record', async () => {
