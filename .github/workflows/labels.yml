@@ -8,7 +8,7 @@ name: Labels from the title
 # A pull request is labelled when it opens and again when it closes, from the title it ends with
 # (the release note reads it); edits in between run nothing.
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, closed]
   issues:
     types: [opened, reopened, labeled, closed]
