@@ -1,5 +1,5 @@
 import type { TrophyGraph } from '../../../../shared/journey/graph'
-import type { StoryUnit } from '../../../../shared/journey/places'
+import type { PlayerStep, StoryUnit } from '../../../../shared/journey/places'
 import type { Locale } from '../i18n/locale'
 
 /** Shapes of the /api payloads the screens share. Screen-specific payloads are typed next to their screen. */
@@ -142,6 +142,8 @@ export interface GuideDetail {
   trophyKinds?: { trophy: string; kind: TrophyKind }[]
   storyline?: { unit: StoryUnit; total: number } | null
   trophyPlaces?: { trophy: string; from: number; to?: number }[]
+  /** Where players usually closed each long trophy, worked out by the server (ADR-015). */
+  trophySteps?: PlayerStep[] | null
   /** What each trophy depends on, for games of branching lines (ADR-014). */
   trophyGraph?: TrophyGraph | null
   buggy?: {

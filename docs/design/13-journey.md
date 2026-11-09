@@ -84,7 +84,13 @@ flowchart LR
 - **Where an open trophy falls**: a trophy of a single moment, where it unlocks. A count, where its PSN counter reaches the target at the pace so far: `pace = value / (player − from + 1)`, then `player + ⌈(target − value) / pace⌉`, never before the player nor its own start, and `total + 1` (after the story) when that pace would not close it in time. With no counter or no pace yet, the end of its range.
 - **The route** orders what is left by that step, a trophy of the moment before a count on the same step. A trophy the guide does not place keeps its spot after the placed one before it.
 - **The suggestion** is a missable of the current phase first, then a counter at 80% or more of its target, then the nearest placed trophy at or after the player's step. With nothing ahead, the first one left behind.
-- **The when line** under a trophy's objective says it in plain words: "Happens in mission 31, naturally with the story. 19 missions ahead of you.", "You can work on it from mission 12 to 30.", "At your pace, it closes in mission 16.", or "Happened in chapter 1, which is behind you." The replay hint only appears when the guide mentions mission or chapter select.
+- **The when line** under a trophy's objective says it in plain words: "Happens in mission 31, naturally with the story.", "You can work on it from mission 12 to 30.", "You can start it in chapter 3.", "At your pace, it closes in mission 16.", or "Happened in chapter 1, which is behind you." The replay hint only appears when the guide mentions mission or chapter select.
+
+### Where long trophies close
+
+Guides say where a long trophy (a count, a collection, an upgrade) starts, almost never where it closes. A place with only `from` says where it can start and does not order the route. Where it closes is worked out from players' unlock times ([ADR-015](../decisions/ADR-015-trophy-steps-from-players.md)): every sync keeps each earned trophy's PSN time in `unlock`, and for each player who earned the long trophy, the furthest placed story trophy they had by then is where they were. The median over at least 3 players becomes the trophy's end (`trophySteps`, added when the guide is served, `shared/journey/places.ts` `closingSteps`), and the panel says "Players who did it usually close it in chapter 7 (12 players)". With fewer players it only says "You can start it in chapter 3". The player's own PSN counter still projects at their pace.
+
+The panel never says how far a trophy is from the player: their trophies only say where they have been at least.
 
 ### An example
 

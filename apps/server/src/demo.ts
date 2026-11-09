@@ -1,7 +1,9 @@
 // The demo: a fixed, fictional player that anyone can open without a PSN account. Its data comes
 // from the demo seed (db/demo-seed.json) and stays as it was loaded: nothing it shows calls PSN or
 // the AI service, and every write is refused, since everyone who opens the demo shares it.
+
 import { one, plain } from './db.ts'
+import { keepUnlocks } from './player-steps.ts'
 import {
   type ProfileSummary,
   type TitleGroups,
@@ -81,7 +83,12 @@ export async function storedTitles(accountId: string): Promise<TitleProgress[]> 
 
 // A title's trophy list: from PSN for a real player, as stored for the demo one.
 export async function trophiesFor(title: TitleProgress, user: User): Promise<TrophyStatus[]> {
-  if (!isDemo(user)) return titleTrophies(title, user.psn_account_id)
+  if (!isDemo(user)) {
+    const list = await titleTrophies(title, user.psn_account_id)
+    // Every earned trophy's time feeds where long trophies usually close (ADR-015).
+    keepUnlocks(user.id, title.npCommunicationId, list)
+    return list
+  }
   return (await getTitle(user.id, title.npCommunicationId))?.trophies ?? []
 }
 

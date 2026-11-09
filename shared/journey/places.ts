@@ -27,11 +27,23 @@ export interface TrophyPlace {
   to?: number
 }
 
+/** Where players who earned a long trophy were in the campaign when it closed (ADR-015). */
+export interface PlayerStep {
+  trophy: string
+  step: number
+  players: number
+}
+
 export interface PlacedGuide {
   storyline?: Storyline | null
   trophyPlaces?: TrophyPlace[] | null
   trophyKinds?: { trophy: string; kind: 'natural' | 'hunt' | 'grind' }[] | null
+  // Worked out from players' unlock times, never stored in the guide.
+  trophySteps?: PlayerStep[] | null
 }
+
+// Fewer players than this never set where a trophy closes: one offline sync could move it.
+const MIN_PLAYERS = 3
 
 export interface PlacedTrophy {
   name: string
@@ -60,6 +72,11 @@ function placeOf<T extends PlacedTrophy>(trophy: T, trophies: T[], guide?: Place
 }
 
 const counter = (t: PlacedTrophy) => (t.progressTarget ?? 0) > 1
+
+/** Where players usually closed a long trophy, when enough of them did. */
+function usualStep(t: PlacedTrophy, guide: PlacedGuide) {
+  return guide.trophySteps?.find((s) => trophyMatches(t, s.trophy) && s.players >= MIN_PLAYERS)
+}
 
 /** A trophy that keeps going: a range in the guide, a grind, or a PSN counter. */
 function keepsGoing(t: PlacedTrophy, place: TrophyPlace, guide: PlacedGuide) {
@@ -101,8 +118,10 @@ export function expectedStep<T extends PlacedTrophy>(
   const target = trophy.progressTarget ?? 0
   // Without a pace, the guide's end; a guide that only says where it starts does not say where it
   // falls, so the trophy does not order the route (it keeps its spot, as an unplaced one).
-  if (at === undefined || at < place.from || value <= 0 || target <= 1)
-    return place.to === undefined ? undefined : Math.max(place.to, at ?? 0)
+  if (at === undefined || at < place.from || value <= 0 || target <= 1) {
+    const end = place.to ?? usualStep(trophy, guide)?.step
+    return end === undefined ? undefined : Math.max(end, at ?? 0)
+  }
   const pace = value / (at - place.from + 1)
   const projected = at + Math.ceil((target - value) / pace)
   return Math.min(Math.max(projected, at, place.from), guide.storyline.total + 1)
@@ -170,11 +189,84 @@ export function trophyWhen<T extends PlacedTrophy>(
     unit: guide.storyline.unit,
     from: place.from,
     to: keeps ? (place.to ?? place.from) : undefined,
-    // A trophy that keeps going and whose end nobody states: only where it can start is known.
+    // A trophy that keeps going and whose end the guide does not state: where players usually closed
+    // it, when enough did, else only where it can start.
     open: keeps && place.to === undefined,
+    usually: keeps && place.to === undefined ? usualStep(trophy, guide) : undefined,
     at,
     expected,
     late: expected > guide.storyline.total,
     behind: !keeps && at !== undefined && place.from < at,
   }
+}
+
+export interface Unlock {
+  user: string
+  trophyId: number
+  at: string
+}
+
+/** Which placed trophies mark where a player is (step by id) and which keep going. */
+function splitPlaced<T extends PlacedTrophy & { id: number }>(
+  base: T[],
+  trophies: T[],
+  guide: PlacedGuide,
+) {
+  const moment = new Map<number, number>()
+  const long = new Set<number>()
+  for (const t of base) {
+    const place = placeOf(t, trophies, guide)
+    if (!place) continue
+    if (keepsGoing(t, place, guide)) long.add(t.id)
+    else moment.set(t.id, place.from)
+  }
+  return { moment, long }
+}
+
+/** One player's unlocks, in order: where they were as each long trophy closed. */
+function stepsOfPlayer(
+  list: Unlock[],
+  moment: Map<number, number>,
+  long: Set<number>,
+  steps: Map<number, number[]>,
+) {
+  // At the same second, the story trophy comes first: the count closed where it happened.
+  const first = (u: Unlock) => Number(long.has(u.trophyId))
+  list.sort((a, b) => a.at.localeCompare(b.at) || first(a) - first(b))
+  let reached = 0
+  for (const u of list) {
+    const step = moment.get(u.trophyId)
+    if (step !== undefined) reached = Math.max(reached, step)
+    else if (long.has(u.trophyId) && reached)
+      steps.set(u.trophyId, [...(steps.get(u.trophyId) ?? []), reached])
+  }
+}
+
+/**
+ * Where each long trophy closes, from players' unlock times: for each player who earned it, the
+ * furthest single-moment trophy they had by then says where they were; the median over players is
+ * the trophy's step (ADR-015). A trophy earned before any placed story trophy says nothing.
+ */
+export function closingSteps<T extends PlacedTrophy & { id: number }>(
+  trophies: T[],
+  unlocks: Unlock[],
+  guide?: PlacedGuide | null,
+): PlayerStep[] {
+  if (!usable(guide)) return []
+  const base = trophies.filter((t) => t.groupId === 'default' && t.type !== 'platinum')
+  const byId = new Map(base.map((t) => [t.id, t]))
+  const { moment, long } = splitPlaced(base, trophies, guide)
+  const users = new Map<string, Unlock[]>()
+  for (const u of unlocks)
+    if (byId.has(u.trophyId)) users.set(u.user, [...(users.get(u.user) ?? []), u])
+  const steps = new Map<number, number[]>()
+  for (const list of users.values()) stepsOfPlayer(list, moment, long, steps)
+  return [...steps].map(([id, list]) => {
+    const sorted = list.sort((a, b) => a - b)
+    return {
+      trophy: byId.get(id)?.name ?? '',
+      step: sorted[Math.floor((sorted.length - 1) / 2)],
+      players: sorted.length,
+    }
+  })
 }

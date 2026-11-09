@@ -9,6 +9,7 @@
     "migrate": "bun --env-file=../../.env scripts/migrate.ts",
     "password": "bun --env-file=../../.env scripts/set-password.ts",
     "check-servers": "bun --env-file=../../.env scripts/check-servers.ts",
+    "backfill-unlocks": "bun --env-file=../../.env scripts/backfill-unlocks.ts",
     "build-seed": "bun --env-file=../../.env scripts/build-seed.ts",
     "catalog:expand": "bun --env-file=../../.env scripts/expand-catalog.ts",
     "catalog:media": "bun --env-file=../../.env scripts/catalog-media.ts",
