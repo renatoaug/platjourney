@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.64.2](https://github.com/renatoaug/platjourney/compare/v0.64.1...v0.64.2) (2026-11-09)
+
+### Bug Fixes
+
+* **ai:** answer natural trophies with where the story hands them over ([#163](https://github.com/renatoaug/platjourney/issues/163)) ([18acf3f](https://github.com/renatoaug/platjourney/commit/18acf3f840672963e5a084a53a9d54d724aec51c))
+
 ## [0.64.1](https://github.com/renatoaug/platjourney/compare/v0.64.0...v0.64.1) (2026-11-09)
 
 ### Bug Fixes
