@@ -375,7 +375,11 @@ function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
         {back}
         <ScenesButton shots={shots} at={scene} name={d.name} onGo={setScene} />
       </div>
-      <div className="hero immersive tinted" id="title-hero" style={tintStyle(d.game.tint)}>
+      <div
+        className={`hero immersive tinted${owned ? '' : ' title-outside'}`}
+        id="title-hero"
+        style={tintStyle(d.game.tint)}
+      >
         <UnobtainableBanner guide={{ unobtainable: g?.unobtainable }} />
         <div className="inner">
           <div className="hero-top">

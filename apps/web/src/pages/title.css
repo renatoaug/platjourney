@@ -113,4 +113,59 @@
   .hero-top .platform {
     margin-left: auto;
   }
+
+  /* A game outside the library on a wide screen: name, facts and trophies on the left, the actions
+   * in a column on the right, level with the foot. A phone keeps the stacked hero. */
+  @media (min-width: 1101px) {
+    .hero.immersive.title-outside .inner {
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+      grid-template-rows: auto auto auto;
+      row-gap: 18px;
+    }
+
+    .hero.immersive.title-outside .hero-bottom {
+      display: contents;
+    }
+
+    /* The platform sits above the name instead of floating over the art. */
+    .hero.immersive.title-outside .hero-title-row {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .hero.immersive.title-outside .hero-title-row > .platform {
+      order: -1;
+      margin-top: 0;
+    }
+
+    .hero.immersive.title-outside .trophy-breakdown {
+      grid-column: 1;
+      grid-row: 3;
+    }
+
+    .hero.immersive.title-outside .cta {
+      grid-column: 2;
+      grid-row: 1 / 4;
+      align-self: end;
+      flex-direction: column;
+      align-items: stretch;
+      flex-wrap: nowrap;
+    }
+
+    .hero.immersive.title-outside .cta > :is(.button, button) {
+      justify-content: center;
+      min-height: 48px;
+    }
+
+    .hero.immersive.title-outside .cta .title-secondary-actions {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero.immersive.title-outside .title-secondary-actions > .button,
+    .hero.immersive.title-outside .title-secondary-actions .game-about-buy,
+    .hero.immersive.title-outside .title-secondary-actions .game-about-deal {
+      grid-column: 1;
+      grid-row: auto;
+    }
+  }
 }
