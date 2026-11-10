@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, cast
 
+import httpx
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion
 from openai.types.responses import Response
@@ -341,6 +342,34 @@ async def embed(texts: list[str]) -> list[list[float]]:
         )
         out.extend(d.embedding for d in sorted(res.data, key=lambda d: d.index))
     return out
+
+
+DECIDE_URL = 'https://api.typesafe.ai/v1/systemone'
+
+
+def decide_on() -> bool:
+    return bool(settings.typesafe_api_key)
+
+
+async def decide(state: str, questions: dict[str, Any]) -> dict[str, Any]:
+    """A decision model's answers (a choice with the probability of each option) to questions about
+    one state, each answered alone. Input tokens are billed; output is free."""
+    started = time.monotonic()
+    async with httpx.AsyncClient(timeout=120) as client:
+        res = await client.post(
+            DECIDE_URL,
+            headers={'Authorization': f'Bearer {settings.typesafe_api_key}'},
+            json={'model': settings.decision_model, 'state': state, 'questions': questions},
+        )
+    res.raise_for_status()
+    body = cast(dict[str, Any], res.json())
+    usage = cast(dict[str, int], body.get('usage') or {})
+    await record_call(
+        str(body.get('model') or settings.decision_model),
+        Usage(input=usage.get('input_tokens', 0)),
+        int((time.monotonic() - started) * 1000),
+    )
+    return cast(dict[str, Any], body.get('answers') or {})
 
 
 async def transcribe(audio: bytes, filename: str, language: str, prompt: str) -> str:

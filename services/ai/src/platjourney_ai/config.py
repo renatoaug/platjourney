@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     ai_gap_search_daily: int = 0
 
     openai_api_key: str = ''
+    # The decision model that estimates where a trophy falls before players say (ADR-017). Unset,
+    # the journey keeps its own estimate (halfway through the guide's range, the PSN rarity).
+    typesafe_api_key: str = ''
+    decision_model: str = 'jev-latest'
     openai_model: str = 'gpt-5.5'
     embedding_model: str = 'text-embedding-3-small'
     # Speech to text for the chat's mic: always OpenAI, whatever AI_PROVIDER says.
