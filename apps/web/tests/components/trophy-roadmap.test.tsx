@@ -903,6 +903,28 @@ test('with every trophy earned, the kinds still count the whole game', () => {
   expect(container.querySelector('.roadmap-kinds')?.textContent).toContain('1 caçada')
 })
 
+test('a trick written as paragraphs opens with its intro set apart, and the rest reads as paragraphs', () => {
+  const game = routeGame()
+  const first = game.trophies[0]
+  const trick =
+    'Esse troféu é online e sai com a primeira doação.\n\nDoe uma arma no armário compartilhado de um terminal.\n\nO troféu pipoca na hora.'
+  const guide = { ...(game.guide as GuideDetail), tricks: [{ trophy: first.name, trick }] }
+  const pending = { ...first, earned: false, earnedAt: undefined }
+  const { container } = renderApp(
+    <TrophyRoadmap game={{ ...game, guide, trophies: [pending, ...game.trophies.slice(1)] }} />,
+  )
+  fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
+  expect(container.querySelector('.roadmap-trick-intro')?.textContent).toBe(
+    'Esse troféu é online e sai com a primeira doação.',
+  )
+  expect(container.querySelector('.roadmap-steps')).toBeNull()
+  const paragraphs = [...container.querySelectorAll('.roadmap-advice > p')].map(
+    (p) => p.textContent,
+  )
+  expect(paragraphs).toContain('Doe uma arma no armário compartilhado de um terminal.')
+  expect(paragraphs).toContain('O troféu pipoca na hora.')
+})
+
 test('a trick of several lines reads as numbered steps, and the player can say whether it helped', () => {
   const game = routeGame()
   const first = game.trophies[0]

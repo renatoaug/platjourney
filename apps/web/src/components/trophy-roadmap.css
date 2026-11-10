@@ -1415,6 +1415,12 @@
     overflow-wrap: anywhere;
   }
 
+  /* What the trophy is about, before how to get it. */
+  .roadmap-advice .roadmap-trick-intro {
+    color: var(--color-fg-muted);
+    font-style: italic;
+  }
+
   .roadmap-steps {
     display: grid;
     gap: 8px;
