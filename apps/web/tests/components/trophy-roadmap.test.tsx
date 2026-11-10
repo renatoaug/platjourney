@@ -903,6 +903,32 @@ test('with every trophy earned, the kinds still count the whole game', () => {
   expect(container.querySelector('.roadmap-kinds')?.textContent).toContain('1 caçada')
 })
 
+test('the online note shows only when the trophy has no tip of its own', () => {
+  const game = routeGame()
+  const first = game.trophies[0]
+  const online = [
+    { trophy: first.name, what: 'Conecte-se e publique um pedido.', boostable: false },
+  ]
+  const pending = { ...first, earned: false, earnedAt: undefined }
+  const open = (guide: GuideDetail) => {
+    const view = renderApp(
+      <TrophyRoadmap game={{ ...game, guide, trophies: [pending, ...game.trophies.slice(1)] }} />,
+    )
+    fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
+    const text = view.container.querySelector('.roadmap-advice')?.textContent ?? ''
+    view.unmount()
+    return text
+  }
+  const base = { ...(game.guide as GuideDetail), onlineTrophies: online }
+  expect(open({ ...base, tricks: [] })).toContain('Objetivo online')
+  const withTip = open({
+    ...base,
+    tricks: [{ trophy: first.name, trick: 'Esse troféu é online.\n\nPublique um pedido.' }],
+  })
+  expect(withTip).not.toContain('Objetivo online')
+  expect(withTip).toContain('Publique um pedido.')
+})
+
 test('a trick written as paragraphs opens with its intro set apart, and the rest reads as paragraphs', () => {
   const game = routeGame()
   const first = game.trophies[0]
