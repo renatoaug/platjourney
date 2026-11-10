@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.65.0](https://github.com/renatoaug/platjourney/compare/v0.64.2...v0.65.0) (2026-11-10)
+
+### Features
+
+* **web:** order the journey by where trophies are earned, with clearer advice and inline icons ([#164](https://github.com/renatoaug/platjourney/issues/164)) ([5042d7b](https://github.com/renatoaug/platjourney/commit/5042d7b26e9882686d54e722b6b48051e5f01135))
+
 ## [0.64.2](https://github.com/renatoaug/platjourney/compare/v0.64.1...v0.64.2) (2026-11-09)
 
 ### Bug Fixes
