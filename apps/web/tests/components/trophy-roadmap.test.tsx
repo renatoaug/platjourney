@@ -612,7 +612,7 @@ test('a tip that repeats the warning or the trick is not shown twice', () => {
   const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
   fireEvent.click(screen.getByRole('button', { name: /Piedade/ }))
   expect(container.querySelector('.roadmap-caution')?.textContent).toContain('guarda ferido')
-  expect(container.querySelector('.roadmap-tips')).toBeNull()
+  expect(container.querySelector('.roadmap-advice .roadmap-tips')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: /Perito/ }))
   expect(container.querySelector('.roadmap-advice')?.textContent).toContain('Use o bloqueio')
 })
@@ -683,7 +683,7 @@ test('a trophy the guide does not explain gets its description and Nexo, with no
   const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
   fireEvent.click(screen.getByRole('button', { name: /Só a Descrição/ }))
   expect(container.querySelector('.roadmap-objective')?.textContent).toContain('não explica')
-  expect(container.querySelector('.roadmap-tips')).toBeNull()
+  expect(container.querySelector('.roadmap-advice .roadmap-tips')).toBeNull()
   expect(container.querySelector('.roadmap-advice-label')).toBeNull()
   expect(container.querySelector('.roadmap-advice .roadmap-ask')?.getAttribute('href')).toContain(
     'trophy=',
@@ -921,6 +921,58 @@ test('asking the Nexo sits on the line of "How to do it"', () => {
   expect(container.querySelector('.nexo-asks')).toBeNull()
 })
 
+test('a collection indexes its pieces by stretch, the stretches list by chapter, and a story trophy shows its own', () => {
+  const game = routeGame()
+  const [story, collection, other] = game.trophies
+  const piece = (n: number) => ({
+    kind: 'collectible',
+    trophy: collection.name,
+    name: `Flor ${n}/3`,
+    where: `Capítulo ${n}`,
+    text: `Flor ${n}`,
+    steps: [`Siga pela direita até a flor ${n}.`],
+  })
+  const guide = {
+    ...(game.guide as GuideDetail),
+    tricks: [
+      { trophy: collection.name, trick: 'Esse troféu é da coleção.\n\nPegue as três flores.' },
+    ],
+    milestones: [
+      {
+        after: story.name,
+        tips: [
+          piece(1),
+          { kind: 'item', trophy: null, text: 'Guarde as pedras para o chefe.' },
+          { kind: 'collectible', trophy: other.name, text: 'Souvenir 1/2 no barco.' },
+        ],
+      },
+      { after: other.name, tips: [piece(2), piece(3)] },
+    ],
+  }
+  const open = game.trophies.map((t) => ({ ...t, earned: false, earnedAt: undefined }))
+  const { container } = renderApp(<TrophyRoadmap game={{ ...game, guide, trophies: open }} />)
+  const pick = (name: string) =>
+    fireEvent.click(screen.getAllByRole('button', { name: new RegExp(name) })[0])
+  pick(collection.name)
+  const advice = () => container.querySelector('.roadmap-advice')?.textContent ?? ''
+  expect(advice()).toContain('Pegue as três flores.')
+  // Under the trophy, an index: each piece and its stretch; the steps stay in "By chapter".
+  const index = [...container.querySelectorAll('.roadmap-index button')].map((b) => b.textContent)
+  expect(index).toEqual([
+    expect.stringContaining('Flor 1/3'),
+    expect.stringContaining('Flor 2/3'),
+    expect.stringContaining('Flor 3/3'),
+  ])
+  expect(advice()).not.toContain('Siga pela direita até a flor 2.')
+  const chapters = container.querySelector('.roadmap-chapters')
+  expect(chapters?.querySelector('summary')?.textContent).toContain('Por capítulo')
+  expect(chapters?.textContent).toContain('Siga pela direita até a flor 2.')
+  pick(story.name)
+  expect(advice()).toContain('Nesse trecho')
+  expect(advice()).toContain('Guarde as pedras para o chefe.')
+  expect(advice()).toContain('Souvenir 1/2 no barco.')
+})
+
 test('the online note shows only when the trophy has no tip of its own', () => {
   const game = routeGame()
   const first = game.trophies[0]
@@ -1106,8 +1158,8 @@ test('with places in the guide, a trophy says when it falls instead of leaving a
   pick(/^Terceiro Ato/)
   // Where the player is now stays unsaid: their trophies only say where they have been at least.
   expect(when()).toBe('Você ganha seguindo a história, no capítulo 3.')
-  // A story trophy with no tip has nothing to ask the Nexo about.
-  expect(container.querySelector('#roadmap-advice .roadmap-ask')).toBeNull()
+  // A story trophy with no tip of its own shows what its stretch holds (a collectible after it).
+  expect(container.querySelector('#roadmap-advice')?.textContent).toContain('Nesse trecho')
   pick(/^Mira Certeira/)
   expect(when()).toBe(
     'Acontecia no capítulo 1, que ficou para trás. Dá para voltar pela seleção de capítulos.',

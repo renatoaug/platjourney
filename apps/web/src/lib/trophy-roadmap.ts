@@ -55,6 +55,23 @@ export function trophyRoadmap(trophies: Trophy[], guide?: GuideDetail | null): T
   return stages
 }
 
+/**
+ * What the guide says to watch for in the stretch a story trophy opens, until the next one: the
+ * same tips the player is sent when they earn it, without those about trophies already earned or
+ * about this one.
+ */
+export function stretchTips(trophy: Trophy, trophies: Trophy[], guide?: GuideDetail | null) {
+  const milestone = guide?.milestones?.find((m) => !!m.after && trophyMatches(trophy, m.after))
+  if (!milestone) return []
+  const earned = trophies.filter((t) => t.earned)
+  return milestone.tips.filter(
+    (tip) =>
+      !tip.trophy ||
+      (!trophyMatches(trophy, tip.trophy) &&
+        !earned.some((t) => trophyMatches(t, tip.trophy ?? ''))),
+  )
+}
+
 /** What a trophy asks of the player, when the guide says. */
 export function trophyKind(trophy: Trophy, guide?: GuideDetail | null): TrophyKind | undefined {
   return guide?.trophyKinds?.find((x) => trophyMatches(trophy, x.trophy))?.kind
