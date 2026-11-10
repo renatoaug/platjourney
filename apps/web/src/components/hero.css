@@ -710,7 +710,9 @@
     font-size: var(--text-sm);
   }
 
+  /* The chips are shorter than the difficulty card: they sit at its middle, not its top. */
   .hero.immersive .meta {
+    align-items: center;
     margin-top: 14px;
   }
 
