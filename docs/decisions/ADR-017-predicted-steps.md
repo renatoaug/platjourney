@@ -11,16 +11,17 @@ The player's place on the line is the furthest step among their earned story tro
 
 ## Decision
 1. **A decision model's estimate comes before the fallback.** For each base-game trophy without a single moment, the AI service asks a decision model (Jev, typesafe.ai) a choice over the steps (0, each step, after the story), given the guide's story trophies with their steps and the trophy's text, guide range and PSN rarity. The expected step (probability-weighted mean) is stored in the guide as `predicted_steps` (`services/ai/src/platjourney_ai/steps.py`, `llm.decide`). The order is: 3 or more players, then the estimate, then halfway or rarity. A trophy of a single moment always stays where the guide puts it.
-2. **The server asks in the background.** When it serves a guide with places and no estimate, it calls `POST /guides/predict-steps` once an hour per game at most, tagged `guide_steps`; the answer reaches the next page load. Saving the guide again drops the estimate, so a new estimate follows the new places. Without `TYPESAFE_API_KEY`, nothing is asked and the journey keeps its fallback.
+2. **The content pipeline writes it when it saves a guide.** Right after saving, it runs `steps.predict` inside the AI service's container, with its `TYPESAFE_API_KEY`, and the round shows the predicted order of each game. Only pipeline guides have `storyline` and `trophyPlaces` (a guide the app researches on its own never does), so the app never calls the model while serving a page. Saving the guide again drops the estimate until the pipeline writes it again. Without the key, nothing is written and the journey keeps its fallback.
 3. **`storyline.order: "free"`** marks a game whose steps can be played in any order. There the player's place is how many steps they have done, a step they skipped is never behind them, the suggestion is the first open trophy in the route, and players' marks count steps done instead of the step's number.
 
 ## Alternatives considered
 - **A general language model with a prompt**: slower and dearer per trophy, and its numbers are not probabilities to average; the decision model answers a whole game in one call for a fraction of a cent.
 - **Estimate at request time**: every page load would wait on a model; stored with the guide it is read like any other field.
+- **The server asks in the background when it serves a guide without one**: it would only ever fire for guides the pipeline had just saved, one page load late (the first player sees the old order), with nobody reviewing the result and a failure visible only in the server's log.
 - **The furthest step in free games, with a graph of what opens what**: the graph (ADR-014) says what a trophy needs, not where the player is; counting steps done is the honest measure when order is free.
 
 ## Consequences
 - On the 34 games measured, the estimate misses by 19% on average (18% on placed counts, 22% on trophies the guide does not place) against 27%, 21% and 43% for the fallback; it was closer on 358 trophies and the fallback on 213. It did worse on GTA III and Resident Evil 4.
-- Every guide with places costs one call (about 15 000 input tokens, under US$0.001) the first time it is opened after being saved.
+- Every guide with places costs one call (about 15 000 input tokens, under US$0.001) each time the pipeline saves it, and the first player already sees the route with the estimate.
 - Well-known games may be estimated from what the model already knows about them; on obscure games the estimate is probably weaker, and players' data still replaces it trophy by trophy.
 - Guides need `order: "free"` written by hand where it applies; without it, a game played in any order keeps the old behaviour.

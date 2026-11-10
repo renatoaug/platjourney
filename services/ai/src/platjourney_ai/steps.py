@@ -5,7 +5,8 @@ players' unlock times then say where the rest are usually earned (ADR-015, ADR-0
 few players has no such data, so a decision model (`llm.decide`) picks, for each of those
 trophies, the step players usually earn it at, from the guide's story trophies and the trophy's
 own text. The expected step (the probability-weighted mean) is stored in the guide as
-`predicted_steps`; saving the guide again drops it, and the server asks for it once more.
+`predicted_steps` by the content pipeline right after it saves the guide (ADR-017); saving the
+guide again drops it until the pipeline writes it again.
 """
 
 import logging

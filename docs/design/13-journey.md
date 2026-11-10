@@ -96,7 +96,7 @@ The panel never says how far a trophy is from the player: their trophies only sa
 
 A game with fewer than 3 players has no `trophySteps`. For it, the AI service asks a decision model (Jev, typesafe.ai) where each trophy without a single moment is usually earned, as a choice over the steps, from the guide's story trophies and the trophy's text, range and rarity ([ADR-017](../decisions/ADR-017-predicted-steps.md)). The expected step is stored with the guide as `predictedSteps`. The order of what decides a step is: players (3 or more), then the estimate, then halfway through the range or the rarity. The panel never quotes the estimate: "Players who did it usually…" stays for players' data only.
 
-The server asks in the background the first time it serves a guide with places and no estimate (at most once an hour per game); saving the guide again drops it. Without `TYPESAFE_API_KEY` nothing is asked. Measured against players on 34 games, the estimate missed by 19% of the story against 27% for halfway and rarity.
+The content pipeline writes it right after saving a guide, through the AI service's `steps.predict`, one call per guide; saving the guide again drops it until the pipeline writes it again. The server never asks for it. Without `TYPESAFE_API_KEY` the step writes nothing. Measured against players on 34 games, the estimate missed by 19% of the story against 27% for halfway and rarity.
 
 ### Games played in any order
 

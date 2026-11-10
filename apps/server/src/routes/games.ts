@@ -119,7 +119,7 @@ async function ownedDetail(
     ensureGuide(found, trophies, { name: title.name, platform: title.platform }),
   )
   const { queued } = built
-  const guide = await withPlayerSteps(built.guide, trophies, title.npCommunicationId, found)
+  const guide = await withPlayerSteps(built.guide, trophies, title.npCommunicationId)
   if (guide && !isDemo(user))
     ensureDeepGuide(found, title.total).catch((e) =>
       console.error('deep guide failed:', (e as Error).message),
@@ -160,7 +160,7 @@ async function catalogDetail(user: User, found: Game, platform: string) {
     ),
   )
   const { queued } = built
-  const guide = await withPlayerSteps(built.guide, list?.trophies, list?.np, found)
+  const guide = await withPlayerSteps(built.guide, list?.trophies, list?.np)
   if (guide && !isDemo(user))
     ensureDeepGuide(found).catch((e) => console.error('deep guide failed:', (e as Error).message))
   return {
