@@ -1,6 +1,6 @@
 # ADR-016: The route orders each trophy by where it is probably earned
 
-- **Status**: Accepted
+- **Status**: Accepted, extended by [ADR-017](ADR-017-predicted-steps.md)
 - **Date**: 2026-11-10
 - **Related**: [ADR-013](ADR-013-journey-from-guide.md), [ADR-015](ADR-015-trophy-steps-from-players.md), [Trophy journey](../design/13-journey.md#places-along-the-game)
 

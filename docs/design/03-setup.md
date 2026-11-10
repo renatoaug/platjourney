@@ -71,6 +71,7 @@ and open http://localhost:3000 (only this machine can reach it). The first time,
 | `PSN_NPSSO` | NPSSO of the throwaway PSN account. Treat it like a password |
 | `TELEGRAM_BOT_TOKEN` | The bot's token |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | OpenAI key and default model (not needed with local models) |
+| `TYPESAFE_API_KEY`, `DECISION_MODEL` | Optional. The decision model that estimates where a trophy falls before players say ([ADR-017](../decisions/ADR-017-predicted-steps.md)); default `jev-latest` |
 | `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET` | The IGDB app |
 | `SURREAL_URL`, `SURREAL_USER`, `SURREAL_PASS`, `SURREAL_NS`, `SURREAL_DB` | SurrealDB; Docker Compose reads the user and password too |
 | `AI_URL`, `AI_TOKEN` | Where the AI service listens and the token the server calls it with (`openssl rand -hex 24`); the service refuses to start with a token under 32 characters |

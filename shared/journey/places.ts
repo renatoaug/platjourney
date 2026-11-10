@@ -16,6 +16,9 @@ export interface Storyline {
   // What one step of the game is (the app names it in the player's language) and how many there are.
   unit: StoryUnit
   total: number
+  // `free` when the steps can be played in any order (bosses, worlds, regions): the player's place is
+  // how many of them they have done, and nothing they skipped is ever behind them.
+  order?: 'free' | null
 }
 
 export interface TrophyPlace {
@@ -40,6 +43,15 @@ export interface PlacedGuide {
   trophyKinds?: { trophy: string; kind: 'natural' | 'hunt' | 'grind' }[] | null
   // Worked out from players' unlock times, never stored in the guide.
   trophySteps?: PlayerStep[] | null
+  // A model's estimate of where each trophy without a single moment falls, stored with the guide by
+  // the AI service: the prior before players say otherwise (ADR-017).
+  predictedSteps?: PredictedStep[] | null
+}
+
+/** Where a model expects a trophy to fall, from the guide and the trophy's text (ADR-017). */
+interface PredictedStep {
+  trophy: string
+  step: number
 }
 
 // Fewer players than this never set where a trophy closes: one offline sync could move it.
@@ -74,6 +86,13 @@ function placeOf<T extends PlacedTrophy>(trophy: T, trophies: T[], guide?: Place
 }
 
 const counter = (t: PlacedTrophy) => (t.progressTarget ?? 0) > 1
+
+const free = (g: PlacedGuide) => g.storyline?.order === 'free'
+
+/** The model's estimate for a trophy, used only when players have not said yet. */
+function predictedStep(t: PlacedTrophy, guide: PlacedGuide) {
+  return guide.predictedSteps?.find((s) => trophyMatches(t, s.trophy))?.step
+}
 
 /** Where players usually earned a trophy the guide gives no moment for, when enough of them did. */
 export function usualStep(t: PlacedTrophy, guide?: PlacedGuide | null) {
@@ -112,8 +131,9 @@ function keepsGoing(t: PlacedTrophy, place: TrophyPlace, guide: PlacedGuide) {
 }
 
 /**
- * The furthest step the player's earned trophies point to. Only trophies of a single moment count:
- * a count can close anywhere, so it says nothing about where the player is.
+ * The furthest step the player's earned trophies point to; in a game of free order, how many steps
+ * they have done. Only trophies of a single moment count: a count can close anywhere, so it says
+ * nothing about where the player is.
  */
 export function playerStep<T extends PlacedTrophy>(trophies: T[], guide?: PlacedGuide | null) {
   if (!usable(guide)) return undefined
@@ -122,7 +142,8 @@ export function playerStep<T extends PlacedTrophy>(trophies: T[], guide?: Placed
     const place = placeOf(t, trophies, guide)
     return place && !keepsGoing(t, place, guide) ? [place.from] : []
   })
-  return steps.length ? Math.max(...steps) : undefined
+  if (!steps.length) return undefined
+  return free(guide) ? new Set(steps).size : Math.max(...steps)
 }
 
 /**
@@ -131,7 +152,8 @@ export function playerStep<T extends PlacedTrophy>(trophies: T[], guide?: Placed
  * reaches the target, never before the player nor its own start, and after the story when the pace
  * would not close it in time. Without a pace: where players usually earned it, else halfway through
  * the guide's range, else its start. One the guide does not place: where players usually earned it,
- * else by its rarity. Undefined only when the guide places nothing.
+ * else by its rarity. Before players, a model's estimate stands in for halfway and for the rarity
+ * (ADR-017). Undefined only when the guide places nothing.
  */
 export function expectedStep<T extends PlacedTrophy>(
   trophy: T,
@@ -141,7 +163,7 @@ export function expectedStep<T extends PlacedTrophy>(
 ) {
   if (!usable(guide)) return undefined
   const place = placeOf(trophy, trophies, guide)
-  const usual = usualStep(trophy, guide)?.step
+  const usual = usualStep(trophy, guide)?.step ?? predictedStep(trophy, guide)
   if (!place) return Math.max(usual ?? rarityStep(trophy, trophies, guide), at ?? 0)
   if (!keepsGoing(trophy, place, guide)) return place.from
   const value = trophy.progressValue ?? 0
@@ -177,7 +199,8 @@ export function placedOrder<T extends PlacedTrophy>(
 
 /**
  * The next trophy ahead of the player: the first expected at or after their step, else the first
- * left behind. Undefined when the guide places nothing.
+ * left behind. In a game of free order nothing is behind: the first in the route. Undefined when the
+ * guide places nothing.
  */
 export function nextPlaced<T extends PlacedTrophy>(
   open: T[],
@@ -189,6 +212,7 @@ export function nextPlaced<T extends PlacedTrophy>(
   const placed = placedOrder(open, trophies, guide).filter(
     (t) => expectedStep(t, trophies, guide, at || undefined) !== undefined,
   )
+  if (free(guide)) return placed[0]
   return (
     placed.find((t) => (expectedStep(t, trophies, guide, at || undefined) ?? 0) >= at) ?? placed[0]
   )
@@ -224,7 +248,8 @@ export function trophyWhen<T extends PlacedTrophy>(
     late: expected > guide.storyline.total,
     // The guide writes "after the story" as the step past the last one (the 25th of 24 missions).
     after: keeps && (place.to ?? place.from) > guide.storyline.total,
-    behind: !keeps && at !== undefined && place.from < at,
+    // In a game of free order a step the player skipped is still ahead of them.
+    behind: !keeps && !free(guide) && at !== undefined && place.from < at,
   }
 }
 
@@ -252,12 +277,21 @@ type Mark = { at: number; step: number }
 
 const time = (u: Unlock) => Date.parse(u.at)
 
-/** A player's story trophies in time, each no earlier in the story than the one before. */
-function marksOf(list: Unlock[], moment: Map<number, number>) {
+/**
+ * A player's story trophies in time, each no earlier in the story than the one before. In a game of
+ * free order a mark is how many steps the player had done by then.
+ */
+function marksOf(list: Unlock[], moment: Map<number, number>, inAnyOrder: boolean) {
   const marks: Mark[] = []
+  const done = new Set<number>()
   for (const u of list) {
     const step = moment.get(u.trophyId)
-    if (step !== undefined && step >= (marks.at(-1)?.step ?? 0)) marks.push({ at: time(u), step })
+    if (step === undefined) continue
+    if (inAnyOrder) {
+      if (done.has(step)) continue
+      done.add(step)
+      marks.push({ at: time(u), step: done.size })
+    } else if (step >= (marks.at(-1)?.step ?? 0)) marks.push({ at: time(u), step })
   }
   return marks
 }
@@ -283,9 +317,10 @@ function stepsOfPlayer(
   moment: Map<number, number>,
   total: number,
   steps: Map<number, number[]>,
+  inAnyOrder: boolean,
 ) {
   list.sort((a, b) => time(a) - time(b))
-  const marks = marksOf(list, moment)
+  const marks = marksOf(list, moment, inAnyOrder)
   if (!marks.length) return
   const start = time(list[0])
   for (const u of list) {
@@ -313,7 +348,8 @@ export function closingSteps<T extends PlacedTrophy & { id: number }>(
   for (const u of unlocks)
     if (byId.has(u.trophyId)) users.set(u.user, [...(users.get(u.user) ?? []), u])
   const steps = new Map<number, number[]>()
-  for (const list of users.values()) stepsOfPlayer(list, moment, guide.storyline.total, steps)
+  for (const list of users.values())
+    stepsOfPlayer(list, moment, guide.storyline.total, steps, free(guide))
   return [...steps].map(([id, list]) => {
     const sorted = list.sort((a, b) => a - b)
     const mid = sorted.length / 2

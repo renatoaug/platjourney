@@ -46,7 +46,7 @@ The share of trophies with specific text is what a content round can raise: it n
 
 A guide can say where each base-game trophy sits along the game. Two optional fields carry it:
 
-- `storyline`: what one step of the game is and how many there are, as `{ unit: "mission", total: 35 }`. The unit is one of `mission`, `chapter`, `episode`, `act` or `level`; the app names it in the player's language.
+- `storyline`: what one step of the game is and how many there are, as `{ unit: "mission", total: 35 }`. The unit is one of `mission`, `chapter`, `episode`, `act` or `level`; the app names it in the player's language. `order: "free"` marks a game whose steps can be played in any order (see "Games played in any order").
 - `trophyPlaces`: for each trophy, the step where it unlocks (`from`) or, for a count or a collection, the range it is worked on (`from`, `to`). A step past `total` is after the story (mission select, free roam).
 
 With them, the journey is a line of steps. The player is a point on it, each open trophy is another point, and the route and the suggestion read the distance between them. The code is `shared/journey/places.ts`; the server's focus and the web map call the same functions.
@@ -81,7 +81,7 @@ flowchart LR
 ```
 
 - **Where the player is**: the furthest `from` among the earned trophies of a single moment. A count can close anywhere, so it does not count. A trophy keeps going when its place has `to > from`, its kind is `grind`, or PSN gives it a counter above one. It is an estimate, never a claim about the save.
-- **Where an open trophy falls**: a trophy of a single moment, where it unlocks. A count, where its PSN counter reaches the target at the pace so far: `pace = value / (player − from + 1)`, then `player + ⌈(target − value) / pace⌉`, never before the player nor its own start, and `total + 1` (after the story) when that pace would not close it in time. With no counter or no pace yet, where players usually earned it, else halfway through its range (its start when the guide gives only a start). A trophy the guide does not place: where players usually earned it, else at the story trophy with the closest PSN rarity, else after the story ([ADR-016](../decisions/ADR-016-route-by-expected-unlock.md)). Step 0 is the start of the game, before step 1.
+- **Where an open trophy falls**: a trophy of a single moment, where it unlocks. A count, where its PSN counter reaches the target at the pace so far: `pace = value / (player − from + 1)`, then `player + ⌈(target − value) / pace⌉`, never before the player nor its own start, and `total + 1` (after the story) when that pace would not close it in time. With no counter or no pace yet, where players usually earned it, else halfway through its range (its start when the guide gives only a start). A trophy the guide does not place: where players usually earned it, else at the story trophy with the closest PSN rarity, else after the story ([ADR-016](../decisions/ADR-016-route-by-expected-unlock.md)). Before players, a model's estimate stands in for halfway and for the rarity (see "Before players"). Step 0 is the start of the game, before step 1.
 - **The route** orders what is left by that step, a trophy of the moment before a count on the same step. A trophy the guide does not place goes where it is expected too, never by its spot in PSN's list.
 - **The suggestion** is a missable of the current phase first, then a counter at 80% or more of its target, then the nearest placed trophy at or after the player's step. With nothing ahead, the first one left behind.
 - **The when line** under a trophy's objective says it in plain words: "You earn it by following the story, in mission 31.", "You can work on it from mission 12 to 30.", "You can start it in chapter 3.", "At your pace, it closes in mission 16.", or "Happened in chapter 1, which is behind you." The replay hint only appears when the guide mentions mission or chapter select.
@@ -91,6 +91,16 @@ flowchart LR
 Guides say where a long trophy (a count, a collection, an upgrade) starts, almost never where it closes, and some trophies they do not place at all. Both are worked out from players' unlock times ([ADR-015](../decisions/ADR-015-trophy-steps-from-players.md), [ADR-016](../decisions/ADR-016-route-by-expected-unlock.md)): every sync keeps each earned trophy's PSN time in `unlock`. For each player, their placed story trophies are marks in time; a trophy earned between two marks gets a step in proportion to the time, one earned before the first grows from 0 since their first unlock, and one earned after the story's last step is after the story. The median over at least 3 players becomes the trophy's step (`trophySteps`, added when the guide is served, `shared/journey/places.ts` `closingSteps`), never before the guide's start. The panel says "Players who did it usually close it in chapter 7 (12 players)", or for a trophy the guide does not place, "Players who did it usually get it at the start of the game (13 players)". The player's own PSN counter still projects at their pace.
 
 The panel never says how far a trophy is from the player: their trophies only say where they have been at least.
+
+### Before players
+
+A game with fewer than 3 players has no `trophySteps`. For it, the AI service asks a decision model (Jev, typesafe.ai) where each trophy without a single moment is usually earned, as a choice over the steps, from the guide's story trophies and the trophy's text, range and rarity ([ADR-017](../decisions/ADR-017-predicted-steps.md)). The expected step is stored with the guide as `predictedSteps`. The order of what decides a step is: players (3 or more), then the estimate, then halfway through the range or the rarity. The panel never quotes the estimate: "Players who did it usually…" stays for players' data only.
+
+The server asks in the background the first time it serves a guide with places and no estimate (at most once an hour per game); saving the guide again drops it. Without `TYPESAFE_API_KEY` nothing is asked. Measured against players on 34 games, the estimate missed by 19% of the story against 27% for halfway and rarity.
+
+### Games played in any order
+
+With `storyline.order: "free"` (bosses, worlds or regions in any order), the guide's steps are the usual order, not a fixed one. The player's place is how many steps they have done, not the furthest; a step they skipped is never "behind"; the suggestion is the first open trophy in the route; and players' marks count steps done. Without the flag, beating a late boss first would put the player past every boss they skipped.
 
 ### An example
 

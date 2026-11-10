@@ -59,3 +59,4 @@ What this makes easier, what it makes harder, what to watch. (bullets)
 | [ADR-014](ADR-014-trophy-dependencies.md) | Trophy dependencies as a graph inside the guide | Accepted |
 | [ADR-015](ADR-015-trophy-steps-from-players.md) | Where a long trophy closes, worked out from players' unlock times | Accepted |
 | [ADR-016](ADR-016-route-by-expected-unlock.md) | The route orders each trophy by where it is probably earned | Accepted |
+| [ADR-017](ADR-017-predicted-steps.md) | A decision model estimates where a trophy falls before players do, and some games are played in any order | Accepted |

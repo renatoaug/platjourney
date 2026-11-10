@@ -42,6 +42,8 @@ PRICES: dict[str, tuple[float, float, float]] = {
     'text-embedding-3-small': (0.02, 0.02, 0),
     # Audio input is $3 and the text prompt (the words to expect) $1.25; both counted at $3.
     'gpt-4o-mini-transcribe': (3, 3, 5),
+    # https://typesafe.ai (2026-11-10): output is free. Versions (jev-1.14.0) cost the same.
+    'jev': (0.042, 0.042, 0),
 }
 # Each web search call, on top of the tokens its results add to the input.
 WEB_SEARCH_USD = 10 / 1000
@@ -64,7 +66,11 @@ def cost_usd(model: str, u: Usage) -> float:
     if model.startswith(LOCAL_PREFIX):
         return 0.0
     # Snapshots carry a date suffix (gpt-5.5-2026-08-01) and cost the same as the alias.
-    price = PRICES.get(model) or PRICES.get(re.sub(r'-\d{4}-\d{2}-\d{2}$', '', model))
+    price = (
+        PRICES.get(model)
+        or PRICES.get(re.sub(r'-\d{4}-\d{2}-\d{2}$', '', model))
+        or PRICES.get(re.sub(r'-(latest|\d+\.\d+\.\d+)$', '', model))
+    )
     if price is None:
         if model not in _warned:
             _warned.add(model)

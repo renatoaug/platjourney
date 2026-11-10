@@ -149,6 +149,49 @@ describe('trophies placed along the game', () => {
     ).toBe('Sem lugar')
   })
 
+  test("before players, a model's estimate places a count and a trophy the guide does not", () => {
+    const { list } = game()
+    const extra = [trophy('Sem lugar', { earnedRate: 38 }), ...list]
+    const predicted: PlacedGuide = {
+      ...guide,
+      predictedSteps: [
+        { trophy: 'Paus e Pedras', step: 14 },
+        { trophy: 'Sem lugar', step: 13 },
+      ],
+    }
+    // Halfway through 3 to 33 would be 18; the estimate says 14.
+    expect(expectedStep(extra[6], extra, predicted, 12)).toBe(14)
+    expect(expectedStep(extra[0], extra, predicted, 12)).toBe(13)
+    // Players win over the estimate once there are enough of them.
+    const played = {
+      ...predicted,
+      trophySteps: [{ trophy: 'Paus e Pedras', step: 20, players: 3 }],
+    }
+    expect(expectedStep(extra[6], extra, played, 12)).toBe(20)
+    // The estimate never puts a trophy of a single moment anywhere but its place.
+    const moment = { ...predicted, predictedSteps: [{ trophy: 'Príncipe', step: 30 }] }
+    expect(expectedStep(extra[4], extra, moment, 12)).toBe(13)
+  })
+
+  test('in a game of free order the player is how many steps they did, and nothing is behind', () => {
+    // Five bosses in any order; the guide lists them in the usual one.
+    const bosses: PlacedGuide = {
+      storyline: { unit: 'level', total: 5, order: 'free' },
+      trophyPlaces: ['A', 'B', 'C', 'D', 'E'].map((n, i) => ({ trophy: n, from: i + 1 })),
+    }
+    // The player beat D first.
+    const list = ['A', 'B', 'C', 'D', 'E'].map((n) => trophy(n, { earned: n === 'D' }))
+    const open = list.filter((t) => !t.earned)
+    expect(playerStep(list, bosses)).toBe(1)
+    expect(nextPlaced(open, list, bosses)?.name).toBe('A')
+    expect(trophyWhen(list[0], list, bosses)?.behind).toBe(false)
+    // The same game in a fixed order: A, B and C are behind, and the next is E.
+    const fixed = { ...bosses, storyline: { unit: 'level' as const, total: 5 } }
+    expect(playerStep(list, fixed)).toBe(4)
+    expect(nextPlaced(open, list, fixed)?.name).toBe('E')
+    expect(trophyWhen(list[0], list, fixed)?.behind).toBe(true)
+  })
+
   test('without places, the order is the roadmap and there is no next', () => {
     const { list, open } = game()
     expect(placedOrder(open, list, {})).toBe(open)
@@ -228,6 +271,27 @@ describe('where players usually close a long trophy', () => {
     // Fewer than three: its start, never behind the player.
     expect(expectedStep(paus, list, steps(2), 12)).toBe(12)
     expect(trophyWhen(paus, list, steps(2))?.usually).toBeUndefined()
+  })
+  test('in a game of free order a mark is how many steps the player had done', () => {
+    const bosses: PlacedGuide = {
+      storyline: { unit: 'level', total: 4, order: 'free' },
+      trophyPlaces: [
+        { trophy: 'A', from: 1 },
+        { trophy: 'B', from: 2 },
+        { trophy: 'C', from: 3 },
+        { trophy: 'D', from: 4 },
+        { trophy: 'Coleção', from: 1, to: 5 },
+      ],
+    }
+    const all = ids(['A', 'B', 'C', 'D', 'Coleção'].map((n) => trophy(n)))
+    // Each player beats D, then A, closes the collection, then beats B: between their 2nd and 3rd.
+    const unlocks = ['a', 'b', 'c'].flatMap((u) => [
+      at(u, 4, 1),
+      at(u, 1, 2),
+      at(u, 5, 3),
+      at(u, 2, 4),
+    ])
+    expect(closingSteps(all, unlocks, bosses)).toEqual([{ trophy: 'Coleção', step: 3, players: 3 }])
   })
 })
 
