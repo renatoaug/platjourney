@@ -1485,6 +1485,16 @@
     font-size: var(--text-base);
   }
 
+  /* A titled list under a tip: where a collection's pieces are, or what the stretch holds. */
+  .roadmap-tips-group {
+    display: grid;
+    gap: 8px;
+  }
+
+  .roadmap-tips-title {
+    font-size: var(--text-base);
+  }
+
   .roadmap-tips {
     display: grid;
     gap: 12px;

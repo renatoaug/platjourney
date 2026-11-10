@@ -17,6 +17,7 @@ import {
   ongoingObjectives,
   personalRoadmap,
   phasePlan,
+  stretchTips,
   trophyAdvice,
   trophyKind,
   trophyMentions,
@@ -48,6 +49,9 @@ const messages = defineMessages({
       'Conquistas sem data aparecem agrupadas após as datadas, sem ordem cronológica conhecida. Datas iguais não informam a ordem entre si.',
     phasePlan: 'Plano da fase',
     tipsCount: { one: 'Ver {count} ponto do roteiro', other: 'Ver os {count} pontos do roteiro' },
+    where: 'Onde estão',
+    stretch: 'Nesse trecho',
+    titledCount: '{title} ({count})',
     track: 'Trilha da rota',
     baseTrack: 'Base',
     dlcTrack: 'DLC {count}',
@@ -172,6 +176,9 @@ const messages = defineMessages({
       'Undated achievements are grouped after dated ones, without a known chronological order. Equal timestamps do not establish order between them.',
     phasePlan: 'Phase plan',
     tipsCount: { one: 'See {count} route point', other: 'See all {count} route points' },
+    where: 'Where they are',
+    stretch: 'In this stretch',
+    titledCount: '{title} ({count})',
     track: 'Route track',
     baseTrack: 'Base',
     dlcTrack: 'DLC {count}',
@@ -288,8 +295,8 @@ const messages = defineMessages({
 
 const anchor = (trophy: Trophy) => `roadmap-${encodeURIComponent(trophy.groupId)}-${trophy.id}`
 
-function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
-  const t = useMessages(messages)
+/** What the panel shows for a trophy, from the guide. */
+function adviceParts(trophy: Trophy, game: RoadmapGame) {
   const advice = trophyAdvice(trophy, game.guide)
   // A trophy's own trick already says how: the guide's other mentions of it only repeat it. Without
   // one, a tip beside the warning says the same thing, and steps that repeat a tip add nothing.
@@ -298,13 +305,32 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
     ? []
     : advice.tips.filter((tip) => !(tip.kind === 'missable' && advice.warning))
   const said = tips.map((tip) => tip.text).join(' ')
-  const steps = trick
-    ? []
-    : trophyMentions(trophy, game.trophies, game.guide).filter((s) => !said.includes(s))
-  // Once earned there is nothing left to lose.
-  const warning = trophy.earned ? undefined : advice.warning
+  return {
+    advice,
+    trick,
+    tips,
+    // A collection's trick says what to gather; where each piece is stays below it.
+    locations: trick ? advice.tips.filter((tip) => tip.kind === 'collectible') : [],
+    stretch: stretchTips(trophy, game.trophies, game.guide),
+    steps: trick
+      ? []
+      : trophyMentions(trophy, game.trophies, game.guide).filter((s) => !said.includes(s)),
+    // Once earned there is nothing left to lose.
+    warning: trophy.earned ? undefined : advice.warning,
+  }
+}
+
+function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
+  const t = useMessages(messages)
+  const { advice, trick, tips, locations, stretch, steps, warning } = adviceParts(trophy, game)
   const hasAdvice =
-    trick || warning || advice.online || advice.bug || !!tips.length || !!steps.length
+    trick ||
+    warning ||
+    advice.online ||
+    advice.bug ||
+    !!tips.length ||
+    !!steps.length ||
+    !!stretch.length
   // A story trophy with nothing to watch for has nothing to ask: it comes by playing.
   const quiet = !hasAdvice && trophyKind(trophy, game.guide) === 'natural'
   return (
@@ -322,6 +348,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
       )}
       {trick && <TrickSteps text={trick} />}
       <RoadmapTips tips={tips} />
+      <RoadmapTips tips={locations} title={t('where')} />
       {steps.map((step) => (
         <p key={step}>
           <GuideText text={step} />
@@ -356,6 +383,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           <GuideText text={[advice.bug.issue, advice.bug.workaround].filter(Boolean).join('\n')} />
         </p>
       )}
+      <RoadmapTips tips={stretch} title={t('stretch')} />
       {hasAdvice && <TipRating trophy={trophy} />}
     </div>
   )
@@ -508,7 +536,7 @@ function TipRating({ trophy }: { trophy: Trophy }) {
 }
 
 /** The guide's words for this trophy along the route. A long checklist stays folded. */
-function RoadmapTips({ tips }: { tips: RouteTip[] }) {
+function RoadmapTips({ tips, title }: { tips: RouteTip[]; title?: string }) {
   const t = useMessages(messages)
   if (!tips.length) return null
   const list = (
@@ -537,10 +565,22 @@ function RoadmapTips({ tips }: { tips: RouteTip[] }) {
       ))}
     </ul>
   )
-  if (tips.length < 3) return list
+  if (tips.length < 3)
+    return title ? (
+      <section className="roadmap-tips-group">
+        <b className="roadmap-tips-title">{title}</b>
+        {list}
+      </section>
+    ) : (
+      list
+    )
   return (
     <details className="roadmap-advice-details">
-      <summary>{t('tipsCount', { count: tips.length })}</summary>
+      <summary>
+        {title
+          ? t('titledCount', { title, count: tips.length })
+          : t('tipsCount', { count: tips.length })}
+      </summary>
       {list}
     </details>
   )
