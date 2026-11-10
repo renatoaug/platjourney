@@ -894,17 +894,9 @@
     margin-top: 48px;
   }
 
-  /* What comes with the story stays on the route but steps back: what asks for action stands out. */
-  .roadmap-route > [data-kind="hunt"] {
-    --roadmap-marker-color: var(--color-accent);
-  }
-
-  .roadmap-route > [data-kind="grind"] {
-    --roadmap-marker-color: var(--color-highlight-warm);
-  }
-
-  /* A natural stop keeps its size when selected: only its ring lights up, so the route holds still. */
-  /* A story trophy is the same stop, only smaller. */
+  /* Every open stop has the same color, whatever its kind; only a missable stands out (below). A
+     natural stop keeps its size when selected: only its ring lights up, so the route holds still. A
+     story trophy is the same stop, only smaller. */
   .roadmap-route > [data-kind="natural"] .roadmap-route-pin {
     width: 52px;
     height: 52px;
@@ -916,19 +908,8 @@
   }
 
   .roadmap-route-kind {
-    font-size: var(--text-sm);
-  }
-
-  [data-kind="natural"] .roadmap-route-kind {
     color: var(--color-fg-muted);
-  }
-
-  [data-kind="hunt"] .roadmap-route-kind {
-    color: var(--color-accent);
-  }
-
-  [data-kind="grind"] .roadmap-route-kind {
-    color: var(--color-highlight-warm);
+    font-size: var(--text-sm);
   }
 
   /* 25px: the total's icon and its gap. */
@@ -951,18 +932,7 @@
     border-radius: var(--radius-tag);
     font-size: var(--text-sm);
     line-height: var(--leading-none);
-  }
-
-  .roadmap-kind.natural {
     color: var(--color-fg-muted);
-  }
-
-  .roadmap-kind.hunt {
-    color: var(--color-accent);
-  }
-
-  .roadmap-kind.grind {
-    color: var(--color-highlight-warm);
   }
 
   .roadmap-route-art {
