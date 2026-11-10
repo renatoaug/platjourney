@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.69.0](https://github.com/renatoaug/platjourney/compare/v0.68.0...v0.69.0) (2026-11-10)
+
+### Features
+
+* **web:** let a tip's intro be followed by numbered steps ([#170](https://github.com/renatoaug/platjourney/issues/170)) ([d13d109](https://github.com/renatoaug/platjourney/commit/d13d1094bd73263ee6d757727fe44137604e4def))
+
 ## [0.68.0](https://github.com/renatoaug/platjourney/compare/v0.67.1...v0.68.0) (2026-11-10)
 
 ### Features
