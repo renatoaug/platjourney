@@ -362,11 +362,11 @@ test('objective and stored guidance have distinct icons, while missing advice ad
     <TrophyRoadmap game={{ ...game, trophies: [{ ...game.trophies[1], earned: false }] }} />,
   )
   expect(container.querySelector('.roadmap-objective use')?.getAttribute('href')).toBe(
-    '/icons.svg#target',
+    '#icon-target',
   )
   expect(screen.getByText('Como fazer')).toBeTruthy()
   expect(container.querySelector('.roadmap-advice-label use')?.getAttribute('href')).toBe(
-    '/icons.svg#nexo',
+    '#icon-nexo',
   )
   expect(container.querySelector('.roadmap-advice strong')?.textContent).toBe('the path')
   unmount()
@@ -475,7 +475,7 @@ test('earned history shows trophy art and full descriptions without changing pro
   fireEvent.error(art)
   expect(button.querySelector('img')).toBeNull()
   expect(button.querySelector('.roadmap-earned-art > svg use')?.getAttribute('href')).toBe(
-    '/icons.svg#trophy',
+    '#icon-trophy',
   )
   fireEvent.click(button)
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(earned.name)
@@ -1017,7 +1017,7 @@ test('with places in the guide, a trophy says when it falls instead of leaving a
   const pick = (name: RegExp) => fireEvent.click(within(route).getByRole('button', { name }))
   pick(/^Terceiro Ato/)
   // Where the player is now stays unsaid: their trophies only say where they have been at least.
-  expect(when()).toBe('Acontece no capítulo 3, naturalmente pela história.')
+  expect(when()).toBe('Você ganha seguindo a história, no capítulo 3.')
   // A story trophy with no tip has nothing to ask the Nexo about.
   expect(container.querySelector('#roadmap-advice .roadmap-ask')).toBeNull()
   pick(/^Mira Certeira/)

@@ -75,19 +75,26 @@ export function trophyAdvice(trophy: Trophy, guide?: GuideDetail | null) {
 
 const MAX_MENTIONS = 3
 
+// A step shared with more trophies than this is a list of what a phase gives, not how to get one.
+const MAX_SHARED = 3
+
+// A sentence that points at what came before it ("Isso libera...", "Dica: esses quatro troféus...").
+const LEANS =
+  /^(?:\*{0,2}(?:dica|aten[çc][ãa]o|nota|tip|note)\*{0,2}:\*{0,2}\s*)?(?:isso|isto|ess[ea]s?|est[ea]s?|aquel[ea]s?|ambos|ambas|assim|this|that|these|those|both)\b/i
+
 // A step of a phase or a sentence of a tip, on its own. A sentence that leans on the one before it
-// ("Isso libera o troféu X.") keeps that one, or it says nothing alone.
+// ("Isso libera o troféu X.") keeps that one; one that opens a line has nothing to lean on (the list
+// above it is another step), so it says nothing alone and never shows.
 function guideSteps(text: string) {
   return text.split(/\n+/).flatMap((line) => {
     const step = line.replace(/^\s*(?:\d+[.)]|[-•])\s*/, '').trim()
     if (!step) return []
     if (/^\s*\d+[.)]/.test(line)) return [step]
     const sentences = step.split(/(?<=[.!?])\s+(?=[\p{Lu}*\d])/u)
-    return sentences.map((sentence, i) =>
-      i && /^(?:isso|isto|esse|essa|este|esta|assim|this|that|these)\b/i.test(sentence)
-        ? `${sentences[i - 1]} ${sentence}`
-        : sentence,
-    )
+    return sentences.flatMap((sentence, i) => {
+      if (!LEANS.test(sentence)) return [sentence]
+      return i ? [`${sentences[i - 1]} ${sentence}`] : []
+    })
   })
 }
 
@@ -137,8 +144,12 @@ export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: Guide
     (step) => mentions(step, trophy) && !secret.some((t) => mentions(step, t)),
   )
   const own = naming.filter((step) => !others.some((t) => mentions(step, t)))
-  // With no step of its own, one shared with other trophies still says how, instead of nothing.
-  return (own.length || hasOwnAdvice(trophy, guide) ? own : naming).slice(0, MAX_MENTIONS)
+  // A story trophy comes by playing: a step it shares with others (the story's whole list, "from
+  // the first trophy to the last") only makes it look like work.
+  if (trophyKind(trophy, guide) === 'natural') return own.slice(0, MAX_MENTIONS)
+  // With no step of its own, one shared with a few other trophies still says how, instead of nothing.
+  const few = naming.filter((step) => others.filter((t) => mentions(step, t)).length < MAX_SHARED)
+  return (own.length || hasOwnAdvice(trophy, guide) ? own : few).slice(0, MAX_MENTIONS)
 }
 
 /** Whether the guide has a tip, a trick, a warning, an online note or a bug for this trophy. */

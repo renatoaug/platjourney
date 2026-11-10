@@ -7,5 +7,5 @@ test('an icon points into the sprite and stays out of the accessibility tree', (
   const svg = container.querySelector('svg') as SVGElement
   expect(svg.getAttribute('class')).toBe('icon big')
   expect(svg.getAttribute('aria-hidden')).toBe('true')
-  expect(svg.querySelector('use')?.getAttribute('href')).toBe('/icons.svg#bell')
+  expect(svg.querySelector('use')?.getAttribute('href')).toBe('#icon-bell')
 })

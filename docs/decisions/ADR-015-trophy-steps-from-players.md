@@ -1,6 +1,6 @@
 # ADR-015: Where a long trophy closes, worked out from players' unlock times
 
-- **Status**: Accepted
+- **Status**: Accepted, extended by [ADR-016](ADR-016-route-by-expected-unlock.md) (every trophy without a single moment, interpolated between story trophies)
 - **Date**: 2026-11-09
 - **Related**: [ADR-013](ADR-013-journey-from-guide.md), [ADR-014](ADR-014-trophy-dependencies.md), [Trophy journey](../design/13-journey.md#places-along-the-game)
 
