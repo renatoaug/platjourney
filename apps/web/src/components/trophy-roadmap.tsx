@@ -544,7 +544,11 @@ function RoadmapTips({ tips, title }: { tips: RouteTip[]; title?: string }) {
       {tips.map((tip) => (
         <li key={`${tip.name ?? ''}${tip.text}`}>
           {tip.name && <strong>{tip.name}</strong>}
-          {tip.where && <em>{tip.where}</em>}
+          {tip.where && (
+            <em>
+              <GuideText text={tip.where} />
+            </em>
+          )}
           {tip.steps?.length ? (
             <ol>
               {tip.steps.map((step) => (
