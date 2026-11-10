@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv, type ProxyOptions, searchForWorkspaceRoot } from 'vite'
+import { inlineIcons } from './inline-icons'
 import { pluginTargets } from './plugin-targets'
 
 // The Bun server serves dist/ and /api. In development it forwards pages to Vite, and Vite forwards /api back.
@@ -34,6 +35,7 @@ export default defineConfig(({ mode }) => {
       // A path, not a package name: Vite would pre-bundle a package, with its own empty rules.
       react({ jsxImportSource: '/src/plugins' }),
       tailwindcss(),
+      inlineIcons(),
     ],
     // The platform's version (root package.json, set by each release) for the account page.
     define: { __APP_VERSION__: JSON.stringify(version) },

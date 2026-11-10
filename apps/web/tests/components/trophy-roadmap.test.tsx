@@ -362,11 +362,11 @@ test('objective and stored guidance have distinct icons, while missing advice ad
     <TrophyRoadmap game={{ ...game, trophies: [{ ...game.trophies[1], earned: false }] }} />,
   )
   expect(container.querySelector('.roadmap-objective use')?.getAttribute('href')).toBe(
-    '/icons.svg#target',
+    '#icon-target',
   )
   expect(screen.getByText('Como fazer')).toBeTruthy()
   expect(container.querySelector('.roadmap-advice-label use')?.getAttribute('href')).toBe(
-    '/icons.svg#nexo',
+    '#icon-nexo',
   )
   expect(container.querySelector('.roadmap-advice strong')?.textContent).toBe('the path')
   unmount()
@@ -475,7 +475,7 @@ test('earned history shows trophy art and full descriptions without changing pro
   fireEvent.error(art)
   expect(button.querySelector('img')).toBeNull()
   expect(button.querySelector('.roadmap-earned-art > svg use')?.getAttribute('href')).toBe(
-    '/icons.svg#trophy',
+    '#icon-trophy',
   )
   fireEvent.click(button)
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe(earned.name)
