@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.68.0](https://github.com/renatoaug/platjourney/compare/v0.67.1...v0.68.0) (2026-11-10)
+
+### Features
+
+* **web:** one color on the route, ask the Nexo beside a tip and the store deal on its button ([#169](https://github.com/renatoaug/platjourney/issues/169)) ([113f014](https://github.com/renatoaug/platjourney/commit/113f01400c7c3f73eb3a68cd452213739e2d8ff6))
+
 ## [0.67.1](https://github.com/renatoaug/platjourney/compare/v0.67.0...v0.67.1) (2026-11-10)
 
 ### Bug Fixes
