@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.66.0](https://github.com/renatoaug/platjourney/compare/v0.65.0...v0.66.0) (2026-11-10)
+
+### Features
+
+* **ai:** estimate where trophies fall before players and follow games played in any order ([#165](https://github.com/renatoaug/platjourney/issues/165)) ([6af5117](https://github.com/renatoaug/platjourney/commit/6af51175e0a05f154ece946a52b96bc16f2894de))
+
 ## [0.65.0](https://github.com/renatoaug/platjourney/compare/v0.64.2...v0.65.0) (2026-11-10)
 
 ### Features
