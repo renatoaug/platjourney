@@ -392,8 +392,31 @@ function AdviceAsk({
   )
 }
 
-/** A trick written one step per line reads as a numbered list; a single line stays a paragraph. */
+/**
+ * A trick written as paragraphs (one line each, separated by an empty line) opens with a one-line
+ * intro of what the trophy is about, set apart, and the rest reads as paragraphs. One written one
+ * step per line reads as a numbered list; a single line stays a paragraph.
+ */
 function TrickSteps({ text }: { text: string }) {
+  const blocks = text
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+  if (blocks.length > 1 && blocks.every((block) => !block.includes('\n'))) {
+    const [intro, ...rest] = blocks
+    return (
+      <>
+        <p className="roadmap-trick-intro">
+          <GuideText text={intro} />
+        </p>
+        {rest.map((block) => (
+          <p key={block}>
+            <GuideText text={block} />
+          </p>
+        ))}
+      </>
+    )
+  }
   const lines = text
     .split('\n')
     .map((line) => line.trim())
