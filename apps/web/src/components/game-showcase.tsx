@@ -307,7 +307,8 @@ export type GameStore = { url: string | null; deal: Interest['deal'] } | null
 
 const TIER_NAMES = { essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' } as const
 
-/** The deal line: the player's PS Plus tier has it, a sale, or the tier that includes it. */
+/** The deal: the player's PS Plus tier has it, a sale, or the tier that includes it. With a store
+ * page it is the store button's own text. */
 function StoreDeal({
   deal: d,
   tier,
@@ -320,7 +321,7 @@ function StoreDeal({
   const money = (cents: number, currency: string) =>
     (cents / 100).toLocaleString(locale, { style: 'currency', currency })
   return (
-    <div className="game-about-deal">
+    <span className="game-about-deal">
       {d.mine ? (
         <b>{t('mine', { tier })}</b>
       ) : d.discount > 0 ? (
@@ -344,7 +345,7 @@ function StoreDeal({
       ) : (
         <b>{t('included', { tier })}</b>
       )}
-    </div>
+    </span>
   )
 }
 
@@ -353,18 +354,21 @@ export function StoreOffer({ store }: { store: NonNullable<GameStore> }) {
   const d = store.deal
   const url = d?.storeUrl ?? store.url
   const tier = TIER_NAMES[d?.plusTier ?? 'extra']
+  const deal = d && (d.mine || d.plus || d.discount > 0) ? <StoreDeal deal={d} tier={tier} /> : null
   return (
     <div className={`game-about-store${d?.mine ? ' mine' : d && d.discount > 0 ? ' sale' : ''}`}>
-      {d && (d.mine || d.plus || d.discount > 0) && <StoreDeal deal={d} tier={tier} />}
-      {url && (
+      {url ? (
         <a
           className="button sm game-about-buy"
           href={url}
           target="_blank"
           rel="noopener noreferrer"
+          title={deal ? t('storeTitle') : undefined}
         >
-          {t('store')} <Icon name="arrow" />
+          {deal ?? t('store')} <Icon name="arrow" />
         </a>
+      ) : (
+        deal
       )}
     </div>
   )

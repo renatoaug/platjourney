@@ -378,14 +378,12 @@ test('objective and stored guidance have distinct icons, while missing advice ad
   expect(screen.queryByText('Como fazer')).toBeNull()
   expect(screen.queryByRole('group', { name: 'Essa dica ajudou?' })).toBeNull()
   expect(screen.queryByText('Sem dica específica no guia.')).toBeNull()
-  // A trophy still to get with no advice: how and when, sent to Nexo from here; no "can I miss
-  // it" without a warning in the guide.
-  const asks = screen.getByRole('navigation', { name: 'Perguntar ao Nexo' })
-  const how = within(asks).getByRole('link', { name: 'Como pegar?' })
-  expect(how.getAttribute('href')).toContain('ask=how')
-  expect(within(asks).getByRole('link', { name: 'Quando fazer?' })).toBeTruthy()
-  expect(how.classList.contains('roadmap-ask')).toBe(true)
-  expect(within(asks).queryByRole('link', { name: 'Dá pra perder?' })).toBeNull()
+  // A trophy still to get with no advice: one link to ask the Nexo about it, no quick questions.
+  const ask = screen.getByRole('link', { name: 'Perguntar ao Nexo' })
+  expect(ask.classList.contains('roadmap-ask')).toBe(true)
+  expect(ask.getAttribute('href')).toContain('trophy=')
+  expect(ask.getAttribute('href')).not.toContain('ask=')
+  expect(screen.queryByRole('link', { name: 'Como pegar?' })).toBeNull()
 })
 
 test('selection stays on the visible page, crosses its boundary symmetrically and keeps order', () => {
@@ -901,6 +899,26 @@ test('with every trophy earned, the kinds still count the whole game', () => {
   }
   const { container } = renderApp(<TrophyRoadmap game={{ ...game, trophies, guide }} />)
   expect(container.querySelector('.roadmap-kinds')?.textContent).toContain('1 caçada')
+})
+
+test('asking the Nexo sits on the line of "How to do it"', () => {
+  const game = routeGame()
+  const first = game.trophies[0]
+  const guide = {
+    ...(game.guide as GuideDetail),
+    tricks: [
+      { trophy: first.name, trick: 'Esse troféu sai na primeira curtida.\n\nAperte o touchpad.' },
+    ],
+  }
+  const pending = { ...first, earned: false, earnedAt: undefined }
+  const { container } = renderApp(
+    <TrophyRoadmap game={{ ...game, guide, trophies: [pending, ...game.trophies.slice(1)] }} />,
+  )
+  fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
+  const head = container.querySelector('.roadmap-advice-head')
+  expect(head?.querySelector('.roadmap-advice-label')?.textContent).toBe('Como fazer')
+  expect(head?.querySelector('.roadmap-ask')?.textContent).toBe('Perguntar ao Nexo')
+  expect(container.querySelector('.nexo-asks')).toBeNull()
 })
 
 test('the online note shows only when the trophy has no tip of its own', () => {

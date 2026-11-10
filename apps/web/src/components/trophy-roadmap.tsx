@@ -30,7 +30,6 @@ import { toast } from '../ui/toast'
 import { TrophyArt } from '../ui/trophy-art'
 import { image } from './game-showcase'
 import { JourneyLink } from './journey-link'
-import { TrophyAsks } from './nexo-asks'
 import { nexoHref } from './tip'
 import './trophy-roadmap.css'
 
@@ -310,11 +309,16 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const quiet = !hasAdvice && trophyKind(trophy, game.guide) === 'natural'
   return (
     <div className="roadmap-advice">
-      {hasAdvice && (
-        <span className="roadmap-advice-label">
-          <Icon name="nexo" />
-          {t('note')}
-        </span>
+      {(hasAdvice || !quiet) && (
+        <div className="roadmap-advice-head">
+          {hasAdvice && (
+            <span className="roadmap-advice-label">
+              <Icon name="nexo" />
+              {t('note')}
+            </span>
+          )}
+          {!quiet && <AdviceAsk trophy={trophy} game={game} />}
+        </div>
       )}
       {trick && <TrickSteps text={trick} />}
       <RoadmapTips tips={tips} />
@@ -353,42 +357,17 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
         </p>
       )}
       {hasAdvice && <TipRating trophy={trophy} />}
-      {!quiet && (
-        <AdviceAsk trophy={trophy} game={game} advice={!!hasAdvice} missable={!!warning} />
-      )}
     </div>
   )
 }
 
-/** A trophy still to get: the questions about it, sent from here; an earned one links the chat. */
-function AdviceAsk({
-  trophy,
-  game,
-  advice,
-  missable,
-}: {
-  trophy: Trophy
-  game: RoadmapGame
-  advice: boolean
-  missable: boolean
-}) {
+/** Asks the Nexo about this trophy, beside "How to do it". */
+function AdviceAsk({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const t = useMessages(messages)
-  if (game.np && !trophy.earned)
-    return (
-      <TrophyAsks
-        np={game.np}
-        name={game.name}
-        trophy={trophy.name}
-        advice={advice}
-        counter={(trophy.progressTarget ?? 0) > 1}
-        missable={missable}
-        className="roadmap-ask"
-      />
-    )
   return (
     <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
-      <Icon name="nexo" />
       {t('ask')}
+      <Icon name="arrow-right" />
     </JourneyLink>
   )
 }

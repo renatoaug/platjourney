@@ -491,9 +491,9 @@
   /* A small button: the card's facts lead, the store follows. */
   .game-about-buy {
     margin-left: auto;
-    min-height: 0;
-    height: 32px;
-    padding: 0 12px;
+    min-height: 32px;
+    height: auto;
+    padding: 6px 12px;
     gap: 6px;
     font-size: var(--text-sm);
   }
