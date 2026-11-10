@@ -231,7 +231,7 @@ describe('trophyMentions', () => {
 
   test('a step that names another trophy stays in the phase plan while the trophy has advice', () => {
     const a = trophy('Aberto')
-    const goal = 'Isso libera **Aberto** e **Segredo**.'
+    const goal = 'Abra o cofre. Isso libera **Aberto** e **Segredo**.'
     const tip = { tricks: [{ trophy: 'Aberto', trick: 'Faça assim.' }] }
     expect(trophyMentions(a, [a, trophy('Segredo')], guideWith(goal, tip))).toEqual([])
     expect(trophyMentions(a, [a], guideWith(goal))).toEqual([goal])
@@ -247,6 +247,23 @@ describe('trophyMentions', () => {
     // Never one that names a trophy still hidden.
     const secret = trophy('Senhores passageiros', { hidden: true })
     expect(trophyMentions(a, [a, secret], guideWith(goal))).toEqual([])
+  })
+
+  test('a step that lists what a phase gives is not how to get one of them', () => {
+    const names = ['Quebra-Gelo', 'De Malta com Amor', 'Skyfall', 'Sozinho']
+    const all = names.map((n) => trophy(n))
+    const goal = `1. A campanha dá automaticamente ${names.map((n) => `**${n}**`).join(', ')}.`
+    expect(trophyMentions(all[0], all, guideWith(goal))).toEqual([])
+    expect(trophyMentions(all[0], all.slice(0, 3), guideWith(goal))).toEqual([goal.slice(3)])
+  })
+
+  test('a line that points back at the list above it never shows alone', () => {
+    const plat = trophy('Até Não Sobrar Nenhum', { type: 'platinum' })
+    const goal =
+      '1. Complete a trilha **Part I**.\nDica: esses quatro troféus também são adicionais e não afetam o troféu **Até Não Sobrar Nenhum**.\nEstes troféus não contam para **Até Não Sobrar Nenhum**.'
+    expect(trophyMentions(plat, [plat], guideWith(goal))).toEqual([])
+    const own = 'Conquiste os demais. Dica: isso vale para **Até Não Sobrar Nenhum**.'
+    expect(trophyMentions(plat, [plat], guideWith(own))).toEqual([own])
   })
 
   test('reads early tips, collectibles and general route tips, at most three, once each', () => {
