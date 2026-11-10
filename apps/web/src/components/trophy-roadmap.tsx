@@ -10,7 +10,7 @@ import {
 } from 'react'
 import { trophyNeeds } from '../../../../shared/journey/graph'
 import { achievementHistory, earnedTimestamp } from '../../../../shared/journey/history'
-import { trophyWhen } from '../../../../shared/journey/places'
+import { type StoryUnit, trophyWhen, usualStep } from '../../../../shared/journey/places'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { type RoadStopGeometry, roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
 import {
@@ -116,9 +116,12 @@ const messages = defineMessages({
     secret: 'Troféu oculto',
     secretNote: 'Nome, descrição e dicas protegidos para evitar spoilers.',
     progress: 'Progresso do troféu na PSN: {value} / {target}',
-    whenStory: 'Acontece naturalmente pela história.',
+    whenStory: 'Você ganha seguindo a história.',
+    whenUsuallyGet: 'Quem já fez costuma conseguir {place} ({count} jogadores).',
+    placeStart: 'no início do jogo',
+    placeAfter: 'depois da história',
     whenAt: 'Acontece {place}.',
-    whenAtNatural: 'Acontece {place}, naturalmente pela história.',
+    whenAtNatural: 'Você ganha seguindo a história, {place}.',
     whenRange: 'Dá para fazer {span}.',
     whenAfter: 'Dá para começar {place} e terminar depois da história.',
     whenStart: 'Dá para começar {place}.',
@@ -237,9 +240,12 @@ const messages = defineMessages({
     secret: 'Hidden trophy',
     secretNote: 'Name, description and advice are protected to avoid spoilers.',
     progress: 'Trophy progress on PSN: {value} / {target}',
-    whenStory: 'Comes naturally with the story.',
+    whenStory: 'You earn it by following the story.',
+    whenUsuallyGet: 'Players who did it usually get it {place} ({count} players).',
+    placeStart: 'at the start of the game',
+    placeAfter: 'after the story',
     whenAt: 'Happens {place}.',
-    whenAtNatural: 'Happens {place}, naturally with the story.',
+    whenAtNatural: 'You earn it by following the story, {place}.',
     whenRange: 'You can work on it {span}.',
     whenAfter: 'You can start it {place} and finish it after the story.',
     whenStart: 'You can start it {place}.',
@@ -564,23 +570,30 @@ function replayable(guide: RoadmapGame['guide']) {
 type When = NonNullable<ReturnType<typeof trophyWhen>>
 type Translate = ReturnType<typeof useMessages<typeof messages>>
 
+// A step in words: the start of the game before the first one, after the story past the last.
+function placeAt(t: Translate, where: { unit: StoryUnit; total: number }, n: number) {
+  if (n <= 0) return t('placeStart')
+  if (n > where.total) return t('placeAfter')
+  return t(`place.${where.unit}`, { n })
+}
+
 // A count or a collection: its range, then where it closes at the player's pace. A pace needs
 // progress on the trophy; without it the guide's range is all there is to say.
 function rangeLine(t: Translate, when: When, counted: boolean) {
   const end = when.to ?? when.from
   const first = when.after
-    ? [t('whenAfter', { place: t(`place.${when.unit}`, { n: when.from }) })]
+    ? [t('whenAfter', { place: placeAt(t, when, when.from) })]
     : [t('whenRange', { span: t(`span.${when.unit}`, { from: when.from, to: end }) })]
   if (!counted) return first
   if (when.late) return when.after ? first : [...first, t('whenLate')]
   if (when.expected === end) return first
-  return [...first, t('whenPace', { place: t(`place.${when.unit}`, { n: when.expected }) })]
+  return [...first, t('whenPace', { place: placeAt(t, when, when.expected) })]
 }
 
 // A trophy of a single moment: where it happens, or that it is behind when a later one was earned.
 // Where the player is now stays unsaid: their trophies only say where they have been at least.
 function momentLine(t: Translate, when: When, natural: boolean, replay: boolean) {
-  const place = t(`place.${when.unit}`, { n: when.from })
+  const place = placeAt(t, when, when.from)
   if (when.behind)
     return [
       replay
@@ -590,6 +603,25 @@ function momentLine(t: Translate, when: When, natural: boolean, replay: boolean)
   return [t(natural ? 'whenAtNatural' : 'whenAt', { place })]
 }
 
+// A trophy the guide does not place: where players usually got it, or that the story brings it.
+function unplacedLine(t: Translate, trophy: Trophy, game: RoadmapGame, natural: boolean) {
+  const usual = usualStep(trophy, game.guide)
+  const story = game.guide?.storyline
+  const seen =
+    usual && story
+      ? [t('whenUsuallyGet', { place: placeAt(t, story, usual.step), count: usual.players })]
+      : []
+  return natural ? [t('whenStory'), ...seen] : seen
+}
+
+// A long trophy whose end the guide does not give: where it starts and where players closed it.
+function openLine(t: Translate, when: When) {
+  const start = t('whenStart', { place: placeAt(t, when, when.from) })
+  if (!when.usually) return [start]
+  const place = placeAt(t, when, when.usually.step)
+  return [start, t('whenUsually', { place, count: when.usually.players })]
+}
+
 /** When an open trophy happens along the game, from the guide's places; the map uses the same steps. */
 function TrophyWhen({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const t = useMessages(messages)
@@ -597,24 +629,14 @@ function TrophyWhen({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const base = game.trophies.filter((x) => x.groupId === 'default')
   const when = trophyWhen(trophy, base, game.guide)
   const natural = trophyKind(trophy, game.guide) === 'natural'
-  if (!when && !natural) return null
   const parts = !when
-    ? [t('whenStory')]
+    ? unplacedLine(t, trophy, game, natural)
     : when.open
-      ? [
-          t('whenStart', { place: t(`place.${when.unit}`, { n: when.from }) }),
-          ...(when.usually
-            ? [
-                t('whenUsually', {
-                  place: t(`place.${when.unit}`, { n: when.usually.step }),
-                  count: when.usually.players,
-                }),
-              ]
-            : []),
-        ]
+      ? openLine(t, when)
       : when.to !== undefined && when.to > when.from
         ? rangeLine(t, when, !!trophy.progressValue)
         : momentLine(t, when, natural, replayable(game.guide))
+  if (!parts.length) return null
   return <p className="roadmap-progress roadmap-when">{parts.join(' ')}</p>
 }
 

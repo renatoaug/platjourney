@@ -63,21 +63,21 @@ describe('trophies placed along the game', () => {
     ).toBeUndefined()
   })
 
-  test('a count sits where it should close: the guide end, or its pace so far', () => {
+  test('a count sits where it should close: halfway through its range, or its pace so far', () => {
     const { list, open } = game()
-    // No progress yet: the end of its range.
-    expect(expectedStep(open[0], list, guide, 12)).toBe(30)
+    // No progress and no players yet: halfway through its range (12 to 30).
+    expect(expectedStep(open[0], list, guide, 12)).toBe(21)
     // 10 of 50 in the first mission with the drone, 10 a mission: 4 more missions.
     const fast = game({ progressValue: 10 })
     expect(expectedStep(fast.open[0], fast.list, guide, 12)).toBe(16)
     // Too slow to close in the story: after it, on mission select.
     const slow = game({ progressValue: 1 })
     expect(expectedStep(slow.open[0], slow.list, guide, 14)).toBe(36)
-    // A collection with no counter: the end of its range.
-    expect(expectedStep(open[3], list, guide, 12)).toBe(33)
+    // A collection with no counter: halfway through its range (3 to 33).
+    expect(expectedStep(open[3], list, guide, 12)).toBe(18)
     // A trophy of a single moment: where it unlocks.
     expect(expectedStep(open[1], list, guide, 12)).toBe(13)
-    // A long trophy whose end the guide does not give does not order the route.
+    // A long trophy whose end the guide does not give: its start, never behind the player.
     const startOnly = {
       ...guide,
       trophyPlaces: [...(guide.trophyPlaces ?? []), { trophy: 'Café', from: 3 }].filter(
@@ -88,7 +88,7 @@ describe('trophies placed along the game', () => {
       ...startOnly,
       trophyKinds: [...(guide.trophyKinds ?? []), { trophy: 'Café', kind: 'grind' as const }],
     }
-    expect(expectedStep(open[2], list, grind, 12)).toBeUndefined()
+    expect(expectedStep(open[2], list, grind, 12)).toBe(12)
   })
 
   test('what is left goes in the order it should fall, and the next is the nearest ahead', () => {
@@ -96,8 +96,8 @@ describe('trophies placed along the game', () => {
     expect(names(placedOrder(open, list, guide))).toEqual([
       'Príncipe',
       'Café',
-      'Golpe Final',
       'Paus e Pedras',
+      'Golpe Final',
       'Sacrifício',
     ])
     expect(nextPlaced(open, list, guide)?.name).toBe('Príncipe')
@@ -118,15 +118,35 @@ describe('trophies placed along the game', () => {
     expect(nextPlaced(open, behind, guide)?.name).toBe('Príncipe')
   })
 
-  test('a trophy the guide does not place keeps its spot after the one before it', () => {
-    const { list } = game()
-    const extra = [...list.slice(0, 4), trophy('Sem lugar'), ...list.slice(4)]
+  test('a trophy the guide does not place goes by its rarity, else after the story', () => {
+    const rated = game().list.map((t) =>
+      t.name === 'Príncipe'
+        ? { ...t, earnedRate: 60 }
+        : t.name === 'Café'
+          ? { ...t, earnedRate: 40 }
+          : t.name === 'Sacrifício'
+            ? { ...t, earnedRate: 10 }
+            : t,
+    )
+    // As many players as Café's: around mission 16, after the story trophy there.
+    const extra = [trophy('Sem lugar', { earnedRate: 38 }), ...rated]
     const open = extra.filter((t) => !t.earned)
     expect(names(placedOrder(open, extra, guide)).slice(0, 3)).toEqual([
       'Príncipe',
-      'Sem lugar',
       'Café',
+      'Sem lugar',
     ])
+    // PSN does not know the share (0): after the story, past the last story trophy.
+    const unknown = [trophy('Sem lugar', { earnedRate: 0 }), ...rated]
+    expect(
+      names(
+        placedOrder(
+          unknown.filter((t) => !t.earned),
+          unknown,
+          guide,
+        ),
+      ).at(-1),
+    ).toBe('Sem lugar')
   })
 
   test('without places, the order is the roadmap and there is no next', () => {
@@ -135,9 +155,9 @@ describe('trophies placed along the game', () => {
     expect(placedOrder(open, list, { ...guide, storyline: null })).toBe(open)
     expect(nextPlaced(open, list, null)).toBeUndefined()
     expect(expectedStep(open[0], list, undefined, 12)).toBeUndefined()
-    // A name two trophies share is never placed.
+    // A name two trophies share is never placed: with no rarity, after the story.
     const twins = [...list, trophy('Café')]
-    expect(expectedStep(twins[4], twins, guide, 12)).toBeUndefined()
+    expect(expectedStep(twins[4], twins, guide, 12)).toBe(36)
   })
 })
 
@@ -177,6 +197,21 @@ describe('where players usually close a long trophy', () => {
     ])
   })
 
+  test('between two story trophies the step goes with the time; before the first, from the start', () => {
+    const { list } = game()
+    const all = ids(list)
+    const unlocks = ['a', 'b', 'c'].flatMap((u) => [
+      at(u, 6, 1), // Paus e Pedras, their first unlock: the start of the game
+      at(u, 1, 10), // Voo, mission 10
+      at(u, 3, 13), // Golpe Final, halfway to Café in time
+      at(u, 5, 16), // Café, mission 16
+    ])
+    expect(closingSteps(all, unlocks, startOnly)).toEqual([
+      { trophy: 'Paus e Pedras', step: 0, players: 3 },
+      { trophy: 'Golpe Final', step: 13, players: 3 },
+    ])
+  })
+
   test('with three players or more it orders the route and says so; with fewer, only the start', () => {
     const { list, open } = game()
     const paus = open.find((t) => t.name === 'Paus e Pedras') as PlacedTrophy
@@ -190,7 +225,8 @@ describe('where players usually close a long trophy', () => {
       step: 20,
       players: 3,
     })
-    expect(expectedStep(paus, list, steps(2), 12)).toBeUndefined()
+    // Fewer than three: its start, never behind the player.
+    expect(expectedStep(paus, list, steps(2), 12)).toBe(12)
     expect(trophyWhen(paus, list, steps(2))?.usually).toBeUndefined()
   })
 })
@@ -206,7 +242,9 @@ test('a range the guide closes past the last step finishes after the story', () 
     from: 8,
     to: 36,
     after: true,
-    late: true,
+    // Without players, it is expected halfway, not only after the story.
+    late: false,
+    expected: 22,
   })
   const paus = trophy('Paus e Pedras')
   expect(trophyWhen(paus, [paus], guide)?.after).toBe(false)

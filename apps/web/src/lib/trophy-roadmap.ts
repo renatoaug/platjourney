@@ -144,6 +144,9 @@ export function trophyMentions(trophy: Trophy, trophies: Trophy[], guide?: Guide
     (step) => mentions(step, trophy) && !secret.some((t) => mentions(step, t)),
   )
   const own = naming.filter((step) => !others.some((t) => mentions(step, t)))
+  // A story trophy comes by playing: a step it shares with others (the story's whole list, "from
+  // the first trophy to the last") only makes it look like work.
+  if (trophyKind(trophy, guide) === 'natural') return own.slice(0, MAX_MENTIONS)
   // With no step of its own, one shared with a few other trophies still says how, instead of nothing.
   const few = naming.filter((step) => others.filter((t) => mentions(step, t)).length < MAX_SHARED)
   return (own.length || hasOwnAdvice(trophy, guide) ? own : few).slice(0, MAX_MENTIONS)

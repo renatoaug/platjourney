@@ -1017,7 +1017,7 @@ test('with places in the guide, a trophy says when it falls instead of leaving a
   const pick = (name: RegExp) => fireEvent.click(within(route).getByRole('button', { name }))
   pick(/^Terceiro Ato/)
   // Where the player is now stays unsaid: their trophies only say where they have been at least.
-  expect(when()).toBe('Acontece no capítulo 3, naturalmente pela história.')
+  expect(when()).toBe('Você ganha seguindo a história, no capítulo 3.')
   // A story trophy with no tip has nothing to ask the Nexo about.
   expect(container.querySelector('#roadmap-advice .roadmap-ask')).toBeNull()
   pick(/^Mira Certeira/)
