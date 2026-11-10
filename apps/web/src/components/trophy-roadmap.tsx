@@ -548,7 +548,7 @@ function RoadmapTipsList({ tips }: { tips: RouteTip[] }) {
   return (
     <ul className="roadmap-tips">
       {tips.map((tip) => (
-        <li key={tipKey(tip)} data-tip={tipKey(tip)}>
+        <li key={tipKey(tip)} data-piece={tipKey(tip)}>
           {tip.name && <strong>{tip.name}</strong>}
           {tip.where && (
             <em>
@@ -615,8 +615,8 @@ function openChapter(i: number, piece: string) {
   // Only the chapter asked for stays open, so the page lands on it.
   for (const other of list?.querySelectorAll<HTMLDetailsElement>('.roadmap-chapter') ?? [])
     other.open = other === el
-  const item = [...el.querySelectorAll<HTMLElement>('[data-tip]')].find(
-    (x) => x.dataset.tip === piece,
+  const item = [...el.querySelectorAll<HTMLElement>('[data-piece]')].find(
+    (x) => x.dataset.piece === piece,
   )
   const target = item ?? el
   target.scrollIntoView({ behavior: 'smooth', block: item ? 'center' : 'start' })
