@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { trophyNeeds } from '../../../../shared/journey/graph'
 import { achievementHistory, earnedTimestamp } from '../../../../shared/journey/history'
+import { trophyMatches } from '../../../../shared/journey/ongoing'
 import { type StoryUnit, trophyWhen, usualStep } from '../../../../shared/journey/places'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { type RoadStopGeometry, roadPoint, roadSegment, roadStop } from '../lib/roadmap-motion'
@@ -49,6 +50,9 @@ const messages = defineMessages({
       'Conquistas sem data aparecem agrupadas após as datadas, sem ordem cronológica conhecida. Datas iguais não informam a ordem entre si.',
     phasePlan: 'Plano da fase',
     tipsCount: { one: 'Ver {count} ponto do roteiro', other: 'Ver os {count} pontos do roteiro' },
+    chapters: 'Por capítulo',
+    chapterStart: 'Começo do jogo',
+    chapterAfter: 'Depois de {trophy}',
     where: 'Onde estão',
     stretch: 'Nesse trecho',
     titledCount: '{title} ({count})',
@@ -176,6 +180,9 @@ const messages = defineMessages({
       'Undated achievements are grouped after dated ones, without a known chronological order. Equal timestamps do not establish order between them.',
     phasePlan: 'Phase plan',
     tipsCount: { one: 'See {count} route point', other: 'See all {count} route points' },
+    chapters: 'By chapter',
+    chapterStart: 'Start of the game',
+    chapterAfter: 'After {trophy}',
     where: 'Where they are',
     stretch: 'In this stretch',
     titledCount: '{title} ({count})',
@@ -348,7 +355,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
       )}
       {trick && <TrickSteps text={trick} />}
       <RoadmapTips tips={tips} />
-      <RoadmapTips tips={locations} title={t('where')} />
+      <StretchIndex tips={locations} game={game} title={t('where')} />
       {steps.map((step) => (
         <p key={step}>
           <GuideText text={step} />
@@ -536,10 +543,9 @@ function TipRating({ trophy }: { trophy: Trophy }) {
 }
 
 /** The guide's words for this trophy along the route. A long checklist stays folded. */
-function RoadmapTips({ tips, title }: { tips: RouteTip[]; title?: string }) {
-  const t = useMessages(messages)
-  if (!tips.length) return null
-  const list = (
+/** The guide's tips as a list: each one's name, where, steps and what to do if passed. */
+function RoadmapTipsList({ tips }: { tips: RouteTip[] }) {
+  return (
     <ul className="roadmap-tips">
       {tips.map((tip) => (
         <li key={`${tip.name ?? ''}${tip.text}`}>
@@ -569,6 +575,12 @@ function RoadmapTips({ tips, title }: { tips: RouteTip[]; title?: string }) {
       ))}
     </ul>
   )
+}
+
+function RoadmapTips({ tips, title }: { tips: RouteTip[]; title?: string }) {
+  const t = useMessages(messages)
+  if (!tips.length) return null
+  const list = <RoadmapTipsList tips={tips} />
   if (tips.length < 3)
     return title ? (
       <section className="roadmap-tips-group">
@@ -586,6 +598,111 @@ function RoadmapTips({ tips, title }: { tips: RouteTip[]; title?: string }) {
           : t('tipsCount', { count: tips.length })}
       </summary>
       {list}
+    </details>
+  )
+}
+
+const chapterId = (i: number) => `roadmap-chapter-${i}`
+
+/** Opens a chapter of "By chapter" and brings it into view. */
+function openChapter(i: number) {
+  const el = document.getElementById(chapterId(i))
+  if (!(el instanceof HTMLDetailsElement)) return
+  const list = el.closest('.roadmap-chapters')
+  if (list instanceof HTMLDetailsElement) list.open = true
+  // Only the chapter asked for stays open, so the page lands on it.
+  for (const other of list?.querySelectorAll<HTMLDetailsElement>('.roadmap-chapter') ?? [])
+    other.open = other === el
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+/** A stretch's name: the story trophy it starts from and where that falls, or the start. */
+function chapterLabel(t: Translate, game: RoadmapGame, after: string | null) {
+  if (!after) return { title: t('chapterStart'), place: '' }
+  const line = game.guide?.storyline
+  const from = game.guide?.trophyPlaces?.find((p) => trophyMatches({ name: after }, p.trophy))?.from
+  return {
+    title: t('chapterAfter', { trophy: after }),
+    place: line && from !== undefined ? placeAt(t, line, from) : '',
+  }
+}
+
+/**
+ * Where each piece of a collection is, as an index: its name and the stretch it is in. The steps
+ * stay in "By chapter", beside the stretch's other tips, where they read in order.
+ */
+function StretchIndex({
+  tips,
+  game,
+  title,
+}: {
+  tips: RouteTip[]
+  game: RoadmapGame
+  title: string
+}) {
+  const t = useMessages(messages)
+  const milestones = game.guide?.milestones ?? []
+  if (!tips.length) return null
+  return (
+    <section className="roadmap-tips-group">
+      <b className="roadmap-tips-title">{title}</b>
+      <ul className="roadmap-index">
+        {tips.map((tip) => {
+          const i = milestones.findIndex((m) => m.tips.includes(tip))
+          const label = chapterLabel(t, game, milestones[i]?.after ?? null)
+          return (
+            <li key={`${tip.name ?? ''}${tip.text}`}>
+              <button type="button" onClick={() => openChapter(i)} disabled={i < 0}>
+                <strong>{tip.name ?? tip.text}</strong>
+                {/* The piece's own place reads better than where its stretch starts. */}
+                <span>
+                  {tip.where ? <GuideText text={tip.where} /> : label.place || label.title}
+                </span>
+                <Icon name="chevron-right" />
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+/** Every stretch of the game in order, with what to collect and watch for in it: the same tips the
+ * player is sent as they reach each one. The stretch the player is in opens first. */
+function RoadmapChapters({ game }: { game: RoadmapGame }) {
+  const t = useMessages(messages)
+  const milestones = game.guide?.milestones ?? []
+  if (!milestones.length) return null
+  const earned = game.trophies.filter((x) => x.earned)
+  const reached = milestones.reduce(
+    (at, m, i) => (!m.after || earned.some((x) => trophyMatches(x, m.after ?? '')) ? i : at),
+    0,
+  )
+  return (
+    <details className="roadmap-chapters">
+      <summary>
+        <Icon name="list" />
+        {t('chapters')}
+        <Icon name="chevron-down" />
+      </summary>
+      {milestones.map((m, i) => {
+        const label = chapterLabel(t, game, m.after)
+        return (
+          <details
+            key={m.after ?? 'start'}
+            id={chapterId(i)}
+            className="roadmap-chapter"
+            open={i === reached}
+          >
+            <summary>
+              <b>{label.title}</b>
+              {label.place && <span>{label.place}</span>}
+            </summary>
+            <RoadmapTipsList tips={m.tips} />
+          </details>
+        )
+      })}
     </details>
   )
 }
@@ -1453,6 +1570,7 @@ export function TrophyRoadmap({
             <RoadmapFocus game={game} selected={selected} target={suggested} />
             <RoadmapPhase game={game} trophy={selected} />
             <RoadmapOngoing game={game} choose={inspect} />
+            <RoadmapChapters game={game} />
             {!!past.length && (
               <details className="roadmap-past">
                 <summary>

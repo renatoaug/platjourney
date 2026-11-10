@@ -612,7 +612,7 @@ test('a tip that repeats the warning or the trick is not shown twice', () => {
   const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
   fireEvent.click(screen.getByRole('button', { name: /Piedade/ }))
   expect(container.querySelector('.roadmap-caution')?.textContent).toContain('guarda ferido')
-  expect(container.querySelector('.roadmap-tips')).toBeNull()
+  expect(container.querySelector('.roadmap-advice .roadmap-tips')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: /Perito/ }))
   expect(container.querySelector('.roadmap-advice')?.textContent).toContain('Use o bloqueio')
 })
@@ -683,7 +683,7 @@ test('a trophy the guide does not explain gets its description and Nexo, with no
   const { container } = renderApp(<TrophyRoadmap game={routeGame()} />)
   fireEvent.click(screen.getByRole('button', { name: /Só a Descrição/ }))
   expect(container.querySelector('.roadmap-objective')?.textContent).toContain('não explica')
-  expect(container.querySelector('.roadmap-tips')).toBeNull()
+  expect(container.querySelector('.roadmap-advice .roadmap-tips')).toBeNull()
   expect(container.querySelector('.roadmap-advice-label')).toBeNull()
   expect(container.querySelector('.roadmap-advice .roadmap-ask')?.getAttribute('href')).toContain(
     'trophy=',
@@ -921,7 +921,7 @@ test('asking the Nexo sits on the line of "How to do it"', () => {
   expect(container.querySelector('.nexo-asks')).toBeNull()
 })
 
-test('a collection keeps where each piece is under its tip, and a story trophy shows its stretch', () => {
+test('a collection indexes its pieces by stretch, the stretches list by chapter, and a story trophy shows its own', () => {
   const game = routeGame()
   const [story, collection, other] = game.trophies
   const piece = (n: number) => ({
@@ -956,8 +956,17 @@ test('a collection keeps where each piece is under its tip, and a story trophy s
   pick(collection.name)
   const advice = () => container.querySelector('.roadmap-advice')?.textContent ?? ''
   expect(advice()).toContain('Pegue as três flores.')
-  expect(advice()).toContain('Onde estão (3)')
-  expect(advice()).toContain('Siga pela direita até a flor 2.')
+  // Under the trophy, an index: each piece and its stretch; the steps stay in "By chapter".
+  const index = [...container.querySelectorAll('.roadmap-index button')].map((b) => b.textContent)
+  expect(index).toEqual([
+    expect.stringContaining('Flor 1/3'),
+    expect.stringContaining('Flor 2/3'),
+    expect.stringContaining('Flor 3/3'),
+  ])
+  expect(advice()).not.toContain('Siga pela direita até a flor 2.')
+  const chapters = container.querySelector('.roadmap-chapters')
+  expect(chapters?.querySelector('summary')?.textContent).toContain('Por capítulo')
+  expect(chapters?.textContent).toContain('Siga pela direita até a flor 2.')
   pick(story.name)
   expect(advice()).toContain('Nesse trecho')
   expect(advice()).toContain('Guarde as pedras para o chefe.')

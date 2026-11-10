@@ -1172,6 +1172,100 @@
     border-top: 1px solid var(--color-border);
   }
 
+  /* Every stretch of the game in order, like the history: a list to open while playing. */
+  .roadmap-chapters {
+    margin: 0 32px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .roadmap-chapters > summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    font-size: var(--text-body);
+    color: var(--color-fg-muted);
+  }
+
+  .roadmap-chapters > summary > .icon:last-child {
+    margin-left: auto;
+    transition: transform 0.15s;
+  }
+
+  .roadmap-chapters[open] > summary > .icon:last-child {
+    transform: rotate(180deg);
+  }
+
+  .roadmap-chapter {
+    border-top: 1px solid var(--color-border);
+    padding-block: 4px 12px;
+    scroll-margin-top: 96px;
+  }
+
+  .roadmap-chapter > summary {
+    cursor: pointer;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    min-height: 44px;
+    padding-block: 10px;
+    font-size: var(--text-body);
+  }
+
+  .roadmap-chapter > summary > span {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .roadmap-chapter > .roadmap-tips {
+    padding-bottom: 8px;
+  }
+
+  /* A collection's pieces as an index: each one opens its stretch in "By chapter". */
+  .roadmap-index {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .roadmap-index button {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-fg);
+    text-align: left;
+    font-size: var(--text-body);
+  }
+
+  .roadmap-index button:hover {
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+  }
+
+  .roadmap-index button:focus-visible {
+    outline: 2px solid var(--color-accent);
+  }
+
+  .roadmap-index button > span {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .roadmap-index button > .icon {
+    margin-left: auto;
+  }
+
   .roadmap-past > summary {
     cursor: pointer;
     list-style: none;
@@ -1734,7 +1828,8 @@
       margin-inline: 20px;
     }
 
-    .roadmap-past {
+    .roadmap-past,
+    .roadmap-chapters {
       margin: 0 20px;
     }
   }
