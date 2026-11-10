@@ -194,3 +194,20 @@ describe('where players usually close a long trophy', () => {
     expect(trophyWhen(paus, list, steps(2))?.usually).toBeUndefined()
   })
 })
+
+test('a range the guide closes past the last step finishes after the story', () => {
+  const late = {
+    ...guide,
+    trophyPlaces: [{ trophy: 'Corda', from: 8, to: 36 }],
+    trophyKinds: [{ trophy: 'Corda', kind: 'grind' as const }],
+  }
+  const corda = trophy('Corda')
+  expect(trophyWhen(corda, [corda], late)).toMatchObject({
+    from: 8,
+    to: 36,
+    after: true,
+    late: true,
+  })
+  const paus = trophy('Paus e Pedras')
+  expect(trophyWhen(paus, [paus], guide)?.after).toBe(false)
+})

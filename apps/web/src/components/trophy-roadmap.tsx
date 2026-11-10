@@ -120,6 +120,7 @@ const messages = defineMessages({
     whenAt: 'Acontece {place}.',
     whenAtNatural: 'Acontece {place}, naturalmente pela história.',
     whenRange: 'Dá para fazer {span}.',
+    whenAfter: 'Dá para começar {place} e terminar depois da história.',
     whenStart: 'Dá para começar {place}.',
     whenUsually: 'Quem já fez costuma fechar {place} ({count} jogadores).',
     whenBehind: 'Acontecia {place}, que ficou para trás. Dá para voltar pela seleção de {units}.',
@@ -240,6 +241,7 @@ const messages = defineMessages({
     whenAt: 'Happens {place}.',
     whenAtNatural: 'Happens {place}, naturally with the story.',
     whenRange: 'You can work on it {span}.',
+    whenAfter: 'You can start it {place} and finish it after the story.',
     whenStart: 'You can start it {place}.',
     whenUsually: 'Players who did it usually close it {place} ({count} players).',
     whenBehind:
@@ -562,13 +564,16 @@ function replayable(guide: RoadmapGame['guide']) {
 type When = NonNullable<ReturnType<typeof trophyWhen>>
 type Translate = ReturnType<typeof useMessages<typeof messages>>
 
-// A count or a collection: its range, then where it closes at the player's pace.
+// A count or a collection: its range, then where it closes at the player's pace. A pace needs
+// progress on the trophy; without it the guide's range is all there is to say.
 function rangeLine(t: Translate, when: When, counted: boolean) {
   const end = when.to ?? when.from
-  const span = t(`span.${when.unit}`, { from: when.from, to: end })
-  const first = [t('whenRange', { span })]
-  if (when.late) return [...first, t('whenLate')]
-  if (!counted || when.expected === end) return first
+  const first = when.after
+    ? [t('whenAfter', { place: t(`place.${when.unit}`, { n: when.from }) })]
+    : [t('whenRange', { span: t(`span.${when.unit}`, { from: when.from, to: end }) })]
+  if (!counted) return first
+  if (when.late) return when.after ? first : [...first, t('whenLate')]
+  if (when.expected === end) return first
   return [...first, t('whenPace', { place: t(`place.${when.unit}`, { n: when.expected }) })]
 }
 

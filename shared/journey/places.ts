@@ -196,6 +196,8 @@ export function trophyWhen<T extends PlacedTrophy>(
     at,
     expected,
     late: expected > guide.storyline.total,
+    // The guide writes "after the story" as the step past the last one (the 25th of 24 missions).
+    after: keeps && (place.to ?? place.from) > guide.storyline.total,
     behind: !keeps && at !== undefined && place.from < at,
   }
 }
