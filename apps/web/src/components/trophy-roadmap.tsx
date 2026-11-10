@@ -339,7 +339,8 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           )}
         </div>
       )}
-      {advice.online && (
+      {/* The tip already says how, online part included; the note stands alone only without one. */}
+      {advice.online && !trick && (
         <p>
           <b>{t('online')}: </b>
           <GuideText text={advice.online.what} />
