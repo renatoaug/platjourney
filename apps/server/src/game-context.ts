@@ -53,8 +53,7 @@ async function loadContext(user: User, title: TitleProgress): Promise<GameContex
   if (guide && !isDemo(user))
     ensureDeepGuide(game, title.total).catch((e) => console.error('deep guide failed:', e.message))
   const played = await playtimes(user).catch(() => new Map())
-  const placed =
-    (await withPlayerSteps(guide, trophies, title.npCommunicationId, game)) ?? undefined
+  const placed = (await withPlayerSteps(guide, trophies, title.npCommunicationId)) ?? undefined
   return { game, title, trophies, guide: placed, groups, hoursPlayed: hours(played.get(game.id)) }
 }
 

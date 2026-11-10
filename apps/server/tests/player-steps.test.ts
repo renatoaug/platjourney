@@ -1,6 +1,5 @@
 import { afterEach, expect, spyOn, test } from 'bun:test'
 import type { PlacedGuide } from '../../../shared/journey/places.ts'
-import * as ai from '../src/ai.ts'
 import * as db from '../src/db.ts'
 import { keepUnlocks, withPlayerSteps } from '../src/player-steps.ts'
 import type { TrophyStatus } from '../src/psn.ts'
@@ -21,7 +20,6 @@ const guide: PlacedGuide = {
 
 afterEach(() => {
   ;(db.q as unknown as { mockRestore?: () => void }).mockRestore?.()
-  ;(ai.ai as unknown as { mockRestore?: () => void }).mockRestore?.()
 })
 
 test("a player's earned trophies are kept once, with their PSN times", async () => {
@@ -60,19 +58,4 @@ test('without places, trophies or a list, the guide is left as it is', async () 
   expect(await withPlayerSteps(guide, [], 'NPWR1')).toBe(guide)
   expect(await withPlayerSteps(guide, trophies, null)).toBe(guide)
   expect(q).not.toHaveBeenCalled()
-})
-
-test("a guide without the model's estimate asks for it once, in the background", async () => {
-  spyOn(db, 'q').mockResolvedValue([])
-  const call = spyOn(ai, 'ai').mockResolvedValue([])
-  const game = { id: 'game:steps', name: 'Jogo' } as Parameters<typeof withPlayerSteps>[3]
-  await withPlayerSteps(guide, trophies, 'NPWR-predict', game)
-  await withPlayerSteps(guide, trophies, 'NPWR-predict', game)
-  expect(call).toHaveBeenCalledTimes(1)
-  expect(call.mock.calls[0][0]).toBe('/guides/predict-steps')
-  // A guide that has it, or places nothing, asks for nothing.
-  const other = { ...game, id: 'game:steps-2' } as typeof game
-  await withPlayerSteps({ ...guide, predictedSteps: [] }, trophies, 'NPWR-predict', other)
-  await withPlayerSteps({}, trophies, 'NPWR-predict', other)
-  expect(call).toHaveBeenCalledTimes(1)
 })
