@@ -1224,6 +1224,40 @@
     padding-bottom: 8px;
   }
 
+  /* The piece chosen from a collection's index glows for a moment where it lands. */
+  .roadmap-chapter .roadmap-flash {
+    border-radius: var(--radius-control);
+    animation: roadmap-flash 1.8s ease-out;
+  }
+
+  @keyframes roadmap-flash {
+    0%,
+    30% {
+      background: color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+      box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+    }
+
+    100% {
+      background: transparent;
+      box-shadow: 0 0 0 6px transparent;
+    }
+  }
+
+  /* Without motion: a steady outline for the same moment, no fade. */
+  @keyframes roadmap-flash-still {
+    0%,
+    100% {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 4px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .roadmap-chapter .roadmap-flash {
+      animation: roadmap-flash-still 1.8s step-end;
+    }
+  }
+
   /* A collection's pieces as an index: each one opens its stretch in "By chapter". */
   .roadmap-index {
     display: grid;

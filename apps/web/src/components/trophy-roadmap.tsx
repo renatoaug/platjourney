@@ -548,7 +548,7 @@ function RoadmapTipsList({ tips }: { tips: RouteTip[] }) {
   return (
     <ul className="roadmap-tips">
       {tips.map((tip) => (
-        <li key={`${tip.name ?? ''}${tip.text}`}>
+        <li key={tipKey(tip)} data-tip={tipKey(tip)}>
           {tip.name && <strong>{tip.name}</strong>}
           {tip.where && (
             <em>
@@ -604,8 +604,10 @@ function RoadmapTips({ tips, title }: { tips: RouteTip[]; title?: string }) {
 
 const chapterId = (i: number) => `roadmap-chapter-${i}`
 
-/** Opens a chapter of "By chapter" and brings it into view. */
-function openChapter(i: number) {
+const tipKey = (tip: RouteTip) => `${tip.name ?? ''}${tip.text}`
+
+/** Opens a chapter of "By chapter", brings the piece asked for into view and makes it glow. */
+function openChapter(i: number, piece: string) {
   const el = document.getElementById(chapterId(i))
   if (!(el instanceof HTMLDetailsElement)) return
   const list = el.closest('.roadmap-chapters')
@@ -613,7 +615,19 @@ function openChapter(i: number) {
   // Only the chapter asked for stays open, so the page lands on it.
   for (const other of list?.querySelectorAll<HTMLDetailsElement>('.roadmap-chapter') ?? [])
     other.open = other === el
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const item = [...el.querySelectorAll<HTMLElement>('[data-tip]')].find(
+    (x) => x.dataset.tip === piece,
+  )
+  const target = item ?? el
+  target.scrollIntoView({ behavior: 'smooth', block: item ? 'center' : 'start' })
+  if (!item) return
+  // Restarted on each choice, so choosing the same piece again glows again.
+  item.classList.remove('roadmap-flash')
+  void item.offsetWidth
+  item.classList.add('roadmap-flash')
+  item.addEventListener('animationend', () => item.classList.remove('roadmap-flash'), {
+    once: true,
+  })
 }
 
 /** A stretch's name: the story trophy it starts from and where that falls, or the start. */
@@ -652,7 +666,7 @@ function StretchIndex({
           const label = chapterLabel(t, game, milestones[i]?.after ?? null)
           return (
             <li key={`${tip.name ?? ''}${tip.text}`}>
-              <button type="button" onClick={() => openChapter(i)} disabled={i < 0}>
+              <button type="button" onClick={() => openChapter(i, tipKey(tip))} disabled={i < 0}>
                 <strong>{tip.name ?? tip.text}</strong>
                 {/* The piece's own place reads better than where its stretch starts. */}
                 <span>
