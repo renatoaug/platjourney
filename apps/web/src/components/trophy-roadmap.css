@@ -1559,14 +1559,18 @@
     color: var(--color-accent);
   }
 
-  /* The trophy's questions are chips: they keep the chip's look and the journey's name. */
-  .roadmap-advice .nexo-ask.roadmap-ask {
-    font-size: var(--text-sm);
-    color: var(--color-fg-muted);
+  /* "How to do it" on the left, asking the Nexo on the right, on one line. */
+  .roadmap-advice-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
   }
 
-  .roadmap-advice .nexo-ask.roadmap-ask:hover {
-    color: var(--color-accent);
+  .roadmap-advice-head .roadmap-ask {
+    margin-left: auto;
+    font-size: var(--text-sm);
   }
 
   .roadmap-content .quiet {

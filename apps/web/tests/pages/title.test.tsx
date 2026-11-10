@@ -103,7 +103,11 @@ test('a game the player does not own: its list by tier, its facts and saving it'
     'De raspão',
   )
   // Nexo can talk about it before the player buys it.
-  expect(screen.getByRole('link', { name: 'Perguntar ao Nexo' }).getAttribute('href')).toBe(
+  // The game's own link; the journey's asks about the selected trophy.
+  const gameAsk = screen
+    .getAllByRole('link', { name: 'Perguntar ao Nexo' })
+    .find((a) => !a.getAttribute('href')?.includes('trophy='))
+  expect(gameAsk?.getAttribute('href')).toBe(
     `/nexo?game=${encodeURIComponent(recommendedData.game.id)}&name=${encodeURIComponent(recommendedData.name).replace(/%20/g, '+')}`,
   )
   fireEvent.click(screen.getByRole('button', { name: /Salvar nos interesses/ }))

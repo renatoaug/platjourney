@@ -133,7 +133,7 @@ test('a tap on the image opens it full screen; a click on the backdrop closes it
 
 describe('the store at the foot of About', () => {
   const url = 'https://store.playstation.com/pt-br/concept/1'
-  test('a sale shows its percent, price, old price and end, with the store link', () => {
+  test('a sale is the store button itself: percent, price, old price and end', () => {
     render(
       <GameAbout
         game={game}
@@ -154,8 +154,11 @@ describe('the store at the foot of About', () => {
     )
     expect(screen.getByText('-75%')).toBeTruthy()
     expect(screen.getByText(/49,90/)).toBeTruthy()
-    const link = screen.getByRole('link', { name: /Ver na PS Store/ }) as HTMLAnchorElement
+    const link = screen.getByRole('link', { name: /-75%.*49,90/ }) as HTMLAnchorElement
     expect(link.href).toBe(url)
+    expect(link.querySelector('.game-about-deal')).toBeTruthy()
+    // The deal says it all: no separate "See on PS Store".
+    expect(screen.queryByRole('link', { name: /Ver na PS Store/ })).toBeNull()
   })
 
   test("the player's own PS Plus says so; without a price, only the link", () => {
@@ -179,7 +182,8 @@ describe('the store at the foot of About', () => {
         }}
       />,
     )
-    expect(screen.getByText('No seu PS Plus Extra: jogue sem pagar')).toBeTruthy()
+    const mine = screen.getByRole('link', { name: /No seu PS Plus Extra: jogue sem pagar/ })
+    expect((mine as HTMLAnchorElement).href).toBe(url)
     unmount()
     const { container } = render(
       <GameAbout game={game} name="Days Gone" store={{ url, deal: null }} />,
