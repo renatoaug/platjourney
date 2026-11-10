@@ -318,6 +318,7 @@ export type Target =
   | 'TitleView'
   | 'ToastHost'
   | 'TooltipHost'
+  | 'TrickBlock'
   | 'TrickSteps'
   | 'TrophyAdvice'
   | 'TrophyArt'

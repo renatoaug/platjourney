@@ -373,16 +373,17 @@ function AdviceAsk({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
 }
 
 /**
- * A trick written as paragraphs (one line each, separated by an empty line) opens with a one-line
- * intro of what the trophy is about, set apart, and the rest reads as paragraphs. One written one
- * step per line reads as a numbered list; a single line stays a paragraph.
+ * A trick that opens with a one-line intro (what the trophy asks for) and an empty line shows the
+ * intro apart; after it, a block of several lines reads as numbered steps and a one-line block as a
+ * paragraph. One written one step per line, with no intro, reads as a numbered list; a single line
+ * stays a paragraph.
  */
 function TrickSteps({ text }: { text: string }) {
   const blocks = text
     .split(/\n\s*\n/)
     .map((block) => block.trim())
     .filter(Boolean)
-  if (blocks.length > 1 && blocks.every((block) => !block.includes('\n'))) {
+  if (blocks.length > 1 && !blocks[0].includes('\n')) {
     const [intro, ...rest] = blocks
     return (
       <>
@@ -390,13 +391,16 @@ function TrickSteps({ text }: { text: string }) {
           <GuideText text={intro} />
         </p>
         {rest.map((block) => (
-          <p key={block}>
-            <GuideText text={block} />
-          </p>
+          <TrickBlock key={block} text={block} />
         ))}
       </>
     )
   }
+  return <TrickBlock text={text} />
+}
+
+/** Lines in sequence read as numbered steps; a single line is a paragraph. */
+function TrickBlock({ text }: { text: string }) {
   const lines = text
     .split('\n')
     .map((line) => line.trim())
