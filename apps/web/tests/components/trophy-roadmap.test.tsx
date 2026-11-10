@@ -947,6 +947,28 @@ test('the online note shows only when the trophy has no tip of its own', () => {
   expect(withTip).toContain('Publique um pedido.')
 })
 
+test('a trick with an intro and steps in sequence shows the intro apart and numbers the steps', () => {
+  const game = routeGame()
+  const first = game.trophies[0]
+  const trick =
+    'Esse troféu é das maestrias: compre as três habilidades dos seis ramos.\n\nPegue 165 dos 200 pontos.\nConfira o total em Sophia > Artefatos.\nCompre tudo em Sophia > Habilidades.'
+  const guide = { ...(game.guide as GuideDetail), tricks: [{ trophy: first.name, trick }] }
+  const pending = { ...first, earned: false, earnedAt: undefined }
+  const { container } = renderApp(
+    <TrophyRoadmap game={{ ...game, guide, trophies: [pending, ...game.trophies.slice(1)] }} />,
+  )
+  fireEvent.click(screen.getAllByRole('button', { name: new RegExp(first.name) })[0])
+  expect(container.querySelector('.roadmap-trick-intro')?.textContent).toBe(
+    'Esse troféu é das maestrias: compre as três habilidades dos seis ramos.',
+  )
+  const steps = [...container.querySelectorAll('.roadmap-steps > li')].map((li) => li.textContent)
+  expect(steps).toEqual([
+    'Pegue 165 dos 200 pontos.',
+    'Confira o total em Sophia > Artefatos.',
+    'Compre tudo em Sophia > Habilidades.',
+  ])
+})
+
 test('a trick written as paragraphs opens with its intro set apart, and the rest reads as paragraphs', () => {
   const game = routeGame()
   const first = game.trophies[0]
