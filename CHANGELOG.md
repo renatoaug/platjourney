@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.70.0](https://github.com/renatoaug/platjourney/compare/v0.69.0...v0.70.0) (2026-11-10)
+
+### Features
+
+* **web:** list the game by chapter and index a collection's pieces ([#171](https://github.com/renatoaug/platjourney/issues/171)) ([f76ad21](https://github.com/renatoaug/platjourney/commit/f76ad21af7fb3d0585299f98dc72dbb5a7073067))
+
 ## [0.69.0](https://github.com/renatoaug/platjourney/compare/v0.68.0...v0.69.0) (2026-11-10)
 
 ### Features
