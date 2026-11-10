@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.67.1](https://github.com/renatoaug/platjourney/compare/v0.67.0...v0.67.1) (2026-11-10)
+
+### Bug Fixes
+
+* **web:** show the online note only when a trophy has no tip ([#168](https://github.com/renatoaug/platjourney/issues/168)) ([b9938ff](https://github.com/renatoaug/platjourney/commit/b9938ffd7edd6ebd8f9296fc38ce4b44b6e2837a))
+
 ## [0.67.0](https://github.com/renatoaug/platjourney/compare/v0.66.1...v0.67.0) (2026-11-10)
 
 ### Features
