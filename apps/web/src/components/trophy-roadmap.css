@@ -342,7 +342,7 @@
   .roadmap-focus {
     display: grid;
     /* The trophy and what it asks for on the left, as wide as they need; the tip takes the rest. */
-    grid-template-columns: minmax(280px, 400px) minmax(0, 1fr);
+    grid-template-columns: minmax(280px, min(600px, 45%)) minmax(0, 1fr);
     align-items: start;
     scroll-margin-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 120px);
   }
