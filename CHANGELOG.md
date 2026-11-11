@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.71.1](https://github.com/renatoaug/platjourney/compare/v0.71.0...v0.71.1) (2026-11-11)
+
+### Bug Fixes
+
+* **web:** one-line page name in the topbar on phones ([#173](https://github.com/renatoaug/platjourney/issues/173)) ([303a585](https://github.com/renatoaug/platjourney/commit/303a585e7b3fb9c730da986596d16cf4071ea215))
+
 ## [0.71.0](https://github.com/renatoaug/platjourney/compare/v0.70.0...v0.71.0) (2026-11-11)
 
 ### Features
