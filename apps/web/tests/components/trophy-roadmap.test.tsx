@@ -1038,7 +1038,7 @@ test('a trick written as paragraphs opens with its intro set apart, and the rest
     'Esse troféu é online e sai com a primeira doação.',
   )
   expect(container.querySelector('.roadmap-steps')).toBeNull()
-  const paragraphs = [...container.querySelectorAll('.roadmap-advice > p')].map(
+  const paragraphs = [...container.querySelectorAll('.roadmap-advice-main > p')].map(
     (p) => p.textContent,
   )
   expect(paragraphs).toContain('Doe uma arma no armário compartilhado de um terminal.')

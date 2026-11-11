@@ -341,7 +341,8 @@
 
   .roadmap-focus {
     display: grid;
-    grid-template-columns: minmax(280px, 0.6fr) minmax(0, 1.4fr);
+    /* The trophy and what it asks for on the left, as wide as they need; the tip takes the rest. */
+    grid-template-columns: minmax(280px, 400px) minmax(0, 1fr);
     align-items: start;
     scroll-margin-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 120px);
   }
@@ -1420,9 +1421,43 @@
     line-height: var(--leading-body);
   }
 
+  .roadmap-facts {
+    padding: 0 32px 24px;
+  }
+
   /* The tip reads as a column of text: long lines across a wide screen are hard to follow. */
-  .roadmap-step > * {
+  .roadmap-step {
+    container-type: inline-size;
+  }
+
+  .roadmap-advice-head,
+  .roadmap-advice-main > * {
     max-width: 72ch;
+  }
+
+  /* Beside the trophy, the tip starts at the top of its column with no rule above it. */
+  .roadmap-step > .roadmap-advice:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .roadmap-advice-body,
+  .roadmap-advice-main,
+  .roadmap-advice-aside {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    min-width: 0;
+  }
+
+  /* Room for both: the list of places goes beside the steps instead of under them. */
+  @container (min-width: 1000px) {
+    .roadmap-advice-body:has(> .roadmap-advice-aside) {
+      grid-template-columns: fit-content(72ch) minmax(280px, 1fr);
+      column-gap: 48px;
+      align-items: start;
+    }
   }
 
   .roadmap-objective,
@@ -1901,6 +1936,10 @@
 
     .roadmap-content {
       padding: 22px 20px 16px;
+    }
+
+    .roadmap-facts {
+      padding: 0 20px 4px;
     }
 
     .roadmap-ongoing,

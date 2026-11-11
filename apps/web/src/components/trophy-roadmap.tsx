@@ -382,45 +382,56 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           {!quiet && <AdviceAsk trophy={trophy} game={game} />}
         </div>
       )}
-      {trick && <TrickSteps text={trick} />}
-      <RoadmapTips tips={tips} />
-      <StretchIndex tips={locations} game={game} title={t('where')} />
-      {steps.map((step) => (
-        <p key={step}>
-          <GuideText text={step} />
-        </p>
-      ))}
-      {warning && (
-        <div className="roadmap-caution">
-          <b>
-            <Icon name="warning" />
-            {t('warning')}
-          </b>
-          <p>
-            <GuideText text={warning.when} />
-          </p>
-          {!trick && (
+      {/* On a wide screen the lists of places sit beside the steps instead of under them. */}
+      <div className="roadmap-advice-body">
+        <div className="roadmap-advice-main">
+          {trick && <TrickSteps text={trick} />}
+          <RoadmapTips tips={tips} />
+          {steps.map((step) => (
+            <p key={step}>
+              <GuideText text={step} />
+            </p>
+          ))}
+          {warning && (
+            <div className="roadmap-caution">
+              <b>
+                <Icon name="warning" />
+                {t('warning')}
+              </b>
+              <p>
+                <GuideText text={warning.when} />
+              </p>
+              {!trick && (
+                <p>
+                  <GuideText text={warning.how} />
+                </p>
+              )}
+            </div>
+          )}
+          {/* The tip already says how, online part included; the note stands alone only without one. */}
+          {advice.online && !trick && (
             <p>
-              <GuideText text={warning.how} />
+              <b>{t('online')}: </b>
+              <GuideText text={advice.online.what} />
             </p>
           )}
+          {advice.bug && (
+            <p>
+              <b>{t('bug')}: </b>
+              <GuideText
+                text={[advice.bug.issue, advice.bug.workaround].filter(Boolean).join('\n')}
+              />
+            </p>
+          )}
+          {hasAdvice && <TipRating trophy={trophy} />}
         </div>
-      )}
-      {/* The tip already says how, online part included; the note stands alone only without one. */}
-      {advice.online && !trick && (
-        <p>
-          <b>{t('online')}: </b>
-          <GuideText text={advice.online.what} />
-        </p>
-      )}
-      {advice.bug && (
-        <p>
-          <b>{t('bug')}: </b>
-          <GuideText text={[advice.bug.issue, advice.bug.workaround].filter(Boolean).join('\n')} />
-        </p>
-      )}
-      <RoadmapTips tips={stretch} title={t('stretch')} />
-      {hasAdvice && <TipRating trophy={trophy} />}
+        {(!!locations.length || !!stretch.length) && (
+          <div className="roadmap-advice-aside">
+            <StretchIndex tips={locations} game={game} title={t('where')} />
+            <RoadmapTips tips={stretch} title={t('stretch')} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -870,22 +881,12 @@ function TrophyNeedsLine({ trophy, game }: { trophy: Trophy; game: RoadmapGame }
   return <p className="roadmap-progress roadmap-needs">{parts.join(' ')}</p>
 }
 
-function TrophyStep({
-  trophy,
-  game,
-  suggested,
-}: {
-  trophy: Trophy
-  game: RoadmapGame
-  suggested: boolean
-}) {
+/** What the trophy asks for and where it stands: beside the trophy, under its name. */
+function TrophyFacts({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const t = useMessages(messages)
   const hidden = trophy.hidden && !trophy.earned
   return (
-    <article
-      className={`roadmap-content roadmap-step${suggested ? ' is-suggested' : ''}`}
-      id="roadmap-advice"
-    >
+    <div className="roadmap-facts">
       <p className="roadmap-objective">
         <Icon name="target" />
         <span>
@@ -899,9 +900,28 @@ function TrophyStep({
           )}
           <TrophyWhen trophy={trophy} game={game} />
           <TrophyNeedsLine trophy={trophy} game={game} />
-          <TrophyAdvice trophy={trophy} game={game} />
         </>
       )}
+    </div>
+  )
+}
+
+function TrophyStep({
+  trophy,
+  game,
+  suggested,
+}: {
+  trophy: Trophy
+  game: RoadmapGame
+  suggested: boolean
+}) {
+  const hidden = trophy.hidden && !trophy.earned
+  return (
+    <article
+      className={`roadmap-content roadmap-step${suggested ? ' is-suggested' : ''}`}
+      id="roadmap-advice"
+    >
+      {!hidden && <TrophyAdvice trophy={trophy} game={game} />}
     </article>
   )
 }
@@ -976,7 +996,10 @@ function RoadmapFocus({
 }) {
   return (
     <div id="roadmap-focus" className="roadmap-focus">
-      <RoadmapLandscape game={game} selected={selected} suggested={target === selected} />
+      <div className="roadmap-focus-side">
+        <RoadmapLandscape game={game} selected={selected} suggested={target === selected} />
+        <TrophyFacts key={anchor(selected)} trophy={selected} game={game} />
+      </div>
       <TrophyStep
         key={anchor(selected)}
         trophy={selected}
