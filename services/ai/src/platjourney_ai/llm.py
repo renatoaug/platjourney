@@ -34,7 +34,8 @@ local = AsyncOpenAI(
 @dataclass(frozen=True)
 class Reply:
     output_text: str
-    # How many web searches the call made, and the pages its answer cited.
+    # How many web searches the call made, and the pages behind the answer: those it cited, then
+    # those the search opened, so an answer that cites nothing still says where it came from.
     searches: int = 0
     urls: tuple[str, ...] = ()
 
@@ -82,6 +83,11 @@ async def respond(step: str | None = None, search: bool = False, **params: Any) 
         params = {k: v for k, v in params.items() if k != 'tools'} | (
             {'tools': tools} if tools else {}
         )
+    # The pages a search opened only come back when asked for.
+    tools = cast(list[dict[str, Any]], params.get('tools') or [])
+    if any(t.get('type') == 'web_search' for t in tools):
+        include = cast(list[str], params.get('include') or [])
+        params = params | {'include': [*include, 'web_search_call.action.sources']}
     started = time.monotonic()
     # Never streamed here, so the overload is always a full Response.
     response = cast(Response, await openai.responses.create(**params))
@@ -104,7 +110,8 @@ async def respond(step: str | None = None, search: bool = False, **params: Any) 
 
 
 def cited_urls(response: Response) -> tuple[str, ...]:
-    """The pages the answer cites, in order, each once."""
+    """The pages behind the answer, each once: those it cites, in order, then those its searches
+    opened."""
     urls: list[str] = []
     for item in response.output:
         if item.type != 'message':
@@ -116,6 +123,15 @@ def cited_urls(response: Response) -> tuple[str, ...]:
                 kind = cast(str, getattr(note, 'type', ''))
                 if kind == 'url_citation' and url and url not in urls:
                     urls.append(url)
+    for item in response.output:
+        if item.type != 'web_search_call':
+            continue
+        action = getattr(item, 'action', None)
+        found = cast(list[object], getattr(action, 'sources', None) or [])
+        opened = cast(str | None, getattr(action, 'url', None))
+        for url in [*(cast(str | None, getattr(source, 'url', None)) for source in found), opened]:
+            if url and url not in urls:
+                urls.append(url)
     return tuple(urls)
 
 
