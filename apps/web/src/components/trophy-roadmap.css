@@ -1451,6 +1451,11 @@
     min-width: 0;
   }
 
+  /* A tip with only a list of places has no steps column: the list starts at the edge. */
+  .roadmap-advice-main:empty {
+    display: none;
+  }
+
   /* Room for both: the list of places goes beside the steps instead of under them. */
   @container (min-width: 1000px) {
     .roadmap-advice-body:has(> .roadmap-advice-aside) {
@@ -1473,11 +1478,6 @@
     margin-top: 8px;
   }
 
-  /* The lines under the objective line up with its text, not its icon. */
-  .roadmap-objective ~ .roadmap-progress {
-    padding-left: 30px;
-  }
-
   .roadmap-when,
   .roadmap-needs {
     margin-top: 4px;
@@ -1494,18 +1494,22 @@
     font-size: var(--text-sm);
   }
 
+  /* The label beside its icon, like "How to do it"; what the trophy asks for on the line below,
+     from the edge. */
   .roadmap-objective {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 6px 7px;
+  }
+
+  .roadmap-objective > span {
+    grid-column: 1 / -1;
   }
 
   .roadmap-objective > .icon {
     width: 20px;
     height: 20px;
-    flex-shrink: 0;
-    /* Centred on the first line of text, whatever its height. */
-    margin-top: calc((1lh - 20px) / 2);
     color: var(--color-accent);
   }
 
@@ -1547,31 +1551,26 @@
     height: 23px;
   }
 
-  /* "How to do it" lines its text up with its label, as the objective's lines do: 30px, the icon and
-     its gap. */
   .roadmap-advice-head .roadmap-advice-label {
     gap: 7px;
   }
 
-  .roadmap-advice > :not(.roadmap-advice-head) {
-    padding-left: 30px;
-  }
-
-  /* A numbered tip keeps its numbers inside that margin too: each number starts where the intro
-     does and its text right after, so the column reads straight. */
-  .roadmap-advice > .roadmap-steps {
-    padding-left: 30px;
+  /* A numbered tip starts each number where the intro does and its text right after, so the
+     column reads straight from the edge of "How to do it". */
+  .roadmap-advice-main > .roadmap-steps {
+    margin: 0;
+    padding-left: 0;
     list-style: none;
     counter-reset: step;
   }
 
-  .roadmap-advice > .roadmap-steps > li {
+  .roadmap-advice-main > .roadmap-steps > li {
     position: relative;
     padding-left: 26px;
     counter-increment: step;
   }
 
-  .roadmap-advice > .roadmap-steps > li::before {
+  .roadmap-advice-main > .roadmap-steps > li::before {
     content: counter(step) ".";
     position: absolute;
     left: 0;

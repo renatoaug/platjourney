@@ -80,7 +80,7 @@ const messages = defineMessages({
     next: 'Próximo marco',
     resume: 'Voltar à sugestão',
     selected: 'Desafio em foco',
-    guidance: 'Objetivo:',
+    guidance: 'Objetivo',
     map: 'MAPA DA JORNADA',
     missable: 'Perdível',
     finale: 'Platina',
@@ -211,7 +211,7 @@ const messages = defineMessages({
     next: 'Next milestone',
     resume: 'Return to suggestion',
     selected: 'Challenge in focus',
-    guidance: 'Objective:',
+    guidance: 'Objective',
     map: 'JOURNEY MAP',
     missable: 'Missable',
     finale: 'Platinum',
@@ -423,7 +423,6 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
               />
             </p>
           )}
-          {hasAdvice && <TipRating trophy={trophy} />}
         </div>
         {(!!locations.length || !!stretch.length) && (
           <div className="roadmap-advice-aside">
@@ -432,6 +431,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           </div>
         )}
       </div>
+      {hasAdvice && <TipRating trophy={trophy} />}
     </div>
   )
 }
@@ -889,9 +889,8 @@ function TrophyFacts({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
     <div className="roadmap-facts">
       <p className="roadmap-objective">
         <Icon name="target" />
-        <span>
-          <b>{t('guidance')}</b> {hidden ? t('secretNote') : trophy.detail}
-        </span>
+        <b>{t('guidance')}</b>
+        <span>{hidden ? t('secretNote') : trophy.detail}</span>
       </p>
       {!hidden && (
         <>
