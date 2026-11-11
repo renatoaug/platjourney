@@ -1512,8 +1512,19 @@
     height: 23px;
   }
 
+  /* "How to do it" lines its text up with its label, as the objective's lines do: 30px, the icon and
+     its gap. */
+  .roadmap-advice-head .roadmap-advice-label {
+    gap: 7px;
+  }
+
+  .roadmap-advice > :not(.roadmap-advice-head) {
+    padding-left: 30px;
+  }
+
   /* The Nexo's antenna sits above its face: lifted, the face lines up with the text beside it. */
-  .roadmap-step .icon:has(> use[href$="#nexo"]) {
+  .roadmap-step .icon:has(> use[href$="#nexo"]),
+  .roadmap-advice-label .icon:has(> use[href$="#nexo"]) {
     translate: 0 -2px;
   }
 
