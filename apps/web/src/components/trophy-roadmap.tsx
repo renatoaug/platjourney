@@ -80,7 +80,7 @@ const messages = defineMessages({
     next: 'Próximo marco',
     resume: 'Voltar à sugestão',
     selected: 'Desafio em foco',
-    guidance: 'Objetivo:',
+    guidance: 'Objetivo',
     map: 'MAPA DA JORNADA',
     missable: 'Perdível',
     finale: 'Platina',
@@ -123,6 +123,7 @@ const messages = defineMessages({
     secret: 'Troféu oculto',
     secretNote: 'Nome, descrição e dicas protegidos para evitar spoilers.',
     progress: 'Progresso do troféu na PSN: {value} / {target}',
+    progressTitle: 'Progresso na PSN',
     whenStory: 'Você ganha seguindo a história.',
     whenUsuallyGet: 'Quem já fez costuma conseguir {place} ({count} jogadores).',
     placeStart: 'no início do jogo',
@@ -210,7 +211,7 @@ const messages = defineMessages({
     next: 'Next milestone',
     resume: 'Return to suggestion',
     selected: 'Challenge in focus',
-    guidance: 'Objective:',
+    guidance: 'Objective',
     map: 'JOURNEY MAP',
     missable: 'Missable',
     finale: 'Platinum',
@@ -253,6 +254,7 @@ const messages = defineMessages({
     secret: 'Hidden trophy',
     secretNote: 'Name, description and advice are protected to avoid spoilers.',
     progress: 'Trophy progress on PSN: {value} / {target}',
+    progressTitle: 'Progress on PSN',
     whenStory: 'You earn it by following the story.',
     whenUsuallyGet: 'Players who did it usually get it {place} ({count} players).',
     placeStart: 'at the start of the game',
@@ -301,6 +303,33 @@ const messages = defineMessages({
 })
 
 const anchor = (trophy: Trophy) => `roadmap-${encodeURIComponent(trophy.groupId)}-${trophy.id}`
+
+/** The trophy's PSN counter as a bar, with the count beside its label. */
+function PsnProgress({ value, target }: { value: number; target: number }) {
+  const t = useMessages(messages)
+  const done = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0
+  const label = t('progress', { value, target })
+  return (
+    <div className="roadmap-progress roadmap-counter">
+      <span className="barlabel">
+        <span>{t('progressTitle')}</span>
+        <b>
+          {value} / {target}
+        </b>
+      </span>
+      <span
+        className="bar small"
+        role="progressbar"
+        aria-valuenow={done}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={label}
+      >
+        <i style={{ width: `${done}%` }} />
+      </span>
+    </div>
+  )
+}
 
 /** What the panel shows for a trophy, from the guide. */
 function adviceParts(trophy: Trophy, game: RoadmapGame) {
@@ -353,44 +382,55 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           {!quiet && <AdviceAsk trophy={trophy} game={game} />}
         </div>
       )}
-      {trick && <TrickSteps text={trick} />}
-      <RoadmapTips tips={tips} />
-      <StretchIndex tips={locations} game={game} title={t('where')} />
-      {steps.map((step) => (
-        <p key={step}>
-          <GuideText text={step} />
-        </p>
-      ))}
-      {warning && (
-        <div className="roadmap-caution">
-          <b>
-            <Icon name="warning" />
-            {t('warning')}
-          </b>
-          <p>
-            <GuideText text={warning.when} />
-          </p>
-          {!trick && (
+      {/* On a wide screen the lists of places sit beside the steps instead of under them. */}
+      <div className="roadmap-advice-body">
+        <div className="roadmap-advice-main">
+          {trick && <TrickSteps text={trick} />}
+          <RoadmapTips tips={tips} />
+          {steps.map((step) => (
+            <p key={step}>
+              <GuideText text={step} />
+            </p>
+          ))}
+          {warning && (
+            <div className="roadmap-caution">
+              <b>
+                <Icon name="warning" />
+                {t('warning')}
+              </b>
+              <p>
+                <GuideText text={warning.when} />
+              </p>
+              {!trick && (
+                <p>
+                  <GuideText text={warning.how} />
+                </p>
+              )}
+            </div>
+          )}
+          {/* The tip already says how, online part included; the note stands alone only without one. */}
+          {advice.online && !trick && (
             <p>
-              <GuideText text={warning.how} />
+              <b>{t('online')}: </b>
+              <GuideText text={advice.online.what} />
+            </p>
+          )}
+          {advice.bug && (
+            <p>
+              <b>{t('bug')}: </b>
+              <GuideText
+                text={[advice.bug.issue, advice.bug.workaround].filter(Boolean).join('\n')}
+              />
             </p>
           )}
         </div>
-      )}
-      {/* The tip already says how, online part included; the note stands alone only without one. */}
-      {advice.online && !trick && (
-        <p>
-          <b>{t('online')}: </b>
-          <GuideText text={advice.online.what} />
-        </p>
-      )}
-      {advice.bug && (
-        <p>
-          <b>{t('bug')}: </b>
-          <GuideText text={[advice.bug.issue, advice.bug.workaround].filter(Boolean).join('\n')} />
-        </p>
-      )}
-      <RoadmapTips tips={stretch} title={t('stretch')} />
+        {(!!locations.length || !!stretch.length) && (
+          <div className="roadmap-advice-aside">
+            <StretchIndex tips={locations} game={game} title={t('where')} />
+            <RoadmapTips tips={stretch} title={t('stretch')} />
+          </div>
+        )}
+      </div>
       {hasAdvice && <TipRating trophy={trophy} />}
     </div>
   )
@@ -841,6 +881,30 @@ function TrophyNeedsLine({ trophy, game }: { trophy: Trophy; game: RoadmapGame }
   return <p className="roadmap-progress roadmap-needs">{parts.join(' ')}</p>
 }
 
+/** What the trophy asks for and where it stands: beside the trophy, under its name. */
+function TrophyFacts({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
+  const t = useMessages(messages)
+  const hidden = trophy.hidden && !trophy.earned
+  return (
+    <div className="roadmap-facts">
+      <p className="roadmap-objective">
+        <Icon name="target" />
+        <b>{t('guidance')}</b>
+        <span>{hidden ? t('secretNote') : trophy.detail}</span>
+      </p>
+      {!hidden && (
+        <>
+          {trophy.progressValue != null && trophy.progressTarget != null && (
+            <PsnProgress value={trophy.progressValue} target={trophy.progressTarget} />
+          )}
+          <TrophyWhen trophy={trophy} game={game} />
+          <TrophyNeedsLine trophy={trophy} game={game} />
+        </>
+      )}
+    </div>
+  )
+}
+
 function TrophyStep({
   trophy,
   game,
@@ -850,31 +914,13 @@ function TrophyStep({
   game: RoadmapGame
   suggested: boolean
 }) {
-  const t = useMessages(messages)
   const hidden = trophy.hidden && !trophy.earned
   return (
     <article
       className={`roadmap-content roadmap-step${suggested ? ' is-suggested' : ''}`}
       id="roadmap-advice"
     >
-      <p className="roadmap-objective">
-        <Icon name="target" />
-        <span>
-          <b>{t('guidance')}</b> {hidden ? t('secretNote') : trophy.detail}
-        </span>
-      </p>
-      {!hidden && (
-        <>
-          {trophy.progressValue != null && trophy.progressTarget != null && (
-            <p className="roadmap-progress">
-              {t('progress', { value: trophy.progressValue, target: trophy.progressTarget })}
-            </p>
-          )}
-          <TrophyWhen trophy={trophy} game={game} />
-          <TrophyNeedsLine trophy={trophy} game={game} />
-          <TrophyAdvice trophy={trophy} game={game} />
-        </>
-      )}
+      {!hidden && <TrophyAdvice trophy={trophy} game={game} />}
     </article>
   )
 }
@@ -949,7 +995,10 @@ function RoadmapFocus({
 }) {
   return (
     <div id="roadmap-focus" className="roadmap-focus">
-      <RoadmapLandscape game={game} selected={selected} suggested={target === selected} />
+      <div className="roadmap-focus-side">
+        <RoadmapLandscape game={game} selected={selected} suggested={target === selected} />
+        <TrophyFacts key={anchor(selected)} trophy={selected} game={game} />
+      </div>
       <TrophyStep
         key={anchor(selected)}
         trophy={selected}

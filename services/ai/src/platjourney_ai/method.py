@@ -17,15 +17,13 @@ PICK = (
     'or difficulty.'
 )
 
-# Game names the player will look for on screen: in Portuguese, as they play, with the guide's name
-# next to it, since a free translation may not match the game's own.
+# Game names the player will look for on screen, all in Portuguese as the journey's tips write them:
+# the official name when a Portuguese source has it, otherwise a translation, never the English one.
 NAMES = (
-    'Missões, locais, itens e personagens: se uma fonte em português traz o nome, use esse. Senão, '
-    'escreva em português com o nome da fonte entre parênteses, sem mudar a grafia dele (ex.: '
-    '"Canal do Pedreiro (The Mason\'s Channel)") e avise uma vez na resposta que os nomes em '
-    'português são tradução livre e no jogo podem estar diferentes. Nome de troféu nunca é '
-    'traduzido: use o da lista. Responda sempre o que o jogador perguntou; se não der para fazer o '
-    'que ele pediu, diga por quê.'
+    'Missões, locais, itens, inimigos e personagens sempre em português: o nome oficial quando uma '
+    'fonte em português traz, senão uma tradução sua. Nunca escreva o nome em inglês, nem entre '
+    'parênteses. Nome de troféu nunca é traduzido: use o da lista. Responda sempre o que o jogador '
+    'perguntou; se não der para fazer o que ele pediu, diga por quê.'
 )
 
 # One play session: which missing trophies, in which order, within the time the player has.

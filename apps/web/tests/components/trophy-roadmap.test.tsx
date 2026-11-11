@@ -199,7 +199,9 @@ test('zero counter remains visible, unavailable counters are not invented and em
       }}
     />,
   )
-  expect(screen.getByText('Progresso do troféu na PSN: 0 / 10')).toBeTruthy()
+  expect(
+    screen.getByRole('progressbar', { name: 'Progresso do troféu na PSN: 0 / 10' }),
+  ).toBeTruthy()
   expect(container.textContent).toContain('não têm uma correspondência única')
   unmount()
   renderApp(<TrophyRoadmap game={{ ...game, trophies: [] }} />)
@@ -1036,7 +1038,7 @@ test('a trick written as paragraphs opens with its intro set apart, and the rest
     'Esse troféu é online e sai com a primeira doação.',
   )
   expect(container.querySelector('.roadmap-steps')).toBeNull()
-  const paragraphs = [...container.querySelectorAll('.roadmap-advice > p')].map(
+  const paragraphs = [...container.querySelectorAll('.roadmap-advice-main > p')].map(
     (p) => p.textContent,
   )
   expect(paragraphs).toContain('Doe uma arma no armário compartilhado de um terminal.')

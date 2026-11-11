@@ -341,7 +341,8 @@
 
   .roadmap-focus {
     display: grid;
-    grid-template-columns: minmax(280px, 0.6fr) minmax(0, 1.4fr);
+    /* The trophy and what it asks for on the left, as wide as they need; the tip takes the rest. */
+    grid-template-columns: minmax(280px, min(600px, 45%)) minmax(0, 1fr);
     align-items: start;
     scroll-margin-top: calc(var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) + 120px);
   }
@@ -1420,9 +1421,48 @@
     line-height: var(--leading-body);
   }
 
+  .roadmap-facts {
+    padding: 0 32px 24px;
+  }
+
   /* The tip reads as a column of text: long lines across a wide screen are hard to follow. */
-  .roadmap-step > * {
+  .roadmap-step {
+    container-type: inline-size;
+  }
+
+  .roadmap-advice-head,
+  .roadmap-advice-main > * {
     max-width: 72ch;
+  }
+
+  /* Beside the trophy, the tip starts at the top of its column with no rule above it. */
+  .roadmap-step > .roadmap-advice:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .roadmap-advice-body,
+  .roadmap-advice-main,
+  .roadmap-advice-aside {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    min-width: 0;
+  }
+
+  /* A tip with only a list of places has no steps column: the list starts at the edge. */
+  .roadmap-advice-main:empty {
+    display: none;
+  }
+
+  /* Room for both: the list of places goes beside the steps instead of under them. */
+  @container (min-width: 1000px) {
+    .roadmap-advice-body:has(> .roadmap-advice-aside) {
+      grid-template-columns: fit-content(72ch) minmax(280px, 1fr);
+      column-gap: 48px;
+      align-items: start;
+    }
   }
 
   .roadmap-objective,
@@ -1438,28 +1478,38 @@
     margin-top: 8px;
   }
 
-  /* The lines under the objective line up with its text, not its icon. */
-  .roadmap-objective ~ .roadmap-progress {
-    padding-left: 30px;
-  }
-
   .roadmap-when,
   .roadmap-needs {
     margin-top: 4px;
   }
 
+  /* A counter: its label and count over a bar, as wide as a line of the objective. */
+  .roadmap-counter {
+    display: grid;
+    max-width: 42ch;
+  }
+
+  .roadmap-counter .barlabel {
+    margin-bottom: 6px;
+    font-size: var(--text-sm);
+  }
+
+  /* The label beside its icon, like "How to do it"; what the trophy asks for on the line below,
+     from the edge. */
   .roadmap-objective {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 6px 7px;
+  }
+
+  .roadmap-objective > span {
+    grid-column: 1 / -1;
   }
 
   .roadmap-objective > .icon {
     width: 20px;
     height: 20px;
-    flex-shrink: 0;
-    /* Centred on the first line of text, whatever its height. */
-    margin-top: calc((1lh - 20px) / 2);
     color: var(--color-accent);
   }
 
@@ -1501,8 +1551,36 @@
     height: 23px;
   }
 
+  .roadmap-advice-head .roadmap-advice-label {
+    gap: 7px;
+  }
+
+  /* A numbered tip starts each number where the intro does and its text right after, so the
+     column reads straight from the edge of "How to do it". */
+  .roadmap-advice-main > .roadmap-steps {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: step;
+  }
+
+  .roadmap-advice-main > .roadmap-steps > li {
+    position: relative;
+    padding-left: 26px;
+    counter-increment: step;
+  }
+
+  .roadmap-advice-main > .roadmap-steps > li::before {
+    content: counter(step) ".";
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+  }
+
   /* The Nexo's antenna sits above its face: lifted, the face lines up with the text beside it. */
-  .roadmap-step .icon:has(> use[href$="#nexo"]) {
+  .roadmap-step .icon:has(> use[href$="icon-nexo"]),
+  .roadmap-advice-label .icon:has(> use[href$="icon-nexo"]) {
     translate: 0 -2px;
   }
 
@@ -1559,8 +1637,10 @@
   }
 
   .roadmap-rate .chip[data-rate] {
-    width: 36px;
-    height: 32px;
+    width: 30px;
+    height: 28px;
+    /* A small control beside its question, not a primary target: no 44px floor. */
+    min-height: 28px;
     padding: 0;
     align-items: center;
     justify-content: center;
@@ -1568,8 +1648,8 @@
   }
 
   .roadmap-rate .chip .icon {
-    width: 17px;
-    height: 17px;
+    width: 15px;
+    height: 15px;
   }
 
   .roadmap-rate .chip[data-rate="yes"]:hover {
@@ -1855,6 +1935,10 @@
 
     .roadmap-content {
       padding: 22px 20px 16px;
+    }
+
+    .roadmap-facts {
+      padding: 0 20px 4px;
     }
 
     .roadmap-ongoing,
