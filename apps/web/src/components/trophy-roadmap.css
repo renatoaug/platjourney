@@ -1522,9 +1522,26 @@
     padding-left: 30px;
   }
 
-  /* A numbered tip keeps its numbers inside that margin too: they start where the text does. */
+  /* A numbered tip keeps its numbers inside that margin too: each number starts where the intro
+     does and its text right after, so the column reads straight. */
   .roadmap-advice > .roadmap-steps {
-    padding-left: calc(30px + 24px);
+    padding-left: 30px;
+    list-style: none;
+    counter-reset: step;
+  }
+
+  .roadmap-advice > .roadmap-steps > li {
+    position: relative;
+    padding-left: 26px;
+    counter-increment: step;
+  }
+
+  .roadmap-advice > .roadmap-steps > li::before {
+    content: counter(step) ".";
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+    font-weight: var(--weight-semibold);
   }
 
   /* The Nexo's antenna sits above its face: lifted, the face lines up with the text beside it. */
@@ -1588,6 +1605,8 @@
   .roadmap-rate .chip[data-rate] {
     width: 30px;
     height: 28px;
+    /* A small control beside its question, not a primary target: no 44px floor. */
+    min-height: 28px;
     padding: 0;
     align-items: center;
     justify-content: center;
