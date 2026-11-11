@@ -199,7 +199,9 @@ test('zero counter remains visible, unavailable counters are not invented and em
       }}
     />,
   )
-  expect(screen.getByText('Progresso do troféu na PSN: 0 / 10')).toBeTruthy()
+  expect(
+    screen.getByRole('progressbar', { name: 'Progresso do troféu na PSN: 0 / 10' }),
+  ).toBeTruthy()
   expect(container.textContent).toContain('não têm uma correspondência única')
   unmount()
   renderApp(<TrophyRoadmap game={{ ...game, trophies: [] }} />)

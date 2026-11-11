@@ -237,6 +237,7 @@ export type Target =
   | 'ProfileSkeleton'
   | 'ProfileView'
   | 'Projection'
+  | 'PsnProgress'
   | 'PullBadge'
   | 'PullRefresh'
   | 'QuickFacts'

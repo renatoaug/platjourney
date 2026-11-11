@@ -1448,6 +1448,17 @@
     margin-top: 4px;
   }
 
+  /* A counter: its label and count over a bar, as wide as a line of the objective. */
+  .roadmap-counter {
+    display: grid;
+    max-width: 42ch;
+  }
+
+  .roadmap-counter .barlabel {
+    margin-bottom: 6px;
+    font-size: var(--text-sm);
+  }
+
   .roadmap-objective {
     display: flex;
     align-items: flex-start;

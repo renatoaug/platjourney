@@ -123,6 +123,7 @@ const messages = defineMessages({
     secret: 'Troféu oculto',
     secretNote: 'Nome, descrição e dicas protegidos para evitar spoilers.',
     progress: 'Progresso do troféu na PSN: {value} / {target}',
+    progressTitle: 'Progresso na PSN',
     whenStory: 'Você ganha seguindo a história.',
     whenUsuallyGet: 'Quem já fez costuma conseguir {place} ({count} jogadores).',
     placeStart: 'no início do jogo',
@@ -253,6 +254,7 @@ const messages = defineMessages({
     secret: 'Hidden trophy',
     secretNote: 'Name, description and advice are protected to avoid spoilers.',
     progress: 'Trophy progress on PSN: {value} / {target}',
+    progressTitle: 'Progress on PSN',
     whenStory: 'You earn it by following the story.',
     whenUsuallyGet: 'Players who did it usually get it {place} ({count} players).',
     placeStart: 'at the start of the game',
@@ -301,6 +303,33 @@ const messages = defineMessages({
 })
 
 const anchor = (trophy: Trophy) => `roadmap-${encodeURIComponent(trophy.groupId)}-${trophy.id}`
+
+/** The trophy's PSN counter as a bar, with the count beside its label. */
+function PsnProgress({ value, target }: { value: number; target: number }) {
+  const t = useMessages(messages)
+  const done = target > 0 ? Math.min(100, Math.round((value / target) * 100)) : 0
+  const label = t('progress', { value, target })
+  return (
+    <div className="roadmap-progress roadmap-counter">
+      <span className="barlabel">
+        <span>{t('progressTitle')}</span>
+        <b>
+          {value} / {target}
+        </b>
+      </span>
+      <span
+        className="bar small"
+        role="progressbar"
+        aria-valuenow={done}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={label}
+      >
+        <i style={{ width: `${done}%` }} />
+      </span>
+    </div>
+  )
+}
 
 /** What the panel shows for a trophy, from the guide. */
 function adviceParts(trophy: Trophy, game: RoadmapGame) {
@@ -866,9 +895,7 @@ function TrophyStep({
       {!hidden && (
         <>
           {trophy.progressValue != null && trophy.progressTarget != null && (
-            <p className="roadmap-progress">
-              {t('progress', { value: trophy.progressValue, target: trophy.progressTarget })}
-            </p>
+            <PsnProgress value={trophy.progressValue} target={trophy.progressTarget} />
           )}
           <TrophyWhen trophy={trophy} game={game} />
           <TrophyNeedsLine trophy={trophy} game={game} />
