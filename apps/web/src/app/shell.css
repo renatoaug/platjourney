@@ -290,7 +290,7 @@
     color: var(--color-fg-subtle);
   }
 
-  .breadcrumb span {
+  .breadcrumb-root span {
     padding: 0 12px;
     color: var(--color-fg-subtle);
   }
@@ -369,6 +369,20 @@
       display: none;
     }
 
+    /* On a phone the topbar's buttons leave room for one line: the page's name alone, cut with
+       an ellipsis when it is long. */
+    .breadcrumb {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .breadcrumb-root {
+      display: none;
+    }
+
     .topbar {
       height: 63px;
       margin-bottom: 25px;
@@ -384,7 +398,7 @@
       font-size: var(--text-xs);
     }
 
-    .breadcrumb span {
+    .breadcrumb-root span {
       padding: 0 6px;
     }
 
