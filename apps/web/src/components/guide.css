@@ -1198,7 +1198,8 @@
     .title-guide-card > .game-about,
     .journey-guide > .game-about {
       display: grid;
-      grid-template-columns: minmax(240px, 1fr) minmax(0, 1.4fr);
+      /* The cover and genres take what they need; the facts take the rest, with no gap between. */
+      grid-template-columns: fit-content(44%) minmax(0, 1fr);
       align-items: stretch;
       gap: 32px;
     }
@@ -1298,6 +1299,14 @@
     display: grid;
     gap: 12px;
     margin: 18px 0 0;
+  }
+
+  /* On a wide card the conditions fill the row in columns instead of one long list. */
+  @container (min-width: 640px) {
+    .quick-facts-conditions {
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      column-gap: 24px;
+    }
   }
 
   .quick-facts-conditions .quick-fact {
