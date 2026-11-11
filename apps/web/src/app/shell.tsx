@@ -332,7 +332,10 @@ export function Shell() {
       <main className="content" id="main-content" tabIndex={-1}>
         <header className="topbar">
           <div className="breadcrumb">
-            {t('breadcrumb')} <span>/</span> <b id="route-label">{label}</b>
+            <span className="breadcrumb-root">
+              {t('breadcrumb')} <span>/</span>{' '}
+            </span>
+            <b id="route-label">{label}</b>
           </div>
           <div className="topbar-right">
             <CommandPalette
