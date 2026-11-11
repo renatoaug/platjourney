@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.71.0](https://github.com/renatoaug/platjourney/compare/v0.70.0...v0.71.0) (2026-11-11)
+
+### Features
+
+* **web:** a wider trophy panel, the PSN counter as a bar and the Nexo's web pages kept ([#172](https://github.com/renatoaug/platjourney/issues/172)) ([3e49b96](https://github.com/renatoaug/platjourney/commit/3e49b9610901b45f75598400686360f7f74d2a16))
+
 ## [0.70.0](https://github.com/renatoaug/platjourney/compare/v0.69.0...v0.70.0) (2026-11-10)
 
 ### Features
