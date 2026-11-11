@@ -1522,9 +1522,14 @@
     padding-left: 30px;
   }
 
+  /* A numbered tip keeps its numbers inside that margin too: they start where the text does. */
+  .roadmap-advice > .roadmap-steps {
+    padding-left: calc(30px + 24px);
+  }
+
   /* The Nexo's antenna sits above its face: lifted, the face lines up with the text beside it. */
-  .roadmap-step .icon:has(> use[href$="#nexo"]),
-  .roadmap-advice-label .icon:has(> use[href$="#nexo"]) {
+  .roadmap-step .icon:has(> use[href$="icon-nexo"]),
+  .roadmap-advice-label .icon:has(> use[href$="icon-nexo"]) {
     translate: 0 -2px;
   }
 
@@ -1581,8 +1586,8 @@
   }
 
   .roadmap-rate .chip[data-rate] {
-    width: 36px;
-    height: 32px;
+    width: 30px;
+    height: 28px;
     padding: 0;
     align-items: center;
     justify-content: center;
@@ -1590,8 +1595,8 @@
   }
 
   .roadmap-rate .chip .icon {
-    width: 17px;
-    height: 17px;
+    width: 15px;
+    height: 15px;
   }
 
   .roadmap-rate .chip[data-rate="yes"]:hover {
