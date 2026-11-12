@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.72.5](https://github.com/renatoaug/platjourney/compare/v0.72.4...v0.72.5) (2026-11-12)
+
+### Bug Fixes
+
+* **web:** a held Nexo stays under the finger and shows it is held ([#180](https://github.com/renatoaug/platjourney/issues/180)) ([0bf79c1](https://github.com/renatoaug/platjourney/commit/0bf79c14223d759ad76e9c85e3923429848f3bab))
+
 ## [0.72.4](https://github.com/renatoaug/platjourney/compare/v0.72.3...v0.72.4) (2026-11-12)
 
 ### Bug Fixes
