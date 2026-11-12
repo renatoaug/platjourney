@@ -5,7 +5,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Page } from '../app/page'
 import { DifficultyMeter } from '../components/difficulty-meter'
 import { GENRES_PT, image } from '../components/game-showcase'
-import { GuideSpotlight, pickOfTheDay } from '../components/guide-spotlight'
+import { GuideSpotlight, GuideSpotlightSkeleton, pickOfTheDay } from '../components/guide-spotlight'
 import { PageTop } from '../components/page-top'
 import { titleHref } from '../components/tip'
 import { defineMessages, getLocale, Language, useLocale, useMessages } from '../i18n/i18n'
@@ -529,7 +529,13 @@ function GuidesTop({ featured, count }: { featured: GuideCardItem | null; count:
       title={t('title')}
       lead={count ? t('leadCount', { count, total: count.toLocaleString(getLocale()) }) : t('lead')}
       art={featured?.shot ? image(featured.shot, 't_1080p') : null}
-      aside={featured && <GuideSpotlight game={featured} />}
+      aside={
+        featured ? (
+          <GuideSpotlight game={featured} />
+        ) : count === null ? (
+          <GuideSpotlightSkeleton />
+        ) : null
+      }
     />
   )
 }

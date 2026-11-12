@@ -6,7 +6,7 @@ import { useApp } from '../app/app-state'
 import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { number } from '../lib/format'
-import { pluginPages } from '../plugins'
+import { menuPages, pluginPages } from '../plugins'
 import { Icon } from '../ui/icon'
 import { connectAccount } from './demo'
 import './account-menu.css'
@@ -16,8 +16,6 @@ const messages = defineMessages({
     open: 'Abrir o menu da conta',
     line: 'Nível {level} · {platinums} platinas',
     profile: 'Meu perfil',
-    history: 'Histórico',
-    nexo: 'Conversas com Nexo',
     settings: 'Configurações',
     logout: 'Sair',
     leaveDemo: 'Sair da demo',
@@ -28,8 +26,6 @@ const messages = defineMessages({
     open: 'Open the account menu',
     line: 'Level {level} · {platinums} platinums',
     profile: 'My profile',
-    history: 'History',
-    nexo: 'Nexo conversations',
     settings: 'Settings',
     logout: 'Sign out',
     leaveDemo: 'Leave the demo',
@@ -40,10 +36,9 @@ const messages = defineMessages({
 
 // How long the menu takes to close (account-menu.css).
 const CLOSE_MS = 140
-const MENU_ICONS = { nexo: 'nexo', history: 'history' }
 
 /** Ends the session when the server confirms it, then starts over from the sign-in screen. */
-async function signOut(): Promise<void> {
+export async function signOut(): Promise<void> {
   await api('/api/auth/logout', {})
   location.assign('/')
 }
@@ -124,32 +119,24 @@ export function AccountMenu({
           id="account-menu-panel"
           role="menu"
         >
+          {/* Who is signed in, and the way to their profile. */}
           {p && (
-            <div className="account-menu-who">
+            <Link
+              to="/profile"
+              role="menuitem"
+              className="account-menu-who"
+              aria-label={t('profile')}
+              onClick={close}
+            >
               {avatar ? <img src={avatar} alt="" /> : <Icon name="circle" />}
               <div>
                 <b>{p.onlineId}</b>
                 <small>{t('line', { level: p.level, platinums: number(p.earned.platinum) })}</small>
               </div>
-            </div>
-          )}
-          <Link to="/profile" role="menuitem" className="account-menu-item" onClick={close}>
-            <Icon name="dashboard" />
-            {t('profile')}
-          </Link>
-          {(['nexo', 'history'] as const).map((key) => (
-            <Link
-              key={key}
-              to={key === 'nexo' ? '/nexo?resume=latest' : `/${key}`}
-              role="menuitem"
-              className="account-menu-item"
-              onClick={close}
-            >
-              <Icon name={MENU_ICONS[key]} />
-              {t(key)}
+              <Icon name="chevron-right" />
             </Link>
-          ))}
-          {pluginPages.map((p) => (
+          )}
+          {menuPages().map((p) => (
             <Link
               key={p.path}
               to={p.path}

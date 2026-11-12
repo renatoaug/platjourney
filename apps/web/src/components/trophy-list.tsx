@@ -19,6 +19,7 @@ import { JourneyLink as Link } from './journey-link'
 import { nexoHref } from './tip'
 import '../ui/section-tabs.css'
 import './trophy-list.css'
+import { TrophyMedal } from '../ui/trophy-medal'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -316,6 +317,7 @@ function TrophyCard({
     >
       <div className="trophy-art">
         <TrophyArt url={t.iconUrl} />
+        <TrophyMedal type={t.type} className="trophy-art-medal" />
         {t.earned && (
           <span className="trophy-earned-mark" title={tr('earned')}>
             <Icon name="check" />
@@ -327,7 +329,6 @@ function TrophyCard({
         <p>{t.detail}</p>
         <div className="trophy-row-meta">
           <span className={`trophy-metal ${t.type}`}>
-            <Icon name="trophy" />
             {TYPES[t.type] ? tr(TYPES[t.type]) : t.type}
           </span>
           {kind && <span className={`trophy-kind ${kind}`}>{tr(`kind.${kind}`)}</span>}

@@ -4,6 +4,7 @@ import { number, pct } from '../lib/format'
 import type { ProfileSummary, YearGoals } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
+import { TrophyMedal } from '../ui/trophy-medal'
 import './stat-tiles.css'
 
 const messages = defineMessages({
@@ -49,7 +50,7 @@ export function StatTiles({
     <>
       <div className="tile stat-tile plat">
         <div className="tile-label">
-          <Icon name="trophy" className="stat-icon" /> {t('platinums')}
+          <TrophyMedal type="platinum" className="stat-icon" /> {t('platinums')}
         </div>
         <b>{number(earned.platinum)}</b>
         <div className="sub">{t('platinumsSub')}</div>
@@ -79,7 +80,7 @@ export function StatTiles({
         <div className="stat-tiers">
           {(['gold', 'silver', 'bronze'] as const).map((tier) => (
             <span key={tier} className={tier}>
-              <Icon name="trophy" /> {number(earned[tier])} {t(`tiers.${tier}`)}
+              <TrophyMedal type={tier} /> {number(earned[tier])} {t(`tiers.${tier}`)}
             </span>
           ))}
         </div>

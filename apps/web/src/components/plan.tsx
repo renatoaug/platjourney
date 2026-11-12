@@ -19,6 +19,7 @@ import { GuideText, Markdown } from '../ui/markdown'
 import { repeat, Sk } from '../ui/skeleton'
 import { ErrorState } from '../ui/states'
 import { toast } from '../ui/toast'
+import { TrophyMedal } from '../ui/trophy-medal'
 import { assistantName } from './app-logo'
 import { DemoNote } from './demo'
 import './plan.css'
@@ -317,7 +318,7 @@ function Route({ plan }: { plan: SessionPlan }) {
                   {step.iconUrl ? (
                     <img src={step.iconUrl} alt="" loading="lazy" />
                   ) : (
-                    <Icon name="trophy" />
+                    <TrophyMedal type={step.type ?? 'bronze'} />
                   )}
                   {step.done && (
                     <span className="route-check">
@@ -348,7 +349,7 @@ function Route({ plan }: { plan: SessionPlan }) {
       {s ? (
         <article key={open} className={`route-focus ${state(open)} tier-${s.type ?? 'bronze'}`}>
           <div className="route-focus-art">
-            {s.iconUrl ? <img src={s.iconUrl} alt="" /> : <Icon name="trophy" />}
+            {s.iconUrl ? <img src={s.iconUrl} alt="" /> : <TrophyMedal type={s.type ?? 'bronze'} />}
           </div>
           <div className="route-focus-body">
             <header>
@@ -373,7 +374,7 @@ function Route({ plan }: { plan: SessionPlan }) {
       ) : (
         <article key="end" className="route-focus end">
           <div className="route-focus-art">
-            <Icon name="trophy" />
+            <TrophyMedal type="platinum" />
           </div>
           <div className="route-focus-body">
             <h3>{t('endTitle')}</h3>

@@ -1,4 +1,5 @@
 import { startAccessCleanup } from './access.ts'
+import { warmBrowse } from './browse.ts'
 import { commandMenu, handleCommand, help } from './commands.ts'
 import { config, version } from './config.ts'
 import { migrate } from './db.ts'
@@ -52,6 +53,8 @@ async function main(): Promise<void> {
   startDeals()
   startSimilarSync()
   startWeb()
+  // The guides list and the plan page's numbers read the whole catalog: load it before anyone asks.
+  warmBrowse()
   startAccessCleanup()
   // English is the default menu; Portuguese apps get theirs.
   Promise.all([

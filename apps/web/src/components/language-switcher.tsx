@@ -14,6 +14,7 @@ import {
 } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
 import type { Me } from '../lib/types'
+import { SettingTitle } from '../ui/setting-title'
 import { toast } from '../ui/toast'
 import './account.css'
 
@@ -97,10 +98,7 @@ export function LanguageSetting() {
   }
   return (
     <div className="setting-row static">
-      <span className="setting-text">
-        <b>{t('title')}</b>
-        <small>{t('hint')}</small>
-      </span>
+      <SettingTitle title={t('title')} hint={t('hint')} />
       <LanguageSwitcher value={locale} onChange={change} disabled={saving} />
     </div>
   )

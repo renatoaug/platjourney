@@ -53,14 +53,13 @@ export const recommendedData: TitleDetail = {
 }
 
 export const Owned: Story = {
-  render: () => <TitleScreen owned load={{ kind: 'ready', d: ownedData }} />,
+  render: () => <TitleScreen load={{ kind: 'ready', d: ownedData }} />,
 }
 
 // "Parecidos com este" under the showcase, the expansion and the series first.
 export const WithSimilar: Story = {
   render: () => (
     <TitleScreen
-      owned
       load={{ kind: 'ready', d: ownedData }}
       similar={<SimilarGames state={{ status: 'ok', items: similarGamesData }} />}
     />
@@ -68,32 +67,27 @@ export const WithSimilar: Story = {
 }
 
 export const NotOwned: Story = {
-  render: () => <TitleScreen owned={false} load={{ kind: 'ready', d: recommendedData }} />,
+  render: () => <TitleScreen load={{ kind: 'ready', d: recommendedData }} />,
 }
 
 /** Not owned and not in the catalog: the guide takes the width. */
 export const NotOwnedWithoutTrophies: Story = {
-  render: () => (
-    <TitleScreen
-      owned={false}
-      load={{ kind: 'ready', d: { ...recommendedData, trophies: null } }}
-    />
-  ),
+  render: () => <TitleScreen load={{ kind: 'ready', d: { ...recommendedData, trophies: null } }} />,
 }
 
 export const GuideBuilding: Story = {
   render: () => (
-    <TitleScreen owned load={{ kind: 'ready', d: { ...ownedData, guide: null, building: true } }} />
+    <TitleScreen load={{ kind: 'ready', d: { ...ownedData, guide: null, building: true } }} />
   ),
 }
 
-export const Loading: Story = { render: () => <TitleScreen owned load={{ kind: 'loading' }} /> }
+export const Loading: Story = { render: () => <TitleScreen load={{ kind: 'loading' }} /> }
 
 export const LoadingNotOwned: Story = {
-  render: () => <TitleScreen owned={false} load={{ kind: 'loading' }} />,
+  render: () => <TitleScreen load={{ kind: 'loading' }} />,
 }
 
-export const NotFound: Story = { render: () => <TitleScreen owned load={{ kind: 'error' }} /> }
+export const NotFound: Story = { render: () => <TitleScreen load={{ kind: 'error' }} /> }
 
 // The same screen in English (the toolbar switches any story).
 export const English: Story = { ...Owned, globals: { locale: Language.En } }
@@ -101,7 +95,6 @@ export const English: Story = { ...Owned, globals: { locale: Language.En } }
 export const GalleryBesideBack: Story = {
   render: () => (
     <TitleScreen
-      owned={false}
       load={{
         kind: 'ready',
         d: {
@@ -117,7 +110,6 @@ export const GalleryBesideBack: Story = {
 export const CompactTrophyCounts: Story = {
   render: () => (
     <TitleScreen
-      owned={false}
       load={{
         kind: 'ready',
         d: {
@@ -138,7 +130,6 @@ export const CompactTrophyCounts: Story = {
 export const SubscriptionActions: Story = {
   render: () => (
     <TitleScreen
-      owned={false}
       load={{
         kind: 'ready',
         d: {

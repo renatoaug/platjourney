@@ -204,7 +204,7 @@ And on the web (`@platjourney/web/plugins`):
 | | |
 |---|---|
 | `before`, `after`, `replace`, `hide` | Changes around any component, by its name (`Target`). See [How a plugin reaches any component](#how-a-plugin-reaches-any-component). |
-| `pages` | Whole pages: `{ path, label (per language), icon, component }` become a route, an item at the end of the menu and the page title. |
+| `pages` | Whole pages: `{ path, label (per language), icon, component, place? }` become a route, the page title and an item in the account group of the menu. `place: 'settings'` keeps a reference page (legal notes, credits) out of the menus and links it at the end of Settings instead. |
 | `refusalAction` | Called when the server refuses model work with `402` (a `Refused` from a plugin): returns the button shown next to the message (`{ href, label }`), or nothing. |
 | `MODEL_WORK_DONE` | The event fired on `window` after the web app finished model work for the player (an answer, a plan, recommendations), so a component can refresh what it shows. |
 

@@ -106,25 +106,47 @@ function facetsOf(items: BrowseItem[], f: BrowseFilters): Facets {
 }
 
 const TTL_MS = 5 * 60_000
-let cached: {
+type BrowseData = {
   at: number
   cards: Map<string, CatalogCard>
   guides: Map<string, GuideSummary>
-} | null = null
+}
+let cached: BrowseData | null = null
+let loading: Promise<BrowseData> | null = null
 
-async function data() {
-  if (cached && Date.now() - cached.at < TTL_MS) return cached
-  const [cards, guides] = await Promise.all([catalogCards(), guideSummaries()])
-  cached = {
-    at: Date.now(),
-    cards: new Map(cards.map((c) => [c.id, c])),
-    guides: new Map(guides.map((g) => [g.game, g])),
-  }
+// The whole catalog and every guide's summary: two full reads, so one at a time.
+function load(): Promise<BrowseData> {
+  loading ??= Promise.all([catalogCards(), guideSummaries()])
+    .then(([cards, guides]) => {
+      cached = {
+        at: Date.now(),
+        cards: new Map(cards.map((c) => [c.id, c])),
+        guides: new Map(guides.map((g) => [g.game, g])),
+      }
+      return cached
+    })
+    .finally(() => {
+      loading = null
+    })
+  return loading
+}
+
+/** The catalog and guides, read once and kept: past five minutes the kept copy still answers at
+ * once while a fresh one loads, so only the very first request after a start waits for the reads. */
+async function data(): Promise<BrowseData> {
+  if (!cached) return load()
+  if (Date.now() - cached.at >= TTL_MS) void load().catch(() => {})
   return cached
+}
+
+/** Loads the catalog before anyone asks (at start), so the first page is not the slow one. */
+export function warmBrowse(): void {
+  void load().catch(() => {})
 }
 
 export function forgetBrowseCache(): void {
   cached = null
+  loading = null
 }
 
 const byName = (a: BrowseItem, b: BrowseItem) => a.name.localeCompare(b.name)

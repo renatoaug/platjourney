@@ -24,6 +24,8 @@ export interface PluginPage {
   /** An icon name from the app's set (`ui/icon`). */
   icon: string
   component: ComponentType
+  /** Where the way to it goes: the menu (default), or a link at the end of Settings. */
+  place?: 'menu' | 'settings'
 }
 
 /** A refusal from the server (a plugin threw Refused): its code and the message already shown. */
@@ -66,6 +68,12 @@ export const guardedPage = (page: PluginPage): PluginPage => ({
 })
 
 export const pluginPages: PluginPage[] = plugins.flatMap((p) => p.pages ?? []).map(guardedPage)
+
+/** The plugins' pages the menus list; the others are reached from Settings. */
+export const menuPages = (): PluginPage[] => pluginPages.filter((p) => p.place !== 'settings')
+
+/** The plugins' pages linked at the end of Settings. */
+export const settingsPages = (): PluginPage[] => pluginPages.filter((p) => p.place === 'settings')
 
 /** The first plugin's action for a refusal, if any offers one. */
 export function refusalAction(refusal: PluginRefusal) {

@@ -9,6 +9,7 @@ import { shownProgress } from '../lib/progress'
 import type { CurrentGame, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
+import { TrophyMedal } from '../ui/trophy-medal'
 import { DifficultyMeter } from './difficulty-meter'
 import './hero.css'
 
@@ -153,7 +154,7 @@ export function HeroProgress({ game: c }: { game: HeroGame }) {
             className={platinum.earned ? 'plat-mark earned' : 'plat-mark'}
             title={t(platinum.earned ? 'platinumEarned' : 'platinumAhead')}
           >
-            <Icon name="trophy" />
+            <TrophyMedal type="platinum" />
           </span>
         )}
       </div>
@@ -257,7 +258,7 @@ export function TrophyBreakdown({ trophies }: { trophies: Trophy[] }) {
               // biome-ignore lint/a11y/noNoninteractiveTabindex: keyboard focus reveals the tier name hidden from the compact row
               tabIndex={0}
             >
-              <Icon name="trophy" /> <span aria-hidden="true">{count(type)}</span>
+              <TrophyMedal type={type} /> <span aria-hidden="true">{count(type)}</span>
             </span>
           ) : null,
         )}

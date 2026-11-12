@@ -1,0 +1,9 @@
+/* The trophy art keeps its proportions inside the icon's box. */
+@layer ui {
+  .icon.trophy-medal {
+    flex: none;
+    object-fit: contain;
+    /* The art leaves a margin around the trophy: this brings it to the icon's size. */
+    scale: 1.3;
+  }
+}

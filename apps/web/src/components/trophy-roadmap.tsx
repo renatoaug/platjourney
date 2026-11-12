@@ -34,6 +34,7 @@ import { image } from './game-showcase'
 import { JourneyLink } from './journey-link'
 import { nexoHref } from './tip'
 import './trophy-roadmap.css'
+import { TrophyMedal } from '../ui/trophy-medal'
 
 type RoadmapGame = Pick<CurrentGame, 'game' | 'name' | 'np' | 'trophies' | 'guide' | 'focus'>
 
@@ -967,7 +968,7 @@ function RoadmapLandscape({
           <h3>{hidden ? t('secret') : selected.name}</h3>
           <span className="roadmap-destination-meta">
             <span className="roadmap-destination-type">
-              <Icon name="trophy" />
+              <TrophyMedal type={selected.type} />
               {t(selected.type === 'platinum' ? 'platinumType' : selected.type)}
             </span>
             {!hidden && kind && <span className={`roadmap-kind ${kind}`}>{t(`kind.${kind}`)}</span>}
@@ -1021,7 +1022,7 @@ function RoadmapSignal({ missable, final }: { missable: boolean; final: boolean 
   if (final)
     return (
       <span className="roadmap-route-finale">
-        <Icon name="trophy" />
+        <TrophyMedal type="platinum" />
         {t('finale')}
       </span>
     )
@@ -1180,7 +1181,7 @@ function RouteStatus({
 
 function RouteNumber({ trophy, index }: { trophy: Trophy; index: number }) {
   if (trophy.earned) return <Icon name="check" />
-  if (trophy.type === 'platinum') return <Icon name="trophy" />
+  if (trophy.type === 'platinum') return <TrophyMedal type="platinum" />
   return String(index + 1).padStart(2, '0')
 }
 
@@ -1680,12 +1681,6 @@ export function TrophyRoadmap({
           {stage.kind !== 'phase' && (
             <p className="roadmap-context-note">{t(`${stage.kind}Note`)}</p>
           )}
-          <footer className="roadmap-footer">
-            <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name)}>
-              <Icon name="nexo" />
-              {t('talk')}
-            </JourneyLink>
-          </footer>
         </>
       )}
     </section>

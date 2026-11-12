@@ -14,6 +14,7 @@ import type { ProfileData } from '../pages/profile'
 import { BoldText } from '../ui/bold-text'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
+import { TrophyMedal } from '../ui/trophy-medal'
 import { InstallGuide, installGuideDue, installPlatform } from './install-guide'
 import './onboarding.css'
 
@@ -319,7 +320,7 @@ function Hello({
           <div className="story-tiers">
             {(['platinum', 'gold', 'silver', 'bronze'] as const).map((k, i) => (
               <div key={k} className={`story-tier ${k}`} style={{ '--i': i } as CSSProperties}>
-                <Icon name="trophy" />
+                <TrophyMedal type={k} />
                 <b>{number(s.earned[k])}</b>
                 <span>{t(`tiers.${k}`)}</span>
               </div>

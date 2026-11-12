@@ -15,24 +15,29 @@ afterEach(() => mock.restore())
 
 const where = () => screen.getByTestId('location').textContent
 
-test('primary navigation has the five product destinations', () => {
+test('the menu groups playing and the account, with signing out by the profile', () => {
   renderApp(<Shell />, { path: '/games' })
   const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
   expect(
     within(nav)
       .getAllByRole('link')
       .map((l) => l.textContent),
-  ).toEqual(['Home', 'Jornada', 'Guias', 'Descobrir', 'Jogos'])
+  ).toEqual(['Home', 'Jornada', 'Guias', 'Descobrir', 'Jogos', 'Configurações'])
+  expect(nav.querySelector('.nav-group.is-play')?.textContent).toContain('JOGAR')
+  expect(screen.getByRole('button', { name: 'Sair' })).toBeTruthy()
   expect(within(nav).getByRole('link', { name: 'Jogos' }).className).toContain('active')
   fireEvent.click(screen.getByRole('button', { name: 'Abrir o menu da conta' }))
-  for (const name of ['Histórico', 'Conversas com Nexo', 'Configurações'])
-    expect(screen.getByRole('menuitem', { name })).toBeTruthy()
+  // The account menu: the player's card opens the profile, then the account's pages and signing out.
+  expect(screen.getByRole('menuitem', { name: 'Meu perfil' }).getAttribute('href')).toBe('/profile')
+  expect(screen.getByRole('menuitem', { name: 'Configurações' })).toBeTruthy()
+  for (const name of ['Histórico', 'Conversas com Nexo'])
+    expect(screen.queryByRole('menuitem', { name })).toBeNull()
   expect(screen.queryByRole('menuitem', { name: 'Buscar guias' })).toBeNull()
   expect(within(nav).getByRole('link', { name: 'Guias' }).getAttribute('href')).toBe('/guides')
 })
 
-for (const entry of ['sidebar', 'account'] as const) {
-  test(`the mounted ${entry} general Nexo entry resumes the latest conversation`, async () => {
+for (const entry of ['sidebar'] as const) {
+  test(`the floating Nexo resumes the latest conversation outside a game (${entry})`, async () => {
     const current = journeyFixture
     if (!current) throw new Error('fixture requires a game')
     const calls = mockApi({
@@ -50,10 +55,7 @@ for (const entry of ['sidebar', 'account'] as const) {
       '/api/chat': [{ role: 'assistant', content: 'Conversa recente de teste.' }],
     })
     renderApp(<Shell />, { path: '/', value: { data: { ...SAMPLE_DATA, current } } })
-    if (entry === 'account') {
-      fireEvent.click(screen.getByRole('button', { name: 'Abrir o menu da conta' }))
-      fireEvent.click(screen.getByRole('menuitem', { name: 'Conversas com Nexo' }))
-    } else fireEvent.click(screen.getByRole('link', { name: /Conte com o Nexo/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Falar com o Nexo' }))
     expect(await screen.findByText('Conversa recente de teste.')).toBeTruthy()
     expect(calls.some((call) => call.path === '/api/chat/threads')).toBe(true)
     expect(
@@ -114,7 +116,7 @@ test('the sidebar profile: skeleton, the player, or waiting for PSN', () => {
   unmount()
 
   const second = renderApp(<Shell />)
-  expect(profile().textContent).toBe('jogadorNível 312 · 42 platinas')
+  expect(profile().textContent).toBe('jogadorNível 312')
   second.unmount()
 
   renderApp(<Shell />, {
@@ -185,21 +187,62 @@ test("a plugin's page gets an item in the menu, its route and its title", async 
   }
 })
 
+test("a plugin's page placed in Settings leaves the menus and is linked there", async () => {
+  pluginPages.push({
+    path: '/legal-test',
+    label: { 'pt-BR': 'Legal de teste', en: 'Test legal' },
+    icon: 'info',
+    component: () => <h1>Legal</h1>,
+    place: 'settings',
+  })
+  try {
+    mockApi({})
+    renderApp(<Shell />, { path: '/settings' })
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir o menu da conta' }))
+    expect(screen.queryByRole('menuitem', { name: 'Legal de teste' })).toBeNull()
+    const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
+    expect(within(nav).queryByRole('link', { name: 'Legal de teste' })).toBeNull()
+    expect((await screen.findByRole('link', { name: 'Legal de teste' })).getAttribute('href')).toBe(
+      '/legal-test',
+    )
+  } finally {
+    pluginPages.length = 0
+  }
+})
+
 test('contextual Nexo returns to the mounted journey with its open session intact', async () => {
   mockApi({ '/api/plan': { plan: null }, '/api/chat': [], '/api/chat/threads': [] })
   const current = journeyFixture
   if (!current) throw new Error('fixture requires a game')
-  renderApp(<Shell />, { path: '/game', value: { data: { ...SAMPLE_DATA, current } } })
-  const session = document.getElementById('journey-session') as HTMLDetailsElement
-  session.open = true
-  fireEvent.click(screen.getByRole('link', { name: 'Conversar com Nexo' }))
+  renderApp(<Shell />, { path: '/game?view=session', value: { data: { ...SAMPLE_DATA, current } } })
+  const session = document.getElementById('journey-session')
+  expect(session).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Falar com o Nexo' }))
   await screen.findByRole('button', { name: 'Voltar à jornada' })
   expect(document.getElementById('journey-session')).toBe(session)
   fireEvent.click(screen.getByRole('button', { name: 'Voltar à jornada' }))
   await waitFor(() => expect(document.querySelector('.journey-chat')).toBeNull())
   expect(document.getElementById('journey-session')).toBe(session)
-  expect(session.open).toBe(true)
-  expect(screen.getByTestId('location').textContent).toBe('/game')
+  expect(screen.getByTestId('location').textContent).toBe('/game?view=session')
+})
+
+test('the journey page asks Nexo in context and comes back to the same route', async () => {
+  mockApi({ '/api/plan': { plan: null }, '/api/chat': [], '/api/chat/threads': [] })
+  renderApp(<Shell />, {
+    path: '/game?view=journey',
+    value: { data: { ...SAMPLE_DATA, current: journeyFixture } },
+  })
+  const roadmap = document.querySelector('.trophy-roadmap')
+  expect(roadmap).toBeTruthy()
+  // The floating Nexo opens a conversation about the game on screen, over the page.
+  fireEvent.click(screen.getByRole('button', { name: 'Falar com o Nexo' }))
+  await screen.findByRole('button', { name: 'Voltar à jornada' })
+  expect(where()).toStartWith('/nexo')
+  expect(document.querySelector('.trophy-roadmap')).toBe(roadmap)
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar à jornada' }))
+  await waitFor(() => expect(document.querySelector('.journey-chat')).toBeNull())
+  expect(document.querySelector('.trophy-roadmap')).toBe(roadmap)
+  expect(screen.getByTestId('location').textContent).toBe('/game?view=journey')
 })
 
 test('contextual chat follows the keyboard viewport and restores page scroll styles', async () => {
@@ -210,10 +253,10 @@ test('contextual chat follows the keyboard viewport and restores page scroll sty
   document.body.style.position = 'relative'
   try {
     renderApp(<Shell />, {
-      path: '/game',
+      path: '/game?view=journey',
       value: { data: { ...SAMPLE_DATA, current: journeyFixture } },
     })
-    fireEvent.click(screen.getByRole('link', { name: 'Conversar com Nexo' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Falar com o Nexo' }))
     await screen.findByRole('button', { name: 'Voltar à jornada' })
     const dialog = document.querySelector('.journey-chat') as HTMLElement
     expect(dialog.dataset.keyboard).toBe('false')

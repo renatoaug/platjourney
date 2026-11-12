@@ -5,15 +5,13 @@ import { JourneySkeleton } from '../../src/components/journey'
 import { GoalsSkeleton } from '../../src/pages/goals'
 import { renderApp } from '../support/web'
 
-test('owned game loading keeps the journey hierarchy instead of the old two-column layout', () => {
+test('owned game loading draws the overview: head, the cards, then the trophy list', () => {
   const { container } = renderApp(<JourneySkeleton />)
-  expect(container.querySelector('.journey > .hero.immersive')).toBeTruthy()
-  expect(container.querySelector('.trophy-roadmap')).toBeTruthy()
-  expect(container.querySelector('.journey-session')).toBeTruthy()
+  expect(container.querySelector('.journey .game-overview-head')).toBeTruthy()
+  expect(container.querySelectorAll('.game-links .game-link')).toHaveLength(4)
   expect(container.querySelector('.journey-trophies')).toBeTruthy()
-  expect(container.querySelector('.journey-guide')).toBeTruthy()
+  expect(container.querySelector('.trophy-roadmap')).toBeNull()
   expect(container.querySelector('[role="tablist"]')).toBeNull()
-  expect(container.querySelector('.hero-aside')).toBeNull()
   expect(container.querySelector('[role="progressbar"]')).toBeNull()
 })
 

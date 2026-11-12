@@ -9,21 +9,20 @@
     align-items: stretch;
   }
 
+  /* The lists of rows close the page, one after the other: notifications, then preferences (on
+     a wide screen across both columns). */
+  .settings-grid > #notifications-card {
+    order: 9;
+  }
+
+  .settings-grid > #preferences-card {
+    order: 10;
+  }
+
   @media (min-width: 761px) {
-    .settings-grid > :nth-child(1) {
-      grid-area: 1 / 1;
-    }
-
-    .settings-grid > :nth-child(2) {
-      grid-area: 2 / 1;
-    }
-
-    .settings-grid > :nth-child(3) {
-      grid-area: 1 / 2;
-    }
-
-    .settings-grid > :nth-child(4) {
-      grid-area: 2 / 2;
+    .settings-grid > #notifications-card,
+    .settings-grid > #preferences-card {
+      grid-column: 1 / -1;
     }
   }
 
@@ -79,5 +78,126 @@
     letter-spacing: var(--tracking-caps);
     line-height: 1;
     text-transform: uppercase;
+  }
+}
+
+/* Notifications, preferences and the plugin pages kept out of the menus, at the end as grouped
+   lists: each group's name above a rounded block of rows, a hairline between rows, the help behind
+   each setting's ⓘ. */
+@layer screens {
+  .settings-grid #notifications-card.card,
+  .settings-grid #preferences-card.card {
+    margin-top: -12px;
+  }
+
+  .settings-grid #notifications-card.card,
+  .settings-grid #preferences-card.card {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .settings-grid #notifications-card.card > h2:first-child,
+  .settings-grid #preferences-card.card > h2:first-child {
+    height: auto;
+    margin: 24px 0 10px;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+
+  #notifications-card .settings-lead {
+    margin: 0 0 10px;
+    padding: 0 4px;
+    font-size: var(--text-sm);
+  }
+
+  /* A group: hairlines above and below its rows, its name above it and room between groups. */
+  .setting-group,
+  .settings-links {
+    display: grid;
+    border-block: 1px solid var(--color-border);
+  }
+
+  .setting-group .setting-row,
+  .settings-links a {
+    min-height: 54px;
+    margin: 0;
+    padding: 10px 4px;
+  }
+
+  .setting-group > * + *,
+  .settings-links a + a {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .setting-group .setting-row + .setting-row {
+    margin-top: 0;
+  }
+
+  .setting-group .demo-note,
+  .setting-group .push-test {
+    margin: 0;
+    padding: 10px 4px;
+  }
+
+  .settings-links {
+    margin-top: 32px;
+  }
+
+  .settings-links a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-fg);
+  }
+
+  .settings-links a b {
+    font-weight: var(--weight-medium);
+  }
+
+  .settings-links a:hover {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-faint), transparent);
+  }
+
+  .settings-links a > .icon:last-child {
+    margin-left: auto;
+    color: var(--color-fg-subtle);
+  }
+}
+
+/* In the grouped lists a select is just its value and a small chevron, like the platform's own
+   settings: no box, the native picker opens on tap. */
+@layer screens {
+  .setting-group select {
+    min-height: 0;
+    height: 32px;
+    padding: 0 22px 0 8px;
+    border: 0;
+    background-color: transparent;
+    /* The base select's chevron: its two halves, side by side at the right edge. */
+    background-position:
+      calc(100% - 9px) 55%,
+      calc(100% - 4px) 55%;
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+    text-align: right;
+    text-align-last: right;
+  }
+
+  /* No box around it when tapped; the keyboard still sees it by its text and chevron lighting up. */
+  .setting-group select:focus,
+  .setting-group select:focus-visible {
+    outline: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .setting-group select:hover,
+  .setting-group select:focus-visible {
+    color: var(--color-accent);
   }
 }

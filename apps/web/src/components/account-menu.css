@@ -164,3 +164,24 @@
     }
   }
 }
+
+/* The player's card opens the profile; signing out is always red. */
+@layer screens {
+  a.account-menu-who {
+    color: inherit;
+    border-radius: var(--radius-control);
+  }
+
+  a.account-menu-who:hover {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-faint), transparent);
+  }
+
+  a.account-menu-who > .icon:last-child {
+    margin-left: auto;
+    color: var(--color-fg-subtle);
+  }
+
+  .account-menu-item.account-menu-logout {
+    color: var(--color-danger);
+  }
+}

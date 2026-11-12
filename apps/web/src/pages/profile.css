@@ -593,3 +593,11 @@
     }
   }
 }
+
+/* The collection's platinum, a little larger than an icon. */
+@layer screens {
+  .icon.collection-medal {
+    width: 28px;
+    height: 28px;
+  }
+}
