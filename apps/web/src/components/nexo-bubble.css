@@ -26,6 +26,14 @@
     transition: box-shadow 0.2s;
   }
 
+  /* A pressed button shrinks a little (base.css), but this one is placed by its transform: the
+     shrink scaled its distance from the corner too, so a held Nexo rose ~20px and dropped back on
+     release. The press shows in Nexo itself instead (.is-dragging img). */
+  .nexo-bubble,
+  .nexo-bubble:active {
+    scale: none;
+  }
+
   .nexo-bubble:hover {
     background: color-mix(in srgb, var(--color-surface) var(--alpha-heavy), transparent);
     box-shadow:
