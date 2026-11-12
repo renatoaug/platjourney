@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.72.1](https://github.com/renatoaug/platjourney/compare/v0.72.0...v0.72.1) (2026-11-12)
+
+### Bug Fixes
+
+* **server:** serve the trophy art as webp ([#176](https://github.com/renatoaug/platjourney/issues/176)) ([4ba7b99](https://github.com/renatoaug/platjourney/commit/4ba7b994e507da70d2742b9cc8d473f23cd7ba5f))
+
 ## [0.72.0](https://github.com/renatoaug/platjourney/compare/v0.71.1...v0.72.0) (2026-11-12)
 
 ### Features
