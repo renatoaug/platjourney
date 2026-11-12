@@ -1,0 +1,194 @@
+/* The value and its chevron, like a platform's own settings; its options in a sheet on a phone,
+   a small list under it on a wide screen. */
+@layer ui {
+  .picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 4px 0 8px;
+    border: 0;
+    background: transparent;
+    color: var(--color-fg-muted);
+    font: inherit;
+    font-size: var(--text-md);
+  }
+
+  .picker:hover,
+  .picker[aria-expanded="true"] {
+    background: transparent;
+    color: var(--color-accent);
+  }
+
+  .picker:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .picker:focus-visible {
+    color: var(--color-accent);
+  }
+
+  .picker .icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s;
+  }
+
+  .picker[aria-expanded="true"] .icon {
+    transform: rotate(180deg);
+  }
+
+  .picker-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+  }
+
+  .picker-scrim {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .picker-list {
+    position: absolute;
+    min-width: 200px;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-card);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-popover);
+    outline: none;
+    animation: picker-in 0.16s ease-out;
+  }
+
+  .picker-title {
+    display: none;
+  }
+
+  .picker-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: var(--radius-control);
+    cursor: pointer;
+  }
+
+  .picker-option.is-active {
+    background: color-mix(in srgb, var(--color-overlay) var(--alpha-faint), transparent);
+  }
+
+  .picker-option[aria-selected="true"] {
+    color: var(--color-accent);
+  }
+
+  .picker-option .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  @keyframes picker-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  /* On a phone: a sheet from the bottom with a grab handle, its title, and the options as one
+     rounded block of rows with hairlines, the chosen one in lime with a check. */
+  @media (max-width: 760px) {
+    .picker-scrim {
+      background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
+      backdrop-filter: blur(4px);
+    }
+
+    .picker-list {
+      inset: auto 0 0 !important;
+      display: grid;
+      min-width: 0;
+      padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+      border-width: 1px 0 0;
+      border-radius: 16px 16px 0 0;
+      background: var(--color-bg-subtle);
+      animation-name: picker-sheet-in;
+      animation-duration: 0.26s;
+      animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+
+    .picker-list::before {
+      content: "";
+      justify-self: center;
+      width: 36px;
+      height: 4px;
+      margin-bottom: 14px;
+      border-radius: var(--radius-pill);
+      background: var(--color-border-strong);
+    }
+
+    .picker-title {
+      display: block;
+      padding: 0 4px 12px;
+      color: var(--color-fg);
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: var(--weight-semibold);
+    }
+
+    .picker-option {
+      min-height: 54px;
+      padding: 0 16px;
+      border-radius: 0;
+      background: var(--color-surface);
+      font-size: var(--text-md);
+    }
+
+    .picker-option + .picker-option {
+      border-top: 1px solid var(--color-border);
+    }
+
+    .picker-title + .picker-option {
+      border-radius: var(--radius-card) var(--radius-card) 0 0;
+    }
+
+    .picker-option:last-child {
+      border-radius: 0 0 var(--radius-card) var(--radius-card);
+    }
+
+    .picker-option.is-active {
+      background: var(--color-surface);
+    }
+
+    .picker-option[aria-selected="true"] {
+      background: color-mix(in srgb, var(--color-accent) var(--alpha-faint), var(--color-surface));
+      font-weight: var(--weight-semibold);
+    }
+
+    .picker-option .icon {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  @keyframes picker-sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .picker-list,
+    .picker .icon {
+      animation: none;
+      transition: none;
+    }
+  }
+}

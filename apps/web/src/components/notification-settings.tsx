@@ -7,6 +7,7 @@ import { ApiError, api } from '../lib/api'
 import { isIosPush } from '../lib/native-push'
 import { disablePush, enablePush, type PushState, pushState } from '../lib/push'
 import type { Me } from '../lib/types'
+import { SettingTitle } from '../ui/setting-title'
 import { Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
 import { DemoNote } from './demo'
@@ -113,63 +114,71 @@ export function NotificationSettingsView({
   return (
     <div className="card" id="notifications-card">
       <h2>{t('title')}</h2>
-      <p className="muted">{t('lead')}</p>
-      {pushAvailable && (
-        <label className="setting-row">
-          <span className="setting-text">
-            <b>{t('device')}</b>
-            {push !== 'loading' && <small>{t(`deviceHint.${push}`)}</small>}
-          </span>
+      <p className="muted settings-lead">{t('lead')}</p>
+      <div className="setting-group">
+        {pushAvailable && (
+          <div className="setting-row">
+            <SettingTitle
+              title={t('device')}
+              htmlFor="pref-push"
+              hint={push === 'on' || push === 'off' ? t(`deviceHint.${push}`) : null}
+              note={
+                push !== 'loading' && push !== 'on' && push !== 'off'
+                  ? t(`deviceHint.${push}`)
+                  : null
+              }
+              action={
+                push === 'on' ? (
+                  <button
+                    type="button"
+                    className="text-link setting-action"
+                    id="push-test"
+                    disabled={busy}
+                    onClick={onTest}
+                  >
+                    {t('test')}
+                  </button>
+                ) : null
+              }
+            />
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              id="pref-push"
+              checked={push === 'on'}
+              aria-checked={push === 'on'}
+              disabled={busy || demo || !switchable}
+              onChange={(e) => onPush(e.target.checked)}
+            />
+          </div>
+        )}
+        {pushAvailable && push === 'error' && (
+          <p className="push-test">
+            <button type="button" className="text-link" disabled={busy} onClick={onRetry}>
+              {t('retry')}
+            </button>
+          </p>
+        )}
+        <label className="setting-row" htmlFor="pref-telegram">
+          <SettingTitle
+            title={t('telegram')}
+            hint={telegramLinked ? t('telegramHint') : null}
+            note={telegramLinked ? null : t('telegramLinkFirst')}
+          />
           <input
             type="checkbox"
             role="switch"
             className="switch"
-            id="pref-push"
-            checked={push === 'on'}
-            aria-checked={push === 'on'}
-            disabled={busy || demo || !switchable}
-            onChange={(e) => onPush(e.target.checked)}
+            id="pref-telegram"
+            checked={telegramLinked && notifyTelegram}
+            aria-checked={telegramLinked && notifyTelegram}
+            disabled={busy || demo || !telegramLinked}
+            onChange={(e) => onTelegram(e.target.checked)}
           />
         </label>
-      )}
-      {pushAvailable && push === 'error' && (
-        <p className="push-test">
-          <button type="button" className="text-link" disabled={busy} onClick={onRetry}>
-            {t('retry')}
-          </button>
-        </p>
-      )}
-      {/* Outside the row's label: a button inside it would take the label's clicks from the switch. */}
-      {pushAvailable && push === 'on' && (
-        <p className="push-test">
-          <button
-            type="button"
-            className="text-link"
-            id="push-test"
-            disabled={busy}
-            onClick={onTest}
-          >
-            {t('test')}
-          </button>
-        </p>
-      )}
-      <label className="setting-row">
-        <span className="setting-text">
-          <b>{t('telegram')}</b>
-          <small>{telegramLinked ? t('telegramHint') : t('telegramLinkFirst')}</small>
-        </span>
-        <input
-          type="checkbox"
-          role="switch"
-          className="switch"
-          id="pref-telegram"
-          checked={telegramLinked && notifyTelegram}
-          aria-checked={telegramLinked && notifyTelegram}
-          disabled={busy || demo || !telegramLinked}
-          onChange={(e) => onTelegram(e.target.checked)}
-        />
-      </label>
-      {demo && <DemoNote />}
+        {demo && <DemoNote />}
+      </div>
     </div>
   )
 }

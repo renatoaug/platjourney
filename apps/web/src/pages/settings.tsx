@@ -1,15 +1,18 @@
 /** Settings page: the account, connected apps (Telegram and assistants), notifications and
  * preferences, out of the profile. */
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { AccountCards, AccountSkeleton } from '../components/account'
 import { ConnectedApps, ConnectedAppsSkeleton } from '../components/connected-apps'
 import { image } from '../components/game-showcase'
 import { PageTop } from '../components/page-top'
-import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import type { Me } from '../lib/types'
+import { settingsPages } from '../plugins'
+import { Icon } from '../ui/icon'
 import { ErrorState } from '../ui/states'
 import './settings.css'
 
@@ -119,6 +122,24 @@ export function SettingsView({
           )}
         </div>
       )}
+      <SettingsLinks />
     </div>
+  )
+}
+
+/** Pages a plugin keeps out of the menus (legal notes, credits), linked at the end. */
+function SettingsLinks() {
+  const locale = useLocale()
+  const pages = settingsPages()
+  if (!pages.length) return null
+  return (
+    <nav className="settings-links">
+      {pages.map((p) => (
+        <Link key={p.path} to={p.path}>
+          <b>{p.label[locale]}</b>
+          <Icon name="chevron-right" />
+        </Link>
+      ))}
+    </nav>
   )
 }

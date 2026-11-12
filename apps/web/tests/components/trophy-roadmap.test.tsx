@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import { cleanup, fireEvent, screen, within } from '@testing-library/react'
 import { useState } from 'react'
-import { SAMPLE_ME } from '../../src/app/app-state'
 import { Journey } from '../../src/components/journey'
 import { TrophyRoadmap } from '../../src/components/trophy-roadmap'
 import { current } from '../../src/fixtures'
@@ -9,7 +8,7 @@ import { routeFocus, routeGame } from '../../src/fixtures/route'
 import { roadPoint, roadStop } from '../../src/lib/roadmap-motion'
 import * as roadmapData from '../../src/lib/trophy-roadmap'
 import type { CurrentGame, GuideDetail } from '../../src/lib/types'
-import { mockApi, renderApp, reply } from '../support/web'
+import { mockApi, renderApp } from '../support/web'
 
 afterEach(() => mock.restore())
 
@@ -159,14 +158,21 @@ const game: CurrentGame = {
 }
 
 test('mounted journey starts at a pending challenge and keeps completed trophies out of the foreground', async () => {
-  const { container } = renderApp(<Journey game={game} plan={null} />, { path: '/game' })
-  await screen.findByRole('link', { name: 'Roteiro' })
+  const { container } = renderApp(<Journey game={game} plan={null} />, {
+    path: '/game?view=journey',
+  })
+  await screen.findByRole('heading', { level: 1, name: 'Jornada da platina' })
   expect(container.querySelector('.roadmap-destination h3')?.textContent).toBe('Secret scene')
   expect(container.querySelector('.roadmap-past')?.hasAttribute('open')).toBe(false)
   expect(container.querySelectorAll('.roadmap-route li').length).toBe(3)
-  expect(container.querySelector('.journey-trophies')).toBeTruthy()
-  expect(container.querySelector('.journey-guide')).toBeTruthy()
   expect(screen.getByText('1 de 3 conquistados')).toBeTruthy()
+  // The trophies stay on the game's overview and the guide on its own page.
+  expect(container.querySelector('.journey-trophies')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar para o jogo' }))
+  expect(container.querySelector('.journey-trophies')).toBeTruthy()
+  expect(container.querySelector('.trophy-roadmap')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: /^Guia da platina/ }))
+  expect(container.querySelector('.journey-guide')).toBeTruthy()
 })
 
 test('hidden trophies show in full, guide markup is sanitized and links retain exact trophy context', async () => {

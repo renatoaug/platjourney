@@ -5,10 +5,10 @@ import { defineMessages, getLocale, Language, useMessages } from '../../i18n/i18
 import { fmtHours } from '../../lib/format'
 import type { YearGoals } from '../../lib/types'
 import { Cover } from '../../ui/cover'
-import { Icon } from '../../ui/icon'
 import { Pager } from '../../ui/pager'
 import { useKept } from './use-kept'
 import '../guide.css'
+import { TrophyMedal } from '../../ui/trophy-medal'
 import './year-platinums.css'
 
 const messages = defineMessages({
@@ -170,7 +170,7 @@ export function YearPlatinums({ goals: p, busy = false }: { goals: YearGoals; bu
     <div className="card year-card" id="year-platinums" ref={box}>
       <div className="year-heading">
         <h2>
-          <Icon name="trophy" /> {t('year.title', { year: p.year })}
+          <TrophyMedal type="platinum" /> {t('year.title', { year: p.year })}
         </h2>
         <span className="key-count">{all.length}</span>
       </div>

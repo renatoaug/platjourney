@@ -37,7 +37,6 @@ const messages = defineMessages({
     seeHistory: 'Ver histórico',
     tipsEmptyTitle: 'O Nexo ainda não falou',
     tipsEmpty: 'Quando você jogar, as dicas e os avisos dele aparecem aqui.',
-    footer: 'Jogue com propósito. Conquiste no seu ritmo.',
   },
   [Language.En]: {
     greeting: {
@@ -59,7 +58,6 @@ const messages = defineMessages({
     seeHistory: 'See history',
     tipsEmptyTitle: 'Nexo has not spoken yet',
     tipsEmpty: 'When you play, its tips and notices show up here.',
-    footer: 'Play with purpose. Achieve at your pace.',
   },
 })
 
@@ -146,10 +144,6 @@ export function Home({ releases = <Releases /> }: { releases?: ReactNode } = {})
           )}
         </div>
       </section>
-      <footer className="page-footer">
-        <span>PLATJOURNEY</span>
-        <span>{t('footer')}</span>
-      </footer>
     </Page>
   )
 }

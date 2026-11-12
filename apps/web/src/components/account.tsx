@@ -5,6 +5,8 @@ import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
 import { ApiError, api, del } from '../lib/api'
 import type { Me } from '../lib/types'
 import { Icon } from '../ui/icon'
+import { Picker } from '../ui/picker'
+import { SettingTitle } from '../ui/setting-title'
 import { Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
 import { type AuthForm, useAuthForm } from './auth/use-auth-form'
@@ -149,11 +151,8 @@ function NoticesSetting({ user }: { user: Me }) {
     setSaving(false)
   }
   return (
-    <label className="setting-row">
-      <span className="setting-text">
-        <b>{t('preferences.notices')}</b>
-        <small>{t('preferences.noticesHint')}</small>
-      </span>
+    <label className="setting-row" htmlFor="pref-notices">
+      <SettingTitle title={t('preferences.notices')} hint={t('preferences.noticesHint')} />
       <input
         type="checkbox"
         role="switch"
@@ -188,24 +187,24 @@ function PlusSetting({ user }: { user: Me }) {
     setSaving(false)
   }
   return (
-    <label className="setting-row">
-      <span className="setting-text">
-        <b>{t('preferences.plus')}</b>
-        <small>{t('preferences.plusHint')}</small>
-      </span>
-      <select
+    <div className="setting-row">
+      <SettingTitle
+        title={t('preferences.plus')}
+        hint={t('preferences.plusHint')}
+        htmlFor="pref-plus"
+      />
+      <Picker
         id="pref-plus"
+        label={t('preferences.plus')}
         value={user.psPlus ?? 'none'}
         disabled={saving || user.demo}
-        onChange={(e) => change(e.target.value as (typeof PLUS_TIERS)[number])}
-      >
-        {PLUS_TIERS.map((tier) => (
-          <option key={tier} value={tier}>
-            {t(`preferences.plusTier.${tier}`)}
-          </option>
-        ))}
-      </select>
-    </label>
+        options={PLUS_TIERS.map((tier) => ({
+          value: tier,
+          label: t(`preferences.plusTier.${tier}`),
+        }))}
+        onChange={change}
+      />
+    </div>
   )
 }
 
@@ -238,38 +237,34 @@ function PreferencesCard({ user }: { user: Me }) {
   return (
     <div className="card" id="preferences-card">
       <h2>{t('preferences.title')}</h2>
-      <label className="setting-row">
-        <span className="setting-text">
-          <b>{t('preferences.dlc')}</b>
-          <small>{t('preferences.dlcHint')}</small>
-        </span>
-        <input
-          type="checkbox"
-          role="switch"
-          className="switch"
-          id="pref-dlc"
-          checked={dlc}
-          aria-checked={dlc}
-          disabled={saving || user.demo}
-          onChange={(e) => change(e.target.checked)}
-        />
-      </label>
-      <PlusSetting user={user} />
-      {user.aiNoticesAvailable && <NoticesSetting user={user} />}
-      {user.demo && <DemoNote />}
-      <LanguageSetting />
-      <div className="setting-row">
-        <span className="setting-text">
-          <b>{t('preferences.intro')}</b>
-          <small>{t('preferences.introHint')}</small>
-        </span>
-        <button
-          type="button"
-          className="ghost sm"
-          onClick={() => document.dispatchEvent(new Event(OPEN_ONBOARDING))}
-        >
-          <Icon name="play" /> {t('preferences.introOpen')}
-        </button>
+      <div className="setting-group">
+        <label className="setting-row" htmlFor="pref-dlc">
+          <SettingTitle title={t('preferences.dlc')} hint={t('preferences.dlcHint')} />
+          <input
+            type="checkbox"
+            role="switch"
+            className="switch"
+            id="pref-dlc"
+            checked={dlc}
+            aria-checked={dlc}
+            disabled={saving || user.demo}
+            onChange={(e) => change(e.target.checked)}
+          />
+        </label>
+        {user.aiNoticesAvailable && <NoticesSetting user={user} />}
+        <PlusSetting user={user} />
+        {user.demo && <DemoNote />}
+        <LanguageSetting />
+        <div className="setting-row">
+          <SettingTitle title={t('preferences.intro')} hint={t('preferences.introHint')} />
+          <button
+            type="button"
+            className="ghost sm"
+            onClick={() => document.dispatchEvent(new Event(OPEN_ONBOARDING))}
+          >
+            <Icon name="play" /> {t('preferences.introOpen')}
+          </button>
+        </div>
       </div>
     </div>
   )

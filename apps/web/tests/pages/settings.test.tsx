@@ -57,12 +57,13 @@ test('a saved preference shows at once, without loading the account again', asyn
     'POST /api/account/preferences': { user: { ...SAMPLE_ME, psPlus: 'extra' } },
   })
   render(<WithAccount />)
-  const plus = (await screen.findByRole('combobox')) as HTMLSelectElement
-  fireEvent.change(plus, { target: { value: 'extra' } })
+  // The picker: a tap opens the options, a tap on one saves it.
+  fireEvent.click(await screen.findByRole('button', { name: /^Seu PS Plus:/ }))
+  fireEvent.click(screen.getByRole('option', { name: 'Extra' }))
   await screen.findByText('PS Plus salvo.')
-  // The saved account renders again: read the select as it is now, once it settles.
+  // The saved account renders again: the picker shows the new value once it settles.
   await waitFor(() =>
-    expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('extra'),
+    expect(screen.getByRole('button', { name: 'Seu PS Plus: Extra' })).toBeTruthy(),
   )
   expect(calls.filter((c) => c.path === '/api/me')).toHaveLength(1)
 })

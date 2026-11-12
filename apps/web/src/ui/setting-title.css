@@ -1,0 +1,60 @@
+/* A setting's name and its ⓘ; what it does unfolds under it. */
+@layer ui {
+  .setting-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .setting-info {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-round);
+    background: transparent;
+    color: var(--color-fg-subtle);
+  }
+
+  .setting-info:hover,
+  .setting-info[aria-expanded="true"] {
+    background: transparent;
+    color: var(--color-accent);
+  }
+
+  .setting-action {
+    margin-left: 6px;
+    font-size: var(--text-sm);
+  }
+
+  .setting-info .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .setting-hint {
+    animation: setting-hint-in 0.2s ease-out;
+  }
+
+  @keyframes setting-hint-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .setting-hint {
+      animation: none;
+    }
+  }
+}
+
+/* A note the player needs now, always under the name. */
+@layer ui {
+  .setting-note {
+    color: var(--color-fg-muted);
+  }
+}

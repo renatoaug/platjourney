@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
+import { Sk } from '../ui/skeleton'
 import { DifficultyMeter } from './difficulty-meter'
 import { image } from './game-showcase'
 import { titleHref } from './tip'
@@ -104,6 +105,24 @@ export function GuideSpotlight({ game }: { game: SpotlightGame }) {
           </span>
         </span>
       )}
+    </aside>
+  )
+}
+
+/** The guide of the day's place while the first list loads. */
+export function GuideSpotlightSkeleton() {
+  return (
+    <aside className="guide-spotlight" aria-hidden="true">
+      <header className="guide-spotlight-heading">
+        <Sk w="90px" h={10} />
+      </header>
+      <div className="guide-spotlight-cover">
+        <Sk w="100%" h={120} />
+      </div>
+      <div className="guide-spotlight-body">
+        <Sk w="70%" h={18} />
+        <Sk w="45%" h={11} />
+      </div>
     </aside>
   )
 }

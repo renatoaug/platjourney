@@ -7,6 +7,7 @@ import { Icon } from '../../ui/icon'
 import { Sk } from '../../ui/skeleton'
 import { season } from './season'
 import '../annual-goal.css'
+import { TrophyMedal } from '../../ui/trophy-medal'
 import './goal-season.css'
 
 const messages = defineMessages({
@@ -188,7 +189,7 @@ export function GoalSeason({
       <div className="goal-overview">
         <div className="goal-season-heading">
           <span className="goal-season-icon">
-            <Icon name="trophy" />
+            <TrophyMedal type="platinum" />
           </span>
           <div>
             <span className="eyebrow">{t('season.eyebrow', { year: p.year })}</span>

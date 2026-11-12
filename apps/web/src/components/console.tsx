@@ -21,6 +21,7 @@ import { JourneyLink } from './journey-link'
 import { FirstAsks } from './nexo-asks'
 import { nexoHref, titleHref } from './tip'
 import './console.css'
+import { TrophyMedal } from '../ui/trophy-medal'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -299,7 +300,7 @@ function Focus({
               <i style={{ width: `${pct(item.progress)}%` }} />
             </div>
             <span className="plat-mark" title={t('platinumAhead')}>
-              <Icon name="trophy" />
+              <TrophyMedal type="platinum" />
             </span>
           </div>
         </div>
@@ -433,7 +434,7 @@ export function Console({ data }: { data: AppStateData }) {
               <Cover url={it.cover} name={it.name} className="console-cover" />
               {it.kind === 'platinum' ? (
                 <span className="console-plat">
-                  <Icon name="trophy" />
+                  <TrophyMedal type="platinum" />
                 </span>
               ) : (
                 <span className="console-mini">

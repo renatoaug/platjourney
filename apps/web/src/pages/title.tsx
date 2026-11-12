@@ -1,5 +1,3 @@
-import { Journey, JourneySkeleton } from '../components/journey'
-import { PlanCard } from '../components/plan'
 /** Game detail for a title outside the current game (owned or recommended). */
 
 import { type ReactNode, useEffect, useState } from 'react'
@@ -8,57 +6,26 @@ import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
-import { DifficultyMeter } from '../components/difficulty-meter'
-import { GameBackdrop, ScenesButton, useScene } from '../components/game-backdrop'
-import { GameNav, type GameSection } from '../components/game-nav'
-import { GameAbout, type GameStore, StoreOffer } from '../components/game-showcase'
-import { Guide, GuideSkeleton } from '../components/guide'
-import {
-  HeroProgress,
-  HeroSkeleton,
-  Short,
-  TrophyBreakdown,
-  UnobtainableBanner,
-} from '../components/hero'
-import { NextTrophy } from '../components/next-trophy'
+import { type GameStore, StoreOffer } from '../components/game-showcase'
+import { Short } from '../components/hero'
+import { Journey, JourneySkeleton } from '../components/journey'
+import { PlanCard } from '../components/plan'
 import { SimilarGamesSection, similarGames } from '../components/similar-games'
-import { TrophyList, TrophyListSkeleton } from '../components/trophy-list'
-import { TrophyRoadmap, TrophyRoadmapSkeleton } from '../components/trophy-roadmap'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
-import { fmtHours } from '../lib/format'
-import { tintStyle } from '../lib/tint'
 import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import './title.css'
-import { nexoHref } from '../components/tip'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    guidePreparing: 'Guia sendo preparado…',
-    hoursOfGuide: '{played} jogadas de ~{hours}h',
-    hoursOfGuideShort: '{played}/~{hours}h',
-    hours: '~{hours} horas',
-    hoursShort: '~{hours}h',
-    playthroughs: {
-      one: '{count} jornada',
-      other: '{count} jornadas',
-    },
-    missables: 'Troféus perdíveis',
-    missablesShort: 'Perdíveis',
-    noMissables: 'Sem perdíveis',
-    online: 'Troféus online',
-    onlineShort: 'Online',
     saved: 'Nos interesses',
     remove: 'Remover dos interesses',
     save: 'Salvar nos interesses',
     saveShort: 'Salvar',
     trophies: 'Troféus',
-    inLibrary: 'NA SUA BIBLIOTECA',
-    talkToNexo: 'Conversar com o Nexo',
-    askNexo: 'Perguntar ao Nexo',
     trophiesPendingTitle: 'Buscando a lista de troféus',
     trophiesPending:
       'A lista deste jogo ainda está chegando da PSN. Volte em breve para ver cada troféu.',
@@ -66,28 +33,11 @@ const messages = defineMessages({
     notFound: 'Não achamos esse jogo.',
   },
   [Language.En]: {
-    guidePreparing: 'Preparing the guide…',
-    hoursOfGuide: '{played} played of ~{hours}h',
-    hoursOfGuideShort: '{played}/~{hours}h',
-    hours: '~{hours} hours',
-    hoursShort: '~{hours}h',
-    playthroughs: {
-      one: '{count} playthrough',
-      other: '{count} playthroughs',
-    },
-    missables: 'Missable trophies',
-    missablesShort: 'Missables',
-    noMissables: 'No missables',
-    online: 'Online trophies',
-    onlineShort: 'Online',
     saved: 'In interests',
     remove: 'Remove from interests',
     save: 'Save to interests',
     saveShort: 'Save',
     trophies: 'Trophies',
-    inLibrary: 'IN YOUR LIBRARY',
-    talkToNexo: 'Talk to Nexo',
-    askNexo: 'Ask Nexo',
     trophiesPendingTitle: 'Fetching the trophy list',
     trophiesPending:
       "This game's list is still on its way from PSN. Come back soon to see each trophy.",
@@ -134,82 +84,7 @@ function titleQuery(spec: string, search: string) {
       : kind === 'id'
         ? `id=${encodeURIComponent(value)}`
         : `name=${encodeURIComponent(value.split('?')[0])}&platform=${encodeURIComponent(platform)}`
-  // A PSN list id comes from the player's library. A catalog link can be any game, and most are not
-  // owned, so its skeleton is the catalog page's.
-  return { query, owned: kind === 'id' }
-}
-
-function TitleMeta({ d }: { d: TitleDetail }) {
-  const t = useMessages(messages)
-  const g = d.guide
-  if (!g)
-    return (
-      <div className="meta">
-        <span>{t('guidePreparing')}</span>
-      </div>
-    )
-  return (
-    <div className="meta">
-      {/* 0 means the sources do not say yet: the fact is left out, never shown as 0. */}
-      {g.difficulty > 0 && <DifficultyMeter value={g.difficulty} look="compact" />}
-      {g.hours > 0 && (
-        <span>
-          <Icon name="clock" />{' '}
-          {d.hoursPlayed != null ? (
-            <Short
-              long={t('hoursOfGuide', { played: fmtHours(d.hoursPlayed), hours: g.hours })}
-              short={t('hoursOfGuideShort', { played: fmtHours(d.hoursPlayed), hours: g.hours })}
-            />
-          ) : (
-            <Short
-              long={t('hours', { hours: g.hours })}
-              short={t('hoursShort', { hours: g.hours })}
-            />
-          )}
-        </span>
-      )}
-      {g.playthroughs > 0 && (
-        <span>
-          <Icon name="gamepad" /> {t('playthroughs', { count: g.playthroughs })}
-        </span>
-      )}
-      <span className={g.hasMissables ? 'warn' : 'ok'}>
-        <Icon name={g.hasMissables ? 'warning' : 'shield'} />{' '}
-        {g.hasMissables ? (
-          <Short long={t('missables')} short={t('missablesShort')} />
-        ) : (
-          t('noMissables')
-        )}
-      </span>
-      {g.hasOnline && (
-        <span className="warn">
-          <Icon name="trophy" /> <Short long={t('online')} short={t('onlineShort')} />
-        </span>
-      )}
-    </div>
-  )
-}
-
-/** Beside the headline, for a game in the library: the next trophy to go for, else its facts card.
- * A game outside the library has its facts in the guide's "About" tab below the section bar. */
-function TitleAside({ d }: { d: TitleDetail }) {
-  if (!d.owned) return null
-  const about = <GameAbout game={d.game} name={d.name} />
-  return (
-    <div className="hero-aside">
-      {d.trophies ? (
-        <NextTrophy
-          trophies={d.trophies}
-          guide={d.guide}
-          game={d.game.id}
-          np={d.np}
-          fallback={about}
-        />
-      ) : (
-        about
-      )}
-    </div>
-  )
+  return { query }
 }
 
 function SaveButton({ d }: { d: TitleDetail }) {
@@ -238,238 +113,61 @@ function SaveButton({ d }: { d: TitleDetail }) {
   )
 }
 
-/** Owned titles load into the same journey as the current game. */
-function TitleSkeleton({ owned = true }: { owned?: boolean }) {
-  if (owned) return <JourneySkeleton gallery={false} />
-  return (
-    <>
-      <div className="hero immersive">
-        <HeroSkeleton
-          aside={false}
-          gallery={false}
-          breakdown
-          cta={
-            <>
-              <Sk w="100%" h={44} />
-              <div className="title-secondary-actions">
-                <Sk w="100%" h={48} />
-                <Sk w="100%" h={48} />
-              </div>
-            </>
-          }
-        />
-      </div>
-      <div className="game-nav" aria-hidden="true">
-        <Sk w="186px" h={52} style={{ borderRadius: 'var(--radius-pill)' }} />
-      </div>
-      <TrophyRoadmapSkeleton />
-      <div className="stack title-columns">
-        <div className="card">
-          <TrophyListSkeleton />
-        </div>
-        <div className="card">
-          <GuideSkeleton />
-        </div>
-      </div>
-    </>
-  )
-}
-
-/** The hero's foot: progress and the chat for a game in the library, saving and asking for one outside it. */
-function HeroBottom({ d }: { d: TitleDetail }) {
+/** Any game opened by link: the one game page, with the player's progress when it is in the
+ * library, else in its catalog mode with its actions (save, ask Nexo, the store) and, while PSN
+ * does not list it yet, a note in place of the trophies. */
+function TitleGame({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; back: ReactNode }) {
   const t = useMessages(messages)
-  if (d.owned)
-    return (
-      <div className="hero-bottom">
-        <HeroProgress
-          game={{
-            earned: d.earned ?? 0,
-            total: d.total ?? 0,
-            progress: d.progress ?? 0,
-            groups: d.groups,
-            trophies: d.trophies,
-          }}
-        />
-        <div className="cta">
-          <Link className="button" to={nexoHref(d.np, d.name)}>
-            {t('talkToNexo')} <Icon name="arrow" />
-          </Link>
-        </div>
-      </div>
-    )
-  // Outside the library the hero shows what there is to earn: the list by tier and how rare the
-  // platinum is.
-  return (
-    <div className="hero-bottom">
-      {d.trophies?.length ? <TrophyBreakdown trophies={d.trophies} /> : null}
-      <div className="cta">
-        <SaveButton d={d} />
-        <div className="title-secondary-actions">
-          {d.trophies?.length ? (
-            <Link className="button secondary" to={nexoHref(d.game.id, d.name)}>
-              <img className="icon" src="/nexo-avatar.svg" alt="" /> {t('askNexo')}
-            </Link>
-          ) : null}
-          {d.store && <StoreOffer store={d.store} />}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const TITLE_SECTIONS: [GameSection, string][] = [
-  ['about', 'title-guide'],
-  ['route', 'journey-roadmap'],
-  ['trophies', 'title-trophies'],
-  ['similar', 'similar-games'],
-]
-
-/** A loaded title: its art across the top under the hero (and the next trophy, when it is in the
- * library), the bar of its sections, the platinum map, trophies and guide, then the similar games. */
-function OwnedJourney({
-  d,
-  similar,
-  back,
-}: {
-  d: TitleDetail
-  similar?: ReactNode
-  back: ReactNode
-}) {
+  const owned = !!(d.owned && d.np)
   const game: CurrentGame = {
     ...d,
     np: d.np ?? '',
     progress: d.progress ?? 0,
     earned: d.earned ?? 0,
-    total: d.total ?? 0,
+    total: d.total ?? d.trophies?.length ?? 0,
     trophies: d.trophies ?? [],
     icon: d.icon ?? undefined,
   }
+  if (owned)
+    return (
+      <Journey game={game} plan={<PlanCard key={d.np} np={d.np} />} similar={similar} back={back} />
+    )
   return (
-    <Journey game={game} plan={<PlanCard key={d.np} np={d.np} />} similar={similar} back={back} />
-  )
-}
-
-function TitleView({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; back: ReactNode }) {
-  const t = useMessages(messages)
-  const g = d.guide
-  const owned = d.owned
-  const shots = d.game.screenshot_ids ?? []
-  const [scene, setScene] = useScene(shots.length)
-  const guide = (
-    <Guide
-      key={d.name}
-      id="title-guide-tabs"
-      about={g ? <GameAbout game={d.game} name={d.name} /> : undefined}
-      game={{
-        name: d.name,
-        guide: g,
-        trophies: d.trophies,
-        deepGuide: d.deepGuide,
-        queued: d.queued === true,
-        // "Ask Nexo" opens the chat on this game: its list when owned, the game itself when not.
-        np: owned ? d.np : d.game.id,
-      }}
+    <Journey
+      game={game}
+      similar={similar}
+      back={back}
+      catalog={
+        <div className="game-overview-cta">
+          <SaveButton d={d} />
+          {d.store && <StoreOffer store={d.store} />}
+        </div>
+      }
+      trophies={
+        d.trophies?.length ? undefined : (
+          <div className="card title-trophies-pending" id="title-trophies">
+            <h2 className="trophy-heading">
+              <Icon name="trophy" />
+              {t('trophies')}
+            </h2>
+            <EmptyState
+              className="title-trophies-wait"
+              icon="clock"
+              title={t('trophiesPendingTitle')}
+            >
+              {t('trophiesPending')}
+            </EmptyState>
+          </div>
+        )
+      }
     />
-  )
-  return (
-    <>
-      <GameBackdrop src={d.icon} shots={shots} at={scene} tint={d.game.tint} />
-      <div className="game-page-actions">
-        {back}
-        <ScenesButton shots={shots} at={scene} name={d.name} onGo={setScene} />
-      </div>
-      <div
-        className={`hero immersive tinted${owned ? '' : ' title-outside'}`}
-        id="title-hero"
-        style={tintStyle(d.game.tint)}
-      >
-        <UnobtainableBanner guide={{ unobtainable: g?.unobtainable }} />
-        <div className="inner">
-          <div className="hero-top">
-            <TitleMeta d={d} />
-          </div>
-          <div className="hero-headline">
-            <div className="hero-title-row">
-              <h2 className="hero-title">{d.name}</h2>
-              <span className="platform">{d.platform}</span>
-            </div>
-          </div>
-          <HeroBottom d={d} />
-          {/* The next trophy to go for; with nothing left to push, or outside the library, the facts. */}
-          <TitleAside d={d} />
-        </div>
-      </div>
-      <GameNav sections={TITLE_SECTIONS} hero="title-hero" name={d.name} progress={d.progress} />
-      {/* About first: the game's facts as the guide's first tab, or above a guide still to come. */}
-      <section className="card title-guide-card" id="title-guide">
-        {!g && <GameAbout game={d.game} name={d.name} />}
-        {guide}
-      </section>
-      {!owned && !!d.trophies?.length && (
-        <TrophyRoadmap
-          key={d.game.id}
-          preview
-          game={{
-            game: d.game,
-            name: d.name,
-            np: d.game.id,
-            trophies: d.trophies,
-            guide: d.guide,
-          }}
-        />
-      )}
-      {/* Trophies first, then the guide; the section navigation reaches both. A game whose PSN
-          list is not known yet says so. */}
-      <div className="stack title-columns" id="game-columns">
-        <div
-          className={`card${owned || d.trophies?.length ? '' : ' title-trophies-pending'}`}
-          id="title-trophies"
-        >
-          {owned || d.trophies?.length ? (
-            // Games not owned list their trophies from the catalog, without the player's progress.
-            // Nexo talks about them by the catalog game.
-            <TrophyList
-              trophies={d.trophies ?? []}
-              guide={d.guide}
-              prefix="title-t"
-              np={owned ? d.np : null}
-              askGame={owned ? undefined : { id: d.game.id, name: d.name }}
-            />
-          ) : (
-            <>
-              <h2 className="trophy-heading">
-                <Icon name="trophy" />
-                {t('trophies')}
-              </h2>
-              <EmptyState
-                className="title-trophies-wait"
-                icon="clock"
-                title={t('trophiesPendingTitle')}
-              >
-                {t('trophiesPending')}
-              </EmptyState>
-            </>
-          )}
-        </div>
-      </div>
-      {similar}
-    </>
   )
 }
 
 type TitleLoad = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; d: TitleDetail }
 
-/** The screen for a given load state. `owned` picks the skeleton (a library link is likely owned);
- * `similar` goes under the showcase ("Parecidos com este"). */
-export function TitleScreen({
-  load,
-  owned,
-  similar,
-}: {
-  load: TitleLoad
-  owned: boolean
-  similar?: ReactNode
-}) {
+/** The screen for a given load state; `similar` goes under the game ("Parecidos com este"). */
+export function TitleScreen({ load, similar }: { load: TitleLoad; similar?: ReactNode }) {
   const t = useMessages(messages)
   const navigate = useNavigate()
   // Back goes where the player came from (Guides, Discover, the library); a page opened from a
@@ -497,14 +195,9 @@ export function TitleScreen({
         </div>
       )}
       <div id="title-page">
-        {load.kind === 'loading' && <TitleSkeleton owned={owned} />}
+        {load.kind === 'loading' && <JourneySkeleton />}
         {load.kind === 'error' && <ErrorState>{t('notFound')}</ErrorState>}
-        {load.kind === 'ready' &&
-          (load.d.owned && load.d.np ? (
-            <OwnedJourney d={load.d} similar={similar} back={back} />
-          ) : (
-            <TitleView d={load.d} similar={similar} back={back} />
-          ))}
+        {load.kind === 'ready' && <TitleGame d={load.d} similar={similar} back={back} />}
       </div>
     </Page>
   )
@@ -513,7 +206,7 @@ export function TitleScreen({
 export function Title() {
   const spec = useParams()['*'] ?? ''
   const { search } = useLocation()
-  const { query, owned } = titleQuery(spec, search)
+  const { query } = titleQuery(spec, search)
   const { cache } = useApp()
   const key = `title:${query}`
   const cached = () => cache[key] as TitleDetail | undefined
@@ -568,7 +261,6 @@ export function Title() {
   return (
     <TitleScreen
       load={load}
-      owned={owned}
       similar={load.kind === 'ready' && <SimilarGamesSection gameId={load.d.game.id} />}
     />
   )

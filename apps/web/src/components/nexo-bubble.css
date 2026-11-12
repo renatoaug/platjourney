@@ -1,0 +1,72 @@
+/* Nexo floating over the screens: a round glass button with Nexo, a gentle bob while idle, and a lift while it is dragged. */
+@layer ui {
+  .nexo-bubble {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-heavy), transparent);
+    box-shadow:
+      var(--shadow-popover),
+      0 0 18px color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
+    backdrop-filter: blur(10px);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    animation: nexo-bubble-in 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) 0.4s backwards;
+    transition: box-shadow 0.2s;
+  }
+
+  .nexo-bubble:hover {
+    background: color-mix(in srgb, var(--color-surface) var(--alpha-heavy), transparent);
+    box-shadow:
+      var(--shadow-popover),
+      0 0 26px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .nexo-bubble img {
+    width: 48px;
+    height: 48px;
+    pointer-events: none;
+    animation: nexo-bubble-bob 3.2s ease-in-out infinite;
+  }
+
+  .nexo-bubble.is-dragging {
+    cursor: grabbing;
+    box-shadow:
+      var(--shadow-drag),
+      0 0 30px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .nexo-bubble.is-dragging img {
+    animation: none;
+    scale: 1.08;
+  }
+
+  @keyframes nexo-bubble-in {
+    from {
+      opacity: 0;
+      scale: 0.3;
+    }
+  }
+
+  @keyframes nexo-bubble-bob {
+    50% {
+      translate: 0 -3px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nexo-bubble,
+    .nexo-bubble img {
+      animation: none;
+    }
+  }
+}

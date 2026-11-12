@@ -16,6 +16,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState, PendingState } from '../ui/states'
 import '../components/goals/year-platinums.css'
 import '../components/trophy-list.css'
+import { TrophyMedal } from '../ui/trophy-medal'
 import './goals.css'
 import './profile.css'
 
@@ -287,7 +288,7 @@ export function ProfileView({
         <section className="profile-tiles">
           <div className="tile plat">
             <div className="tile-label">
-              <Icon name="trophy" className="stat-icon" /> {t('tiles.platinums')}
+              <TrophyMedal type="platinum" className="stat-icon" /> {t('tiles.platinums')}
             </div>
             <b>
               <span className="stat-full">{number(s.earned.platinum)}</span>
@@ -306,7 +307,7 @@ export function ProfileView({
             <div className="sub trophy-counts">
               {(['gold', 'silver', 'bronze'] as const).map((type) => (
                 <span key={type} className={type} title={t(`tiles.${type}`)}>
-                  <Icon name="trophy" />
+                  <TrophyMedal type={type} />
                   <span className="trophy-count">{number(s.earned[type])}</span>
                 </span>
               ))}
@@ -464,7 +465,7 @@ function PlatinumCollection({
             {t('collection.title')} <span>{platinums.length}</span>
           </h2>
         </div>
-        <Icon name="trophy" />
+        <TrophyMedal type="platinum" className="collection-medal" />
       </div>
       {/* No platinum yet: nothing to search or count, only what will show up here. */}
       {platinums.length === 0 && !pending ? (
@@ -599,7 +600,7 @@ export function ProfileSkeleton() {
                 <div className="sub trophy-counts" aria-hidden="true">
                   {(['gold', 'silver', 'bronze'] as const).map((tier) => (
                     <span key={tier} className={tier}>
-                      <Icon name="trophy" />
+                      <TrophyMedal type={tier} />
                       <Sk w="24px" style={{ height: '1lh' }} />
                     </span>
                   ))}
@@ -674,7 +675,7 @@ export function ProfileSkeleton() {
               <span className="eyebrow">{t('collection.eyebrow')}</span>
               <h2 className="goal-section-title">{t('collection.title')}</h2>
             </div>
-            <Icon name="trophy" />
+            <TrophyMedal type="platinum" className="collection-medal" />
           </div>
           <label className="trophy-search">
             <Icon name="search" />

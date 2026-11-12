@@ -108,6 +108,9 @@ test('a failed status lookup stays unconfirmed until retry succeeds', async () =
   expect(screen.queryByText('Notificações desligadas neste aparelho.')).toBeNull()
   state.mockResolvedValue('off')
   fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }))
+  // Confirmed off: the warning goes, and what the switch does sits behind its ⓘ.
+  // (The ⓘ only exists once the state is confirmed on or off.)
+  fireEvent.click(await screen.findByRole('button', { name: 'O que é: Neste aparelho' }))
   expect(await screen.findByText(/Ligue para receber/)).toBeTruthy()
 })
 
@@ -167,5 +170,8 @@ test('failed iOS disable shows uncertainty, and retry confirms remote revocation
   expect(screen.getByText(/Não foi possível confirmar/)).toBeTruthy()
   state.mockResolvedValue('off')
   fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }))
+  // Confirmed off: the warning goes, and what the switch does sits behind its ⓘ.
+  // (The ⓘ only exists once the state is confirmed on or off.)
+  fireEvent.click(await screen.findByRole('button', { name: 'O que é: Neste aparelho' }))
   expect(await screen.findByText(/Ligue para receber/)).toBeTruthy()
 })

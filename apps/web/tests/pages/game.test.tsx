@@ -1,6 +1,8 @@
 import { afterEach, expect, mock, test } from 'bun:test'
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
+import { nexoHref } from '../../src/components/nexo-asks'
+import { NexoBubble } from '../../src/components/nexo-bubble'
 import { samplePlan } from '../../src/components/plan.stories'
 import { current } from '../../src/fixtures'
 import type { CurrentGame } from '../../src/lib/types'
@@ -14,7 +16,7 @@ const game: CurrentGame = {
 }
 
 for (const includeDlcProgress of [false, true]) {
-  test(`journey navigation and hero share the saved DLC scope: ${includeDlcProgress}`, async () => {
+  test(`the overview's ring shares the saved DLC scope: ${includeDlcProgress}`, async () => {
     mockApi({})
     const completed: CurrentGame = {
       ...game,
@@ -24,31 +26,44 @@ for (const includeDlcProgress of [false, true]) {
     renderApp(<GameScreen current={completed} plan={null} />, {
       value: { me: { ...SAMPLE_ME, includeDlcProgress } },
     })
-    await screen.findByRole('navigation', { name: 'Seções do jogo' })
-    expect(document.querySelector('.game-nav-pct')?.textContent).toBe(
+    await screen.findByRole('navigation', { name: completed.name })
+    expect(document.querySelector('.game-ring b')?.textContent).toBe(
       includeDlcProgress ? '80%' : '100%',
     )
-    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe(
-      includeDlcProgress ? '80' : '100',
-    )
+    expect(
+      screen.getByRole('progressbar', { name: 'Progresso no jogo' }).getAttribute('aria-valuenow'),
+    ).toBe(includeDlcProgress ? '80' : '100')
   })
 }
 
-test('journey prioritizes progress and server focus; plan and guide remain available', () => {
+test('the overview leads with progress; the route, the plan and the guide open on their own pages', () => {
   mockApi({})
   renderApp(<GameScreen current={game} plan={<p>plano</p>} />, {
     value: { me: { ...SAMPLE_ME, revealedTrophyGames: [game.game.id] } },
   })
   expect(screen.getByRole('heading', { level: 1, name: 'DAYS GONE' })).toBeTruthy()
-  expect(screen.getByRole('progressbar', { name: 'Progresso do jogo' })).toBeTruthy()
+  expect(screen.getByRole('progressbar', { name: 'Progresso no jogo' })).toBeTruthy()
+  expect(document.getElementById('journey-trophies')?.textContent).toContain('De raspão')
+  expect(screen.getByRole('heading', { name: /^Troféus/ })).toBeTruthy()
+  // The route, the plan and the guide wait behind their cards.
+  expect(document.querySelector('.trophy-roadmap')).toBeNull()
+  expect(document.getElementById('journey-session')).toBeNull()
+  expect(document.querySelector('.journey-guide')).toBeNull()
+
+  fireEvent.click(screen.getByRole('button', { name: /^Jornada da platina/ }))
+  expect(screen.getByRole('heading', { level: 1, name: 'Jornada da platina' })).toBeTruthy()
   expect(
     document.querySelector('.roadmap-step.is-suggested .roadmap-ask')?.getAttribute('href'),
   ).toContain('trophy=')
-  expect(document.getElementById('journey-session')?.hasAttribute('open')).toBe(false)
-  fireEvent.click(screen.getByText('Planejar minha sessão'))
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar para o jogo' }))
+
+  expect(screen.queryByText('plano')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: /^Planejar sessão/ }))
   expect(screen.getByText('plano')).toBeTruthy()
-  expect(document.getElementById('journey-trophies')?.textContent).toContain('De raspão')
-  expect(screen.getByRole('heading', { name: /^Troféus/ })).toBeTruthy()
+  expect(document.getElementById('journey-session')?.textContent).toContain('um roteiro de sessão')
+  fireEvent.click(screen.getByRole('button', { name: 'Voltar para o jogo' }))
+
+  fireEvent.click(screen.getByRole('button', { name: /^Guia da platina/ }))
   expect(document.querySelector('.journey-guide')?.textContent).toContain('Burnout Apocalipse')
 })
 
@@ -66,7 +81,11 @@ test('loading shows skeletons, not an empty or invented journey', () => {
 
 test('a selected game scopes the plan request', async () => {
   const calls = mockApi({ '/api/plan': { plan: samplePlan } })
-  renderApp(<Game />, { value: { data: { ...SAMPLE_DATA, current: game } } })
+  // The plan lives on the session page, so it asks once that page is open.
+  renderApp(<Game />, {
+    path: '/game?view=session',
+    value: { data: { ...SAMPLE_DATA, current: game } },
+  })
   await waitFor(() => expect(calls.some((c) => c.path === `/api/plan?np=${game.np}`)).toBe(true))
 })
 
@@ -79,21 +98,53 @@ test('before first state skeletons remain; a sync failure is explicit', () => {
   expect(screen.getByRole('alert').textContent).toContain('sincronizar')
 })
 
-test('the journey opens on the guide, right under the section bar, then the route and the trophies', () => {
+test('the overview: the trophies by tier and the facts, then the cards in order and the list', () => {
   mockApi({})
-  const { container } = renderApp(
-    <GameScreen current={current as unknown as CurrentGame} plan={null} />,
-  )
+  const withFacts = {
+    ...current,
+    game: { ...current.game, genres: ['Action'], developers: ['Bend Studio'] },
+  } as unknown as CurrentGame
+  const { container } = renderApp(<GameScreen current={withFacts} plan={null} />)
+  const cards = screen.getByRole('navigation', { name: current.name })
+  expect(
+    within(cards)
+      .getAllByRole('button')
+      .map((b) => b.querySelector('b')?.textContent),
+  ).toEqual(['Jornada da platina', 'Guia da platina', 'Planejar sessão', 'Sobre o jogo'])
   const order = [
-    ...container.querySelectorAll('.journey-guide, .trophy-roadmap, .journey-trophies'),
+    ...container.querySelectorAll('.game-links, .game-tiers, .game-facts, .journey-trophies'),
   ]
   expect(order.map((x) => x.classList[x.classList.length > 1 ? 1 : 0])).toEqual([
-    'journey-guide',
-    'trophy-roadmap',
+    'game-tiers',
+    'game-facts',
+    'game-links',
     'journey-trophies',
   ])
   expect(container.querySelector('.game-switch')).toBeNull()
-  // The guide opens on About, as on any game's page, and the section bar starts there.
-  expect(screen.getByRole('tab', { name: 'Sobre' }).getAttribute('aria-selected')).toBe('true')
-  expect(screen.getAllByRole('link', { name: 'Sobre' })[0]).toBeTruthy()
+  // The game's facts unfold in place under their row, with the overview still around them.
+  const about = within(cards).getByRole('button', { name: /^Sobre o jogo/ })
+  expect(about.getAttribute('aria-expanded')).toBe('false')
+  expect(container.querySelector('.journey-about')).toBeNull()
+  fireEvent.click(about)
+  expect(about.getAttribute('aria-expanded')).toBe('true')
+  const panel = container.querySelector('.game-link-panel.journey-about')
+  expect(panel?.previousElementSibling).toBe(about)
+  expect(panel?.querySelector('.game-about')?.textContent).toContain('Bend Studio')
+  expect(container.querySelector('.journey-trophies')).toBeTruthy()
+  fireEvent.click(about)
+  expect(about.getAttribute('aria-expanded')).toBe('false')
+  expect(container.querySelector('.journey-about')).toBeNull()
+})
+
+test('on a game page the floating Nexo opens a conversation about that game', () => {
+  mockApi({})
+  renderApp(
+    <>
+      <GameScreen current={game} plan={null} />
+      <NexoBubble initial={{ x: 0, y: 0 }} />
+    </>,
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Falar com o Nexo' }))
+  expect(screen.getByTestId('location').textContent).toBe(nexoHref(game.np, game.name))
+  expect(screen.getByTestId('location').textContent).toStartWith('/nexo?game=')
 })

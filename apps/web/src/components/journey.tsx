@@ -8,81 +8,36 @@ import { Icon } from '../ui/icon'
 import { GuideText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
 import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
-import { GameNav, type GameSection } from './game-nav'
+import {
+  GameOverview,
+  GameSubpage,
+  type GameView,
+  useGameView,
+  useViewTitle,
+} from './game-overview'
 import { GameAbout } from './game-showcase'
-import { Guide, GuideSkeleton } from './guide'
-import { Hero, HeroSkeleton } from './hero'
+import { Guide } from './guide'
 import { TrophyList, TrophyListSkeleton } from './trophy-list'
-import { TrophyRoadmap, TrophyRoadmapSkeleton } from './trophy-roadmap'
+import { TrophyRoadmap } from './trophy-roadmap'
 import './journey.css'
+import { useNexoTarget } from './nexo-bubble'
+import { nexoHref } from './tip'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    label: 'SUA JORNADA',
-    next: 'Seu próximo passo',
-    ask: 'Me ajuda com isso',
     attention: 'Antes de avançar',
-    pending: 'Pendente no seu roteiro',
-    basis: 'Pelo guia e pelos troféus sincronizados. Isso não confirma onde você está no jogo.',
-    unknown: 'Vamos escolher o próximo passo juntos.',
-    unknownBody:
-      'O Nexo pode cruzar seus troféus com o guia. Conte onde você parou para ajustar a orientação.',
-    done: 'Platina conquistada.',
-    doneBody: 'Sua jornada está registrada. Os troféus e o guia continuam aqui.',
-    talk: 'Conversar com Nexo',
-    guide: 'Consultar o guia completo',
-    plan: 'Planejar minha sessão',
-    session: 'Roteiro da sessão',
-    source: 'Do guia',
-    sync: 'Atualizado pela PSN',
-    unavailable: 'O progresso aparece após a sincronização.',
     onePlan: 'Você mantém um roteiro de sessão por vez. Montar outro substitui o anterior.',
   },
   [Language.En]: {
-    label: 'YOUR JOURNEY',
-    next: 'Your next step',
-    ask: 'Help me with this',
     attention: 'Before moving on',
-    pending: 'Left on your route',
-    basis:
-      'Based on the guide and synced trophies. This does not confirm your location in the game.',
-    unknown: 'Let’s choose your next step together.',
-    unknownBody:
-      'Nexo can connect your trophies with the guide. Say where you stopped to adjust the guidance.',
-    done: 'Platinum earned.',
-    doneBody: 'Your journey is recorded. Your trophies and the guide stay here.',
-    talk: 'Talk to Nexo',
-    guide: 'Read the complete guide',
-    plan: 'Plan my session',
-    session: 'Session route',
-    source: 'From the guide',
-    sync: 'Updated from PSN',
-    unavailable: 'Progress appears after syncing.',
     onePlan: 'You keep one session route at a time. Building another replaces the previous one.',
   },
 })
-
-const SECTIONS: [GameSection, string][] = [
-  ['about', 'journey-guide-section'],
-  ['route', 'journey-roadmap'],
-  ['plan', 'journey-session'],
-  ['trophies', 'journey-trophies'],
-  ['similar', 'similar-games'],
-]
 
 function scopedProgress(c: CurrentGame, includeDlc: boolean) {
   return c.groups?.base
     ? shownProgress(c.groups.base, c.groups.dlc, includeDlc).progress
     : c.progress
-}
-
-function JourneyActions({ back, children }: { back?: ReactNode; children: ReactNode }) {
-  return back ? (
-    <div className="game-page-actions">
-      {back}
-      {children}
-    </div>
-  ) : null
 }
 
 function JourneyWarning({ warning }: { warning: NonNullable<CurrentGame['focus']>['missable'] }) {
@@ -101,109 +56,172 @@ function JourneyWarning({ warning }: { warning: NonNullable<CurrentGame['focus']
   )
 }
 
-/** One owned-game surface, regardless of whether it was opened from PSN presence or the library. */
+/** What one of the game's own pages holds: the route (a preview for a catalog game), the guide,
+ * the session route or the facts. */
+function JourneyPage({
+  view,
+  game: c,
+  plan,
+  catalog,
+  np,
+}: {
+  view: GameView
+  game: CurrentGame
+  plan?: ReactNode
+  catalog: boolean
+  np: string
+}) {
+  const t = useMessages(messages)
+  const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
+  const focus = done || c.guide?.unobtainable || catalog ? null : c.focus
+  return (
+    <>
+      {view === 'journey' &&
+        (catalog ? (
+          c.trophies.length > 0 && (
+            <TrophyRoadmap
+              key={np}
+              preview
+              game={{ game: c.game, name: c.name, np, trophies: c.trophies, guide: c.guide }}
+            />
+          )
+        ) : (
+          <>
+            <TrophyRoadmap key={c.np} game={c} />
+            <JourneyWarning warning={focus?.missable} />
+          </>
+        ))}
+      {view === 'guide' && (
+        <section className="journey-guide is-page" id="journey-guide-section">
+          {!c.guide && <GameAbout game={c.game} name={c.name} />}
+          <Guide
+            id="journey-guide"
+            game={{
+              name: c.name,
+              guide: c.guide ?? null,
+              trophies: c.trophies,
+              np,
+              deepGuide: c.deepGuide,
+              queued: c.queued,
+            }}
+          />
+        </section>
+      )}
+      {view === 'session' && !catalog && (
+        <section className="journey-session" id="journey-session">
+          <p>{t('onePlan')}</p>
+          {plan}
+        </section>
+      )}
+    </>
+  )
+}
+
+/** The one game page, whether opened from PSN presence, the library or the catalog: the game at a
+ * glance, and its journey, guide, session route and facts on their own pages. A catalog game (not
+ * in the library) passes `catalog`: its actions under the head, totals instead of progress, the
+ * journey as a preview, Nexo and the guide on the catalog game, and no session route. */
 export function Journey({
   game: c,
   plan,
   similar,
   back,
+  catalog,
+  trophies,
 }: {
   game: CurrentGame
-  plan: ReactNode
+  plan?: ReactNode
   similar?: ReactNode
   back?: ReactNode
+  catalog?: ReactNode
+  /** In place of the trophy list, e.g. while a catalog game's list is not on PSN yet. */
+  trophies?: ReactNode
 }) {
-  const t = useMessages(messages)
   const includeDlc = useApp().me.includeDlcProgress
   const progress = scopedProgress(c, includeDlc)
   const shots = c.game.screenshot_ids ?? []
   const [scene, setScene] = useScene(shots.length)
-  const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
-  const focus = done || c.guide?.unobtainable ? null : c.focus
+  // Nexo and the guide talk about a catalog game by the game, an owned one by its PSN list.
+  const np = catalog ? c.game.id : c.np
+  // The floating Nexo opens on this game while its page is open.
+  useNexoTarget(np ? nexoHref(np, c.name) : null)
+  const { view, open, close } = useGameView()
+  const title = useViewTitle()
+  const scenes = <ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />
   return (
-    <div className="journey">
+    <div className="journey" style={tintStyle(c.game.tint)}>
       <GameBackdrop src={c.game.art_url ?? c.icon} shots={shots} at={scene} tint={c.game.tint} />
-      <JourneyActions back={back}>
-        <ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />
-      </JourneyActions>
-      <div id="journey-hero" className="hero immersive tinted" style={tintStyle(c.game.tint)}>
-        <Hero game={c} heading={1} cta={false} hideTools />
-      </div>
-      <GameNav
-        sections={SECTIONS}
-        hero="journey-hero"
-        name={c.name}
-        progress={progress}
-        tools={
-          !back && <ScenesButton compact shots={shots} at={scene} name={c.name} onGo={setScene} />
-        }
-      />
-      {/* The guide first, right under the section bar: what hunters look for before the route. */}
-      <section className="card journey-guide" id="journey-guide-section">
-        {/* As on any game's page: the game's facts as the guide's first tab, or above a guide to come. */}
-        {!c.guide && <GameAbout game={c.game} name={c.name} />}
-        <Guide
-          id="journey-guide"
-          about={c.guide ? <GameAbout game={c.game} name={c.name} /> : undefined}
-          game={{
-            name: c.name,
-            guide: c.guide ?? null,
-            trophies: c.trophies,
-            np: c.np,
-            deepGuide: c.deepGuide,
-            queued: c.queued,
-          }}
-        />
-      </section>
-      <TrophyRoadmap key={c.np} game={c} />
-      <JourneyWarning warning={focus?.missable} />
-      <details className="journey-session" id="journey-session">
-        <summary>
-          <Icon name="clock" />
-          {t('plan')}
-          <Icon name="chevron-down" />
-        </summary>
-        <p>{t('onePlan')}</p>
-        {plan}
-      </details>
-      <section className="card journey-trophies" id="journey-trophies">
-        <TrophyList trophies={c.trophies} np={c.np} prefix="journey-t" guide={c.guide} />
-      </section>
-      {similar}
+      {view ? (
+        <GameSubpage title={title(view)} name={c.name} onBack={close}>
+          <JourneyPage view={view} game={c} plan={plan} catalog={!!catalog} np={np} />
+        </GameSubpage>
+      ) : (
+        <>
+          <GameOverview
+            game={c}
+            progress={progress}
+            includeDlc={includeDlc}
+            actions={
+              <>
+                {back ?? <span />}
+                {scenes}
+              </>
+            }
+            onOpen={open}
+            catalog={catalog}
+            trophies={
+              trophies ?? (
+                <section className="card journey-trophies" id="journey-trophies">
+                  <TrophyList
+                    trophies={c.trophies}
+                    np={catalog ? null : c.np}
+                    askGame={catalog ? { id: c.game.id, name: c.name } : undefined}
+                    prefix="journey-t"
+                    guide={c.guide}
+                  />
+                </section>
+              )
+            }
+          />
+          {similar}
+        </>
+      )}
     </div>
   )
 }
 
-/** The same owned-game hierarchy while progress is being loaded. */
-export function JourneySkeleton({ gallery = true }: { gallery?: boolean }) {
-  const t = useMessages(messages)
+/** The overview's shape while progress is being loaded: the head, the cards, the tiers and the
+ * trophy list. */
+export function JourneySkeleton() {
   return (
     <div className="journey" aria-busy="true">
-      <div className="hero immersive tinted">
-        <HeroSkeleton cta={false} aside={false} gallery={false} />
+      <div className="game-overview">
+        <header className="game-overview-head">
+          <Sk w="58px" h={78} style={{ flex: 'none', borderRadius: 'var(--radius-control)' }} />
+          <div className="game-overview-title">
+            <Sk w="38px" h={18} />
+            <Sk w="80%" h={22} />
+            <Sk w="55%" h={11} />
+          </div>
+          <Sk w="72px" h={72} style={{ flex: 'none', borderRadius: 'var(--radius-round)' }} />
+        </header>
+        <Sk w="100%" h={78} style={{ borderRadius: 'var(--radius-card)' }} />
+        <Sk w="100%" h={68} style={{ borderRadius: 'var(--radius-card)' }} />
+        <div className="game-links">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="game-link">
+              <Sk w="34px" h={34} style={{ flex: 'none' }} />
+              <span className="game-link-copy">
+                <Sk w={`${40 + i * 8}%`} h={14} />
+                <Sk w="65%" h={11} />
+              </span>
+            </div>
+          ))}
+        </div>
+        <section className="card journey-trophies">
+          <TrophyListSkeleton />
+        </section>
       </div>
-      <div className="game-nav" aria-hidden="true">
-        <Sk w="186px" h={52} style={{ borderRadius: 'var(--radius-pill)' }} />
-        {gallery && (
-          <span className="game-nav-tools">
-            <Sk w="48px" h={44} />
-          </span>
-        )}
-      </div>
-      <section className="card journey-guide">
-        <GuideSkeleton />
-      </section>
-      <TrophyRoadmapSkeleton />
-      <details className="journey-session">
-        <summary>
-          <Icon name="clock" />
-          {t('plan')}
-          <Icon name="chevron-down" />
-        </summary>
-      </details>
-      <section className="card journey-trophies">
-        <TrophyListSkeleton />
-      </section>
     </div>
   )
 }
