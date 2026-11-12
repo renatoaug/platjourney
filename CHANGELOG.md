@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.73.0](https://github.com/renatoaug/platjourney/compare/v0.72.5...v0.73.0) (2026-11-12)
+
+### Features
+
+* **web:** let players pick the app's accent color ([#181](https://github.com/renatoaug/platjourney/issues/181)) ([4f5f29b](https://github.com/renatoaug/platjourney/commit/4f5f29bd84d1e311b03cff4f7b80cf88a08cd9ed))
+
 ## [0.72.5](https://github.com/renatoaug/platjourney/compare/v0.72.4...v0.72.5) (2026-11-12)
 
 ### Bug Fixes
