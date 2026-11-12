@@ -12,6 +12,7 @@ import {
 } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { tick } from '../lib/native'
 import './nexo-bubble.css'
 
 const messages = defineMessages({
@@ -93,6 +94,8 @@ export function NexoBubble({ initial }: { initial?: Point }) {
   const navigate = useNavigate()
   const [point, setPoint] = useState<Point>(() => initial ?? start())
   const [dragging, setDragging] = useState(false)
+  // Pressed, before or while dragging: Nexo grows and glows under the finger.
+  const [held, setHeld] = useState(false)
   const href = useSyncExternalStore(subscribe, () => target) ?? LATEST
   const press = useRef<{ dx: number; dy: number; x: number; y: number } | null>(null)
   // A drag ends with a click on the same button: this tells it apart from a tap.
@@ -135,12 +138,15 @@ export function NexoBubble({ initial }: { initial?: Point }) {
     if (e.button !== 0) return
     e.currentTarget.setPointerCapture(e.pointerId)
     dragged.current = false
+    setHeld(true)
     press.current = { dx: e.clientX - point.x, dy: e.clientY - point.y, x: e.clientX, y: e.clientY }
   }
   const move = (e: PointerEvent<HTMLButtonElement>) => {
     const p = press.current
     if (!p) return
     if (!dragged.current && Math.hypot(e.clientX - p.x, e.clientY - p.y) < DRAG_PX) return
+    // A short tap of the phone as Nexo comes loose.
+    if (!dragged.current) tick()
     dragged.current = true
     setDragging(true)
     setPoint(
@@ -154,6 +160,7 @@ export function NexoBubble({ initial }: { initial?: Point }) {
   }
   const up = () => {
     press.current = null
+    setHeld(false)
     setDragging(false)
     if (!dragged.current) return
     try {
@@ -174,7 +181,7 @@ export function NexoBubble({ initial }: { initial?: Point }) {
     <button
       ref={button}
       type="button"
-      className={`nexo-bubble${dragging ? ' is-dragging' : ''}`}
+      className={`nexo-bubble${held ? ' is-held' : ''}${dragging ? ' is-dragging' : ''}`}
       data-no-pull
       style={{ transform: `translate3d(${point.x}px, ${point.y}px, 0)` }}
       aria-label={t('open')}

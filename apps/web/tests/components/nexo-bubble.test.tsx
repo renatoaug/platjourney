@@ -10,7 +10,7 @@ test('the floating Nexo stays inside the window and above the space a phone bott
   expect(clampBubble({ x: 400, y: 300 }, 1280, 800)).toEqual({ x: 400, y: 300 })
 })
 
-test('while Nexo is held, a finger moving does not scroll the page; otherwise it does', () => {
+test('while Nexo is held it shows it, and a finger moving does not scroll the page', () => {
   renderApp(<NexoBubble initial={{ x: 100, y: 100 }} />)
   const bubble = screen.getByRole('button', { name: 'Falar com o Nexo' })
   const swipe = () => {
@@ -20,7 +20,10 @@ test('while Nexo is held, a finger moving does not scroll the page; otherwise it
   }
   expect(swipe()).toBe(false)
   fireEvent.pointerDown(bubble, { button: 0, clientX: 130, clientY: 130 })
+  // Held at once, before it moves: Nexo grows and glows.
+  expect(bubble.classList.contains('is-held')).toBe(true)
   expect(swipe()).toBe(true)
   fireEvent.pointerUp(bubble)
+  expect(bubble.classList.contains('is-held')).toBe(false)
   expect(swipe()).toBe(false)
 })
