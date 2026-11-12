@@ -756,11 +756,15 @@
     font-size: var(--text-md);
   }
 
-  /* The pill under the active link glows like a selected menu entry in a game. */
+  /* The menu's column scrolls, so it clips anything outside it: the glow stays inside the pill,
+     a soft light on its top edge, instead of a shadow the column would cut. */
   .nav-indicator {
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent),
-      0 6px 22px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent) 85%, var(--color-fg)),
+      var(--color-accent) 55%
+    );
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-fg) var(--alpha-glow), transparent);
   }
 
   .nav a.active .icon {
