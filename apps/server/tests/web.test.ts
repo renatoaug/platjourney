@@ -1069,6 +1069,14 @@ test('pages come from the built app, with long cache only for assets', async () 
   ).toEndWith('/index.html')
 })
 
+test('the trophy art is served as an image, not the app shell', async () => {
+  spyOn(fs, 'existsSync').mockReturnValue(true)
+  spyOn(fs, 'readFileSync').mockReturnValue('webp')
+  const art = await send('GET', '/trophies/gold.webp')
+  expect(art).toMatchObject({ status: 200, body: 'webp' })
+  expect(art.headers['content-type']).toBe('image/webp')
+})
+
 test('the app shell points link previews at its image with the address the visitor used', async () => {
   spyOn(fs, 'existsSync').mockReturnValue(true)
   spyOn(fs, 'readFileSync').mockReturnValue('<meta property="og:image" content="/og.png">')

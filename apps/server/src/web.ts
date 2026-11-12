@@ -77,6 +77,8 @@ const STATIC_TYPES: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  // The trophy art (public/trophies).
+  '.webp': 'image/webp',
   // Browsers and the services that show a site's icon (an assistant's list of connectors) ask for it.
   '.ico': 'image/x-icon',
   // The install manifest: without its type the app shell would be served in its place.
