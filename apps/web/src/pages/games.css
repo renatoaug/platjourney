@@ -208,26 +208,19 @@
 
   .games-interests .next-up {
     width: 100%;
-    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-columns: 56px minmax(0, 1fr) auto;
     padding: 12px;
     gap: 12px;
   }
 
   .games-interests .next-up-cover {
     width: 56px;
-    min-height: 76px;
   }
 
-  .games-interests .next-up-head {
-    flex-wrap: wrap;
-    gap: 4px 12px;
-  }
-
-  .games-interests .next-up-head b {
+  .games-interests .next-up-name {
     font-size: var(--text-lg);
   }
 
-  .games-interests .next-up .button,
   .games-interests #goal-add-toggle {
     min-height: 44px;
   }

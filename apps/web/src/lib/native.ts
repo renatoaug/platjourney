@@ -82,6 +82,9 @@ export function barOverflow(
   return Math.max(0, Math.round(barBottom - Math.min(visibleBottom, screenHeight)))
 }
 
+// How long the page stays still before the bottom bar is measured again after a scroll.
+const SCROLL_SETTLE_MS = 150
+
 /** A field the keyboard is open for. */
 const typing = () =>
   !!document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]')
@@ -100,6 +103,8 @@ export function keepBottomBarOnScreen(bar: HTMLElement): () => void {
   const timers: ReturnType<typeof setTimeout>[] = []
   const check = () => {
     const viewport = window.visualViewport
+    // Zoomed in, the visible area is not the layout's: leave the bar as it is until it is back.
+    if (viewport && viewport.scale !== 1) return
     const visible = viewport ? viewport.offsetTop + viewport.height : window.innerHeight
     const portrait = window.innerHeight >= window.innerWidth
     const next =
@@ -115,18 +120,27 @@ export function keepBottomBarOnScreen(bar: HTMLElement): () => void {
     check()
     for (const ms of [120, 400, 800]) timers.push(setTimeout(check, ms))
   }
+  // While the page scrolls, and above all while it bounces at an end, the visible area moves under
+  // the bar: measured then, the lift dropped to nothing and the bar sank below the edge, with no
+  // event left to bring it back. Scrolling measures once it has stopped.
+  let scrolling: ReturnType<typeof setTimeout> | undefined
+  const scrolled = () => {
+    clearTimeout(scrolling)
+    scrolling = setTimeout(check, SCROLL_SETTLE_MS)
+  }
   check()
   const targets: EventTarget[] = [window, window.visualViewport].filter((x) => !!x) as EventTarget[]
   for (const target of targets) target.addEventListener('resize', check)
-  window.visualViewport?.addEventListener('scroll', check)
-  window.addEventListener('scroll', check, { passive: true })
+  window.visualViewport?.addEventListener('scroll', scrolled)
+  window.addEventListener('scroll', scrolled, { passive: true })
   document.addEventListener('visibilitychange', check)
   document.addEventListener('focusin', check)
   document.addEventListener('focusout', settle)
   return () => {
     for (const target of targets) target.removeEventListener('resize', check)
-    window.visualViewport?.removeEventListener('scroll', check)
-    window.removeEventListener('scroll', check)
+    window.visualViewport?.removeEventListener('scroll', scrolled)
+    window.removeEventListener('scroll', scrolled)
+    clearTimeout(scrolling)
     document.removeEventListener('visibilitychange', check)
     document.removeEventListener('focusin', check)
     document.removeEventListener('focusout', settle)

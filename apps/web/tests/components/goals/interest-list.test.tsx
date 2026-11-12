@@ -120,6 +120,41 @@ describe('InterestList', () => {
     expect(document.querySelector('.drag-ghost')).toBeNull()
   })
 
+  test('a finger drags only after resting on the grip; a swipe over it scrolls', async () => {
+    const { container } = render(<Demo onReorder={mock(async () => {})} />)
+    const first = container.querySelector('li[data-id="interest:0"]') as HTMLElement
+    const grip = first.querySelector('[data-grip]') as HTMLElement
+    const wait = (ms: number) => act(() => new Promise((r) => setTimeout(r, ms)))
+    // A swipe: the finger moves away before the hold, so nothing is lifted.
+    fireEvent.pointerDown(grip, { clientX: 10, clientY: 5, pointerType: 'touch' })
+    act(() => {
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 10, clientY: 60 }))
+    })
+    await wait(350)
+    expect(document.querySelector('.drag-ghost')).toBeNull()
+    // A tap: lifted before the hold.
+    fireEvent.pointerDown(grip, { clientX: 10, clientY: 5, pointerType: 'touch' })
+    act(() => {
+      document.dispatchEvent(new PointerEvent('pointerup'))
+    })
+    await wait(350)
+    expect(document.querySelector('.drag-ghost')).toBeNull()
+    // A hold: the row lifts, and the page does not scroll under the finger.
+    fireEvent.pointerDown(grip, { clientX: 10, clientY: 5, pointerType: 'touch' })
+    act(() => {
+      document.dispatchEvent(new PointerEvent('pointermove', { clientX: 12, clientY: 7 }))
+    })
+    await wait(350)
+    expect(document.querySelector('.drag-ghost')).toBeTruthy()
+    const touch = new Event('touchmove', { cancelable: true })
+    document.dispatchEvent(touch)
+    expect(touch.defaultPrevented).toBe(true)
+    act(() => {
+      document.dispatchEvent(new PointerEvent('pointerup'))
+    })
+    expect(document.body.classList.contains('is-dragging')).toBe(false)
+  })
+
   test('a busy list cannot be dragged and pointer downs outside the grip do nothing', () => {
     const onReorder = mock(async () => {})
     const { container } = render(<Demo busy onReorder={onReorder} />)

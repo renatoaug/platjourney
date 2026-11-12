@@ -18,8 +18,11 @@ const PULL_MAX = 96
 // The finger moves twice what the indicator does: the pull feels heavy, as in iOS.
 const RESISTANCE = 0.5
 
-/** Whether the touch started inside something scrolled down (a chat, a sheet): that one scrolls. */
+/** Whether the touch started inside something scrolled down (a chat, a sheet): that one scrolls.
+ * Or on something dragged around ([data-no-pull]: the floating Nexo, a list's grip): pulling it
+ * down moves it, not the page. */
 function insideScrolled(target: EventTarget | null): boolean {
+  if ((target as Element | null)?.closest?.('[data-no-pull]')) return true
   for (let el = target as HTMLElement | null; el && el !== document.body; el = el.parentElement)
     if (el.scrollTop > 0 || el.closest('dialog')) return true
   return false

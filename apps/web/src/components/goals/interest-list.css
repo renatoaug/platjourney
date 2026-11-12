@@ -361,7 +361,10 @@
     color: var(--color-accent-muted);
     cursor: grab;
     border-radius: var(--radius-tag);
-    touch-action: none;
+    /* A swipe on it scrolls the page; holding it still starts the drag (holdToDrag). */
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
 
   .goal-grip:hover {

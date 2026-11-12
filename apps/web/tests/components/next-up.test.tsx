@@ -20,10 +20,10 @@ test('the next platinum is the first in the player order that is not platinumed 
   expect(nextUp([interest(4, 1, { done: true })])).toBeNull()
 })
 
-test('the card shows the progress, or that it was never started, and opens the game', () => {
+test('the card shows the progress, or that it was never started, and the whole card opens the game', () => {
   const { unmount } = renderApp(<NextUp interest={interest(1, 1, { progress: 38 })} />)
   expect(screen.getByText('38% dos troféus')).toBeTruthy()
-  expect(screen.getByRole('link', { name: /Abrir jogo/ }).getAttribute('href')).toContain(
+  expect(screen.getByRole('link', { name: /Próxima platina/ }).getAttribute('href')).toContain(
     'game%3A1',
   )
   unmount()

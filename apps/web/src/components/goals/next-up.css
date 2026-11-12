@@ -1,7 +1,8 @@
 @layer screens {
   .next-up {
     display: grid;
-    grid-template-columns: 84px 1fr;
+    grid-template-columns: 84px minmax(0, 1fr) auto;
+    align-items: center;
     gap: 16px;
     width: min(480px, 100%);
     padding: 16px;
@@ -10,14 +11,29 @@
     background: color-mix(in srgb, var(--color-surface) var(--alpha-dim), transparent);
     backdrop-filter: blur(16px);
     box-shadow: var(--shadow-popover);
+    color: var(--color-fg);
+    transition: border-color 0.15s;
   }
 
-  /* The cover as tall as the card's text, however many lines the name takes. */
+  .next-up:hover {
+    border-color: var(--color-accent-muted);
+  }
+
+  .next-up > .icon {
+    color: var(--color-fg-muted);
+  }
+
+  .next-up:hover > .icon {
+    color: var(--color-accent);
+  }
+
+  /* The cover in its own shape (3:4), centered on the card's text: stretched to a tall text it
+     came out squeezed. */
   .next-up-cover {
-    align-self: stretch;
+    align-self: center;
     width: 84px;
-    height: 100%;
-    min-height: 112px;
+    height: auto;
+    aspect-ratio: 3 / 4;
     object-fit: cover;
     border-radius: var(--radius-control);
   }
@@ -44,37 +60,13 @@
     text-transform: none;
   }
 
-  /* The name and, at the far end of its line, the way in. */
-  .next-up-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 14px;
-  }
-
-  .next-up-head b {
+  .next-up-name {
     font-family: var(--font-display);
     font-size: var(--text-2xl);
     font-weight: var(--weight-medium);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-snug);
     text-wrap: balance;
-  }
-
-  .next-up .button {
-    flex: none;
-    gap: 6px;
-    height: 32px;
-    min-height: 0;
-    margin-top: 2px;
-    padding: 0 12px;
-    font-size: var(--text-sm);
-    white-space: nowrap;
-  }
-
-  .next-up .button .icon {
-    width: 13px;
-    height: 13px;
   }
 
   .next-up-progress {
@@ -98,13 +90,12 @@
 
   @media (max-width: 480px) {
     .next-up {
-      grid-template-columns: 72px 1fr;
+      grid-template-columns: 72px minmax(0, 1fr) auto;
       gap: 14px;
     }
 
     .next-up-cover {
       width: 72px;
-      min-height: 96px;
     }
   }
 }
