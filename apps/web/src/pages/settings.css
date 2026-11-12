@@ -117,9 +117,11 @@
 
   /* A group: hairlines above and below its rows, its name above it and room between groups. */
   .setting-group,
+  /* Right under the preferences, as more rows of the same group: no gap, no line of its own on
+     top (the group's last line is it). */
   .settings-links {
     display: grid;
-    border-block: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .setting-group .setting-row,
@@ -142,10 +144,6 @@
   .setting-group .push-test {
     margin: 0;
     padding: 10px 4px;
-  }
-
-  .settings-links {
-    margin-top: 32px;
   }
 
   .settings-links a {

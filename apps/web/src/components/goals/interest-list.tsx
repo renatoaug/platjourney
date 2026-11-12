@@ -1,15 +1,10 @@
 /** The interests list: filter chips, ten per page, and drag to reorder what is still to platinum. */
-import {
-  type PointerEvent as ReactPointerEvent,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router'
 import { defineMessages, Language, type Translator, useLocale, useMessages } from '../../i18n/i18n'
 import { fmtDate, fmtHours, pct } from '../../lib/format'
+import { tick } from '../../lib/native'
 import type { Interest } from '../../lib/types'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
@@ -190,7 +185,13 @@ function Row({
       {g.done || readOnly ? (
         <span className="goal-grip placeholder" />
       ) : (
-        <span className="goal-grip" data-grip aria-hidden="true" data-tip={t('list.drag')}>
+        <span
+          className="goal-grip"
+          data-grip
+          data-no-pull
+          aria-hidden="true"
+          data-tip={t('list.drag')}
+        >
           <Icon name="grip" />
         </span>
       )}
@@ -232,6 +233,34 @@ function Row({
       )}
     </>
   )
+}
+
+// On a touch screen the grip sits where a thumb scrolls the list: a drag starts only after the
+// finger rests on it for a moment, so a swipe that lands on the grip still scrolls the page.
+const HOLD_MS = 280
+const HOLD_SLOP = 8
+
+/** Calls `start` with where the finger is once it has held still on the grip for HOLD_MS; a move
+ * past HOLD_SLOP, a lift or a cancel (the page started scrolling) first lets it go. */
+function holdToDrag(down: PointerEvent, start: (clientY: number) => void): void {
+  let y = down.clientY
+  const end = () => {
+    clearTimeout(timer)
+    document.removeEventListener('pointermove', move)
+    document.removeEventListener('pointerup', end)
+    document.removeEventListener('pointercancel', end)
+  }
+  const move = (e: PointerEvent) => {
+    y = e.clientY
+    if (Math.hypot(e.clientX - down.clientX, e.clientY - down.clientY) > HOLD_SLOP) end()
+  }
+  const timer = setTimeout(() => {
+    end()
+    start(y)
+  }, HOLD_MS)
+  document.addEventListener('pointermove', move)
+  document.addEventListener('pointerup', end)
+  document.addEventListener('pointercancel', end)
 }
 
 export function InterestList({
@@ -327,14 +356,13 @@ export function InterestList({
   }
 
   // Pointer-based drag (mouse and touch); the ghost settles into its slot on release.
-  const startDrag = (event: ReactPointerEvent<HTMLElement>, id: string) => {
+  const startDrag = (grip: HTMLElement, clientY: number, id: string) => {
     const li = rows.current.get(id)
     if (!li || busy || readOnly || stopDrag.current) return
-    event.preventDefault()
     // Hide the grip's "Arrastar" tooltip: the global host hides on mouseout of a [data-tip].
-    event.currentTarget.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
+    grip.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
     const r = li.getBoundingClientRect()
-    const offsetY = event.clientY - r.top
+    const offsetY = clientY - r.top
     let current = visible.map((g) => g.id)
     let lastTarget: string | null = null
     setOrder(current)
@@ -370,7 +398,10 @@ export function InterestList({
       current = next
       setOrder(next)
     }
+    // While a finger drags, the page does not scroll under it.
+    const still = (e: TouchEvent) => e.preventDefault()
     const detach = () => {
+      document.removeEventListener('touchmove', still)
       document.removeEventListener('pointermove', move)
       document.removeEventListener('pointerup', up)
       document.removeEventListener('pointercancel', up)
@@ -391,6 +422,7 @@ export function InterestList({
       onReorder(fullOrder(current)).finally(() => setOrder(null))
     }
     stopDrag.current = detach
+    document.addEventListener('touchmove', still, { passive: false })
     document.addEventListener('pointermove', move, { passive: false })
     document.addEventListener('pointerup', up)
     document.addEventListener('pointercancel', up)
@@ -445,7 +477,17 @@ export function InterestList({
                 data-game={g.game.id}
                 data-draggable={g.done || readOnly ? undefined : ''}
                 onPointerDown={(event) => {
-                  if ((event.target as HTMLElement).closest('[data-grip]')) startDrag(event, g.id)
+                  const grip = (event.target as HTMLElement).closest<HTMLElement>('[data-grip]')
+                  if (!grip) return
+                  if (event.pointerType === 'touch')
+                    holdToDrag(event.nativeEvent, (y) => {
+                      tick()
+                      startDrag(grip, y, g.id)
+                    })
+                  else {
+                    event.preventDefault()
+                    startDrag(grip, event.clientY, g.id)
+                  }
                 }}
               >
                 <Row

@@ -147,6 +147,7 @@ export function NexoBubble({ initial }: { initial?: Point }) {
     <button
       type="button"
       className={`nexo-bubble${dragging ? ' is-dragging' : ''}`}
+      data-no-pull
       style={{ transform: `translate3d(${point.x}px, ${point.y}px, 0)` }}
       aria-label={t('open')}
       data-tip={t('open')}
