@@ -188,4 +188,37 @@
   .account-actions {
     margin-top: 14px;
   }
+
+  /* A color's dot, in the app color setting and its list. */
+  .accent-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: var(--radius-round);
+  }
+
+  .accent-swatch.is-lime {
+    background: var(--color-swatch-lime);
+  }
+
+  .accent-swatch.is-cyan {
+    background: var(--color-swatch-cyan);
+  }
+
+  .accent-swatch.is-cobalt {
+    background: var(--color-swatch-cobalt);
+  }
+
+  .accent-swatch.is-violet {
+    background: var(--color-swatch-violet);
+  }
+
+  .accent-swatch.is-magenta {
+    background: var(--color-swatch-magenta);
+  }
+
+  .accent-swatch.is-amber {
+    background: var(--color-swatch-amber);
+  }
 }

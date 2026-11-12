@@ -1,3 +1,4 @@
+import type { Accent } from '../../../../shared/accent'
 import type { TrophyGraph } from '../../../../shared/journey/graph'
 import type { PlayerStep, StoryUnit } from '../../../../shared/journey/places'
 import type { Locale } from '../i18n/locale'
@@ -17,6 +18,8 @@ export interface Me {
   revealedTrophyGames?: string[]
   /** The PS Plus tier the player says they have. */
   psPlus?: 'none' | 'essential' | 'extra' | 'deluxe'
+  /** The app's accent color picked in Settings. */
+  accent?: Accent
   /** Nexo writes this player's automatic notices; off, they are plain and free. */
   aiNotices?: boolean
   /** Whether this instance lets Nexo write notices at all. */

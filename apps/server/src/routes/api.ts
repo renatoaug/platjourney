@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { DEFAULT_ACCENT } from '../../../../shared/accent.ts'
 import { apnsEnabled } from '../apns.ts'
 import { config } from '../config.ts'
 import { deepGuideStats } from '../deepguide.ts'
@@ -53,6 +54,7 @@ export const publicUser = (u: User) => ({
   includeDlcProgress: u.include_dlc_progress === true,
   revealedTrophyGames: u.revealed_trophy_games ?? [],
   psPlus: u.ps_plus ?? 'none',
+  accent: u.accent ?? DEFAULT_ACCENT,
   aiNotices: u.ai_notices !== false,
   notifyTelegram: u.notify_telegram !== false,
   // The key a browser subscribes to push with; null when the instance has push off.

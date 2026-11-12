@@ -1,3 +1,4 @@
+import { isAccent } from '../../../../shared/accent.ts'
 import { apnsEnabled } from '../apns.ts'
 import {
   AuthError,
@@ -38,10 +39,12 @@ const messages = defineMessages({
   },
 })
 
-// Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices and the language.
+// Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices, the language
+// and the app's accent color.
 async function savePreferences({ req, res, me, locale: language }: Api) {
   const t = translator(messages, language)
-  const { includeDlcProgress, aiNotices, notifyTelegram, locale, psPlus } = await readBody(req)
+  const { includeDlcProgress, aiNotices, notifyTelegram, locale, psPlus, accent } =
+    await readBody(req)
   const fields: Partial<User> = {}
   if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
   if (psPlus !== undefined) {
@@ -49,6 +52,10 @@ async function savePreferences({ req, res, me, locale: language }: Api) {
     const tier = tiers.find((x) => x === psPlus)
     if (!tier) return json(res, 400, { error: 'invalid' })
     fields.ps_plus = tier
+  }
+  if (accent !== undefined) {
+    if (!isAccent(accent)) return json(res, 400, { error: 'invalid' })
+    fields.accent = accent
   }
   if (typeof aiNotices === 'boolean') fields.ai_notices = aiNotices
   if (typeof notifyTelegram === 'boolean') fields.notify_telegram = notifyTelegram
