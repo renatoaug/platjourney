@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.72.4](https://github.com/renatoaug/platjourney/compare/v0.72.3...v0.72.4) (2026-11-12)
+
+### Bug Fixes
+
+* **web:** keep the page still while Nexo is dragged ([#179](https://github.com/renatoaug/platjourney/issues/179)) ([d840149](https://github.com/renatoaug/platjourney/commit/d840149c3af72ce774b4871bdd912662d88764df))
+
 ## [0.72.3](https://github.com/renatoaug/platjourney/compare/v0.72.2...v0.72.3) (2026-11-12)
 
 ### Bug Fixes
