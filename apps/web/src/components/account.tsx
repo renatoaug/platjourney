@@ -10,7 +10,7 @@ import { SettingTitle } from '../ui/setting-title'
 import { Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
 import { type AuthForm, useAuthForm } from './auth/use-auth-form'
-import { DemoNote } from './demo'
+import { DemoNote, useDemoLock } from './demo'
 import { LanguageSetting } from './language-switcher'
 import { NotificationSettings, NotificationSettingsSkeleton } from './notification-settings'
 import { OPEN_ONBOARDING } from './onboarding'
@@ -133,6 +133,7 @@ const restart = () => {
 // Whether Nexo writes this player's automatic notices; only shown when the instance allows it.
 function NoticesSetting({ user }: { user: Me }) {
   const t = useMessages(messages)
+  const locked = useDemoLock(user.demo)
   const { setMe } = useApp()
   const [on, setOn] = useState(user.aiNotices !== false)
   const [saving, setSaving] = useState(false)
@@ -152,7 +153,11 @@ function NoticesSetting({ user }: { user: Me }) {
   }
   return (
     <label className="setting-row" htmlFor="pref-notices">
-      <SettingTitle title={t('preferences.notices')} hint={t('preferences.noticesHint')} />
+      <SettingTitle
+        title={t('preferences.notices')}
+        hint={t('preferences.noticesHint')}
+        note={locked}
+      />
       <input
         type="checkbox"
         role="switch"
@@ -172,6 +177,7 @@ const PLUS_TIERS = ['none', 'essential', 'extra', 'deluxe'] as const
 /** The player's PS Plus tier: PSN does not say, so they do. */
 function PlusSetting({ user }: { user: Me }) {
   const t = useMessages(messages)
+  const locked = useDemoLock(user.demo)
   const { setMe } = useApp()
   const [saving, setSaving] = useState(false)
   const change = async (tier: (typeof PLUS_TIERS)[number]) => {
@@ -191,6 +197,7 @@ function PlusSetting({ user }: { user: Me }) {
       <SettingTitle
         title={t('preferences.plus')}
         hint={t('preferences.plusHint')}
+        note={locked}
         htmlFor="pref-plus"
       />
       <Picker
@@ -210,6 +217,7 @@ function PlusSetting({ user }: { user: Me }) {
 
 function PreferencesCard({ user }: { user: Me }) {
   const t = useMessages(messages)
+  const locked = useDemoLock(user.demo)
   const { setMe } = useApp()
   const [dlc, setDlc] = useState(user.includeDlcProgress)
   const [saving, setSaving] = useState(false)
@@ -239,7 +247,11 @@ function PreferencesCard({ user }: { user: Me }) {
       <h2>{t('preferences.title')}</h2>
       <div className="setting-group">
         <label className="setting-row" htmlFor="pref-dlc">
-          <SettingTitle title={t('preferences.dlc')} hint={t('preferences.dlcHint')} />
+          <SettingTitle
+            title={t('preferences.dlc')}
+            hint={t('preferences.dlcHint')}
+            note={locked}
+          />
           <input
             type="checkbox"
             role="switch"
@@ -253,7 +265,6 @@ function PreferencesCard({ user }: { user: Me }) {
         </label>
         {user.aiNoticesAvailable && <NoticesSetting user={user} />}
         <PlusSetting user={user} />
-        {user.demo && <DemoNote />}
         <LanguageSetting />
         <div className="setting-row">
           <SettingTitle title={t('preferences.intro')} hint={t('preferences.introHint')} />

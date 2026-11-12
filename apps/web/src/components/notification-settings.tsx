@@ -10,7 +10,7 @@ import type { Me } from '../lib/types'
 import { SettingTitle } from '../ui/setting-title'
 import { Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
-import { DemoNote } from './demo'
+import { useDemoLock } from './demo'
 import './account.css'
 import './notification-settings.css'
 
@@ -110,7 +110,12 @@ export function NotificationSettingsView({
   onTelegram,
 }: ViewProps) {
   const t = useMessages(messages)
+  const locked = useDemoLock(demo)
   const switchable = push === 'on' || push === 'off'
+  // What the device row says: how it is set, or why it cannot be (the demo, a blocked browser).
+  const deviceHint = switchable ? t(`deviceHint.${push}`) : null
+  const deviceNote = locked ?? (switchable || push === 'loading' ? null : t(`deviceHint.${push}`))
+  const telegramNote = locked ?? (telegramLinked ? null : t('telegramLinkFirst'))
   return (
     <div className="card" id="notifications-card">
       <h2>{t('title')}</h2>
@@ -121,12 +126,8 @@ export function NotificationSettingsView({
             <SettingTitle
               title={t('device')}
               htmlFor="pref-push"
-              hint={push === 'on' || push === 'off' ? t(`deviceHint.${push}`) : null}
-              note={
-                push !== 'loading' && push !== 'on' && push !== 'off'
-                  ? t(`deviceHint.${push}`)
-                  : null
-              }
+              hint={deviceHint}
+              note={deviceNote}
               action={
                 push === 'on' ? (
                   <button
@@ -164,7 +165,7 @@ export function NotificationSettingsView({
           <SettingTitle
             title={t('telegram')}
             hint={telegramLinked ? t('telegramHint') : null}
-            note={telegramLinked ? null : t('telegramLinkFirst')}
+            note={telegramNote}
           />
           <input
             type="checkbox"
@@ -177,7 +178,6 @@ export function NotificationSettingsView({
             onChange={(e) => onTelegram(e.target.checked)}
           />
         </label>
-        {demo && <DemoNote />}
       </div>
     </div>
   )
