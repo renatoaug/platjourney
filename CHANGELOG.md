@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.72.3](https://github.com/renatoaug/platjourney/compare/v0.72.2...v0.72.3) (2026-11-12)
+
+### Bug Fixes
+
+* **web:** Nexo stops at the bottom bar and each demo lock says so ([#178](https://github.com/renatoaug/platjourney/issues/178)) ([3aeb196](https://github.com/renatoaug/platjourney/commit/3aeb19623f035beb2c1d13c525ed11c6ca662502))
+
 ## [0.72.2](https://github.com/renatoaug/platjourney/compare/v0.72.1...v0.72.2) (2026-11-12)
 
 ### Bug Fixes
