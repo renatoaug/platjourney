@@ -20,8 +20,9 @@ const messages = defineMessages({
 })
 
 const SIZE = 60
-// The gap kept from the window's edges, the same as above a phone's bottom bar.
+// The gap kept from the window's edges; above a phone's bottom bar it sits right on its edge.
 const MARGIN = 8
+const BAR_GAP = 4
 // A press that moves less than this is a tap, not a drag.
 const DRAG_PX = 5
 const KEY = 'platjourney:nexo-bubble'
@@ -61,11 +62,13 @@ function bottomBar(): number {
   return bar ? Math.max(0, window.innerHeight - bar.top) : 0
 }
 
-/** `point` kept inside the window, clear of the edges and of the `bottom` space (a phone's bar). */
+/** `point` kept inside the window, clear of the edges and of the `bottom` space (a phone's bar),
+ * whose top edge it may sit right on. */
 export function clampBubble(point: Point, width: number, height: number, bottom = 0): Point {
+  const floor = bottom ? height - SIZE - BAR_GAP - bottom : height - SIZE - MARGIN
   return {
     x: Math.min(Math.max(MARGIN, point.x), Math.max(MARGIN, width - SIZE - MARGIN)),
-    y: Math.min(Math.max(MARGIN, point.y), Math.max(MARGIN, height - SIZE - MARGIN - bottom)),
+    y: Math.min(Math.max(MARGIN, point.y), Math.max(MARGIN, floor)),
   }
 }
 
@@ -99,9 +102,19 @@ export function NexoBubble({ initial }: { initial?: Point }) {
     () => setPoint((p) => clampBubble(p, width(), window.innerHeight, bottomBar())),
     [],
   )
+  // The first place is worked out before the shell's bottom bar is on screen, so it lay over the
+  // bar while a drag stopped above it: fit again once the bar is there, and whenever it changes.
   useEffect(() => {
     window.addEventListener('resize', fit)
-    return () => window.removeEventListener('resize', fit)
+    const frame = requestAnimationFrame(fit)
+    const bar = document.querySelector('.sidebar')
+    const watch = bar && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(fit) : null
+    if (bar) watch?.observe(bar)
+    return () => {
+      window.removeEventListener('resize', fit)
+      cancelAnimationFrame(frame)
+      watch?.disconnect()
+    }
   }, [fit])
 
   const down = (e: PointerEvent<HTMLButtonElement>) => {

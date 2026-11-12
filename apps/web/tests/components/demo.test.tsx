@@ -173,7 +173,7 @@ describe('what the demo cannot do', () => {
     expect(await screen.findByText('Isto é uma demonstração: nada é salvo.')).toBeTruthy()
   })
 
-  test('account settings are disabled with a note', () => {
+  test('account settings are disabled, each locked one with its note', () => {
     render(
       <MockAppState value={{ me: demo }}>
         <AccountCards user={demo} />
@@ -185,7 +185,9 @@ describe('what the demo cannot do', () => {
     expect(button('delete-open').disabled).toBe(true)
     expect(button('logout').disabled).toBe(false)
     expect((document.getElementById('pref-telegram') as HTMLInputElement).disabled).toBe(true)
-    expect(screen.getAllByText(unavailable)).toHaveLength(3)
+    expect(screen.getAllByText(unavailable)).toHaveLength(1)
+    // Each locked setting says so under its own name: DLC, PS Plus and Telegram at least.
+    expect(screen.getAllByText('Travado na demonstração.').length).toBeGreaterThanOrEqual(3)
   })
 
   test('goals show but cannot be edited, added, removed or moved', () => {
