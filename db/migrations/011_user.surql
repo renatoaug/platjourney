@@ -21,6 +21,8 @@ DEFINE FIELD IF NOT EXISTS include_dlc_progress ON user TYPE bool DEFAULT false;
 DEFINE FIELD IF NOT EXISTS revealed_trophy_games ON user TYPE option<array<string>>;
 -- The player's PS Plus tier, as they say (PSN does not tell): deals count the games its catalog includes.
 DEFINE FIELD IF NOT EXISTS ps_plus ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['none', 'essential', 'extra', 'deluxe'];
+-- The app's accent color the player picked in Settings (shared/accent.ts); none means lime.
+DEFINE FIELD IF NOT EXISTS accent ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['lime', 'cyan', 'cobalt', 'violet', 'magenta', 'amber'];
 -- Nexo writes this player's automatic notices (when the instance allows it); off, they are plain
 -- templates that need no model.
 DEFINE FIELD IF NOT EXISTS ai_notices ON user TYPE bool DEFAULT true;
