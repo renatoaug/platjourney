@@ -19,18 +19,18 @@
   --palette-neutral-50: #f1f3eb;
   --palette-white: #ffffff;
   --palette-black: #000000;
-  --palette-accent-950: #16200f;
-  --palette-accent-600: #647550;
-  --palette-accent-500: #7fa64a;
-  --palette-accent-400: #c2f366;
-  --palette-accent-300: #d2ff86;
-  /* Each accent color the player can pick, for its dot in Settings (shared/accent.ts). */
+  /* Each accent color the player can pick, its main shade, also its dot in Settings (shared/accent.ts). */
   --palette-swatch-lime: #c2f366;
   --palette-swatch-cyan: #4ff0e4;
   --palette-swatch-cobalt: #6aa8ff;
   --palette-swatch-violet: #b48cff;
   --palette-swatch-magenta: #ff6fd0;
   --palette-swatch-amber: #ffb43f;
+  --palette-accent-950: #16200f;
+  --palette-accent-600: #647550;
+  --palette-accent-500: #7fa64a;
+  --palette-accent-400: var(--palette-swatch-lime);
+  --palette-accent-300: #d2ff86;
   --palette-red-950: #3a2525;
   --palette-red-400: #ff9292;
   --palette-gold-400: #e6c47e;
@@ -169,7 +169,7 @@
   --palette-accent-950: #0d201f;
   --palette-accent-600: #507773;
   --palette-accent-500: #41aaa2;
-  --palette-accent-400: #4ff0e4;
+  --palette-accent-400: var(--palette-swatch-cyan);
   --palette-accent-300: #77faef;
   --palette-neutral-950: #0e1212;
   --palette-neutral-925: #121818;
@@ -189,7 +189,7 @@
   --palette-accent-950: #141d2a;
   --palette-accent-600: #5d6f8a;
   --palette-accent-500: #6d99d7;
-  --palette-accent-400: #6aa8ff;
+  --palette-accent-400: var(--palette-swatch-cobalt);
   --palette-accent-300: #7eb3fe;
   --palette-neutral-950: #0f1114;
   --palette-neutral-925: #14171b;
@@ -209,7 +209,7 @@
   --palette-accent-950: #1e192a;
   --palette-accent-600: #72678a;
   --palette-accent-500: #a186d7;
-  --palette-accent-400: #b48cff;
+  --palette-accent-400: var(--palette-swatch-violet);
   --palette-accent-300: #bc9bfe;
   --palette-neutral-950: #121114;
   --palette-neutral-925: #17161b;
@@ -229,7 +229,7 @@
   --palette-accent-950: #291522;
   --palette-accent-600: #8a5e79;
   --palette-accent-500: #d46eb0;
-  --palette-accent-400: #ff6fd0;
+  --palette-accent-400: var(--palette-swatch-magenta);
   --palette-accent-300: #ff88d5;
   --palette-neutral-950: #141012;
   --palette-neutral-925: #1a1518;
@@ -249,7 +249,7 @@
   --palette-accent-950: #251a0c;
   --palette-accent-600: #806a4d;
   --palette-accent-500: #c08c40;
-  --palette-accent-400: #ffb43f;
+  --palette-accent-400: var(--palette-swatch-amber);
   --palette-accent-300: #ffc575;
   --palette-neutral-950: #13110e;
   --palette-neutral-925: #1a1612;
