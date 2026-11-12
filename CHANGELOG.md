@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.72.0](https://github.com/renatoaug/platjourney/compare/v0.71.1...v0.72.0) (2026-11-12)
+
+### Features
+
+* **web:** game page at a glance, trophy art, floating nexo and grouped settings ([#175](https://github.com/renatoaug/platjourney/issues/175)) ([f8dd5a6](https://github.com/renatoaug/platjourney/commit/f8dd5a64ec98e4a2c2fe2a242855f4f7cfa1185c))
+
 ## [0.71.1](https://github.com/renatoaug/platjourney/compare/v0.71.0...v0.71.1) (2026-11-11)
 
 ### Bug Fixes
