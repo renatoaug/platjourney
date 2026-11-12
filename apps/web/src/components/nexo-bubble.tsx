@@ -97,6 +97,7 @@ export function NexoBubble({ initial }: { initial?: Point }) {
   const press = useRef<{ dx: number; dy: number; x: number; y: number } | null>(null)
   // A drag ends with a click on the same button: this tells it apart from a tap.
   const dragged = useRef(false)
+  const button = useRef<HTMLButtonElement>(null)
 
   const fit = useCallback(
     () => setPoint((p) => clampBubble(p, width(), window.innerHeight, bottomBar())),
@@ -116,6 +117,19 @@ export function NexoBubble({ initial }: { initial?: Point }) {
       watch?.disconnect()
     }
   }, [fit])
+
+  // iOS scrolls the page under a finger dragging the bubble, whatever its touch-action says: at the
+  // end of the page the bounce lifted the whole screen, Nexo with it, so the drag stopped short of
+  // the bottom bar and Nexo dropped into place on release. While held, the page stays still.
+  useEffect(() => {
+    const el = button.current
+    if (!el) return
+    const still = (e: TouchEvent) => {
+      if (press.current) e.preventDefault()
+    }
+    el.addEventListener('touchmove', still, { passive: false })
+    return () => el.removeEventListener('touchmove', still)
+  })
 
   const down = (e: PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return
@@ -158,6 +172,7 @@ export function NexoBubble({ initial }: { initial?: Point }) {
   if (location.pathname === '/nexo') return null
   return (
     <button
+      ref={button}
       type="button"
       className={`nexo-bubble${dragging ? ' is-dragging' : ''}`}
       data-no-pull
