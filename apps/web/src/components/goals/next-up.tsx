@@ -1,5 +1,5 @@
 /** The first game in the player's list, as a glass card on the Interests page's top: the platinum
- * they are going for next, how far it is and a way into it. */
+ * they are going for next and how far it is. The whole card opens the game. */
 import { Link } from 'react-router'
 import { defineMessages, Language, useMessages } from '../../i18n/i18n'
 import { pct } from '../../lib/format'
@@ -16,14 +16,12 @@ const messages = defineMessages({
     first: '1º da sua lista',
     notStarted: 'Ainda não começou',
     progress: '{progress}% dos troféus',
-    open: 'Abrir jogo',
   },
   [Language.En]: {
     eyebrow: 'Next platinum',
     first: 'First on your list',
     notStarted: 'Not started yet',
     progress: '{progress}% of trophies',
-    open: 'Open game',
   },
 })
 
@@ -35,18 +33,13 @@ export function NextUp({ interest: i }: { interest: Interest }) {
   const t = useMessages(messages)
   const progress = started(i) ? (i.progress ?? 0) : null
   return (
-    <aside className="next-up" aria-label={t('eyebrow')}>
+    <Link className="next-up" to={titleHref(i.game.id)}>
       <Cover url={i.game.cover_url} name={i.game.name} className="next-up-cover" />
       <div className="next-up-body">
         <span className="eyebrow">
           {t('eyebrow')} <span>· {t('first')}</span>
         </span>
-        <div className="next-up-head">
-          <b>{i.game.name}</b>
-          <Link className="button sm" to={titleHref(i.game.id)}>
-            {t('open')} <Icon name="arrow" />
-          </Link>
-        </div>
+        <b className="next-up-name">{i.game.name}</b>
         {progress != null ? (
           <div className="next-up-progress">
             <div className="bar">
@@ -58,6 +51,7 @@ export function NextUp({ interest: i }: { interest: Interest }) {
           <span className="next-up-sub">{t('notStarted')}</span>
         )}
       </div>
-    </aside>
+      <Icon name="chevron-right" />
+    </Link>
   )
 }
