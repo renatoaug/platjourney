@@ -19,11 +19,18 @@
   --palette-neutral-50: #f1f3eb;
   --palette-white: #ffffff;
   --palette-black: #000000;
-  --palette-lime-950: #16200f;
-  --palette-lime-600: #647550;
-  --palette-lime-500: #7fa64a;
-  --palette-lime-400: #c2f366;
-  --palette-lime-300: #d2ff86;
+  --palette-accent-950: #16200f;
+  --palette-accent-600: #647550;
+  --palette-accent-500: #7fa64a;
+  --palette-accent-400: #c2f366;
+  --palette-accent-300: #d2ff86;
+  /* Each accent color the player can pick, for its dot in Settings (shared/accent.ts). */
+  --palette-swatch-lime: #c2f366;
+  --palette-swatch-cyan: #4ff0e4;
+  --palette-swatch-cobalt: #6aa8ff;
+  --palette-swatch-violet: #b48cff;
+  --palette-swatch-magenta: #ff6fd0;
+  --palette-swatch-amber: #ffb43f;
   --palette-red-950: #3a2525;
   --palette-red-400: #ff9292;
   --palette-gold-400: #e6c47e;
@@ -52,11 +59,18 @@
   --color-fg-tint: var(--palette-olive-300);
   --color-fg-tint-muted: var(--palette-olive-400);
   /* Accent (brand) */
-  --color-accent: var(--palette-lime-400);
-  --color-accent-hover: var(--palette-lime-300);
-  --color-accent-dim: var(--palette-lime-500);
-  --color-accent-muted: var(--palette-lime-600);
-  --color-on-accent: var(--palette-lime-950);
+  --color-accent: var(--palette-accent-400);
+  --color-accent-hover: var(--palette-accent-300);
+  --color-accent-dim: var(--palette-accent-500);
+  --color-accent-muted: var(--palette-accent-600);
+  --color-on-accent: var(--palette-accent-950);
+  /* The dot of each accent color in Settings */
+  --color-swatch-lime: var(--palette-swatch-lime);
+  --color-swatch-cyan: var(--palette-swatch-cyan);
+  --color-swatch-cobalt: var(--palette-swatch-cobalt);
+  --color-swatch-violet: var(--palette-swatch-violet);
+  --color-swatch-magenta: var(--palette-swatch-magenta);
+  --color-swatch-amber: var(--palette-swatch-amber);
   /* Feedback */
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
@@ -144,4 +158,109 @@
  */
 :root {
   color-scheme: dark;
+}
+
+/* The accent the player picked in Settings (data-accent on <html>, shared/accent.ts). Each swaps
+ * the accent family and gives the background and greys a faint tint of the same hue, as lime
+ * does by default. Generated in OKLCH from the lime set: same lightness, the new hue, and contrast
+ * AA or better for text on the accent and the accent on the background. */
+
+:root[data-accent="cyan"] {
+  --palette-accent-950: #0d201f;
+  --palette-accent-600: #507773;
+  --palette-accent-500: #41aaa2;
+  --palette-accent-400: #4ff0e4;
+  --palette-accent-300: #77faef;
+  --palette-neutral-950: #0e1212;
+  --palette-neutral-925: #121818;
+  --palette-neutral-900: #161c1c;
+  --palette-neutral-850: #1a2827;
+  --palette-neutral-800: #253130;
+  --palette-neutral-700: #324542;
+  --palette-neutral-500: #718e8a;
+  --palette-neutral-400: #94a8a6;
+  --palette-neutral-300: #b5cdcb;
+  --palette-neutral-50: #eaf4f3;
+  --palette-olive-300: #99c0bc;
+  --palette-olive-400: #84b0ab;
+}
+
+:root[data-accent="cobalt"] {
+  --palette-accent-950: #141d2a;
+  --palette-accent-600: #5d6f8a;
+  --palette-accent-500: #6d99d7;
+  --palette-accent-400: #6aa8ff;
+  --palette-accent-300: #7eb3fe;
+  --palette-neutral-950: #0f1114;
+  --palette-neutral-925: #14171b;
+  --palette-neutral-900: #181b1f;
+  --palette-neutral-850: #1f252f;
+  --palette-neutral-800: #292f36;
+  --palette-neutral-700: #38414d;
+  --palette-neutral-500: #7b889b;
+  --palette-neutral-400: #9ba4b2;
+  --palette-neutral-300: #bdc9d9;
+  --palette-neutral-50: #edf2f9;
+  --palette-olive-300: #a6b8d2;
+  --palette-olive-400: #93a8c4;
+}
+
+:root[data-accent="violet"] {
+  --palette-accent-950: #1e192a;
+  --palette-accent-600: #72678a;
+  --palette-accent-500: #a186d7;
+  --palette-accent-400: #b48cff;
+  --palette-accent-300: #bc9bfe;
+  --palette-neutral-950: #121114;
+  --palette-neutral-925: #17161b;
+  --palette-neutral-900: #1b1a1f;
+  --palette-neutral-850: #26232d;
+  --palette-neutral-800: #2f2d35;
+  --palette-neutral-700: #423e4b;
+  --palette-neutral-500: #898399;
+  --palette-neutral-400: #a5a1b0;
+  --palette-neutral-300: #c9c4d7;
+  --palette-neutral-50: #f3f0f8;
+  --palette-olive-300: #bab1cf;
+  --palette-olive-400: #a9a0c1;
+}
+
+:root[data-accent="magenta"] {
+  --palette-accent-950: #291522;
+  --palette-accent-600: #8a5e79;
+  --palette-accent-500: #d46eb0;
+  --palette-accent-400: #ff6fd0;
+  --palette-accent-300: #ff88d5;
+  --palette-neutral-950: #141012;
+  --palette-neutral-925: #1a1518;
+  --palette-neutral-900: #1e191c;
+  --palette-neutral-850: #2c2128;
+  --palette-neutral-800: #342b30;
+  --palette-neutral-700: #493c44;
+  --palette-neutral-500: #967f8c;
+  --palette-neutral-400: #ae9ea7;
+  --palette-neutral-300: #d4c1cc;
+  --palette-neutral-50: #f7eff4;
+  --palette-olive-300: #cbadbe;
+  --palette-olive-400: #bc9bae;
+}
+
+:root[data-accent="amber"] {
+  --palette-accent-950: #251a0c;
+  --palette-accent-600: #806a4d;
+  --palette-accent-500: #c08c40;
+  --palette-accent-400: #ffb43f;
+  --palette-accent-300: #ffc575;
+  --palette-neutral-950: #13110e;
+  --palette-neutral-925: #1a1612;
+  --palette-neutral-900: #1e1a16;
+  --palette-neutral-850: #2b241b;
+  --palette-neutral-800: #332d26;
+  --palette-neutral-700: #483f33;
+  --palette-neutral-500: #938471;
+  --palette-neutral-400: #aca294;
+  --palette-neutral-300: #d2c5b5;
+  --palette-neutral-50: #f6f1ea;
+  --palette-olive-300: #c7b39a;
+  --palette-olive-400: #b8a285;
 }

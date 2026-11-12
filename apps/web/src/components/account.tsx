@@ -1,5 +1,6 @@
 /** Account cards on the profile page: Telegram link, notifications, DLC and language preferences, password and deletion. */
 import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { ACCENTS, type Accent, DEFAULT_ACCENT } from '../../../../shared/accent'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
 import { ApiError, api, del } from '../lib/api'
@@ -38,6 +39,17 @@ const messages = defineMessages({
       plusHint: 'Com essa informação os interesses mostram os jogos que o seu plano já inclui.',
       plusSaved: 'PS Plus salvo.',
       plusTier: { none: 'Não tenho', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
+      accent: 'Cor do app',
+      accentHint: 'A cor dos botões, do menu e dos destaques. O fundo ganha um leve tom dela.',
+      accentSaved: 'Cor salva.',
+      accentName: {
+        lime: 'Limão',
+        cyan: 'Ciano',
+        cobalt: 'Cobalto',
+        violet: 'Violeta',
+        magenta: 'Magenta',
+        amber: 'Âmbar',
+      },
       dlc: 'Contar DLCs no progresso',
       dlcHint:
         'A platina só pede o jogo base. Ligue para ver o progresso com as DLCs em todo o app, no Telegram e no Nexo.',
@@ -87,6 +99,18 @@ const messages = defineMessages({
       plusHint: 'With it, your interests show the games your plan already includes.',
       plusSaved: 'PS Plus saved.',
       plusTier: { none: 'None', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
+      accent: 'App color',
+      accentHint:
+        'The color of buttons, the menu and highlights. The background takes a faint tint of it.',
+      accentSaved: 'Color saved.',
+      accentName: {
+        lime: 'Lime',
+        cyan: 'Cyan',
+        cobalt: 'Cobalt',
+        violet: 'Violet',
+        magenta: 'Magenta',
+        amber: 'Amber',
+      },
       dlc: 'Count DLC in progress',
       dlcHint:
         'The platinum only needs the base game. Turn on to see progress with DLC across the app, on Telegram and in Nexo.',
@@ -173,6 +197,51 @@ function NoticesSetting({ user }: { user: Me }) {
 }
 
 const PLUS_TIERS = ['none', 'essential', 'extra', 'deluxe'] as const
+
+/** The app's accent color: a few ready ones, applied at once and saved on the account. */
+function AccentSetting({ user }: { user: Me }) {
+  const t = useMessages(messages)
+  const { setMe } = useApp()
+  const locked = useDemoLock(user.demo)
+  const [saving, setSaving] = useState(false)
+  const change = async (accent: Accent) => {
+    const before = user
+    // The page changes before the answer, so the pick feels instant; a failure puts it back.
+    setMe({ ...user, accent })
+    setSaving(true)
+    try {
+      const saved = await api<{ user: Me }>('/api/account/preferences', { accent })
+      setMe(saved.user)
+      toast(t('preferences.accentSaved'), 'success')
+    } catch (e) {
+      setMe(before)
+      if (!handled(e)) toast(t('preferences.saveFailed'))
+    }
+    setSaving(false)
+  }
+  return (
+    <div className="setting-row">
+      <SettingTitle
+        title={t('preferences.accent')}
+        hint={t('preferences.accentHint')}
+        note={locked}
+        htmlFor="pref-accent"
+      />
+      <Picker
+        id="pref-accent"
+        label={t('preferences.accent')}
+        value={user.accent ?? DEFAULT_ACCENT}
+        disabled={saving || user.demo}
+        options={ACCENTS.map((accent) => ({
+          value: accent,
+          label: t(`preferences.accentName.${accent}`),
+          lead: <span className={`accent-swatch is-${accent}`} aria-hidden="true" />,
+        }))}
+        onChange={change}
+      />
+    </div>
+  )
+}
 
 /** The player's PS Plus tier: PSN does not say, so they do. */
 function PlusSetting({ user }: { user: Me }) {
@@ -265,6 +334,7 @@ function PreferencesCard({ user }: { user: Me }) {
         </label>
         {user.aiNoticesAvailable && <NoticesSetting user={user} />}
         <PlusSetting user={user} />
+        <AccentSetting user={user} />
         <LanguageSetting />
         <div className="setting-row">
           <SettingTitle title={t('preferences.intro')} hint={t('preferences.introHint')} />

@@ -1,3 +1,4 @@
+import type { Accent } from '../../../../shared/accent.ts'
 import { camelKeys, one, plain, q, type RecordId, rid, snakeKeys } from '../db.ts'
 import type { Locale } from '../i18n.ts'
 
@@ -17,6 +18,8 @@ export interface User {
   include_dlc_progress?: boolean
   revealed_trophy_games?: string[]
   ps_plus?: 'none' | 'essential' | 'extra' | 'deluxe' | null
+  // The app's accent color picked in Settings; none means lime.
+  accent?: Accent | null
   // Nexo's words in automatic notices; off, plain templates (no model).
   ai_notices?: boolean
   // Notices also go to the linked Telegram chat; off, only the web and push.

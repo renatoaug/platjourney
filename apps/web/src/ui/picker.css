@@ -96,6 +96,16 @@
     height: 16px;
   }
 
+  /* An option's own mark before its name (a color's dot); the name then takes the room left. */
+  .picker-lead {
+    display: inline-flex;
+    flex: none;
+  }
+
+  .picker-option .picker-lead + span {
+    flex: 1;
+  }
+
   @keyframes picker-in {
     from {
       opacity: 0;

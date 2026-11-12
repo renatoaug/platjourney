@@ -1,7 +1,15 @@
 /** A choice among a few options, drawn by the app so it opens the same everywhere: a button with
  * the current value and a chevron; a tap opens the options, as a sheet from the bottom on a phone
  * and a list under the button on a wide screen. Keyboard: arrows move, Enter picks, Esc closes. */
-import { type KeyboardEvent, useCallback, useEffect, useId, useRef, useState } from 'react'
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from './icon'
 import './picker.css'
@@ -9,6 +17,8 @@ import './picker.css'
 export interface PickerOption<T extends string> {
   value: T
   label: string
+  /** Drawn before the label, in the button and in the list (a color's dot). */
+  lead?: ReactNode
 }
 
 export function Picker<T extends string>({
@@ -95,6 +105,7 @@ export function Picker<T extends string>({
           else show()
         }}
       >
+        {current?.lead && <span className="picker-lead">{current.lead}</span>}
         <span>{current?.label}</span>
         <Icon name="chevron-down" />
       </button>
@@ -135,6 +146,7 @@ export function Picker<T extends string>({
                   onClick={() => pick(o.value)}
                   onKeyDown={() => {}}
                 >
+                  {o.lead && <span className="picker-lead">{o.lead}</span>}
                   <span>{o.label}</span>
                   {o.value === value && <Icon name="check" />}
                 </div>
