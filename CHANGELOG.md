@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.72.2](https://github.com/renatoaug/platjourney/compare/v0.72.1...v0.72.2) (2026-11-12)
+
+### Bug Fixes
+
+* **web:** touch fixes for the phone app ([#177](https://github.com/renatoaug/platjourney/issues/177)) ([7f1b43b](https://github.com/renatoaug/platjourney/commit/7f1b43beea7f9349c00b78310b983936825aaaf4))
+
 ## [0.72.1](https://github.com/renatoaug/platjourney/compare/v0.72.0...v0.72.1) (2026-11-12)
 
 ### Bug Fixes
