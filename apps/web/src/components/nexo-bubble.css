@@ -26,6 +26,14 @@
     transition: box-shadow 0.2s;
   }
 
+  /* A pressed button shrinks a little (base.css), but this one is placed by its transform: the
+     shrink scaled its distance from the corner too, so a held Nexo rose ~20px and dropped back on
+     release. The press shows in Nexo itself instead (.is-dragging img). */
+  .nexo-bubble,
+  .nexo-bubble:active {
+    scale: none;
+  }
+
   .nexo-bubble:hover {
     background: color-mix(in srgb, var(--color-surface) var(--alpha-heavy), transparent);
     box-shadow:
@@ -38,18 +46,24 @@
     height: 48px;
     pointer-events: none;
     animation: nexo-bubble-bob 3.2s ease-in-out infinite;
+    transition: scale 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
   }
 
-  .nexo-bubble.is-dragging {
-    cursor: grabbing;
+  /* Held: Nexo grows inside the circle (the circle itself keeps its size, see above) and the glow
+     comes on, at once, before the finger even moves. */
+  .nexo-bubble.is-held {
     box-shadow:
       var(--shadow-drag),
       0 0 30px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
   }
 
-  .nexo-bubble.is-dragging img {
+  .nexo-bubble.is-held img {
     animation: none;
-    scale: 1.08;
+    scale: 1.14;
+  }
+
+  .nexo-bubble.is-dragging {
+    cursor: grabbing;
   }
 
   @keyframes nexo-bubble-in {
@@ -69,6 +83,7 @@
     .nexo-bubble,
     .nexo-bubble img {
       animation: none;
+      transition: none;
     }
   }
 }
