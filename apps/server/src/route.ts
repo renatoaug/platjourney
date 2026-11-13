@@ -14,6 +14,13 @@ const messages = defineMessages({
       one: '1 coisa para pegar aqui: {types}.',
       other: '{count} coisas para pegar aqui: {types}.',
     },
+    // The same count when no item says what it is ("Esse aviso adianta o troféu X: ...").
+    collectiblesUntyped: {
+      one: '1 coisa para pegar aqui.',
+      other: '{count} coisas para pegar aqui.',
+    },
+    // The type of the items that do not say theirs, next to those that do ("2 flores e 1 item").
+    otherItem: 'item',
     alsoMissable: {
       one: 'Além do troféu {trophies}, que é perdível.',
       other: 'Além dos troféus {trophies}, que são perdíveis.',
@@ -33,6 +40,11 @@ const messages = defineMessages({
       one: '1 thing to pick up here: {types}.',
       other: '{count} things to pick up here: {types}.',
     },
+    collectiblesUntyped: {
+      one: '1 thing to pick up here.',
+      other: '{count} things to pick up here.',
+    },
+    otherItem: 'item',
     alsoMissable: {
       one: 'Plus the trophy {trophies}, which is missable.',
       other: 'Plus the trophies {trophies}, which are missable.',
@@ -107,8 +119,47 @@ export function stillOpen(milestone: Milestone, earned: string[]): Milestone | u
 export function routeNotice(milestone: Milestone, locale: Locale = DEFAULT_LOCALE): string {
   const t = translator(messages, locale)
   const head = t(milestone.after ? 'after' : 'before')
-  const tips = milestone.tips.map((tip) => tipLine(tip, locale))
+  const tips = byTrophy(milestone.tips).map((tip) => tipLine(tip, locale))
   return [head, ...tips].join('\n')
+}
+
+// A plain tip about a trophy: one line that opens with the trophy's name.
+const aboutTrophy = (tip: RouteTip) =>
+  !!tip.trophy && tip.kind !== 'collectible' && !(tip.name && tip.steps?.length)
+
+/** Several plain tips about the same trophy go under one heading, their texts one after the
+ * other, where the first one was: two bullets both titled "🏆 **X**" read as a mistake. The same
+ * text twice goes once. Checklist items and collectibles keep their own lines. */
+export function byTrophy(tips: RouteTip[]): RouteTip[] {
+  const out: RouteTip[] = []
+  const seen = new Map<string, RouteTip>()
+  for (const tip of tips) {
+    const key = aboutTrophy(tip) ? `${tip.kind === 'missable'}:${norm(tip.trophy ?? '')}` : ''
+    const first = key ? seen.get(key) : undefined
+    if (!first) {
+      const own = { ...tip }
+      if (key) seen.set(key, own)
+      out.push(own)
+    } else if (!first.text.includes(tip.text.trim())) first.text = `${first.text} ${tip.text}`
+  }
+  return out
+}
+
+// Guides write names in bold inside their texts; inside a heading that is already bold, the inner
+// marks would close it halfway.
+const unbold = (text: string) => text.replace(/\*\*/g, '')
+
+/** What a collectible is called, when its text or name opens with that: "Flor 3/5" from "Flor 3/5:
+ * Genciana", "Souvenir 1/21, Best player" from "Souvenir 1/21, Best player: na varanda". A label is
+ * short or numbered and has no markdown: a sentence before a colon ("Esse aviso adianta o troféu
+ * **X**: recolha...") is not one. Undefined when there is none. */
+function collectibleLabel(tip: RouteTip): string | undefined {
+  const source = tip.name ?? tip.text
+  const at = source.indexOf(': ')
+  if (at < 0 && !tip.name) return undefined
+  const head = (at < 0 ? source : source.slice(0, at)).trim()
+  const label = !!head && !head.includes('*') && (/\d/.test(head) || head.split(/\s+/).length <= 4)
+  return label ? head : undefined
 }
 
 // One tip as a line. A checklist item goes out numbered, its name in bold, the sub-chapter in
@@ -118,7 +169,7 @@ export function routeNotice(milestone: Milestone, locale: Locale = DEFAULT_LOCAL
 export function tipLine(tip: RouteTip, locale: Locale = DEFAULT_LOCALE, n?: number): string {
   const t = translator(messages, locale)
   if (tip.name && tip.steps?.length) {
-    const title = `**${n ? `${n}. ` : ''}${tip.kind === 'missable' ? '⚠️ ' : ''}${tip.name}**`
+    const title = `**${n ? `${n}. ` : ''}${tip.kind === 'missable' ? '⚠️ ' : ''}${unbold(tip.name)}**`
     return [
       title,
       tip.where ? `*${tip.where}*` : '',
@@ -129,7 +180,7 @@ export function tipLine(tip: RouteTip, locale: Locale = DEFAULT_LOCALE, n?: numb
       .join('\n')
   }
   const at = tip.text.indexOf(': ')
-  if (tip.kind === 'collectible' && at >= 0) {
+  if (tip.kind === 'collectible' && at >= 0 && collectibleLabel({ ...tip, name: undefined })) {
     const rest = tip.text.slice(at + 2)
     return `• **${tip.text.slice(0, at)}**\n${rest.charAt(0).toUpperCase()}${rest.slice(1)}`
   }
@@ -137,10 +188,11 @@ export function tipLine(tip: RouteTip, locale: Locale = DEFAULT_LOCALE, n?: numb
   return `• ${t(tip.kind === 'missable' ? 'missableTip' : 'trophyTip', { trophy: tip.trophy, text: tip.text })}`
 }
 
-// The collectible's type from its name: "Flor 3/5, Genciana" is a Flor, "Baú secreto 2/10" a Baú
-// secreto.
+// The collectible's type from its label: "Flor 3/5, Genciana" is a Flor, "Baú secreto 2/10" a Baú
+// secreto. Undefined when the item has no label.
 const collectibleType = (tip: RouteTip) => {
-  const name = tip.name?.split(': ')[0] ?? tip.text.split(': ')[0] ?? tip.text
+  const name = collectibleLabel(tip)
+  if (!name) return undefined
   return (
     name.match(/^(.*?)\s+\d+(?:\s*\/\s*\d+)?(?:\D|$)/)?.[1] ??
     name.split(',')[0] ??
@@ -207,13 +259,22 @@ export function collectibleSummary(tips: RouteTip[], locale: Locale = DEFAULT_LO
     ),
   ]
   const types = new Map<string, number>()
-  for (const tip of found)
-    types.set(collectibleType(tip), (types.get(collectibleType(tip)) ?? 0) + 1)
-  const list = new Intl.ListFormat(locale, { type: 'conjunction' }).format(
-    [...types].map(([type, n]) => counted(n, type, locale)),
-  )
+  let untyped = 0
+  for (const tip of found) {
+    const type = collectibleType(tip)
+    if (type) types.set(type, (types.get(type) ?? 0) + 1)
+    else untyped++
+  }
+  const counts = [...types].map(([type, n]) => counted(n, type, locale))
+  if (untyped && types.size) counts.push(counted(untyped, t('otherItem'), locale))
+  const list = new Intl.ListFormat(locale, { type: 'conjunction' }).format(counts)
   const parts = [
-    found.length ? t('collectibles', { count: found.length, types: list }) : '',
+    found.length
+      ? t(types.size ? 'collectibles' : 'collectiblesUntyped', {
+          count: found.length,
+          types: list,
+        })
+      : '',
     missables.length
       ? t(found.length ? 'alsoMissable' : 'onlyMissable', {
           count: missables.length,

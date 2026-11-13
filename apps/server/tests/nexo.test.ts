@@ -258,3 +258,43 @@ test('any other failure of the service still fails the reply', async () => {
   ai.mockRejectedValue(new aiModule.AiError(500, 'down'))
   await expect(reply(user, 'oi', ctx)).rejects.toThrow('down')
 })
+
+test('a notice for a player reading English names the trophies and the next one in English', async () => {
+  const en = makeUser({ locale: 'en' })
+  const started = makeContext({
+    trophies: [
+      makeTrophy({ id: 1, name: 'Paus e Pedras', nameEn: 'Sticks and Stones', earned: true }),
+      makeTrophy({
+        id: 2,
+        name: 'Pá, Pum',
+        nameEn: 'Bang Bang',
+        detail: 'Faça 50 tiros na cabeça',
+        detailEn: 'Land 50 headshots',
+      }),
+      makeTrophy({ id: 3, name: 'Fim' }),
+    ],
+    guide: {
+      roadmap: [
+        { phase: 'Fase 1 — Começo', goal: '', trophies: ['Paus e Pedras', 'Pá, Pum'] },
+        { phase: 'Fase 2 — Fim', goal: '', trophies: ['Fim'] },
+      ],
+    } as unknown as GameContext['guide'],
+  })
+  ai.mockResolvedValueOnce({ text: 'Easy platinum.' })
+  const firsts = [started.trophies[0]]
+  const text = await proactiveTip(en, started, undefined, undefined, undefined, firsts)
+  const body = ai.mock.calls[0][1] as { focus?: { trophy?: string; detail?: string } }
+  expect(body.focus).toMatchObject({ trophy: 'Bang Bang', detail: 'Land 50 headshots' })
+  expect(text).toStartWith('🏆 **Sticks and Stones**\n\n')
+
+  // An unlock that closes a phase: the model reads which, the title is in English.
+  ai.mockResolvedValueOnce({ text: 'Nice.' })
+  const done = makeContext({
+    ...started,
+    trophies: started.trophies.map((t) => (t.id === 2 ? { ...t, earned: true } : t)),
+  })
+  const unlocked = await unlockReaction(en, done, [done.trophies[1]])
+  const sent = ai.mock.calls[1][1] as { focus?: { completed?: string } }
+  expect(sent.focus?.completed).toBe('Fase 1')
+  expect(unlocked).toStartWith('🏆 **Bang Bang**')
+})

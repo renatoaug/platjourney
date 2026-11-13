@@ -13,6 +13,7 @@ import type { GameContext } from './nexo.ts'
 import { lastRecommended } from './repository/recommendation.ts'
 import type { User } from './repository/user.ts'
 import {
+  byTrophy,
   collectibleSummary,
   currentMilestone,
   type RouteTip,
@@ -58,11 +59,14 @@ const messages = defineMessages({
     missables: '⚠️ **Perdíveis: fique de olho**',
     missablesMore: { one: 'E mais 1 no guia.', other: 'E mais {count} no guia.' },
     missable: '⚠️ **{trophy}** é perdível: {when}',
+    // The same, without the guide's words on when (a player reading English: the guide is pt-BR).
+    missableBare: '⚠️ **{trophy}** é perdível.',
     almost: '**Quase lá**: {trophy}, {value} de {target}.',
     focusStill: 'A sugestão de próximo troféu continua sendo **{trophy}**.',
     mark: {
       first: 'Primeiro troféu de {game}: a jornada começou.',
-      half: 'Metade do jogo base: {earned} de {total} troféus.',
+      // The cheer before it already says it is half: only the count.
+      half: '{earned} de {total} troféus do jogo base.',
       final: 'Reta final: faltam {count} para a platina: {remaining}.',
       platinum: 'Platina de {game}! Parabéns.',
     },
@@ -70,7 +74,10 @@ const messages = defineMessages({
       '**Sugestão de próximo troféu**\nSeguindo o roteiro, o próximo a pipocar deve ser **{trophy}**.\n{detail}',
     focusNewBehind:
       '**Sugestão de próximo troféu**\nPelo momento em que você está, vale buscar **{trophy}**, que ficou para trás.\n{detail}',
-    phaseDone: '🎉 Fechou a {phase} do roteiro!',
+    phaseDone: {
+      one: '🎉 Fechou a {phase} do roteiro!',
+      other: '🎉 Fechou {phase} do roteiro!',
+    },
     // A missable just earned: one of these, the same per trophy.
     missableEarned: {
       a: '🔒 **{trophy}** era perdível e agora é seu para sempre. Esse não escapou!',
@@ -80,6 +87,10 @@ const messages = defineMessages({
     },
     unlocked: '🏆 **{trophy}** ({type}) em **{game}**',
     unlockedRate: '🏆 **{trophy}** ({type}, {rate}% de quem joga) em **{game}**',
+    // Several at once: the game once, above them.
+    unlockedSeveral: '{count} troféus em **{game}**:',
+    unlockedItem: '🏆 **{trophy}** ({type})',
+    unlockedItemRate: '🏆 **{trophy}** ({type}, {rate}% de quem joga)',
     types: {
       platinum: 'platina',
       gold: 'ouro',
@@ -114,11 +125,12 @@ const messages = defineMessages({
     missables: '⚠️ **Missables: keep an eye out**',
     missablesMore: { one: '1 more in the guide.', other: '{count} more in the guide.' },
     missable: '⚠️ **{trophy}** is missable: {when}',
+    missableBare: '⚠️ **{trophy}** is missable.',
     almost: '**Almost there**: {trophy}, {value} of {target}.',
     focusStill: 'The suggested next trophy is still **{trophy}**.',
     mark: {
       first: 'First trophy in {game}: the journey has begun.',
-      half: 'Halfway through the base game: {earned} of {total} trophies.',
+      half: '{earned} of {total} base-game trophies.',
       final: 'Final stretch: {count} left to the platinum: {remaining}.',
       platinum: 'Platinum in {game}! Congratulations.',
     },
@@ -126,7 +138,10 @@ const messages = defineMessages({
       '**Suggested next trophy**\nFollowing the roadmap, the next one to pop should be **{trophy}**.\n{detail}',
     focusNewBehind:
       '**Suggested next trophy**\nWhere you are now, **{trophy}** is worth going after: it was left behind.\n{detail}',
-    phaseDone: '🎉 You closed {phase} of the roadmap!',
+    phaseDone: {
+      one: '🎉 You closed {phase} of the roadmap!',
+      other: '🎉 You closed {phase} of the roadmap!',
+    },
     missableEarned: {
       a: "🔒 **{trophy}** was missable and now it's yours for good. That one didn't get away!",
       b: '🎯 Missable in the bag: **{trophy}**. One less scare on the way to the platinum.',
@@ -135,6 +150,9 @@ const messages = defineMessages({
     },
     unlocked: '🏆 **{trophy}** ({type}) in **{game}**',
     unlockedRate: '🏆 **{trophy}** ({type}, {rate}% of players) in **{game}**',
+    unlockedSeveral: '{count} trophies in **{game}**:',
+    unlockedItem: '🏆 **{trophy}** ({type})',
+    unlockedItemRate: '🏆 **{trophy}** ({type}, {rate}% of players)',
     types: {
       platinum: 'platinum',
       gold: 'gold',
@@ -149,6 +167,52 @@ const TYPES = new Set(['platinum', 'gold', 'silver', 'bronze'])
 type Named = Pick<GameContext, 'title'> & Partial<Pick<GameContext, 'game'>>
 // The catalog's name ("Days Gone"), not the trophy list's ("DAYS GONE").
 const gameName = (ctx: Named) => ctx.game?.name ?? ctx.title.name
+
+type Trophy = GameContext['trophies'][number]
+
+const english = (user: User) => userLocale(user) === Language.En
+
+/** A trophy's name in the player's language: PSN's English name for a player reading English, the
+ * pt-BR one (what a Brazilian console shows) otherwise. A list PSN has only in English gives the
+ * English name in both: nothing here translates it. */
+export const nameFor = (user: User, t: Pick<Trophy, 'name' | 'nameEn'>) =>
+  tidy(english(user) && t.nameEn ? t.nameEn : t.name)
+
+/** PSN's description of a trophy in the player's language, by the same rule as `nameFor`. */
+export const detailFor = (user: User, t: Pick<Trophy, 'detail' | 'detailEn'>) =>
+  english(user) && t.detailEn ? t.detailEn : t.detail
+
+// The trophy a guide names: guides write the pt-BR name, sometimes the English one.
+function listed(ctx: Pick<GameContext, 'trophies'>, name: string): Trophy | undefined {
+  const key = tidy(name).toLowerCase()
+  return ctx.trophies.find((x) =>
+    [x.name, x.nameEn].some((n) => n && tidy(n).toLowerCase() === key),
+  )
+}
+
+/** A trophy name the guide wrote, as the player reads it. */
+const guideName = (user: User, ctx: Pick<GameContext, 'trophies'>, name: string) => {
+  const found = listed(ctx, name)
+  return found ? nameFor(user, found) : tidy(name)
+}
+
+/**
+ * The guide's tips as the player reads them. The guide is written in pt-BR, so for a player reading
+ * English its words (where an item is, when a missable closes) do not go into the notice: a tip about
+ * a trophy becomes that trophy, by its English name, with PSN's English description, once per
+ * trophy; a tip about no trophy (an item, a warning) has nothing to say in English and is left out.
+ */
+function readable(user: User, ctx: GameContext, tips: RouteTip[]): RouteTip[] {
+  if (!english(user)) return tips
+  const seen = new Set<number>()
+  return tips.flatMap((tip): RouteTip[] => {
+    const found = tip.trophy ? listed(ctx, tip.trophy) : undefined
+    if (!found || seen.has(found.id)) return []
+    seen.add(found.id)
+    const kind = tip.kind === 'missable' ? 'missable' : 'trophy'
+    return [{ kind, text: detailFor(user, found), trophy: nameFor(user, found) }]
+  })
+}
 
 /** The plain notice for a game just started: its first trophies when it came with some (PSN lists a
  * game only once one pops), then the next trophy, the missables and what to keep at the whole game.
@@ -165,7 +229,10 @@ export const startNotice = (
     : t('started', { game: gameName(ctx) })
   const { trophy, behind } = todaysFocus(ctx)
   const next = trophy
-    ? t(behind ? 'focusNewBehind' : 'focusNew', { trophy: trophy.name, detail: trophy.detail })
+    ? t(behind ? 'focusNewBehind' : 'focusNew', {
+        trophy: nameFor(user, trophy),
+        detail: detailFor(user, trophy),
+      })
     : undefined
   return together(opening, next, startLists(user, ctx, ongoingTrophies(ctx), after))
 }
@@ -174,24 +241,24 @@ export const startNotice = (
 const MISSABLES_MAX = 3
 
 /** The guide's missables still open, in its order, without those the checklist after the notice
- * already names. A hidden one is only counted (`hidden`): its name would be a spoiler. */
+ * already names (by either name). A hidden one is only counted (`hidden`): its name would be a
+ * spoiler. `trophy` is the list's own entry. */
 export function openMissables(
   ctx: GameContext,
   after = '',
-): { trophy: string; when: string; hidden: boolean }[] {
-  const open = ctx.trophies.filter((x) => !x.earned)
-  const find = (name: string) =>
-    open.find((x) => [x.name, x.nameEn].some((n) => n && tidy(n).toLowerCase() === name))
+): { trophy: Trophy; when: string; hidden: boolean }[] {
   return (ctx.guide?.missables ?? []).flatMap((m) => {
-    const trophy = tidy(m.trophy)
-    const found = find(trophy.toLowerCase())
-    if (!found || after.includes(`**${trophy}**`)) return []
-    return [{ trophy, when: m.when, hidden: !!found.hidden }]
+    const found = listed(ctx, m.trophy)
+    if (!found || found.earned) return []
+    const names = [m.trophy, found.name, found.nameEn].filter(Boolean).map((n) => tidy(n))
+    if (names.some((n) => after.includes(`**${n}**`))) return []
+    return [{ trophy: found, when: m.when, hidden: !!found.hidden }]
   })
 }
 
 /** The start notice's own lists, as written after Nexo's words (Nexo would shorten them): the open
- * missables, then what to keep at the whole game. */
+ * missables, then what to keep at the whole game. A missable says when it closes in the guide's
+ * words, or, for a player reading English, what PSN says it asks for. */
 export function startLists(
   user: User,
   ctx: GameContext,
@@ -202,16 +269,21 @@ export function startLists(
   const missables = openMissables(ctx, after)
   const shown = missables.filter((m) => !m.hidden).slice(0, MISSABLES_MAX)
   const more = missables.length - shown.length
+  const item = (m: (typeof shown)[number]) =>
+    t('ongoingItem', {
+      trophy: nameFor(user, m.trophy),
+      detail: english(user) ? detailFor(user, m.trophy) : m.when,
+    })
   const warn = shown.length
     ? [
         t('missables'),
-        ...shown.map((m) => t('ongoingItem', { trophy: m.trophy, detail: m.when })),
+        ...shown.map(item),
         ...(more ? [t('missablesMore', { count: more })] : []),
       ].join('\n')
     : undefined
   // A trophy in the missables list is not repeated in the next one.
-  const warned = new Set(shown.map((m) => m.trophy.toLowerCase()))
-  const keep = ongoing.filter((x) => !warned.has(tidy(x.name).toLowerCase()))
+  const warned = new Set(shown.map((m) => m.trophy.id))
+  const keep = ongoing.filter((x) => !warned.has(x.id))
   return together(warn, ongoingBlock(user, keep)) || undefined
 }
 
@@ -232,7 +304,9 @@ export function ongoingTrophies(ctx: GameContext): GameContext['trophies'] {
 function ongoingBlock(user: User, trophies: GameContext['trophies']): string | undefined {
   if (!trophies.length) return undefined
   const t = translator(messages, user)
-  const items = trophies.map((x) => t('ongoingItem', { trophy: tidy(x.name), detail: x.detail }))
+  const items = trophies.map((x) =>
+    t('ongoingItem', { trophy: nameFor(user, x), detail: detailFor(user, x) }),
+  )
   return [t('ongoing'), ...items].join('\n')
 }
 
@@ -264,31 +338,39 @@ export const missableCheer = (
   unlocked: GameContext['trophies'],
 ): string | undefined => {
   const t = translator(messages, user)
-  const missables = new Set((ctx.guide?.missables ?? []).map((m) => tidy(m.trophy).toLowerCase()))
+  const missables = new Set(
+    (ctx.guide?.missables ?? []).flatMap((m) => listed(ctx, m.trophy)?.id ?? []),
+  )
   const lines = unlocked
-    .filter((x) => missables.has(tidy(x.name).toLowerCase()))
+    .filter((x) => missables.has(x.id))
     .map((x) => {
       const sum = [...x.name].reduce((n, c) => n + c.charCodeAt(0), 0)
-      return t(`missableEarned.${FOLLOWED[sum % FOLLOWED.length]}`, { trophy: tidy(x.name) })
+      return t(`missableEarned.${FOLLOWED[sum % FOLLOWED.length]}`, { trophy: nameFor(user, x) })
     })
   return lines.length ? lines.join('\n') : undefined
 }
 
+/** The trophies just earned. One goes in a line with its game; several name the game once, above
+ * them, instead of repeating it on every line. */
 export const unlockNotice = (user: User, ctx: Named, unlocked: GameContext['trophies']) => {
   const t = translator(messages, user)
-  return unlocked
-    .map((trophy) => {
-      const params = {
-        trophy: tidy(trophy.name),
-        type: TYPES.has(trophy.type)
-          ? t(`types.${trophy.type}` as MessageKey<typeof messages>)
-          : trophy.type,
-        rate: fmtRate(userLocale(user), trophy.earnedRate),
-        game: gameName(ctx),
-      }
-      return trophy.earnedRate ? t('unlockedRate', params) : t('unlocked', params)
-    })
-    .join('\n')
+  const several = unlocked.length > 1
+  const lines = unlocked.map((trophy) => {
+    const params = {
+      trophy: nameFor(user, trophy),
+      type: TYPES.has(trophy.type)
+        ? t(`types.${trophy.type}` as MessageKey<typeof messages>)
+        : trophy.type,
+      rate: fmtRate(userLocale(user), trophy.earnedRate),
+      game: gameName(ctx),
+    }
+    if (several) return t(trophy.earnedRate ? 'unlockedItemRate' : 'unlockedItem', params)
+    return trophy.earnedRate ? t('unlockedRate', params) : t('unlocked', params)
+  })
+  const head = several
+    ? [t('unlockedSeveral', { count: unlocked.length, game: gameName(ctx) })]
+    : []
+  return [...head, ...lines].join('\n')
 }
 
 // The guide's note on what comes next, when this start or these unlocks reach one of its
@@ -301,10 +383,11 @@ export function routeFor(user: User, ctx: GameContext, unlocked: string[], start
   const earned = ctx.trophies.filter((t) => t.earned).map((t) => t.name)
   const open = reached && stillOpen(reached, earned)
   if (!open) return undefined
-  const milestone = { ...open, tips: asMissables(ctx, open.tips) }
+  const milestone = { ...open, tips: readable(user, ctx, asMissables(ctx, open.tips)) }
   const apart = (tip: RouteTip) => tip.kind === 'collectible' || tip.kind === 'missable'
   const common = milestone.tips.filter((tip) => !apart(tip))
   const kept = milestone.tips.filter(apart)
+  if (!common.length && !kept.length) return undefined
   return {
     text: common.length ? routeNotice({ ...milestone, tips: common }, userLocale(user)) : undefined,
     collectibles: kept.length ? stretchBlock(user, kept) : undefined,
@@ -316,15 +399,21 @@ export function routeFor(user: User, ctx: GameContext, unlocked: string[], start
 export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
   const t = translator(messages, user)
   const focus = focusAfter(ctx, unlocked)
-  const done = focus.completed ? t('phaseDone', { phase: focus.completed }) : undefined
+  const closed = focus.completed ?? []
+  const done = closed.length
+    ? t('phaseDone', { phase: listOf(user, closed), count: closed.length })
+    : undefined
   if (!focus.trophy) return done
+  const trophy = nameFor(user, focus.trophy)
+  const detail = detailFor(user, focus.trophy)
   const next = !focus.changed
-    ? t('focusStill', { trophy: focus.trophy.name })
-    : focus.behind
-      ? t('focusNewBehind', { trophy: focus.trophy.name, detail: focus.trophy.detail })
-      : t('focusNew', { trophy: focus.trophy.name, detail: focus.trophy.detail })
+    ? t('focusStill', { trophy })
+    : t(focus.behind ? 'focusNewBehind' : 'focusNew', { trophy, detail })
   return together(done, next)
 }
+
+const listOf = (user: User, items: string[]) =>
+  new Intl.ListFormat(userLocale(user), { type: 'conjunction' }).format(items)
 
 // The first trophy, halfway, the final stretch or the platinum, for the plain notice.
 export const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {
@@ -335,7 +424,7 @@ export const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['
     earned: mark.earned,
     total: mark.total,
     count: mark.remaining.length,
-    remaining: mark.remaining.join(', '),
+    remaining: mark.remaining.map((n) => guideName(user, ctx, n)).join(', '),
   })
   return `${markCheer(user, mark.kind)} ${line}`
 }
@@ -346,53 +435,69 @@ export const together = (...parts: (string | undefined)[]) => parts.filter(Boole
 // list, so it costs no model and gets no count wrong. Lines with nothing to say are left out.
 // With `again`, the player already got the full notice for this game and earned nothing since:
 // only the suggestion, in one line, and the collectibles of the stretch they are in.
+// Names and descriptions are PSN's in the player's language; the guide's own words (a trick, when a
+// missable closes) are pt-BR and stay out of a notice in English.
 export function sessionNotice(user: User, game: string, ctx?: GameContext, again = false): string {
   const t = translator(messages, user)
   if (!ctx) return `${t('playing', { game })} ${t('goodSession')}`
-  const opening = t('playing', { game: gameName(ctx) })
   const missing = ctx.trophies.filter(
     (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
   )
-  const { trophy: focus, trick, missable, behind } = todaysFocus(ctx)
-  if (again) return againNotice(user, ctx, focus?.name)
+  const focus = todaysFocus(ctx)
+  if (again) return againNotice(user, ctx, focus.trophy && nameFor(user, focus.trophy))
 
+  const stretch = hereTips(user, ctx)
   const blocks = [
     missing.length
       ? t('heading', { game: gameName(ctx), left: t('left', { count: missing.length }) })
-      : opening,
+      : t('playing', { game: gameName(ctx) }),
+    ...focusBlocks(user, focus),
+    stretch,
+    missableLine(user, ctx, focus.missable, stretch),
+    almostLine(user, missing, focus.trophy?.id),
+    t('goodSession'),
   ]
-  if (focus) {
-    const line = behind
-      ? t('focusBehind', { trophy: focus.name })
-      : t('focus', { trophy: focus.name })
-    blocks.push(`${line}\n${focus.detail}`)
-    if (trick) blocks.push(t('tip', { tip: trick }))
-  }
-  const stretch = hereTips(user, ctx)
-  if (stretch) blocks.push(stretch)
-  if (missable && !stretch.includes(`**${missable.trophy}**`))
-    blocks.push(t('missable', { trophy: missable.trophy, when: missable.when }))
-  // The tracked trophy closest to done, past halfway.
+  return blocks.filter(Boolean).join('\n\n')
+}
+
+// The session's suggestion with PSN's description, and the guide's trick for it (pt-BR only).
+function focusBlocks(user: User, focus: ReturnType<typeof todaysFocus>): string[] {
+  const t = translator(messages, user)
+  if (!focus.trophy) return []
+  const trophy = nameFor(user, focus.trophy)
+  const line = t(focus.behind ? 'focusBehind' : 'focus', { trophy })
+  const trick = focus.trick && !english(user) ? t('tip', { tip: focus.trick }) : ''
+  return [`${line}\n${detailFor(user, focus.trophy)}`, trick]
+}
+
+// The missable of the focus's phase, unless the stretch's checklist already names it.
+function missableLine(
+  user: User,
+  ctx: GameContext,
+  missable: ReturnType<typeof todaysFocus>['missable'],
+  stretch: string,
+): string {
+  if (!missable) return ''
+  const t = translator(messages, user)
+  const trophy = guideName(user, ctx, missable.trophy)
+  if (stretch.includes(`**${trophy}**`)) return ''
+  return english(user)
+    ? t('missableBare', { trophy })
+    : t('missable', { trophy, when: missable.when })
+}
+
+// The tracked trophy closest to done, past halfway.
+function almostLine(user: User, missing: Trophy[], focus?: number): string {
+  const fill = (x: Trophy) => (x.progressValue ?? 0) / (x.progressTarget ?? 1)
   const almost = missing
-    .filter(
-      (x) =>
-        x.progressTarget && x.id !== focus?.id && (x.progressValue ?? 0) / x.progressTarget >= 0.5,
-    )
-    .sort(
-      (a, b) =>
-        (b.progressValue ?? 0) / (b.progressTarget ?? 1) -
-        (a.progressValue ?? 0) / (a.progressTarget ?? 1),
-    )[0]
-  if (almost)
-    blocks.push(
-      t('almost', {
-        trophy: almost.name,
-        value: almost.progressValue ?? 0,
-        target: almost.progressTarget ?? 0,
-      }),
-    )
-  blocks.push(t('goodSession'))
-  return blocks.join('\n\n')
+    .filter((x) => x.progressTarget && x.id !== focus && fill(x) >= 0.5)
+    .sort((a, b) => fill(b) - fill(a))[0]
+  if (!almost) return ''
+  return translator(messages, user)('almost', {
+    trophy: nameFor(user, almost),
+    value: almost.progressValue ?? 0,
+    target: almost.progressTarget ?? 0,
+  })
 }
 
 // The guide's tips for the stretch the player is in, without those about trophies they have.
@@ -413,7 +518,8 @@ function hereTips(user: User, ctx: GameContext, kinds?: string[]): string {
   const tips = asMissables(ctx, open?.tips ?? []).filter(
     (tip) => !kinds || kinds.includes(tip.kind),
   )
-  return tips.length ? stretchBlock(user, tips) : ''
+  const shown = readable(user, ctx, tips)
+  return shown.length ? stretchBlock(user, shown) : ''
 }
 
 // A tip about a trophy the guide lists as missable is a missable tip, whatever kind the milestone
@@ -428,11 +534,12 @@ function asMissables(ctx: GameContext, tips: RouteTip[]): RouteTip[] {
 }
 
 // "Where you are in the game": the checklist summed up (what to pick up, the missables by name),
-// then each item in the order the player meets it.
+// then each item in the order the player meets it, several tips about one trophy under one heading.
 function stretchBlock(user: User, tips: RouteTip[]): string {
   const locale = userLocale(user)
   const head = [translator(messages, user)('here'), collectibleSummary(tips, locale)]
     .filter(Boolean)
     .join('\n')
-  return `${head}\n\n${tips.map((tip, i) => tipLine(tip, locale, i + 1)).join('\n\n')}`
+  const items = byTrophy(tips)
+  return `${head}\n\n${items.map((tip, i) => tipLine(tip, locale, i + 1)).join('\n\n')}`
 }

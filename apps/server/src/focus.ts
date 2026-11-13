@@ -90,10 +90,23 @@ function placeOf<R extends { trophies: string[] }>(
 /**
  * Where the guide's structure points next: with a graph, the trophy behind the step that opens the
  * most others; with places, the nearest ahead of the player; else the phase's first.
+ *
+ * A graph only says what a trophy depends on, not when in the game a step comes: a step with nothing
+ * before it in the graph ("Radagon e Elden Beast", the last boss) counts as ready from the first
+ * minute. So the graph's pick stands only when the roadmap does not leave it to a later phase
+ * (`later`); otherwise a player who just started would be sent to an ending.
  */
-function along(base: TrophyStatus[], guide: GameContext['guide'], inPhase: string[]) {
+function along(
+  base: TrophyStatus[],
+  guide: GameContext['guide'],
+  inPhase: string[],
+  later: Set<string>,
+) {
   const open = base.filter((x) => !x.earned)
-  const key = keyStep(base, guide)?.trophy ?? nextPlaced(open, base, guide)
+  const step = keyStep(base, guide)?.trophy
+  const name = step && tidy(step.name)
+  const now = name && (inPhase.includes(name) || !later.has(name)) ? step : undefined
+  const key = now ?? nextPlaced(open, base, guide)
   return key ? tidy(key.name) : inPhase[0]
 }
 
@@ -128,7 +141,7 @@ export function todaysFocus(ctx: Pick<GameContext, 'trophies' | 'guide'>): Focus
   const name =
     inPhase.find((n) => missableNames.has(n)) ??
     almostFull(roadmap, open) ??
-    along(base, guide, inPhase)
+    along(base, guide, inPhase, later)
   const trophy = name ? open.get(name) : undefined
   const { home, behind: phaseBehind } = placeOf(roadmap, name, at, earned)
   // With places in the guide, "left behind" means a later story trophy was earned, not a later phase.
@@ -146,12 +159,14 @@ export function todaysFocus(ctx: Pick<GameContext, 'trophies' | 'guide'>): Focus
 }
 
 // The focus a trophy notice talks about: the one the player had before these unlocks stays, unless
-// one of them was it; then the next one by the same rule is new. A phase whose last open trophy is
-// among these unlocks is `completed`.
+// one of them was it; then the next one by the same rule is new. Every phase whose last open trophy
+// is among these unlocks is `completed`, in the roadmap's order: one sweep can close two (a trophy
+// the roadmap lists in both, or several unlocks synced together), and naming only the first made
+// the next notice look like it skipped a phase.
 export function focusAfter(
   ctx: Pick<GameContext, 'trophies' | 'guide'>,
   unlocked: TrophyStatus[],
-): Focus & { changed: boolean; completed?: string } {
+): Focus & { changed: boolean; completed?: string[] } {
   const ids = new Set(unlocked.map((t) => t.id))
   const before = todaysFocus({
     ...ctx,
@@ -159,10 +174,10 @@ export function focusAfter(
   })
   const now = todaysFocus(ctx)
   const still = new Set(now.phases.map((p) => p.phase))
-  const completed = before.phases.find((p) => !still.has(p.phase))?.short
+  const completed = before.phases.filter((p) => !still.has(p.phase)).map((p) => p.short)
   return {
     ...now,
     changed: before.trophy?.name !== now.trophy?.name,
-    ...(completed ? { completed } : {}),
+    ...(completed.length ? { completed } : {}),
   }
 }
