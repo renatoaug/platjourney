@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.75.0](https://github.com/renatoaug/platjourney/compare/v0.74.0...v0.75.0) (2026-11-13)
+
+### Features
+
+* **web:** new app icon and logo ([#183](https://github.com/renatoaug/platjourney/issues/183)) ([0a7e905](https://github.com/renatoaug/platjourney/commit/0a7e905e40ca4223192b23b98e637e9ab6730252))
+
 ## [0.74.0](https://github.com/renatoaug/platjourney/compare/v0.73.0...v0.74.0) (2026-11-13)
 
 ### Features
