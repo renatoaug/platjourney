@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.74.0](https://github.com/renatoaug/platjourney/compare/v0.73.0...v0.74.0) (2026-11-13)
+
+### Features
+
+* **web:** red accent color and the app version in settings ([#182](https://github.com/renatoaug/platjourney/issues/182)) ([575cb57](https://github.com/renatoaug/platjourney/commit/575cb57ae1c6abc477f8cfad5c04119a576eeb42))
+
 ## [0.73.0](https://github.com/renatoaug/platjourney/compare/v0.72.5...v0.73.0) (2026-11-12)
 
 ### Features
