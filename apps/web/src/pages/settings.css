@@ -1,4 +1,10 @@
 @layer screens {
+  /* The page measures its own width, not the window's: beside the sidebar on an iPad the content
+     is much narrower than the screen, so the layout follows the room it really has. */
+  #settings-page {
+    container-type: inline-size;
+  }
+
   /* Two by two, each pair as tall as its taller card: the account beside notifications, the
      connected apps beside preferences. The cards come in phone order (account, apps,
      notifications, preferences), so the wide layout places them. */
@@ -19,7 +25,7 @@
     order: 10;
   }
 
-  @media (min-width: 761px) {
+  @container (min-width: 721px) {
     .settings-grid > #notifications-card,
     .settings-grid > #preferences-card {
       grid-column: 1 / -1;
@@ -48,7 +54,8 @@
     align-content: start;
   }
 
-  @media (max-width: 760px) {
+  /* One card per row when two would be too narrow for the account's name and buttons. */
+  @container (max-width: 720px) {
     .settings-grid {
       grid-template-columns: minmax(0, 1fr);
       align-items: start;

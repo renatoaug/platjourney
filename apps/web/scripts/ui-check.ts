@@ -1,4 +1,4 @@
-// Screenshots every screen at desktop and phone width and runs axe on each one.
+// Screenshots every screen at desktop, iPad (portrait and landscape) and phone width and runs axe on each one.
 // bun run ui:check [route ...]   routes like /, /game, /goals; default is all of them.
 // Needs the built app running (bun run build, then UI_URL, default http://localhost:3000) and a user in the database
 // (UI_USER = PSN online id; default is the first user). Output goes to .ui-check/.
@@ -23,9 +23,13 @@ const ROUTES = [
   '/history',
   '/usage',
   '/profile',
+  '/settings',
 ]
 const VIEWPORTS = [
   { name: '1280', width: 1280, height: 900 },
+  // iPad Air in landscape and portrait: the sidebar stays, so the content is narrower than it looks.
+  { name: '1180', width: 1180, height: 820 },
+  { name: '820', width: 820, height: 1180 },
   { name: '375', width: 375, height: 812 },
 ]
 
