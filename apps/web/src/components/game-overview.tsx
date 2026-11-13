@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtPlayTime, number, pct } from '../lib/format'
+import { trophyName } from '../lib/trophy-text'
 import type { CurrentGame, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { TrophyMedal } from '../ui/trophy-medal'
@@ -196,9 +197,9 @@ function ProgressRing({
   )
 }
 
-function journeyLead(t: Translator<typeof messages>, done: boolean, next?: string) {
+function journeyLead(t: Translator<typeof messages>, done: boolean, next?: Trophy) {
   if (done) return t('journeyDone')
-  return next ? t('journeyNext', { name: next }) : t('journeyStart')
+  return next ? t('journeyNext', { name: trophyName(next) }) : t('journeyStart')
 }
 
 /** Each tier's cup, with how many of its trophies are earned of how many there are. */
@@ -342,7 +343,7 @@ function GameLinks({
           accent
           icon="compass"
           title={t('journey')}
-          lead={catalog ? t('journeyPreview') : journeyLead(t, done, c.focus?.trophy?.name)}
+          lead={catalog ? t('journeyPreview') : journeyLead(t, done, c.focus?.trophy)}
           side={
             !done && !catalog && hasMissables ? (
               <span className="game-link-pill">

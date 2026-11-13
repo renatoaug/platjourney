@@ -59,6 +59,9 @@ export function withTrophyCards(messages: ChatMessage[], user: User, ctx?: GameC
         id: t.id,
         name: t.name,
         detail: t.detail ?? null,
+        // The page shows the one in the player's language.
+        nameEn: t.nameEn || null,
+        detailEn: t.detailEn || null,
         type: t.type,
         iconUrl: t.iconUrl ?? null,
         earned: t.earned,

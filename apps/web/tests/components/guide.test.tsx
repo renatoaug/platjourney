@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { Guide, type GuideGame, GuideSkeleton } from '../../src/components/guide'
 import { current } from '../../src/fixtures'
+import { setLocale } from '../../src/i18n/i18n'
 import type { GuideDetail } from '../../src/lib/types'
 
 const guide = current.guide as GuideDetail
@@ -284,4 +285,21 @@ test('an unknown playthrough count stays textual instead of a large numeric metr
   expect(screen.getByText('~130h').closest('.quick-fact')?.classList.contains('unknown')).toBe(
     false,
   )
+})
+
+test('a trophy the guide names shows PSN’s name in the player’s language', () => {
+  setLocale('en', { persist: false })
+  try {
+    const { container } = show({
+      ...game,
+      guide: {
+        ...guide,
+        missables: [{ trophy: 'Entrega especial', when: 'No Capítulo 2', how: 'Entregue.' }],
+      },
+    })
+    fireEvent.click(screen.getByRole('tab', { name: /Missables/ }))
+    expect(container.querySelector('.missable-head b')?.textContent).toBe('Special Delivery')
+  } finally {
+    setLocale('pt-BR', { persist: false })
+  }
 })

@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MockAppState } from '../../src/app/app-state'
 import { Plan, PlanCard, type PlanProps, type SessionPlan } from '../../src/components/plan'
 import { samplePlan } from '../../src/components/plan.stories'
+import { setLocale } from '../../src/i18n/i18n'
 import { ToastHost } from '../../src/ui/toast'
 
 const noop = () => {}
@@ -265,4 +266,22 @@ describe('PlanCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Agora não' }))
     expect(skip).toHaveBeenCalled()
   })
+})
+
+test('a step names its trophy in the player’s language', () => {
+  setLocale('en', { persist: false })
+  try {
+    const steps = samplePlan.steps.map((s) => ({
+      ...s,
+      nameEn: `${s.trophy} (EN)`,
+      detailEn: 'In English',
+    }))
+    const { container } = show({ plan: { ...samplePlan, steps } })
+    expect(container.querySelector('.route-focus h3')?.textContent).toBe(
+      `${samplePlan.steps[samplePlan.nextIndex].trophy} (EN)`,
+    )
+    expect(container.querySelector('.route-detail')?.textContent).toBe('In English')
+  } finally {
+    setLocale('pt-BR', { persist: false })
+  }
 })

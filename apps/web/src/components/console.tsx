@@ -10,6 +10,7 @@ import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtPlayTime, fmtRate, pct } from '../lib/format'
 import { shownProgress } from '../lib/progress'
 import { tintStyle } from '../lib/tint'
+import { trophyDetail, trophyName } from '../lib/trophy-text'
 import type { AppStateData, CurrentGame } from '../lib/types'
 import type { Platinum } from '../pages/profile'
 import { BoldText } from '../ui/bold-text'
@@ -118,7 +119,7 @@ const isCover = (art?: string | null, cover?: string | null) =>
 
 function focusLine(c: CurrentGame, note?: string) {
   const next = c.focus?.trophy
-  return next ? `${next.name}: ${next.detail}` : note?.split(/\n\s*\n/)[0]
+  return next ? `${trophyName(next)}: ${trophyDetail(next)}` : note?.split(/\n\s*\n/)[0]
 }
 
 function items(data: AppStateData, platinums: Platinum[] | null, includeDlc: boolean): Item[] {
@@ -150,7 +151,7 @@ function items(data: AppStateData, platinums: Platinum[] | null, includeDlc: boo
       platform: c.platform,
       tip: focusLine(c, tip?.content),
       context: c.np,
-      target: c.focus?.trophy?.name,
+      target: c.focus?.trophy && trophyName(c.focus.trophy),
     })
   }
   for (const r of data.ranking) {

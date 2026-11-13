@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
+import { trophyMatches } from '../../../../shared/journey/ongoing'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { shownProgress } from '../lib/progress'
 import { tintStyle } from '../lib/tint'
-import type { CurrentGame } from '../lib/types'
+import { trophyName } from '../lib/trophy-text'
+import type { CurrentGame, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { GuideText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
@@ -40,15 +42,23 @@ function scopedProgress(c: CurrentGame, includeDlc: boolean) {
     : c.progress
 }
 
-function JourneyWarning({ warning }: { warning: NonNullable<CurrentGame['focus']>['missable'] }) {
+function JourneyWarning({
+  warning,
+  trophies,
+}: {
+  warning: NonNullable<CurrentGame['focus']>['missable']
+  trophies: Trophy[]
+}) {
   const t = useMessages(messages)
   if (!warning) return null
+  // The guide names it in pt-BR: the list's own entry gives the name in the player's language.
+  const found = trophies.find((x) => trophyMatches(x, warning.trophy))
   return (
     <aside className="journey-warning" aria-label={t('attention')}>
       <div className="journey-warning-heading">
         <Icon name="warning" /> <span>{t('attention')}</span>
       </div>
-      <b>{warning.trophy}</b>
+      <b>{found ? trophyName(found) : warning.trophy}</b>
       <p>
         <GuideText text={warning.when} />
       </p>
@@ -88,7 +98,7 @@ function JourneyPage({
         ) : (
           <>
             <TrophyRoadmap key={c.np} game={c} />
-            <JourneyWarning warning={focus?.missable} />
+            <JourneyWarning warning={focus?.missable} trophies={c.trophies} />
           </>
         ))}
       {view === 'guide' && (

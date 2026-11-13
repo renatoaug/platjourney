@@ -12,6 +12,7 @@ import { defineMessages, Language, type Translator, translator, useMessages } fr
 import { ApiError, api, del } from '../lib/api'
 import { fmtClock, fmtDate, fmtMinutes } from '../lib/format'
 import { plainText } from '../lib/text'
+import { trophyDetail, trophyName } from '../lib/trophy-text'
 import type { AssistantKey } from '../lib/types'
 import { modelWorkDone } from '../plugins'
 import { Icon } from '../ui/icon'
@@ -170,6 +171,9 @@ interface PlanStep {
   type: string | null
   // The trophy's own description ("Open every secret chest"); absent on old plans.
   detail?: string | null
+  // Its English name and description, for a player reading English.
+  nameEn?: string | null
+  detailEn?: string | null
 }
 
 export interface SessionPlan {
@@ -358,8 +362,8 @@ function Route({ plan }: { plan: SessionPlan }) {
                 <Icon name="clock" /> ~{fmtMinutes(s.minutes)}
               </span>
             </header>
-            <h3>{s.trophy}</h3>
-            {s.detail && <p className="route-detail">{s.detail}</p>}
+            <h3>{trophyName({ name: s.trophy, nameEn: s.nameEn })}</h3>
+            {trophyDetail(s) && <p className="route-detail">{trophyDetail(s)}</p>}
             <Markdown text={s.how} />
             {s.trick && (
               <div className="plan-trick">
