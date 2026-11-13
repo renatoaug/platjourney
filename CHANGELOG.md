@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.75.4](https://github.com/renatoaug/platjourney/compare/v0.75.3...v0.75.4) (2026-11-13)
+
+### Bug Fixes
+
+* **server:** nexo notices in the player's language with the journey's next trophy ([#187](https://github.com/renatoaug/platjourney/issues/187)) ([f427a4d](https://github.com/renatoaug/platjourney/commit/f427a4da8d74fb8864b791c9f0d978f7df633284))
+
 ## [0.75.3](https://github.com/renatoaug/platjourney/compare/v0.75.2...v0.75.3) (2026-11-13)
 
 ### Bug Fixes
