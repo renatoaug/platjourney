@@ -136,7 +136,7 @@ export function ConnectView({
     <div className="auth connect-screen">
       <section className="connect" id="connect-page">
         <div className="logo connect-logo">
-          <img className="brand-mark" src="/logo.svg" alt="" width="40" height="40" />
+          <img className="brand-mark" src="/logo.png" alt="" width="40" height="40" />
           <span className="brand-name">
             plat<span className="brand-accent">journey</span>
           </span>

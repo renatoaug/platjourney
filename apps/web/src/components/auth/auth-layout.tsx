@@ -67,7 +67,7 @@ export function AuthLayout({
       <div className="auth-layout">
         <section className="auth-story" aria-label="PlatJourney">
           <div className="logo auth-logo">
-            <img className="brand-mark" src="/logo.svg" alt="" width="40" height="40" />
+            <img className="brand-mark" src="/logo.png" alt="" width="40" height="40" />
             <span className="brand-name">
               plat<span className="brand-accent">journey</span>
             </span>

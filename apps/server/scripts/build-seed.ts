@@ -236,7 +236,7 @@ const user = {
   psn_online_id: 'PlatJourneyDemo',
   psn_account_id: 'demo',
   demo: true,
-  avatar_url: '/logo.svg',
+  avatar_url: '/logo.png',
   include_dlc_progress: false,
   ps_plus: PS_PLUS,
   goal_targets: Object.fromEntries(Object.entries(GOALS).map(([y, n]) => [y, n])),

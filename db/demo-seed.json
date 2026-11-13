@@ -6,7 +6,7 @@
       "psn_online_id": "PlatJourneyDemo",
       "psn_account_id": "demo",
       "demo": true,
-      "avatar_url": "/logo.svg",
+      "avatar_url": "/logo.png",
       "include_dlc_progress": false,
       "goal_targets": {
         "2025": 8,

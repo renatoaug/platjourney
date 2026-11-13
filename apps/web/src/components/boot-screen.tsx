@@ -121,7 +121,7 @@ export function BootScreen({ leaving = false }: { leaving?: boolean }) {
         </div>
       )}
       <span className="boot-brand" aria-hidden="true">
-        <img src="/logo.svg" alt="" width="28" height="28" />
+        <img src="/logo.png" alt="" width="28" height="28" />
         <span>
           plat<span className="boot-brand-accent">journey</span>
         </span>

@@ -130,7 +130,7 @@ export const Skeleton: Story = {
 export const Covers: Story = {
   render: () => (
     <div className="flex gap-4">
-      <Cover url="/logo.svg" name="PlatJourney" className="entry-cover" />
+      <Cover url="/logo.png" name="PlatJourney" className="entry-cover" />
       <Cover name="Days Gone" className="entry-cover" />
     </div>
   ),

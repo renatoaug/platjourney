@@ -1,4 +1,4 @@
-# <img src="apps/web/public/logo.svg" alt="" width="40" align="top"> PlatJourney
+# <img src="apps/web/public/logo.png" alt="" width="40" align="top"> PlatJourney
 
 Your PlayStation platinum journey, guided by Nexo: PlatJourney watches your PSN profile, notices the game you start and the trophies you unlock, and helps you on the web and on Telegram with researched platinum guides, session routes and recommendations from what you actually play.
 

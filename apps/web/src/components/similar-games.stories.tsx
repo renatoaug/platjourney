@@ -4,7 +4,7 @@ import { SimilarGames, type SimilarGamesState } from './similar-games'
 
 export const similarGamesData: SimilarGame[] = [
   {
-    game: { id: 'game:40', name: 'Ghost of Tsushima', cover_url: '/logo.svg' },
+    game: { id: 'game:40', name: 'Ghost of Tsushima', cover_url: '/logo.png' },
     difficulty: 4,
     hours: 45,
     relation: 'similar',
@@ -16,19 +16,19 @@ export const similarGamesData: SimilarGame[] = [
     relation: 'expansion',
   },
   {
-    game: { id: 'game:42', name: 'The Last of Us Part II', cover_url: '/logo.svg' },
+    game: { id: 'game:42', name: 'The Last of Us Part II', cover_url: '/logo.png' },
     difficulty: 5,
     hours: 35,
     relation: 'similar',
   },
   {
-    game: { id: 'game:43', name: 'Days Gone Remastered', cover_url: '/logo.svg' },
+    game: { id: 'game:43', name: 'Days Gone Remastered', cover_url: '/logo.png' },
     difficulty: 3,
     hours: 70,
     relation: 'series',
   },
   {
-    game: { id: 'game:44', name: 'Horizon Zero Dawn', cover_url: '/logo.svg' },
+    game: { id: 'game:44', name: 'Horizon Zero Dawn', cover_url: '/logo.png' },
     difficulty: 3,
     hours: 50,
     relation: 'similar',
