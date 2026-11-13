@@ -663,7 +663,7 @@ describe('checkUser', () => {
     config.automatic.notices = false
     await checkUser(user)
     const text = logTip.mock.calls.find((c) => c[1] === 'start')?.[2] ?? ''
-    expect(text.split('\n\n')[1]).toStartWith('🏆 **Primeiro**')
+    expect(text.split('\n\n')[1]).toStartWith('2 troféus em **Days Gone**:\n🏆 **Primeiro**')
     expect(text).toEndWith('Antes de começar:\n• Jogue no Difícil.')
     expect(text.split('\n\n')[0]).toBe(followedNotice(user, game.id))
     expect(followedNotice(user, game.id)).toBe(followedNotice(user, game.id))
@@ -746,7 +746,7 @@ describe('checkUser', () => {
     await checkUser(user)
     expect(reaction).not.toHaveBeenCalled()
     const text =
-      '🏆 **Segundo** (ouro, 12,5% de quem joga) em **Days Gone**\n\nMetade do caminho! Daqui pra frente a platina só fica mais perto. Metade do jogo base: 2 de 3 troféus.\n\nAgora vale saber:\n• Compre o arco.'
+      '🏆 **Segundo** (ouro, 12,5% de quem joga) em **Days Gone**\n\nMetade do caminho! Daqui pra frente a platina só fica mais perto. 2 de 3 troféus do jogo base.\n\nAgora vale saber:\n• Compre o arco.'
     expect(logTip).toHaveBeenCalledWith(user.id, 'unlock', text, game.id)
     expect(send.mock.calls).toEqual([['42', text]])
   })
@@ -797,7 +797,7 @@ describe('checkUser', () => {
     await checkUser(user)
     const text = logTip.mock.calls.find((c) => c[1] === 'start')?.[2] ?? ''
     expect(text).toStartWith(
-      '🏆 **Primeiro** (bronze, 50% de quem joga) em **Days Gone**\n🏆 **Segundo** (ouro, 12,5% de quem joga) em **Days Gone**',
+      '2 troféus em **Days Gone**:\n🏆 **Primeiro** (bronze, 50% de quem joga)\n🏆 **Segundo** (ouro, 12,5% de quem joga)',
     )
     expect(text).toEndWith('Antes de começar:\n• Jogue no Difícil.')
     expect(markTip).toHaveBeenCalled()

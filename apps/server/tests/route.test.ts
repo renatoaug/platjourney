@@ -161,3 +161,44 @@ test('the stretch the player is in is the furthest milestone reached, or the ope
   expect(currentMilestone(guide, ['Fim do Capítulo 1', 'Fim do Capítulo 2'])).toBe(milestones[2])
   expect(currentMilestone(undefined, ['Fim do Capítulo 1'])).toBeUndefined()
 })
+
+test('a collectible whose text opens with a sentence, not a label, is counted without a type', () => {
+  // Grand Theft Auto V: the text before the colon is a sentence about the trophy, not what the item
+  // is called, so it is neither a type in the count nor a bold heading.
+  const letter = {
+    kind: 'collectible' as const,
+    text: 'Esse aviso adianta o troféu **Um Mistério Solucionado**: Recolha os 50 pedaços de carta.',
+    trophy: 'Um Mistério Solucionado',
+  }
+  expect(collectibleSummary([letter])).toBe('1 coisa para pegar aqui. Seguem na ordem.')
+  expect(tipLine(letter)).toBe(`• ${letter.text}`)
+  const flower = { kind: 'collectible' as const, text: 'Flor 1/5: Na praia.', trophy: null }
+  expect(collectibleSummary([flower, letter])).toBe(
+    '2 coisas para pegar aqui: 1 flor e 1 item. Seguem na ordem.',
+  )
+  // A checklist item named with bold inside goes in one bold heading, not two nested ones.
+  const named = {
+    ...letter,
+    name: 'Carta 1/50 do troféu **Um Mistério Solucionado**',
+    steps: ['x'],
+  }
+  expect(tipLine(named, 'pt-BR', 1)).toStartWith(
+    '**1. Carta 1/50 do troféu Um Mistério Solucionado**\n',
+  )
+})
+
+test('several plain tips about the same trophy go under one heading', () => {
+  // Hot Wheels Unleashed: two bullets both titled "🏆 **Boca de Siri**".
+  const milestone: Milestone = {
+    after: 'Fim do Capítulo 1',
+    tips: [
+      { kind: 'trophy', text: 'Vença sem usar o turbo.', trophy: 'Boca de Siri' },
+      { kind: 'item', text: 'Compre o carro azul.', trophy: null },
+      { kind: 'trophy', text: 'Dá para repetir a corrida.', trophy: 'boca de siri ' },
+      { kind: 'trophy', text: 'Vença sem usar o turbo.', trophy: 'Boca de Siri' },
+    ],
+  }
+  expect(routeNotice(milestone)).toBe(
+    'Agora vale saber:\n• 🏆 **Boca de Siri**: Vença sem usar o turbo. Dá para repetir a corrida.\n• Compre o carro azul.',
+  )
+})

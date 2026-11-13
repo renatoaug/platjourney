@@ -1,12 +1,12 @@
 import { AiError, ai } from './ai.ts'
 import { aiContext } from './ai-context.ts'
 import { tagged } from './costs.ts'
-import { focusAfter, storyTrophy, tidy, todaysFocus } from './focus.ts'
+import { focusAfter, storyTrophy, todaysFocus } from './focus.ts'
 import type { Guide } from './guide.ts'
 import { hookFor } from './hooks.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
 import { markCheer, progressMark } from './marks.ts'
-import { ongoingTrophies, openMissables, startLists } from './notices.ts'
+import { detailFor, nameFor, ongoingTrophies, openMissables, startLists } from './notices.ts'
 import { aroundModel } from './plugins.ts'
 import type { TitleGroups, TitleProgress, TrophyStatus } from './psn.ts'
 import {
@@ -118,15 +118,16 @@ export async function proactiveTip(
       kind: 'start',
       context: aiContext(ctx, user),
       ...(firsts.length ? { unlocked: firsts } : {}),
-      ...(ongoing.length ? { ongoing: ongoing.map((t) => t.name) } : {}),
+      // Names and descriptions in the player's language, the ones the notice shows.
+      ...(ongoing.length ? { ongoing: ongoing.map((t) => nameFor(user, t)) } : {}),
       ...(missables.length
-        ? { missables: missables.filter((m) => !m.hidden).map((m) => m.trophy) }
+        ? { missables: missables.filter((m) => !m.hidden).map((m) => nameFor(user, m.trophy)) }
         : {}),
       ...(focus.trophy
         ? {
             focus: {
-              trophy: focus.trophy.name,
-              detail: focus.trophy.detail,
+              trophy: nameFor(user, focus.trophy),
+              detail: detailFor(user, focus.trophy),
               trick: focus.trick,
             },
           }
@@ -138,14 +139,16 @@ export async function proactiveTip(
     ctx.game.id,
   )
   // The first trophy as the message's title with our cheer, as on any unlock notice.
-  const names = firsts.map((t) => t.name)
+  const names = firsts.map((t) => nameFor(user, t))
   const titled = firsts.length
-    ? `${names.map((n) => `🏆 **${tidy(n)}**`).join('\n')}\n\n${markCheer(user, 'first')}\n\n${withoutTitle(said, names)}`
+    ? `${names.map((n) => `🏆 **${n}**`).join('\n')}\n\n${markCheer(user, 'first')}\n\n${withoutTitle(said, [...names, ...firsts.map((t) => t.name)])}`
     : said
   const text = [titled, startLists(user, ctx, ongoing, after), after].filter(Boolean).join('\n\n')
   await logTip(user.id, 'start', text, ctx.game.id)
   return text
 }
+
+const PHASES = new Intl.ListFormat(Language.PtBR, { type: 'conjunction' })
 
 export async function unlockReaction(
   user: User,
@@ -181,9 +184,10 @@ export async function unlockReaction(
         ? {
             focus: {
               behind: focus.behind ?? false,
-              completed: focus.completed,
-              trophy: focus.trophy?.name,
-              detail: focus.trophy?.detail,
+              // Every phase these unlocks closed, as one name ("Fase 1 e Fase 2"): the prompt is pt-BR.
+              completed: focus.completed && PHASES.format(focus.completed),
+              trophy: focus.trophy && nameFor(user, focus.trophy),
+              detail: focus.trophy && detailFor(user, focus.trophy),
               trick: focus.trick,
               changed: focus.changed,
               missable: focus.missable,
@@ -196,10 +200,10 @@ export async function unlockReaction(
     ctx.game.id,
   )
   // The trophy as the message's title, then Nexo's words: the same first line as a plain notice.
-  const body = withoutTitle(
-    text,
-    unlocked.map((t) => t.name),
-  )
+  const body = withoutTitle(text, [
+    ...unlocked.map((t) => t.name),
+    ...unlocked.map((t) => nameFor(user, t)),
+  ])
   // At a mark, our own line opens the message under the trophy (a paragraph of its own, so it does not
   // read as part of the title), and Nexo's words follow it.
   const cheer = [mark ? markCheer(user, mark.kind) : '', relief ?? '']
@@ -207,7 +211,7 @@ export async function unlockReaction(
     .map((line) => `\n\n${line}`)
     .join('')
   const tail = after ? `\n\n${after}` : ''
-  const titled = `${unlocked.map((t) => `🏆 **${tidy(t.name)}**`).join('\n')}${cheer}\n\n${body}${tail}`
+  const titled = `${unlocked.map((t) => `🏆 **${nameFor(user, t)}**`).join('\n')}${cheer}\n\n${body}${tail}`
   await logTip(user.id, 'unlock', titled, ctx.game.id)
   return titled
 }

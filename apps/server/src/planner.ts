@@ -84,6 +84,9 @@ export interface PlanView extends Omit<SessionPlan, 'status'> {
     iconUrl: string | null
     type: string | null
     detail: string | null
+    // The trophy's English name and description: the page shows the player's language.
+    nameEn: string | null
+    detailEn: string | null
   })[]
   doneCount: number
   status: PlanStatus
@@ -292,6 +295,8 @@ function view(plan: SessionPlan, ctx?: GameContext): PlanView {
       startsAt: clock,
       iconUrl: trophy?.iconUrl ?? null,
       detail: trophy?.detail ?? null,
+      nameEn: trophy?.nameEn || null,
+      detailEn: trophy?.detailEn || null,
       type: trophy?.type ?? null,
     }
     clock += s.minutes
@@ -360,7 +365,7 @@ export function planReport(p: PlanView, locale: Locale = DEFAULT_LOCALE): string
     '',
     ...p.steps.map(
       (s, i) =>
-        `${i + 1}. ${s.done ? '✅ ' : ''}**${s.trophy}** (~${h(s.minutes)})\n   ${s.how}${s.trick ? `\n   ${t('trick', { trick: s.trick })}` : ''}`,
+        `${i + 1}. ${s.done ? '✅ ' : ''}**${locale === Language.En && s.nameEn ? s.nameEn : s.trophy}** (~${h(s.minutes)})\n   ${s.how}${s.trick ? `\n   ${t('trick', { trick: s.trick })}` : ''}`,
     ),
     ...(p.warnings.length ? ['', ...p.warnings.map((w) => `⚠️ ${w}`)] : []),
     ...(p.ifTimeLeft ? ['', t('ifTimeLeft', { text: p.ifTimeLeft })] : []),

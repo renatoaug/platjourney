@@ -6,10 +6,12 @@ import {
   Language,
   type MessageKey,
   type Translator,
+  useLocale,
   useMessages,
 } from '../i18n/i18n'
 import { fmtDate, fmtRate } from '../lib/format'
 import { trophyKind } from '../lib/trophy-roadmap'
+import { trophyDetail, trophyName } from '../lib/trophy-text'
 import type { GuideDetail, Trophy, TrophyKind } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { repeat, Sk } from '../ui/skeleton'
@@ -266,7 +268,11 @@ function filtered(
   return scope
     .filter((t) => status === 'all' || (status === 'earned') === !!t.earned)
     .filter((t) => !onlyProgress || t.progressTarget)
-    .filter((t) => !query || `${t.name} ${t.detail} ${t.nameEn}`.toLowerCase().includes(query))
+    .filter(
+      (t) =>
+        !query ||
+        `${t.name} ${t.detail} ${t.nameEn ?? ''} ${t.detailEn ?? ''}`.toLowerCase().includes(query),
+    )
     .sort(SORTERS[sort] ?? SORTERS.pending)
 }
 
@@ -310,6 +316,8 @@ function TrophyCard({
   kind?: TrophyKind
 }) {
   const tr = useMessages(messages)
+  const locale = useLocale()
+  const name = trophyName(t, locale)
   const help = ask && !t.earned
   return (
     <article
@@ -325,8 +333,8 @@ function TrophyCard({
         )}
       </div>
       <div className="trophy-row-content">
-        <h4>{t.name}</h4>
-        <p>{t.detail}</p>
+        <h4>{name}</h4>
+        <p>{trophyDetail(t, locale)}</p>
         <div className="trophy-row-meta">
           <span className={`trophy-metal ${t.type}`}>
             {TYPES[t.type] ? tr(TYPES[t.type]) : t.type}
@@ -351,11 +359,7 @@ function TrophyCard({
         ) : null}
       </div>
       {help && t.type !== 'platinum' && (
-        <Link
-          className="trophy-help-btn"
-          aria-label={tr('help.askAbout', { name: t.name })}
-          to={ask}
-        >
+        <Link className="trophy-help-btn" aria-label={tr('help.askAbout', { name })} to={ask}>
           <Icon name="nexo" />
           <span>{tr('help.ask')}</span>
         </Link>
@@ -657,7 +661,12 @@ export function TrophyList({
               shown
                 .slice(start, start + TROPHY_PAGE_SIZE)
                 .map((x) => (
-                  <TrophyCard key={x.id} t={x} ask={askHref(x.name)} kind={trophyKind(x, guide)} />
+                  <TrophyCard
+                    key={x.id}
+                    t={x}
+                    ask={askHref(trophyName(x))}
+                    kind={trophyKind(x, guide)}
+                  />
                 ))
             ) : (
               <div className="trophy-empty">{t('noResultsHint')}</div>

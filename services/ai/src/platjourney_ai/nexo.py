@@ -393,6 +393,13 @@ def cite(text: str, used: list[Passage]) -> str:
     return re.sub(r'^([ \t]*(?:Fontes?|Sources?):[ \t]*)(.+)$', line, text, flags=re.M)
 
 
+def clause(text: str | None) -> str:
+    """A PSN description to quote inside a sentence of the prompt. PSN ends many with a period
+    ("Derrote Li."): quoted as it is, the model copied the period into its own sentence ("derrote
+    Li. para avançar na história"), which reads as a name cut short. An ellipsis stays."""
+    return re.sub(r'(?<!\.)\.$', '', (text or '').strip())
+
+
 def start_prompt(
     ctx: GameContext,
     unlocked: list[Trophy] | None = None,
@@ -415,7 +422,8 @@ def start_prompt(
     if focus and focus.trophy:
         trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
         target = (
-            f'Depois, aponte como próximo troféu {focus.trophy} ({focus.detail}), em negrito, e '
+            f'Depois, aponte como próximo troféu {focus.trophy} ({clause(focus.detail)}), em '
+            'negrito, e '
             f'diga em uma linha como pegar.{trick} Não sugira outro troféu como próximo alvo.'
         )
     else:
@@ -581,8 +589,8 @@ def focus_prompt(focus: Focus) -> str:
         )
         parts.append(
             f'O troféu sugerido antes acabou de sair: sugira o próximo, {focus.trophy}'
-            f' ({focus.detail}), por que ele agora (pelo que o jogador acabou de conquistar ou'
-            f' pelo ponto do jogo em que está){how}.{where}{trick}'
+            f' ({clause(focus.detail)}), por que ele agora (pelo que o jogador acabou de'
+            f' conquistar ou pelo ponto do jogo em que está){how}.{where}{trick}'
         )
     elif focus.trophy:
         parts.append(

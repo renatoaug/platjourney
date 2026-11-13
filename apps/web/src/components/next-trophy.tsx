@@ -2,9 +2,10 @@
  * guide the player is in, then the most common one still missing. A tap away from a tip on it. */
 import { type ReactNode, useEffect, useState } from 'react'
 import { useApp } from '../app/app-state'
-import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { fmtMinutes, fmtRate } from '../lib/format'
+import { trophyDetail, trophyName } from '../lib/trophy-text'
 import type { GuideDetail, Trophy } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { TrophyArt } from '../ui/trophy-art'
@@ -127,11 +128,13 @@ export function NextTrophy({
   fallback?: ReactNode
 }) {
   const t = useMessages(messages)
+  const locale = useLocale()
   const { me } = useApp()
   const plan = useTodayPlan(game)
   const next = pickNext(trophies, guide, plan)
   if (!next) return fallback
   const { trophy, from, minutes } = next
+  const name = trophyName(trophy, locale)
   return (
     <aside className={`next-trophy ${trophy.type}`} aria-label={t('eyebrow')}>
       <span className="eyebrow">
@@ -143,8 +146,8 @@ export function NextTrophy({
           <TrophyArt url={trophy.iconUrl} />
         </span>
         <div>
-          <b>{trophy.name}</b>
-          <p>{trophy.detail}</p>
+          <b>{name}</b>
+          <p>{trophyDetail(trophy, locale)}</p>
           <span className="next-facts">
             <span className="next-type">{t(`types.${trophy.type}`)}</span>
             {minutes != null && (
@@ -158,7 +161,7 @@ export function NextTrophy({
         </div>
       </div>
       {np && !me.demo ? (
-        <TrophyAsks np={np} trophy={trophy.name} />
+        <TrophyAsks np={np} trophy={name} />
       ) : (
         <Link className="button secondary sm" to="/nexo">
           <Icon name="nexo" /> {t('ask')}

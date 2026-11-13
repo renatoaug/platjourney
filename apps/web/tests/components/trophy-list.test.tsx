@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { MockAppState, SAMPLE_ME } from '../../src/app/app-state'
 import { TrophyList, TrophyListSkeleton } from '../../src/components/trophy-list'
 import { current } from '../../src/fixtures'
+import { setLocale } from '../../src/i18n/i18n'
 import type { GuideDetail, Trophy } from '../../src/lib/types'
 import { ToastHost } from '../../src/ui/toast'
 
@@ -52,6 +53,7 @@ const names = () => screen.getAllByRole('heading', { level: 4 }).map((h) => h.te
 
 afterEach(() => {
   mock.restore()
+  setLocale('pt-BR', { persist: false })
 })
 
 describe('TrophyList', () => {
@@ -247,4 +249,24 @@ test('trophy kinds filter the list and tag the rows; a guide without them shows 
     </MemoryRouter>,
   )
   expect(screen.queryByLabelText('Tipo')).toBeNull()
+})
+
+test('a player reading English sees PSN’s English names and descriptions, and finds either', () => {
+  setLocale('en', { persist: false })
+  const list: Trophy[] = [
+    {
+      ...base[0],
+      name: 'Marcando o gol',
+      nameEn: 'Scoring',
+      detail: 'Vença',
+      detailEn: 'Win a race',
+    },
+  ]
+  show(list)
+  expect(names()).toEqual(['Scoring'])
+  expect(screen.getByText('Win a race')).toBeTruthy()
+  expect(screen.queryByText('Marcando o gol')).toBeNull()
+  // The search still matches the pt-BR name.
+  fireEvent.change(screen.getByLabelText('Search trophies'), { target: { value: 'marcando' } })
+  expect(names()).toEqual(['Scoring'])
 })

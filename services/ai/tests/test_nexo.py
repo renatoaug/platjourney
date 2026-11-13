@@ -195,6 +195,18 @@ def test_the_start_notice_skips_the_first_trophy_title_and_names_the_server_s_ne
     assert 'vão em listas nossas logo depois da sua mensagem: não fale deles.' in kept
 
 
+def test_a_psn_description_is_quoted_without_its_closing_period() -> None:
+    # Marvel's Spider-Man: "Derrote Li." copied with its period into the model's own sentence read
+    # as a name cut short ("derrote Li. para avançar na história").
+    focus = nexo.Focus(trophy='Pensamento Positivo', detail='Derrote Li.', changed=True)
+    start = nexo.start_prompt(context(), [], focus)
+    assert 'Pensamento Positivo (Derrote Li), em negrito' in start
+    assert 'Pensamento Positivo (Derrote Li), por que ele agora' in nexo.focus_prompt(focus)
+    # An ellipsis is part of the text, not a closing period.
+    assert nexo.clause('Com Grandes Poderes...') == 'Com Grandes Poderes...'
+    assert nexo.clause(None) == ''
+
+
 async def test_a_game_nexo_recommended_opens_glad_the_player_followed_it(model: Model) -> None:
     told = nexo.Recommended(days_ago=5, why='Curto depois de um longo')
     await nexo.tip('start', context(), [], recommended=told)

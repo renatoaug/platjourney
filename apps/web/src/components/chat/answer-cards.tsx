@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useInterests } from '../../app/use-interests'
-import { defineMessages, getLocale, Language, useMessages } from '../../i18n/i18n'
+import { defineMessages, getLocale, Language, useLocale, useMessages } from '../../i18n/i18n'
+import { trophyDetail, trophyName } from '../../lib/trophy-text'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
 import { TrophyArt } from '../../ui/trophy-art'
@@ -71,6 +72,8 @@ export interface ChatTrophyCard {
   id: number
   name: string
   detail?: string | null
+  nameEn?: string | null
+  detailEn?: string | null
   type: string
   iconUrl?: string | null
   earned: boolean
@@ -201,6 +204,8 @@ export function AnswerTrophy({
   game?: { id: string; name: string; art_url?: string | null } | null
 }) {
   const t = useMessages(messages)
+  const locale = useLocale()
+  const detail = trophyDetail(trophy, locale)
   return (
     <div className="answer-card" data-tier={trophy.type}>
       <AnswerHero art={game?.art_url}>
@@ -210,7 +215,7 @@ export function AnswerTrophy({
           </span>
           <div>
             {game?.name && <span>{game.name}</span>}
-            <strong>{trophy.name}</strong>
+            <strong>{trophyName(trophy, locale)}</strong>
           </div>
         </div>
         {game?.id && (
@@ -237,10 +242,10 @@ export function AnswerTrophy({
           <AnswerStat icon="layers" label={t('rarity')} value={number(trophy.rarity)} unit="%" />
         )}
       </div>
-      {trophy.detail && (
+      {detail && (
         <div className="answer-objective">
           <span>{t('objective')}</span>
-          <p>{trophy.detail}</p>
+          <p>{detail}</p>
         </div>
       )}
     </div>

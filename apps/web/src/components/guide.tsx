@@ -11,6 +11,7 @@ import {
 import { defineMessages, getLocale, Language, type MessageKey, useMessages } from '../i18n/i18n'
 import { fmtDate, fmtPlayTime, fmtRate } from '../lib/format'
 import { nameText } from '../lib/text'
+import { trophyName } from '../lib/trophy-text'
 import type { DeepGuideStats, GuideDetail, Trophy } from '../lib/types'
 import { useLingered } from '../lib/use-lingered'
 import { Icon } from '../ui/icon'
@@ -347,6 +348,11 @@ const trophyNamed = (c: GuideGame, name: string) =>
     (t) => normalize(t.name) === normalize(name) || normalize(t.nameEn) === normalize(name),
   )
 
+/** A trophy the guide names, as the player reads it: PSN's name in their language when the list
+ * has it, the guide's own words otherwise. */
+const shownName = (trophy: Pick<Trophy, 'name' | 'nameEn'> | undefined, name: string) =>
+  trophy ? trophyName(trophy) : name
+
 // The tips tab in one list: the easiest, hardest and most tedious trophies first, set apart, then the
 // other tips. A highlighted trophy with its own tip shows both in one entry, so nothing repeats.
 function keyTips(g: GuideDetail) {
@@ -408,7 +414,7 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
                     <KeyArt trophy={trophy} />
                     <span className="key-strategy-title key-feature-title">
                       <span className="key-feature-label">{tr(`key.${f.label}`)}</span>
-                      <span>{f.item.trophy}</span>
+                      <span>{shownName(trophy, f.item.trophy)}</span>
                     </span>
                     {trophy?.earned && (
                       <span className="key-earned key-earned-badge">
@@ -456,7 +462,7 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
                     <summary>
                       <KeyArt trophy={trophy} />
                       <span className="key-strategy-title">
-                        <span>{t.trophy}</span>
+                        <span>{shownName(trophy, t.trophy)}</span>
                       </span>
                       {trophy?.earned && (
                         <span className="key-earned key-earned-badge">
@@ -510,7 +516,7 @@ function KeyTrophies({ c, g }: { c: GuideGame; g: GuideDetail }) {
             {online.length ? (
               online.map((o) => (
                 <div key={o.trophy} className="key-online-item">
-                  <h4>{o.trophy}</h4>
+                  <h4>{shownName(trophyNamed(c, o.trophy), o.trophy)}</h4>
                   <p>
                     <GuideText text={o.what} />
                   </p>
@@ -740,7 +746,7 @@ function Missable({
       <KeyArt trophy={trophy} />
       <div className="missable-body">
         <div className="missable-head">
-          <b>{m.trophy}</b>
+          <b>{shownName(trophy, m.trophy)}</b>
           {trophy?.earned && (
             <span className="key-earned">
               <Icon name="check" />

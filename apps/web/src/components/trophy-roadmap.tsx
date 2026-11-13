@@ -24,6 +24,7 @@ import {
   trophyMentions,
   trophyRoadmap,
 } from '../lib/trophy-roadmap'
+import { trophyDetail, trophyName } from '../lib/trophy-text'
 import type { CurrentGame, RouteTip, Trophy, TrophyKind } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { GuideText } from '../ui/markdown'
@@ -441,7 +442,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
 function AdviceAsk({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const t = useMessages(messages)
   return (
-    <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophy.name)}>
+    <JourneyLink className="roadmap-ask" to={nexoHref(game.np, game.name, trophyName(trophy))}>
       {t('ask')}
       <Icon name="arrow-right" />
     </JourneyLink>
@@ -677,7 +678,10 @@ function chapterLabel(t: Translate, game: RoadmapGame, after: string | null) {
   const line = game.guide?.storyline
   const from = game.guide?.trophyPlaces?.find((p) => trophyMatches({ name: after }, p.trophy))?.from
   return {
-    title: t('chapterAfter', { trophy: after }),
+    // The guide names the trophy in pt-BR: the list's own entry gives it in the player's language.
+    title: t('chapterAfter', {
+      trophy: trophyName(game.trophies.find((x) => trophyMatches(x, after)) ?? { name: after }),
+    }),
     place: line && from !== undefined ? placeAt(t, line, from) : '',
   }
 }
@@ -891,7 +895,7 @@ function TrophyFacts({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
       <p className="roadmap-objective">
         <Icon name="target" />
         <b>{t('guidance')}</b>
-        <span>{hidden ? t('secretNote') : trophy.detail}</span>
+        <span>{hidden ? t('secretNote') : trophyDetail(trophy)}</span>
       </p>
       {!hidden && (
         <>
@@ -965,7 +969,7 @@ function RoadmapLandscape({
           <span className="roadmap-state">
             {selected.earned ? t('earned') : suggested ? t('suggestion') : t('selected')}
           </span>
-          <h3>{hidden ? t('secret') : selected.name}</h3>
+          <h3>{hidden ? t('secret') : trophyName(selected)}</h3>
           <span className="roadmap-destination-meta">
             <span className="roadmap-destination-type">
               <TrophyMedal type={selected.type} />
@@ -1439,7 +1443,9 @@ function RoadmapForward({
                     <RouteAlert on={missable && !trophy.earned} />
                   </span>
                   <span className="roadmap-route-caption">
-                    <span className="roadmap-route-name">{hidden ? t('secret') : trophy.name}</span>
+                    <span className="roadmap-route-name">
+                      {hidden ? t('secret') : trophyName(trophy)}
+                    </span>
                     <RouteKind kind={kind} />
                     {target === trophy && !trophy.earned && (
                       <small className="roadmap-suggested-label">{t('suggestion')}</small>
@@ -1483,13 +1489,13 @@ const RoadmapOngoing = memo(function RoadmapOngoing({
               type="button"
               className="roadmap-ongoing-select"
               onClick={() => choose(trophy)}
-              aria-label={trophy.name}
+              aria-label={trophyName(trophy)}
             >
               <span className="roadmap-ongoing-art">
                 <TrophyArt url={trophy.iconUrl} />
               </span>
               <span>
-                <strong>{trophy.name}</strong>
+                <strong>{trophyName(trophy)}</strong>
                 <small>{t(basis)}</small>
               </span>
               <Icon name="chevron-right" />
@@ -1651,9 +1657,9 @@ export function TrophyRoadmap({
                       <button
                         type="button"
                         aria-pressed={selected === trophy}
-                        aria-label={trophy.name}
+                        aria-label={trophyName(trophy)}
                         aria-describedby={
-                          trophy.detail ? `${anchor(trophy)}-earned-detail` : undefined
+                          trophyDetail(trophy) ? `${anchor(trophy)}-earned-detail` : undefined
                         }
                         onClick={() => choose(trophy)}
                       >
@@ -1664,10 +1670,12 @@ export function TrophyRoadmap({
                           </span>
                         </span>
                         <span className="roadmap-earned-copy">
-                          <strong>{trophy.name}</strong>
+                          <strong>{trophyName(trophy)}</strong>
                           <EarnedDate trophy={trophy} />
-                          {trophy.detail && (
-                            <span id={`${anchor(trophy)}-earned-detail`}>{trophy.detail}</span>
+                          {trophyDetail(trophy) && (
+                            <span id={`${anchor(trophy)}-earned-detail`}>
+                              {trophyDetail(trophy)}
+                            </span>
                           )}
                         </span>
                         <Icon name="chevron-right" />
