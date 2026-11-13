@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.75.2](https://github.com/renatoaug/platjourney/compare/v0.75.1...v0.75.2) (2026-11-13)
+
+### Bug Fixes
+
+* **ios:** declare that the app uses no non-exempt encryption ([#185](https://github.com/renatoaug/platjourney/issues/185)) ([e470791](https://github.com/renatoaug/platjourney/commit/e4707918418430485e950531ca99da9c34cb44cd))
+
 ## [0.75.1](https://github.com/renatoaug/platjourney/compare/v0.75.0...v0.75.1) (2026-11-13)
 
 ### Bug Fixes
