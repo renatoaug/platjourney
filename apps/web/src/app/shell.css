@@ -224,7 +224,7 @@
     opacity: 0.8;
   }
 
-  /* Which release is running, for bug reports: the quietest line in the sidebar and the sheet. */
+  /* Which release is running, for bug reports: the quietest line in the sidebar. */
   .app-version {
     display: block;
     margin-top: 10px;

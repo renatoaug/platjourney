@@ -21,11 +21,13 @@ const messages = defineMessages({
     title: 'Configurações',
     lead: 'A sua conta, os apps conectados, as notificações e as preferências.',
     loadFailed: 'Não conseguimos carregar as configurações.',
+    version: 'Versão {version}',
   },
   [Language.En]: {
     title: 'Settings',
     lead: 'Your account, connected apps, notifications and preferences.',
     loadFailed: "We couldn't load the settings.",
+    version: 'Version {version}',
   },
 })
 
@@ -123,8 +125,16 @@ export function SettingsView({
         </div>
       )}
       <SettingsLinks />
+      <SettingsVersion />
     </div>
   )
+}
+
+/** Which release is running, for bug reports, on every screen size (the sidebar's line is hidden
+ * on a phone and in the iOS app, which opens the live site, so this is its version too). */
+function SettingsVersion() {
+  const t = useMessages(messages)
+  return <p className="settings-version">{t('version', { version: __APP_VERSION__ })}</p>
 }
 
 /** Pages a plugin keeps out of the menus (legal notes, credits), linked at the end. */

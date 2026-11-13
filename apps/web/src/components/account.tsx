@@ -49,6 +49,7 @@ const messages = defineMessages({
         violet: 'Violeta',
         magenta: 'Magenta',
         amber: 'Âmbar',
+        red: 'Vermelho',
       },
       dlc: 'Contar DLCs no progresso',
       dlcHint:
@@ -110,6 +111,7 @@ const messages = defineMessages({
         violet: 'Violet',
         magenta: 'Magenta',
         amber: 'Amber',
+        red: 'Red',
       },
       dlc: 'Count DLC in progress',
       dlcHint:

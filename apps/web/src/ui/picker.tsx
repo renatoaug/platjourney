@@ -7,6 +7,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
@@ -43,7 +44,7 @@ export function Picker<T extends string>({
   const [active, setActive] = useState(0)
   const button = useRef<HTMLButtonElement>(null)
   const list = useRef<HTMLDivElement>(null)
-  const [place, setPlace] = useState<{ top: number; right: number } | null>(null)
+  const [place, setPlace] = useState<{ top?: number; bottom?: number; right: number } | null>(null)
   const current = options.find((o) => o.value === value) ?? options[0]
 
   const close = useCallback((focus = true) => {
@@ -65,6 +66,17 @@ export function Picker<T extends string>({
     )
     setOpen(true)
   }
+
+  // Under the button by default; above it when the list would run past the bottom of the window
+  // and there is more room above (a setting near the end of the page).
+  useLayoutEffect(() => {
+    if (!open) return
+    const r = button.current?.getBoundingClientRect()
+    const height = list.current?.offsetHeight ?? 0
+    if (!r || r.bottom + 6 + height <= window.innerHeight - 8) return
+    if (r.top > window.innerHeight - r.bottom)
+      setPlace({ bottom: window.innerHeight - r.top + 6, right: window.innerWidth - r.right })
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -129,7 +141,7 @@ export function Picker<T extends string>({
               aria-activedescendant={`${listId}-${active}`}
               tabIndex={-1}
               onKeyDown={keys}
-              style={place ? { top: place.top, right: place.right } : undefined}
+              style={place ?? undefined}
             >
               <div className="picker-title" aria-hidden="true">
                 {label}

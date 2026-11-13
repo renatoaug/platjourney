@@ -26,6 +26,7 @@
   --palette-swatch-violet: #b48cff;
   --palette-swatch-magenta: #ff6fd0;
   --palette-swatch-amber: #ffb43f;
+  --palette-swatch-red: #ff3b47;
   --palette-accent-950: #16200f;
   --palette-accent-600: #647550;
   --palette-accent-500: #7fa64a;
@@ -71,6 +72,7 @@
   --color-swatch-violet: var(--palette-swatch-violet);
   --color-swatch-magenta: var(--palette-swatch-magenta);
   --color-swatch-amber: var(--palette-swatch-amber);
+  --color-swatch-red: var(--palette-swatch-red);
   /* Feedback */
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
@@ -263,4 +265,24 @@
   --palette-neutral-50: #f6f1ea;
   --palette-olive-300: #c7b39a;
   --palette-olive-400: #b8a285;
+}
+
+:root[data-accent="red"] {
+  --palette-accent-950: #2b1614;
+  --palette-accent-600: #8d615d;
+  --palette-accent-500: #c4343e;
+  --palette-accent-400: var(--palette-swatch-red);
+  --palette-accent-300: #ff6f77;
+  --palette-neutral-950: #141010;
+  --palette-neutral-925: #1b1515;
+  --palette-neutral-900: #1f1919;
+  --palette-neutral-850: #2e2120;
+  --palette-neutral-800: #362b2a;
+  --palette-neutral-700: #4c3c3a;
+  --palette-neutral-500: #9a807d;
+  --palette-neutral-400: #b19e9c;
+  --palette-neutral-300: #d8c2bf;
+  --palette-neutral-50: #f9efee;
+  --palette-olive-300: #d1ada9;
+  --palette-olive-400: #c29b97;
 }

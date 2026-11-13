@@ -124,6 +124,15 @@
     border-bottom: 1px solid var(--color-border);
   }
 
+  /* The quietest line at the foot of the page. */
+  .settings-version {
+    margin: 20px 0 0;
+    color: var(--color-fg-subtle);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-caps);
+    text-align: center;
+  }
+
   .setting-group .setting-row,
   .settings-links a {
     min-height: 54px;
