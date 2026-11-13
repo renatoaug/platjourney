@@ -248,8 +248,6 @@ export type Target =
   | 'ProgressRing'
   | 'Projection'
   | 'PsnProgress'
-  | 'PullBadge'
-  | 'PullRefresh'
   | 'QuickFacts'
   | 'RadarCard'
   | 'Ranking'

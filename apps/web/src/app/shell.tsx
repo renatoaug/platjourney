@@ -19,7 +19,6 @@ import { NexoBubble } from '../components/nexo-bubble'
 import { Notifications } from '../components/notifications'
 import { Onboarding } from '../components/onboarding'
 import { PrivateNotice } from '../components/private-notice'
-import { PullRefresh } from '../components/pull-refresh'
 import {
   defineMessages,
   getLocale,
@@ -383,15 +382,8 @@ export function Shell() {
   const background = (location.state as { journey?: Location } | null)?.journey
   const modal = location.pathname === '/nexo' && background
   const pathname = modal ? background.pathname : location.pathname
-  const { me, loadState } = useApp()
+  const { me } = useApp()
   const [privateProfile, setPrivateProfile] = useState(false)
-  // Pulling down refreshes the app's data and mounts the screen again, so it fetches its own too
-  // (a screen seen before keeps showing while it does).
-  const [refreshes, setRefreshes] = useState(0)
-  const pullRefresh = async () => {
-    await loadState()
-    setRefreshes((n) => n + 1)
-  }
   const locale = useLocale()
   const isTitle = pathname.startsWith('/title/')
   const arrival = useArrival(pathname)
@@ -455,8 +447,7 @@ export function Shell() {
         {me.demo && <DemoBanner />}
         <Onboarding />
         {privateProfile && <PrivateNotice />}
-        <PullRefresh onRefresh={pullRefresh} />
-        <Routes key={refreshes} location={modal ? background : location}>
+        <Routes location={modal ? background : location}>
           <Route path="/" element={<Home />} />
           <Route path="/overview" element={<Navigate to="/" replace />} />
           <Route path="/games" element={<Games />} />

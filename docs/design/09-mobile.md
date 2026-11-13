@@ -18,7 +18,6 @@ What makes the web app behave like a native one, in the browser, the installed a
 | On a phone, a deeper screen slides in from the right, going back slides in from the left, and the menu's screens fade | `useArrival` in `app/shell.tsx`, `styles/page.css` |
 | Holding something that can be tapped does not select its text or open the link preview, and it sinks a little under the finger | `styles/base.css` |
 | The profile and a game's page show at once when seen before, and refresh in place | the app cache (`useApp().cache`) |
-| Pulling down at the top refreshes the screen (installed and native app only: Safari has its own) | `components/pull-refresh.tsx` |
 
 The page covers the whole screen (`viewport-fit=cover`); the app frame and the sign-in screen keep the status bar's height free with `env(safe-area-inset-top)`.
 
@@ -49,7 +48,7 @@ Building for a store needs Xcode (iOS) or Android Studio (Android), a developer 
 |---|---|
 | Launch screen | `@capacitor/splash-screen` shows Nexo on the dark background (`launchShowDuration` 6000 ms at most) until the page's boot screen is drawn, then `hideLaunchScreen` in `apps/web/src/lib/native.ts` fades it out in 200 ms |
 | Back swipe | A swipe from the left edge goes back a screen, with the iPhone's own animation (`MainViewController.swift`) |
-| Haptics | `@capacitor/haptics` gives a light tick on the menu, tab bars, switches and pull-to-refresh (`lib/native.ts`); in a browser it does nothing |
+| Haptics | `@capacitor/haptics` gives a light tick on the menu, tab bars, and switches (`lib/native.ts`); in a browser it does nothing |
 
 The native splash hands over from the mounted `App`, after the web mascot decodes and a frame paints. Image decoding has a 1.5-second fallback so an unavailable image cannot keep the app covered; unmounting cancels the pending handoff. This web change also reaches existing remote-URL builds. It does not change their static launch artwork or native six-second auto-hide timeout. Matching that artwork to the animated web screen, or changing native startup behavior, requires a separately validated iOS binary. The launch storyboard itself cannot run the web animation.
 

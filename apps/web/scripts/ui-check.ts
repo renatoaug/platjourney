@@ -29,6 +29,7 @@ const VIEWPORTS = [
   { name: '1280', width: 1280, height: 900 },
   // iPad Air in landscape and portrait: the sidebar stays, so the content is narrower than it looks.
   { name: '1180', width: 1180, height: 820 },
+  { name: '1024', width: 1024, height: 1366 },
   { name: '820', width: 820, height: 1180 },
   { name: '375', width: 375, height: 812 },
 ]

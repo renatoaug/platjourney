@@ -32,20 +32,19 @@
     }
   }
 
-  /* The account in two columns: who it is on the left, its buttons on the right. */
+  /* The account card stretches to its pair's height; deleting the account stays at its foot. */
   .settings-grid .account-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 16px;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
   }
 
-  .settings-grid .account-card > :not(.account-id, .account-actions) {
-    grid-column: 1 / -1;
+  .settings-grid .account-card > .danger-zone {
+    margin-top: auto;
   }
 
-  .settings-grid .account-actions {
-    margin-top: 0;
+  /* margin-top: auto drops the zone's own spacing; the block above keeps it. */
+  .settings-grid .account-card > :has(+ .danger-zone) {
+    margin-bottom: 18px;
   }
 
   /* A card stretched to its pair's height keeps its content at the top. */
@@ -59,15 +58,6 @@
     .settings-grid {
       grid-template-columns: minmax(0, 1fr);
       align-items: start;
-    }
-
-    /* The account's buttons under its name. */
-    .settings-grid .account-card {
-      grid-template-columns: 1fr;
-    }
-
-    .settings-grid .account-actions {
-      margin-top: 14px;
     }
   }
 
