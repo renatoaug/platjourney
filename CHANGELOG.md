@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.75.3](https://github.com/renatoaug/platjourney/compare/v0.75.2...v0.75.3) (2026-11-13)
+
+### Bug Fixes
+
+* **web:** tablet fixes from the ipad app ([#186](https://github.com/renatoaug/platjourney/issues/186)) ([09226a9](https://github.com/renatoaug/platjourney/commit/09226a953fe0fd54ca5837b4670d66f6324aa968))
+
 ## [0.75.2](https://github.com/renatoaug/platjourney/compare/v0.75.1...v0.75.2) (2026-11-13)
 
 ### Bug Fixes
