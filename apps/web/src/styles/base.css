@@ -164,6 +164,13 @@
     scrollbar-color: var(--color-border-strong) transparent;
   }
 
+  /* No rubber band past the ends of the page: in the iOS app the bounce dragged the sticky sidebar
+     along with the content and offered a pull-to-refresh nobody asked for. */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;

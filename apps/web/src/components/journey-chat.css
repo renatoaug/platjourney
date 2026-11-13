@@ -105,6 +105,19 @@
     font-size: var(--text-lg);
   }
 
+  /* On a tablet the chat is a centered sheet: while the keyboard is up it fits the part of the
+     screen above it, so the field stays in view (journey-chat.tsx measures the visible area). */
+  @media (min-width: 761px) {
+    .journey-chat[data-keyboard="true"] {
+      position: fixed;
+      inset: auto 0 auto 0;
+      top: calc(var(--journey-viewport-top, 0px) + 12px);
+      height: calc(var(--journey-viewport-height, 100dvh) - 24px);
+      max-height: calc(var(--journey-viewport-height, 100dvh) - 24px);
+      margin: 0 auto;
+    }
+  }
+
   @media (max-width: 760px) {
     .journey-chat {
       margin: 0;

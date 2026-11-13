@@ -172,13 +172,16 @@
     box-shadow: inset var(--shadow-focus);
   }
 
+  /* The sidebar stays put beside the page. Its padding clears the status bar and the home
+     indicator, so on an iPad the player's card at its foot is not cut by the screen's edge. */
   .sidebar {
     position: sticky;
     top: 0;
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding: 36px 20px 20px;
+    padding: calc(36px + env(safe-area-inset-top, 0px)) 20px
+      calc(20px + env(safe-area-inset-bottom, 0px));
     border-right: 1px solid var(--color-border);
     background: var(--color-bg-subtle);
   }
@@ -286,7 +289,8 @@
 
   @media (max-width: 1100px) {
     .sidebar {
-      padding: 30px 12px 20px;
+      padding: calc(30px + env(safe-area-inset-top, 0px)) 12px
+        calc(20px + env(safe-area-inset-bottom, 0px));
     }
   }
 

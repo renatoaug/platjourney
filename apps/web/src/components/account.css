@@ -185,8 +185,18 @@
     font-size: var(--text-md);
   }
 
-  .account-actions {
-    margin-top: 14px;
+  /* Who the account is, with its buttons beside it; they drop under the name when the card is
+     too narrow for both (a phone, or a column beside the sidebar on an iPad). */
+  .account-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px 16px;
+  }
+
+  .account-head .account-id {
+    min-width: 0;
   }
 
   /* A color's dot, in the app color setting and its list. */

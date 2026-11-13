@@ -441,40 +441,42 @@ function AccountCard({ user, onEditing }: { user: Me; onEditing?: (editing: bool
   return (
     <div className="card account-card">
       <h2>{t('title')}</h2>
-      <div className="account-id">
-        {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt="" />
-        ) : (
-          <span className="account-avatar-empty">
-            <Icon name="gamepad" />
-          </span>
-        )}
-        <div>
-          <b>{user.onlineId}</b>
-          <small>{t('psnId')}</small>
+      <div className="account-head">
+        <div className="account-id">
+          {user.avatarUrl ? (
+            <img src={user.avatarUrl} alt="" />
+          ) : (
+            <span className="account-avatar-empty">
+              <Icon name="gamepad" />
+            </span>
+          )}
+          <div>
+            <b>{user.onlineId}</b>
+            <small>{t('psnId')}</small>
+          </div>
         </div>
-      </div>
-      <div className="chips account-actions">
-        <button
-          type="button"
-          className="ghost sm"
-          id="password-open"
-          hidden={pw.open}
-          disabled={user.demo}
-          onClick={() => pw.setOpen(true)}
-        >
-          {t('password.open')}
-        </button>
-        <button
-          type="button"
-          className="ghost sm"
-          id="logout"
-          disabled={leaving}
-          aria-busy={leaving}
-          onClick={logout}
-        >
-          {leaving ? t('leaving') : t('logout')}
-        </button>
+        <div className="chips account-actions">
+          <button
+            type="button"
+            className="ghost sm"
+            id="password-open"
+            hidden={pw.open}
+            disabled={user.demo}
+            onClick={() => pw.setOpen(true)}
+          >
+            {t('password.open')}
+          </button>
+          <button
+            type="button"
+            className="ghost sm"
+            id="logout"
+            disabled={leaving}
+            aria-busy={leaving}
+            onClick={logout}
+          >
+            {leaving ? t('leaving') : t('logout')}
+          </button>
+        </div>
       </div>
       {logoutFailed && (
         <p className="auth-error" role="alert">
