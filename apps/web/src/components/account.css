@@ -221,4 +221,8 @@
   .accent-swatch.is-amber {
     background: var(--color-swatch-amber);
   }
+
+  .accent-swatch.is-red {
+    background: var(--color-swatch-red);
+  }
 }
