@@ -420,7 +420,7 @@ export function Shell() {
     <div className="app" id="app" data-arrival={arrival}>
       <aside className="sidebar" ref={sidebar}>
         <Link className="logo" to="/" aria-label={t('logoLabel')}>
-          <img className="brand-mark" src="/logo.svg" alt="" width="40" height="40" />
+          <img className="brand-mark" src="/logo.png" alt="" width="40" height="40" />
           <span className="brand-name">
             plat<span className="brand-accent">journey</span>
           </span>

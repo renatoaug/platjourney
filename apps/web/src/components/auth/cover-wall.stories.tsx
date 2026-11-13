@@ -6,7 +6,7 @@ export default meta
 type Story = StoryObj
 
 // Placeholder tiles: stories stay off the network, so the covers are empty images.
-const covers = Array.from({ length: 24 }, () => '/logo.svg')
+const covers = Array.from({ length: 24 }, () => '/logo.png')
 
 export const Wall: Story = {
   render: () => <CoverWall load={async () => ({ covers, guides: 1130 })} />,

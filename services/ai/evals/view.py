@@ -28,7 +28,7 @@ THEME = HERE.parents[2] / 'apps' / 'web' / 'src' / 'styles' / 'theme.css'
 # The app's own toast, so a confirmation here looks like one in the app.
 TOAST = HERE.parents[2] / 'apps' / 'web' / 'src' / 'ui' / 'toast.css'
 # The app's own logo, mascot and favicon, so the viewer looks like the app.
-ASSETS = {'logo.svg', 'favicon.svg', 'nexo-avatar.svg', 'icons.svg'}
+ASSETS = {'logo.png', 'favicon.png', 'nexo-avatar.svg', 'icons.svg'}
 # What a question costs when a suite has never run: the chat or judge calls it makes.
 DEFAULT_COST = {'retrieval': 0.0002, 'scope': 0.003, 'answers': 0.02}
 
@@ -60,7 +60,9 @@ async def toast_styles() -> FileResponse:
 async def asset(name: str) -> FileResponse:
     if name not in ASSETS:
         raise HTTPException(404)
-    return FileResponse(PUBLIC / name, media_type='image/svg+xml')
+    return FileResponse(
+        PUBLIC / name, media_type='image/png' if name.endswith('.png') else 'image/svg+xml'
+    )
 
 
 @app.get('/api/suites')

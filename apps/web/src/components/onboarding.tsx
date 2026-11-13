@@ -556,7 +556,7 @@ function HunterCard({
       <span className="eyebrow rise story-center">{t('card.eyebrow')}</span>
       <div className="story-card">
         <header>
-          <img src={s.avatarUrl || '/logo.svg'} alt="" />
+          <img src={s.avatarUrl || '/logo.png'} alt="" />
           <div>
             <b>{me.onlineId}</b>
             <span>{t('card.role')}</span>
@@ -761,7 +761,7 @@ export function Stories({
         </div>
         <div className="story-top">
           <span className="story-who">
-            <img src="/logo.svg" alt="" width="26" height="26" />
+            <img src="/logo.png" alt="" width="26" height="26" />
             PlatJourney <small>{t('by')}</small>
           </span>
           <button type="button" className="ghost sm" onClick={() => onDone()}>

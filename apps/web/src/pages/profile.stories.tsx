@@ -33,7 +33,7 @@ const NAMES = [
 const game = (name: string, i: number): Game => ({
   id: `game:${i}`,
   name,
-  cover_url: i % 3 ? '/logo.svg' : undefined,
+  cover_url: i % 3 ? '/logo.png' : undefined,
 })
 
 const platinums: Platinum[] = NAMES.map((name, i) => ({

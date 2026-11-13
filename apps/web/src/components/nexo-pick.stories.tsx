@@ -4,7 +4,7 @@ import { type NexoPick, NexoPickPanel } from './nexo-pick'
 export const picksData: NexoPick[] = [
   {
     id: 'recommendation:3',
-    game: { id: 'game:2', name: 'Inside', cover_url: '/logo.svg' },
+    game: { id: 'game:2', name: 'Inside', cover_url: '/logo.png' },
     why: 'Umas 5 horas, dificuldade 2 e nada online: dá para fechar em duas noites depois do trabalho.',
     firstStep:
       'Jogue a história com o guia de colecionáveis aberto: os orbes são o único perdível.',
@@ -16,7 +16,7 @@ export const picksData: NexoPick[] = [
   },
   {
     id: 'recommendation:2',
-    game: { id: 'game:7', name: 'Journey', cover_url: '/logo.svg' },
+    game: { id: 'game:7', name: 'Journey', cover_url: '/logo.png' },
     why: 'Parecido com Abzu, que você platinou: curto, calmo e lindo.',
     firstStep: 'Comece pelo capítulo 1 e pegue os símbolos brilhantes no caminho.',
     mood: 'Pra relaxar',
@@ -27,7 +27,7 @@ export const picksData: NexoPick[] = [
   },
   {
     id: 'recommendation:1',
-    game: { id: 'game:1', name: 'Days Gone', cover_url: '/logo.svg' },
+    game: { id: 'game:1', name: 'Days Gone', cover_url: '/logo.png' },
     why: 'Você já está em 40% e falta pouco da história.',
     firstStep: 'Termine as missões de Iron Mike antes de ir para o sul.',
     mood: null,
@@ -42,7 +42,7 @@ export const picksData: NexoPick[] = [
 export const assistantPicksData: NexoPick[] = [
   {
     id: 'recommendation:4',
-    game: { id: 'game:9', name: 'Far Cry 5', cover_url: '/logo.svg' },
+    game: { id: 'game:9', name: 'Far Cry 5', cover_url: '/logo.png' },
     why: 'Faltam só 6 troféus, dificuldade baixa e sem perdíveis.',
     firstStep: null,
     mood: null,

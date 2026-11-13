@@ -13,7 +13,7 @@ export const recsData: Recs = {
   },
   items: [
     {
-      game: { id: 'game:10', name: 'Horizon Zero Dawn', cover_url: '/logo.svg' },
+      game: { id: 'game:10', name: 'Horizon Zero Dawn', cover_url: '/logo.png' },
       platform: 'PS4',
       difficulty: 3,
       hours: 50,

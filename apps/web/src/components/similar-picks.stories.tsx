@@ -7,7 +7,7 @@ import { SimilarPicks, type SimilarState } from './similar-picks'
 export const similarData: SimilarRecs = {
   items: [
     {
-      game: { id: 'game:10', name: 'Horizon Zero Dawn', cover_url: '/logo.svg' },
+      game: { id: 'game:10', name: 'Horizon Zero Dawn', cover_url: '/logo.png' },
       platform: 'PS4',
       difficulty: 3,
       hours: 50,
@@ -29,7 +29,7 @@ export const similarData: SimilarRecs = {
       platinumed: ['Bloodborne'],
     },
     {
-      game: { id: 'game:12', name: 'Marvel’s Spider-Man', cover_url: '/logo.svg' },
+      game: { id: 'game:12', name: 'Marvel’s Spider-Man', cover_url: '/logo.png' },
       platform: 'PS4',
       difficulty: 2,
       hours: 30,
@@ -41,7 +41,7 @@ export const similarData: SimilarRecs = {
   ],
   quick: [
     {
-      game: { id: 'game:20', name: 'Astro’s Playroom', cover_url: '/logo.svg' },
+      game: { id: 'game:20', name: 'Astro’s Playroom', cover_url: '/logo.png' },
       platform: 'PS5',
       difficulty: 2,
       hours: 6,
@@ -63,7 +63,7 @@ export const similarData: SimilarRecs = {
   ],
   series: [
     {
-      game: { id: 'game:30', name: 'Horizon Forbidden West', cover_url: '/logo.svg' },
+      game: { id: 'game:30', name: 'Horizon Forbidden West', cover_url: '/logo.png' },
       platform: 'PS5',
       difficulty: 3,
       hours: 60,

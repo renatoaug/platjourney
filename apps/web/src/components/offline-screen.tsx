@@ -90,7 +90,7 @@ export function OfflineScreen({ onRetry }: { onRetry: () => Promise<boolean> }) 
   return (
     <main className="offline" id="main-content" tabIndex={-1}>
       <header className="logo offline-brand">
-        <img className="brand-mark" src="/logo.svg" alt="" width="36" height="36" />
+        <img className="brand-mark" src="/logo.png" alt="" width="36" height="36" />
         <span className="brand-name">
           plat<span className="brand-accent">journey</span>
         </span>
