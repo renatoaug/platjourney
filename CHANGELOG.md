@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.75.1](https://github.com/renatoaug/platjourney/compare/v0.75.0...v0.75.1) (2026-11-13)
+
+### Bug Fixes
+
+* **web:** settings fit the room beside the sidebar on an ipad ([#184](https://github.com/renatoaug/platjourney/issues/184)) ([72eefdb](https://github.com/renatoaug/platjourney/commit/72eefdbcb88841beec44387ba161c664bb510082))
+
 ## [0.75.0](https://github.com/renatoaug/platjourney/compare/v0.74.0...v0.75.0) (2026-11-13)
 
 ### Features
