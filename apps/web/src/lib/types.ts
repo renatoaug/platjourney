@@ -1,6 +1,7 @@
 import type { Accent } from '../../../../shared/accent'
 import type { TrophyGraph } from '../../../../shared/journey/graph'
 import type { PlayerStep, StoryUnit } from '../../../../shared/journey/places'
+import type { Skin } from '../../../../shared/skin'
 import type { Locale } from '../i18n/locale'
 
 /** Shapes of the /api payloads the screens share. Screen-specific payloads are typed next to their screen. */
@@ -20,6 +21,8 @@ export interface Me {
   psPlus?: 'none' | 'essential' | 'extra' | 'deluxe'
   /** The app's accent color picked in Settings. */
   accent?: Accent
+  /** The app's skin picked in Settings. */
+  skin?: Skin
   /** Nexo writes this player's automatic notices; off, they are plain and free. */
   aiNotices?: boolean
   /** Whether this instance lets Nexo write notices at all. */

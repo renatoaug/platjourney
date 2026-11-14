@@ -200,6 +200,59 @@
   }
 
   /* A color's dot, in the app color setting and its list. */
+  /* A skin's miniature in Settings: its background, a bar of its accent and its corners. */
+  .skin-swatch {
+    display: inline-flex;
+    align-items: flex-end;
+    width: 26px;
+    height: 18px;
+    padding: 3px;
+    border: 1px solid color-mix(in srgb, var(--color-overlay) var(--alpha-line), transparent);
+    border-radius: 4px;
+  }
+
+  .skin-swatch i {
+    display: block;
+    width: 70%;
+    height: 4px;
+    border-radius: 2px;
+  }
+
+  .skin-swatch.is-default {
+    background: var(--color-skin-default-bg);
+  }
+
+  .skin-swatch.is-default i {
+    background: var(--color-skin-default-accent);
+  }
+
+  .skin-swatch.is-neon {
+    background: var(--color-skin-neon-bg);
+    border-color: var(--color-skin-neon-accent);
+    box-shadow: 0 0 6px var(--color-skin-neon-accent);
+  }
+
+  .skin-swatch.is-neon i {
+    background: var(--color-skin-neon-accent);
+    box-shadow: 0 0 5px var(--color-skin-neon-accent);
+  }
+
+  .skin-swatch.is-pixel {
+    background: var(--color-skin-pixel-bg);
+    border: 2px solid var(--color-shadow);
+    border-radius: 0;
+    box-shadow: 2px 2px 0 var(--color-shadow);
+  }
+
+  .skin-swatch.is-pixel i {
+    border-radius: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--color-skin-pixel-accent) 0 3px,
+      transparent 3px 4px
+    );
+  }
+
   .accent-swatch {
     display: inline-block;
     width: 14px;

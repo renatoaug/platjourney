@@ -190,6 +190,7 @@ test('register and login sign in, start watching and set the cookie', async () =
       revealedTrophyGames: [],
       psPlus: 'none',
       accent: 'lime',
+      skin: 'default',
       aiNotices: true,
       aiNoticesAvailable: config.automatic.notices,
       notifyTelegram: true,
@@ -420,6 +421,14 @@ test('preferences take one of the accent colors, and the account says lime until
   const res = await send('POST', '/api/account/preferences', { accent: 'violet' })
   expect(res.body.user.accent).toBe('violet')
   expect(users.updateUser).toHaveBeenCalledWith(me.id, { accent: 'violet' })
+})
+
+test('preferences take one of the skins, and the account says default until one is picked', async () => {
+  expect((await send('GET', '/api/me')).body.user.skin).toBe('default')
+  expect((await send('POST', '/api/account/preferences', { skin: 'vaporwave' })).status).toBe(400)
+  const res = await send('POST', '/api/account/preferences', { skin: 'neon' })
+  expect(res.body.user.skin).toBe('neon')
+  expect(users.updateUser).toHaveBeenCalledWith(me.id, { skin: 'neon' })
 })
 
 test('preferences take the Telegram notices choice', async () => {

@@ -1,6 +1,7 @@
 /** Account cards on the profile page: Telegram link, notifications, DLC and language preferences, password and deletion. */
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { ACCENTS, type Accent, DEFAULT_ACCENT } from '../../../../shared/accent'
+import { DEFAULT_SKIN, SKINS, type Skin } from '../../../../shared/skin'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
 import { ApiError, api, del } from '../lib/api'
@@ -51,6 +52,11 @@ const messages = defineMessages({
         amber: 'Âmbar',
         red: 'Vermelho',
       },
+      accentBySkin: 'A skin {skin} já define as cores. Volte para a Padrão para escolher uma cor.',
+      skin: 'Skin do app',
+      skinHint: 'Muda o visual inteiro: cores, fontes, cantos e sombras.',
+      skinSaved: 'Skin salva.',
+      skinName: { default: 'Padrão', neon: 'Neon', pixel: 'Pixel' },
       dlc: 'Contar DLCs no progresso',
       dlcHint:
         'A platina só pede o jogo base. Ligue para ver o progresso com as DLCs em todo o app, no Telegram e no Nexo.',
@@ -113,6 +119,11 @@ const messages = defineMessages({
         amber: 'Amber',
         red: 'Red',
       },
+      accentBySkin: 'The {skin} skin sets the colors. Switch back to Default to pick a color.',
+      skin: 'App skin',
+      skinHint: 'Changes the whole look: colors, fonts, corners and shadows.',
+      skinSaved: 'Skin saved.',
+      skinName: { default: 'Default', neon: 'Neon', pixel: 'Pixel' },
       dlc: 'Count DLC in progress',
       dlcHint:
         'The platinum only needs the base game. Turn on to see progress with DLC across the app, on Telegram and in Nexo.',
@@ -206,6 +217,9 @@ function AccentSetting({ user }: { user: Me }) {
   const { setMe } = useApp()
   const locked = useDemoLock(user.demo)
   const [saving, setSaving] = useState(false)
+  // A skin brings its own colors, so the accent waits until the default look is back.
+  const skin = user.skin ?? DEFAULT_SKIN
+  const skinned = skin !== DEFAULT_SKIN
   const change = async (accent: Accent) => {
     const before = user
     // The page changes before the answer, so the pick feels instant; a failure puts it back.
@@ -225,7 +239,11 @@ function AccentSetting({ user }: { user: Me }) {
     <div className="setting-row">
       <SettingTitle
         title={t('preferences.accent')}
-        hint={t('preferences.accentHint')}
+        hint={
+          skinned
+            ? t('preferences.accentBySkin', { skin: t(`preferences.skinName.${skin}`) })
+            : t('preferences.accentHint')
+        }
         note={locked}
         htmlFor="pref-accent"
       />
@@ -233,11 +251,60 @@ function AccentSetting({ user }: { user: Me }) {
         id="pref-accent"
         label={t('preferences.accent')}
         value={user.accent ?? DEFAULT_ACCENT}
-        disabled={saving || user.demo}
+        disabled={saving || user.demo || skinned}
         options={ACCENTS.map((accent) => ({
           value: accent,
           label: t(`preferences.accentName.${accent}`),
           lead: <span className={`accent-swatch is-${accent}`} aria-hidden="true" />,
+        }))}
+        onChange={change}
+      />
+    </div>
+  )
+}
+
+/** The app's skin: the default look, Neon or Pixel, applied at once and saved on the account. */
+function SkinSetting({ user }: { user: Me }) {
+  const t = useMessages(messages)
+  const { setMe } = useApp()
+  const locked = useDemoLock(user.demo)
+  const [saving, setSaving] = useState(false)
+  const change = async (skin: Skin) => {
+    const before = user
+    // The page changes before the answer, so the pick feels instant; a failure puts it back.
+    setMe({ ...user, skin })
+    setSaving(true)
+    try {
+      const saved = await api<{ user: Me }>('/api/account/preferences', { skin })
+      setMe(saved.user)
+      toast(t('preferences.skinSaved'), 'success')
+    } catch (e) {
+      setMe(before)
+      if (!handled(e)) toast(t('preferences.saveFailed'))
+    }
+    setSaving(false)
+  }
+  return (
+    <div className="setting-row">
+      <SettingTitle
+        title={t('preferences.skin')}
+        hint={t('preferences.skinHint')}
+        note={locked}
+        htmlFor="pref-skin"
+      />
+      <Picker
+        id="pref-skin"
+        label={t('preferences.skin')}
+        value={user.skin ?? DEFAULT_SKIN}
+        disabled={saving || user.demo}
+        options={SKINS.map((skin) => ({
+          value: skin,
+          label: t(`preferences.skinName.${skin}`),
+          lead: (
+            <span className={`skin-swatch is-${skin}`} aria-hidden="true">
+              <i />
+            </span>
+          ),
         }))}
         onChange={change}
       />
@@ -336,6 +403,7 @@ function PreferencesCard({ user }: { user: Me }) {
         </label>
         {user.aiNoticesAvailable && <NoticesSetting user={user} />}
         <PlusSetting user={user} />
+        <SkinSetting user={user} />
         <AccentSetting user={user} />
         <LanguageSetting />
         <div className="setting-row">

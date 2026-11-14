@@ -1,0 +1,101 @@
+/*
+ * What each skin changes beyond the tokens in theme.css: the touches a token cannot carry. Neon
+ * lights the accent up (glowing buttons, active menu item, bars and titles); Pixel draws hard
+ * shadows, thick borders and progress in blocks. The skins layer comes after screens, so these
+ * win over any component without a more specific selector.
+ */
+@layer skins {
+  /* Neon */
+  :root[data-skin="neon"] .button:not(.secondary),
+  :root[data-skin="neon"] .nav a.active {
+    box-shadow: var(--shadow-glow);
+  }
+
+  :root[data-skin="neon"] .button:not(.secondary):hover {
+    box-shadow:
+      0 0 12px color-mix(in srgb, var(--color-accent) var(--alpha-dim), transparent),
+      0 0 36px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
+  }
+
+  :root[data-skin="neon"] .card {
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-line), var(--color-border));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent),
+      0 0 28px color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
+  }
+
+  :root[data-skin="neon"] .bar i {
+    background: linear-gradient(90deg, var(--color-accent), var(--color-fg-tint));
+    box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) var(--alpha-dim), transparent);
+  }
+
+  :root[data-skin="neon"] .bar.gold i {
+    background: var(--color-trophy-gold);
+    box-shadow: none;
+  }
+
+  :root[data-skin="neon"] h1,
+  :root[data-skin="neon"] .tile b {
+    text-shadow: 0 0 14px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
+  }
+
+  @media (max-width: 760px) {
+    :root[data-skin="neon"] .nav a.active {
+      box-shadow: none;
+      text-shadow: var(--shadow-glow);
+    }
+  }
+
+  /* Pixel */
+  :root[data-skin="pixel"] .card {
+    border-width: 2px;
+    border-color: var(--color-border-strong);
+    box-shadow: 4px 4px 0 var(--color-shadow);
+  }
+
+  :root[data-skin="pixel"] .button,
+  :root[data-skin="pixel"] .nav a.active {
+    border: 2px solid var(--color-shadow);
+    box-shadow: 3px 3px 0 var(--color-shadow);
+  }
+
+  :root[data-skin="pixel"] .button:active {
+    transform: translate(3px, 3px);
+    box-shadow: none;
+  }
+
+  :root[data-skin="pixel"] .bar {
+    height: 8px;
+    border: 2px solid var(--color-border-strong);
+  }
+
+  :root[data-skin="pixel"] .bar.small {
+    height: 6px;
+  }
+
+  /* Progress fills in blocks with a 2px gap, like an old health bar. */
+  :root[data-skin="pixel"] .bar i {
+    background: repeating-linear-gradient(90deg, var(--color-accent) 0 6px, transparent 6px 8px);
+  }
+
+  :root[data-skin="pixel"] .bar.gold i {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--color-trophy-gold) 0 6px,
+      transparent 6px 8px
+    );
+  }
+
+  :root[data-skin="pixel"] h1,
+  :root[data-skin="pixel"] h2,
+  :root[data-skin="pixel"] .tile b {
+    -webkit-font-smoothing: none;
+  }
+
+  @media (max-width: 760px) {
+    :root[data-skin="pixel"] .nav a.active {
+      border-color: transparent;
+      box-shadow: none;
+    }
+  }
+}

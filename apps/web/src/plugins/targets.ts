@@ -308,6 +308,7 @@ export type Target =
   | 'SimilarGamesSection'
   | 'SimilarPicks'
   | 'Sk'
+  | 'SkinSetting'
   | 'SourceNote'
   | 'StatTiles'
   | 'StatTilesSkeleton'

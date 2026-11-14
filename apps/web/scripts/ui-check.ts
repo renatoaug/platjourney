@@ -1,5 +1,7 @@
 // Screenshots every screen at desktop, iPad (portrait and landscape) and phone width and runs axe on each one.
 // bun run ui:check [route ...]   routes like /, /game, /goals; default is all of them.
+// UI_SKINS=default,neon,pixel checks each skin in turn (shared/skin.ts): the test account wears
+// one, the screenshots carry its name, and the account gets its own skin back at the end.
 // Needs the built app running (bun run build, then UI_URL, default http://localhost:3000) and a user in the database
 // (UI_USER = PSN online id; default is the first user). Output goes to .ui-check/.
 import { createHash, randomBytes } from 'node:crypto'
@@ -63,14 +65,38 @@ function describeViolation(where: string, v: Violation): string {
   return `${where}: ${v.id} (${v.nodes.length}) ${v.help}${nodes}`
 }
 
-async function checkRoute(page: Page, route: string, vpName: string, problems: string[]) {
+const SKINS = (process.env.UI_SKINS ?? '').split(',').filter(Boolean)
+
+// Puts the test account in `skin` through the same endpoint Settings uses; returns the one it had.
+async function wearSkin(token: string, skin: string): Promise<string> {
+  const headers = { cookie: `platjourney_session=${token}`, 'content-type': 'application/json' }
+  const me = await fetch(`${BASE}/api/me`, { headers }).then((r) => r.json())
+  const res = await fetch(`${BASE}/api/account/preferences`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ skin }),
+  })
+  if (!res.ok) throw new Error(`could not switch to the ${skin} skin: ${res.status}`)
+  return me.user?.skin ?? 'default'
+}
+
+async function checkRoute(
+  page: Page,
+  route: string,
+  vpName: string,
+  problems: string[],
+  skin = '',
+) {
   const url = route === 'login' ? `${BASE}/` : `${BASE}/#${route}`
   await page.goto(url)
   await settle(page)
-  // Capture the final page, not a compositor frame of its entrance animation. This also keeps
-  // axe's contrast sampling stable when a full-page screenshot resizes the viewport.
-  await page.addStyleTag({ content: '.page { animation: none !important; }' })
-  const name = route === '/' ? 'home' : route.replace(/^\//, '').replace(/[/.]/g, '-')
+  // Capture the final page, not a compositor frame of its entrance animation (the page's and the
+  // sidebar items', which come in one after another). This also keeps axe's contrast sampling
+  // stable when a full-page screenshot resizes the viewport.
+  await page.addStyleTag({ content: '.page, .nav a { animation: none !important; }' })
+  const name =
+    (route === '/' ? 'home' : route.replace(/^\//, '').replace(/[/.]/g, '-')) +
+    (skin ? `-${skin}` : '')
   await page.screenshot({ path: `${OUT}/${name}-${vpName}.png`, fullPage: true })
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -81,14 +107,15 @@ async function checkRoute(page: Page, route: string, vpName: string, problems: s
     problems.push(describeViolation(`${name} @${vpName}`, v))
 }
 
-async function check(browser: Browser, token: string | null, routes: string[]) {
+async function check(browser: Browser, token: string | null, routes: string[], skin = '') {
   const problems: string[] = []
   for (const vp of VIEWPORTS) {
     const context = await browser.newContext({ viewport: vp, colorScheme: 'dark' })
     if (token) await context.addCookies([{ name: 'platjourney_session', value: token, url: BASE }])
     const page = await context.newPage()
     page.on('pageerror', (e) => problems.push(`${vp.name} js error: ${e.message}`))
-    for (const route of token ? routes : ['login']) await checkRoute(page, route, vp.name, problems)
+    for (const route of token ? routes : ['login'])
+      await checkRoute(page, route, vp.name, problems, skin)
     await context.close()
   }
   return problems
@@ -100,7 +127,17 @@ const token = await sessionToken()
 await closeDb()
 const routes = process.argv.slice(2).length ? process.argv.slice(2) : ROUTES
 const browser = await chromium.launch()
-const problems = [...(await check(browser, token, routes)), ...(await check(browser, null, []))]
+const problems: string[] = []
+if (SKINS.length) {
+  let before = ''
+  for (const skin of SKINS) {
+    const was = await wearSkin(token, skin)
+    before ||= was
+    problems.push(...(await check(browser, token, routes, skin)))
+  }
+  await wearSkin(token, before)
+} else problems.push(...(await check(browser, token, routes)))
+problems.push(...(await check(browser, null, [])))
 await browser.close()
 console.log(`screenshots in ${OUT}/`)
 if (problems.length) {

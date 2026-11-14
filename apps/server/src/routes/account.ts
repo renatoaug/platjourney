@@ -1,4 +1,5 @@
 import { isAccent } from '../../../../shared/accent.ts'
+import { isSkin } from '../../../../shared/skin.ts'
 import { apnsEnabled } from '../apns.ts'
 import {
   AuthError,
@@ -39,24 +40,39 @@ const messages = defineMessages({
   },
 })
 
-// Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices, the language
-// and the app's accent color.
-async function savePreferences({ req, res, me, locale: language }: Api) {
-  const t = translator(messages, language)
-  const { includeDlcProgress, aiNotices, notifyTelegram, locale, psPlus, accent } =
-    await readBody(req)
+const PLUS_TIERS = ['none', 'essential', 'extra', 'deluxe'] as const
+
+// The choices picked from a fixed list (PS Plus tier, accent color, skin): each one sent must be
+// one of its list. Returns the fields to save, or null when a choice is not on its list.
+function listChoices(body: Record<string, unknown>): Partial<User> | null {
   const fields: Partial<User> = {}
-  if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
+  const { psPlus, accent, skin } = body
   if (psPlus !== undefined) {
-    const tiers = ['none', 'essential', 'extra', 'deluxe'] as const
-    const tier = tiers.find((x) => x === psPlus)
-    if (!tier) return json(res, 400, { error: 'invalid' })
+    const tier = PLUS_TIERS.find((x) => x === psPlus)
+    if (!tier) return null
     fields.ps_plus = tier
   }
   if (accent !== undefined) {
-    if (!isAccent(accent)) return json(res, 400, { error: 'invalid' })
+    if (!isAccent(accent)) return null
     fields.accent = accent
   }
+  if (skin !== undefined) {
+    if (!isSkin(skin)) return null
+    fields.skin = skin
+  }
+  return fields
+}
+
+// Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices, the language,
+// the PS Plus tier, the app's accent color and its skin.
+async function savePreferences({ req, res, me, locale: language }: Api) {
+  const t = translator(messages, language)
+  const body = await readBody(req)
+  const { includeDlcProgress, aiNotices, notifyTelegram, locale } = body
+  const choices = listChoices(body)
+  if (!choices) return json(res, 400, { error: 'invalid' })
+  const fields: Partial<User> = { ...choices }
+  if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
   if (typeof aiNotices === 'boolean') fields.ai_notices = aiNotices
   if (typeof notifyTelegram === 'boolean') fields.notify_telegram = notifyTelegram
   if (locale !== undefined) {
