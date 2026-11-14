@@ -26,7 +26,7 @@ const messages = defineMessages({
     subtitleLoading: 'Um passo mais perto da platina.',
     subtitleGame: '{name} · {progress}%',
     subtitleGeneral: 'Suas platinas, metas e próximos jogos.',
-    subtitleNotOwned: 'Falando sobre {name}, antes de você comprar.',
+    subtitleNotOwned: 'Falando sobre {name}.',
     switchFailed: 'Não consegui trocar o jogo. Tenta de novo.',
   },
   [Language.En]: {
@@ -34,7 +34,7 @@ const messages = defineMessages({
     subtitleLoading: 'One step closer to the platinum.',
     subtitleGame: '{name} · {progress}%',
     subtitleGeneral: 'Your platinums, goals and next games.',
-    subtitleNotOwned: 'Talking about {name}, before you buy it.',
+    subtitleNotOwned: 'Talking about {name}.',
     switchFailed: 'Could not switch the game. Try again.',
   },
 })

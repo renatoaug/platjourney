@@ -77,21 +77,24 @@
       0 0 28px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
   }
 
-  :root[data-skin="neon"] .button:not(.secondary),
+  /* The store link carries the deal (gold price, struck price, end date) as its label, so it stays a
+   * dark glass button: on the gradient those texts would vanish. */
+  :root[data-skin="neon"] .button:not(.secondary, .game-about-buy),
   :root[data-skin="neon"] .nav a.active {
     background: linear-gradient(100deg, var(--color-accent), var(--color-fg-tint));
     color: var(--color-on-accent);
     box-shadow: var(--shadow-glow);
   }
 
-  :root[data-skin="neon"] .button:not(.secondary):hover {
+  :root[data-skin="neon"] .button:not(.secondary, .game-about-buy):hover {
     box-shadow:
       0 0 12px color-mix(in srgb, var(--color-accent) var(--alpha-dim), transparent),
       0 0 36px color-mix(in srgb, var(--color-fg-tint) var(--alpha-strong), transparent);
   }
 
   :root[data-skin="neon"] button.ghost,
-  :root[data-skin="neon"] .button.secondary {
+  :root[data-skin="neon"] .button.secondary,
+  :root[data-skin="neon"] .button.game-about-buy {
     border-color: color-mix(in srgb, var(--color-highlight-warm) var(--alpha-strong), transparent);
     box-shadow: 0 0 12px
       color-mix(in srgb, var(--color-highlight-warm) var(--alpha-soft), transparent);
@@ -206,7 +209,8 @@
   }
 
   :root[data-skin="pixel"] button.ghost,
-  :root[data-skin="pixel"] .button.secondary {
+  :root[data-skin="pixel"] .button.secondary,
+  :root[data-skin="pixel"] .button.game-about-buy {
     box-shadow:
       inset 2px 2px 0 var(--color-border-strong),
       3px 3px 0 var(--color-shadow);
