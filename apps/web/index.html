@@ -29,6 +29,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+<!-- The Pixel skin pixelates the game art with this filter (styles/skins.css): 6px blocks. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="pixelate" x="0" y="0" width="1" height="1"><feFlood x="3" y="3" width="1" height="1"/><feComposite width="6" height="6"/><feTile result="grid"/><feComposite in="SourceGraphic" in2="grid" operator="in"/><feMorphology operator="dilate" radius="3"/></filter></svg>
 <div id="root">
 <!-- The boot screen before any script runs (components/boot-screen.tsx draws the same once the app starts).
      Hidden until the stylesheet shows it, so it never appears unstyled. -->
