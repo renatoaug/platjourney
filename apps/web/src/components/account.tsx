@@ -52,7 +52,8 @@ const messages = defineMessages({
         amber: 'Âmbar',
         red: 'Vermelho',
       },
-      accentBySkin: 'A skin {skin} já define as cores. Volte para a Padrão para escolher uma cor.',
+      accentBySkin: 'Pinta a skin {skin} na cor escolhida, ou deixa na cor da própria skin.',
+      accentSkinOwn: 'Cor da skin',
       skin: 'Skin do app',
       skinHint: 'Muda o visual inteiro: cores, fontes, cantos e sombras.',
       skinSaved: 'Skin salva.',
@@ -119,7 +120,8 @@ const messages = defineMessages({
         amber: 'Amber',
         red: 'Red',
       },
-      accentBySkin: 'The {skin} skin sets the colors. Switch back to Default to pick a color.',
+      accentBySkin: 'Paints the {skin} skin in the color you pick, or leaves it in its own.',
+      accentSkinOwn: "Skin's own",
       skin: 'App skin',
       skinHint: 'Changes the whole look: colors, fonts, corners and shadows.',
       skinSaved: 'Skin saved.',
@@ -217,7 +219,7 @@ function AccentSetting({ user }: { user: Me }) {
   const { setMe } = useApp()
   const locked = useDemoLock(user.demo)
   const [saving, setSaving] = useState(false)
-  // A skin brings its own colors, so the accent waits until the default look is back.
+  // With a skin on, the accent paints the skin; lime leaves it in its own colors.
   const skin = user.skin ?? DEFAULT_SKIN
   const skinned = skin !== DEFAULT_SKIN
   const change = async (accent: Accent) => {
@@ -251,12 +253,25 @@ function AccentSetting({ user }: { user: Me }) {
         id="pref-accent"
         label={t('preferences.accent')}
         value={user.accent ?? DEFAULT_ACCENT}
-        disabled={saving || user.demo || skinned}
-        options={ACCENTS.map((accent) => ({
-          value: accent,
-          label: t(`preferences.accentName.${accent}`),
-          lead: <span className={`accent-swatch is-${accent}`} aria-hidden="true" />,
-        }))}
+        disabled={saving || user.demo}
+        options={ACCENTS.map((accent) =>
+          // Under a skin, the default lime means the skin's own color.
+          skinned && accent === DEFAULT_ACCENT
+            ? {
+                value: accent,
+                label: t('preferences.accentSkinOwn'),
+                lead: (
+                  <span className={`skin-swatch is-${skin}`} aria-hidden="true">
+                    <i />
+                  </span>
+                ),
+              }
+            : {
+                value: accent,
+                label: t(`preferences.accentName.${accent}`),
+                lead: <span className={`accent-swatch is-${accent}`} aria-hidden="true" />,
+              },
+        )}
         onChange={change}
       />
     </div>

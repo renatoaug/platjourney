@@ -133,9 +133,23 @@
       color-mix(in srgb, var(--color-highlight-warm) var(--alpha-strong), transparent);
   }
 
+  /* The game's art in a duotone of the skin's color: the picture in greys, the color laid over
+   * it (so a picked accent recolors it too). */
   :root[data-skin="neon"] .game-backdrop img,
   :root[data-skin="neon"] .console-art img:not(.blur) {
-    filter: grayscale(1) sepia(1) hue-rotate(225deg) saturate(2.6) brightness(0.8) contrast(1.1);
+    filter: grayscale(1) brightness(0.85) contrast(1.15);
+  }
+
+  :root[data-skin="neon"] .game-backdrop::before,
+  :root[data-skin="neon"] .console-art::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    background: linear-gradient(120deg, var(--color-accent), var(--color-fg-tint));
+    mix-blend-mode: color;
+    opacity: 0.85;
+    pointer-events: none;
   }
 
   @media (max-width: 760px) {
