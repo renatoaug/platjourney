@@ -65,9 +65,22 @@
       order: -1;
     }
 
-    /* The miniatures on the left, the way in on the right. */
+    /* The miniatures on the left, the way in on the right, on the same edge as the close button. */
+    .skins-invite {
+      padding-right: 14px;
+    }
+
+    .skins-invite-copy {
+      padding-right: 44px;
+    }
+
     .skins-invite > .button {
       margin-left: auto;
+    }
+
+    .skins-invite-close {
+      top: 14px;
+      right: 14px;
     }
   }
 
