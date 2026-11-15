@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.79.0](https://github.com/renatoaug/platjourney/compare/v0.78.0...v0.79.0) (2026-11-15)
+
+### Features
+
+* **ai:** nexo answers "what now" with something quick, and its answers lead to the journey ([#192](https://github.com/renatoaug/platjourney/issues/192)) ([64e644c](https://github.com/renatoaug/platjourney/commit/64e644c5fb2c69b37bca28135e8a45b7780fbd47))
+
 ## [0.78.0](https://github.com/renatoaug/platjourney/compare/v0.77.1...v0.78.0) (2026-11-15)
 
 ### Features
