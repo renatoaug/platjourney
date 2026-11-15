@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.78.0](https://github.com/renatoaug/platjourney/compare/v0.77.1...v0.78.0) (2026-11-15)
+
+### Features
+
+* **web:** new brand mark, an easier way to the settings and one way for screens to arrive ([#191](https://github.com/renatoaug/platjourney/issues/191)) ([1fa6933](https://github.com/renatoaug/platjourney/commit/1fa69338aba419421e611a3032ab0b9f832b99fe))
+
 ## [0.77.1](https://github.com/renatoaug/platjourney/compare/v0.77.0...v0.77.1) (2026-11-15)
 
 ### Bug Fixes
