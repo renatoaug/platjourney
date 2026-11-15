@@ -1,0 +1,295 @@
+/*
+ * What each skin changes beyond the tokens in theme.css: the touches a token cannot carry. The
+ * skins layer comes after screens, so these win over any component without a more specific
+ * selector. Both skins leave the trophy colors and the wordmark alone.
+ *
+ * Neon: a synthwave night. Violet and pink glows over a perspective grid, glass cards with a lit
+ * rim, titles filled with a violet-to-pink gradient, numbers in cyan, gradient buttons and the
+ * game's art in a violet duotone.
+ *
+ * Pixel: an 8-bit game. The pixel font everywhere, a checkered floor under CRT scanlines, cards
+ * drawn as game windows, raised buttons, square icons, progress in blocks and the game's art
+ * pixelated (the #pixelate filter in index.html).
+ */
+@layer skins {
+  /* Both: a display font with longer descenders than the default needs room below the line. */
+  :root[data-skin] .console-title,
+  :root[data-skin] .hero-title {
+    padding-bottom: 0.12em;
+    line-height: 1.08;
+  }
+
+  /* Settings draws notifications and preferences as bare lists with no padding; a skin frames
+   * every card, so these get room inside their frame. */
+  :root[data-skin] .settings-grid #notifications-card.card,
+  :root[data-skin] .settings-grid :is(#preferences-card, #appearance-card).card {
+    padding: 0 16px 8px;
+  }
+
+  /* The frame closes the list, so its own closing line would be a second edge. */
+  :root[data-skin] .settings-grid #notifications-card .setting-group,
+  :root[data-skin] .settings-grid :is(#preferences-card, #appearance-card) .setting-group {
+    border-bottom: 0;
+  }
+
+  /* ---------------------------------------------------------------- Neon */
+
+  :root[data-skin="neon"] body {
+    background:
+      radial-gradient(
+        60vw 50vh at 0% 0%,
+        color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        55vw 55vh at 100% 100%,
+        color-mix(in srgb, var(--color-fg-tint) var(--alpha-tint), transparent),
+        transparent 70%
+      ),
+      var(--color-bg);
+    background-attachment: fixed;
+  }
+
+  /* The synthwave floor: a perspective grid fading in at the foot of the screen. */
+  :root[data-skin="neon"] body::before {
+    content: "";
+    position: fixed;
+    z-index: -2;
+    inset: auto -50% 0;
+    height: 45vh;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent) 0 1px,
+        transparent 1px 64px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--color-fg-tint) var(--alpha-line), transparent) 0 1px,
+        transparent 1px 48px
+      );
+    transform: perspective(320px) rotateX(62deg);
+    transform-origin: bottom;
+    mask-image: linear-gradient(to top, black, transparent);
+  }
+
+  :root[data-skin="neon"] .sidebar {
+    border-right-color: color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
+    background: color-mix(in srgb, var(--color-bg-subtle) var(--alpha-heavy), transparent);
+    box-shadow: 1px 0 24px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+  }
+
+  :root[data-skin="neon"] .card {
+    background-color: color-mix(in srgb, var(--color-surface) var(--alpha-dim), transparent);
+    backdrop-filter: blur(14px);
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--color-fg-tint) var(--alpha-strong), transparent),
+      0 0 0 1px color-mix(in srgb, var(--color-fg-tint) var(--alpha-tint), transparent),
+      0 0 28px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+  }
+
+  /* The store link carries the deal (gold price, struck price, end date) as its label, so it stays a
+   * dark glass button: on the gradient those texts would vanish. */
+  :root[data-skin="neon"] .button:not(.secondary, .game-about-buy),
+  :root[data-skin="neon"] .nav a.active {
+    background: linear-gradient(100deg, var(--color-accent), var(--color-fg-tint));
+    color: var(--color-on-accent);
+    box-shadow: var(--shadow-glow);
+  }
+
+  :root[data-skin="neon"] .button:not(.secondary, .game-about-buy):hover {
+    box-shadow:
+      0 0 12px color-mix(in srgb, var(--color-accent) var(--alpha-dim), transparent),
+      0 0 36px color-mix(in srgb, var(--color-fg-tint) var(--alpha-strong), transparent);
+  }
+
+  :root[data-skin="neon"] button.ghost,
+  :root[data-skin="neon"] .button.secondary,
+  :root[data-skin="neon"] .button.game-about-buy {
+    border-color: color-mix(in srgb, var(--color-highlight-warm) var(--alpha-strong), transparent);
+    box-shadow: 0 0 12px
+      color-mix(in srgb, var(--color-highlight-warm) var(--alpha-soft), transparent);
+  }
+
+  :root[data-skin="neon"] .bar i {
+    background: linear-gradient(90deg, var(--color-accent), var(--color-fg-tint));
+    box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) var(--alpha-dim), transparent);
+  }
+
+  :root[data-skin="neon"] .bar.gold i {
+    background: var(--color-trophy-gold);
+    box-shadow: none;
+  }
+
+  /* Titles filled with the violet-to-pink gradient, glowing. */
+  :root[data-skin="neon"] h1,
+  :root[data-skin="neon"] .console-title,
+  :root[data-skin="neon"] .hero-title {
+    background: linear-gradient(
+      100deg,
+      var(--color-fg) 10%,
+      var(--color-accent) 55%,
+      var(--color-fg-tint)
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(
+      0 0 14px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent)
+    );
+  }
+
+  :root[data-skin="neon"] .tile b,
+  :root[data-skin="neon"] .eyebrow {
+    color: var(--color-highlight-warm);
+    text-shadow: 0 0 12px
+      color-mix(in srgb, var(--color-highlight-warm) var(--alpha-strong), transparent);
+  }
+
+  /* The game's art in a duotone of the skin's color: the picture in greys, the color laid over
+   * it (so a picked accent recolors it too). */
+  :root[data-skin="neon"] .game-backdrop img,
+  :root[data-skin="neon"] .console-art img:not(.blur) {
+    filter: grayscale(1) brightness(0.85) contrast(1.15);
+  }
+
+  :root[data-skin="neon"] .game-backdrop::before,
+  :root[data-skin="neon"] .console-art::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    background: linear-gradient(120deg, var(--color-accent), var(--color-fg-tint));
+    mix-blend-mode: color;
+    opacity: 0.85;
+    pointer-events: none;
+  }
+
+  @media (max-width: 760px) {
+    :root[data-skin="neon"] .nav a.active {
+      background: none;
+      box-shadow: none;
+      color: var(--color-accent);
+      text-shadow: var(--shadow-glow);
+    }
+  }
+
+  /* --------------------------------------------------------------- Pixel */
+
+  /* The floor: a checkerboard of two dark tiles, with CRT scanlines over the whole screen. */
+  :root[data-skin="pixel"] body {
+    background:
+      repeating-conic-gradient(var(--color-bg) 0 25%, var(--color-bg-subtle) 0 50%) 0 0 / 16px 16px;
+  }
+
+  :root[data-skin="pixel"] body::after {
+    content: "";
+    position: fixed;
+    z-index: 999;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--color-shadow) var(--alpha-soft), transparent) 0 1px,
+      transparent 1px 3px
+    );
+  }
+
+  :root[data-skin="pixel"] .sidebar {
+    border-right: 4px solid var(--color-shadow);
+  }
+
+  /* Cards as game windows: a light frame, a dark inner line and a hard shadow. */
+  :root[data-skin="pixel"] .card {
+    border: 2px solid var(--color-fg-subtle);
+    box-shadow:
+      inset 0 0 0 2px var(--color-shadow),
+      inset 0 0 0 4px var(--color-border-strong),
+      6px 6px 0 var(--color-shadow);
+  }
+
+  /* Raised buttons: light on the top-left edge, dark on the bottom-right, pressed when held. */
+  :root[data-skin="pixel"] .button,
+  :root[data-skin="pixel"] .nav a.active {
+    border: 2px solid var(--color-shadow);
+    box-shadow:
+      inset 3px 3px 0 var(--color-accent-hover),
+      inset -3px -3px 0 var(--color-accent-dim),
+      3px 3px 0 var(--color-shadow);
+  }
+
+  :root[data-skin="pixel"] button.ghost,
+  :root[data-skin="pixel"] .button.secondary,
+  :root[data-skin="pixel"] .button.game-about-buy {
+    box-shadow:
+      inset 2px 2px 0 var(--color-border-strong),
+      3px 3px 0 var(--color-shadow);
+  }
+
+  :root[data-skin="pixel"] .button:active {
+    transform: translate(3px, 3px);
+    box-shadow: none;
+  }
+
+  :root[data-skin="pixel"] .icon {
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    shape-rendering: crispEdges;
+  }
+
+  :root[data-skin="pixel"] img {
+    image-rendering: pixelated;
+  }
+
+  :root[data-skin="pixel"] .game-backdrop img,
+  :root[data-skin="pixel"] .console-art img:not(.blur) {
+    filter: url("#pixelate") saturate(1.3);
+  }
+
+  :root[data-skin="pixel"] .bar {
+    height: 10px;
+    border: 2px solid var(--color-shadow);
+    box-shadow: inset 0 0 0 1px var(--color-border-strong);
+  }
+
+  :root[data-skin="pixel"] .bar.small {
+    height: 8px;
+  }
+
+  /* Progress fills in blocks with a 2px gap, like an old health bar. */
+  :root[data-skin="pixel"] .bar i {
+    background: repeating-linear-gradient(90deg, var(--color-accent) 0 6px, transparent 6px 8px);
+  }
+
+  :root[data-skin="pixel"] .bar.gold i {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--color-trophy-gold) 0 6px,
+      transparent 6px 8px
+    );
+  }
+
+  :root[data-skin="pixel"] .eyebrow {
+    color: var(--color-highlight-warm);
+  }
+
+  :root[data-skin="pixel"] h1,
+  :root[data-skin="pixel"] .console-title,
+  :root[data-skin="pixel"] .hero-title {
+    text-shadow: 4px 4px 0 var(--color-shadow);
+  }
+
+  :root[data-skin="pixel"] body {
+    -webkit-font-smoothing: none;
+  }
+
+  @media (max-width: 760px) {
+    :root[data-skin="pixel"] .nav a.active {
+      border-color: transparent;
+      box-shadow: none;
+    }
+  }
+}

@@ -11,6 +11,7 @@ import {
 import { defineMessages, Language, translator } from '../i18n/i18n'
 import { applyAccent } from '../lib/accent'
 import { api } from '../lib/api'
+import { applySkin } from '../lib/skin'
 import type { AppStateData, Me } from '../lib/types'
 import { toast } from '../ui/toast'
 
@@ -57,6 +58,8 @@ export function AppStateProvider({ me: initial, children }: { me: Me; children: 
   const [me, setMe] = useState(initial)
   // The page wears the player's accent color, and changes with it at once.
   useEffect(() => applyAccent(me.accent), [me.accent])
+  // And its skin, with the same instant change.
+  useEffect(() => applySkin(me.skin), [me.skin])
   const [data, setDataState] = useState<AppStateData | null>(null)
   const [loading, setLoading] = useState(false)
   const [sync, setSync] = useState<SyncStatus>('connecting')

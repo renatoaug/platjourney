@@ -27,6 +27,13 @@
   --palette-swatch-magenta: #ff6fd0;
   --palette-swatch-amber: #ffb43f;
   --palette-swatch-red: #ff3b47;
+  /* Each skin's background and accent, for its miniature in Settings (shared/skin.ts). */
+  --palette-skin-default-bg: #10120f;
+  --palette-skin-default-accent: #c2f366;
+  --palette-skin-neon-bg: #0a0612;
+  --palette-skin-neon-accent: #d08aff;
+  --palette-skin-pixel-bg: #14121f;
+  --palette-skin-pixel-accent: #4ce26a;
   --palette-accent-950: #16200f;
   --palette-accent-600: #647550;
   --palette-accent-500: #7fa64a;
@@ -73,6 +80,13 @@
   --color-swatch-magenta: var(--palette-swatch-magenta);
   --color-swatch-amber: var(--palette-swatch-amber);
   --color-swatch-red: var(--palette-swatch-red);
+  /* The miniature of each skin in Settings */
+  --color-skin-default-bg: var(--palette-skin-default-bg);
+  --color-skin-default-accent: var(--palette-skin-default-accent);
+  --color-skin-neon-bg: var(--palette-skin-neon-bg);
+  --color-skin-neon-accent: var(--palette-skin-neon-accent);
+  --color-skin-pixel-bg: var(--palette-skin-pixel-bg);
+  --color-skin-pixel-accent: var(--palette-skin-pixel-accent);
   /* Feedback */
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
@@ -100,6 +114,9 @@
   --font-display: "Space Grotesk", sans-serif;
   --font-body: Inter, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
+  /* The "platjourney" wordmark: brand identity, the same in every skin. */
+  --font-brand: "Space Grotesk", sans-serif;
+  --tracking-brand: -0.04em;
   --text-xs: 10px;
   --text-sm: 11px;
   --text-md: 12px;
@@ -160,6 +177,91 @@
  */
 :root {
   color-scheme: dark;
+}
+
+/* The skin the player picked in Settings (data-skin on <html>, shared/skin.ts). A skin goes
+ * further than an accent: its own palette, the display font, the corners and the shadows. It comes
+ * before the accents, so a picked accent paints the skin in that color (a cyan Neon, an amber
+ * Pixel) while the skin keeps its fonts, shapes and effects; with the default lime, the skin wears
+ * its own colors. The trophy colors (platinum, gold, silver, bronze) and the danger red stay the
+ * same in every skin. The component touches a token cannot carry (glows, pixel borders, stepped
+ * bars) live in styles/skins.css. */
+
+/* Neon: near-black with a violet cast, electric purple, hot pink and real glow. */
+:root[data-skin="neon"] {
+  --palette-neutral-950: #0a0612;
+  --palette-neutral-925: #0e0818;
+  --palette-neutral-900: #130b20;
+  --palette-neutral-850: #1c1030;
+  --palette-neutral-800: #2a1846;
+  --palette-neutral-700: #422670;
+  --palette-neutral-500: #8574aa;
+  --palette-neutral-400: #ab9ccc;
+  --palette-neutral-300: #d0c3ec;
+  --palette-neutral-50: #f4eefe;
+  --palette-accent-950: #0c0216;
+  --palette-accent-600: #6a3d99;
+  --palette-accent-500: #a24fe6;
+  --palette-accent-400: #d08aff;
+  --palette-accent-300: #e2b3ff;
+  --palette-olive-300: #ff7ad9;
+  --palette-olive-400: #e86bc6;
+  --palette-peach-300: #6ef3ff;
+
+  --font-display: Orbitron, "Space Grotesk", sans-serif;
+  --tracking-tight: -0.01em;
+  --tracking-snug: 0;
+
+  --radius-tag: 4px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  --shadow-glow:
+    0 0 8px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent),
+    0 0 24px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  --shadow-popover:
+    0 18px 50px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent),
+    0 0 32px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+}
+
+/* Pixel: an old console's limited palette, a pixel display font, square corners and hard,
+ * unblurred shadows. */
+:root[data-skin="pixel"] {
+  --palette-neutral-950: #14121f;
+  --palette-neutral-925: #181626;
+  --palette-neutral-900: #1c1a2c;
+  --palette-neutral-850: #26233c;
+  --palette-neutral-800: #36325a;
+  --palette-neutral-700: #4d4882;
+  --palette-neutral-500: #8a84b8;
+  --palette-neutral-400: #aaa5d0;
+  --palette-neutral-300: #cfcbea;
+  --palette-neutral-50: #f4f1ff;
+  --palette-accent-950: #071f0c;
+  --palette-accent-600: #1f6b2e;
+  --palette-accent-500: #2f9e46;
+  --palette-accent-400: #4ce26a;
+  --palette-accent-300: #82ff98;
+  --palette-olive-300: #41b8ff;
+  --palette-olive-400: #2f9ce0;
+  --palette-peach-300: #ffb347;
+
+  --font-display: "Pixelify Sans", "Space Grotesk", sans-serif;
+  --font-body: "Pixelify Sans", Inter, system-ui, sans-serif;
+  --tracking-tight: 0;
+  --tracking-snug: 0;
+
+  --radius-tag: 0;
+  --radius-control: 0;
+  --radius-card: 0;
+  --radius-pill: 0;
+
+  --shadow-focus: 0 0 0 3px var(--color-accent);
+  --shadow-glow: 3px 3px 0 var(--color-accent-muted);
+  --shadow-popover: 6px 6px 0 var(--color-shadow);
+  --shadow-drag: 6px 6px 0 var(--color-shadow), 0 0 0 2px var(--color-accent);
 }
 
 /* The accent the player picked in Settings (data-accent on <html>, shared/accent.ts). Each swaps

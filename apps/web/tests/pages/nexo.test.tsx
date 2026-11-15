@@ -387,7 +387,7 @@ test('a game outside the library says the conversation is before buying it', () 
       data: { ...SAMPLE_DATA, current: { ...(current as unknown as CurrentGame), owned: false } },
     },
   })
-  expect(screen.getByText('Falando sobre DAYS GONE, antes de você comprar.')).toBeTruthy()
+  expect(screen.getByText('Falando sobre DAYS GONE.')).toBeTruthy()
 })
 
 test('switching the game clears the conversation and shows the skeleton until the new one loads', async () => {

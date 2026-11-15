@@ -15,7 +15,7 @@
     align-items: stretch;
   }
 
-  /* The lists of rows close the page, one after the other: notifications, then preferences (on
+  /* The lists of rows close the page, one after the other: appearance, notifications, then preferences (on
      a wide screen across both columns). */
   .settings-grid > #notifications-card {
     order: 9;
@@ -25,9 +25,14 @@
     order: 10;
   }
 
+  .settings-grid > #appearance-card {
+    order: 8;
+  }
+
   @container (min-width: 721px) {
     .settings-grid > #notifications-card,
-    .settings-grid > #preferences-card {
+    .settings-grid > #preferences-card,
+    .settings-grid > #appearance-card {
       grid-column: 1 / -1;
     }
   }
@@ -83,12 +88,12 @@
    each setting's ⓘ. */
 @layer screens {
   .settings-grid #notifications-card.card,
-  .settings-grid #preferences-card.card {
+  .settings-grid :is(#preferences-card, #appearance-card).card {
     margin-top: -12px;
   }
 
   .settings-grid #notifications-card.card,
-  .settings-grid #preferences-card.card {
+  .settings-grid :is(#preferences-card, #appearance-card).card {
     padding: 0;
     border: 0;
     background: transparent;
@@ -96,7 +101,7 @@
   }
 
   .settings-grid #notifications-card.card > h2:first-child,
-  .settings-grid #preferences-card.card > h2:first-child {
+  .settings-grid :is(#preferences-card, #appearance-card).card > h2:first-child {
     height: auto;
     margin: 24px 0 10px;
     padding: 0 4px;

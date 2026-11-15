@@ -78,16 +78,12 @@ export function Picker<T extends string>({
       setPlace({ bottom: window.innerHeight - r.top + 6, right: window.innerWidth - r.right })
   }, [open])
 
+  // A click outside lands on the scrim, which covers the whole window and only closes the list.
+  // Closing on pointerdown instead would unmount the scrim before the click, and the click would
+  // reach whatever sits under it (a toggle in the same settings list).
   useEffect(() => {
-    if (!open) return
-    list.current?.focus()
-    const outside = (e: PointerEvent) => {
-      const target = e.target as Node
-      if (!list.current?.contains(target) && !button.current?.contains(target)) close(false)
-    }
-    document.addEventListener('pointerdown', outside)
-    return () => document.removeEventListener('pointerdown', outside)
-  }, [open, close])
+    if (open) list.current?.focus()
+  }, [open])
 
   const keys = (e: KeyboardEvent) => {
     if (e.key === 'Escape') return close()

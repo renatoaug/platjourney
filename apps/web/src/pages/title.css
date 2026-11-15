@@ -21,8 +21,10 @@
 
   .hero .title-secondary-actions .button {
     min-width: 0;
-    min-height: 44px;
-    height: 48px;
+    /* At least 48px, taller when the deal wraps (a wide skin font): the pair stretches together. */
+    min-height: 48px;
+    height: auto;
+    align-self: stretch;
     padding: 8px;
     font-size: var(--text-base);
     gap: 6px;

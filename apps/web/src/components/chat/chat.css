@@ -314,8 +314,9 @@
     white-space: nowrap;
   }
 
+  /* Full strength: at 70% the small date fell under 4.5:1 on the darker accents (cobalt, red). */
   .msg.user .message-meta {
-    color: color-mix(in srgb, var(--color-on-accent) var(--alpha-dim), transparent);
+    color: var(--color-on-accent);
     margin-bottom: 8px;
   }
 

@@ -23,6 +23,8 @@ DEFINE FIELD IF NOT EXISTS revealed_trophy_games ON user TYPE option<array<strin
 DEFINE FIELD IF NOT EXISTS ps_plus ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['none', 'essential', 'extra', 'deluxe'];
 -- The app's accent color the player picked in Settings (shared/accent.ts); none means lime.
 DEFINE FIELD OVERWRITE accent ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['lime', 'cyan', 'cobalt', 'violet', 'magenta', 'amber', 'red'];
+-- The app's skin the player picked in Settings (shared/skin.ts); none means the default look.
+DEFINE FIELD IF NOT EXISTS skin ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['default', 'neon', 'pixel'];
 -- Nexo writes this player's automatic notices (when the instance allows it); off, they are plain
 -- templates that need no model.
 DEFINE FIELD IF NOT EXISTS ai_notices ON user TYPE bool DEFAULT true;

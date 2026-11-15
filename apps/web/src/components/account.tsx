@@ -1,6 +1,7 @@
 /** Account cards on the profile page: Telegram link, notifications, DLC and language preferences, password and deletion. */
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { ACCENTS, type Accent, DEFAULT_ACCENT } from '../../../../shared/accent'
+import { DEFAULT_SKIN, SKINS, type Skin } from '../../../../shared/skin'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
 import { ApiError, api, del } from '../lib/api'
@@ -39,7 +40,8 @@ const messages = defineMessages({
       plusHint: 'Com essa informação os interesses mostram os jogos que o seu plano já inclui.',
       plusSaved: 'PS Plus salvo.',
       plusTier: { none: 'Não tenho', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
-      accent: 'Cor do app',
+      appearance: 'Aparência',
+      accent: 'Cor',
       accentHint: 'A cor dos botões, do menu e dos destaques. O fundo ganha um leve tom dela.',
       accentSaved: 'Cor salva.',
       accentName: {
@@ -51,6 +53,12 @@ const messages = defineMessages({
         amber: 'Âmbar',
         red: 'Vermelho',
       },
+      accentBySkin: 'Pinta a skin {skin} na cor escolhida, ou deixa na cor da própria skin.',
+      accentSkinOwn: 'Cor da skin',
+      skin: 'Skin',
+      skinHint: 'Muda o visual inteiro: cores, fontes, cantos e sombras.',
+      skinSaved: 'Skin salva.',
+      skinName: { default: 'Padrão', neon: 'Neon', pixel: 'Pixel' },
       dlc: 'Contar DLCs no progresso',
       dlcHint:
         'A platina só pede o jogo base. Ligue para ver o progresso com as DLCs em todo o app, no Telegram e no Nexo.',
@@ -100,7 +108,8 @@ const messages = defineMessages({
       plusHint: 'With it, your interests show the games your plan already includes.',
       plusSaved: 'PS Plus saved.',
       plusTier: { none: 'None', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
-      accent: 'App color',
+      appearance: 'Appearance',
+      accent: 'Color',
       accentHint:
         'The color of buttons, the menu and highlights. The background takes a faint tint of it.',
       accentSaved: 'Color saved.',
@@ -113,6 +122,12 @@ const messages = defineMessages({
         amber: 'Amber',
         red: 'Red',
       },
+      accentBySkin: 'Paints the {skin} skin in the color you pick, or leaves it in its own.',
+      accentSkinOwn: "Skin's own",
+      skin: 'Skin',
+      skinHint: 'Changes the whole look: colors, fonts, corners and shadows.',
+      skinSaved: 'Skin saved.',
+      skinName: { default: 'Default', neon: 'Neon', pixel: 'Pixel' },
       dlc: 'Count DLC in progress',
       dlcHint:
         'The platinum only needs the base game. Turn on to see progress with DLC across the app, on Telegram and in Nexo.',
@@ -206,6 +221,9 @@ function AccentSetting({ user }: { user: Me }) {
   const { setMe } = useApp()
   const locked = useDemoLock(user.demo)
   const [saving, setSaving] = useState(false)
+  // With a skin on, the accent paints the skin; lime leaves it in its own colors.
+  const skin = user.skin ?? DEFAULT_SKIN
+  const skinned = skin !== DEFAULT_SKIN
   const change = async (accent: Accent) => {
     const before = user
     // The page changes before the answer, so the pick feels instant; a failure puts it back.
@@ -225,7 +243,11 @@ function AccentSetting({ user }: { user: Me }) {
     <div className="setting-row">
       <SettingTitle
         title={t('preferences.accent')}
-        hint={t('preferences.accentHint')}
+        hint={
+          skinned
+            ? t('preferences.accentBySkin', { skin: t(`preferences.skinName.${skin}`) })
+            : t('preferences.accentHint')
+        }
         note={locked}
         htmlFor="pref-accent"
       />
@@ -234,10 +256,72 @@ function AccentSetting({ user }: { user: Me }) {
         label={t('preferences.accent')}
         value={user.accent ?? DEFAULT_ACCENT}
         disabled={saving || user.demo}
-        options={ACCENTS.map((accent) => ({
-          value: accent,
-          label: t(`preferences.accentName.${accent}`),
-          lead: <span className={`accent-swatch is-${accent}`} aria-hidden="true" />,
+        options={ACCENTS.map((accent) =>
+          // Under a skin, the default lime means the skin's own color.
+          skinned && accent === DEFAULT_ACCENT
+            ? {
+                value: accent,
+                label: t('preferences.accentSkinOwn'),
+                lead: (
+                  <span className={`skin-swatch is-${skin}`} aria-hidden="true">
+                    <i />
+                  </span>
+                ),
+              }
+            : {
+                value: accent,
+                label: t(`preferences.accentName.${accent}`),
+                lead: <span className={`accent-swatch is-${accent}`} aria-hidden="true" />,
+              },
+        )}
+        onChange={change}
+      />
+    </div>
+  )
+}
+
+/** The app's skin: the default look, Neon or Pixel, applied at once and saved on the account. */
+function SkinSetting({ user }: { user: Me }) {
+  const t = useMessages(messages)
+  const { setMe } = useApp()
+  const locked = useDemoLock(user.demo)
+  const [saving, setSaving] = useState(false)
+  const change = async (skin: Skin) => {
+    const before = user
+    // The page changes before the answer, so the pick feels instant; a failure puts it back.
+    setMe({ ...user, skin })
+    setSaving(true)
+    try {
+      const saved = await api<{ user: Me }>('/api/account/preferences', { skin })
+      setMe(saved.user)
+      toast(t('preferences.skinSaved'), 'success')
+    } catch (e) {
+      setMe(before)
+      if (!handled(e)) toast(t('preferences.saveFailed'))
+    }
+    setSaving(false)
+  }
+  return (
+    <div className="setting-row">
+      <SettingTitle
+        title={t('preferences.skin')}
+        hint={t('preferences.skinHint')}
+        note={locked}
+        htmlFor="pref-skin"
+      />
+      <Picker
+        id="pref-skin"
+        label={t('preferences.skin')}
+        value={user.skin ?? DEFAULT_SKIN}
+        disabled={saving || user.demo}
+        options={SKINS.map((skin) => ({
+          value: skin,
+          label: t(`preferences.skinName.${skin}`),
+          lead: (
+            <span className={`skin-swatch is-${skin}`} aria-hidden="true">
+              <i />
+            </span>
+          ),
         }))}
         onChange={change}
       />
@@ -336,7 +420,6 @@ function PreferencesCard({ user }: { user: Me }) {
         </label>
         {user.aiNoticesAvailable && <NoticesSetting user={user} />}
         <PlusSetting user={user} />
-        <AccentSetting user={user} />
         <LanguageSetting />
         <div className="setting-row">
           <SettingTitle title={t('preferences.intro')} hint={t('preferences.introHint')} />
@@ -348,6 +431,20 @@ function PreferencesCard({ user }: { user: Me }) {
             <Icon name="play" /> {t('preferences.introOpen')}
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/** How the app looks: the skin, then the color that paints it. */
+function AppearanceCard({ user }: { user: Me }) {
+  const t = useMessages(messages)
+  return (
+    <div className="card" id="appearance-card">
+      <h2>{t('preferences.appearance')}</h2>
+      <div className="setting-group">
+        <SkinSetting user={user} />
+        <AccentSetting user={user} />
       </div>
     </div>
   )
@@ -575,6 +672,7 @@ export function AccountCards({
       {children}
       <NotificationSettings user={user} />
       <PreferencesCard user={user} />
+      <AppearanceCard user={user} />
     </>
   )
 }

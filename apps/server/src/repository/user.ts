@@ -1,4 +1,5 @@
 import type { Accent } from '../../../../shared/accent.ts'
+import type { Skin } from '../../../../shared/skin.ts'
 import { camelKeys, one, plain, q, type RecordId, rid, snakeKeys } from '../db.ts'
 import type { Locale } from '../i18n.ts'
 
@@ -20,6 +21,8 @@ export interface User {
   ps_plus?: 'none' | 'essential' | 'extra' | 'deluxe' | null
   // The app's accent color picked in Settings; none means lime.
   accent?: Accent | null
+  // The app's skin picked in Settings; none means the default look.
+  skin?: Skin | null
   // Nexo's words in automatic notices; off, plain templates (no model).
   ai_notices?: boolean
   // Notices also go to the linked Telegram chat; off, only the web and push.

@@ -32,7 +32,7 @@ const messages = defineMessages({
     storeTitle: 'Na PS Store',
     until: 'até {date}',
     plus: '{price} no PS Plus',
-    mine: 'No seu PS Plus {tier}: jogue sem pagar',
+    mine: 'Incluso no seu PS Plus {tier}',
     included: 'Incluso no PS Plus {tier}',
   },
   [Language.En]: {
@@ -57,7 +57,7 @@ const messages = defineMessages({
     storeTitle: 'On PS Store',
     until: 'until {date}',
     plus: '{price} with PS Plus',
-    mine: 'In your PS Plus {tier}: play at no cost',
+    mine: 'Included in your PS Plus {tier}',
     included: 'Included with PS Plus {tier}',
   },
 })
