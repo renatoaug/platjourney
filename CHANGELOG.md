@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.77.1](https://github.com/renatoaug/platjourney/compare/v0.77.0...v0.77.1) (2026-11-15)
+
+### Bug Fixes
+
+* **mobile:** declare portuguese and english in the ios app ([#190](https://github.com/renatoaug/platjourney/issues/190)) ([2dda1c6](https://github.com/renatoaug/platjourney/commit/2dda1c6f26b224f63acd07b049119d684552476c))
+
 ## [0.77.0](https://github.com/renatoaug/platjourney/compare/v0.76.0...v0.77.0) (2026-11-15)
 
 ### Features
