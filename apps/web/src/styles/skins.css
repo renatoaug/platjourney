@@ -26,6 +26,12 @@
     padding: 0 16px 8px;
   }
 
+  /* The frame closes the list, so its own closing line would be a second edge. */
+  :root[data-skin] .settings-grid #notifications-card .setting-group,
+  :root[data-skin] .settings-grid #preferences-card .setting-group {
+    border-bottom: 0;
+  }
+
   /* ---------------------------------------------------------------- Neon */
 
   :root[data-skin="neon"] body {
