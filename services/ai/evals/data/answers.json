@@ -217,6 +217,16 @@
       ],
       "reference": "A primeira linha diz que faltam 18 troféus do jogo base para a platina (sem contar a platina) e que 14 deles ainda são perdíveis; depois vem a ordem.",
       "avoid": ["19 troféus", "faltam 19"]
+    },
+    {
+      "game": "Horizon Forbidden West",
+      "question": "quais troféus mais fáceis pra eu fazer agora, nesse ponto do jogo?",
+      "earned": ["Concluiu uma série de desafios da arena"],
+      "reference": "Sugere troféus rápidos de fazer na próxima sessão, que saem junto com o que a pessoa já vai fazer (subir alguns níveis, uma técnica de arma, uma montaria, uma planagem longa). Não puxa como resposta principal a análise de todos os tipos de máquina, que é uma coleta longa. Se não souber em que ponto da história a pessoa está, termina perguntando o capítulo ou a missão.",
+      "avoid": [
+        "apontar a análise de todos os tipos de máquina como o troféu para fazer agora",
+        "repetir o mesmo alerta de perdível que já foi dado na conversa"
+      ]
     }
   ]
 }

@@ -78,6 +78,19 @@
     border: 0;
   }
 
+  /* Under an answer about a game: the way to its journey, small, after the text. */
+  .message-journey {
+    justify-self: start;
+    align-self: flex-start;
+    margin-top: 10px;
+    gap: 6px;
+  }
+
+  .message-journey .icon {
+    width: 14px;
+    height: 14px;
+  }
+
   .chatform {
     display: flex;
     gap: 10px;
