@@ -1,6 +1,7 @@
 /* An owned game at a glance, built like a console app's game page: a clean head over the game's
    picture, cards with an arrow that open the game's own pages, the trophies by tier with their
-   cups, the guide's numbers in one card, then the trophy list. One column, also on a wide screen. */
+   cups, the guide's numbers in one card, then the trophy list. One column on a phone; a wide screen
+   gives the head more presence and puts the tiers and the numbers side by side. */
 @layer screens {
   .game-overview,
   .game-subpage {
@@ -442,5 +443,55 @@
 @layer screens {
   .journey-guide.is-page .guide-heading {
     display: none;
+  }
+
+  /* A wide screen: a bigger cover and name, the actions at their own width under them instead of a
+     bar across the page, and the tiers beside the guide's numbers. */
+  @media (min-width: 1024px) {
+    .game-overview {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: 16px;
+    }
+
+    .game-overview > * {
+      grid-column: 1 / -1;
+    }
+
+    .game-overview > .game-tiers,
+    .game-overview > .game-facts {
+      grid-column: auto;
+    }
+
+    .game-overview-head {
+      gap: 24px;
+      padding-top: clamp(40px, 14vh, 180px);
+    }
+
+    .game-overview-cover {
+      width: 132px;
+      height: 176px;
+    }
+
+    .game-overview-title {
+      gap: 8px;
+    }
+
+    .game-overview-title h1 {
+      font-size: var(--text-display);
+      letter-spacing: -0.5px;
+    }
+
+    .game-overview-played {
+      font-size: var(--text-body);
+    }
+
+    .game-overview-cta {
+      grid-template-columns: repeat(2, minmax(0, 260px));
+      justify-content: start;
+    }
+
+    .game-overview-cta > :only-child {
+      grid-column: auto;
+    }
   }
 }
