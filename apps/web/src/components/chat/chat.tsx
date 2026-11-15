@@ -69,6 +69,7 @@ const messages = defineMessages({
     },
     partner: 'PARCEIRO DE PLATINAS',
     typing: 'Nexo está preparando uma resposta',
+    seeJourney: 'Ver na jornada',
     welcomeEyebrow: 'SEU PARCEIRO DE CONQUISTAS',
     welcomeTitle: 'Sou o Nexo. Vamos à platina?',
     welcomeBody:
@@ -162,6 +163,7 @@ const messages = defineMessages({
     },
     partner: 'PLATINUM PARTNER',
     typing: 'Nexo is preparing an answer',
+    seeJourney: 'See it on the journey',
     welcomeEyebrow: 'YOUR ACHIEVEMENT PARTNER',
     welcomeTitle: 'I am Nexo. Shall we go for the platinum?',
     welcomeBody:
@@ -327,6 +329,15 @@ function AssistantMessage({
         </div>
       ) : (
         <Markdown className="message-content" text={body} />
+      )}
+      {/* An answer about a game ends with the way to its journey, where every step has its detail. */}
+      {!pending && message?.game?.id && (
+        <Link
+          className="button secondary sm message-journey"
+          to={`${titleHref(message.game.id)}?view=journey`}
+        >
+          <Icon name="compass" /> {t('seeJourney')}
+        </Link>
       )}
     </div>
   )
