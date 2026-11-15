@@ -109,20 +109,25 @@ export function GuideSpotlight({ game }: { game: SpotlightGame }) {
   )
 }
 
-/** The guide of the day's place while the first list loads. */
+/** The guide of the day's place while the first list loads: the same grid as the card, with the
+ * label and the open link, the cover, the name and its line, and the facts band. */
 export function GuideSpotlightSkeleton() {
   return (
     <aside className="guide-spotlight" aria-hidden="true">
       <header className="guide-spotlight-heading">
         <Sk w="90px" h={10} />
+        <Sk w="72px" h={12} />
       </header>
-      <div className="guide-spotlight-cover">
-        <Sk w="100%" h={120} />
-      </div>
+      <span className="guide-spotlight-cover sk" />
       <div className="guide-spotlight-body">
-        <Sk w="70%" h={18} />
-        <Sk w="45%" h={11} />
+        <Sk w="260px" h={22} />
+        <Sk w="110px" h={11} />
       </div>
+      <span className="guide-spotlight-chips">
+        <Sk w="70px" h={14} />
+        <Sk w="44px" h={14} />
+        <Sk w="96px" h={14} />
+      </span>
     </aside>
   )
 }

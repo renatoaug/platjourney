@@ -87,10 +87,16 @@
     height: 72px;
   }
 
+  /* The glow sits on the whole drawing: on the circle alone, the filter's box showed as a faint
+     square around the ring. */
   .game-ring svg {
     width: 100%;
     height: 100%;
+    overflow: visible;
     transform: rotate(-90deg);
+    filter: drop-shadow(
+      0 0 4px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent)
+    );
   }
 
   .game-ring circle {
@@ -105,9 +111,6 @@
   .game-ring-fill {
     stroke: var(--color-accent);
     stroke-linecap: round;
-    filter: drop-shadow(
-      0 0 4px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent)
-    );
     transition: stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1);
     animation: game-ring-in 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
   }

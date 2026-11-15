@@ -61,6 +61,11 @@
     box-shadow: var(--shadow-popover);
   }
 
+  /* The skeleton's cover keeps the cover's shape, not a skeleton line's height. */
+  .guide-spotlight-cover.sk {
+    height: auto;
+  }
+
   .guide-spotlight-body {
     grid-area: body;
     display: grid;
@@ -125,6 +130,11 @@
     color: var(--color-fg-soft);
     font-size: var(--text-sm);
     white-space: nowrap;
+  }
+
+  /* The skeleton's facts are skeleton lines, not facts: they take back the shared skeleton look. */
+  .guide-spotlight-chips > .sk {
+    all: revert-layer;
   }
 
   .guide-spotlight-chips .icon {
