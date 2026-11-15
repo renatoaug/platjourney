@@ -298,7 +298,7 @@ export function ProfileView({
           </div>
           <div className="tile">
             <div className="tile-label">
-              <Icon name="trophy" className="stat-icon" /> {t('tiles.trophies')}
+              <TrophyMedal type="gold" className="stat-icon" /> {t('tiles.trophies')}
             </div>
             <b>
               <span className="stat-full">{number(total)}</span>

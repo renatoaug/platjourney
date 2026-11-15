@@ -439,7 +439,7 @@ function TrophyHeading({ prefix, count }: { prefix: string; count: string | numb
   return (
     <header>
       <h2 className="trophy-heading">
-        <Icon name="trophy" />
+        <TrophyMedal type="gold" />
         {t('heading')}{' '}
         <span id={`${prefix}-count`} className="heading-count">
           {count}

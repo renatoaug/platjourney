@@ -74,7 +74,7 @@ export function StatTiles({
       </div>
       <div className="tile stat-tile">
         <div className="tile-label">
-          <Icon name="trophy" className="stat-icon" /> {t('trophies')}
+          <TrophyMedal type="gold" className="stat-icon" /> {t('trophies')}
         </div>
         <b>{number(total)}</b>
         <div className="stat-tiers">

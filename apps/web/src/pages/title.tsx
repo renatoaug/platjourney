@@ -17,6 +17,7 @@ import type { CurrentGame, DeepGuideStats, Game, GuideDetail, Trophy } from '../
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
+import { TrophyMedal } from '../ui/trophy-medal'
 import './title.css'
 
 const messages = defineMessages({
@@ -147,7 +148,7 @@ function TitleGame({ d, similar, back }: { d: TitleDetail; similar?: ReactNode; 
         d.trophies?.length ? undefined : (
           <div className="card title-trophies-pending" id="title-trophies">
             <h2 className="trophy-heading">
-              <Icon name="trophy" />
+              <TrophyMedal type="gold" />
               {t('trophies')}
             </h2>
             <EmptyState

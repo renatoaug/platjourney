@@ -20,6 +20,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { SourceNote } from '../ui/source-note'
 import { EmptyState } from '../ui/states'
 import { TrophyArt } from '../ui/trophy-art'
+import { TrophyMedal } from '../ui/trophy-medal'
 import { bandOf } from './difficulty-meter'
 import { JourneyLink as Link } from './journey-link'
 import { ExplainAsk } from './nexo-asks'
@@ -803,7 +804,7 @@ function GuidePhase({
       <PhaseGoal text={phase.goal} />
       {phase.trophies.length > 0 && (
         <p className="phase-trophies">
-          <Icon name="trophy" />
+          <TrophyMedal type="gold" />
           <span>
             <b>{tr('phaseTrophies')}</b> {phase.trophies.join(' · ')}
           </span>

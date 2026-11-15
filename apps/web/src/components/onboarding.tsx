@@ -424,7 +424,7 @@ function Rarest({ rarest }: { rarest: Platinum }) {
       </p>
       {rarest.trophyName && (
         <span className="story-trophy rise" style={rise(4)}>
-          <Icon name="trophy" />
+          <TrophyMedal type="gold" />
           {rarest.trophyName} · {monthYear(rarest.earnedAt)}
         </span>
       )}

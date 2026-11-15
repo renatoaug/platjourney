@@ -24,6 +24,7 @@ import { Sk } from '../../ui/skeleton'
 import { SourceNote, splitSource } from '../../ui/source-note'
 import { ErrorState } from '../../ui/states'
 import { toast } from '../../ui/toast'
+import { TrophyMedal } from '../../ui/trophy-medal'
 import { VoiceWave, WAVE_SAMPLES } from '../../ui/voice-wave'
 import { DemoConnectButton } from '../demo'
 import { askMessages, TROPHY_ASKS } from '../nexo-asks'
@@ -617,7 +618,7 @@ function ChatTrophy({ trophy, onClear }: { trophy: string; onClear: () => void }
   const t = useMessages(messages)
   return (
     <span className="chat-trophy">
-      <Icon name="trophy" />
+      <TrophyMedal type="gold" />
       <b title={`${t('trophy.label')}: ${trophy}`}>{trophy}</b>
       <button type="button" aria-label={t('trophy.remove', { trophy })} onClick={onClear}>
         <Icon name="close" />

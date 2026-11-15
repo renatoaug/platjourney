@@ -342,7 +342,7 @@ function Route({ plan }: { plan: SessionPlan }) {
               onClick={() => setPicked(steps.length)}
             >
               <span className="route-art">
-                <Icon name="trophy" />
+                <TrophyMedal type="gold" />
               </span>
               <span className="route-tag">{t('endTitle')}</span>
               <span className="route-clock">{fmtMinutes(plan.totalMinutes)}</span>
