@@ -108,9 +108,27 @@ export function SettingsView({
 }) {
   const { hash } = useLocation()
   const ready = load.kind !== 'loading' && load.kind !== 'error'
-  // A link to a section (/settings#appearance) scrolls to it once the cards are on the page.
+  // A link to a section (/settings#appearance) glides to it once the cards are on the page and the
+  // screen has arrived, then lights it up for a moment, like a missable reached from the guide.
   useEffect(() => {
-    if (ready && hash) document.getElementById(`${hash.slice(1)}-card`)?.scrollIntoView()
+    if (!ready || !hash) return
+    const card = document.getElementById(`${hash.slice(1)}-card`)
+    if (!card) return
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches
+    const go = setTimeout(
+      () => {
+        card.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' })
+        card.classList.remove('spotlit')
+        void card.offsetWidth
+        card.classList.add('spotlit')
+      },
+      still ? 0 : 350,
+    )
+    const done = setTimeout(() => card.classList.remove('spotlit'), 3200)
+    return () => {
+      clearTimeout(go)
+      clearTimeout(done)
+    }
   }, [ready, hash])
   return (
     <div id="settings-page">

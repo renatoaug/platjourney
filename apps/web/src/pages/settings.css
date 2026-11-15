@@ -209,4 +209,36 @@
   .setting-group select:focus-visible {
     color: var(--color-accent);
   }
+
+  /* A section reached from a link elsewhere (/settings#appearance) lights up in the accent for a
+     moment once the page has glided to it. */
+  .settings-grid > .card.spotlit {
+    animation: settings-spotlight 2.6s ease-out 0.35s both;
+  }
+
+  @keyframes settings-spotlight {
+    0% {
+      background-color: transparent;
+      box-shadow: 0 0 0 0 transparent;
+    }
+
+    18%,
+    55% {
+      background-color: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+      box-shadow:
+        0 0 0 2px var(--color-accent),
+        0 0 32px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
+    }
+
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .settings-grid > .card.spotlit {
+      animation: none;
+      box-shadow: 0 0 0 2px var(--color-accent);
+    }
+  }
 }
