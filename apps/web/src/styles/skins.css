@@ -19,6 +19,13 @@
     line-height: 1.08;
   }
 
+  /* Settings draws notifications and preferences as bare lists with no padding; a skin frames
+   * every card, so these get room inside their frame. */
+  :root[data-skin] .settings-grid #notifications-card.card,
+  :root[data-skin] .settings-grid #preferences-card.card {
+    padding: 0 16px 8px;
+  }
+
   /* ---------------------------------------------------------------- Neon */
 
   :root[data-skin="neon"] body {
