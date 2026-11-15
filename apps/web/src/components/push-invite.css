@@ -57,18 +57,20 @@
     padding: 0;
   }
 
-  /* On a phone: the bell beside the words, and the button right under them, on the text's edge. */
+  /* On a phone: the bell, the words and the button side by side; the close button in the corner,
+     above the way in. */
   @media (max-width: 760px) {
     .push-invite {
       position: relative;
       display: grid;
-      grid-template-columns: 32px minmax(0, 1fr);
-      align-items: start;
-      gap: 10px 12px;
+      grid-template-columns: 32px minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 12px;
       padding: 16px 14px 16px 16px;
     }
 
     .push-invite-icon {
+      align-self: start;
       width: 32px;
       height: 32px;
     }
@@ -78,13 +80,8 @@
       height: 16px;
     }
 
-    .push-invite-copy {
-      padding-right: 36px;
-    }
-
-    .push-invite > .button {
-      grid-column: 2;
-      justify-self: start;
+    .push-invite-copy h2 {
+      padding-right: 8px;
     }
 
     .push-invite-close {
