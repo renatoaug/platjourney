@@ -16,6 +16,7 @@ export type Target =
   | 'App'
   | 'AppLogo'
   | 'AppStateProvider'
+  | 'AppearanceCard'
   | 'AskDialog'
   | 'AskIdeas'
   | 'AskNexo'

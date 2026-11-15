@@ -40,7 +40,8 @@ const messages = defineMessages({
       plusHint: 'Com essa informação os interesses mostram os jogos que o seu plano já inclui.',
       plusSaved: 'PS Plus salvo.',
       plusTier: { none: 'Não tenho', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
-      accent: 'Cor do app',
+      appearance: 'Aparência',
+      accent: 'Cor',
       accentHint: 'A cor dos botões, do menu e dos destaques. O fundo ganha um leve tom dela.',
       accentSaved: 'Cor salva.',
       accentName: {
@@ -54,7 +55,7 @@ const messages = defineMessages({
       },
       accentBySkin: 'Pinta a skin {skin} na cor escolhida, ou deixa na cor da própria skin.',
       accentSkinOwn: 'Cor da skin',
-      skin: 'Skin do app',
+      skin: 'Skin',
       skinHint: 'Muda o visual inteiro: cores, fontes, cantos e sombras.',
       skinSaved: 'Skin salva.',
       skinName: { default: 'Padrão', neon: 'Neon', pixel: 'Pixel' },
@@ -107,7 +108,8 @@ const messages = defineMessages({
       plusHint: 'With it, your interests show the games your plan already includes.',
       plusSaved: 'PS Plus saved.',
       plusTier: { none: 'None', essential: 'Essential', extra: 'Extra', deluxe: 'Deluxe' },
-      accent: 'App color',
+      appearance: 'Appearance',
+      accent: 'Color',
       accentHint:
         'The color of buttons, the menu and highlights. The background takes a faint tint of it.',
       accentSaved: 'Color saved.',
@@ -122,7 +124,7 @@ const messages = defineMessages({
       },
       accentBySkin: 'Paints the {skin} skin in the color you pick, or leaves it in its own.',
       accentSkinOwn: "Skin's own",
-      skin: 'App skin',
+      skin: 'Skin',
       skinHint: 'Changes the whole look: colors, fonts, corners and shadows.',
       skinSaved: 'Skin saved.',
       skinName: { default: 'Default', neon: 'Neon', pixel: 'Pixel' },
@@ -418,8 +420,6 @@ function PreferencesCard({ user }: { user: Me }) {
         </label>
         {user.aiNoticesAvailable && <NoticesSetting user={user} />}
         <PlusSetting user={user} />
-        <SkinSetting user={user} />
-        <AccentSetting user={user} />
         <LanguageSetting />
         <div className="setting-row">
           <SettingTitle title={t('preferences.intro')} hint={t('preferences.introHint')} />
@@ -431,6 +431,20 @@ function PreferencesCard({ user }: { user: Me }) {
             <Icon name="play" /> {t('preferences.introOpen')}
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/** How the app looks: the skin, then the color that paints it. */
+function AppearanceCard({ user }: { user: Me }) {
+  const t = useMessages(messages)
+  return (
+    <div className="card" id="appearance-card">
+      <h2>{t('preferences.appearance')}</h2>
+      <div className="setting-group">
+        <SkinSetting user={user} />
+        <AccentSetting user={user} />
       </div>
     </div>
   )
@@ -658,6 +672,7 @@ export function AccountCards({
       {children}
       <NotificationSettings user={user} />
       <PreferencesCard user={user} />
+      <AppearanceCard user={user} />
     </>
   )
 }
