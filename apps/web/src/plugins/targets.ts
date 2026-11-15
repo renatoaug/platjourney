@@ -310,6 +310,8 @@ export type Target =
   | 'SimilarPicks'
   | 'Sk'
   | 'SkinSetting'
+  | 'SkinsInvite'
+  | 'SkinsInviteView'
   | 'SourceNote'
   | 'StatTiles'
   | 'StatTilesSkeleton'

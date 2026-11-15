@@ -1,7 +1,7 @@
 /** Settings page: the account, connected apps (Telegram and assistants), notifications and
  * preferences, out of the profile. */
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { AccountCards, AccountSkeleton } from '../components/account'
@@ -106,6 +106,12 @@ export function SettingsView({
   onEditing?: (editing: boolean) => void
   apps: (user: Me) => ReactNode
 }) {
+  const { hash } = useLocation()
+  const ready = load.kind !== 'loading' && load.kind !== 'error'
+  // A link to a section (/settings#appearance) scrolls to it once the cards are on the page.
+  useEffect(() => {
+    if (ready && hash) document.getElementById(`${hash.slice(1)}-card`)?.scrollIntoView()
+  }, [ready, hash])
   return (
     <div id="settings-page">
       <SettingsTop title={title} lead={lead} />

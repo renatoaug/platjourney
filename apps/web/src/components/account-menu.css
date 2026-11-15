@@ -33,6 +33,27 @@
     object-fit: cover;
   }
 
+  /* A small gear on the photo's corner: a tap on the photo opens the menu with the settings. */
+  .topbar-avatar-badge {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    display: grid;
+    place-items: center;
+    width: 17px;
+    height: 17px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-round);
+    background: var(--color-surface);
+    color: var(--color-fg);
+    pointer-events: none;
+  }
+
+  .topbar-avatar-badge .icon {
+    width: 11px;
+    height: 11px;
+  }
+
   /* A small card under the photo that grows out of it. */
   .account-menu-panel {
     position: absolute;

@@ -113,6 +113,10 @@ export function AccountMenu({
       >
         {avatar ? <img src={avatar} alt="" /> : <Icon name="circle" />}
       </button>
+      {/* The photo stays the player's; the gear says there is a menu with the settings behind it. */}
+      <span className="topbar-avatar-badge" aria-hidden="true">
+        <Icon name="settings" />
+      </span>
       {state !== 'closed' && (
         <div
           className={`account-menu-panel${state === 'closing' ? ' is-closing' : ''}`}
