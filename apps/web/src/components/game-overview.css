@@ -359,7 +359,13 @@
   .game-tier .icon {
     width: 28px;
     height: 28px;
-    margin-bottom: 2px;
+    margin-bottom: 6px;
+  }
+
+  /* The number's own line height would leave a gap under the digits, deeper than the space above
+     the cup: it sits on its glyphs so the card's padding is the same on both sides. */
+  .game-tier b {
+    line-height: 1;
   }
 
   .game-tier b,
