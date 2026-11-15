@@ -11,7 +11,8 @@
   .logo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    /* The emblem has no tile now, so its own glow already spaces it from the name. */
+    gap: 6px;
     padding: 0 8px 46px;
     font-family: var(--font-brand);
     font-size: var(--text-3xl);
