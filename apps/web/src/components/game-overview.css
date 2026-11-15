@@ -134,6 +134,16 @@
 
   /* A catalog game's actions under the head: save and the store. */
   /* Save and the store side by side, half the width each. */
+  /* Under the head on a phone: the head wraps and the actions take the whole width. */
+  .game-overview-head {
+    flex-wrap: wrap;
+  }
+
+  .game-overview-head > .game-overview-cta {
+    flex-basis: 100%;
+    margin-top: 4px;
+  }
+
   .game-overview-cta {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -485,13 +495,24 @@
       font-size: var(--text-body);
     }
 
-    .game-overview-cta {
-      grid-template-columns: repeat(2, minmax(0, 260px));
-      justify-content: start;
+    /* At the head's end, on the title's baseline. */
+    .game-overview-head {
+      flex-wrap: nowrap;
     }
 
-    .game-overview-cta > :only-child {
-      grid-column: auto;
+    .game-overview-head > .game-overview-cta {
+      flex-basis: auto;
+      margin: 0 0 6px;
+    }
+
+    .game-overview-cta {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .game-overview-cta > *,
+    .game-overview-cta .game-about-buy {
+      width: 240px;
     }
   }
 }
