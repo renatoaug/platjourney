@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.80.0](https://github.com/renatoaug/platjourney/compare/v0.79.0...v0.80.0) (2026-11-15)
+
+### Features
+
+* **web:** invite players to turn on Nexo's notices on Home and in the bell ([#193](https://github.com/renatoaug/platjourney/issues/193)) ([bc26f4c](https://github.com/renatoaug/platjourney/commit/bc26f4c16116c382e78fc02ee91c235f70385cef))
+
 ## [0.79.0](https://github.com/renatoaug/platjourney/compare/v0.78.0...v0.79.0) (2026-11-15)
 
 ### Features
