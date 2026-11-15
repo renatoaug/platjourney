@@ -249,6 +249,8 @@ export type Target =
   | 'ProgressRing'
   | 'Projection'
   | 'PsnProgress'
+  | 'PushInvite'
+  | 'PushInviteView'
   | 'QuickFacts'
   | 'RadarCard'
   | 'Ranking'

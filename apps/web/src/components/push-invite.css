@@ -1,0 +1,134 @@
+@layer screens {
+  /* On Home: the bell, the question, the way to turn it on and the way out, in one row. */
+  .push-invite {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0;
+    padding: 16px 18px;
+    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .push-invite-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+    color: var(--color-accent);
+  }
+
+  .push-invite-icon .icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .push-invite-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .push-invite-copy h2 {
+    margin: 0 0 2px;
+    font-size: var(--text-lg);
+  }
+
+  .push-invite-copy p {
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .push-invite > .button {
+    flex: none;
+    min-height: 0;
+    height: 32px;
+    padding: 0 16px;
+  }
+
+  .push-invite-close {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    min-height: 0;
+    margin-left: -6px;
+    padding: 0;
+  }
+
+  @media (max-width: 760px) {
+    .push-invite {
+      position: relative;
+      flex-wrap: wrap;
+      padding-right: 14px;
+    }
+
+    .push-invite-icon {
+      width: 32px;
+      height: 32px;
+    }
+
+    .push-invite-icon .icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .push-invite-copy {
+      flex-basis: calc(100% - 48px);
+      padding-right: 36px;
+    }
+
+    .push-invite > .button {
+      margin-left: auto;
+    }
+
+    .push-invite-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      margin: 0;
+    }
+  }
+
+  /* At the top of the bell's list: one quiet line until notices are on. */
+  .push-invite-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    font-size: var(--text-sm);
+  }
+
+  .push-invite-row > .icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--color-accent);
+  }
+
+  .push-invite-row > span {
+    display: grid;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .push-invite-row small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+
+  .push-invite-row.is-blocked > .icon {
+    color: var(--color-fg-muted);
+  }
+
+  .push-invite-row > .button {
+    flex: none;
+    min-height: 0;
+    height: 28px;
+    padding: 0 12px;
+  }
+}

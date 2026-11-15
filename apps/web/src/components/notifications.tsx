@@ -12,13 +12,13 @@ import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { fmtDay, fmtTime } from '../lib/format'
-import { askPushOnce } from '../lib/push'
 import { md } from '../lib/text'
 import type { Tip } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { pageItems } from '../ui/pager'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
+import { PushInvite } from './push-invite'
 import { KIND_ICON, kindLabel, messages as tipMessages, titleHref } from './tip'
 import './notifications.css'
 
@@ -192,7 +192,7 @@ export function NotificationsFooter({
 
 export function Notifications() {
   const t = useMessages(messages)
-  const { data, setData, me } = useApp()
+  const { data, setData } = useApp()
   const unread = data?.unread ?? 0
   const [state, setState] = useState<'closed' | 'open' | 'closing'>('closed')
   const [page, setPage] = useState(1)
@@ -223,7 +223,6 @@ export function Notifications() {
   const open = () => {
     clearTimeout(closing.current)
     setState('open')
-    askPushOnce(me.demo ? null : me.pushKey)
     if (unread) setRing((r) => r + 1)
     // The list loads before the read mark, so new items still show highlighted.
     load(1).then(() => {
@@ -299,6 +298,8 @@ export function Notifications() {
             <b>{t('title')}</b>
             {typeof loaded === 'object' && <span>{loaded.total}</span>}
           </header>
+          {/* Until notices reach this device, the list offers it: the bell is where they matter. */}
+          {state === 'open' && <PushInvite variant="row" />}
           <div className="notif-list">
             <NotifListBody loaded={loaded} onNavigate={close} />
           </div>
