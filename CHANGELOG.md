@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.76.0](https://github.com/renatoaug/platjourney/compare/v0.75.4...v0.76.0) (2026-11-15)
+
+### Features
+
+* **web:** app skins, starting with neon and pixel ([#188](https://github.com/renatoaug/platjourney/issues/188)) ([a449dbf](https://github.com/renatoaug/platjourney/commit/a449dbf4df385f435d4afe89d771d3c264252e3b))
+
 ## [0.75.4](https://github.com/renatoaug/platjourney/compare/v0.75.3...v0.75.4) (2026-11-13)
 
 ### Bug Fixes
