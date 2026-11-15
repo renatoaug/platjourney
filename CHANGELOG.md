@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.77.0](https://github.com/renatoaug/platjourney/compare/v0.76.0...v0.77.0) (2026-11-15)
+
+### Features
+
+* **web:** new trophy art across the app ([#189](https://github.com/renatoaug/platjourney/issues/189)) ([1bef442](https://github.com/renatoaug/platjourney/commit/1bef442c54519bbadf0157f862ca9027ae4d12bc))
+
 ## [0.76.0](https://github.com/renatoaug/platjourney/compare/v0.75.4...v0.76.0) (2026-11-15)
 
 ### Features
