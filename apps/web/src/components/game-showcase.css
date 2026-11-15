@@ -469,6 +469,20 @@
     color: var(--color-accent);
   }
 
+  /* "Included in your PS Plus Essential" on one line inside a button: the end gives way to "…". */
+  .game-about-buy .game-about-deal:has(> b:only-child) {
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .game-about-buy .game-about-deal > b:only-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .game-about-deal s {
     color: var(--color-fg-subtle);
     font-size: var(--text-sm);
