@@ -1617,7 +1617,7 @@ export function TrophyRoadmap({
         </div>
         <div className="roadmap-intro-actions">
           <span className="roadmap-total">
-            <Icon name="trophy" />
+            <TrophyMedal type="gold" />
             {inspecting
               ? t('catalogCount', { total: base.length })
               : t('count', { earned: base.filter((x) => x.earned).length, total: base.length })}

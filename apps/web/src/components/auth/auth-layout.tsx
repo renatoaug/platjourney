@@ -9,6 +9,7 @@ import {
 } from '../../i18n/i18n'
 import { BoldText } from '../../ui/bold-text'
 import { Icon } from '../../ui/icon'
+import { TrophyMedal } from '../../ui/trophy-medal'
 import { LanguageSwitcher } from '../language-switcher'
 import { CoverWall } from './cover-wall'
 import './auth-layout.css'
@@ -103,7 +104,7 @@ export function AuthLayout({
             </div>
             <i />
             <div>
-              <Icon name="trophy" />
+              <TrophyMedal type="gold" />
               <span>{t('story.earn')}</span>
             </div>
           </div>

@@ -74,13 +74,13 @@ export function StatTiles({
       </div>
       <div className="tile stat-tile">
         <div className="tile-label">
-          <Icon name="trophy" className="stat-icon" /> {t('trophies')}
+          <TrophyMedal type="gold" className="stat-icon" /> {t('trophies')}
         </div>
         <b>{number(total)}</b>
         <div className="stat-tiers">
           {(['gold', 'silver', 'bronze'] as const).map((tier) => (
             <span key={tier} className={tier}>
-              <TrophyMedal type={tier} /> {number(earned[tier])} {t(`tiers.${tier}`)}
+              <TrophyMedal type={tier} title={t(`tiers.${tier}`)} /> {number(earned[tier])}
             </span>
           ))}
         </div>
@@ -136,7 +136,7 @@ export function StatTilesSkeleton() {
       {i === 2 ? (
         <div className="stat-tiers">
           {repeat(3, () => (
-            <Sk w="72px" h={14} />
+            <Sk w="48px" h={14} />
           ))}
         </div>
       ) : (
