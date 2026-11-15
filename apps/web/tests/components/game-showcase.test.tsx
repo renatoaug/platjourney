@@ -182,7 +182,7 @@ describe('the store at the foot of About', () => {
         }}
       />,
     )
-    const mine = screen.getByRole('link', { name: /No seu PS Plus Extra: jogue sem pagar/ })
+    const mine = screen.getByRole('link', { name: /Incluso no seu PS Plus Extra/ })
     expect((mine as HTMLAnchorElement).href).toBe(url)
     unmount()
     const { container } = render(
