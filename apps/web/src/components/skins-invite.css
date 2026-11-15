@@ -64,6 +64,11 @@
       flex-basis: 100%;
       order: -1;
     }
+
+    /* The miniatures on the left, the way in on the right. */
+    .skins-invite > .button {
+      margin-left: auto;
+    }
   }
 
   /* The border breathes in the accent, like a sign switching on. */

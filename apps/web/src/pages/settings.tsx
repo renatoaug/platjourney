@@ -1,7 +1,7 @@
 /** Settings page: the account, connected apps (Telegram and assistants), notifications and
  * preferences, out of the profile. */
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { AccountCards, AccountSkeleton } from '../components/account'
@@ -10,6 +10,7 @@ import { image } from '../components/game-showcase'
 import { PageTop } from '../components/page-top'
 import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
+import { useHashSpotlight } from '../lib/spotlight'
 import type { Me } from '../lib/types'
 import { settingsPages } from '../plugins'
 import { Icon } from '../ui/icon'
@@ -106,30 +107,7 @@ export function SettingsView({
   onEditing?: (editing: boolean) => void
   apps: (user: Me) => ReactNode
 }) {
-  const { hash } = useLocation()
-  const ready = load.kind !== 'loading' && load.kind !== 'error'
-  // A link to a section (/settings#appearance) glides to it once the cards are on the page and the
-  // screen has arrived, then lights it up for a moment, like a missable reached from the guide.
-  useEffect(() => {
-    if (!ready || !hash) return
-    const card = document.getElementById(`${hash.slice(1)}-card`)
-    if (!card) return
-    const still = matchMedia('(prefers-reduced-motion: reduce)').matches
-    const go = setTimeout(
-      () => {
-        card.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' })
-        card.classList.remove('spotlit')
-        void card.offsetWidth
-        card.classList.add('spotlit')
-      },
-      still ? 0 : 350,
-    )
-    const done = setTimeout(() => card.classList.remove('spotlit'), 3200)
-    return () => {
-      clearTimeout(go)
-      clearTimeout(done)
-    }
-  }, [ready, hash])
+  useHashSpotlight(load.kind !== 'loading' && load.kind !== 'error')
   return (
     <div id="settings-page">
       <SettingsTop title={title} lead={lead} />

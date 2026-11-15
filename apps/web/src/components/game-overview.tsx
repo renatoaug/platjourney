@@ -106,11 +106,6 @@ export function useGameView() {
         { replace: true },
       )
   }
-  // A new page starts at its top.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll when the view changes
-  useEffect(() => {
-    window.scrollTo({ top: 0 })
-  }, [view])
   return { view, open, close }
 }
 

@@ -110,6 +110,15 @@
   --alpha-dim: 70%;
   --alpha-heavy: 90%;
 
+  /* Motion: how long screens and highlights take, and how they ease (app/navigation.ts). */
+  --motion-tab: 0.18s;
+  --motion-screen: 0.28s;
+  --motion-spotlight: 2.6s;
+  --ease-screen: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* How far a screen slides in: a phone moves the whole screen, a wide screen only hints at it. */
+  --screen-push-from: 28%;
+  --screen-pop-from: -22%;
+
   /* Typography */
   --font-display: "Space Grotesk", sans-serif;
   --font-body: Inter, system-ui, sans-serif;
@@ -170,6 +179,13 @@
   /* Layout. Breakpoints can't be variables in plain CSS; use only these in @media:
    * 480px (phone), 760px (tablet, sidebar collapses), 1100px (narrow desktop), 1600px (wide). */
   --sidebar: 224px;
+}
+
+@media (min-width: 761px) {
+  :root {
+    --screen-push-from: 24px;
+    --screen-pop-from: -24px;
+  }
 }
 
 /* Dark is the only theme today. A light theme redefines the semantic level here, never the palette:
