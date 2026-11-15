@@ -11,7 +11,8 @@
   .logo {
     display: flex;
     align-items: center;
-    gap: 12px;
+    /* The emblem has no tile now, so its own glow already spaces it from the name. */
+    gap: 6px;
     padding: 0 8px 46px;
     font-family: var(--font-brand);
     font-size: var(--text-3xl);
@@ -53,55 +54,93 @@
   .page {
     display: none;
     padding-bottom: 30px;
-    animation: enter 0.3s ease;
   }
 
   .page.active {
     display: block;
   }
 
-  /* On a phone a screen arrives like in a native app (shell.tsx, useArrival): a deeper screen slides
-     in from the right, going back slides in from the left, and the menu's screens fade. */
+  /* Every screen arrives the same way (app/navigation.ts sets data-arrival): between the menu's own
+     screens it fades, a deeper screen slides in from the right, going back slides in from the left.
+     A wide screen keeps the direction but only hints at it. */
+  [data-arrival="tab"] .page {
+    animation: page-fade var(--motion-tab) ease;
+  }
+
+  [data-arrival="push"] .page {
+    animation: page-push var(--motion-screen) var(--ease-screen);
+  }
+
+  [data-arrival="pop"] .page {
+    animation: page-pop var(--motion-screen) var(--ease-screen);
+  }
+
   @media (max-width: 760px) {
     .content {
       overflow-x: clip;
     }
 
-    [data-arrival="push"] .page {
-      animation: page-push 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    [data-arrival="pop"] .page {
-      animation: page-pop 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    [data-arrival="tab"] .page {
-      animation: page-fade 0.18s ease;
-    }
-
     /* The native app's back swipe already slides the screen in: it only fades. */
     [data-native] [data-arrival="pop"] .page {
-      animation: page-fade 0.18s ease;
+      animation: page-fade var(--motion-tab) ease;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-arrival] .page {
+      animation: page-fade var(--motion-tab) ease;
     }
   }
 
   @keyframes page-push {
     from {
       opacity: 0.4;
-      transform: translateX(28%);
+      transform: translateX(var(--screen-push-from));
     }
   }
 
   @keyframes page-pop {
     from {
       opacity: 0.4;
-      transform: translateX(-22%);
+      transform: translateX(var(--screen-pop-from));
     }
   }
 
   @keyframes page-fade {
     from {
       opacity: 0;
+    }
+  }
+
+  /* A section reached by a link (#appearance) lights up in the accent for a moment once the page has
+     glided to it (lib/spotlight.ts). */
+  .is-spotlit {
+    animation: spotlight var(--motion-spotlight) ease-out 0.35s both;
+  }
+
+  @keyframes spotlight {
+    0% {
+      background-color: transparent;
+      box-shadow: 0 0 0 0 transparent;
+    }
+
+    18%,
+    55% {
+      background-color: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+      box-shadow:
+        0 0 0 2px var(--color-accent),
+        0 0 32px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
+    }
+
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .is-spotlit {
+      animation: none;
+      box-shadow: 0 0 0 2px var(--color-accent);
     }
   }
 

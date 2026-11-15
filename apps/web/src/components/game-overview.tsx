@@ -106,11 +106,6 @@ export function useGameView() {
         { replace: true },
       )
   }
-  // A new page starts at its top.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll when the view changes
-  useEffect(() => {
-    window.scrollTo({ top: 0 })
-  }, [view])
   return { view, open, close }
 }
 
@@ -263,6 +258,7 @@ function GameHead({
   earned,
   total,
   catalog,
+  actions,
 }: {
   game: CurrentGame
   progress: number
@@ -270,6 +266,8 @@ function GameHead({
   total: number
   /** A game outside the library: how many trophies it has, and no progress ring. */
   catalog?: boolean
+  /** Its actions (save, the store), at the head's end on a wide screen and under it on a phone. */
+  actions?: ReactNode
 }) {
   const t = useMessages(messages)
   const g = c.guide
@@ -301,6 +299,7 @@ function GameHead({
           </small>
         </ProgressRing>
       )}
+      {actions}
     </header>
   )
 }
@@ -416,8 +415,8 @@ export function GameOverview({
         earned={earned}
         total={counted.length}
         catalog={!!catalog}
+        actions={catalog}
       />
-      {catalog}
       <UnobtainableBanner guide={c.guide} />
       <GameTiers trophies={counted} totals={!!catalog} />
       <GameNumbers game={c} />

@@ -1,0 +1,125 @@
+@layer screens {
+  /* One line on a wide screen: the two skins, the words, the way in and the way out. */
+  .skins-invite {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0;
+    padding: 18px 22px;
+    border-color: var(--color-accent);
+    animation: skins-invite-glow 2.4s ease-in-out infinite;
+    background: linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--color-accent) var(--alpha-wash), var(--color-surface)),
+      var(--color-surface)
+    );
+  }
+
+  .skins-invite-swatches {
+    display: flex;
+    flex: none;
+    gap: 8px;
+  }
+
+  .skins-invite-swatches .skin-swatch {
+    width: 44px;
+    height: 30px;
+    padding: 5px;
+  }
+
+  .skins-invite-swatches .skin-swatch i {
+    height: 6px;
+  }
+
+  /* As tall as the skins' miniatures beside it. */
+  .skins-invite > .button {
+    flex: none;
+    min-height: 0;
+    height: 32px;
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .skins-invite-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .skins-invite-copy h2 {
+    margin: 4px 0 2px;
+    font-size: var(--text-lg);
+  }
+
+  .skins-invite-copy p {
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  /* On a wide screen the close button closes the row, beside the way in. */
+  .skins-invite-close {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    min-height: 0;
+    margin-left: -8px;
+    padding: 0;
+  }
+
+  @media (max-width: 760px) {
+    .skins-invite {
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .skins-invite-copy {
+      flex-basis: 100%;
+      order: -1;
+    }
+
+    /* The miniatures on the left, the way in on the right, on the same edge as the close button. */
+    .skins-invite {
+      padding-right: 14px;
+    }
+
+    .skins-invite-copy {
+      padding-right: 44px;
+    }
+
+    .skins-invite > .button {
+      margin-left: auto;
+    }
+
+    .skins-invite-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      margin: 0;
+    }
+  }
+
+  /* The border breathes in the accent, like a sign switching on. */
+  @keyframes skins-invite-glow {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent),
+        0 0 10px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+    }
+
+    50% {
+      box-shadow:
+        0 0 0 1px var(--color-accent),
+        0 0 28px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent),
+        inset 0 0 18px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skins-invite {
+      animation: none;
+      box-shadow: 0 0 18px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+    }
+  }
+}

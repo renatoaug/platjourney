@@ -7,6 +7,7 @@ import { AnnualGoal, AnnualGoalSkeleton } from '../components/annual-goal'
 import { Console, ConsoleSkeleton } from '../components/console'
 import { GameCardsSkeleton, RadarCard } from '../components/game-cards'
 import { Releases } from '../components/releases'
+import { SkinsInvite } from '../components/skins-invite'
 import { StatTiles, StatTilesSkeleton } from '../components/stat-tiles'
 import { TipItem, TipSkeleton } from '../components/tip'
 import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
@@ -82,6 +83,7 @@ export function Home({ releases = <Releases /> }: { releases?: ReactNode } = {})
         {profile ? greeting(t, profile.onlineId) : t('titleFallback')}
       </h1>
       <div id="home-hero">{data ? <Console data={data} /> : <ConsoleSkeleton />}</div>
+      {data && <SkinsInvite />}
       <section className="tiles" id="tiles" aria-label={t('tilesLabel')}>
         {data ? <StatTiles profile={profile ?? null} goals={data.goals} /> : <StatTilesSkeleton />}
       </section>

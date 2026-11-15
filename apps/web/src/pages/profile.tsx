@@ -24,6 +24,7 @@ const messages = defineMessages({
   [Language.PtBR]: {
     loadFailed: 'Não conseguimos carregar o perfil.',
     levelLabel: 'Nível',
+    settings: 'Configurações',
     privateTitle: 'Seus troféus estão privados',
     privateBody:
       'Sem troféus visíveis na PSN não há perfil para mostrar. A sua conta e as preferências continuam nas configurações.',
@@ -76,6 +77,7 @@ const messages = defineMessages({
   [Language.En]: {
     loadFailed: 'Could not load the profile.',
     levelLabel: 'Level',
+    settings: 'Settings',
     privateTitle: 'Your trophies are private',
     privateBody:
       'Without trophies visible on PSN there is no profile to show. Your account and preferences are still in the settings.',
@@ -266,6 +268,13 @@ export function ProfileView({
   return (
     <>
       <div className="card profile-hero profile-identity">
+        <Link
+          to="/settings"
+          className="button secondary sm profile-settings"
+          aria-label={t('settings')}
+        >
+          <Icon name="settings" /> <span>{t('settings')}</span>
+        </Link>
         <img className="profile-avatar" src={s.avatarUrl || undefined} alt="" />
         <div className="profile-name">
           <h1>{s.onlineId}</h1>

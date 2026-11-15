@@ -42,6 +42,7 @@ import { menuPages, pluginPages } from '../plugins'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { useApp } from './app-state'
+import { screenOf, useArrival, useScrollMemory } from './navigation'
 import './shell.css'
 
 const messages = defineMessages({
@@ -153,23 +154,6 @@ const LABELS: Record<string, MessageKey<typeof messages>> = {
   '/history': 'nav.history',
   '/profile': 'nav.profile',
   '/settings': 'nav.settings',
-}
-
-/** How the screen was reached, for its entrance on a phone (page.css): `tab` between the menu's
- * screens fades, `push` into a deeper screen slides in from the right, `pop` (back) from the left. */
-type Arrival = 'tab' | 'push' | 'pop'
-
-function useArrival(pathname: string): Arrival {
-  const type = useNavigationType()
-  const previous = useRef(pathname)
-  const arrival = useRef<Arrival>('tab')
-  if (previous.current !== pathname) {
-    const isTab = (path: string) => path in LABELS || pluginPages.some((p) => p.path === path)
-    arrival.current =
-      type === 'POP' ? 'pop' : isTab(pathname) && isTab(previous.current) ? 'tab' : 'push'
-    previous.current = pathname
-  }
-  return arrival.current
 }
 
 /** The active link in the navigation, for the pill to slide under. */
@@ -386,7 +370,9 @@ export function Shell() {
   const [privateProfile, setPrivateProfile] = useState(false)
   const locale = useLocale()
   const isTitle = pathname.startsWith('/title/')
-  const arrival = useArrival(pathname)
+  const screen = screenOf(modal ? background : location)
+  const arrival = useArrival(screen)
+  useScrollMemory(location, screen, !!modal)
   const page = pluginPages.find((p) => p.path === pathname)
   const label = page
     ? page.label[locale]
@@ -396,7 +382,6 @@ export function Shell() {
     // A game page names the tab after the game once it knows it; a generic "Jogo" first would only
     // flash before the name.
     if (!isTitle) document.title = label
-    window.scrollTo({ top: 0 })
   }, [label, isTitle])
 
   useEffect(() => {

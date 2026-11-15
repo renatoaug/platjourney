@@ -101,6 +101,7 @@
 
   /* Personal collection and account activity. */
   .profile-identity {
+    position: relative;
     padding: 22px 28px;
     border-color: color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
     background: linear-gradient(115deg, var(--color-surface-raised), var(--color-surface));
@@ -599,5 +600,35 @@
   .icon.collection-medal {
     width: 28px;
     height: 28px;
+  }
+
+  /* The way to the settings, in the corner of the card that is about the player. */
+  .profile-settings {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    gap: 6px;
+  }
+
+  .profile-settings .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* On a phone the name needs the width: the gear alone, round. */
+  @media (max-width: 760px) {
+    .profile-settings {
+      top: 10px;
+      right: 10px;
+      width: 36px;
+      height: 36px;
+      min-height: 0;
+      padding: 0;
+      border-radius: var(--radius-round);
+    }
+
+    .profile-settings span {
+      display: none;
+    }
   }
 }

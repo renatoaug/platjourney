@@ -10,6 +10,7 @@ import { image } from '../components/game-showcase'
 import { PageTop } from '../components/page-top'
 import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
+import { useHashSpotlight } from '../lib/spotlight'
 import type { Me } from '../lib/types'
 import { settingsPages } from '../plugins'
 import { Icon } from '../ui/icon'
@@ -106,6 +107,7 @@ export function SettingsView({
   onEditing?: (editing: boolean) => void
   apps: (user: Me) => ReactNode
 }) {
+  useHashSpotlight(load.kind !== 'loading' && load.kind !== 'error')
   return (
     <div id="settings-page">
       <SettingsTop title={title} lead={lead} />

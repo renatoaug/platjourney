@@ -1,6 +1,7 @@
 /* An owned game at a glance, built like a console app's game page: a clean head over the game's
    picture, cards with an arrow that open the game's own pages, the trophies by tier with their
-   cups, the guide's numbers in one card, then the trophy list. One column, also on a wide screen. */
+   cups, the guide's numbers in one card, then the trophy list. One column on a phone; a wide screen
+   gives the head more presence and puts the tiers and the numbers side by side. */
 @layer screens {
   .game-overview,
   .game-subpage {
@@ -86,10 +87,16 @@
     height: 72px;
   }
 
+  /* The glow sits on the whole drawing: on the circle alone, the filter's box showed as a faint
+     square around the ring. */
   .game-ring svg {
     width: 100%;
     height: 100%;
+    overflow: visible;
     transform: rotate(-90deg);
+    filter: drop-shadow(
+      0 0 4px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent)
+    );
   }
 
   .game-ring circle {
@@ -104,9 +111,6 @@
   .game-ring-fill {
     stroke: var(--color-accent);
     stroke-linecap: round;
-    filter: drop-shadow(
-      0 0 4px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent)
-    );
     transition: stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1);
     animation: game-ring-in 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s backwards;
   }
@@ -133,6 +137,16 @@
 
   /* A catalog game's actions under the head: save and the store. */
   /* Save and the store side by side, half the width each. */
+  /* Under the head on a phone: the head wraps and the actions take the whole width. */
+  .game-overview-head {
+    flex-wrap: wrap;
+  }
+
+  .game-overview-head > .game-overview-cta {
+    flex-basis: 100%;
+    margin-top: 4px;
+  }
+
   .game-overview-cta {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -348,7 +362,18 @@
   .game-tier .icon {
     width: 28px;
     height: 28px;
-    margin-bottom: 2px;
+    margin-bottom: 6px;
+  }
+
+  /* The number's own line height would leave a gap under the digits, deeper than the space above
+     the cup: it sits on its glyphs so the card's padding is the same on both sides. */
+  .game-tier b {
+    line-height: 1;
+  }
+
+  /* The cups' art leaves a little air above them; the bottom padding gives that back. */
+  .game-tiers.card {
+    padding-bottom: 7px;
   }
 
   .game-tier b,
@@ -442,5 +467,66 @@
 @layer screens {
   .journey-guide.is-page .guide-heading {
     display: none;
+  }
+
+  /* A wide screen: a bigger cover and name, the actions at their own width under them instead of a
+     bar across the page, and the tiers beside the guide's numbers. */
+  @media (min-width: 1024px) {
+    .game-overview {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: 16px;
+    }
+
+    .game-overview > * {
+      grid-column: 1 / -1;
+    }
+
+    .game-overview > .game-tiers,
+    .game-overview > .game-facts {
+      grid-column: auto;
+    }
+
+    .game-overview-head {
+      gap: 24px;
+      padding-top: clamp(40px, 14vh, 180px);
+    }
+
+    .game-overview-cover {
+      width: 132px;
+      height: 176px;
+    }
+
+    .game-overview-title {
+      gap: 8px;
+    }
+
+    .game-overview-title h1 {
+      font-size: var(--text-display);
+      letter-spacing: -0.5px;
+    }
+
+    .game-overview-played {
+      font-size: var(--text-body);
+    }
+
+    /* At the head's end, on the title's baseline. */
+    .game-overview-head {
+      flex-wrap: nowrap;
+    }
+
+    .game-overview-head > .game-overview-cta {
+      flex-basis: auto;
+      margin: 0 0 6px;
+    }
+
+    .game-overview-cta {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .game-overview-cta > *,
+    .game-overview-cta .game-about-buy {
+      width: 240px;
+    }
   }
 }
