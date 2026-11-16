@@ -202,7 +202,9 @@ function GameTiers({ trophies, totals }: { trophies: Trophy[]; totals?: boolean 
   const t = useMessages(messages)
   if (!trophies.length) return null
   return (
-    <section className="card game-tiers" aria-label={t('tiers')}>
+    // A game outside the library shows what its list has, not what the player earned: the cups are
+    // dimmed and each count carries its tier's name, so "1" never reads as a platinum won.
+    <section className={`card game-tiers${totals ? ' is-catalog' : ''}`} aria-label={t('tiers')}>
       {TIERS.map((tier) => {
         const all = trophies.filter((x) => x.type === tier)
         if (!all.length) return null
@@ -214,7 +216,7 @@ function GameTiers({ trophies, totals }: { trophies: Trophy[]; totals?: boolean 
                 ? number(all.length)
                 : `${number(all.filter((x) => x.earned).length)}/${number(all.length)}`}
             </b>
-            <span className="sr-only">{t(tier)}</span>
+            {totals ? <small>{t(tier)}</small> : <span className="sr-only">{t(tier)}</span>}
           </div>
         )
       })}
