@@ -371,27 +371,6 @@
     line-height: 1;
   }
 
-  /* A catalog game: the cups dimmed and the tier named under its count. */
-  .game-tiers.is-catalog .icon {
-    opacity: 0.45;
-    filter: grayscale(0.6);
-  }
-
-  .game-tiers.is-catalog .game-tier small {
-    margin-top: 3px;
-    line-height: 1;
-  }
-
-  /* The cups' art leaves a little air above them; the bottom padding gives that back. */
-  .game-tiers.card {
-    padding-bottom: 7px;
-  }
-
-  .game-tier b,
-  .game-facts b {
-    font-size: var(--text-lg);
-  }
-
   .game-tier small,
   .game-facts small {
     color: var(--color-fg-muted);
