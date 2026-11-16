@@ -1,5 +1,10 @@
 import { expect, test } from 'bun:test'
-import { themeTokens, withColorMixFallback, withoutColorMix } from '../../color-mix-fallback'
+import {
+  componentTokens,
+  themeTokens,
+  withColorMixFallback,
+  withoutColorMix,
+} from '../../color-mix-fallback'
 
 const tokens = themeTokens(`
 :root {
@@ -55,4 +60,18 @@ test('each rule that mixes is repeated with plain colors, only for browsers with
     '@supports not (color: color-mix(in srgb, red 50%, blue)) {\n.ring-track { stroke: rgba(255, 255, 255, 0.22); }\n}',
   )
   expect(out.match(/@supports not/g)).toHaveLength(1)
+})
+
+test('a token a component defines is read, and a token that is a mix is replaced too', () => {
+  const all = new Map(tokens)
+  componentTokens(
+    `.tinted { --game-tint-deep: color-mix(in srgb, var(--game-tint, var(--color-accent)) 50%, transparent); }`,
+    all,
+  )
+  expect(
+    withoutColorMix(
+      'linear-gradient(var(--game-tint-deep), color-mix(in srgb, var(--game-tint-deep) 50%, transparent))',
+      all,
+    ),
+  ).toBe('linear-gradient(rgba(194, 243, 102, 0.5), rgba(194, 243, 102, 0.25))')
 })
