@@ -5,5 +5,8 @@ project(':capacitor-android').projectDir = new File('../../../node_modules/.bun/
 include ':capacitor-haptics'
 project(':capacitor-haptics').projectDir = new File('../../../node_modules/.bun/@capacitor+haptics@8.0.2+9cf34ba37901b220/node_modules/@capacitor/haptics/android')
 
+include ':capacitor-push-notifications'
+project(':capacitor-push-notifications').projectDir = new File('../../../node_modules/.bun/@capacitor+push-notifications@8.1.3+9cf34ba37901b220/node_modules/@capacitor/push-notifications/android')
+
 include ':capacitor-splash-screen'
 project(':capacitor-splash-screen').projectDir = new File('../../../node_modules/.bun/@capacitor+splash-screen@8.0.2+9cf34ba37901b220/node_modules/@capacitor/splash-screen/android')
