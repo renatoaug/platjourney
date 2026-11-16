@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.81.2](https://github.com/renatoaug/platjourney/compare/v0.81.1...v0.81.2) (2026-11-16)
+
+### Bug Fixes
+
+* **web:** layouts and colors on an older android webview ([#197](https://github.com/renatoaug/platjourney/issues/197)) ([9ede4ff](https://github.com/renatoaug/platjourney/commit/9ede4ff56b31f074a6de34fb0aff21a2dadb9dd5))
+
 ## [0.81.1](https://github.com/renatoaug/platjourney/compare/v0.81.0...v0.81.1) (2026-11-16)
 
 ### Bug Fixes
