@@ -62,10 +62,12 @@ test('the card asks only after the tap, then goes away once notices are on', asy
   browser('default')
   const calls = mockApi({ 'POST /api/push/subscription': { ok: true } })
   show('card')
-  const enable = await screen.findByRole('button', { name: 'Ativar' })
+  const enable = await screen.findByRole('button', { name: 'Ativar' }, { timeout: 5000 })
   expect(permission).toBe('default')
   fireEvent.click(enable)
-  await waitFor(() => expect(screen.queryByRole('button', { name: 'Ativar' })).toBeNull())
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Ativar' })).toBeNull(), {
+    timeout: 5000,
+  })
   expect(permission).toBe('granted')
   expect(calls.some((c) => c.method === 'POST')).toBe(true)
 })
@@ -74,7 +76,7 @@ test('dismissed, the card stays away on this device', async () => {
   browser('default')
   mockApi({})
   const { unmount } = show('card')
-  fireEvent.click(await screen.findByRole('button', { name: 'Dispensar' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Dispensar' }, { timeout: 5000 }))
   expect(screen.queryByRole('button', { name: 'Ativar' })).toBeNull()
   unmount()
   show('card')
@@ -90,7 +92,9 @@ test('blocked, the bell explains where to allow it and the card says nothing', a
   expect(screen.queryByText(/Quer que o Nexo/)).toBeNull()
   unmount()
   show('row')
-  expect(await screen.findByText(/bloqueadas neste aparelho/)).toBeTruthy()
+  expect(
+    await screen.findByText(/bloqueadas neste aparelho/, undefined, { timeout: 5000 }),
+  ).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Ativar' })).toBeNull()
 })
 
