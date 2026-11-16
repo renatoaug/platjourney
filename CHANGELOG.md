@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.81.0](https://github.com/renatoaug/platjourney/compare/v0.80.1...v0.81.0) (2026-11-16)
+
+### Features
+
+* **server:** push to the android app through firebase ([#195](https://github.com/renatoaug/platjourney/issues/195)) ([9486087](https://github.com/renatoaug/platjourney/commit/9486087d9ea8835d4b507bb37350cf401df241fe))
+
 ## [0.80.1](https://github.com/renatoaug/platjourney/compare/v0.80.0...v0.80.1) (2026-11-16)
 
 ### Bug Fixes
