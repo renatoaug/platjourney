@@ -1,11 +1,13 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import type { Plugin } from 'vite'
 
 // color-mix() reaches Chrome and Android WebView only from version 111. On an older WebView a
 // declaration that uses it is dropped whole: a cover loses the gradient that keeps its text
 // readable, a ring loses its track. The mixes here are of the theme's tokens, so this computes each
 // one from the default theme (theme.css, before any skin or accent the player picks) and repeats the
-// rule with the plain color, only for browsers without color-mix().
+// rule with the plain color, only for browsers without color-mix(). A token a component defines
+// (a game's tint, set per game at runtime) is taken at the value its stylesheet gives it.
 const SUPPORTS = '@supports not (color: color-mix(in srgb, red 50%, blue))'
 
 type Rgba = [number, number, number, number]
@@ -38,6 +40,30 @@ export function themeTokens(css: string): Map<string, string> {
     }
     i++
   }
+  return tokens
+}
+
+/** Custom properties the other stylesheets define, for the tokens the theme does not have. The
+ * first definition found wins, and the theme's always does. */
+export function componentTokens(css: string, tokens: Map<string, string>): void {
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, '')
+  for (const m of clean.matchAll(/(--[\w-]+)\s*:\s*([^;{}]+?)\s*;/g)) {
+    if (!tokens.has(m[1])) tokens.set(m[1], m[2].replace(/\s+/g, ' '))
+  }
+}
+
+function cssFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name)
+    if (entry.isDirectory()) return cssFiles(path)
+    return entry.name.endsWith('.css') ? [path] : []
+  })
+}
+
+/** The default theme, then what the app's other stylesheets define. */
+export function appTokens(themePath: string, srcDir: string): Map<string, string> {
+  const tokens = themeTokens(readFileSync(themePath, 'utf8'))
+  for (const file of cssFiles(srcDir)) componentTokens(readFileSync(file, 'utf8'), tokens)
   return tokens
 }
 
@@ -180,7 +206,12 @@ export function withoutColorMix(value: string, tokens: Map<string, string>): str
     if (!color) return undefined
     out = out.slice(0, at) + rgba(color) + out.slice(end + 1)
   }
-  return out
+  // A token that is itself a mix would bring color-mix() back where it is used.
+  return out.replace(/var\(\s*--[\w-]+\s*\)/g, (ref) => {
+    const value = resolve(ref, tokens)
+    const color = value?.startsWith('color-mix(') ? mix(value, tokens) : undefined
+    return color ? rgba(color) : ref
+  })
 }
 
 /** The declarations of a rule's body that mix, with plain colors; those it cannot compute are left out. */
@@ -250,14 +281,14 @@ export function withColorMixFallback(css: string, tokens: Map<string, string>): 
   return out
 }
 
-export function colorMixFallback(themePath: string): Plugin {
+export function colorMixFallback(themePath: string, srcDir: string): Plugin {
   let tokens: Map<string, string> | undefined
   return {
     name: 'platjourney:color-mix-fallback',
     enforce: 'pre',
     transform(code, id) {
       if (!/\.css($|\?)/.test(id) || !code.includes('color-mix(')) return null
-      tokens ??= themeTokens(readFileSync(themePath, 'utf8'))
+      tokens ??= appTokens(themePath, srcDir)
       return { code: withColorMixFallback(code, tokens), map: null }
     },
   }

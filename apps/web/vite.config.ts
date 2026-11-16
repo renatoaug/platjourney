@@ -37,7 +37,10 @@ export default defineConfig(({ mode }) => {
       // A path, not a package name: Vite would pre-bundle a package, with its own empty rules.
       react({ jsxImportSource: '/src/plugins' }),
       containerFallback(),
-      colorMixFallback(fileURLToPath(new URL('./src/styles/theme.css', import.meta.url))),
+      colorMixFallback(
+        fileURLToPath(new URL('./src/styles/theme.css', import.meta.url)),
+        fileURLToPath(new URL('./src', import.meta.url)),
+      ),
       tailwindcss(),
       inlineIcons(),
     ],
