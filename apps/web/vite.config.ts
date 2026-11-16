@@ -63,6 +63,14 @@ export default defineConfig(({ mode }) => {
         ['/api', '/.well-known/oauth-', '/oauth/', '/mcp'].map((path) => [path, toServer]),
       ),
     },
-    build: { outDir: 'dist', emptyOutDir: true },
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
+      // The Android app runs in the phone's WebView, which can be older than any current browser.
+      // Below Chrome 104 a media query written as a range (width<=760px) never matches, so every
+      // screen keeps its desktop layout; this target keeps them as max-width and min-width.
+      // Cascade layers set the floor at Chrome 99.
+      cssTarget: ['chrome99', 'safari15', 'firefox97'],
+    },
   }
 })
