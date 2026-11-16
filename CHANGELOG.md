@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.80.1](https://github.com/renatoaug/platjourney/compare/v0.80.0...v0.80.1) (2026-11-16)
+
+### Bug Fixes
+
+* **web:** a catalog game's trophy tiers count from zero ([#194](https://github.com/renatoaug/platjourney/issues/194)) ([cd177bb](https://github.com/renatoaug/platjourney/commit/cd177bba6e2e636501f2f71bb36133d810c9e3bf))
+
 ## [0.80.0](https://github.com/renatoaug/platjourney/compare/v0.79.0...v0.80.0) (2026-11-15)
 
 ### Features
