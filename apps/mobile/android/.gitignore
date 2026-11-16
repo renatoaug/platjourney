@@ -62,7 +62,8 @@ captures/
 .cxx/
 
 # Google Services (e.g. APIs or Firebase)
-# google-services.json
+# Firebase config for push: kept out of the repository, copied in before a build.
+google-services.json
 
 # Freeline
 freeline.py

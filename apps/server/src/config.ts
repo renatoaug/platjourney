@@ -74,6 +74,20 @@ export const config = {
     environment:
       process.env.APNS_ENVIRONMENT === 'sandbox' ? ('sandbox' as const) : ('production' as const),
   },
+  // FCM (the Android app) is off until an operator supplies a Firebase service account: the JSON
+  // file Firebase gives, in one line. Only its project, client email and private key are read.
+  fcm: (() => {
+    try {
+      const raw = JSON.parse(process.env.FCM_SERVICE_ACCOUNT || '{}')
+      return {
+        projectId: String(raw.project_id || ''),
+        clientEmail: String(raw.client_email || ''),
+        privateKey: String(raw.private_key || ''),
+      }
+    } catch {
+      return { projectId: '', clientEmail: '', privateKey: '' }
+    }
+  })(),
   // The longest chat message passed to the model, on the web and on Telegram (the web app
   // stops typing at the same length).
   chat: { maxChars: 1000 },

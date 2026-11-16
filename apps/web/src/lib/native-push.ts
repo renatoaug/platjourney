@@ -1,4 +1,5 @@
-/** APNs lifecycle for the iOS Capacitor shell. A browser never calls a native plugin. */
+/** Native push lifecycle for the Capacitor shells: APNs on the iPhone app, FCM on the Android app.
+ * A browser never calls a native plugin. */
 import { api, del } from './api'
 import { isNative } from './native'
 
@@ -19,8 +20,16 @@ interface CapacitorBridge {
 }
 const bridge = () => (window as Window & { Capacitor?: CapacitorBridge }).Capacitor
 const plugin = () => bridge()?.Plugins?.PushNotifications
-export const isIosPush = (): boolean =>
-  isNative() && bridge()?.getPlatform?.() === 'ios' && !!plugin()
+/** The native app this runs in, when it can receive push: the iPhone or the Android app. */
+export const nativePlatform = (): 'ios' | 'android' | null => {
+  const platform = bridge()?.getPlatform?.()
+  return isNative() && plugin() && (platform === 'ios' || platform === 'android') ? platform : null
+}
+export const isNativePush = (): boolean => nativePlatform() !== null
+
+/** Whether the server can push to this native app: APNs for the iPhone, FCM for Android. */
+export const nativePushAvailable = (me: { nativePush?: boolean; androidPush?: boolean }) =>
+  nativePlatform() === 'android' ? !!me.androidPush : !!me.nativePush
 
 let owner: string | null = null
 let available = false
@@ -84,7 +93,7 @@ function settle(error?: Error) {
 
 // Installed before authentication loads so a cold-start tap waits at the requested URL through login.
 export function listenNativePush(): Promise<void> {
-  if (!isIosPush()) return Promise.resolve()
+  if (!isNativePush()) return Promise.resolve()
   if (listening) return listening
   const push = plugin() as PushPlugin
   listening = (async () => {
@@ -108,6 +117,7 @@ export function listenNativePush(): Promise<void> {
             installation: installation(),
             token: event.value,
             owner: current,
+            platform: nativePlatform(),
           })
         })
         .then(() => {
@@ -223,7 +233,7 @@ export async function disableNativePush(): Promise<'off'> {
 
 /** Re-register on launch/resume; a changed token replaces this installation's previous token. */
 export function startNativePush(user: string | null, ready = false): () => void {
-  if (!isIosPush()) return () => {}
+  if (!isNativePush()) return () => {}
   generation++
   settle(new Error('APNs session changed'))
   owner = user

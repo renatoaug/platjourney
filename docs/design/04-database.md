@@ -246,15 +246,15 @@ erDiagram
     push_subscription {
         id record(push_subscription) PK
         user record(user) FK
-        transport string "webpush or apns; legacy defaults webpush"
+        transport string "webpush, apns or fcm; legacy defaults webpush"
         endpoint option(string) "webpush only, unique"
         p256dh option(string) "webpush only"
         auth option(string) "webpush only"
-        installation option(string) "apns only, random secret"
-        token option(string) "apns only"
+        installation option(string) "apns and fcm, random secret"
+        token option(string) "apns and fcm"
         environment option(string) "apns: sandbox or production"
-        session_hash option(string) "apns: live auth session required"
-        destination_key string "derived endpoint or environment:token"
+        session_hash option(string) "apns and fcm: live auth session required"
+        destination_key string "derived endpoint, environment:token or fcm:token"
         registration_key string "derived endpoint or installation"
         created_at datetime
         updated_at datetime
@@ -502,7 +502,7 @@ erDiagram
 | `message` | chat message | | `role`: user or assistant. `card`: what an answer shows besides its text, written with it: for a next pick, `kind` (`game`), `game`, `name`, `cover_url`, `art_url`, `difficulty`, `hours` and `progress` |
 | `notification` | item in the bell | | `kind`: `start`, `unlock`, `session`, `route`, `server`, `deal`, `answer`. Points at the `tip` it shows, when there is one |
 | `session_plan` | session plan | `user, status` | One row per plan, Nexo's or a connected assistant's (`assistant`: `claude`, `chatgpt`, `other`). `status`: `active` while on screen, `ended` (the player ended the session before its time), `dismissed` (closed once it was over), `replaced` (a new plan took its place) or `expired` (its time, the minutes asked plus an hour, ran out with no action; it still shows as a recap until the next day, and an hourly check marks it). The plan on screen is the player's latest `active` or `expired` one. Reviewed steps additionally retain `journey: {edition, version, objective}` inside the existing flexible `steps` object; their `minutes` are reserved blocks, not task-duration estimates. The API derives `timing: budget`, current eligibility and spoiler masking without storing additional root fields. This needs no schema migration. Each step keeps its trophy and `trophy_id` on `np_communication_id`, and `done` (earned by `ended_at`; for an expired plan, checked against the trophies the last sync stored). `reason` is why the player closed a plan with no step done, when they answered the optional question: `not_useful`, `too_long`, `other_game` or `no_time`. Kept with the account and wiped with it |
-| `push_subscription` | Push destination owned by a user, discriminated by `transport` (`webpush` or `apns`) | (`transport`, `destination_key`); (`transport`, `registration_key`); legacy Web Push `endpoint` | Flat typed fields with transport-specific assertions, never a free JSON payload. Web Push keeps endpoint/p256dh/auth and account ownership without inventing a session or installation. APNs requires installation/token/environment/session_hash; only live owner sessions deliver. Derived keys are always populated: Web Push uses its endpoint for both, APNs uses environment:token for destination and installation for registration. Token reuse on a new installation transfers ownership atomically; invalid-token cleanup matches installation/token/environment. Existing Web Push rows are upgraded in place by migration 028. Automatic rollback to older servers is not supported: their sender does not filter by transport; see ADR-012. The ops device metric now includes both transports. |
+| `push_subscription` | Push destination owned by a user, discriminated by `transport` (`webpush`, `apns` for the iPhone app or `fcm` for the Android app) | (`transport`, `destination_key`); (`transport`, `registration_key`); legacy Web Push `endpoint` | Flat typed fields with transport-specific assertions, never a free JSON payload. Web Push keeps endpoint/p256dh/auth and account ownership without inventing a session or installation. APNs requires installation/token/environment/session_hash; only live owner sessions deliver. Derived keys are always populated: Web Push uses its endpoint for both, APNs uses environment:token for destination and installation for registration. Token reuse on a new installation transfers ownership atomically; invalid-token cleanup matches installation/token/environment. FCM (the Android app) has the same installation/token/session_hash as APNs and no environment; its destination is `fcm:` plus the token. Existing Web Push rows are upgraded in place by migration 028. Automatic rollback to older servers is not supported: their sender does not filter by transport; see ADR-012. The ops device metric now includes both transports. |
 | `auth_session` | signed-in browser | `token_hash` | Only the hash of the cookie is stored |
 | `verification` | pending "About me" code | `psn_online_id_lower` | Expires; no account yet. `secret_hash` is the hash of the claim cookie: only its holder can finish the claim or get the same code again, and nobody else can replace the row until `expires_at` |
 | `access` | address an account is used from | `user, ip_hash` | An HMAC of the IP, only with `ACCESS_HASH_SECRET` |

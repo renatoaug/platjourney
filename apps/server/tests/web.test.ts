@@ -11,6 +11,7 @@ import * as browser from '../src/browse.ts'
 import { config } from '../src/config.ts'
 import * as deepguide from '../src/deepguide.ts'
 import { DEMO_ACCOUNT_ID } from '../src/demo.ts'
+import * as fcm from '../src/fcm.ts'
 import * as gameContext from '../src/game-context.ts'
 import * as guide from '../src/guide.ts'
 import { GUIDE_VERSION, type Guide } from '../src/guide.ts'
@@ -196,6 +197,7 @@ test('register and login sign in, start watching and set the cookie', async () =
       notifyTelegram: true,
       pushKey: null,
       nativePush: false,
+      androidPush: false,
       locale: 'pt-BR',
       demo: false,
       onboarded: false,
@@ -1500,6 +1502,26 @@ test('the PS Plus tier is a preference, and an unknown one is refused', async ()
   expect((await send('POST', '/api/account/preferences', { psPlus: 'gold' })).status).toBe(400)
 })
 
+test('an Android device registers through FCM when the service account is set', async () => {
+  spyOn(fcm, 'fcmEnabled').mockReturnValue(false)
+  spyOn(auth, 'sessionHash').mockReturnValue('server-session')
+  const save = spyOn(nativeSubs, 'saveNativeDevice').mockResolvedValue()
+  const installation = 'c'.repeat(64)
+  const token = `dXk:APA91b${'x'.repeat(140)}`
+  const body = { installation, token, owner: me.id, platform: 'android' }
+  expect((await send('POST', '/api/push/native', body)).status).toBe(404)
+  spyOn(fcm, 'fcmEnabled').mockReturnValue(true)
+  expect((await send('POST', '/api/push/native', body)).status).toBe(200)
+  expect(save).toHaveBeenCalledWith(me.id, 'server-session', {
+    transport: 'fcm',
+    installation,
+    token,
+  })
+  expect((await send('POST', '/api/push/native', { ...body, token: 'not a token' })).status).toBe(
+    400,
+  )
+})
+
 test('native push validates the device, pins environment and uses the authenticated owner and session', async () => {
   spyOn(apns, 'apnsEnabled').mockReturnValue(true)
   spyOn(auth, 'sessionHash').mockReturnValue('server-session')
@@ -1516,6 +1538,7 @@ test('native push validates the device, pins environment and uses the authentica
   }
   expect((await send('POST', '/api/push/native', valid)).status).toBe(200)
   expect(save).toHaveBeenCalledWith(me.id, 'server-session', {
+    transport: 'apns',
     installation,
     token: token.toLowerCase(),
     environment: config.apns.environment,
