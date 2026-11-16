@@ -3,7 +3,7 @@
 import { installed, installPlatform } from '../components/install-guide'
 import { api, del } from './api'
 import { isNative } from './native'
-import { disableNativePush, enableNativePush, isIosPush, nativePushState } from './native-push'
+import { disableNativePush, enableNativePush, isNativePush, nativePushState } from './native-push'
 
 /**
  * - `unsupported`: this browser has no push
@@ -17,7 +17,7 @@ export type PushState = 'unsupported' | 'install' | 'native' | 'denied' | 'off' 
 const WORKER = '/sw.js'
 
 function support(): PushState | null {
-  if (isNative() && !isIosPush()) return 'native'
+  if (isNative() && !isNativePush()) return 'native'
   const capable =
     'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
   if (!capable) return installPlatform() === 'ios' && !installed() ? 'install' : 'unsupported'
@@ -34,7 +34,7 @@ const save = (sub: PushSubscription) => api('/api/push/subscription', sub.toJSON
 
 /** Where this device stands. A device already on is saved again, in case the server dropped it. */
 export async function pushState(): Promise<PushState> {
-  if (isIosPush()) return nativePushState()
+  if (isNativePush()) return nativePushState()
   const limit = support()
   if (limit) return limit
   if (Notification.permission === 'denied') return 'denied'
@@ -53,7 +53,7 @@ function keyBytes(key: string): Uint8Array<ArrayBuffer> {
 
 /** Asks the browser's permission, subscribes this device and tells the server. */
 export async function enablePush(key: string): Promise<PushState> {
-  if (isIosPush()) return enableNativePush()
+  if (isNativePush()) return enableNativePush()
   const limit = support()
   if (limit) return limit
   if ((await Notification.requestPermission()) !== 'granted')
@@ -72,7 +72,7 @@ export async function enablePush(key: string): Promise<PushState> {
 
 /** Stops the notices on this device, here and on the server. */
 export async function disablePush(): Promise<PushState> {
-  if (isIosPush()) return disableNativePush()
+  if (isNativePush()) return disableNativePush()
   const sub = await subscription()
   if (sub) {
     await del('/api/push/subscription', { endpoint: sub.endpoint })

@@ -32,6 +32,8 @@ export interface Me {
   /** The key a browser subscribes to push with; null when the instance has push off. */
   pushKey?: string | null
   nativePush?: boolean
+  /** The server can push to the Android app (FCM). */
+  androidPush?: boolean
   /** The language the player chose; null until they pick one. */
   locale?: Locale | null
   telegramBot?: { username: string; name: string } | null

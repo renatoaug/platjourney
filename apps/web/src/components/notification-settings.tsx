@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
-import { isIosPush } from '../lib/native-push'
+import { isNativePush, nativePushAvailable } from '../lib/native-push'
 import { disablePush, enablePush, type PushState, pushState } from '../lib/push'
 import type { Me } from '../lib/types'
 import { SettingTitle } from '../ui/setting-title'
@@ -208,7 +208,7 @@ export function NotificationSettings({ user }: { user: Me }) {
   const { setMe } = useApp()
   const [push, setPush] = useState<PushState | 'loading' | 'error'>('loading')
   const [busy, setBusy] = useState(false)
-  const pushAvailable = isIosPush() ? !!user.nativePush : !!user.pushKey
+  const pushAvailable = isNativePush() ? nativePushAvailable(user) : !!user.pushKey
   useEffect(() => {
     if (!pushAvailable) return
     let live = true
@@ -232,7 +232,7 @@ export function NotificationSettings({ user }: { user: Me }) {
   const changePush = (on: boolean) =>
     run(async () => {
       const state = await (on ? enablePush(user.pushKey ?? '') : disablePush()).catch((error) => {
-        if (isIosPush()) setPush('error')
+        if (isNativePush()) setPush('error')
         throw error
       })
       setPush(state)

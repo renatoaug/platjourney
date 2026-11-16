@@ -17,7 +17,12 @@ export const Row: Story = {
 
 // Blocked on an iPhone: the system will not ask again, so the line says where to allow it.
 export const BlockedOnIphone: Story = {
-  render: () => <PushInviteView variant="row" blocked ios onEnable={() => {}} />,
+  render: () => <PushInviteView variant="row" blocked device="ios" onEnable={() => {}} />,
+}
+
+// Blocked on Android: the same, in Android's settings.
+export const BlockedOnAndroid: Story = {
+  render: () => <PushInviteView variant="row" blocked device="android" onEnable={() => {}} />,
 }
 
 // Blocked in a browser.

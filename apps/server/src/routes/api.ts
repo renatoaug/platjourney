@@ -5,6 +5,7 @@ import { apnsEnabled } from '../apns.ts'
 import { config } from '../config.ts'
 import { deepGuideStats } from '../deepguide.ts'
 import { isDemo } from '../demo.ts'
+import { fcmEnabled } from '../fcm.ts'
 import { todaysFocus } from '../focus.ts'
 import { getCurrent } from '../game-context.ts'
 import { defineMessages, fromAcceptLanguage, Language, type Locale, userLocale } from '../i18n.ts'
@@ -62,6 +63,7 @@ export const publicUser = (u: User) => ({
   // The key a browser subscribes to push with; null when the instance has push off.
   pushKey: pushEnabled() ? config.push.publicKey : null,
   nativePush: apnsEnabled(),
+  androidPush: fcmEnabled(),
   // Whether this instance lets Nexo write notices at all; the profile's switch only shows then.
   aiNoticesAvailable: config.automatic.notices,
   locale: u.locale ?? null,

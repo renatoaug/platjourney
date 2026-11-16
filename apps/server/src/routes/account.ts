@@ -11,6 +11,7 @@ import {
 } from '../auth.ts'
 import { config } from '../config.ts'
 import { isDemo } from '../demo.ts'
+import { fcmEnabled } from '../fcm.ts'
 import { forgetUser } from '../game-context.ts'
 import { json, readBody } from '../http.ts'
 import { defineMessages, isLocale, Language, translator } from '../i18n.ts'
@@ -122,22 +123,31 @@ async function dropPush({ req, res, me }: Api) {
 }
 
 async function saveNativePush({ req, res, me }: Api) {
-  if (!apnsEnabled()) return json(res, 404, { error: 'push_off' })
-  const { installation, token, owner } = await readBody(req)
+  const { installation, token, owner, platform } = await readBody(req)
+  const android = platform === 'android'
+  if (android ? !fcmEnabled() : !apnsEnabled()) return json(res, 404, { error: 'push_off' })
   if (
     owner !== me.id ||
     typeof installation !== 'string' ||
     !/^[a-f0-9]{64}$/.test(installation) ||
     typeof token !== 'string' ||
-    !/^[a-fA-F0-9]{32,512}$/.test(token) ||
-    token.length % 2
+    (android
+      ? !/^[A-Za-z0-9:_-]{32,4096}$/.test(token)
+      : !/^[a-fA-F0-9]{32,512}$/.test(token) || token.length % 2)
   )
     return json(res, 400, { error: 'invalid' })
-  await saveNativeDevice(me.id, sessionHash(req), {
-    installation,
-    token: token.toLowerCase(),
-    environment: config.apns.environment,
-  })
+  await saveNativeDevice(
+    me.id,
+    sessionHash(req),
+    android
+      ? { transport: 'fcm', installation, token }
+      : {
+          transport: 'apns',
+          installation,
+          token: token.toLowerCase(),
+          environment: config.apns.environment,
+        },
+  )
   return json(res, 200, { ok: true })
 }
 

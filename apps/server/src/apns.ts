@@ -1,6 +1,7 @@
 import { createHash, createPrivateKey, sign } from 'node:crypto'
 import { type ClientHttp2Session, connect } from 'node:http2'
 import { config } from './config.ts'
+import { fcmEnabled, sendFcm } from './fcm.ts'
 import type { PushMessage } from './push.ts'
 import {
   expireNativeDevice,
@@ -29,7 +30,7 @@ export function apnsAuthorization(now = Date.now()): string {
 }
 
 const connections = new Map<string, ClientHttp2Session>()
-function connection(environment: NativeDevice['environment']): ClientHttp2Session {
+function connection(environment: 'sandbox' | 'production'): ClientHttp2Session {
   const host =
     environment === 'sandbox' ? 'https://api.sandbox.push.apple.com' : 'https://api.push.apple.com'
   let session = connections.get(host)
@@ -62,7 +63,7 @@ export function apnsPayload(message: PushMessage): string {
 }
 
 export async function sendApns(
-  device: NativeDevice,
+  device: Exclude<NativeDevice, { transport: 'fcm' }>,
   message: PushMessage,
 ): Promise<{ status: number; reason?: string }> {
   const payload = apnsPayload(message)
@@ -107,28 +108,63 @@ export async function sendApns(
   })
 }
 
+/** One iPhone: sent, or the device forgotten when APNs no longer knows its token. */
+async function toIphone(
+  device: Exclude<NativeDevice, { transport: 'fcm' }>,
+  message: PushMessage,
+): Promise<boolean> {
+  const result = await sendApns(device, message)
+  if (result.status === 200) return true
+  const gone =
+    result.status === 410 ||
+    (result.status === 400 &&
+      ['BadDeviceToken', 'DeviceTokenNotForTopic'].includes(result.reason ?? ''))
+  if (gone) await expireNativeDevice(device)
+  // Never log tokens, keys, message bodies or error strings from network libraries.
+  else console.warn(`APNs refused: ${result.status}`)
+  return false
+}
+
+/** One Android phone: sent, or the device forgotten when FCM no longer knows its token. */
+async function toAndroid(
+  device: Extract<NativeDevice, { transport: 'fcm' }>,
+  message: PushMessage,
+): Promise<boolean> {
+  const result = await sendFcm(device.token, message)
+  if (result.status === 200) return true
+  if (result.gone) await expireNativeDevice(device)
+  else console.warn(`FCM refused: ${result.status}`)
+  return false
+}
+
+/** Sends to every native device of the player: the iPhone app through APNs, the Android app through
+ * FCM. A device the provider no longer knows is forgotten; any other failure is only logged. */
 export async function nativePushTo(user: { id: string }, message: PushMessage): Promise<number> {
-  if (!apnsEnabled()) return 0
-  let sent = 0
+  const on = { apns: apnsEnabled(), fcm: fcmEnabled() }
+  if (!on.apns && !on.fcm) return 0
+  // One send per destination, and only through a provider that is set up.
   const seen = new Set<string>()
-  for (const device of await nativeDevices(user.id)) {
-    if (seen.has(`${device.environment}:${device.token}`)) continue
-    seen.add(`${device.environment}:${device.token}`)
-    try {
-      if (!(await nativeDeviceActive(user.id, device))) continue
-      const result = await sendApns(device, message)
-      if (result.status === 200) sent++
-      else if (
-        result.status === 410 ||
-        (result.status === 400 &&
-          ['BadDeviceToken', 'DeviceTokenNotForTopic'].includes(result.reason ?? ''))
-      )
-        await expireNativeDevice(device)
-      // Never log tokens, keys, message bodies or error strings from network libraries.
-      else console.warn(`APNs refused: ${result.status}`)
-    } catch {
-      console.warn('APNs delivery failed')
-    }
-  }
+  const targets = (await nativeDevices(user.id)).filter((device) => {
+    const key =
+      device.transport === 'fcm' ? `fcm:${device.token}` : `${device.environment}:${device.token}`
+    if (seen.has(key) || !(device.transport === 'fcm' ? on.fcm : on.apns)) return false
+    seen.add(key)
+    return true
+  })
+  let sent = 0
+  for (const device of targets) if (await deliver(user.id, device, message)) sent++
   return sent
+}
+
+/** One device, rechecked right before the send: true when the provider accepted it. */
+async function deliver(user: string, device: NativeDevice, message: PushMessage): Promise<boolean> {
+  try {
+    if (!(await nativeDeviceActive(user, device))) return false
+    return device.transport === 'fcm'
+      ? await toAndroid(device, message)
+      : await toIphone(device, message)
+  } catch {
+    console.warn(`${device.transport === 'fcm' ? 'FCM' : 'APNs'} delivery failed`)
+    return false
+  }
 }

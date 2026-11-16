@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { isIosPush } from '../lib/native-push'
+import { isNativePush, nativePlatform, nativePushAvailable } from '../lib/native-push'
 import { enablePush, type PushState, pushState } from '../lib/push'
 import { Icon } from '../ui/icon'
 import { toast } from '../ui/toast'
@@ -22,6 +22,7 @@ const messages = defineMessages({
     dismiss: 'Dispensar',
     blocked: 'As notificações estão bloqueadas neste aparelho',
     blockedIos: 'Para liberar: Ajustes do iPhone → PlatJourney → Notificações.',
+    blockedAndroid: 'Para liberar: Configurações do Android → Apps → PlatJourney → Notificações.',
     blockedWeb: 'Para liberar: nas permissões deste site, no navegador, permita notificações.',
     on: 'Pronto: os avisos do Nexo chegam neste aparelho.',
     notAllowed: 'As notificações não foram permitidas.',
@@ -35,6 +36,7 @@ const messages = defineMessages({
     dismiss: 'Dismiss',
     blocked: 'Notifications are blocked on this device',
     blockedIos: 'To allow them: iPhone Settings → PlatJourney → Notifications.',
+    blockedAndroid: 'To allow them: Android Settings → Apps → PlatJourney → Notifications.',
     blockedWeb: "To allow them: in this site's permissions in the browser, allow notifications.",
     on: "Done: Nexo's notices arrive on this device.",
     notAllowed: 'Notifications were not allowed.',
@@ -56,7 +58,7 @@ function dismissed(): boolean {
 function usePush() {
   const { me } = useApp()
   const t = useMessages(messages)
-  const available = !me.demo && (isIosPush() ? !!me.nativePush : !!me.pushKey)
+  const available = !me.demo && (isNativePush() ? nativePushAvailable(me) : !!me.pushKey)
   const [state, setState] = useState<PushState | 'loading'>('loading')
   const [busy, setBusy] = useState(false)
   useEffect(() => {
@@ -98,7 +100,7 @@ export function PushInvite({ variant }: { variant: 'card' | 'row' }) {
     <PushInviteView
       variant={variant}
       blocked={state === 'denied'}
-      ios={isIosPush()}
+      device={nativePlatform() ?? 'web'}
       busy={busy}
       onEnable={enable}
       onDismiss={dismiss}
@@ -109,14 +111,15 @@ export function PushInvite({ variant }: { variant: 'card' | 'row' }) {
 export function PushInviteView({
   variant,
   blocked = false,
-  ios = false,
+  device = 'web',
   busy = false,
   onEnable,
   onDismiss,
 }: {
   variant: 'card' | 'row'
   blocked?: boolean
-  ios?: boolean
+  /** Where the notices would arrive, for where to allow them once blocked. */
+  device?: 'ios' | 'android' | 'web'
   busy?: boolean
   onEnable: () => void
   onDismiss?: () => void
@@ -128,7 +131,17 @@ export function PushInviteView({
         <Icon name="bell" />
         <span>
           <b>{blocked ? t('blocked') : t('row')}</b>
-          {blocked && <small>{ios ? t('blockedIos') : t('blockedWeb')}</small>}
+          {blocked && (
+            <small>
+              {t(
+                device === 'ios'
+                  ? 'blockedIos'
+                  : device === 'android'
+                    ? 'blockedAndroid'
+                    : 'blockedWeb',
+              )}
+            </small>
+          )}
         </span>
         {!blocked && (
           <button type="button" className="button sm" disabled={busy} onClick={onEnable}>

@@ -152,7 +152,7 @@ test('each device state explains itself and only on and off can be switched', ()
 })
 
 test('failed iOS disable shows uncertainty, and retry confirms remote revocation', async () => {
-  spyOn(nativePush, 'isIosPush').mockReturnValue(true)
+  spyOn(nativePush, 'isNativePush').mockReturnValue(true)
   const state = spyOn(push, 'pushState').mockResolvedValue('on')
   spyOn(push, 'disablePush').mockRejectedValue(new Error('DELETE failed'))
   show({ ...me, nativePush: true })

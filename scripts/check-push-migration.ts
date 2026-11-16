@@ -121,6 +121,28 @@ try {
       { installation: '9'.repeat(64), deviceToken: '8'.repeat(64) },
     ),
   )
+  // Android (migration 030): an FCM device has no environment, keeps its own unique keys and is
+  // delivered and revoked with the session like an APNs one.
+  const android = {
+    transport: 'fcm' as const,
+    installation: '7'.repeat(64),
+    token: `dXk:APA91b${'x'.repeat(140)}`,
+  }
+  await apns.saveNativeDevice(two, 'session-two', android)
+  assert.equal(await apns.nativeDeviceActive(two, android), true)
+  const androidRow = await q<Record<string, unknown>[]>(
+    "SELECT * FROM push_subscription WHERE transport = 'fcm'",
+  )
+  assert.equal(androidRow[0].environment, undefined)
+  assert.equal(androidRow[0].destination_key, `fcm:${android.token}`)
+  await assert.rejects(
+    q(
+      "CREATE push_subscription SET transport = 'fcm', user = user:two, installation = $installation, token = $deviceToken, environment = 'production', session_hash = 'session-two'",
+      { installation: '5'.repeat(64), deviceToken: android.token },
+    ),
+  )
+  await apns.expireNativeDevice(android)
+  assert.equal(await apns.nativeDeviceActive(two, android), false)
   // A reinstall can keep the same APNs token but gets a new installation secret.
   const reinstalled = { ...device, installation: '6'.repeat(64) }
   await apns.saveNativeDevice(two, 'session-two', reinstalled)
@@ -166,7 +188,7 @@ try {
   await migrate()
   assert.equal((await web.pushSubscriptions(one)).length, 2)
   console.log(
-    'PASS: legacy upgrade, repeat/mixed migration, discriminated validation, unique indexes, rotation, account/session isolation, scoped deletes and legacy writes',
+    'PASS: legacy upgrade, Android FCM rows, repeat/mixed migration, discriminated validation, unique indexes, rotation, account/session isolation, scoped deletes and legacy writes',
   )
 } finally {
   await closeDb()

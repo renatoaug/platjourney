@@ -14,7 +14,7 @@ import {
 } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { handoffLaunchScreen } from '../lib/native'
-import { startNativePush } from '../lib/native-push'
+import { nativePushAvailable, startNativePush } from '../lib/native-push'
 import type { Me } from '../lib/types'
 import { Connect, isConnectPage } from '../pages/connect'
 import { Login } from '../pages/login'
@@ -70,7 +70,7 @@ export function App() {
   useEffect(handoffLaunchScreen, [])
   const [session, setSession] = useState<Session>({ kind: 'loading' })
   const pushOwner = session.kind === 'in' && !session.me.demo ? session.me.id : null
-  const pushAvailable = session.kind === 'in' && !!session.me.nativePush
+  const pushAvailable = session.kind === 'in' && nativePushAvailable(session.me)
   useEffect(() => startNativePush(pushOwner, pushAvailable), [pushOwner, pushAvailable])
   const [firstData, setFirstData] = useState(false)
   const markFirstData = useCallback(() => setFirstData(true), [])
