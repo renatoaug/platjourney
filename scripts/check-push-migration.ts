@@ -121,7 +121,7 @@ try {
       { installation: '9'.repeat(64), deviceToken: '8'.repeat(64) },
     ),
   )
-  // Android (migration 030): an FCM device has no environment, keeps its own unique keys and is
+  // Android: an FCM device has no environment, keeps its own unique keys and is
   // delivered and revoked with the session like an APNs one.
   const android = {
     transport: 'fcm' as const,
