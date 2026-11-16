@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.81.3](https://github.com/renatoaug/platjourney/compare/v0.81.2...v0.81.3) (2026-11-16)
+
+### Bug Fixes
+
+* **web:** game backdrops on an older android webview ([#198](https://github.com/renatoaug/platjourney/issues/198)) ([cd5a2fb](https://github.com/renatoaug/platjourney/commit/cd5a2fb1df6f56907b329997df994b60bc4eb7a5))
+
 ## [0.81.2](https://github.com/renatoaug/platjourney/compare/v0.81.1...v0.81.2) (2026-11-16)
 
 ### Bug Fixes
