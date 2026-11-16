@@ -371,16 +371,6 @@
     line-height: 1;
   }
 
-  /* The cups' art leaves a little air above them; the bottom padding gives that back. */
-  .game-tiers.card {
-    padding-bottom: 7px;
-  }
-
-  .game-tier b,
-  .game-facts b {
-    font-size: var(--text-lg);
-  }
-
   .game-tier small,
   .game-facts small {
     color: var(--color-fg-muted);

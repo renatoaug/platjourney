@@ -115,17 +115,16 @@ test('a game the player does not own: its list by tier, its facts and saving it'
   })
   renderApp(<Title />, { path: '/title/game/game%3A19561', route: '/title/*' })
   await screen.findByRole('heading', { name: 'DAYS GONE' })
-  // Nothing of the player's to show: no progress, but what there is to earn, by tier.
+  // Nothing of the player's to show: no progress, and each tier counts from zero, so a list's one
+  // platinum never reads as one won.
   expect(screen.queryByRole('progressbar')).toBeNull()
   expect(document.querySelector('.game-overview-played')?.textContent).toMatch(/^\d+ troféus$/)
-  const tiers = document.querySelector('.game-tiers')?.textContent ?? ''
-  expect(tiers).toMatch(/\d/)
-  expect(tiers).not.toContain('/')
   const trophyCount = recommendedData.trophies?.length ?? 0
-  const tierCounts = [...document.querySelectorAll('.game-tier b')].map((b) =>
-    Number(b.textContent),
+  const tierCounts = [...document.querySelectorAll('.game-tier b')].map(
+    (b) => b.textContent?.split('/') ?? [],
   )
-  expect(tierCounts.reduce((a, b) => a + b, 0)).toBe(trophyCount)
+  expect(tierCounts.every(([earned]) => earned === '0')).toBe(true)
+  expect(tierCounts.reduce((a, [, all]) => a + Number(all), 0)).toBe(trophyCount)
   // Its facts: the guide's time.
   expect(facts()).toMatch(/~70(?: horas|h)Tempo/)
   // No session route for a game the player does not have.
