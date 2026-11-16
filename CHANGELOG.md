@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.81.1](https://github.com/renatoaug/platjourney/compare/v0.81.0...v0.81.1) (2026-11-16)
+
+### Bug Fixes
+
+* **web:** the android app on an older webview, and its icon ([#196](https://github.com/renatoaug/platjourney/issues/196)) ([90e8a43](https://github.com/renatoaug/platjourney/commit/90e8a4384110a7dd547e70b350134969f603fec7))
+
 ## [0.81.0](https://github.com/renatoaug/platjourney/compare/v0.80.1...v0.81.0) (2026-11-16)
 
 ### Features
