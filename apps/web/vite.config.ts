@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv, type ProxyOptions, searchForWorkspaceRoot } from 'vite'
+import { colorMixFallback } from './color-mix-fallback'
 import { containerFallback } from './container-fallback'
 import { inlineIcons } from './inline-icons'
 import { pluginTargets } from './plugin-targets'
@@ -36,6 +37,7 @@ export default defineConfig(({ mode }) => {
       // A path, not a package name: Vite would pre-bundle a package, with its own empty rules.
       react({ jsxImportSource: '/src/plugins' }),
       containerFallback(),
+      colorMixFallback(fileURLToPath(new URL('./src/styles/theme.css', import.meta.url))),
       tailwindcss(),
       inlineIcons(),
     ],
