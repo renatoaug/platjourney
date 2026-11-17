@@ -207,6 +207,10 @@
     align-items: center;
     gap: 3px;
     padding: 3px;
+    /* A fieldset keeps its own border and margins otherwise. */
+    margin: 0;
+    border: 0;
+    min-inline-size: 0;
     background: var(--color-bg-subtle);
     border-radius: var(--radius-control);
   }

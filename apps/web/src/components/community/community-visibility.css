@@ -1,0 +1,11 @@
+@layer screens {
+  .community-visibility {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+}

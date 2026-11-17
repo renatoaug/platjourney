@@ -50,7 +50,9 @@ test('a game from the library: progress, the guide numbers and the trophies', as
   expect(document.querySelector('.journey-trophies, #title-trophies')?.textContent).toContain(
     'De raspão',
   )
-  expect(screen.getByRole('link', { name: /Voltar/ }).getAttribute('href')).toBe('/discover')
+  expect(screen.getByRole('link', { name: /Voltar/ }).getAttribute('href')).toBe(
+    '/games?tab=discover',
+  )
   // The rest of the guide's numbers are on the guide's page.
   fireEvent.click(screen.getByRole('button', { name: /^Guia da platina/ }))
   expect(quickFacts()).toContain('Jogadas mínimas1')

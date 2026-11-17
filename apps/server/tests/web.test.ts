@@ -195,6 +195,7 @@ test('register and login sign in, start watching and set the cookie', async () =
       aiNotices: true,
       aiNoticesAvailable: config.automatic.notices,
       notifyTelegram: true,
+      communityVisible: true,
       pushKey: null,
       nativePush: false,
       androidPush: false,
@@ -776,6 +777,21 @@ test('the profile page adds the account', async () => {
     totalHours: 5,
     user: { id: me.id },
   })
+})
+
+test("another player's profile is shown only when they show up in the community", async () => {
+  const page = spyOn(profile, 'profilePage').mockResolvedValue({ totalHours: 9 } as never)
+  spyOn(lib, 'library').mockResolvedValue([])
+  const other = makeUser({ id: 'user:other', psn_account_id: '99', psn_online_id: 'Other_One' })
+  const find = spyOn(users, 'userByOnlineId').mockResolvedValue(other)
+  const shown = await send('GET', '/api/profile?user=other_one')
+  expect(shown.body).toEqual({ totalHours: 9 })
+  expect(page.mock.calls.at(-1)?.[1]).toBe(other)
+  find.mockResolvedValue({ ...other, community_visible: false })
+  expect((await send('GET', '/api/profile?user=other_one')).status).toBe(404)
+  find.mockResolvedValue({ ...other, demo: true })
+  expect((await send('GET', '/api/profile?user=other_one')).status).toBe(404)
+  expect((await send('GET', '/api/profile?user=../x')).status).toBe(400)
 })
 
 test('plans are read, discarded and made for 15 to 600 minutes', async () => {

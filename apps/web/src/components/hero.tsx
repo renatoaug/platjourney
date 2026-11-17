@@ -319,7 +319,7 @@ export function Hero({
           <h2 className="hero-title">{t('emptyTitle')}</h2>
           <p className="hero-caption">{t('emptyCaption')}</p>
         </div>
-        <Link className="button" to="/discover">
+        <Link className="button" to="/games?tab=discover">
           {t('exploreLibrary')} <Icon name="arrow" />
         </Link>
       </div>

@@ -375,7 +375,7 @@ export function Console({ data }: { data: AppStateData }) {
           <span className="eyebrow">{t('label.current')}</span>
           <p>{t('empty')}</p>
           <div className="console-actions">
-            <Link className="button" to="/discover">
+            <Link className="button" to="/games?tab=discover">
               {t('explore')} <Icon name="arrow" />
             </Link>
           </div>

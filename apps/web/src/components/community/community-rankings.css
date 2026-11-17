@@ -1,0 +1,292 @@
+@layer screens {
+  .community-rankings {
+    display: grid;
+    gap: 16px;
+  }
+
+  .community-rankings-bar {
+    width: 100%;
+    max-width: 640px;
+    justify-self: center;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  /* Which board: a segmented row of words, the chosen one in the accent. */
+  .community-board-tabs {
+    display: inline-flex;
+    gap: 4px;
+    margin: 0;
+    padding: 4px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-bg-subtle);
+    min-inline-size: 0;
+  }
+
+  .community-board-tabs button {
+    min-height: 34px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    cursor: pointer;
+  }
+
+  .community-board-tabs button[aria-pressed="true"] {
+    background: var(--color-surface-raised);
+    color: var(--color-accent);
+  }
+
+  .community-period {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+
+  .community-period .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .community-period:hover {
+    color: var(--color-accent);
+  }
+
+  .community-board.card {
+    display: grid;
+    gap: 20px;
+    padding: 24px;
+    max-width: 640px;
+    width: 100%;
+    justify-self: center;
+    background:
+      radial-gradient(
+        80% 50% at 50% 0%,
+        color-mix(in srgb, var(--color-trophy-gold) var(--alpha-tint), transparent),
+        transparent 70%
+      ),
+      var(--color-surface);
+  }
+
+  /* The podium: second, first and third, the first raised and crowned. */
+  .community-podium {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    grid-auto-flow: dense;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 0 0;
+    list-style: none;
+  }
+
+  .community-podium-step {
+    --place: var(--color-trophy-gold);
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .community-podium-step.place-1 {
+    grid-column: 2;
+  }
+
+  .community-podium-step.place-2 {
+    --place: var(--color-trophy-silver);
+    grid-column: 1;
+  }
+
+  .community-podium-step.place-3 {
+    --place: var(--color-trophy-bronze);
+    grid-column: 3;
+  }
+
+  .community-podium-face {
+    position: relative;
+    display: grid;
+    place-items: center;
+    margin-bottom: 14px;
+  }
+
+  .community-podium-face .community-avatar {
+    width: 64px;
+    height: 64px;
+    box-shadow:
+      0 0 0 3px var(--color-surface),
+      0 0 0 6px var(--place);
+  }
+
+  .community-podium-step.place-1 .community-podium-face .community-avatar {
+    width: 84px;
+    height: 84px;
+    box-shadow:
+      0 0 0 3px var(--color-surface),
+      0 0 0 6px var(--place),
+      0 0 28px color-mix(in srgb, var(--place) var(--alpha-strong), transparent);
+  }
+
+  .community-podium-step.place-1 {
+    margin-bottom: 18px;
+  }
+
+  .community-podium-crown {
+    position: absolute;
+    top: -28px;
+    color: var(--place);
+    filter: drop-shadow(
+      0 2px 6px color-mix(in srgb, var(--place) var(--alpha-strong), transparent)
+    );
+  }
+
+  .community-podium-crown .icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* The place on a badge over the avatar's foot. */
+  .community-podium-place {
+    position: absolute;
+    bottom: -12px;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-round);
+    background: var(--place);
+    color: var(--color-bg);
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    box-shadow: 0 0 0 3px var(--color-surface);
+  }
+
+  .community-rank-name {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--color-fg);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  a.community-rank-name:hover {
+    color: var(--color-accent);
+  }
+
+  .community-rank-value {
+    color: var(--color-accent);
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    white-space: nowrap;
+  }
+
+  .community-rank-game {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* After the podium: a plain list, one row per player. */
+  .community-rank-list {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .community-rank-list li,
+  .community-rank-mine {
+    display: grid;
+    grid-template-columns: 28px 36px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: var(--radius-control);
+  }
+
+  .community-rank-list li.mine {
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+  }
+
+  .community-rank-list .community-avatar,
+  .community-rank-mine .community-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .community-rank-pos {
+    color: var(--color-fg-subtle);
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .community-rank-who {
+    display: grid;
+    min-width: 0;
+  }
+
+  /* The reader's own place, pinned at the foot in the accent. */
+  .community-rank-mine {
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
+    color: var(--color-fg);
+    font-weight: var(--weight-semibold);
+  }
+
+  .community-rank-mine .community-rank-pos {
+    color: var(--color-accent);
+  }
+
+  .community-rank-mine.none {
+    grid-template-columns: 1fr;
+    color: var(--color-fg-muted);
+    font-weight: var(--weight-regular);
+    text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    .community-board.card {
+      padding: 18px 12px;
+    }
+
+    .community-podium-face .community-avatar {
+      width: 54px;
+      height: 54px;
+    }
+
+    .community-podium-step.place-1 .community-podium-face .community-avatar {
+      width: 70px;
+      height: 70px;
+    }
+
+    .community-board-tabs button {
+      padding: 0 12px;
+    }
+  }
+}

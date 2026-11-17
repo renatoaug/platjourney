@@ -35,6 +35,7 @@ const ICONS = [
   'refresh',
   'close',
   'globe',
+  'users',
   'chevron-up',
   'chevron-down',
   'bookmark',

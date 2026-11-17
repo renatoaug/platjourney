@@ -19,6 +19,7 @@ import { ACCOUNT_ROUTES } from './routes/account.ts'
 import { type ApiHandler, apiMessages, requestLocale } from './routes/api.ts'
 import { authRoutes } from './routes/auth.ts'
 import { CHAT_ROUTES } from './routes/chat.ts'
+import { COMMUNITY_ROUTES } from './routes/community.ts'
 import { demoAnswered } from './routes/demo.ts'
 import { GAME_ROUTES } from './routes/games.ts'
 import { HOME_ROUTES } from './routes/home.ts'
@@ -107,6 +108,7 @@ const API_ROUTES: Record<string, ApiHandler> = {
   ...CHAT_ROUTES,
   ...PLAN_ROUTES,
   ...INTEREST_ROUTES,
+  ...COMMUNITY_ROUTES,
 }
 
 async function api(

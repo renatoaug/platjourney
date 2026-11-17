@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { AnnualGoal, AnnualGoalSkeleton } from '../components/annual-goal'
+import { CommunityHighlights } from '../components/community/community-highlights'
 import { Console, ConsoleSkeleton } from '../components/console'
 import { GameCardsSkeleton, RadarCard } from '../components/game-cards'
 import { PushInvite } from '../components/push-invite'
@@ -70,8 +71,14 @@ const greeting = (t: Translator<typeof messages>, onlineId: string) => {
   })
 }
 
-/** `releases` replaces the calendar's own request (stories pass it in a fixed state). */
-export function Home({ releases = <Releases /> }: { releases?: ReactNode } = {}) {
+/** `releases` and `community` replace their own requests (stories pass them in a fixed state). */
+export function Home({
+  releases = <Releases />,
+  community = <CommunityHighlights />,
+}: {
+  releases?: ReactNode
+  community?: ReactNode
+} = {}) {
   const t = useMessages(messages)
   const { data } = useApp()
   // The profile is missing while PSN has not answered for this player.
@@ -126,6 +133,7 @@ export function Home({ releases = <Releases /> }: { releases?: ReactNode } = {})
         </div>
       </div>
       {releases}
+      {community}
       <section className="activity-section">
         <div className="section-head">
           <div>

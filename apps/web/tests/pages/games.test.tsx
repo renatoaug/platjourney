@@ -11,7 +11,10 @@ const handlers = { onSide: () => {}, onQuery: () => {}, onPage: () => {}, onRetr
 
 test('library uses personal PSN titles, not platinum ranking, with explicit journey links', async () => {
   const calls = mockApi({ '/api/library': sampleLibrary })
-  renderApp(<Games />, { value: { data: { ...SAMPLE_DATA, ranking: [] } } })
+  renderApp(<Games />, {
+    path: '/games?tab=library',
+    value: { data: { ...SAMPLE_DATA, ranking: [] } },
+  })
   await screen.findByRole('link', { name: 'Abrir jornada de ASTRO BOT' })
   expect(calls[0]?.path).toContain('scope=owned')
   expect(screen.getByText('Platina conquistada')).toBeTruthy()
@@ -26,7 +29,7 @@ test('search requests only owned games; no matches can be cleared', async () => 
     '/api/library': ({ path }) =>
       path.includes('q=zzz') ? { ...sampleLibrary, total: 0, items: [] } : sampleLibrary,
   })
-  renderApp(<Games />)
+  renderApp(<Games />, { path: '/games?tab=library' })
   await screen.findByText('ASTRO BOT')
   fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'zzz' } })
   await screen.findByText('Nenhum jogo com esse nome.')
@@ -55,7 +58,7 @@ test('explicit interests URL opens the integrated section and tab history is nav
     value: { data: { ...SAMPLE_DATA, goals: emptyGoals } },
   })
   expect(screen.getByText('Salve o primeiro jogo que você quer platinar.')).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', { name: 'Biblioteca PSN' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Biblioteca' }))
   await screen.findByText('ASTRO BOT')
   expect(screen.getByTestId('location').textContent).toBe('/games?tab=library')
   fireEvent.click(screen.getByRole('button', { name: 'Interesses' }))
@@ -89,7 +92,7 @@ test('pagination preserves scope and opens later library entries', async () => {
       page: path.includes('page=2') ? 2 : 1,
     }),
   })
-  renderApp(<Games />)
+  renderApp(<Games />, { path: '/games?tab=library' })
   await screen.findByText('ASTRO BOT')
   fireEvent.click(screen.getByRole('button', { name: 'Próxima página' }))
   await waitFor(() => expect(calls.at(-1)?.path).toContain('scope=owned&page=2'))
@@ -113,14 +116,12 @@ test('goals and achievements have their own URL without losing interests', async
     path: '/games?tab=goals',
     value: { data: { ...SAMPLE_DATA, goals: sampleGoals } },
   })
-  expect(
-    screen.getByRole('button', { name: 'Metas e conquistas' }).getAttribute('aria-pressed'),
-  ).toBe('true')
+  expect(screen.getByRole('button', { name: 'Metas' }).getAttribute('aria-pressed')).toBe('true')
   expect(screen.queryByRole('heading', { name: /^Meus interesses/ })).toBeNull()
   expect(document.querySelector('.goal-season')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Interesses' }))
   expect(screen.getByTestId('location').textContent).toBe('/games?tab=interests')
   expect(screen.getByRole('heading', { name: /^Meus interesses/ })).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', { name: 'Metas e conquistas' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Metas' }))
   expect(screen.getByTestId('location').textContent).toBe('/games?tab=goals')
 })

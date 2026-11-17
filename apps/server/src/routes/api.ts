@@ -60,6 +60,7 @@ export const publicUser = (u: User) => ({
   skin: u.skin ?? DEFAULT_SKIN,
   aiNotices: u.ai_notices !== false,
   notifyTelegram: u.notify_telegram !== false,
+  communityVisible: u.community_visible !== false,
   // The key a browser subscribes to push with; null when the instance has push off.
   pushKey: pushEnabled() ? config.push.publicKey : null,
   nativePush: apnsEnabled(),

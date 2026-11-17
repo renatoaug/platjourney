@@ -1,12 +1,14 @@
 /** Profile page: level, numbers, pace and platinums with search and pages. Settings have their own page. */
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
+import { DifficultyMeter } from '../components/difficulty-meter'
 import { titleHref } from '../components/tip'
 import { TrophyRoom, TrophyRoomSkeleton } from '../components/trophy-room'
-import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
+import { defineMessages, getLocale, Language, type Translator, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
+import { rarityTier } from '../lib/community'
 import { compact, fmtHours, fmtLong, fmtRate, number, pct } from '../lib/format'
 import type { Game, Me, ProfileSummary } from '../lib/types'
 import { Cover } from '../ui/cover'
@@ -23,6 +25,8 @@ import './profile.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     loadFailed: 'Não conseguimos carregar o perfil.',
+    backToCommunity: 'Comunidade',
+    notInCommunity: 'Esse jogador não aparece na Comunidade.',
     levelLabel: 'Nível',
     settings: 'Configurações',
     privateTitle: 'Seus troféus estão privados',
@@ -31,6 +35,9 @@ const messages = defineMessages({
     openSettings: 'Abrir configurações',
     levelProgress: '{progress}% para o {next}',
     pace: 'SEU RITMO',
+    publicPace: 'RITMO',
+    publicMost: 'TEMPO DE JOGO',
+    publicNoData: 'O ritmo por ano aparece aqui depois da primeira platina.',
     byYear: 'Platinas por ano',
     most: { eyebrow: 'SEU TEMPO', title: 'Mais jogados' },
     noDataTitle: 'Sem platinas para contar',
@@ -53,6 +60,10 @@ const messages = defineMessages({
     },
     collection: {
       eyebrow: 'SUA COLEÇÃO',
+      publicEyebrow: 'COLEÇÃO',
+      publicPlaceholder: 'Buscar na coleção',
+      publicSyncing: 'A coleção está sendo sincronizada.',
+      publicEmpty: 'A primeira platina vai aparecer aqui, com a data e a raridade.',
       title: 'Platinas',
       searchLabel: 'Buscar platina',
       placeholder: 'Buscar na sua coleção',
@@ -76,6 +87,8 @@ const messages = defineMessages({
   },
   [Language.En]: {
     loadFailed: 'Could not load the profile.',
+    backToCommunity: 'Community',
+    notInCommunity: 'This player does not show up in the Community.',
     levelLabel: 'Level',
     settings: 'Settings',
     privateTitle: 'Your trophies are private',
@@ -84,6 +97,9 @@ const messages = defineMessages({
     openSettings: 'Open settings',
     levelProgress: '{progress}% to {next}',
     pace: 'YOUR PACE',
+    publicPace: 'PACE',
+    publicMost: 'TIME PLAYED',
+    publicNoData: 'The pace per year shows up here after the first platinum.',
     byYear: 'Platinums per year',
     most: { eyebrow: 'YOUR TIME', title: 'Most played' },
     noDataTitle: 'No platinums to count',
@@ -106,6 +122,10 @@ const messages = defineMessages({
     },
     collection: {
       eyebrow: 'YOUR COLLECTION',
+      publicEyebrow: 'COLLECTION',
+      publicPlaceholder: 'Search the collection',
+      publicSyncing: 'The collection is syncing.',
+      publicEmpty: 'The first platinum will show up here, with its date and rarity.',
       title: 'Platinums',
       searchLabel: 'Search platinums',
       placeholder: 'Search your collection',
@@ -148,13 +168,16 @@ export interface ProfileData {
   rarest: Platinum | null
   fastestStreak: { from: string; to: string; count: number } | null
   totalHours: number
-  mostPlayed: { game: Game; hours: number }[]
-  user: Me
+  mostPlayed: { game: Game; hours: number; difficulty?: number | null }[]
+  /** Only on one's own profile. */
+  user?: Me
 }
 
 type Load =
   | { kind: 'loading' }
   | { kind: 'error' }
+  // Another player's profile, of someone who does not show up in the community.
+  | { kind: 'missing' }
   // Trophies hidden: no profile to show, but the account must still be reachable.
   | { kind: 'account'; user: Me }
   | { kind: 'ready'; data: ProfileData }
@@ -166,6 +189,61 @@ let platinumPage = 1
 let platinumQuery = ''
 
 const lower = (s: string) => s.toLocaleLowerCase(getLocale())
+
+/** A player's public profile, opened from the community: what everyone sees, one's own included. */
+export function PublicProfile() {
+  const { user = '' } = useParams()
+  return <PlayerProfile key={user} user={user} />
+}
+
+/** The public profile: the same page, read only, with the way back to the community. */
+function PlayerProfile({ user }: { user: string }) {
+  const t = useMessages(messages)
+  const [load, setLoad] = useState<Load>({ kind: 'loading' })
+  useEffect(() => {
+    let live = true
+    api<ProfileData>(`/api/profile?user=${encodeURIComponent(user)}`)
+      .then((data) => live && setLoad({ kind: 'ready', data }))
+      .catch(
+        (e) =>
+          live &&
+          setLoad({
+            kind:
+              e instanceof ApiError && (e.status === 404 || e.code === 'trophies_private')
+                ? 'missing'
+                : 'error',
+          }),
+      )
+    return () => {
+      live = false
+    }
+  }, [user])
+  const back = (
+    <Link to="/community" className="text-link profile-back">
+      <Icon name="chevron-left" /> {t('backToCommunity')}
+    </Link>
+  )
+  return (
+    <Page path="/profile">
+      <div id="profile-page">
+        {load.kind === 'loading' && <ProfileSkeleton />}
+        {load.kind === 'error' && <ErrorState action={back}>{t('loadFailed')}</ErrorState>}
+        {load.kind === 'missing' && (
+          <EmptyState icon="users" action={back}>
+            {t('notInCommunity')}
+          </EmptyState>
+        )}
+        {load.kind === 'ready' && (
+          <>
+            {back}
+            {/* The public version: no Settings, even on one's own. */}
+            <ProfileView data={load.data} action={false} publicView />
+          </>
+        )}
+      </div>
+    </Page>
+  )
+}
 
 export function Profile() {
   const t = useMessages(messages)
@@ -252,12 +330,27 @@ export function ProfilePrivate() {
   )
 }
 
+/** Behind the player's card: the art of their latest platinum. */
+const heroArt = (platinums: Platinum[]) => {
+  const last = platinums.reduce<Platinum | null>(
+    (a, p) => (!a || p.earnedAt > a.earnedAt ? p : a),
+    null,
+  )
+  return last?.game.art_url ?? last?.game.cover_url ?? undefined
+}
+
 export function ProfileView({
   data: d,
   onSearching,
+  action,
+  publicView = false,
 }: {
   data: ProfileData
   onSearching?: (focused: boolean) => void
+  /** In the corner of the card: Settings on one's own profile, the way back on another's. */
+  action?: ReactNode
+  /** The public version, opened from the community: the texts do not speak to the reader. */
+  publicView?: boolean
 }) {
   const t = useMessages(messages)
   const s = d.summary
@@ -268,13 +361,18 @@ export function ProfileView({
   return (
     <>
       <div className="card profile-hero profile-identity">
-        <Link
-          to="/settings"
-          className="button secondary sm profile-settings"
-          aria-label={t('settings')}
-        >
-          <Icon name="settings" /> <span>{t('settings')}</span>
-        </Link>
+        {heroArt(d.platinums) && (
+          <img className="profile-hero-art" src={heroArt(d.platinums)} alt="" loading="lazy" />
+        )}
+        {action ?? (
+          <Link
+            to="/settings"
+            className="button secondary sm profile-settings"
+            aria-label={t('settings')}
+          >
+            <Icon name="settings" /> <span>{t('settings')}</span>
+          </Link>
+        )}
         <img className="profile-avatar" src={s.avatarUrl || undefined} alt="" />
         <div className="profile-name">
           <h1>{s.onlineId}</h1>
@@ -379,7 +477,7 @@ export function ProfileView({
       <div className="profile-layout">
         <div className="profile-band">
           <div className="card">
-            <span className="eyebrow">{t('pace')}</span>
+            <span className="eyebrow">{t(publicView ? 'publicPace' : 'pace')}</span>
             <h2>{t('byYear')}</h2>
             {d.byYear.length ? (
               <div className="years">
@@ -393,20 +491,26 @@ export function ProfileView({
               </div>
             ) : (
               <EmptyState icon="dashboard" title={t('noDataTitle')}>
-                {t('noData')}
+                {t(publicView ? 'publicNoData' : 'noData')}
               </EmptyState>
             )}
           </div>
           {d.mostPlayed.length > 0 && (
             <div className="card profile-most">
-              <span className="eyebrow">{t('most.eyebrow')}</span>
+              <span className="eyebrow">{publicView ? t('publicMost') : t('most.eyebrow')}</span>
               <h2>{t('most.title')}</h2>
               <ol>
-                {d.mostPlayed.slice(0, 3).map((m) => (
+                {d.mostPlayed.slice(0, 3).map((m, i) => (
                   <li key={m.game.id}>
                     <Link to={titleHref(m.game.id)}>
+                      <i className="profile-most-rank">{i + 1}</i>
                       <Cover url={m.game.cover_url} name={m.game.name} className="plat-cover" />
-                      <span>{m.game.name}</span>
+                      <span className="profile-most-name">
+                        <span>{m.game.name}</span>
+                        {m.difficulty ? (
+                          <DifficultyMeter value={m.difficulty} look="compact" />
+                        ) : null}
+                      </span>
                       <b>{fmtHours(m.hours)}</b>
                     </Link>
                   </li>
@@ -414,45 +518,60 @@ export function ProfileView({
               </ol>
             </div>
           )}
-          <div className="profile-band-side">
-            <RarestPlatinum rarest={d.rarest} />
-          </div>
+          {/* One's own profile only: where plugins add their card (the plan); nothing on the public one. */}
+          {!publicView && (
+            <div className="profile-band-side">
+              <RarestPlatinum />
+            </div>
+          )}
         </div>
         <PlatinumCollection
           platinums={d.platinums}
           pending={d.pendingPlatinums}
           onSearching={onSearching}
+          publicView={publicView}
         />
       </div>
     </>
   )
 }
 
-function RarestPlatinum({ rarest }: { rarest: Platinum | null }) {
-  const t = useMessages(messages)
-  if (!rarest) return null
-  return (
-    <Link className="card profile-rarest" to={titleHref(rarest.game.id)}>
-      <Cover url={rarest.game.cover_url} name={rarest.game.name} className="plat-cover" />
-      <span>
-        <span className="eyebrow">{t('tiles.rarest')}</span>
-        <b>{rarest.game.name}</b>
-        <small className="muted">{t('tiles.rarestSub', { rate: fmtRate(rarest.rarity) })}</small>
-      </span>
-    </Link>
-  )
+/** The anchor under the profile's numbers where plugins add a card (the subscription plan). The
+ * rarest platinum it used to show now leads the trophy room, so it draws nothing of its own. */
+function RarestPlatinum() {
+  return null
+}
+
+/** The collection's own words: speaking to the player on their profile, neutral on the public one. */
+function collectionWords(t: Translator<typeof messages>, publicView: boolean) {
+  return publicView
+    ? {
+        eyebrow: t('collection.publicEyebrow'),
+        placeholder: t('collection.publicPlaceholder'),
+        syncing: t('collection.publicSyncing'),
+        empty: t('collection.publicEmpty'),
+      }
+    : {
+        eyebrow: t('collection.eyebrow'),
+        placeholder: t('collection.placeholder'),
+        syncing: t('collection.syncing'),
+        empty: t('collection.empty'),
+      }
 }
 
 function PlatinumCollection({
   platinums,
   pending,
   onSearching,
+  publicView = false,
 }: {
   platinums: Platinum[]
   pending: number
   onSearching?: (focused: boolean) => void
+  publicView?: boolean
 }) {
   const t = useMessages(messages)
+  const words = collectionWords(t, publicView)
   const [query, setQuery] = useState(platinumQuery)
   const [page, setPage] = useState(platinumPage)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -469,7 +588,7 @@ function PlatinumCollection({
     <div className="card platinum-collection">
       <div className="collection-heading">
         <div>
-          <span className="eyebrow">{t('collection.eyebrow')}</span>
+          <span className="eyebrow">{words.eyebrow}</span>
           <h2 className="goal-section-title">
             {t('collection.title')} <span>{platinums.length}</span>
           </h2>
@@ -479,7 +598,7 @@ function PlatinumCollection({
       {/* No platinum yet: nothing to search or count, only what will show up here. */}
       {platinums.length === 0 && !pending ? (
         <EmptyState icon="trophy" title={t('collection.emptyTitle')}>
-          {t('collection.empty')}
+          {words.empty}
         </EmptyState>
       ) : (
         <>
@@ -489,7 +608,7 @@ function PlatinumCollection({
               id="platinum-search"
               ref={searchRef}
               aria-label={t('collection.searchLabel')}
-              placeholder={t('collection.placeholder')}
+              placeholder={words.placeholder}
               value={query}
               onFocus={() => onSearching?.(true)}
               onBlur={() => onSearching?.(false)}
@@ -516,30 +635,31 @@ function PlatinumCollection({
             {matches.length ? (
               matches.slice(start, start + PAGE_SIZE).map((p) => (
                 <Link key={p.game.id} className="collection-tile" to={titleHref(p.game.id)}>
-                  <Cover url={p.game.cover_url} name={p.game.name} className="plat-cover" />
-                  <div>
-                    <h3>{p.game.name}</h3>
-                    <p>
-                      {p.platform} <span>·</span>{' '}
-                      {t('collection.rarity', { rate: fmtRate(p.rarity) })}
-                      {p.hours != null && (
-                        <>
-                          {' '}
-                          <span>·</span> {t('collection.played', { hours: fmtHours(p.hours) })}
-                        </>
-                      )}
-                    </p>
-                    <time dateTime={p.earnedAt}>{fmtLong(p.earnedAt)}</time>
+                  <div className="collection-art">
+                    <Cover url={p.game.cover_url} name={p.game.name} className="plat-cover" />
+                    <TrophyMedal type="platinum" className="collection-tile-medal" />
+                    <span className={`collection-rarity is-${rarityTier(p.rarity)}`}>
+                      {fmtRate(p.rarity)}%
+                    </span>
+                    <div className="collection-info">
+                      <h3>{p.game.name}</h3>
+                      <p>
+                        {p.platform}
+                        {p.hours != null && (
+                          <>
+                            {' '}
+                            <span>·</span> {fmtHours(p.hours)}
+                          </>
+                        )}
+                      </p>
+                      <time dateTime={p.earnedAt}>{fmtLong(p.earnedAt)}</time>
+                    </div>
                   </div>
                 </Link>
               ))
             ) : (
               <EmptyState>
-                {query
-                  ? t('collection.tryAnother')
-                  : pending
-                    ? t('collection.syncing')
-                    : t('collection.empty')}
+                {query ? t('collection.tryAnother') : pending ? words.syncing : words.empty}
               </EmptyState>
             )}
           </div>
@@ -662,20 +782,6 @@ export function ProfileSkeleton() {
                 </li>
               ))}
             </ol>
-          </div>
-          <div className="profile-band-side">
-            <div className="card profile-rarest">
-              <span className="plat-cover sk" aria-hidden="true" />
-              <span>
-                <span className="eyebrow">{t('tiles.rarest')}</span>
-                <b aria-hidden="true">
-                  <Sk w="120px" style={{ height: '1lh', maxWidth: '100%' }} />
-                </b>
-                <small className="muted" aria-hidden="true">
-                  <Sk w="85%" style={{ height: '1lh' }} />
-                </small>
-              </span>
-            </div>
           </div>
         </div>
         <div className="card platinum-collection">

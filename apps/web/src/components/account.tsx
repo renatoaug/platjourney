@@ -60,6 +60,11 @@ const messages = defineMessages({
       skinSaved: 'Skin salva.',
       skinName: { default: 'Padrão', neon: 'Neon', pixel: 'Pixel' },
       dlc: 'Contar DLCs no progresso',
+      community: 'Aparecer na Comunidade',
+      communityHint:
+        'Suas platinas, troféus raros e medalhas aparecem no feed e nos rankings da Comunidade. Desligado, ninguém vê o que você conquista.',
+      communityOn: 'Você aparece na Comunidade.',
+      communityOff: 'Você saiu da Comunidade.',
       dlcHint:
         'A platina só pede o jogo base. Ligue para ver o progresso com as DLCs em todo o app, no Telegram e no Nexo.',
       notices: 'Avisos escritos pelo Nexo',
@@ -129,6 +134,11 @@ const messages = defineMessages({
       skinSaved: 'Skin saved.',
       skinName: { default: 'Default', neon: 'Neon', pixel: 'Pixel' },
       dlc: 'Count DLC in progress',
+      community: 'Show me in the Community',
+      communityHint:
+        'Your platinums, rare trophies and medals show up in the Community feed and rankings. Off, nobody sees what you earn.',
+      communityOn: 'You show up in the Community.',
+      communityOff: 'You left the Community.',
       dlcHint:
         'The platinum only needs the base game. Turn on to see progress with DLC across the app, on Telegram and in Nexo.',
       notices: 'Notices written by Nexo',
@@ -204,6 +214,48 @@ function NoticesSetting({ user }: { user: Me }) {
         role="switch"
         className="switch"
         id="pref-notices"
+        checked={on}
+        aria-checked={on}
+        disabled={saving || user.demo}
+        onChange={(e) => change(e.target.checked)}
+      />
+    </label>
+  )
+}
+
+/** Whether the player's platinums, rare trophies and medals show up in the community. */
+function CommunitySetting({ user }: { user: Me }) {
+  const t = useMessages(messages)
+  const locked = useDemoLock(user.demo)
+  const { setMe } = useApp()
+  const [on, setOn] = useState(user.communityVisible !== false)
+  const [saving, setSaving] = useState(false)
+  useEffect(() => setOn(user.communityVisible !== false), [user.communityVisible])
+  const change = async (next: boolean) => {
+    setOn(next)
+    setSaving(true)
+    try {
+      const saved = await api<{ user: Me }>('/api/account/preferences', { communityVisible: next })
+      setMe(saved.user)
+      toast(next ? t('preferences.communityOn') : t('preferences.communityOff'), 'success')
+    } catch (e) {
+      setOn(!next)
+      if (!handled(e)) toast(t('preferences.saveFailed'))
+    }
+    setSaving(false)
+  }
+  return (
+    <label className="setting-row" htmlFor="pref-community">
+      <SettingTitle
+        title={t('preferences.community')}
+        hint={t('preferences.communityHint')}
+        note={locked}
+      />
+      <input
+        type="checkbox"
+        role="switch"
+        className="switch"
+        id="pref-community"
         checked={on}
         aria-checked={on}
         disabled={saving || user.demo}
@@ -419,6 +471,7 @@ function PreferencesCard({ user }: { user: Me }) {
           />
         </label>
         {user.aiNoticesAvailable && <NoticesSetting user={user} />}
+        <CommunitySetting user={user} />
         <PlusSetting user={user} />
         <LanguageSetting />
         <div className="setting-row">

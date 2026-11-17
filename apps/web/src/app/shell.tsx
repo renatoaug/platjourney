@@ -28,14 +28,14 @@ import {
   useMessages,
 } from '../i18n/i18n'
 import { keepBottomBarOnScreen } from '../lib/native'
-import { Discover } from '../pages/discover'
+import { Community } from '../pages/community'
 import { Game } from '../pages/game'
 import { Games } from '../pages/games'
 import { Guides } from '../pages/guides'
 import { History } from '../pages/history'
 import { Home } from '../pages/home'
 import { Nexo } from '../pages/nexo'
-import { Profile } from '../pages/profile'
+import { Profile, PublicProfile } from '../pages/profile'
 import { Settings } from '../pages/settings'
 import { Title } from '../pages/title'
 import { menuPages, pluginPages } from '../plugins'
@@ -54,6 +54,7 @@ const messages = defineMessages({
       nexo: 'Nexo',
       goals: 'Interesses',
       discover: 'Descobrir',
+      community: 'Comunidade',
       guides: 'Guias',
       history: 'Histórico',
       profile: 'Meu perfil',
@@ -97,6 +98,7 @@ const messages = defineMessages({
       nexo: 'Nexo',
       goals: 'Interests',
       discover: 'Discover',
+      community: 'Community',
       guides: 'Guides',
       history: 'History',
       profile: 'My profile',
@@ -134,11 +136,18 @@ const messages = defineMessages({
   },
 })
 
+/** Discover became a tab of Games: old links keep their options (?scope=interests). */
+function DiscoverMoved() {
+  const { search } = useLocation()
+  const extra = search ? `&${search.slice(1)}` : ''
+  return <Navigate to={`/games?tab=discover${extra}`} replace />
+}
+
 const NAV: { to: string; label: MessageKey<typeof messages>; icon: string }[] = [
   { to: '/', label: 'nav.home', icon: 'dashboard' },
   { to: '/game', label: 'nav.game', icon: 'compass' },
   { to: '/guides', label: 'nav.guides', icon: 'book-open' },
-  { to: '/discover', label: 'nav.discover', icon: 'globe' },
+  { to: '/community', label: 'nav.community', icon: 'users' },
   { to: '/games?tab=interests', label: 'nav.games', icon: 'gamepad' },
 ]
 
@@ -149,7 +158,8 @@ const LABELS: Record<string, MessageKey<typeof messages>> = {
   '/overview': 'nav.home',
   '/nexo': 'nav.nexo',
   '/goals': 'nav.goals',
-  '/discover': 'nav.discover',
+  '/discover': 'nav.games',
+  '/community': 'nav.community',
   '/guides': 'nav.guides',
   '/history': 'nav.history',
   '/profile': 'nav.profile',
@@ -376,7 +386,11 @@ export function Shell() {
   const page = pluginPages.find((p) => p.path === pathname)
   const label = page
     ? page.label[locale]
-    : t(isTitle ? 'nav.title' : (LABELS[pathname] ?? 'nav.home'))
+    : t(
+        isTitle
+          ? 'nav.title'
+          : (LABELS[pathname.replace(/^\/profiles\/.+/, '/community')] ?? 'nav.home'),
+      )
 
   useEffect(() => {
     // A game page names the tab after the game once it knows it; a generic "Jogo" first would only
@@ -439,10 +453,12 @@ export function Shell() {
           <Route path="/game" element={<Game />} />
           <Route path="/nexo" element={<Nexo />} />
           <Route path="/goals" element={<Navigate to="/games?tab=goals" replace />} />
-          <Route path="/discover" element={<Discover />} />
+          <Route path="/discover" element={<DiscoverMoved />} />
+          <Route path="/community" element={<Community />} />
           <Route path="/guides" element={<Guides />} />
           <Route path="/history" element={<History />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profiles/:user" element={<PublicProfile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/title/*" element={<Title />} />
           {pluginPages.map((p) => (

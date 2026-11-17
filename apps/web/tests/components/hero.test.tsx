@@ -74,7 +74,7 @@ test('no game: how to start one', () => {
   renderApp(<Hero game={null} />)
   expect(screen.getByRole('heading', { name: 'O próximo desafio é seu.' })).toBeTruthy()
   expect(screen.getByRole('link', { name: /Explorar minha biblioteca/ }).getAttribute('href')).toBe(
-    '/discover',
+    '/games?tab=discover',
   )
 })
 

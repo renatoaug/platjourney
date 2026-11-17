@@ -7,14 +7,14 @@ import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtRate } from '../lib/format'
 import type { Platinum } from '../pages/profile'
 import { Sk } from '../ui/skeleton'
+import { TrophyMedal } from '../ui/trophy-medal'
 import { image } from './game-showcase'
 import { titleHref } from './tip'
 import './trophy-room.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    eyebrow: 'Sala de troféus',
-    title: 'Seus recordes',
+    eyebrow: 'Platinas em destaque',
     rarest: 'A mais rara',
     rarestStat: '{rate}% dos jogadores têm',
     fastest: 'A mais rápida',
@@ -25,8 +25,7 @@ const messages = defineMessages({
     firstStat: 'em {date}',
   },
   [Language.En]: {
-    eyebrow: 'Trophy room',
-    title: 'Your records',
+    eyebrow: 'Standout platinums',
     rarest: 'The rarest',
     rarestStat: '{rate}% of players have it',
     fastest: 'The fastest',
@@ -110,10 +109,9 @@ export function TrophyRoom({ platinums }: { platinums: Platinum[] }) {
   const records = recordsOf(platinums, t)
   return (
     <section className="trophy-room" aria-labelledby="trophy-room-title">
-      <header>
-        <span className="eyebrow">{t('eyebrow')}</span>
-        <h2 id="trophy-room-title">{t('title')}</h2>
-      </header>
+      <h2 id="trophy-room-title" className="eyebrow trophy-room-title">
+        <TrophyMedal type="platinum" /> {t('eyebrow')}
+      </h2>
       <div className="room-records">
         {records.map((r) => (
           <RecordCard key={r.key} record={r} />
@@ -129,10 +127,9 @@ export function TrophyRoomSkeleton() {
   const titleId = useId()
   return (
     <section className="trophy-room" aria-labelledby={titleId} aria-busy="true">
-      <header>
-        <span className="eyebrow">{t('eyebrow')}</span>
-        <h2 id={titleId}>{t('title')}</h2>
-      </header>
+      <h2 id={titleId} className="eyebrow trophy-room-title">
+        <TrophyMedal type="platinum" /> {t('eyebrow')}
+      </h2>
       <div className="room-records">
         {(['rarest', 'fastest', 'longest', 'first'] as const).map((key) => (
           <div key={key} className={`room-record ${key}`}>

@@ -4,6 +4,7 @@
  * guide as it was.
  */
 import { closingSteps, type PlacedGuide } from '../../../shared/journey/places.ts'
+import { keepRarities } from './community.ts'
 import type { TrophyStatus } from './psn.ts'
 import { saveUnlocks, unlocksOn } from './repository/unlock.ts'
 
@@ -11,6 +12,7 @@ import { saveUnlocks, unlocksOn } from './repository/unlock.ts'
 const saved = new Map<string, number>()
 
 export function keepUnlocks(user: string, np: string, trophies: TrophyStatus[]) {
+  keepRarities(np, trophies)
   const earned = trophies.flatMap((t) =>
     t.earned && t.earnedAt ? [{ id: t.id, earnedAt: t.earnedAt }] : [],
   )

@@ -45,9 +45,9 @@ test('no platinum, no room', () => {
 
 test('loading reserves the records showcase without invented facts or clickable game links', () => {
   const { container } = renderApp(<TrophyRoomSkeleton />)
-  expect(screen.getByRole('region', { name: 'Seus recordes' }).getAttribute('aria-busy')).toBe(
-    'true',
-  )
+  expect(
+    screen.getByRole('region', { name: 'Platinas em destaque' }).getAttribute('aria-busy'),
+  ).toBe('true')
   expect(container.querySelectorAll('.room-record')).toHaveLength(4)
   expect(container.querySelectorAll('.room-record-body .sk')).toHaveLength(8)
   expect(container.querySelector('a.room-record')).toBeNull()

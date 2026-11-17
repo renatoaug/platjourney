@@ -9,19 +9,27 @@ import {
   sessionCookie,
   sessionHash,
 } from '../auth.ts'
+import { forgetCommunity } from '../community.ts'
 import { config } from '../config.ts'
 import { isDemo } from '../demo.ts'
 import { fcmEnabled } from '../fcm.ts'
 import { forgetUser } from '../game-context.ts'
 import { json, readBody } from '../http.ts'
 import { defineMessages, isLocale, Language, translator } from '../i18n.ts'
+import { library } from '../library.ts'
 import { consentClient, decide } from '../oauth.ts'
 import { profilePage } from '../profile.ts'
 import { pushEnabled, pushTo } from '../push.ts'
 import { deleteNativeDevice, saveNativeDevice } from '../repository/native-push.ts'
 import { connectionsOf, deleteConnection } from '../repository/oauth.ts'
 import { deletePushSubscription, savePushSubscription } from '../repository/push-subscription.ts'
-import { setLinkCode, setTrophyVisibility, type User, updateUser } from '../repository/user.ts'
+import {
+  setLinkCode,
+  setTrophyVisibility,
+  type User,
+  updateUser,
+  userByOnlineId,
+} from '../repository/user.ts'
 import { botUsername } from '../telegram.ts'
 import { type Api, type ApiHandler, accountUser } from './api.ts'
 import { forgetSummary } from './home.ts'
@@ -64,18 +72,20 @@ function listChoices(body: Record<string, unknown>): Partial<User> | null {
   return fields
 }
 
-// Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices, the language,
+// Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices, showing up in
+// the community, the language,
 // the PS Plus tier, the app's accent color and its skin.
 async function savePreferences({ req, res, me, locale: language }: Api) {
   const t = translator(messages, language)
   const body = await readBody(req)
-  const { includeDlcProgress, aiNotices, notifyTelegram, locale } = body
+  const { includeDlcProgress, aiNotices, notifyTelegram, communityVisible, locale } = body
   const choices = listChoices(body)
   if (!choices) return json(res, 400, { error: 'invalid' })
   const fields: Partial<User> = { ...choices }
   if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
   if (typeof aiNotices === 'boolean') fields.ai_notices = aiNotices
   if (typeof notifyTelegram === 'boolean') fields.notify_telegram = notifyTelegram
+  if (typeof communityVisible === 'boolean') fields.community_visible = communityVisible
   if (locale !== undefined) {
     if (!isLocale(locale))
       return json(res, 400, { error: 'invalid_locale', message: t('invalidLocale') })
@@ -83,6 +93,7 @@ async function savePreferences({ req, res, me, locale: language }: Api) {
   }
   if (!Object.keys(fields).length) return json(res, 400, { error: 'invalid' })
   await updateUser(me.id, fields)
+  if (fields.community_visible !== undefined) forgetCommunity()
   return json(res, 200, { user: await accountUser({ ...me, ...fields }) })
 }
 
@@ -259,11 +270,24 @@ export const ACCOUNT_ROUTES: Record<string, ApiHandler> = {
     forgetSummary(me.id)
     return json(res, 200, { ok: true }, { 'set-cookie': sessionCookie(null) })
   },
-  'GET /api/profile': async ({ res, me, titles }) =>
-    json(res, 200, {
+  // ?user=<id>: another player's profile, only of someone who shows up in the community.
+  'GET /api/profile': async ({ res, url, me, titles }) => {
+    // ?user=<PSN name>: the public version, even of one's own profile: what the others see,
+    // without the account.
+    const other = url.searchParams.get('user')
+    if (other) {
+      if (!/^[A-Za-z0-9_-]{3,16}$/.test(other)) return json(res, 400, { error: 'invalid' })
+      const self = other.toLowerCase() === (me.psn_online_id ?? '').toLowerCase()
+      const player = self ? me : await userByOnlineId(other)
+      if (!player || (!self && (isDemo(player) || player.community_visible === false)))
+        return json(res, 404, { error: 'not_found' })
+      return json(res, 200, await profilePage(await library(player.psn_account_id), player))
+    }
+    return json(res, 200, {
       ...(await profilePage(await titles(), me)),
       user: await accountUser(me),
-    }),
+    })
+  },
   'GET /api/oauth/client': consentInfo,
   'POST /api/oauth/authorize': consent,
   'GET /api/connections': connections,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
@@ -15,6 +15,7 @@ import { Icon } from '../ui/icon'
 import { Pager } from '../ui/pager'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
+import { Discover } from './discover'
 import { GoalsSkeleton, GoalsView } from './goals'
 import './games.css'
 
@@ -23,9 +24,10 @@ const messages = defineMessages({
     eyebrow: 'Sua coleção de platinas',
     title: 'Seus jogos',
     lead: 'Escolha um jogo para acompanhar a platina.',
-    library: 'Biblioteca PSN',
+    library: 'Biblioteca',
     interests: 'Interesses',
-    goals: 'Metas e conquistas',
+    discover: 'Descobrir',
+    goals: 'Metas',
     tabs: 'Seus jogos',
     source: 'Progresso conforme sua preferência de DLC.',
     base: 'Jogo base',
@@ -61,9 +63,10 @@ const messages = defineMessages({
     eyebrow: 'Your platinum collection',
     title: 'Your games',
     lead: 'Choose a game to follow your platinum journey.',
-    library: 'PSN library',
+    library: 'Library',
     interests: 'Interests',
-    goals: 'Goals and achievements',
+    discover: 'Discover',
+    goals: 'Goals',
     tabs: 'Your games',
     source: 'Progress follows your DLC preference.',
     base: 'Base game',
@@ -99,13 +102,16 @@ const messages = defineMessages({
 export function Games() {
   const { data, sync, me } = useApp()
   const [params, setParams] = useSearchParams()
-  const [keptSide, setKeptSide] = useKept<'library' | 'interests' | 'goals'>(
+  const [keptSide, setKeptSide] = useKept<'library' | 'interests' | 'goals' | 'discover'>(
     'games.side',
-    'library',
+    'discover',
   )
   const tab = params.get('tab')
-  const side = tab === 'library' || tab === 'interests' || tab === 'goals' ? tab : keptSide
-  const setSide = (value: 'library' | 'interests' | 'goals') => {
+  const side =
+    tab === 'library' || tab === 'interests' || tab === 'goals' || tab === 'discover'
+      ? tab
+      : keptSide
+  const setSide = (value: 'library' | 'interests' | 'goals' | 'discover') => {
     setKeptSide(value)
     setParams((before) => {
       const next = new URLSearchParams(before)
@@ -159,6 +165,7 @@ export function Games() {
       goals={data?.goals}
       readOnly={me.demo === true}
       interestsFailed={!data && sync === 'failed'}
+      discover={<Discover embedded />}
     />
   )
 }
@@ -175,11 +182,12 @@ export function GamesView({
   goals,
   readOnly = false,
   interestsFailed = false,
+  discover = null,
 }: {
   library: OwnedLibrary | null
   failed?: boolean
-  side?: 'library' | 'interests' | 'goals'
-  onSide: (side: 'library' | 'interests' | 'goals') => void
+  side?: 'library' | 'interests' | 'goals' | 'discover'
+  onSide: (side: 'library' | 'interests' | 'goals' | 'discover') => void
   query?: string
   onQuery: (query: string) => void
   onPage: (page: number) => void
@@ -187,6 +195,8 @@ export function GamesView({
   goals?: YearGoals
   readOnly?: boolean
   interestsFailed?: boolean
+  /** What the Discover tab shows: the Discover page's body, passed in so stories need no network. */
+  discover?: ReactNode
 }) {
   const t = useMessages(messages)
   const featured = nextUp(goals?.interests ?? [])?.game ?? goals?.platinumed[0]?.game
@@ -207,13 +217,15 @@ export function GamesView({
           tint={featured?.tint}
         />
         <fieldset className="segmented" aria-label={t('tabs')}>
-          {(['library', 'interests', 'goals'] as const).map((key) => (
+          {(['discover', 'interests', 'library', 'goals'] as const).map((key) => (
             <button key={key} type="button" aria-pressed={side === key} onClick={() => onSide(key)}>
               {t(key)}
             </button>
           ))}
         </fieldset>
-        {side === 'library' ? (
+        {side === 'discover' ? (
+          discover
+        ) : side === 'library' ? (
           <LibrarySection
             library={library}
             failed={failed}

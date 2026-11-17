@@ -22,7 +22,7 @@ export function NextPickLink() {
     <div className="next-pick-ask">
       <img className="next-pick-nexo" src="/nexo-avatar.svg" alt="" />
       <span>{t('hint')}</span>
-      <Link className="next-pick-go" to="/discover?scope=interests">
+      <Link className="next-pick-go" to="/games?tab=discover&scope=interests">
         {t('ask')} <Icon name="arrow-right" />
       </Link>
     </div>

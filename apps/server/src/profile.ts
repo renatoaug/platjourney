@@ -3,6 +3,7 @@ import { keepUnlocks } from './player-steps.ts'
 import { hours, playtimes } from './playtime.ts'
 import { type ProfileSummary, profileSummary, type TitleProgress, titleTrophies } from './psn.ts'
 import { type Game, gamesForTitles, getGame } from './repository/game.ts'
+import { getGuide } from './repository/guide.ts'
 import { listPlatinums, savePlatinum } from './repository/platinum.ts'
 import type { User } from './repository/user.ts'
 import { tints } from './tint.ts'
@@ -25,7 +26,8 @@ export interface ProfilePage {
   rarest: PlatinumEntry | null
   fastestStreak: { from: string; to: string; count: number } | null
   totalHours: number
-  mostPlayed: { game: Game; hours: number }[]
+  /** The guide's platinum difficulty, 1 to 10, when there is a guide with one. */
+  mostPlayed: { game: Game; hours: number; difficulty: number | null }[]
 }
 
 // The platinum's own unlock date and rarity live on the trophy, not on the title
@@ -111,8 +113,17 @@ export async function profilePage(library: TitleProgress[], user: User): Promise
   const played = await playtimes(user)
   const mostPlayed = []
   for (const p of [...played.values()].sort((a, b) => b.seconds - a.seconds).slice(0, 5)) {
-    const game = await getGame(p.game)
-    if (game) mostPlayed.push({ game, hours: hours(p) as number })
+    const [game, guide] = await Promise.all([
+      getGame(p.game),
+      getGuide<{ difficulty?: number }>(p.game),
+    ])
+    const difficulty = Number(guide?.difficulty) || 0
+    if (game)
+      mostPlayed.push({
+        game,
+        hours: hours(p) as number,
+        difficulty: difficulty >= 1 && difficulty <= 10 ? difficulty : null,
+      })
   }
   const rarest = platinums.reduce<PlatinumEntry | null>(
     (best, p) => (best === null || p.rarity < best.rarity ? p : best),

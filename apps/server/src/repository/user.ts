@@ -27,6 +27,7 @@ export interface User {
   ai_notices?: boolean
   // Notices also go to the linked Telegram chat; off, only the web and push.
   notify_telegram?: boolean
+  community_visible?: boolean
   locale?: Locale | null
   // The shared, read-only demo player.
   demo?: boolean
@@ -61,6 +62,18 @@ export async function userByAccount(accountId: string): Promise<User | undefined
   return fromRow(
     plain(
       await one<User>('SELECT * FROM user WHERE psn_account_id = $a LIMIT 1', { a: accountId }),
+    ),
+  )
+}
+
+/** A player by their PSN name, whatever its case: the address of their public profile. */
+export async function userByOnlineId(onlineId: string): Promise<User | undefined> {
+  return fromRow(
+    plain(
+      await one<User>(
+        'SELECT * FROM user WHERE string::lowercase(psn_online_id) = $n AND demo != true LIMIT 1',
+        { n: onlineId.toLowerCase() },
+      ),
     ),
   )
 }
@@ -178,8 +191,11 @@ export async function wipeUserData(id: string): Promise<void> {
     'playtime',
     'session_plan',
     'unlock',
+    'medal',
+    'reaction',
   ])
     await q(`DELETE ${table} WHERE user = $user`, { user })
+  await q('DELETE follow WHERE user = $user OR target = $user', { user })
   await q('UPDATE $user SET goal_targets = {}, taste_profile = NONE', { user })
 }
 

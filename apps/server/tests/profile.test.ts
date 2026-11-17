@@ -4,6 +4,7 @@ import * as playtime from '../src/playtime.ts'
 import { profilePage } from '../src/profile.ts'
 import * as psn from '../src/psn.ts'
 import * as games from '../src/repository/game.ts'
+import * as guides from '../src/repository/guide.ts'
 import * as platinums from '../src/repository/platinum.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
 import * as unlocks from '../src/repository/unlock.ts'
@@ -69,6 +70,9 @@ test('an empty profile has nothing to show', async () => {
 })
 
 test('platinums are grouped by year and platform with the rarest and the best month', async () => {
+  spyOn(guides, 'getGuide').mockImplementation(
+    async (game: string) => (game === 'A' ? { difficulty: 7 } : undefined) as never,
+  )
   const library = [
     platinumed('A'),
     makeTitle({ npCommunicationId: 'B', platform: 'PS4' }),
@@ -109,9 +113,10 @@ test('platinums are grouped by year and platform with the rarest and the best mo
     count: 2,
   })
   expect(page.totalHours).toBe(13)
-  expect(page.mostPlayed.map((m) => [m.game.id, m.hours])).toEqual([
-    ['A', 10],
-    ['B', 2],
+  // The guide's difficulty when there is one; a guide without it, or none, leaves it empty.
+  expect(page.mostPlayed.map((m) => [m.game.id, m.hours, m.difficulty])).toEqual([
+    ['A', 10, 7],
+    ['B', 2, null],
   ])
   expect(page.pendingPlatinums).toBe(0)
 })

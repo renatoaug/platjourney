@@ -15,23 +15,42 @@
     }
   }
 
+  /* The tabs in one row; on a narrow screen the row scrolls sideways instead of wrapping. */
   .games-page .segmented {
     width: fit-content;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 100%;
+    display: flex;
     min-inline-size: 0;
     margin: 0;
     border: 1px solid var(--color-border);
-    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .games-page .segmented::-webkit-scrollbar {
+    display: none;
   }
 
   .games-page .segmented button {
+    flex: none;
     min-height: 44px;
     font-size: var(--text-body);
-    white-space: normal;
-    min-width: 0;
+    white-space: nowrap;
     line-height: var(--leading-tight);
-    padding-inline: 10px;
+    padding-inline: 14px;
+  }
+
+  /* On a phone the tabs fill the width, each one an equal share. */
+  @media (max-width: 760px) {
+    .games-page .segmented {
+      width: 100%;
+    }
+
+    .games-page .segmented button {
+      flex: 1 0 auto;
+      padding-inline: 9px;
+      font-size: var(--text-base);
+    }
   }
 
   .games-library {
