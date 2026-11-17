@@ -88,12 +88,15 @@ export async function firstUnlocks(users: string[], nps: string[]): Promise<Map<
   if (!users.length || !nps.length) return new Map()
   const rows = plain(
     await q<{ user: string; np_communication_id: string; first: string }[]>(
-      'SELECT record::id(user) AS user, np_communication_id, math::min(earned_at) AS first FROM unlock WHERE user IN $users AND np_communication_id IN $nps AND earned_at > $since GROUP BY user, np_communication_id',
+      'SELECT record::id(user) AS user, np_communication_id, time::min(earned_at) AS first FROM unlock WHERE user IN $users AND np_communication_id IN $nps AND earned_at > $since GROUP BY user, np_communication_id',
       { users: ids(users), nps, since: TROPHIES_BEGAN },
     ),
   )
+  // A list whose only unlocks are placeholders has no first date: it is left out.
   return new Map(
-    rows.map((r) => [`${r.user}|${r.np_communication_id}`, new Date(r.first).toISOString()]),
+    rows.flatMap((r) =>
+      r.first ? [[`${r.user}|${r.np_communication_id}`, new Date(r.first).toISOString()]] : [],
+    ),
   )
 }
 
