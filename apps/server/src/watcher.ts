@@ -44,6 +44,19 @@ async function plainNotice(user: User, kind: TipKind, text: string, game?: strin
   await notify(user, text)
 }
 
+// The session notice says nothing new when it would read exactly like the last one sent within a
+// day: a game without a guide, or one played again with nothing earned. It is skipped then.
+async function repeatsLastSession(user: User, text: string): Promise<boolean> {
+  const last = await lastTip(user.id, 'session')
+  if (!last || last.content !== text) return false
+  return Date.now() - new Date(last.created_at).getTime() < SESSION_AGAIN_HOURS * 3_600_000
+}
+
+async function sessionNoticeOnce(user: User, text: string, game?: string) {
+  if (await repeatsLastSession(user, text)) return
+  await plainNotice(user, 'session', text, game)
+}
+
 // Nexo writes the notices when the instance allows it (AI_NOTICES) and the player wants it
 // (the profile's switch); otherwise they come from plain templates, free.
 const nexoNotices = (user: User) => config.automatic.notices && user.ai_notices !== false
@@ -401,7 +414,7 @@ async function sessionStart(
     // A game picked from presence is the one being played, whatever the catalog calls it.
     const same = !!ctx.unlisted || comparable(playing) === comparable(ctx.title.name)
     if (same) await gameSession(user, ctx, playing)
-    else await plainNotice(user, 'session', sessionNotice(user, playing))
+    else await sessionNoticeOnce(user, sessionNotice(user, playing))
   }
   await updateUser(user.id, { session_notice_at: new Date() })
 }
@@ -416,7 +429,7 @@ async function gameSession(user: User, ctx: GameContext, playing: string): Promi
       { ctx, route: undefined },
     )
     const again = await nothingNew(user, ctx)
-    await plainNotice(user, 'session', sessionNotice(user, playing, view.ctx, again), ctx.game.id)
+    await sessionNoticeOnce(user, sessionNotice(user, playing, view.ctx, again), ctx.game.id)
   })
 }
 

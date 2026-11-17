@@ -466,8 +466,16 @@ function focusBlocks(user: User, focus: ReturnType<typeof todaysFocus>): string[
   if (!focus.trophy) return []
   const trophy = nameFor(user, focus.trophy)
   const line = t(focus.behind ? 'focusBehind' : 'focus', { trophy })
-  const trick = focus.trick && !english(user) ? t('tip', { tip: focus.trick }) : ''
+  const how = focus.trick && !english(user) ? trickBody(focus.trick) : ''
+  const trick = how ? t('tip', { tip: how }) : ''
   return [`${line}\n${detailFor(user, focus.trophy)}`, trick]
+}
+
+// A guide's trick opens with one line on what the trophy asks: the notice already shows PSN's
+// description right above, so it keeps only how to do it. A trick of one paragraph stays whole.
+export function trickBody(trick: string): string {
+  const [first, ...rest] = trick.trim().split(/\n\s*\n/)
+  return rest.length ? rest.join('\n\n').trim() : first
 }
 
 // The missable of the focus's phase, unless the stretch's checklist already names it.

@@ -10,6 +10,7 @@ import {
   sessionNotice,
   startLists,
   startNotice,
+  trickBody,
   unlockNotice,
 } from '../src/notices.ts'
 import { makeContext, makeGame, makeTrophy, makeUser } from './fixtures.ts'
@@ -242,4 +243,14 @@ test('several trophies at once name their game once', () => {
   expect(text.split('\n')[0]).toBe('8 troféus em **Goals**:')
   expect(text.match(/Goals/g)).toHaveLength(1)
   expect(unlockNotice(user, ctx, [got[0]])).toEndWith('em **Goals**')
+})
+
+test('the session tip keeps how to do it, without the opening line PSN already says', () => {
+  expect(
+    trickBody(
+      'Esse troféu pede: crie três itens.\n\nCrie três itens lendários.\nO troféu sai no terceiro.',
+    ),
+  ).toBe('Crie três itens lendários.\nO troféu sai no terceiro.')
+  // A trick of one paragraph is all the advice there is.
+  expect(trickBody('Use o atalho do parque.')).toBe('Use o atalho do parque.')
 })
