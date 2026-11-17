@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.83.2](https://github.com/renatoaug/platjourney/compare/v0.83.1...v0.83.2) (2026-11-17)
+
+### Bug Fixes
+
+* **server:** no session notice that repeats the last one, and no tip that repeats the trophy ([#203](https://github.com/renatoaug/platjourney/issues/203)) ([285cacb](https://github.com/renatoaug/platjourney/commit/285cacb8d822ba782bce9bef30995a6924625f8f))
+
 ## [0.83.1](https://github.com/renatoaug/platjourney/compare/v0.83.0...v0.83.1) (2026-11-17)
 
 ### Bug Fixes
