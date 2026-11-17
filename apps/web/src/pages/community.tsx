@@ -45,6 +45,16 @@ const messages = defineMessages({
 type Tab = 'feed' | 'rankings' | 'games'
 const TABS: Tab[] = ['feed', 'rankings', 'games']
 
+// What this screen last showed, kept while the app is open: going back to it from a player's
+// profile shows the same feed at once instead of its skeleton.
+const seen: {
+  scope: FeedScope
+  period: 'month' | 'year'
+  feed: Partial<Record<FeedScope, FeedState>>
+  ranks: Partial<Record<'month' | 'year', RankingsState>>
+  games: GamesState | null
+} = { scope: 'all', period: 'month', feed: {}, ranks: {}, games: null }
+
 export function Community() {
   const { me } = useApp()
   const english = useLocale() === Language.En
@@ -57,15 +67,24 @@ export function Community() {
       return p
     })
 
-  const [scope, setScope] = useState<FeedScope>('all')
-  const [feed, setFeed] = useState<FeedState>({ status: 'loading' })
+  const [scope, setScope] = useState<FeedScope>(() => seen.scope)
+  // Seen before (coming back from a profile): shown at once and refreshed in place, so the screen
+  // does not flash back to its skeleton.
+  const [feed, setFeed] = useState<FeedState>(() => seen.feed[seen.scope] ?? { status: 'loading' })
   const [feedTry, setFeedTry] = useState(0)
   // biome-ignore lint/correctness/useExhaustiveDependencies: feedTry asks for a retry
   useEffect(() => {
     let live = true
-    setFeed({ status: 'loading' })
+    seen.scope = scope
+    const kept = seen.feed[scope]
+    setFeed(kept ?? { status: 'loading' })
     fetchFeed(scope)
-      .then((page) => live && setFeed({ status: 'ok', ...page }))
+      .then((page) => {
+        if (!live) return
+        const next: FeedState = { status: 'ok', ...page }
+        seen.feed[scope] = next
+        setFeed(next)
+      })
       .catch(() => live && setFeed({ status: 'error' }))
     return () => {
       live = false
@@ -132,31 +151,44 @@ export function Community() {
       .catch(() => setFeedTry((v) => v + 1))
   }
 
-  const [period, setPeriod] = useState<'month' | 'year'>('month')
-  const [ranks, setRanks] = useState<RankingsState>({ status: 'loading' })
+  const [period, setPeriod] = useState<'month' | 'year'>(() => seen.period)
+  const [ranks, setRanks] = useState<RankingsState>(
+    () => seen.ranks[seen.period] ?? { status: 'loading' },
+  )
   const [rankTry, setRankTry] = useState(0)
   // biome-ignore lint/correctness/useExhaustiveDependencies: rankTry asks for a retry
   useEffect(() => {
     if (tab !== 'rankings') return
     let live = true
-    setRanks({ status: 'loading' })
+    seen.period = period
+    setRanks(seen.ranks[period] ?? { status: 'loading' })
     fetchRankings(period)
-      .then((data) => live && setRanks({ status: 'ok', data }))
+      .then((data) => {
+        if (!live) return
+        const next: RankingsState = { status: 'ok', data }
+        seen.ranks[period] = next
+        setRanks(next)
+      })
       .catch(() => live && setRanks({ status: 'error' }))
     return () => {
       live = false
     }
   }, [tab, period, rankTry])
 
-  const [games, setGames] = useState<GamesState>({ status: 'loading' })
+  const [games, setGames] = useState<GamesState>(() => seen.games ?? { status: 'loading' })
   const [gamesTry, setGamesTry] = useState(0)
   // biome-ignore lint/correctness/useExhaustiveDependencies: gamesTry asks for a retry
   useEffect(() => {
     if (tab !== 'games') return
     let live = true
-    setGames({ status: 'loading' })
+    setGames(seen.games ?? { status: 'loading' })
     fetchCommunityGames()
-      .then((data) => live && setGames({ status: 'ok', data }))
+      .then((data) => {
+        if (!live) return
+        const next: GamesState = { status: 'ok', data }
+        seen.games = next
+        setGames(next)
+      })
       .catch(() => live && setGames({ status: 'error' }))
     return () => {
       live = false

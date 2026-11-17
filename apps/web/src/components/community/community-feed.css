@@ -355,3 +355,13 @@
     }
   }
 }
+
+@layer screens {
+  .community-avatar-link {
+    transition: transform var(--motion-tab);
+  }
+
+  .community-avatar-link:hover {
+    transform: scale(1.06);
+  }
+}

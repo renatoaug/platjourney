@@ -327,15 +327,34 @@ function EventWhat({ event: e, english }: { event: CommunityEvent; english: bool
   )
 }
 
-export function Avatar({ person, className = '' }: { person?: Person; className?: string }) {
-  return (
-    <span className={`community-avatar ${className}`.trim()}>
-      {person?.avatarUrl ? (
-        <img src={person.avatarUrl} alt="" loading="lazy" />
-      ) : (
-        <Icon name="gamepad" />
-      )}
-    </span>
+/** A player's face. With `link`, it opens their public profile, like their name next to it; it
+ * stays out of the tab order and the screen reader, since the name is the same link. */
+export function Avatar({
+  person,
+  className = '',
+  link = false,
+}: {
+  person?: Person
+  className?: string
+  link?: boolean
+}) {
+  const face = person?.avatarUrl ? (
+    <img src={person.avatarUrl} alt="" loading="lazy" />
+  ) : (
+    <Icon name="gamepad" />
+  )
+  const classes = `community-avatar ${className}`.trim()
+  return link && person ? (
+    <Link
+      className={`${classes} community-avatar-link`}
+      to={playerLink(person.onlineId)}
+      tabIndex={-1}
+      aria-hidden="true"
+    >
+      {face}
+    </Link>
+  ) : (
+    <span className={classes}>{face}</span>
   )
 }
 
@@ -368,7 +387,7 @@ function FeedItem({
       )}
       <div className="community-event-body">
         <header className="community-event-who">
-          <Avatar person={person} />
+          <Avatar person={person} link />
           {person ? (
             <Link className="community-name" to={playerLink(person.onlineId)}>
               @{name}
