@@ -35,7 +35,7 @@ import { Guides } from '../pages/guides'
 import { History } from '../pages/history'
 import { Home } from '../pages/home'
 import { Nexo } from '../pages/nexo'
-import { Profile } from '../pages/profile'
+import { Profile, PublicProfile } from '../pages/profile'
 import { Settings } from '../pages/settings'
 import { Title } from '../pages/title'
 import { menuPages, pluginPages } from '../plugins'
@@ -386,7 +386,11 @@ export function Shell() {
   const page = pluginPages.find((p) => p.path === pathname)
   const label = page
     ? page.label[locale]
-    : t(isTitle ? 'nav.title' : (LABELS[pathname] ?? 'nav.home'))
+    : t(
+        isTitle
+          ? 'nav.title'
+          : (LABELS[pathname.replace(/^\/profiles\/.+/, '/community')] ?? 'nav.home'),
+      )
 
   useEffect(() => {
     // A game page names the tab after the game once it knows it; a generic "Jogo" first would only
@@ -454,6 +458,7 @@ export function Shell() {
           <Route path="/guides" element={<Guides />} />
           <Route path="/history" element={<History />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profiles/:user" element={<PublicProfile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/title/*" element={<Title />} />
           {pluginPages.map((p) => (

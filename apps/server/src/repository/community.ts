@@ -6,18 +6,26 @@ export interface Member {
   id: string
   onlineId: string
   avatarUrl: string | null
+  /** Shows up to the others; a player out of the community still sees their own. */
+  visible: boolean
 }
 
 export async function members(): Promise<Member[]> {
   const rows = plain(
-    await q<{ id: string; psn_online_id: string; avatar_url: string | null }[]>(
-      'SELECT id, psn_online_id, avatar_url FROM user WHERE community_visible != false AND demo != true',
-    ),
+    await q<
+      {
+        id: string
+        psn_online_id: string
+        avatar_url: string | null
+        community_visible: boolean | null
+      }[]
+    >('SELECT id, psn_online_id, avatar_url, community_visible FROM user WHERE demo != true'),
   )
   return rows.map((r) => ({
     id: r.id.replace(/^user:/, ''),
     onlineId: r.psn_online_id,
     avatarUrl: r.avatar_url ?? null,
+    visible: r.community_visible !== false,
   }))
 }
 
@@ -164,25 +172,40 @@ export async function saveRarities(np: string, trophies: Omit<Rarity, 'np'>[]): 
 }
 
 /** The name and art of the games on these lists, from any player's library. */
-export async function gamesOn(
-  nps: string[],
-): Promise<Map<string, { name: string; iconUrl: string | null; game: string | null }>> {
+export interface GameOn {
+  name: string
+  iconUrl: string | null
+  game: string | null
+  coverUrl: string | null
+  artUrl: string | null
+}
+
+export async function gamesOn(nps: string[]): Promise<Map<string, GameOn>> {
   if (!nps.length) return new Map()
   const rows = plain(
     await q<
-      { np_communication_id: string; name: string; icon_url: string | null; game: string | null }[]
+      {
+        np_communication_id: string
+        name: string
+        icon_url: string | null
+        game: string | null
+        cover_url: string | null
+        art_url: string | null
+      }[]
     >(
-      'SELECT np_communication_id, name, icon_url, record::id(game) AS game FROM title WHERE np_communication_id IN $nps',
+      'SELECT np_communication_id, name, icon_url, record::id(game) AS game, game.cover_url AS cover_url, game.art_url AS art_url FROM title WHERE np_communication_id IN $nps',
       { nps },
     ),
   )
-  const out = new Map<string, { name: string; iconUrl: string | null; game: string | null }>()
+  const out = new Map<string, GameOn>()
   for (const r of rows) {
     if (out.has(r.np_communication_id)) continue
     out.set(r.np_communication_id, {
       name: r.name,
       iconUrl: r.icon_url ?? null,
       game: r.game === null || r.game === undefined ? null : String(r.game),
+      coverUrl: r.cover_url ?? null,
+      artUrl: r.art_url ?? null,
     })
   }
   return out
@@ -251,7 +274,7 @@ export async function setFollow(user: string, target: string, on: boolean): Prom
   }
 }
 
-export type ReactionKind = 'gg' | 'fire' | 'skull'
+export type ReactionKind = 'like' | 'gg' | 'fire' | 'wow' | 'skull'
 
 export async function setReaction(
   user: string,
@@ -288,7 +311,10 @@ export async function reactionsOn(
     ),
   )
   for (const r of rows) {
-    const e = out.get(r.event) ?? { counts: { gg: 0, fire: 0, skull: 0 }, mine: [] }
+    const e = out.get(r.event) ?? {
+      counts: { like: 0, gg: 0, fire: 0, wow: 0, skull: 0 },
+      mine: [],
+    }
     e.counts[r.kind]++
     if (String(r.user) === user.replace(/^user:/, '')) e.mine.push(r.kind)
     out.set(r.event, e)

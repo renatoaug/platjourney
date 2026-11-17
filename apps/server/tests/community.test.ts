@@ -161,7 +161,7 @@ test('a reaction must name a feed event and a known kind', async () => {
     (
       await call('POST /api/community/react', '/api/community/react', {
         event: 'drop table',
-        kind: 'gg',
+        kind: 'like',
         on: true,
       })
     ).status,
@@ -177,7 +177,7 @@ test('a reaction must name a feed event and a known kind', async () => {
   ).toBe(400)
   const ok = await call('POST /api/community/react', '/api/community/react', {
     event: 'plat:a:NP1',
-    kind: 'gg',
+    kind: 'like',
     on: true,
   })
   expect(ok.status).toBe(200)
@@ -188,7 +188,7 @@ test('a player follows only someone in the community, never themselves', async (
   const set = spyOn(repo, 'setFollow').mockResolvedValue()
   spyOn(repo, 'following').mockResolvedValue([])
   spyOn(community, 'community').mockResolvedValue({
-    members: [{ id: 'other', onlineId: 'Other', avatarUrl: null }],
+    members: [{ id: 'other', onlineId: 'Other', avatarUrl: null, visible: true }],
     feed: [],
   })
   const self = await call('POST /api/community/follow', '/api/community/follow', {
@@ -222,8 +222,8 @@ test('the feed filters by scope and pages by date', async () => {
   })
   spyOn(community, 'community').mockResolvedValue({
     members: [
-      { id: me, onlineId: 'Me', avatarUrl: null },
-      { id: 'other', onlineId: 'Other', avatarUrl: null },
+      { id: me, onlineId: 'Me', avatarUrl: null, visible: true },
+      { id: 'other', onlineId: 'Other', avatarUrl: null, visible: true },
     ],
     feed: [event('other', day(3)), event(me, day(2)), event('other', day(1))],
   })
@@ -245,7 +245,7 @@ test('the demo looks at the community without reacting or following', async () =
   const react = spyOn(repo, 'setReaction').mockResolvedValue()
   const follow = spyOn(repo, 'setFollow').mockResolvedValue()
   for (const [route, body] of [
-    ['POST /api/community/react', { event: 'plat:a:NP1', kind: 'gg', on: true }],
+    ['POST /api/community/react', { event: 'plat:a:NP1', kind: 'like', on: true }],
     ['POST /api/community/follow', { user: 'other', on: true }],
   ] as const) {
     const res = new FakeResponse()
@@ -265,4 +265,29 @@ test('the demo looks at the community without reacting or following', async () =
   }
   expect(react).not.toHaveBeenCalled()
   expect(follow).not.toHaveBeenCalled()
+})
+
+test('a player out of the community still sees their own, and nobody else does', async () => {
+  const me = makeUser().id.replace(/^user:/, '')
+  const event = (user: string, at: string) => ({
+    key: `start:${user}:NP1:${at}`,
+    kind: 'start' as const,
+    user,
+    at,
+    game: null,
+  })
+  spyOn(community, 'community').mockResolvedValue({
+    members: [
+      { id: me, onlineId: 'Me', avatarUrl: null, visible: false },
+      { id: 'other', onlineId: 'Other', avatarUrl: null, visible: true },
+      { id: 'quiet', onlineId: 'Quiet', avatarUrl: null, visible: false },
+    ],
+    feed: [event('quiet', day(4)), event(me, day(3)), event('other', day(2))],
+  })
+  spyOn(repo, 'following').mockResolvedValue([])
+  spyOn(repo, 'reactionsOn').mockResolvedValue(new Map())
+  const all = await call('GET /api/community/feed', '/api/community/feed?scope=all')
+  expect(all.body.events.map((e: { user: string }) => e.user)).toEqual([me, 'other'])
+  const mine = await call('GET /api/community/feed', '/api/community/feed?scope=me')
+  expect(mine.body.events).toHaveLength(1)
 })

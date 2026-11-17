@@ -1,5 +1,5 @@
-/** A trophy in its tier, as rendered art in the console's spirit (our own drawing, not the
- * console's): the platinum a blue orb in silver petals, gold, silver and bronze cups. Sized like
+/** A trophy in its tier, as rendered art: the platinum a blue orb with the controller's four
+ * symbols (triangle, circle, cross, square) in silver petals, gold, silver and bronze cups. Sized like
  * `Icon` (the `icon` class), so it drops in wherever a trophy's type is known. */
 import './trophy-medal.css'
 

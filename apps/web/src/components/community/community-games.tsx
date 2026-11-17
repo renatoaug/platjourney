@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { defineMessages, Language, useMessages } from '../../i18n/i18n'
 import { type CommunityGames as Games, gameLink } from '../../lib/community'
 import { Cover } from '../../ui/cover'
+import { Icon } from '../../ui/icon'
 import { repeat, Sk } from '../../ui/skeleton'
 import { EmptyState, ErrorState } from '../../ui/states'
 import './community-games.css'
@@ -59,11 +60,19 @@ export function CommunityGames({ state, onRetry }: { state: GamesState; onRetry:
     return (
       <div className="community-shelves" aria-hidden="true">
         {repeat(3, () => (
-          <div className="card community-shelf">
-            <Sk w="50%" h={20} />
-            {repeat(4, () => (
-              <Sk w="100%" h={48} />
-            ))}
+          <div className="community-shelf">
+            <Sk w="30%" h={20} />
+            <div className="community-shelf-list">
+              {repeat(5, () => (
+                <span className="community-shelf-tile">
+                  <span className="community-shelf-art">
+                    <Sk w="100%" style={{ height: '100%' }} />
+                  </span>
+                  <Sk w="80%" h={12} />
+                  <Sk w="50%" h={10} />
+                </span>
+              ))}
+            </div>
           </div>
         ))}
       </div>
@@ -73,7 +82,7 @@ export function CommunityGames({ state, onRetry }: { state: GamesState; onRetry:
     rows.map((r) => ({
       key: r.game.np,
       name: r.game.name,
-      art: r.game.iconUrl,
+      art: r.game.coverUrl ?? r.game.iconUrl,
       link: gameLink(r.game),
       players: r.players,
     }))
@@ -99,33 +108,38 @@ export function CommunityGames({ state, onRetry }: { state: GamesState; onRetry:
 function Shelf({ title, lead, rows }: { title: string; lead?: string; rows: Row[] }) {
   const t = useMessages(messages)
   return (
-    <section className="card community-shelf" aria-label={title}>
-      <header>
-        <h2>{title}</h2>
-        {lead && <p>{lead}</p>}
+    <section className="community-shelf" aria-label={title}>
+      <header className="section-head">
+        <div>
+          <h2>{title}</h2>
+          {lead && <p>{lead}</p>}
+        </div>
       </header>
       {!rows.length ? (
         <EmptyState icon="gamepad">{t('empty')}</EmptyState>
       ) : (
-        <ol>
-          {rows.map((r) => {
+        <ol className="community-shelf-list">
+          {rows.map((r, i) => {
             const body = (
               <>
-                <Cover className="community-shelf-art" url={r.art} name={r.name} />
+                <span className="community-shelf-art">
+                  <Cover url={r.art} name={r.name} />
+                  <span className="community-shelf-rank">{String(i + 1).padStart(2, '0')}</span>
+                </span>
                 <span className="community-shelf-name">{r.name}</span>
                 <span className="community-shelf-players">
-                  {t('players', { count: r.players })}
+                  <Icon name="users" /> {t('players', { count: r.players })}
                 </span>
               </>
             )
             return (
               <li key={r.key}>
                 {r.link ? (
-                  <Link to={r.link} className="community-shelf-row">
+                  <Link to={r.link} className="community-shelf-tile">
                     {body}
                   </Link>
                 ) : (
-                  <span className="community-shelf-row">{body}</span>
+                  <span className="community-shelf-tile">{body}</span>
                 )}
               </li>
             )

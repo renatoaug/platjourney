@@ -1,8 +1,8 @@
 // The community's answers from the server (routes/community.ts), and the calls that change it.
 import { api } from './api'
 
-export type ReactionKind = 'gg' | 'fire' | 'skull'
-export const REACTIONS: ReactionKind[] = ['gg', 'fire', 'skull']
+export type ReactionKind = 'like' | 'gg' | 'fire' | 'wow' | 'skull'
+export const REACTIONS: ReactionKind[] = ['like', 'gg', 'fire', 'wow', 'skull']
 
 export type MedalKind = 'rare_hunter' | 'quick_platinum' | 'no_day_off' | 'year_goal'
 
@@ -11,6 +11,9 @@ export interface CommunityGame {
   name: string
   iconUrl: string | null
   id: string | null
+  /** The catalog's box art and wide art, when the catalog knows the game. */
+  coverUrl?: string | null
+  artUrl?: string | null
 }
 
 export interface Reactions {
@@ -26,7 +29,7 @@ export type CommunityEvent = {
   reactions: Reactions
 } & (
   | { kind: 'platinum'; rate: number }
-  | { kind: 'rare'; trophy: string; trophyEn: string; rate: number }
+  | { kind: 'rare'; trophy: string; trophyEn: string; type?: string; rate: number }
   | { kind: 'start' }
   | { kind: 'medal'; medal: MedalKind }
 )
@@ -53,10 +56,14 @@ export interface RankRow {
   game?: CommunityGame | null
 }
 
+export type Board = 'platinums' | 'rare' | 'fastest'
+
 export interface Rankings {
   platinums: RankRow[]
   rare: RankRow[]
   fastest: RankRow[]
+  /** The reader's own place on each board, wherever it falls; none when not on it. */
+  mine?: Record<Board, (RankRow & { place: number }) | null>
   people: Record<string, Person>
   me: string
 }
@@ -91,3 +98,12 @@ export const follow = (user: string, on: boolean) =>
 /** A game's page in the app: its catalog page when the catalog knows it. */
 export const gameLink = (game: CommunityGame | null) =>
   game?.id ? `/title/game/${encodeURIComponent(`game:${game.id.replace(/^game:/, '')}`)}` : null
+
+/** The PSN rarity tier of a share of players: under 5% ultra rare, under 15% very rare, under 50%
+ * rare, otherwise common. */
+export type RarityTier = 'ultra' | 'very' | 'rare' | 'common'
+export const rarityTier = (rate: number): RarityTier =>
+  rate < 5 ? 'ultra' : rate < 15 ? 'very' : rate < 50 ? 'rare' : 'common'
+
+/** A player's profile, opened from their name in the community. */
+export const playerLink = (onlineId: string) => `/profiles/${encodeURIComponent(onlineId)}`

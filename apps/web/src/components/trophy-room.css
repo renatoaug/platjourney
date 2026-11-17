@@ -153,4 +153,17 @@
       transition: none;
     }
   }
+
+  .trophy-room .trophy-room-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: var(--text-lg);
+  }
+
+  .trophy-room-title .icon {
+    width: 24px;
+    height: 24px;
+  }
 }

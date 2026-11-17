@@ -24,10 +24,10 @@ const messages = defineMessages({
     eyebrow: 'Sua coleção de platinas',
     title: 'Seus jogos',
     lead: 'Escolha um jogo para acompanhar a platina.',
-    library: 'Biblioteca PSN',
+    library: 'Biblioteca',
     interests: 'Interesses',
     discover: 'Descobrir',
-    goals: 'Metas e conquistas',
+    goals: 'Metas',
     tabs: 'Seus jogos',
     source: 'Progresso conforme sua preferência de DLC.',
     base: 'Jogo base',
@@ -63,10 +63,10 @@ const messages = defineMessages({
     eyebrow: 'Your platinum collection',
     title: 'Your games',
     lead: 'Choose a game to follow your platinum journey.',
-    library: 'PSN library',
+    library: 'Library',
     interests: 'Interests',
     discover: 'Discover',
-    goals: 'Goals and achievements',
+    goals: 'Goals',
     tabs: 'Your games',
     source: 'Progress follows your DLC preference.',
     base: 'Base game',
@@ -104,7 +104,7 @@ export function Games() {
   const [params, setParams] = useSearchParams()
   const [keptSide, setKeptSide] = useKept<'library' | 'interests' | 'goals' | 'discover'>(
     'games.side',
-    'library',
+    'discover',
   )
   const tab = params.get('tab')
   const side =
@@ -217,7 +217,7 @@ export function GamesView({
           tint={featured?.tint}
         />
         <fieldset className="segmented" aria-label={t('tabs')}>
-          {(['library', 'interests', 'goals', 'discover'] as const).map((key) => (
+          {(['discover', 'interests', 'library', 'goals'] as const).map((key) => (
             <button key={key} type="button" aria-pressed={side === key} onClick={() => onSide(key)}>
               {t(key)}
             </button>

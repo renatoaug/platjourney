@@ -5,6 +5,8 @@ import { Page } from '../app/page'
 import { CommunityFeed, type FeedState } from '../components/community/community-feed'
 import { CommunityGames, type GamesState } from '../components/community/community-games'
 import { CommunityRankings, type RankingsState } from '../components/community/community-rankings'
+import { CommunitySide } from '../components/community/community-side'
+import { CommunityVisibility } from '../components/community/community-visibility'
 import { PageTop } from '../components/page-top'
 import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import {
@@ -161,21 +163,29 @@ export function Community() {
     }
   }, [tab, gamesTry])
 
+  // The page's backdrop: the art of the newest event that has some.
+  const art =
+    feed.status === 'ok' ? (feed.events.find((e) => e.game?.artUrl)?.game?.artUrl ?? null) : null
+
   return (
-    <CommunityView tab={tab} onTab={setTab}>
+    <CommunityView tab={tab} onTab={setTab} art={art}>
       {tab === 'feed' ? (
-        <CommunityFeed
-          state={feed}
-          scope={scope}
-          onScope={setScope}
-          onReact={onReact}
-          onFollow={onFollow}
-          onMore={more}
-          onRetry={() => setFeedTry((v) => v + 1)}
-          me={me.id.replace(/^user:/, '')}
-          english={english}
-          readOnly={me.demo === true}
-        />
+        <div className="community-feed-layout">
+          <CommunityFeed
+            state={feed}
+            scope={scope}
+            onScope={setScope}
+            onReact={onReact}
+            onFollow={onFollow}
+            onMore={more}
+            onRetry={() => setFeedTry((v) => v + 1)}
+            me={me.id.replace(/^user:/, '')}
+            english={english}
+            readOnly={me.demo === true}
+            toolbar={<CommunityVisibility onChange={() => setFeedTry((v) => v + 1)} />}
+          />
+          <CommunitySide onTab={setTab} />
+        </div>
       ) : tab === 'rankings' ? (
         <CommunityRankings
           state={ranks}
@@ -194,18 +204,20 @@ export function Community() {
 export function CommunityView({
   tab,
   onTab,
+  art,
   children,
 }: {
   tab: Tab
   onTab: (tab: Tab) => void
+  art?: string | null
   children: ReactNode
 }) {
   const t = useMessages(messages)
   return (
     <Page path="/community">
       <div className="community-page">
-        <PageTop eyebrow={t('eyebrow')} title={t('title')} lead={t('lead')} />
-        <fieldset className="segmented community-tabs" aria-label={t('tabs')}>
+        <PageTop eyebrow={t('eyebrow')} title={t('title')} lead={t('lead')} art={art} />
+        <fieldset className="community-tabs" aria-label={t('tabs')}>
           {TABS.map((key) => (
             <button key={key} type="button" aria-pressed={tab === key} onClick={() => onTab(key)}>
               {t(key)}

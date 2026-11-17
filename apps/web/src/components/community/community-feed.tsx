@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, Language, useMessages } from '../../i18n/i18n'
 import {
@@ -6,14 +7,17 @@ import {
   gameLink,
   type MedalKind,
   type Person,
-  REACTIONS,
+  playerLink,
   type ReactionKind,
+  rarityTier,
 } from '../../lib/community'
 import { fmtAgo, fmtRate } from '../../lib/format'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
 import { repeat, Sk } from '../../ui/skeleton'
 import { EmptyState, ErrorState } from '../../ui/states'
+import { TrophyMedal } from '../../ui/trophy-medal'
+import { CommunityReactions } from './community-reactions'
 import './community-feed.css'
 
 const messages = defineMessages({
@@ -23,20 +27,19 @@ const messages = defineMessages({
     all: 'Todos',
     following: 'Quem eu sigo',
     me: 'Eu',
-    platinum: 'platinou',
-    rare: 'pegou',
-    start: 'começou',
-    medal: 'ganhou a medalha',
-    share: 'só {rate}% têm',
-    shareCommon: '{rate}% têm',
+    platinum: 'Platinou',
+    rare: 'Troféu raro',
+    start: 'Começou a caçada',
+    medal: 'Nova medalha',
+    inGame: 'em {game}',
+    ultra: 'Ultra raro · {rate}%',
+    very: 'Muito raro · {rate}%',
+    rareTier: 'Raro · {rate}%',
+    common: 'Comum · {rate}%',
     follow: 'Seguir',
     unfollow: 'Seguindo',
     followLabel: 'Seguir {name}',
     unfollowLabel: 'Deixar de seguir {name}',
-    react: '{reaction} em {event}: {count}',
-    gg: 'GG',
-    fire: 'Fogo',
-    skull: 'Sofrido',
     more: 'Ver mais',
     loadingMore: 'Carregando…',
     emptyAll:
@@ -59,20 +62,19 @@ const messages = defineMessages({
     all: 'Everyone',
     following: 'Following',
     me: 'Me',
-    platinum: 'platinumed',
-    rare: 'earned',
-    start: 'started',
-    medal: 'earned the medal',
-    share: 'only {rate}% have it',
-    shareCommon: '{rate}% have it',
+    platinum: 'Platinumed',
+    rare: 'Rare trophy',
+    start: 'Started the hunt',
+    medal: 'New medal',
+    inGame: 'in {game}',
+    ultra: 'Ultra rare · {rate}%',
+    very: 'Very rare · {rate}%',
+    rareTier: 'Rare · {rate}%',
+    common: 'Common · {rate}%',
     follow: 'Follow',
     unfollow: 'Following',
     followLabel: 'Follow {name}',
     unfollowLabel: 'Unfollow {name}',
-    react: '{reaction} on {event}: {count}',
-    gg: 'GG',
-    fire: 'Fire',
-    skull: 'Hard-won',
     more: 'Show more',
     loadingMore: 'Loading…',
     emptyAll:
@@ -91,7 +93,6 @@ const messages = defineMessages({
   },
 })
 
-const EMOJI: Record<ReactionKind, string> = { gg: '🏆', fire: '🔥', skull: '💀' }
 const MEDAL_ICON: Record<MedalKind, string> = {
   rare_hunter: '💎',
   quick_platinum: '⚡',
@@ -117,11 +118,14 @@ export function CommunityFeed({
   scope,
   onScope,
   onRetry,
+  toolbar,
   ...rest
 }: {
   state: FeedState
   scope: FeedScope
   onScope: (scope: FeedScope) => void
+  /** Beside the filters: the player's own switch to show up in the community. */
+  toolbar?: ReactNode
   onReact: (event: CommunityEvent, kind: ReactionKind) => void
   onFollow: (user: string, on: boolean) => void
   onMore: () => void
@@ -135,13 +139,22 @@ export function CommunityFeed({
   const t = useMessages(messages)
   return (
     <section className="community-feed" aria-label={t('feed')}>
-      <fieldset className="segmented community-scopes" aria-label={t('scopes')}>
-        {(['all', 'following', 'me'] as const).map((s) => (
-          <button key={s} type="button" aria-pressed={scope === s} onClick={() => onScope(s)}>
-            {t(s)}
-          </button>
-        ))}
-      </fieldset>
+      <div className="community-feed-bar">
+        <fieldset className="chips community-scopes" aria-label={t('scopes')}>
+          {(['all', 'following', 'me'] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`chip${scope === s ? ' active' : ''}`}
+              aria-pressed={scope === s}
+              onClick={() => onScope(s)}
+            >
+              {t(s)}
+            </button>
+          ))}
+        </fieldset>
+        {toolbar}
+      </div>
       {state.status === 'ok' && !state.visible && <p className="community-hidden">{t('hidden')}</p>}
       {state.status === 'loading' && <FeedSkeleton />}
       {state.status === 'error' && (
@@ -189,21 +202,16 @@ function FeedList({
   if (!state.events.length) return <EmptyState icon="users">{t(EMPTY[scope])}</EmptyState>
   return (
     <>
-      <ol className="community-events">
-        {state.events.map((e) => (
-          <FeedItem
-            key={e.key}
-            event={e}
-            person={state.people[e.user]}
-            followed={state.following.includes(e.user)}
-            mine={e.user === me}
-            english={english}
-            readOnly={readOnly}
-            onReact={(kind) => onReact(e, kind)}
-            onFollow={(on) => onFollow(e.user, on)}
-          />
-        ))}
-      </ol>
+      <CommunityEventList
+        events={state.events}
+        people={state.people}
+        following={state.following}
+        me={me}
+        english={english}
+        readOnly={readOnly}
+        onReact={onReact}
+        onFollow={onFollow}
+      />
       {state.next && (
         <button
           type="button"
@@ -218,73 +226,116 @@ function FeedList({
   )
 }
 
-/** What happened, after the player's name: "platinou Ghost of Tsushima". */
-function EventWhat({ event: e, english }: { event: CommunityEvent; english: boolean }) {
-  const t = useMessages(messages)
-  const link = gameLink(e.game)
-  const game = !e.game ? null : link ? <Link to={link}>{e.game.name}</Link> : <b>{e.game.name}</b>
-  if (e.kind === 'medal')
-    return (
-      <>
-        {t('medal')} <b>{t(e.medal)}</b>
-      </>
-    )
-  if (e.kind === 'rare')
-    return (
-      <>
-        {t('rare')} <b>{english ? e.trophyEn || e.trophy : e.trophy}</b>
-        {game && <> · {game}</>}
-      </>
-    )
+/** Events as cards, the same in the feed and on a player's page. */
+function CommunityEventList({
+  events,
+  people,
+  following,
+  me,
+  english = false,
+  readOnly = false,
+  onReact,
+  onFollow,
+}: {
+  events: CommunityEvent[]
+  people: Record<string, Person>
+  following: string[]
+  me: string
+  english?: boolean
+  readOnly?: boolean
+  onReact: (event: CommunityEvent, kind: ReactionKind) => void
+  onFollow: (user: string, on: boolean) => void
+}) {
   return (
-    <>
-      {t(e.kind === 'platinum' ? 'platinum' : 'start')} {game}
-    </>
+    <ol className="community-events">
+      {events.map((e) => (
+        <FeedItem
+          key={e.key}
+          event={e}
+          person={people[e.user]}
+          followed={following.includes(e.user)}
+          mine={e.user === me}
+          english={english}
+          readOnly={readOnly}
+          onReact={(kind) => onReact(e, kind)}
+          onFollow={(on) => onFollow(e.user, on)}
+        />
+      ))}
+    </ol>
   )
 }
 
+const TIER_KEY = { ultra: 'ultra', very: 'very', rare: 'rareTier', common: 'common' } as const
+
+/** The share of players who have it, in PSN's tiers: "Ultra raro · 3,3%". */
 function Rate({ rate }: { rate: number }) {
   const t = useMessages(messages)
   if (!(rate > 0)) return null
-  const rare = rate < 5
+  const tier = rarityTier(rate)
   return (
-    <span className={`community-rate${rare ? ' rare' : ''}`}>
-      {t(rare ? 'share' : 'shareCommon', { rate: fmtRate(rate) })}
+    <span className={`community-rate is-${tier}`}>
+      {t(TIER_KEY[tier], { rate: fmtRate(rate) })}
     </span>
   )
 }
 
-function ReactionButton({
-  kind,
-  event: e,
-  name,
-  onReact,
-  disabled,
-}: {
-  kind: ReactionKind
-  event: CommunityEvent
-  name: string
-  onReact: (kind: ReactionKind) => void
-  disabled: boolean
-}) {
-  const t = useMessages(messages)
-  const count = e.reactions.counts[kind]
+/** The badge on the left of what happened: the trophy itself, or the medal. */
+function EventBadge({ event: e }: { event: CommunityEvent }) {
+  if (e.kind === 'medal')
+    return (
+      <span className="community-event-badge medal" aria-hidden="true">
+        {MEDAL_ICON[e.medal]}
+      </span>
+    )
+  if (e.kind === 'start')
+    return (
+      <span className="community-event-badge start" aria-hidden="true">
+        <Icon name="gamepad" />
+      </span>
+    )
   return (
-    <button
-      type="button"
-      className="community-reaction"
-      aria-pressed={e.reactions.mine.includes(kind)}
-      aria-label={t('react', {
-        reaction: t(kind),
-        event: `${name} ${e.game?.name ?? ''}`.trim(),
-        count,
-      })}
-      disabled={disabled}
-      onClick={() => onReact(kind)}
-    >
-      <span aria-hidden="true">{EMOJI[kind]}</span>
-      {count > 0 && <span className="community-reaction-count">{count}</span>}
-    </button>
+    <span className="community-event-badge" aria-hidden="true">
+      <TrophyMedal type={e.kind === 'platinum' ? 'platinum' : (e.type ?? 'gold')} />
+    </span>
+  )
+}
+
+/** What happened: a small kicker ("Platinou") over the big name (the game, the trophy, the medal). */
+function EventWhat({ event: e, english }: { event: CommunityEvent; english: boolean }) {
+  const t = useMessages(messages)
+  const link = gameLink(e.game)
+  const game = !e.game ? null : link ? <Link to={link}>{e.game.name}</Link> : e.game.name
+  const title =
+    e.kind === 'medal'
+      ? t(e.medal)
+      : e.kind === 'rare'
+        ? english
+          ? e.trophyEn || e.trophy
+          : e.trophy
+        : game
+  return (
+    <div className="community-event-what">
+      <EventBadge event={e} />
+      <div className="community-event-text">
+        <span className="community-event-kicker">{t(e.kind)}</span>
+        <strong className="community-event-title">{title}</strong>
+        {e.kind === 'rare' && e.game && (
+          <span className="community-event-sub">{t('inGame', { game: e.game.name })}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export function Avatar({ person, className = '' }: { person?: Person; className?: string }) {
+  return (
+    <span className={`community-avatar ${className}`.trim()}>
+      {person?.avatarUrl ? (
+        <img src={person.avatarUrl} alt="" loading="lazy" />
+      ) : (
+        <Icon name="gamepad" />
+      )}
+    </span>
   )
 }
 
@@ -309,34 +360,23 @@ function FeedItem({
 }) {
   const t = useMessages(messages)
   const name = person?.onlineId ?? '—'
+  const scene = e.game?.artUrl ?? e.game?.coverUrl ?? e.game?.iconUrl
   return (
     <li className={`community-event ${e.kind}`}>
-      <span className="community-avatar">
-        {person?.avatarUrl ? (
-          <img src={person.avatarUrl} alt="" loading="lazy" />
-        ) : (
-          <Icon name="gamepad" />
-        )}
-      </span>
+      {scene && e.kind !== 'medal' && (
+        <img className="community-event-scene" src={scene} alt="" loading="lazy" />
+      )}
       <div className="community-event-body">
-        <p className="community-event-line">
-          <b className="community-name">@{name}</b> <EventWhat event={e} english={english} />
-        </p>
-        <p className="community-event-meta">
+        <header className="community-event-who">
+          <Avatar person={person} />
+          {person ? (
+            <Link className="community-name" to={playerLink(person.onlineId)}>
+              @{name}
+            </Link>
+          ) : (
+            <b className="community-name">@{name}</b>
+          )}
           <time dateTime={e.at}>{fmtAgo(e.at)}</time>
-          {(e.kind === 'platinum' || e.kind === 'rare') && <Rate rate={e.rate} />}
-        </p>
-        <div className="community-event-actions">
-          {REACTIONS.map((kind) => (
-            <ReactionButton
-              key={kind}
-              kind={kind}
-              event={e}
-              name={name}
-              onReact={onReact}
-              disabled={readOnly}
-            />
-          ))}
           {!mine && !readOnly && (
             <button
               type="button"
@@ -348,38 +388,58 @@ function FeedItem({
               {t(followed ? 'unfollow' : 'follow')}
             </button>
           )}
+        </header>
+        {/* What happened, quoted under the player, so it never reads as the player's own data. */}
+        <div className="community-event-quote">
+          <EventWhat event={e} english={english} />
         </div>
       </div>
-      {e.kind === 'medal' ? (
-        <span className="community-event-art medal" aria-hidden="true">
-          {MEDAL_ICON[e.medal]}
-        </span>
-      ) : (
-        <Cover className="community-event-art" url={e.game?.iconUrl} name={e.game?.name} />
+      {e.kind !== 'medal' && (
+        <Cover
+          className="community-event-cover"
+          url={e.game?.coverUrl ?? e.game?.iconUrl}
+          name={e.game?.name}
+        />
       )}
+      <div className="community-event-actions">
+        <CommunityReactions event={e} name={name} onReact={onReact} readOnly={readOnly} />
+        {(e.kind === 'platinum' || e.kind === 'rare') && <Rate rate={e.rate} />}
+      </div>
     </li>
   )
 }
 
 function FeedSkeleton() {
+  // The same pieces as a real card, so nothing moves when the feed arrives.
   return (
     <ol className="community-events" aria-hidden="true">
       {repeat(4, () => (
         <li className="community-event">
-          <span className="community-avatar">
-            <Sk w="100%" h={40} />
-          </span>
           <div className="community-event-body">
-            <p className="community-event-line">
-              <Sk w="75%" h={16} />
-            </p>
-            <p className="community-event-meta">
-              <Sk w="40%" h={12} />
-            </p>
+            <header className="community-event-who">
+              <span className="community-avatar">
+                <Sk w="100%" style={{ height: '100%' }} />
+              </span>
+              <Sk w={110} h={12} />
+            </header>
+            <div className="community-event-quote">
+              <div className="community-event-what">
+                <span className="community-event-badge">
+                  <Sk w={32} h={32} />
+                </span>
+                <div className="community-event-text">
+                  <Sk w={80} h={10} />
+                  <Sk w={180} h={18} />
+                </div>
+              </div>
+            </div>
           </div>
-          <span className="community-event-art">
-            <Sk w="100%" h={56} />
+          <span className="community-event-cover">
+            <Sk w="100%" style={{ height: '100%' }} />
           </span>
+          <div className="community-event-actions">
+            <Sk w={84} h={34} />
+          </div>
         </li>
       ))}
     </ol>

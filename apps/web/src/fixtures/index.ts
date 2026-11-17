@@ -456,7 +456,7 @@ const daysGone: CommunityGame = {
   iconUrl: current.icon ?? null,
   id: 'game:19561',
 }
-const noReactions = { counts: { gg: 0, fire: 0, skull: 0 }, mine: [] }
+const noReactions = { counts: { like: 0, gg: 0, fire: 0, wow: 0, skull: 0 }, mine: [] }
 
 export const communityEvents: CommunityEvent[] = [
   {
@@ -466,7 +466,7 @@ export const communityEvents: CommunityEvent[] = [
     at: '2026-11-15T12:10:00Z',
     game: daysGone,
     rate: 4.2,
-    reactions: { counts: { gg: 3, fire: 1, skull: 0 }, mine: ['gg'] },
+    reactions: { counts: { like: 3, gg: 0, fire: 1, wow: 0, skull: 0 }, mine: ['like'] },
   },
   {
     key: 'rare:beto:NPWR17130_00:44',
@@ -477,7 +477,7 @@ export const communityEvents: CommunityEvent[] = [
     trophy: 'Sobreviveu à horda de Lost Lake',
     trophyEn: 'Survived the Lost Lake horde',
     rate: 1.8,
-    reactions: { counts: { gg: 0, fire: 2, skull: 4 }, mine: [] },
+    reactions: { counts: { like: 0, gg: 0, fire: 2, wow: 0, skull: 4 }, mine: [] },
   },
   {
     key: 'medal:caio:rare_hunter',
@@ -509,6 +509,11 @@ export const communityRankings: Rankings = {
     { user: 'ana', value: 5 },
   ],
   fastest: [{ user: 'ana', value: 3.4, game: daysGone }],
+  mine: {
+    platinums: { user: 'beto', value: 2, place: 2 },
+    rare: { user: 'beto', value: 9, place: 1 },
+    fastest: null,
+  },
   people: communityPeople,
   me: 'beto',
 }

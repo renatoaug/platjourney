@@ -4,7 +4,77 @@
     gap: 20px;
   }
 
+  /* The three sections as words, the chosen one over a straight neon bar in the accent. */
   .community-tabs {
-    justify-self: start;
+    display: flex;
+    gap: 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
+  }
+
+  .community-tabs button {
+    position: relative;
+    min-height: 40px;
+    padding: 0 0 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-fg-subtle);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    transition: color var(--motion-tab);
+  }
+
+  .community-tabs button::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--color-accent);
+    box-shadow:
+      0 0 6px var(--color-accent),
+      0 0 14px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
+    opacity: 0;
+    transform: scaleX(0.4);
+    transition:
+      opacity var(--motion-tab),
+      transform var(--motion-tab);
+  }
+
+  .community-tabs button:hover {
+    color: var(--color-fg-muted);
+  }
+
+  .community-tabs button[aria-pressed="true"] {
+    color: var(--color-fg);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+  }
+
+  .community-tabs button[aria-pressed="true"]::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  /* The feed takes the page; on a wide screen the highlights stand beside it. */
+  .community-feed-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 1100px) {
+    .community-feed-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .community-feed-layout .community-side {
+      display: none;
+    }
   }
 }

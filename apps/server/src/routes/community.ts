@@ -1,4 +1,4 @@
-import { community, communityGames, forgetCommunity, rankings } from '../community.ts'
+import { community, communityGames, forgetCommunity, type RankRow, rankings } from '../community.ts'
 import { isDemo } from '../demo.ts'
 import { json, readBody } from '../http.ts'
 import { secureUrl } from '../psn.ts'
@@ -13,7 +13,9 @@ import {
 import type { ApiHandler } from './api.ts'
 
 const PAGE = 30
-const REACTIONS: ReactionKind[] = ['gg', 'fire', 'skull']
+// How many players each ranking board lists.
+const TOP = 20
+const REACTIONS: ReactionKind[] = ['like', 'gg', 'fire', 'wow', 'skull']
 
 const person = (m: Member | undefined) =>
   m ? { id: m.id, onlineId: m.onlineId, avatarUrl: secureUrl(m.avatarUrl) } : null
@@ -40,8 +42,11 @@ export const COMMUNITY_ROUTES: Record<string, ApiHandler> = {
     const { members, feed } = await community()
     const mine = myId(me.id)
     const follows = scope === 'following' ? new Set(await following(mine)) : null
+    // A player out of the community is left out for the others, never for themselves.
+    const seen = new Set(members.filter((m) => m.visible || m.id === mine).map((m) => m.id))
     const shown = feed.filter(
       (e) =>
+        seen.has(e.user) &&
         (!before || e.at < before) &&
         (scope === 'all' || (scope === 'me' ? e.user === mine : follows?.has(e.user))),
     )
@@ -53,7 +58,10 @@ export const COMMUNITY_ROUTES: Record<string, ApiHandler> = {
     return json(res, 200, {
       events: page.map((e) => ({
         ...e,
-        reactions: reactions.get(e.key) ?? { counts: { gg: 0, fire: 0, skull: 0 }, mine: [] },
+        reactions: reactions.get(e.key) ?? {
+          counts: { like: 0, gg: 0, fire: 0, wow: 0, skull: 0 },
+          mine: [],
+        },
       })),
       people: peopleOf(
         members,
@@ -74,8 +82,24 @@ export const COMMUNITY_ROUTES: Record<string, ApiHandler> = {
         ? new Date(now.getFullYear(), now.getMonth(), 1)
         : new Date(now.getFullYear(), 0, 1)
     const [ranks, { members }] = await Promise.all([rankings(since), community()])
-    const ids = [...ranks.platinums, ...ranks.rare, ...ranks.fastest].map((r) => r.user)
-    return json(res, 200, { ...ranks, people: peopleOf(members, ids), me: myId(me.id) })
+    const mine = myId(me.id)
+    // The top 20 of each board, and the reader's own place in it wherever it falls.
+    const board = (rows: RankRow[]) => {
+      const at = rows.findIndex((r) => r.user === mine)
+      return { top: rows.slice(0, TOP), mine: at < 0 ? null : { ...rows[at], place: at + 1 } }
+    }
+    const platinums = board(ranks.platinums)
+    const rare = board(ranks.rare)
+    const fastest = board(ranks.fastest)
+    const ids = [platinums, rare, fastest].flatMap((b) => b.top.map((r) => r.user))
+    return json(res, 200, {
+      platinums: platinums.top,
+      rare: rare.top,
+      fastest: fastest.top,
+      mine: { platinums: platinums.mine, rare: rare.mine, fastest: fastest.mine },
+      people: peopleOf(members, [...ids, mine]),
+      me: mine,
+    })
   },
   'GET /api/community/games': async ({ res }) => json(res, 200, await communityGames()),
   // { event, kind, on }: one reaction of the player's on a feed event.
@@ -92,7 +116,11 @@ export const COMMUNITY_ROUTES: Record<string, ApiHandler> = {
       return json(res, 400, { error: 'invalid' })
     await setReaction(myId(me.id), event, kind as ReactionKind, on)
     const r = await reactionsOn([event], myId(me.id))
-    return json(res, 200, r.get(event) ?? { counts: { gg: 0, fire: 0, skull: 0 }, mine: [] })
+    return json(
+      res,
+      200,
+      r.get(event) ?? { counts: { like: 0, gg: 0, fire: 0, wow: 0, skull: 0 }, mine: [] },
+    )
   },
   // { user, on }: follow a player who shows up in the community, or stop.
   'POST /api/community/follow': async ({ req, res, me }) => {
@@ -102,7 +130,8 @@ export const COMMUNITY_ROUTES: Record<string, ApiHandler> = {
       return json(res, 400, { error: 'invalid' })
     if (user === myId(me.id)) return json(res, 400, { error: 'self' })
     const { members } = await community()
-    if (on && !members.some((m) => m.id === user)) return json(res, 404, { error: 'not_found' })
+    if (on && !members.some((m) => m.id === user && m.visible))
+      return json(res, 404, { error: 'not_found' })
     await setFollow(myId(me.id), user, on)
     forgetCommunity()
     return json(res, 200, { following: await following(myId(me.id)) })

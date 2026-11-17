@@ -8,6 +8,7 @@ import type { TrophyStatus } from './psn.ts'
 import {
   awardMedal,
   firstUnlocks,
+  type GameOn,
   gamesOn,
   goalTargets,
   type InterestCount,
@@ -32,7 +33,19 @@ export interface FeedGame {
   name: string
   iconUrl: string | null
   id: string | null
+  /** The catalog's box art and wide art, when the catalog knows the game. */
+  coverUrl: string | null
+  artUrl: string | null
 }
+
+const feedGame = (np: string, g: GameOn): FeedGame => ({
+  np,
+  name: g.name,
+  iconUrl: g.iconUrl,
+  id: g.game,
+  coverUrl: g.coverUrl,
+  artUrl: g.artUrl,
+})
 
 export type FeedEvent = {
   key: string
@@ -41,7 +54,7 @@ export type FeedEvent = {
   game: FeedGame | null
 } & (
   | { kind: 'platinum'; rate: number }
-  | { kind: 'rare'; trophy: string; trophyEn: string; rate: number }
+  | { kind: 'rare'; trophy: string; trophyEn: string; type: string; rate: number }
   | { kind: 'start' }
   | { kind: 'medal'; medal: MedalKind }
 )
@@ -188,7 +201,7 @@ export async function community(): Promise<Community> {
   ])
   const gameOf = (np: string): FeedGame | null => {
     const g = games.get(np)
-    return g ? { np, name: g.name, iconUrl: g.iconUrl, id: g.game } : null
+    return g ? feedGame(np, g) : null
   }
   const feed: FeedEvent[] = []
   for (const p of plats)
@@ -211,6 +224,7 @@ export async function community(): Promise<Community> {
       game: gameOf(u.np),
       trophy: r.name,
       trophyEn: r.nameEn,
+      type: r.type,
       rate: r.rate,
     })
   }
@@ -253,7 +267,8 @@ export async function rankings(since: Date): Promise<{
   rare: RankRow[]
   fastest: RankRow[]
 }> {
-  const people = await members()
+  // Only players who show up: rankings are what everyone sees.
+  const people = (await members()).filter((m) => m.visible)
   const users = people.map((m) => m.id)
   const [plats, unlocks] = await Promise.all([
     platinumsSince(users, since),
@@ -287,14 +302,15 @@ export async function rankings(since: Date): Promise<{
       best.set(p.user, {
         user: p.user,
         value,
-        game: g ? { np: p.np, name: g.name, iconUrl: g.iconUrl, id: g.game } : null,
+        game: g ? feedGame(p.np, g) : null,
       })
     }
   }
+  // Whole lists: the route keeps the top and finds the reader's own place in them.
   return {
-    platinums: count(plats).slice(0, 20),
-    rare: count(rare).slice(0, 20),
-    fastest: [...best.values()].sort((a, b) => a.value - b.value).slice(0, 20),
+    platinums: count(plats),
+    rare: count(rare),
+    fastest: [...best.values()].sort((a, b) => a.value - b.value),
   }
 }
 
@@ -309,7 +325,7 @@ export async function communityGames(): Promise<{
   platinumed: GameCount[]
   wanted: InterestCount[]
 }> {
-  const people = await members()
+  const people = (await members()).filter((m) => m.visible)
   const users = people.map((m) => m.id)
   const now = Date.now()
   const month = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -326,9 +342,7 @@ export async function communityGames(): Promise<{
     return [...by]
       .flatMap(([np, who]) => {
         const g = games.get(np)
-        return g
-          ? [{ game: { np, name: g.name, iconUrl: g.iconUrl, id: g.game }, players: who.size }]
-          : []
+        return g ? [{ game: feedGame(np, g), players: who.size }] : []
       })
       .sort((a, b) => b.players - a.players || a.game.name.localeCompare(b.game.name))
       .slice(0, 10)

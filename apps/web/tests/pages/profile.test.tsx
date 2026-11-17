@@ -30,16 +30,15 @@ test('the profile: identity, tiles, the collection and the yearly rhythm', async
   expect(tiles.textContent).toContain('2.972')
   expect(tiles.textContent).not.toContain('mais jogado')
   expect(tiles.textContent).not.toContain('Platina mais rara')
-  const rarest = container.querySelector('.profile-rarest') as HTMLElement
-  expect(rarest.textContent).toContain('Platina mais rara')
-  expect(rarest.textContent).toContain('2,4% de quem joga tem')
+  // The rarest platinum leads the trophy room; no card of its own beside the numbers.
+  expect(container.querySelector('.profile-rarest')).toBeNull()
   expect(tiles.textContent).toContain('Melhor mês')
   expect(screen.getByRole('heading', { name: 'Platinas 10' })).toBeTruthy()
   expect(results()).toBe('1–10 de 10 platinas')
   const rows = within(list()).getAllByRole('link')
   expect(rows).toHaveLength(10)
   expect(rows[0].getAttribute('href')).toBe('/title/game/game%3A0')
-  expect(rows[1].textContent).toContain('27h jogadas')
+  expect(rows[1].textContent).toContain('PS5 · 27h')
   expect(rows[0].textContent).not.toContain('jogadas')
   expect(container.querySelectorAll('.years .year')).toHaveLength(5)
   // The settings live on their own page now.
@@ -189,13 +188,12 @@ test('loading stays on the skeleton', () => {
   const { container } = renderApp(<Profile />)
   expect(container.querySelectorAll('.profile-tiles .tile')).toHaveLength(5)
   expect(container.querySelectorAll('.collection-grid .collection-tile')).toHaveLength(10)
-  expect(screen.getByRole('region', { name: 'Seus recordes' }).getAttribute('aria-busy')).toBe(
-    'true',
-  )
+  expect(
+    screen.getByRole('region', { name: 'Platinas em destaque' }).getAttribute('aria-busy'),
+  ).toBe('true')
   expect(container.querySelectorAll('.room-record')).toHaveLength(4)
   expect(container.querySelector('.profile-avatar.sk')).toBeTruthy()
   expect(container.querySelectorAll('.profile-most .plat-cover.sk')).toHaveLength(3)
-  expect(container.querySelector('.profile-rarest .plat-cover.sk')).toBeTruthy()
   expect(container.querySelector('.platinum-collection .trophy-results .sk')).toBeTruthy()
   expect(container.querySelectorAll('.collection-tile time .sk')).toHaveLength(10)
   expect(search().hasAttribute('disabled')).toBe(true)

@@ -1,19 +1,19 @@
 @layer screens {
   .community-shelves {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
+    gap: 32px;
   }
 
   .community-shelf {
     display: grid;
-    gap: 12px;
-    align-content: start;
+    gap: 14px;
+    min-width: 0;
   }
 
-  .community-shelf header h2 {
+  .community-shelf h2 {
     margin: 0;
-    font-size: var(--text-lg);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
   }
 
   .community-shelf header p {
@@ -22,47 +22,83 @@
     font-size: var(--text-sm);
   }
 
-  .community-shelf ol {
+  /* Box art side by side, like a shelf; on a phone it scrolls sideways inside itself. */
+  .community-shelf-list {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 0 0 4px;
     display: grid;
-    gap: 6px;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(132px, 160px);
+    gap: 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
-  .community-shelf-row {
+  .community-shelf-tile {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 10px;
-    min-height: 44px;
-    padding: 4px 6px;
-    border-radius: var(--radius-control);
+    gap: 8px;
     color: var(--color-fg);
     text-decoration: none;
   }
 
-  a.community-shelf-row:hover {
-    background: var(--color-bg-subtle);
+  .community-shelf-art {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--radius-control);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    transition:
+      transform var(--motion-tab),
+      box-shadow var(--motion-tab);
   }
 
-  .community-shelf-art {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-control);
+  .community-shelf-art img,
+  .community-shelf-art .cover-placeholder {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+  }
+
+  a.community-shelf-tile:hover .community-shelf-art {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--color-accent);
+  }
+
+  .community-shelf-rank {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 2px 8px;
+    border-radius: var(--radius-tag);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
+    color: var(--color-accent);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
   }
 
   .community-shelf-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-weight: 600;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
   }
 
   .community-shelf-players {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     color: var(--color-fg-muted);
     font-size: var(--text-xs);
     white-space: nowrap;
+  }
+
+  .community-shelf-players .icon {
+    width: 12px;
+    height: 12px;
   }
 }

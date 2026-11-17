@@ -18,7 +18,7 @@ DEFINE INDEX IF NOT EXISTS follow_target ON follow FIELDS target;
 DEFINE TABLE IF NOT EXISTS reaction SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS user ON reaction TYPE record<user>;
 DEFINE FIELD IF NOT EXISTS event ON reaction TYPE string ASSERT string::len($value) > 0 AND string::len($value) <= 200;
-DEFINE FIELD IF NOT EXISTS kind ON reaction TYPE string ASSERT $value IN ['gg', 'fire', 'skull'];
+DEFINE FIELD IF NOT EXISTS kind ON reaction TYPE string ASSERT $value IN ['like', 'gg', 'fire', 'wow', 'skull'];
 DEFINE FIELD IF NOT EXISTS created_at ON reaction TYPE datetime DEFAULT time::now() READONLY;
 DEFINE INDEX IF NOT EXISTS reaction_user_event_kind ON reaction FIELDS user, event, kind UNIQUE;
 DEFINE INDEX IF NOT EXISTS reaction_event ON reaction FIELDS event;

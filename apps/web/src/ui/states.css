@@ -23,7 +23,7 @@
   /* A card with nothing to show yet: an icon, a line in bold, what to do about it. */
   .empty-rich {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 16px;
     padding: 18px 0 6px;
     animation: onb-enter 0.35s ease both;

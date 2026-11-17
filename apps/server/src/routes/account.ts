@@ -16,13 +16,20 @@ import { fcmEnabled } from '../fcm.ts'
 import { forgetUser } from '../game-context.ts'
 import { json, readBody } from '../http.ts'
 import { defineMessages, isLocale, Language, translator } from '../i18n.ts'
+import { library } from '../library.ts'
 import { consentClient, decide } from '../oauth.ts'
 import { profilePage } from '../profile.ts'
 import { pushEnabled, pushTo } from '../push.ts'
 import { deleteNativeDevice, saveNativeDevice } from '../repository/native-push.ts'
 import { connectionsOf, deleteConnection } from '../repository/oauth.ts'
 import { deletePushSubscription, savePushSubscription } from '../repository/push-subscription.ts'
-import { setLinkCode, setTrophyVisibility, type User, updateUser } from '../repository/user.ts'
+import {
+  setLinkCode,
+  setTrophyVisibility,
+  type User,
+  updateUser,
+  userByOnlineId,
+} from '../repository/user.ts'
 import { botUsername } from '../telegram.ts'
 import { type Api, type ApiHandler, accountUser } from './api.ts'
 import { forgetSummary } from './home.ts'
@@ -263,11 +270,24 @@ export const ACCOUNT_ROUTES: Record<string, ApiHandler> = {
     forgetSummary(me.id)
     return json(res, 200, { ok: true }, { 'set-cookie': sessionCookie(null) })
   },
-  'GET /api/profile': async ({ res, me, titles }) =>
-    json(res, 200, {
+  // ?user=<id>: another player's profile, only of someone who shows up in the community.
+  'GET /api/profile': async ({ res, url, me, titles }) => {
+    // ?user=<PSN name>: the public version, even of one's own profile: what the others see,
+    // without the account.
+    const other = url.searchParams.get('user')
+    if (other) {
+      if (!/^[A-Za-z0-9_-]{3,16}$/.test(other)) return json(res, 400, { error: 'invalid' })
+      const self = other.toLowerCase() === (me.psn_online_id ?? '').toLowerCase()
+      const player = self ? me : await userByOnlineId(other)
+      if (!player || (!self && (isDemo(player) || player.community_visible === false)))
+        return json(res, 404, { error: 'not_found' })
+      return json(res, 200, await profilePage(await library(player.psn_account_id), player))
+    }
+    return json(res, 200, {
       ...(await profilePage(await titles(), me)),
       user: await accountUser(me),
-    }),
+    })
+  },
   'GET /api/oauth/client': consentInfo,
   'POST /api/oauth/authorize': consent,
   'GET /api/connections': connections,

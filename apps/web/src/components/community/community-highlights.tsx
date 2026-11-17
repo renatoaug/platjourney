@@ -3,9 +3,9 @@ import { Link } from 'react-router'
 import { defineMessages, Language, type Translator, useLocale, useMessages } from '../../i18n/i18n'
 import { type CommunityEvent, fetchFeed, type Person } from '../../lib/community'
 import { fmtAgo } from '../../lib/format'
-import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
 import { repeat, Sk } from '../../ui/skeleton'
+import { TrophyMedal } from '../../ui/trophy-medal'
 import './community-feed.css'
 import './community-highlights.css'
 
@@ -65,6 +65,25 @@ function lineOf(e: CommunityEvent, t: Translator<typeof messages>, english: bool
   return t('medal')
 }
 
+/** The tile's picture: the game's art faded behind, and the trophy (or medal) in front. */
+function HighlightArt({ event: e }: { event: CommunityEvent }) {
+  const scene = e.game?.artUrl ?? e.game?.coverUrl
+  return (
+    <>
+      {scene && <img className="community-highlight-scene" src={scene} alt="" loading="lazy" />}
+      <span className="community-highlight-badge" aria-hidden="true">
+        {e.kind === 'medal' ? (
+          '🏅'
+        ) : e.kind === 'start' ? (
+          <Icon name="play" />
+        ) : (
+          <TrophyMedal type={e.kind === 'platinum' ? 'platinum' : (e.type ?? 'gold')} />
+        )}
+      </span>
+    </>
+  )
+}
+
 export function CommunityHighlightsView({ state }: { state: HighlightsState }) {
   const t = useMessages(messages)
   const english = useLocale() === Language.En
@@ -93,12 +112,11 @@ export function CommunityHighlightsView({ state }: { state: HighlightsState }) {
         <ol className="community-highlight-list">
           {state.events.map((e) => {
             const p = state.people[e.user]
-            const game = e.game?.name ?? ''
             const line = lineOf(e, t, english)
             return (
               <li key={e.key} className={`community-highlight ${e.kind}`}>
                 <Link to="/community" className="community-highlight-link">
-                  <Cover className="community-highlight-art" url={e.game?.iconUrl} name={game} />
+                  <HighlightArt event={e} />
                   <span className="community-highlight-text">
                     <b>@{p?.onlineId ?? '—'}</b> {line}
                     <small>{fmtAgo(e.at)}</small>

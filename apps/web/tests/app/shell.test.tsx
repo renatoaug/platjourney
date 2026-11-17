@@ -90,10 +90,10 @@ test('primary navigation opens the games screen', () => {
 test('a fresh Games navigation always opens interests, including from another inner tab', () => {
   mockApi({ '/api/library': never })
   renderApp(<Shell />, { path: '/games?tab=library' })
-  expect(screen.getByRole('button', { name: 'Biblioteca PSN' }).getAttribute('aria-pressed')).toBe(
+  expect(screen.getByRole('button', { name: 'Biblioteca' }).getAttribute('aria-pressed')).toBe(
     'true',
   )
-  for (const tab of ['Metas e conquistas', 'Biblioteca PSN']) {
+  for (const tab of ['Metas', 'Biblioteca']) {
     fireEvent.click(screen.getByRole('button', { name: tab }))
     fireEvent.click(screen.getByRole('link', { name: 'Jogos' }))
     expect(where()).toBe('/games?tab=interests')

@@ -2,11 +2,22 @@
   .community-feed {
     display: grid;
     gap: 16px;
-    max-width: 820px;
+    min-width: 0;
+  }
+
+  .community-feed-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .community-scopes {
-    justify-self: start;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
   }
 
   .community-hidden {
@@ -23,33 +34,104 @@
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 10px;
+    gap: 12px;
   }
 
+  /* An event is a little scene: the game's art behind, fading into the card from the right, the
+     trophy and the name big on the left, the box art standing on the right. */
   .community-event {
+    --event-accent: var(--color-accent);
+    position: relative;
+    isolation: isolate;
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 56px;
-    gap: 12px;
-    align-items: start;
-    padding: 14px;
-    border: 1px solid var(--color-border);
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 16px 16px 20px;
+    border: 1px solid color-mix(in srgb, var(--event-accent) var(--alpha-line), var(--color-border));
     border-radius: var(--radius-card);
-    background: var(--color-surface);
+    background:
+      radial-gradient(
+        120% 140% at 0% 0%,
+        color-mix(in srgb, var(--event-accent) var(--alpha-tint), transparent),
+        transparent 60%
+      ),
+      var(--color-surface);
+    /* Not clipped: the reaction ring can reach past the card. The art clips itself instead. */
+    overflow: visible;
+  }
+
+  /* While its reaction ring is open, the card rises over the ones after it. */
+  .community-event:has(.community-react-bar) {
+    z-index: 3;
+  }
+
+  /* A stripe of the event's color down the left edge, stopping where the corners round. */
+  .community-event::before {
+    content: "";
+    position: absolute;
+    inset: var(--radius-card) auto var(--radius-card) 0;
+    width: 1px;
+    background: var(--event-accent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--event-accent) var(--alpha-strong), transparent);
   }
 
   .community-event.platinum {
-    border-color: var(--color-trophy-platinum);
+    --event-accent: var(--color-trophy-platinum);
+  }
+
+  .community-event.rare {
+    --event-accent: var(--color-trophy-gold);
+  }
+
+  .community-event.medal {
+    --event-accent: var(--color-highlight-warm);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .community-event-scene {
+    position: absolute;
+    inset: 0 0 0 30%;
+    z-index: -1;
+    width: 70%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0 var(--radius-card) var(--radius-card) 0;
+    opacity: 0.35;
+    mask-image: linear-gradient(to right, transparent, var(--color-shadow) 70%);
+    filter: saturate(1.2);
+  }
+
+  .community-event-body {
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+  }
+
+  .community-event-who {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: var(--text-sm);
+  }
+
+  .community-event-who time {
+    color: var(--color-fg-subtle);
+    white-space: nowrap;
   }
 
   .community-avatar {
-    width: 40px;
-    height: 40px;
+    flex: none;
+    width: 36px;
+    height: 36px;
     border-radius: var(--radius-round);
     overflow: hidden;
     display: grid;
     place-items: center;
     background: var(--color-bg-subtle);
     color: var(--color-fg-muted);
+    box-shadow: 0 0 0 1px var(--color-border-strong);
   }
 
   .community-avatar img {
@@ -58,96 +140,218 @@
     object-fit: cover;
   }
 
-  .community-event-body {
+  .community-name {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: var(--weight-semibold);
     min-width: 0;
-    display: grid;
-    gap: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .community-event-line {
-    margin: 0;
-    font-size: var(--text-base);
-    line-height: 1.4;
+  .community-event-what {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  /* As wide as the avatar above it, so the two sit on one vertical line. */
+  .community-event-badge {
+    flex: none;
+    width: 36px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-round);
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--event-accent) var(--alpha-glow), transparent),
+      transparent 70%
+    );
+  }
+
+  .community-event-badge .icon {
+    width: 36px;
+    height: 36px;
+    filter: drop-shadow(
+      0 0 10px color-mix(in srgb, var(--event-accent) var(--alpha-strong), transparent)
+    );
+  }
+
+  .community-event-badge.medal {
+    font-size: var(--text-3xl);
+    border: 1px solid color-mix(in srgb, var(--event-accent) var(--alpha-strong), transparent);
+  }
+
+  /* Starting a game: a controller in the accent, with no frame, so it never reads as an avatar. */
+  .community-event-badge.start {
+    color: var(--color-accent);
+  }
+
+  .community-event-badge.start .icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .community-event-text {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  .community-event-kicker {
+    color: var(--event-accent);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .community-event-title {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    line-height: 1.2;
+    color: var(--color-fg);
     overflow-wrap: anywhere;
   }
 
-  .community-event-line a {
-    color: var(--color-fg);
-    font-weight: 600;
+  .community-event-title a {
+    color: inherit;
+    text-decoration: none;
   }
 
-  .community-name {
+  .community-event-title a:hover {
     color: var(--color-accent);
   }
 
-  .community-event-meta {
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 10px;
-    color: var(--color-fg-subtle);
-    font-size: var(--text-xs);
-  }
-
-  .community-rate.rare {
-    color: var(--color-accent);
-  }
-
-  .community-event-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-  }
-
-  .community-reaction {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    min-height: 36px;
-    min-width: 44px;
-    padding: 4px 10px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-pill);
-    background: transparent;
-    color: var(--color-fg);
+  .community-event-sub {
+    color: var(--color-fg-muted);
     font-size: var(--text-sm);
   }
 
-  .community-reaction[aria-pressed="true"] {
-    border-color: var(--color-accent);
-    background: var(--color-accent-muted);
+  /* Under the whole card: reactions on the left, the rarity badge at the far right. */
+  .community-event-actions {
+    grid-column: 1 / -1;
+    margin-left: 44px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
   }
 
-  .community-reaction-count {
-    font-variant-numeric: tabular-nums;
+  .community-rate {
+    margin-left: auto;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid currentcolor;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .community-rate.is-ultra {
+    color: var(--color-trophy-gold);
+    background: color-mix(in srgb, var(--color-trophy-gold) var(--alpha-soft), transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-trophy-gold) var(--alpha-glow), transparent);
+  }
+
+  .community-rate.is-very {
+    color: var(--color-trophy-platinum-light);
+    background: color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-soft), transparent);
+  }
+
+  .community-rate.is-rare {
+    color: var(--color-trophy-silver);
+  }
+
+  .community-rate.is-common {
+    color: var(--color-fg-muted);
+  }
+
+  /* What happened, quoted under the player: indented to the name, in its own panel, so it reads as the post and not as the player's data. */
+  .community-event-quote {
+    margin-left: 44px;
+    padding: 10px 14px;
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
   }
 
   .community-follow {
     margin-left: auto;
-    min-height: 36px;
+    min-height: 32px;
   }
 
   .community-follow[aria-pressed="true"] {
     color: var(--color-fg-muted);
   }
 
-  .community-event-art {
-    width: 56px;
-    height: 56px;
+  /* The box art standing on the right, tilted toward the player like on a shelf. */
+  .community-event-cover {
+    width: 96px;
+    aspect-ratio: 3 / 4;
+    height: auto;
     border-radius: var(--radius-control);
     object-fit: cover;
+    box-shadow: 0 12px 28px var(--color-shadow);
   }
 
-  .community-event-art.medal {
-    display: grid;
-    place-items: center;
-    font-size: var(--text-3xl);
-    background: var(--color-bg-subtle);
+  .community-event.platinum .community-event-cover {
+    box-shadow:
+      0 12px 28px var(--color-shadow),
+      0 0 0 2px var(--color-trophy-platinum),
+      0 0 20px color-mix(in srgb, var(--color-trophy-platinum) var(--alpha-glow), transparent);
   }
 
   .community-more {
     justify-self: center;
+  }
+
+  @media (max-width: 640px) {
+    .community-event-quote,
+    .community-event-actions {
+      margin-left: 0;
+    }
+
+    .community-event {
+      grid-template-columns: minmax(0, 1fr) 64px;
+      gap: 12px;
+      padding: 14px 12px 14px 16px;
+    }
+
+    .community-event-cover {
+      width: 64px;
+      align-self: start;
+    }
+
+    .community-event-badge {
+      width: 36px;
+      height: 44px;
+    }
+
+    .community-event-badge .icon {
+      width: 32px;
+      height: 32px;
+    }
+
+    .community-event-title {
+      font-size: var(--text-lg);
+    }
+
+    .community-rate {
+      padding: 3px 8px;
+      letter-spacing: normal;
+    }
+
+    .community-event-scene {
+      inset: 0;
+      width: 100%;
+      border-radius: var(--radius-card);
+      opacity: 0.22;
+    }
   }
 }
