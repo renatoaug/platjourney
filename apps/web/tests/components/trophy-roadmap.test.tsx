@@ -981,6 +981,40 @@ test('a collection indexes its pieces by stretch, the stretches list by chapter,
   expect(advice()).toContain('Souvenir 1/2 no barco.')
 })
 
+test('a stretch tip with steps says which trophy it is for, unless it sits under that trophy', () => {
+  const game = routeGame()
+  const [story, , other] = game.trophies
+  const guide = {
+    ...(game.guide as GuideDetail),
+    milestones: [
+      {
+        after: story.name,
+        tips: [
+          {
+            kind: 'warning',
+            trophy: other.name,
+            text: 'Eletrocute 50 inimigos.',
+            where: 'Arena final',
+            steps: ['Atire nos barris amarelos perto dos inimigos.'],
+          },
+        ],
+      },
+    ],
+  }
+  const open = game.trophies.map((t) => ({ ...t, earned: false, earnedAt: undefined }))
+  const { container } = renderApp(<TrophyRoadmap game={{ ...game, guide, trophies: open }} />)
+  const pick = (name: string) =>
+    fireEvent.click(screen.getAllByRole('button', { name: new RegExp(name) })[0])
+  const chapters = container.querySelector('.roadmap-chapters')
+  expect(chapters?.textContent).toContain(`Para o troféu ${other.name}`)
+  pick(story.name)
+  expect(container.querySelector('.roadmap-advice')?.textContent).toContain(
+    `Para o troféu ${other.name}`,
+  )
+  pick(other.name)
+  expect(container.querySelector('.roadmap-advice')?.textContent).not.toContain('Para o troféu')
+})
+
 test('the online note shows only when the trophy has no tip of its own', () => {
   const game = routeGame()
   const first = game.trophies[0]

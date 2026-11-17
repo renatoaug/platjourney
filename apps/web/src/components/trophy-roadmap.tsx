@@ -55,6 +55,7 @@ const messages = defineMessages({
     chapters: 'Por capítulo',
     chapterStart: 'Começo do jogo',
     chapterAfter: 'Depois de {trophy}',
+    forTrophy: 'Para o troféu {trophy}',
     where: 'Onde estão',
     stretch: 'Nesse trecho',
     titledCount: '{title} ({count})',
@@ -186,6 +187,7 @@ const messages = defineMessages({
     chapters: 'By chapter',
     chapterStart: 'Start of the game',
     chapterAfter: 'After {trophy}',
+    forTrophy: 'For the {trophy} trophy',
     where: 'Where they are',
     stretch: 'In this stretch',
     titledCount: '{title} ({count})',
@@ -388,7 +390,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
       <div className="roadmap-advice-body">
         <div className="roadmap-advice-main">
           {trick && <TrickSteps text={trick} />}
-          <RoadmapTips tips={tips} />
+          <RoadmapTips tips={tips} trophy={trophy} />
           {steps.map((step) => (
             <p key={step}>
               <GuideText text={step} />
@@ -429,7 +431,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
         {(!!locations.length || !!stretch.length) && (
           <div className="roadmap-advice-aside">
             <StretchIndex tips={locations} game={game} title={t('where')} />
-            <RoadmapTips tips={stretch} title={t('stretch')} />
+            <RoadmapTips tips={stretch} title={t('stretch')} trophy={trophy} />
           </div>
         )}
       </div>
@@ -586,12 +588,24 @@ function TipRating({ trophy }: { trophy: Trophy }) {
 
 /** The guide's words for this trophy along the route. A long checklist stays folded. */
 /** The guide's tips as a list: each one's name, where, steps and what to do if passed. */
-function RoadmapTipsList({ tips }: { tips: RouteTip[] }) {
+function RoadmapTipsList({ tips, trophy }: { tips: RouteTip[]; trophy?: Trophy }) {
+  const t = useMessages(messages)
+  // A tip without a name of its own says which trophy it is for, unless it sits under that trophy.
+  const forOther = (tip: RouteTip) =>
+    tip.trophy && tip.trophy !== trophy?.name && tip.trophy !== trophy?.nameEn ? tip.trophy : null
   return (
     <ul className="roadmap-tips">
       {tips.map((tip) => (
         <li key={tipKey(tip)} data-piece={tipKey(tip)}>
-          {tip.name && <strong>{tip.name}</strong>}
+          {tip.name ? (
+            <strong>{tip.name}</strong>
+          ) : (
+            forOther(tip) && (
+              <strong className="roadmap-tip-trophy">
+                {t('forTrophy', { trophy: forOther(tip) ?? '' })}
+              </strong>
+            )
+          )}
           {tip.where && (
             <em>
               <GuideText text={tip.where} />
@@ -619,10 +633,18 @@ function RoadmapTipsList({ tips }: { tips: RouteTip[] }) {
   )
 }
 
-function RoadmapTips({ tips, title }: { tips: RouteTip[]; title?: string }) {
+function RoadmapTips({
+  tips,
+  title,
+  trophy,
+}: {
+  tips: RouteTip[]
+  title?: string
+  trophy?: Trophy
+}) {
   const t = useMessages(messages)
   if (!tips.length) return null
-  const list = <RoadmapTipsList tips={tips} />
+  const list = <RoadmapTipsList tips={tips} trophy={trophy} />
   if (tips.length < 3)
     return title ? (
       <section className="roadmap-tips-group">
