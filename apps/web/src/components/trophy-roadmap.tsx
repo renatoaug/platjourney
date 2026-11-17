@@ -587,6 +587,18 @@ function TipRating({ trophy }: { trophy: Trophy }) {
 }
 
 /** The guide's words for this trophy along the route. A long checklist stays folded. */
+/** "Para o troféu <name>", with the trophy's name in the accent color. */
+function TipTrophy({ name, label }: { name: string; label: string }) {
+  const [before, after = ''] = label.split('{trophy}')
+  return (
+    <strong className="roadmap-tip-trophy">
+      {before}
+      <span>{name}</span>
+      {after}
+    </strong>
+  )
+}
+
 /** The guide's tips as a list: each one's name, where, steps and what to do if passed. */
 function RoadmapTipsList({ tips, trophy }: { tips: RouteTip[]; trophy?: Trophy }) {
   const t = useMessages(messages)
@@ -601,9 +613,10 @@ function RoadmapTipsList({ tips, trophy }: { tips: RouteTip[]; trophy?: Trophy }
             <strong>{tip.name}</strong>
           ) : (
             forOther(tip) && (
-              <strong className="roadmap-tip-trophy">
-                {t('forTrophy', { trophy: forOther(tip) ?? '' })}
-              </strong>
+              <TipTrophy
+                name={forOther(tip) ?? ''}
+                label={t('forTrophy', { trophy: '{trophy}' })}
+              />
             )
           )}
           {tip.where && (
