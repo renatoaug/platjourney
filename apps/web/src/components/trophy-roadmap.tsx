@@ -390,7 +390,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
       <div className="roadmap-advice-body">
         <div className="roadmap-advice-main">
           {trick && <TrickSteps text={trick} />}
-          <RoadmapTips tips={tips} trophy={trophy} />
+          <RoadmapTips tips={tips} trophy={trophy} trophies={game.trophies} />
           {steps.map((step) => (
             <p key={step}>
               <GuideText text={step} />
@@ -431,7 +431,12 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
         {(!!locations.length || !!stretch.length) && (
           <div className="roadmap-advice-aside">
             <StretchIndex tips={locations} game={game} title={t('where')} />
-            <RoadmapTips tips={stretch} title={t('stretch')} trophy={trophy} />
+            <RoadmapTips
+              tips={stretch}
+              title={t('stretch')}
+              trophy={trophy}
+              trophies={game.trophies}
+            />
           </div>
         )}
       </div>
@@ -587,20 +592,32 @@ function TipRating({ trophy }: { trophy: Trophy }) {
 }
 
 /** The guide's words for this trophy along the route. A long checklist stays folded. */
-/** "Para o troféu <name>", with the trophy's name in the accent color. */
-function TipTrophy({ name, label }: { name: string; label: string }) {
+/** "Para o troféu <name> (<what it asks>)", the name in the accent color and what it asks in grey.
+ * A secret trophy not earned yet keeps what it asks to itself. */
+function TipTrophy({ name, label, trophy }: { name: string; label: string; trophy?: Trophy }) {
   const [before, after = ''] = label.split('{trophy}')
+  const detail = trophy && !(trophy.hidden && !trophy.earned) ? trophyDetail(trophy) : ''
   return (
     <strong className="roadmap-tip-trophy">
       {before}
       <span>{name}</span>
       {after}
+      {detail && <small> ({detail.replace(/\.$/, '')})</small>}
     </strong>
   )
 }
 
 /** The guide's tips as a list: each one's name, where, steps and what to do if passed. */
-function RoadmapTipsList({ tips, trophy }: { tips: RouteTip[]; trophy?: Trophy }) {
+function RoadmapTipsList({
+  tips,
+  trophy,
+  trophies = [],
+}: {
+  tips: RouteTip[]
+  trophy?: Trophy
+  /** The game's trophies, to say what the trophy a tip is for asks. */
+  trophies?: Trophy[]
+}) {
   const t = useMessages(messages)
   // A tip without a name of its own says which trophy it is for, unless it sits under that trophy.
   const forOther = (tip: RouteTip) =>
@@ -616,6 +633,7 @@ function RoadmapTipsList({ tips, trophy }: { tips: RouteTip[]; trophy?: Trophy }
               <TipTrophy
                 name={forOther(tip) ?? ''}
                 label={t('forTrophy', { trophy: '{trophy}' })}
+                trophy={trophies.find((x) => x.name === tip.trophy || x.nameEn === tip.trophy)}
               />
             )
           )}
@@ -650,14 +668,16 @@ function RoadmapTips({
   tips,
   title,
   trophy,
+  trophies,
 }: {
   tips: RouteTip[]
   title?: string
   trophy?: Trophy
+  trophies?: Trophy[]
 }) {
   const t = useMessages(messages)
   if (!tips.length) return null
-  const list = <RoadmapTipsList tips={tips} trophy={trophy} />
+  const list = <RoadmapTipsList tips={tips} trophy={trophy} trophies={trophies} />
   if (tips.length < 3)
     return title ? (
       <section className="roadmap-tips-group">
@@ -793,7 +813,7 @@ function RoadmapChapters({ game }: { game: RoadmapGame }) {
               <b>{label.title}</b>
               {label.place && <span>{label.place}</span>}
             </summary>
-            <RoadmapTipsList tips={m.tips} />
+            <RoadmapTipsList tips={m.tips} trophies={game.trophies} />
           </details>
         )
       })}

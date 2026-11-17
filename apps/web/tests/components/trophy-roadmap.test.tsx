@@ -1007,6 +1007,10 @@ test('a stretch tip with steps says which trophy it is for, unless it sits under
     fireEvent.click(screen.getAllByRole('button', { name: new RegExp(name) })[0])
   const chapters = container.querySelector('.roadmap-chapters')
   expect(chapters?.textContent).toContain(`Para o troféu ${other.name}`)
+  // What the trophy asks, in grey beside its name; a secret one keeps it to itself.
+  expect(chapters?.querySelector('.roadmap-tip-trophy small')?.textContent).toBe(
+    ` (${other.detail.replace(/\.$/, '')})`,
+  )
   pick(story.name)
   expect(container.querySelector('.roadmap-advice')?.textContent).toContain(
     `Para o troféu ${other.name}`,
