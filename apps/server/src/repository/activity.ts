@@ -119,10 +119,10 @@ export async function tipById(user: string, id: string): Promise<Tip | undefined
 export async function lastTip(
   user: string,
   kind: TipKind,
-): Promise<{ game: string | null; created_at: string } | undefined> {
+): Promise<{ game: string | null; created_at: string; content: string } | undefined> {
   const [tip] = plain(
-    await q<{ game: string | null; created_at: string }[]>(
-      'SELECT game, created_at FROM tip WHERE user = $user AND kind = $kind ORDER BY created_at DESC LIMIT 1',
+    await q<{ game: string | null; created_at: string; content: string }[]>(
+      'SELECT game, created_at, content FROM tip WHERE user = $user AND kind = $kind ORDER BY created_at DESC LIMIT 1',
       { user: userRef(user), kind },
     ),
   )

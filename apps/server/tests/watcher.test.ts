@@ -190,7 +190,7 @@ describe('session start', () => {
     }
 
     test('the same game the same day with nothing earned gets one short line', async () => {
-      expect(await open({ game: game.id, created_at: hoursAgo(7) })).toBe(short)
+      expect(await open({ game: game.id, created_at: hoursAgo(7), content: '' })).toBe(short)
     })
 
     test('a trophy earned since the last notice brings the full one back', async () => {
@@ -201,17 +201,33 @@ describe('session start', () => {
         makeTrophy({ id: 4, name: 'Novo', earned: true, earnedAt: hoursAgo(1) }),
         trophies[2],
       ])
-      expect(await open({ game: game.id, created_at: hoursAgo(7) })).toStartWith(
+      expect(await open({ game: game.id, created_at: hoursAgo(7), content: '' })).toStartWith(
         '🎮 Hora de jogar! ',
       )
     })
 
+    test('a notice that would read exactly like the last one within a day is not sent again', async () => {
+      const first = (await open({ game: game.id, created_at: hoursAgo(7), content: '' })) ?? ''
+      expect(first).not.toBe('')
+      logTip.mockClear()
+      expect(await open({ game: game.id, created_at: hoursAgo(7), content: first })).toBeUndefined()
+      logTip.mockClear()
+      // A day later the same words are a fresh reminder.
+      expect(
+        await open({
+          game: game.id,
+          created_at: hoursAgo(SESSION_AGAIN_HOURS + 1),
+          content: first,
+        }),
+      ).toBeDefined()
+    })
+
     test(`after ${SESSION_AGAIN_HOURS} hours, or after another game, the notice is full again`, async () => {
       expect(
-        await open({ game: game.id, created_at: hoursAgo(SESSION_AGAIN_HOURS + 1) }),
+        await open({ game: game.id, created_at: hoursAgo(SESSION_AGAIN_HOURS + 1), content: '' }),
       ).toStartWith('🎮 Hora de jogar! ')
       logTip.mockClear()
-      expect(await open({ game: 'game:other', created_at: hoursAgo(7) })).toStartWith(
+      expect(await open({ game: 'game:other', created_at: hoursAgo(7), content: '' })).toStartWith(
         '🎮 Hora de jogar! ',
       )
     })
@@ -1232,7 +1248,11 @@ describe('a game the profile does not list yet', () => {
     expect(saveEarned).not.toHaveBeenCalled()
 
     // Next sweep, still playing: no second start notice.
-    lastTip.mockResolvedValue({ game: 'game:mind', created_at: new Date().toISOString() })
+    lastTip.mockResolvedValue({
+      game: 'game:mind',
+      created_at: new Date().toISOString(),
+      content: '',
+    })
     await checkUser(user)
     expect(starts()).toHaveLength(1)
 
@@ -1245,7 +1265,11 @@ describe('a game the profile does not list yet', () => {
   test('its first listing brings the first trophy as an unlock, not a second start', async () => {
     playing.mockResolvedValue('MindsEye')
     await checkUser(user)
-    lastTip.mockResolvedValue({ game: 'game:mind', created_at: new Date().toISOString() })
+    lastTip.mockResolvedValue({
+      game: 'game:mind',
+      created_at: new Date().toISOString(),
+      content: '',
+    })
     logTip.mockClear()
     // PSN lists it with its first trophy.
     spyOn(games, 'gameForTitle').mockResolvedValue(newGame)
