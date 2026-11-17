@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.83.0](https://github.com/renatoaug/platjourney/compare/v0.82.0...v0.83.0) (2026-11-17)
+
+### Features
+
+* **web:** the community, with a feed, reactions, rankings and public profiles ([#201](https://github.com/renatoaug/platjourney/issues/201)) ([6b4e8c3](https://github.com/renatoaug/platjourney/commit/6b4e8c307992e9c1bee68b104eef22902f0419b3))
+
 ## [0.82.0](https://github.com/renatoaug/platjourney/compare/v0.81.4...v0.82.0) (2026-11-17)
 
 ### Features
