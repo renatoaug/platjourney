@@ -150,7 +150,7 @@ function BoardView({ data, board }: { data: Rankings; board: Board }) {
                     <Icon name="crown" />
                   </span>
                 )}
-                <Avatar person={data.people[r.user]} />
+                <Avatar person={data.people[r.user]} link />
                 <span className="community-podium-place">{i + 1}</span>
               </span>
               <Name data={data} user={r.user} />
@@ -167,7 +167,7 @@ function BoardView({ data, board }: { data: Rankings; board: Board }) {
           {rest.map((r, i) => (
             <li key={r.user} className={r.user === data.me ? 'mine' : undefined}>
               <span className="community-rank-pos">{i + 4}</span>
-              <Avatar person={data.people[r.user]} />
+              <Avatar person={data.people[r.user]} link />
               <span className="community-rank-who">
                 <Name data={data} user={r.user} />
                 {board === 'fastest' && r.game && (

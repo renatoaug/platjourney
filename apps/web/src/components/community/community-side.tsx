@@ -45,15 +45,22 @@ export type SideState =
   | { status: 'loading' }
   | { status: 'ok'; rankings: Rankings | null; games: CommunityGames | null }
 
+// The last answer, kept while the app is open, so coming back shows it at once.
+let kept: SideState | null = null
+
 export function CommunitySide({ onTab }: { onTab: (tab: 'rankings' | 'games') => void }) {
-  const [state, setState] = useState<SideState>({ status: 'loading' })
+  const [state, setState] = useState<SideState>(() => kept ?? { status: 'loading' })
   useEffect(() => {
     let live = true
     // Each part on its own: one that fails leaves the other standing.
     Promise.all([
       fetchRankings('month').catch(() => null),
       fetchCommunityGames().catch(() => null),
-    ]).then(([rankings, games]) => live && setState({ status: 'ok', rankings, games }))
+    ]).then(([rankings, games]) => {
+      if (!live) return
+      kept = { status: 'ok', rankings, games }
+      setState(kept)
+    })
     return () => {
       live = false
     }
@@ -105,7 +112,7 @@ export function CommunitySideView({
                 return (
                   <li key={r.user}>
                     <span className={`community-side-pos place-${i + 1}`}>{i + 1}</span>
-                    <Avatar person={p} />
+                    <Avatar person={p} link />
                     {p ? (
                       <Link className="community-side-name" to={playerLink(p.onlineId)}>
                         @{p.onlineId}
