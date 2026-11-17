@@ -3,7 +3,9 @@
 -- event is written twice. A player who turns `community_visible` off leaves the feed and the
 -- rankings; follows, reactions and medals are personal data, deleted with the account.
 
-DEFINE FIELD IF NOT EXISTS community_visible ON user TYPE bool DEFAULT true;
+DEFINE FIELD IF NOT EXISTS community_visible ON user TYPE bool DEFAULT ALWAYS true;
+-- Players who existed before this field show up too: give them the value it defaults to.
+UPDATE user SET community_visible = true WHERE community_visible = NONE;
 
 -- One row per player and player they follow.
 DEFINE TABLE IF NOT EXISTS follow SCHEMAFULL;
