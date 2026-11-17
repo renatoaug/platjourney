@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.83.1](https://github.com/renatoaug/platjourney/compare/v0.83.0...v0.83.1) (2026-11-17)
+
+### Bug Fixes
+
+* **web:** a player's picture opens their profile, and the community comes back without a flash ([#202](https://github.com/renatoaug/platjourney/issues/202)) ([8d71db7](https://github.com/renatoaug/platjourney/commit/8d71db7fd71f0438bb20701de118e25795c81370))
+
 ## [0.83.0](https://github.com/renatoaug/platjourney/compare/v0.82.0...v0.83.0) (2026-11-17)
 
 ### Features
