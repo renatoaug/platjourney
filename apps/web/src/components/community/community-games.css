@@ -1,0 +1,68 @@
+@layer screens {
+  .community-shelves {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .community-shelf {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+
+  .community-shelf header h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+  }
+
+  .community-shelf header p {
+    margin: 4px 0 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .community-shelf ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+
+  .community-shelf-row {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 4px 6px;
+    border-radius: var(--radius-control);
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+
+  a.community-shelf-row:hover {
+    background: var(--color-bg-subtle);
+  }
+
+  .community-shelf-art {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-control);
+    object-fit: cover;
+  }
+
+  .community-shelf-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .community-shelf-players {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+}

@@ -29,6 +29,7 @@ export interface Me {
   aiNoticesAvailable?: boolean
   /** Notices also go to the linked Telegram chat. */
   notifyTelegram?: boolean
+  communityVisible?: boolean
   /** The key a browser subscribes to push with; null when the instance has push off. */
   pushKey?: string | null
   nativePush?: boolean

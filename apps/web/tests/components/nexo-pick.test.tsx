@@ -181,5 +181,5 @@ test('in English', async () => {
 test('the interests send the player to Discover, looking among the saved games', () => {
   renderApp(<NextPickLink />)
   const link = screen.getByRole('link', { name: /Deixa o Nexo escolher/ })
-  expect(link.getAttribute('href')).toBe('/discover?scope=interests')
+  expect(link.getAttribute('href')).toBe('/games?tab=discover&scope=interests')
 })

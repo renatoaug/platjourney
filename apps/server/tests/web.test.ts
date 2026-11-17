@@ -195,6 +195,7 @@ test('register and login sign in, start watching and set the cookie', async () =
       aiNotices: true,
       aiNoticesAvailable: config.automatic.notices,
       notifyTelegram: true,
+      communityVisible: true,
       pushKey: null,
       nativePush: false,
       androidPush: false,

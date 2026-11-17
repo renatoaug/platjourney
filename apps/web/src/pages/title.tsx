@@ -177,7 +177,7 @@ export function TitleScreen({ load, similar }: { load: TitleLoad; similar?: Reac
   const back = (
     <Link
       className="text-link back-link"
-      to="/discover"
+      to="/games?tab=discover"
       onClick={(e) => {
         if (opened) return
         e.preventDefault()

@@ -22,7 +22,7 @@ test('the menu groups playing and the account, with signing out by the profile',
     within(nav)
       .getAllByRole('link')
       .map((l) => l.textContent),
-  ).toEqual(['Home', 'Jornada', 'Guias', 'Descobrir', 'Jogos', 'Configurações'])
+  ).toEqual(['Home', 'Jornada', 'Guias', 'Comunidade', 'Jogos', 'Configurações'])
   expect(nav.querySelector('.nav-group.is-play')?.textContent).toContain('JOGAR')
   expect(screen.getByRole('button', { name: 'Sair' })).toBeTruthy()
   expect(within(nav).getByRole('link', { name: 'Jogos' }).className).toContain('active')
@@ -69,10 +69,10 @@ for (const entry of ['sidebar'] as const) {
 }
 
 test('the breadcrumb and the tab title follow the route', async () => {
-  mockApi({ '/api/title': never })
-  const { unmount } = renderApp(<Shell />, { path: '/discover' })
-  expect(screen.getByText('Descobrir', { selector: '#route-label' })).toBeTruthy()
-  await waitFor(() => expect(document.title).toBe('Descobrir'))
+  mockApi({ '/api/title': never, '/api/community/feed': never })
+  const { unmount } = renderApp(<Shell />, { path: '/community' })
+  expect(screen.getByText('Comunidade', { selector: '#route-label' })).toBeTruthy()
+  await waitFor(() => expect(document.title).toBe('Comunidade'))
   unmount()
   renderApp(<Shell />, { path: '/title/game/game%3A1' })
   expect(screen.getByText('Jogo', { selector: '#route-label' })).toBeTruthy()

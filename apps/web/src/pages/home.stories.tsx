@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MockAppState, SAMPLE_DATA } from '../app/app-state'
+import { CommunityHighlightsView } from '../components/community/community-highlights'
 import { rankingData } from '../components/game-cards.stories'
 import { currentData, tipsData } from '../components/nexo-brief.stories'
 import { ReleasesView } from '../components/releases'
 import { releasesData } from '../components/releases.stories'
+import { communityEvents, communityPeople } from '../fixtures'
 import { Language } from '../i18n/i18n'
 import { Home } from './home'
 
@@ -19,6 +21,11 @@ export const Loaded: Story = {
       }}
     >
       <Home
+        community={
+          <CommunityHighlightsView
+            state={{ status: 'ok', events: communityEvents.slice(0, 3), people: communityPeople }}
+          />
+        }
         releases={
           <ReleasesView
             load={{ status: 'ok', releases: releasesData }}
@@ -35,6 +42,11 @@ export const Empty: Story = {
   render: () => (
     <MockAppState value={{ data: { ...SAMPLE_DATA, profile: null } }}>
       <Home
+        community={
+          <CommunityHighlightsView
+            state={{ status: 'ok', events: communityEvents.slice(0, 3), people: communityPeople }}
+          />
+        }
         releases={
           <ReleasesView
             load={{ status: 'ok', releases: releasesData }}
@@ -50,6 +62,11 @@ export const Loading: Story = {
   render: () => (
     <MockAppState value={{ data: null }}>
       <Home
+        community={
+          <CommunityHighlightsView
+            state={{ status: 'ok', events: communityEvents.slice(0, 3), people: communityPeople }}
+          />
+        }
         releases={
           <ReleasesView
             load={{ status: 'ok', releases: releasesData }}

@@ -32,6 +32,10 @@ erDiagram
     user ||--o{ platinum : "earned"
     game ||--o{ platinum : "of"
     user ||--o{ unlock : "earned trophies"
+    user ||--o{ follow : "follows"
+    user ||--o{ follow : "is followed by"
+    user ||--o{ reaction : "reacts"
+    user ||--o{ medal : "earned medals"
     user ||--o{ playtime : "played"
     game ||--o{ playtime : "for"
     user ||--o{ session_plan : "planned"
@@ -53,6 +57,7 @@ erDiagram
         include_dlc_progress bool
         ai_notices bool
         notify_telegram bool
+        community_visible bool
         ps_plus option(string)
         accent option(string)
         skin option(string)
@@ -99,6 +104,37 @@ erDiagram
         user record(user) FK
         np_communication_id string
         trophy_id int
+        earned_at datetime
+        created_at datetime
+    }
+    trophy_rarity {
+        id record(trophy_rarity) PK
+        np_communication_id string
+        trophy_id int
+        type string
+        name string
+        name_en string
+        earned_rate number
+        created_at datetime
+        updated_at datetime
+    }
+    follow {
+        id record(follow) PK
+        user record(user) FK
+        target record(user) FK
+        created_at datetime
+    }
+    reaction {
+        id record(reaction) PK
+        user record(user) FK
+        event string
+        kind string
+        created_at datetime
+    }
+    medal {
+        id record(medal) PK
+        user record(user) FK
+        kind string
         earned_at datetime
         created_at datetime
     }
@@ -490,10 +526,14 @@ erDiagram
 
 | Table | One row per | Unique on | Notes |
 |---|---|---|---|
-| `user` | account | `psn_online_id_lower`, `psn_account_id`, `telegram_chat_id` (when set) | The PSN account id is the identity; `telegram_chat_id` is the linked Telegram chat, on one account at most (linking it takes it off any other), set from a `telegram_link_code` that works until `telegram_link_expires_at`. `session_notice_at` is when the last session-start notice went out. settings, goals and the current session live here as objects. `revealed_trophy_games` is an optional list of catalog game IDs whose hidden trophies the account explicitly reveals; absent means hidden. The authenticated account endpoint atomically adds/removes one game, preserving other games and accounts; `/api/me` restores the choice on other devices. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell. `accent` is the app's accent color the player picked in Settings (one of `shared/accent.ts`: `lime`, `cyan`, `cobalt`, `violet`, `magenta`, `amber`, `red`); absent means lime. `skin` is the app's skin the player picked in Settings (one of `shared/skin.ts`: `default`, `neon`, `pixel`); absent means the default look. `notify_telegram` (on by default) sends notices to the linked chat; off, they reach only the web and push |
+| `user` | account | `psn_online_id_lower`, `psn_account_id`, `telegram_chat_id` (when set) | The PSN account id is the identity; `telegram_chat_id` is the linked Telegram chat, on one account at most (linking it takes it off any other), set from a `telegram_link_code` that works until `telegram_link_expires_at`. `session_notice_at` is when the last session-start notice went out. settings, goals and the current session live here as objects. `revealed_trophy_games` is an optional list of catalog game IDs whose hidden trophies the account explicitly reveals; absent means hidden. The authenticated account endpoint atomically adds/removes one game, preserving other games and accounts; `/api/me` restores the choice on other devices. `taste_profile` is what Nexo read from the library; `taste_prefs` is what the player changed in it (genres, traits and things to avoid added or removed, and rules such as no missables or a maximum of hours). `ps_plus` is the PS Plus tier the player says they have (`essential`, `extra`, `deluxe`), since PSN does not tell. `accent` is the app's accent color the player picked in Settings (one of `shared/accent.ts`: `lime`, `cyan`, `cobalt`, `violet`, `magenta`, `amber`, `red`); absent means lime. `skin` is the app's skin the player picked in Settings (one of `shared/skin.ts`: `default`, `neon`, `pixel`); absent means the default look. `notify_telegram` (on by default) sends notices to the linked chat; off, they reach only the web and push. `community_visible` (on by default) puts the player's platinums, rare trophies and medals in the community's feed and rankings; off, others see none of it, and the player still sees the community |
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `unlock` | trophy a player earned, with its PSN unlock time | `user, np_communication_id, trophy_id` | Written whenever the server fetches a game's trophy list from PSN (`keepUnlocks`: the watcher, a game's page, the chat, a session plan, and the profile's platinum dates for every platinumed game of a new account) and once for the whole library by `bun run backfill-unlocks`; only read back as aggregates: where players usually close a long trophy (ADR-015). Never updated, deleted with the account |
+| `trophy_rarity` | trophy on a PSN list | `np_communication_id, trophy_id` | Its share of players on PSN (`earned_rate`, in %), with its grade and names, from the last list a player who owns the game opened (a catalog list has no rates); kept at most every six hours per list by `keepRarities` (`community.ts`). Shared, not personal. Feeds the community's rare trophies and medals |
+| `follow` | player and a player they follow in the community | `user, target` | Written by `POST /api/community/follow`, only for a player who shows up in the community; deleted with either account |
+| `reaction` | player, feed event and kind | `user, event, kind` | `kind`: `gg`, `fire`, `skull`. `event` is the feed event's stable key (`plat:<user>:<np>`, `rare:<user>:<np>:<trophy>`, `start:<user>:<np>`, `medal:<user>:<kind>`): the feed itself is never stored, it is read from `unlock`, `platinum`, `trophy_rarity` and `medal`. Deleted with the account |
+| `medal` | player and medal | `user, kind` | `kind`: `rare_hunter` (five trophies under 5% of players), `quick_platinum` (a platinum within seven days of the game's first trophy), `no_day_off` (trophies on seven days in a row), `year_goal` (the year's platinum goal reached). `earned_at` is the trophy or platinum that earned it. Written by the server, at most hourly, the first time it finds one earned; deleted with the account |
 | `playtime` | game played | `user, game` | Seconds and play count from PSN, matched to a catalog game by the store name without its console and edition tags; a name neither the player's trophy lists, the catalog nor IGDB knows is left out, never added as a game |
 | `interest` | game the player wants to platinum | `user, game` | Ordered by `position`, per `year`. `recommended_at`: when Nexo last recommended the game before it was saved, set by the server and never overwritten. `source`: where the player saved it from (`releases`, the home's calendar; `recommendations`, Nexo's picks; `similar`, the lists of similar games; `title`, a game's page; `search`, the add panel), shown under the game on Interests, kept from the first save; none for older saves and Telegram. `next_pick_at`: when Nexo picked it as the next platinum on request (a pick among the interests, kept in `recommendation`), on one interest of the player at a time. `owned_at`: when the player said they already have it ("I have it" on a deal), for a game bought but never started, which PSN does not list yet; it is no longer shown as a deal nor in deal notices |
 | `recommendation` | game Nexo recommended (in a Discover batch, or one pick asked for), or a connected assistant suggested | | `source`: `discover` for a batch's rows (none on rows from before it, read the same), `pick` for a game picked on request (Discover's "What to play now?" and `/pick` on Telegram). `recommender`: who, an enum: `nexo` (the default) or an assistant connected through MCP, `claude`, `chatgpt` or `other` (one the app does not know by name); the app shows its name. **Assistants**: a game an assistant suggests (`save_suggestion`) is a `pick` of its own, with its reason in `why`; suggesting the game again replaces the row. Discover shows them with Nexo's picks in "What to play now?", under the assistant's name; `first_step` is optional for them. They do not count for Nexo's next pick nor its start notice ("the game Nexo recommended"), but like Nexo's they keep new batches from repeating the game. **Batches**: every batch of the last year, with why and what it is similar to; `batch_at` groups a batch's rows. Discover shows the latest batch; the older ones keep new batches to games not shown yet, and shown games come back, the oldest first, only when those run out. Rows from before batches were kept have no `batch_at` and count as one batch. **Picks**: one game with `why`, `first_step` (where to start), what the player asked (`mood`, in their words; `scope`, `interests` or `any`; `owned_only`, only games they have) and `fits` (false when nothing matched the mood and Nexo chose the closest); no `batch_at`, and `platform`, `difficulty` and `hours` only when known. Discover shows the latest pick and the earlier ones; asking again leaves out the games picked in the last 24 hours in the same scope. A game started within 30 days of being recommended, either way, opens its start notice glad the player followed it. Rows older than a year are deleted with the batches |

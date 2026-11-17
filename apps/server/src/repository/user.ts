@@ -27,6 +27,7 @@ export interface User {
   ai_notices?: boolean
   // Notices also go to the linked Telegram chat; off, only the web and push.
   notify_telegram?: boolean
+  community_visible?: boolean
   locale?: Locale | null
   // The shared, read-only demo player.
   demo?: boolean
@@ -178,8 +179,11 @@ export async function wipeUserData(id: string): Promise<void> {
     'playtime',
     'session_plan',
     'unlock',
+    'medal',
+    'reaction',
   ])
     await q(`DELETE ${table} WHERE user = $user`, { user })
+  await q('DELETE follow WHERE user = $user OR target = $user', { user })
   await q('UPDATE $user SET goal_targets = {}, taste_profile = NONE', { user })
 }
 

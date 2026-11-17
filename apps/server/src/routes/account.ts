@@ -9,6 +9,7 @@ import {
   sessionCookie,
   sessionHash,
 } from '../auth.ts'
+import { forgetCommunity } from '../community.ts'
 import { config } from '../config.ts'
 import { isDemo } from '../demo.ts'
 import { fcmEnabled } from '../fcm.ts'
@@ -64,18 +65,20 @@ function listChoices(body: Record<string, unknown>): Partial<User> | null {
   return fields
 }
 
-// Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices, the language,
+// Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices, showing up in
+// the community, the language,
 // the PS Plus tier, the app's accent color and its skin.
 async function savePreferences({ req, res, me, locale: language }: Api) {
   const t = translator(messages, language)
   const body = await readBody(req)
-  const { includeDlcProgress, aiNotices, notifyTelegram, locale } = body
+  const { includeDlcProgress, aiNotices, notifyTelegram, communityVisible, locale } = body
   const choices = listChoices(body)
   if (!choices) return json(res, 400, { error: 'invalid' })
   const fields: Partial<User> = { ...choices }
   if (typeof includeDlcProgress === 'boolean') fields.include_dlc_progress = includeDlcProgress
   if (typeof aiNotices === 'boolean') fields.ai_notices = aiNotices
   if (typeof notifyTelegram === 'boolean') fields.notify_telegram = notifyTelegram
+  if (typeof communityVisible === 'boolean') fields.community_visible = communityVisible
   if (locale !== undefined) {
     if (!isLocale(locale))
       return json(res, 400, { error: 'invalid_locale', message: t('invalidLocale') })
@@ -83,6 +86,7 @@ async function savePreferences({ req, res, me, locale: language }: Api) {
   }
   if (!Object.keys(fields).length) return json(res, 400, { error: 'invalid' })
   await updateUser(me.id, fields)
+  if (fields.community_visible !== undefined) forgetCommunity()
   return json(res, 200, { user: await accountUser({ ...me, ...fields }) })
 }
 

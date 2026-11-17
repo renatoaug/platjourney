@@ -1,0 +1,10 @@
+@layer screens {
+  .community-page {
+    display: grid;
+    gap: 20px;
+  }
+
+  .community-tabs {
+    justify-self: start;
+  }
+}

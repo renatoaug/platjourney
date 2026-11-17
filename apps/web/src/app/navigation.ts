@@ -13,7 +13,7 @@ import { type Location, useNavigationType } from 'react-router'
 export type Arrival = 'tab' | 'push' | 'pop'
 
 /** The bottom bar's screens: moving between them is a tab change, anything else goes deeper. */
-const TABS = new Set(['/', '/game', '/guides', '/discover', '/games'])
+const TABS = new Set(['/', '/game', '/guides', '/community', '/games'])
 
 /** What makes a screen: the path, plus a game's page when one is open. */
 export function screenOf(location: Pick<Location, 'pathname' | 'search'>): string {

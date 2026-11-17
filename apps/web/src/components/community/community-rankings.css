@@ -1,0 +1,90 @@
+@layer screens {
+  .community-rankings {
+    display: grid;
+    gap: 16px;
+  }
+
+  .community-rankings > .segmented {
+    justify-self: start;
+  }
+
+  .community-boards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .community-board {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+
+  .community-board h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+  }
+
+  .community-board ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .community-board li {
+    display: grid;
+    grid-template-columns: 32px 32px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: var(--radius-control);
+  }
+
+  .community-board li.mine {
+    background: var(--color-bg-subtle);
+    box-shadow: inset 3px 0 0 var(--color-accent);
+  }
+
+  .community-board li .community-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .community-board-pos {
+    color: var(--color-fg-subtle);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .community-board-name {
+    min-width: 0;
+    display: grid;
+    overflow: hidden;
+  }
+
+  .community-board-name b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .community-board-name small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+
+  .community-board-detail {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .community-board-value {
+    color: var(--color-accent);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}

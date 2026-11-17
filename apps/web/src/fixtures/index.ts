@@ -1,5 +1,12 @@
 /** Sample data for the stories and the tests: a real game guide and trophies, no player data. */
 
+import type {
+  CommunityEvent,
+  CommunityGame,
+  CommunityGames,
+  Person,
+  Rankings,
+} from '../lib/community'
 import type { CurrentGame, Tip } from '../lib/types'
 
 export const current: CurrentGame = {
@@ -435,3 +442,82 @@ export const tips: Tip[] = [
     game: { id: 'game:19561', name: 'Days Gone' },
   },
 ]
+
+// The community: three made-up players and what they did, on a real game's art.
+export const communityPeople: Record<string, Person> = {
+  ana: { id: 'ana', onlineId: 'Ana_Platina', avatarUrl: null },
+  beto: { id: 'beto', onlineId: 'BetoHunter', avatarUrl: null },
+  caio: { id: 'caio', onlineId: 'caio_trofeus', avatarUrl: null },
+}
+
+const daysGone: CommunityGame = {
+  np: 'NPWR17130_00',
+  name: 'DAYS GONE',
+  iconUrl: current.icon ?? null,
+  id: 'game:19561',
+}
+const noReactions = { counts: { gg: 0, fire: 0, skull: 0 }, mine: [] }
+
+export const communityEvents: CommunityEvent[] = [
+  {
+    key: 'plat:ana:NPWR17130_00',
+    kind: 'platinum',
+    user: 'ana',
+    at: '2026-11-15T12:10:00Z',
+    game: daysGone,
+    rate: 4.2,
+    reactions: { counts: { gg: 3, fire: 1, skull: 0 }, mine: ['gg'] },
+  },
+  {
+    key: 'rare:beto:NPWR17130_00:44',
+    kind: 'rare',
+    user: 'beto',
+    at: '2026-11-15T09:30:00Z',
+    game: daysGone,
+    trophy: 'Sobreviveu à horda de Lost Lake',
+    trophyEn: 'Survived the Lost Lake horde',
+    rate: 1.8,
+    reactions: { counts: { gg: 0, fire: 2, skull: 4 }, mine: [] },
+  },
+  {
+    key: 'medal:caio:rare_hunter',
+    kind: 'medal',
+    user: 'caio',
+    at: '2026-11-14T22:00:00Z',
+    game: null,
+    medal: 'rare_hunter',
+    reactions: noReactions,
+  },
+  {
+    key: 'start:caio:NPWR17130_00',
+    kind: 'start',
+    user: 'caio',
+    at: '2026-11-14T20:00:00Z',
+    game: { ...daysGone, iconUrl: null },
+    reactions: noReactions,
+  },
+]
+
+export const communityRankings: Rankings = {
+  platinums: [
+    { user: 'ana', value: 4 },
+    { user: 'beto', value: 2 },
+    { user: 'caio', value: 1 },
+  ],
+  rare: [
+    { user: 'beto', value: 9 },
+    { user: 'ana', value: 5 },
+  ],
+  fastest: [{ user: 'ana', value: 3.4, game: daysGone }],
+  people: communityPeople,
+  me: 'beto',
+}
+
+export const communityGames: CommunityGames = {
+  playing: [
+    { game: daysGone, players: 5 },
+    { game: { ...daysGone, np: 'x1', name: 'Ghost of Tsushima', id: null }, players: 3 },
+  ],
+  platinumed: [{ game: daysGone, players: 2 }],
+  wanted: [{ game: 'game:19561', name: 'DAYS GONE', coverUrl: null, players: 4 }],
+}

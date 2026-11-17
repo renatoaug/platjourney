@@ -229,9 +229,12 @@ const fetchDailyGuide = () =>
 export function Discover({
   releases = <Releases look="band" />,
   loadDailyGuide = fetchDailyGuide,
+  embedded = false,
 }: {
   releases?: ReactNode
   loadDailyGuide?: () => Promise<SpotlightGame | null>
+  /** Inside the Games page's Discover tab: no frame or head of its own. */
+  embedded?: boolean
 } = {}) {
   const t = useMessages(messages)
   const { cache, me } = useApp()
@@ -337,14 +340,8 @@ export function Discover({
 
   const noLibrary = similar.status === 'ok' && similar.recs.reason === 'no-library'
 
-  return (
-    <Page path="/discover">
-      <PageTop
-        eyebrow={t('eyebrow')}
-        title={t('title')}
-        lead={t('lead')}
-        art={dailyGuide?.shot ? image(dailyGuide.shot, 't_1080p') : null}
-      />
+  const body = (
+    <>
       <NexoPickBox
         initialScope={params.get('scope') === 'interests' ? 'interests' : 'any'}
         spotlight={params.has('scope')}
@@ -373,6 +370,18 @@ export function Discover({
       <DiscoverBands similar={similar} />
       {/* The same calendar as the overview: what is out now and coming soon, worth discovering too. */}
       {releases}
+    </>
+  )
+  if (embedded) return <div className="discover-embedded">{body}</div>
+  return (
+    <Page path="/discover">
+      <PageTop
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        lead={t('lead')}
+        art={dailyGuide?.shot ? image(dailyGuide.shot, 't_1080p') : null}
+      />
+      {body}
     </Page>
   )
 }
