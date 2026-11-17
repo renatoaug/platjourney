@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.82.0](https://github.com/renatoaug/platjourney/compare/v0.81.4...v0.82.0) (2026-11-17)
+
+### Features
+
+* **web:** what the trophy asks beside the trophy a tip is for ([#200](https://github.com/renatoaug/platjourney/issues/200)) ([8487ce9](https://github.com/renatoaug/platjourney/commit/8487ce9257d986c6cf4d75b3a8cd677339e07023))
+
 ## [0.81.4](https://github.com/renatoaug/platjourney/compare/v0.81.3...v0.81.4) (2026-11-17)
 
 ### Bug Fixes
