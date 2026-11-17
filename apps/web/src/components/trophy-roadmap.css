@@ -1721,6 +1721,10 @@
     color: var(--color-fg-muted);
   }
 
+  .roadmap-tip-trophy span {
+    color: var(--color-accent);
+  }
+
   .roadmap-tips ol {
     margin: 0;
     padding-inline-start: 20px;

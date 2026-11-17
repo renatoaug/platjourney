@@ -332,6 +332,7 @@ export type Target =
   | 'TipItem'
   | 'TipRating'
   | 'TipSkeleton'
+  | 'TipTrophy'
   | 'Title'
   | 'TitleGame'
   | 'TitleScreen'
