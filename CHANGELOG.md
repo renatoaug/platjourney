@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.81.4](https://github.com/renatoaug/platjourney/compare/v0.81.3...v0.81.4) (2026-11-17)
+
+### Bug Fixes
+
+* **web:** a route tip says which trophy it is for ([#199](https://github.com/renatoaug/platjourney/issues/199)) ([25a9921](https://github.com/renatoaug/platjourney/commit/25a992108d01a3c1b4dfe8e67e1fac816a66f86f))
+
 ## [0.81.3](https://github.com/renatoaug/platjourney/compare/v0.81.2...v0.81.3) (2026-11-16)
 
 ### Bug Fixes
