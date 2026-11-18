@@ -9,6 +9,8 @@
  *
  * Vice City: a beach city at dusk. A violet sky through magenta and coral to a warm yellow
  * horizon, palms and a skyline in silhouette, poster headlines and cards framed like poster panels.
+ * It moves: the striped sun breathes as it sets, the palms sway, the sea glints, gulls cross the
+ * sky, a neon tube runs along the menu's edge and the headlines flicker like a sign.
  *
  * Christmas: a snowy night. Snow falls in two depths, a string of lights blinks along the top,
  * snow piles up on the bottom bar (and on the account in the sidebar) the longer the app stays
@@ -328,15 +330,92 @@
     position: fixed;
     z-index: -3;
     left: 58%;
-    bottom: -9vmin;
-    width: 30vmin;
-    height: 30vmin;
+    bottom: -6vmin;
+    width: 24vmin;
+    height: 24vmin;
     border-radius: 50%;
     pointer-events: none;
-    background: radial-gradient(circle, var(--color-sky-yellow) 55%, transparent 72%);
+    /* The retro sun: solid on top, crossed lower down by bands of the sky that thicken toward
+       the sea (the circle's corners clip them). */
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 9px, var(--color-sky-coral) 9px 13px)
+      bottom / 100% 46% no-repeat,
+      radial-gradient(circle closest-side, var(--color-sky-yellow) 97%, transparent);
     box-shadow: 0 0 120px 40px
       color-mix(in srgb, var(--color-sky-orange) var(--alpha-strong), transparent);
     opacity: 0.6;
+    animation: vc-sun-glow 6s ease-in-out infinite alternate;
+  }
+
+  @keyframes vc-sun-glow {
+    to {
+      opacity: 0.8;
+      box-shadow: 0 0 160px 60px
+        color-mix(in srgb, var(--color-sky-orange) var(--alpha-strong), transparent);
+    }
+  }
+
+  /* The sea at the foot of the sky: glints of the low sun drifting along fine lines of water. */
+  :root[data-skin="vice_city"]::before {
+    content: "";
+    position: fixed;
+    z-index: -2;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 12vh;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--color-sky-yellow) 0 22px,
+      transparent 22px 70px,
+      var(--color-sky-coral) 70px 84px,
+      transparent 84px 150px
+    );
+    mask-image:
+      repeating-linear-gradient(to bottom, var(--color-shadow) 0 2px, transparent 2px 8px),
+      radial-gradient(ellipse 40% 100% at 64% 100%, var(--color-shadow), transparent 70%);
+    mask-composite: intersect;
+    opacity: 0.45;
+    animation: vc-sea 9s linear infinite;
+  }
+
+  @keyframes vc-sea {
+    to {
+      background-position: 150px 0;
+    }
+  }
+
+  /* Gulls crossing the sky now and then. */
+  :root[data-skin="vice_city"]::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    top: 16vh;
+    left: 0;
+    width: 120px;
+    height: 44px;
+    pointer-events: none;
+    background: var(--color-sky-violet);
+    mask:
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20120%2044%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M4%2014%20q7%20-8%2013%200%20q6%20-8%2013%200%22/%3E%3Cpath%20d%3D%22M46%2030%20q5%20-6%2010%200%20q5%20-6%2010%200%22/%3E%3Cpath%20d%3D%22M84%2010%20q6%20-7%2011%200%20q5%20-7%2011%200%22/%3E%3C/svg%3E")
+      center / contain no-repeat;
+    opacity: 0.7;
+    animation: vc-gulls 46s linear infinite;
+  }
+
+  @keyframes vc-gulls {
+    from {
+      transform: translate(-140px, 0);
+    }
+
+    50% {
+      transform: translate(50vw, -3vh);
+    }
+
+    to {
+      transform: translate(calc(100vw + 20px), 1vh);
+    }
   }
 
   /* Palms framing the screen and the city on the horizon, as night silhouettes. */
@@ -361,11 +440,59 @@
       auto 62vh,
       100% 22vh;
     opacity: 0.45;
+    animation: vc-palms 7s ease-in-out infinite alternate;
+  }
+
+  /* The palms lean in the sea breeze; the city stays put. */
+  @keyframes vc-palms {
+    to {
+      mask-position:
+        left -52px bottom -20px,
+        right -78px bottom -40px,
+        center bottom;
+    }
   }
 
   :root[data-skin="vice_city"] .sidebar {
     border-right: 3px solid var(--color-shadow);
     background: color-mix(in srgb, var(--color-sky-violet) var(--alpha-heavy), transparent);
+  }
+
+  /* A neon tube along the menu's edge, its sunset colors running: down the sidebar's right side on
+     a computer, across the top of the bottom bar on a phone. */
+  :root[data-skin="vice_city"] .sidebar::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 2px;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        to bottom,
+        var(--color-sky-magenta),
+        var(--color-sky-coral),
+        var(--color-sky-yellow),
+        var(--color-sky-coral),
+        var(--color-sky-magenta)
+      )
+      0 0 / 100% 200%;
+    box-shadow: 0 0 10px var(--color-sky-magenta);
+    animation: vc-tube-down 4s linear infinite;
+  }
+
+  @keyframes vc-tube-down {
+    to {
+      background-position: 0 200%;
+    }
+  }
+
+  @keyframes vc-tube-across {
+    to {
+      background-position: 200% 0;
+    }
   }
 
   /* Cards are framed like the panels of a poster through tokens (theme.css), so a card a screen
@@ -431,23 +558,65 @@
     display: none;
   }
 
+  @media (max-width: 760px) {
+    :root[data-skin="vice_city"] .sidebar::before {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: auto;
+      width: auto;
+      height: 2px;
+      background:
+        linear-gradient(
+          90deg,
+          var(--color-sky-magenta),
+          var(--color-sky-coral),
+          var(--color-sky-yellow),
+          var(--color-sky-coral),
+          var(--color-sky-magenta)
+        )
+        0 0 / 200% 100%;
+      animation-name: vc-tube-across;
+    }
+  }
+
   :root[data-skin="vice_city"] button.ghost,
   :root[data-skin="vice_city"] .button.secondary,
   :root[data-skin="vice_city"] .button.game-about-buy {
     border: 2px solid var(--color-sky-coral);
   }
 
+  /* Progress in the sky's ramp, a glint of sun sliding along it. */
   :root[data-skin="vice_city"] .bar i {
-    background: linear-gradient(
-      90deg,
-      var(--color-sky-magenta),
-      var(--color-sky-orange),
-      var(--color-sky-yellow)
-    );
+    background:
+      linear-gradient(
+        100deg,
+        transparent 35%,
+        color-mix(in srgb, var(--color-fg) var(--alpha-strong), transparent) 50%,
+        transparent 65%
+      )
+      -100% 0 / 50% 100% no-repeat,
+      linear-gradient(
+        90deg,
+        var(--color-sky-magenta),
+        var(--color-sky-orange),
+        var(--color-sky-yellow)
+      );
+    animation: vc-glint 3.2s ease-in-out infinite;
+  }
+
+  @keyframes vc-glint {
+    60%,
+    to {
+      background-position:
+        200% 0,
+        0 0;
+    }
   }
 
   :root[data-skin="vice_city"] .bar.gold i {
     background: var(--color-trophy-gold);
+    animation: none;
   }
 
   /* Titles tall, condensed, white and upper case, like a poster headline. */
@@ -459,7 +628,41 @@
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.01em;
-    text-shadow: 3px 3px 0 color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+    text-shadow:
+      3px 3px 0 color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent),
+      0 0 18px color-mix(in srgb, var(--color-sky-magenta) var(--alpha-glow), transparent);
+    animation: vc-sign 7s steps(1) infinite;
+  }
+
+  /* Like a neon sign: lit, a quick double flicker, lit again. */
+  @keyframes vc-sign {
+    0%,
+    91%,
+    93.5%,
+    to {
+      opacity: 1;
+    }
+
+    92%,
+    94.5% {
+      opacity: 0.55;
+    }
+  }
+
+  /* Without motion the scene holds still: the sun, the palms, the sea, the gulls and the signs. */
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-skin="vice_city"] body::before,
+    :root[data-skin="vice_city"] body::after,
+    :root[data-skin="vice_city"]::before,
+    :root[data-skin="vice_city"] .sidebar::before,
+    :root[data-skin="vice_city"] .bar i,
+    :root[data-skin="vice_city"] :is(h1, h2, .console-title, .hero-title) {
+      animation: none;
+    }
+
+    :root[data-skin="vice_city"]::after {
+      display: none;
+    }
   }
 
   /* Small labels and numbers in the warm yellow of the low sun. */
