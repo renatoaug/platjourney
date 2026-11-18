@@ -48,8 +48,16 @@
   }
 
   .share-targets-places .button {
+    gap: 8px;
     padding: 10px 8px;
     text-decoration: none;
+  }
+
+  /* Each place's own logo, in its own colors. */
+  .share-targets-places img {
+    flex: none;
+    width: 18px;
+    height: 18px;
   }
 
   .share-targets-copy {

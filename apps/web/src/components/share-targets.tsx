@@ -100,6 +100,7 @@ export function ShareTargets({
             target="_blank"
             rel="noopener noreferrer"
           >
+            <img src={`/${p.key}.svg`} alt="" />
             {p.label}
           </a>
         ))}
