@@ -1,0 +1,25 @@
+@layer screens {
+  /* Round, quiet until hovered, and a touch target big enough on a phone. */
+  .share-platinum {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-round);
+  }
+
+  .share-platinum[aria-busy="true"] .icon {
+    animation: share-pulse 0.9s ease-in-out infinite alternate;
+  }
+
+  @keyframes share-pulse {
+    to {
+      opacity: 0.35;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .share-platinum[aria-busy="true"] .icon {
+      animation: none;
+    }
+  }
+}

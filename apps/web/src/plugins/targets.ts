@@ -329,6 +329,7 @@ export type Target =
   | 'SettingsTop'
   | 'SettingsVersion'
   | 'SettingsView'
+  | 'SharePlatinum'
   | 'Shelf'
   | 'ShelfSkeleton'
   | 'Shell'

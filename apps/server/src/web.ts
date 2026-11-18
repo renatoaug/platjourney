@@ -25,6 +25,7 @@ import { GAME_ROUTES } from './routes/games.ts'
 import { HOME_ROUTES } from './routes/home.ts'
 import { INTEREST_ROUTES } from './routes/interests.ts'
 import { PLAN_ROUTES } from './routes/plan.ts'
+import { SHARE_ROUTES } from './routes/share.ts'
 
 // What a failed request says, whichever route threw it.
 const messages = defineMessages({
@@ -109,6 +110,7 @@ const API_ROUTES: Record<string, ApiHandler> = {
   ...PLAN_ROUTES,
   ...INTEREST_ROUTES,
   ...COMMUNITY_ROUTES,
+  ...SHARE_ROUTES,
 }
 
 async function api(

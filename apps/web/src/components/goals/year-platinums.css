@@ -189,7 +189,15 @@
   }
 
   .year-month-group li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
     margin: 0;
+  }
+
+  .year-month-group li > .year-platinum {
+    flex: 1;
+    min-width: 0;
   }
 
   .year-platinum {
