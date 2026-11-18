@@ -15,6 +15,7 @@ const messages = defineMessages({
     savedOnly: 'A imagem foi salva: abra onde quer postar e anexe o arquivo.',
     preview: 'A imagem que vai no post',
     where: 'Postar em',
+    or: 'ou',
     copyText: 'Copiar texto',
     textCopied: 'Texto copiado',
     close: 'Fechar',
@@ -26,6 +27,7 @@ const messages = defineMessages({
     savedOnly: 'The image was saved: open where you want to post and attach the file.',
     preview: 'The image that goes in the post',
     where: 'Post on',
+    or: 'or',
     copyText: 'Copy text',
     textCopied: 'Text copied',
     close: 'Close',
@@ -96,15 +98,20 @@ export function ShareTargets({
           <a
             key={p.key}
             className={`button secondary share-target-${p.key}`}
+            aria-label={p.label}
             href={p.href}
             target="_blank"
             rel="noopener noreferrer"
           >
             <img src={`/${p.key}.svg`} alt="" />
-            {p.label}
+            {/* X's logo is its name. */}
+            {p.key !== 'x' && p.label}
           </a>
         ))}
       </nav>
+      <div className="share-targets-or" aria-hidden="true">
+        {t('or')}
+      </div>
       <button
         type="button"
         className="ghost sm share-targets-copy"

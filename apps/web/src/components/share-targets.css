@@ -60,11 +60,36 @@
     height: 18px;
   }
 
+  /* A hairline fading at both ends, with the word in the middle. */
+  .share-targets-or {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin: 18px 0 10px;
+    color: var(--color-fg-subtle);
+    font-size: var(--text-md);
+  }
+
+  .share-targets-or::before,
+  .share-targets-or::after {
+    flex: 1;
+    height: 1px;
+    content: "";
+  }
+
+  .share-targets-or::before {
+    background: linear-gradient(90deg, transparent, var(--color-border-strong));
+  }
+
+  .share-targets-or::after {
+    background: linear-gradient(90deg, var(--color-border-strong), transparent);
+  }
+
   .share-targets-copy {
-    display: inline-flex;
+    display: flex;
     gap: 6px;
     align-items: center;
-    margin-top: 12px;
+    margin: 0 auto;
   }
 
   @media (max-width: 480px) {
