@@ -57,8 +57,10 @@ const messages = defineMessages({
   },
 })
 
-/** Where the card sends people. */
-export const SHARE_HOST = 'platjourney.app'
+/** The address the card prints: the site's home, short enough to read on an image. */
+const SITE = 'platjourney.com'
+/** Where a shared link opens: the app itself, at the player's public profile. */
+export const SHARE_HOST = 'app.platjourney.com'
 
 const WIDTH = 1200
 const HEIGHT = 675
@@ -605,8 +607,8 @@ export function brandFooter(
   ctx.letterSpacing = '1px'
   ctx.textAlign = 'right'
   ctx.fillStyle = LIME
-  ctx.fillText(SHARE_HOST.toUpperCase(), width - 30, y + 26)
-  const hostW = ctx.measureText(SHARE_HOST.toUpperCase()).width
+  ctx.fillText(SITE.toUpperCase(), width - 30, y + 26)
+  const hostW = ctx.measureText(SITE.toUpperCase()).width
   ctx.fillStyle = MUTED
   ctx.fillText(`${cta} `, width - 30 - hostW - 6, y + 26)
   ctx.textAlign = 'left'
