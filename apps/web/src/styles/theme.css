@@ -295,7 +295,7 @@
 /* Vice City: a beach city at dusk. Deep violet through magenta and coral to a warm yellow,
  * condensed poster headlines, small corners and cards framed like poster panels. */
 :root[data-skin="vice_city"] {
-  /* Deep violet nights, white type, and the sunset ramp for everything that should glow. */
+  /* Deep violet nights, white type, and the sky's ramp for everything that should glow. */
   --palette-neutral-950: #1c0836;
   --palette-neutral-925: #220a42;
   --palette-neutral-900: #2a0d50;
