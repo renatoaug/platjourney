@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.86.0](https://github.com/renatoaug/platjourney/compare/v0.85.2...v0.86.0) (2026-11-18)
+
+### Features
+
+* **web:** skins that move, a christmas skin and a light on game cards ([#208](https://github.com/renatoaug/platjourney/issues/208)) ([07c34d8](https://github.com/renatoaug/platjourney/commit/07c34d89297dbb56aebe4ddf943f4f97b7df23b5))
+
 ## [0.85.2](https://github.com/renatoaug/platjourney/compare/v0.85.1...v0.85.2) (2026-11-18)
 
 ## [0.85.1](https://github.com/renatoaug/platjourney/compare/v0.85.0...v0.85.1) (2026-11-18)
