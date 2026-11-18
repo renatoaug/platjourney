@@ -43,6 +43,12 @@
     display: inline-flex;
   }
 
+  /* Beside a heading's count, the button stays as low as that pill. */
+  .share-collection .share-platinum-labeled {
+    gap: 6px;
+    padding: 6px 12px;
+  }
+
   .share-collection-menu {
     position: absolute;
     z-index: 20;
