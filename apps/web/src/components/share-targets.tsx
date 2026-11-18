@@ -1,9 +1,8 @@
 /** Where to post a shared image from a computer: the image is already copied and saved, and each
  * place opens its own posting screen with the line and the link filled in, for the player to paste
  * the image into. A site cannot hand an image to these places; only a phone's share sheet can. */
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { useCopy } from '../lib/use-copy'
 import { Icon } from '../ui/icon'
 import './share-targets.css'
 
@@ -16,8 +15,8 @@ const messages = defineMessages({
     preview: 'A imagem que vai no post',
     where: 'Postar em',
     or: 'ou',
-    copyText: 'Copiar texto',
-    textCopied: 'Texto copiado',
+    copyPost: 'Copiar post',
+    postCopied: 'Post copiado',
     close: 'Fechar',
   },
   [Language.En]: {
@@ -28,11 +27,27 @@ const messages = defineMessages({
     preview: 'The image that goes in the post',
     where: 'Post on',
     or: 'or',
-    copyText: 'Copy text',
-    textCopied: 'Text copied',
+    copyPost: 'Copy post',
+    postCopied: 'Post copied',
     close: 'Close',
   },
 })
+
+/** The image and the words together: where the post is pasted takes the image, the words or
+ * both, as that place reads a paste. Without image copying, the words alone. */
+async function copyPost(image: string, words: string) {
+  try {
+    const blob = await (await fetch(image)).blob()
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'image/png': blob,
+        'text/plain': new Blob([words], { type: 'text/plain' }),
+      }),
+    ])
+  } catch {
+    await navigator.clipboard?.writeText(words).catch(() => {})
+  }
+}
 
 /** Each place's posting screen with the line and the link filled in. */
 export function postLinks(text: string, link: string) {
@@ -70,7 +85,12 @@ export function ShareTargets({
 }) {
   const t = useMessages(messages)
   const ref = useRef<HTMLDialogElement>(null)
-  const { copied: textCopied, copy } = useCopy()
+  const [postCopied, setPostCopied] = useState(false)
+  useEffect(() => {
+    if (!postCopied) return
+    const id = setTimeout(() => setPostCopied(false), 1800)
+    return () => clearTimeout(id)
+  }, [postCopied])
   useEffect(() => {
     const dialog = ref.current
     if (dialog && !dialog.open) dialog.showModal?.()
@@ -115,9 +135,9 @@ export function ShareTargets({
       <button
         type="button"
         className="ghost sm share-targets-copy"
-        onClick={() => copy(`${text}\n${link}`)}
+        onClick={() => copyPost(image, `${text}\n${link}`).then(() => setPostCopied(true))}
       >
-        <Icon name={textCopied ? 'check' : 'copy'} /> {textCopied ? t('textCopied') : t('copyText')}
+        <Icon name={postCopied ? 'check' : 'copy'} /> {postCopied ? t('postCopied') : t('copyPost')}
       </button>
     </dialog>
   )
