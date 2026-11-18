@@ -10,6 +10,10 @@
  * Vice City: a beach city at dusk. A violet sky through magenta and coral to a warm yellow
  * horizon, palms and a skyline in silhouette, poster headlines and cards framed like poster panels.
  *
+ * Christmas: a snowy night. Snow falls in two depths, a string of lights blinks along the top,
+ * snow piles up on the bottom bar (and on the account in the sidebar) the longer the app stays
+ * open, progress runs as a candy cane, the active tab wears a Santa hat and titles are gold.
+ *
  * Pixel: an 8-bit game. The pixel font everywhere, a checkered floor under CRT scanlines, cards
  * drawn as game windows, raised buttons, square icons, progress in blocks and the game's art
  * pixelated (the #pixelate filter in index.html).
@@ -485,5 +489,346 @@
     mix-blend-mode: color;
     opacity: 0.75;
     pointer-events: none;
+  }
+
+  /* --------------------------------------------------------- Christmas */
+
+  /* The night over a pine forest, with the warm glow of a window low on the screen. */
+  :root[data-skin="christmas"] body {
+    background:
+      radial-gradient(
+        70vw 40vh at 50% 110%,
+        color-mix(in srgb, var(--color-xmas-gold) var(--alpha-tint), transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        50vw 50vh at 100% 0%,
+        color-mix(in srgb, var(--color-xmas-green) var(--alpha-tint), transparent),
+        transparent 70%
+      ),
+      linear-gradient(to bottom, var(--color-xmas-night), var(--color-bg));
+    background-attachment: fixed;
+  }
+
+  /* Snow in two depths: small flakes behind the content drifting slowly, bigger ones in front
+     falling faster. Each layer is one tile of flakes sliding down by its own height, so it loops. */
+  :root[data-skin="christmas"] body::before,
+  :root[data-skin="christmas"] body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  :root[data-skin="christmas"] body::before {
+    z-index: -1;
+    background-image:
+      radial-gradient(circle at 12% 18%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px)),
+      radial-gradient(
+        circle at 38% 62%,
+        var(--color-xmas-snow) 0 1.5px,
+        transparent calc(1.5px + 1px)
+      ),
+      radial-gradient(circle at 64% 8%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px)),
+      radial-gradient(
+        circle at 82% 44%,
+        var(--color-xmas-snow) 0 1.5px,
+        transparent calc(1.5px + 1px)
+      ),
+      radial-gradient(circle at 26% 88%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px)),
+      radial-gradient(circle at 92% 78%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px)),
+      radial-gradient(circle at 52% 36%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px));
+    background-size: 180px 180px;
+    opacity: 0.55;
+    animation: xmas-snow-far 18s linear infinite;
+  }
+
+  :root[data-skin="christmas"] body::after {
+    z-index: 15;
+    background-image:
+      radial-gradient(
+        circle at 18% 30%,
+        var(--color-xmas-snow) 0 2.5px,
+        transparent calc(2.5px + 1px)
+      ),
+      radial-gradient(circle at 58% 12%, var(--color-xmas-snow) 0 2px, transparent calc(2px + 1px)),
+      radial-gradient(circle at 78% 66%, var(--color-xmas-snow) 0 3px, transparent calc(3px + 1px)),
+      radial-gradient(circle at 34% 74%, var(--color-xmas-snow) 0 2px, transparent calc(2px + 1px)),
+      radial-gradient(circle at 90% 24%, var(--color-xmas-snow) 0 2px, transparent calc(2px + 1px));
+    background-size: 320px 320px;
+    opacity: 0.8;
+    filter: blur(0.4px);
+    animation: xmas-snow-near 11s linear infinite;
+  }
+
+  @keyframes xmas-snow-far {
+    to {
+      background-position: 30px 180px;
+    }
+  }
+
+  @keyframes xmas-snow-near {
+    to {
+      background-position: -60px 320px;
+    }
+  }
+
+  /* A string of lights along the top: the wire in scallops and four colors of bulbs, two of them
+     on each layer, the layers blinking in turn. */
+  :root[data-skin="christmas"]::before,
+  :root[data-skin="christmas"]::after {
+    content: "";
+    position: fixed;
+    z-index: 40;
+    top: env(safe-area-inset-top, 0px);
+    left: 0;
+    right: 0;
+    height: 26px;
+    pointer-events: none;
+    background-repeat: repeat-x;
+  }
+
+  :root[data-skin="christmas"]::before {
+    background-image:
+      radial-gradient(
+        ellipse 30px 14px at 24px -6px,
+        transparent 84%,
+        var(--color-xmas-wire) 86% 100%,
+        transparent 101%
+      ),
+      radial-gradient(ellipse 4px 6px at 24px 15px, var(--color-xmas-red) 70%, transparent),
+      radial-gradient(ellipse 4px 6px at 24px 15px, var(--color-xmas-green) 70%, transparent);
+    background-size:
+      48px 26px,
+      192px 26px,
+      192px 26px;
+    background-position:
+      0 0,
+      0 0,
+      96px 0;
+    filter: drop-shadow(
+      0 0 4px color-mix(in srgb, var(--color-xmas-gold) var(--alpha-strong), transparent)
+    );
+    animation: xmas-blink 1.8s ease-in-out infinite alternate;
+  }
+
+  :root[data-skin="christmas"]::after {
+    background-image:
+      radial-gradient(ellipse 4px 6px at 24px 15px, var(--color-xmas-gold) 70%, transparent),
+      radial-gradient(ellipse 4px 6px at 24px 15px, var(--color-xmas-blue) 70%, transparent);
+    background-size:
+      192px 26px,
+      192px 26px;
+    background-position:
+      48px 0,
+      144px 0;
+    filter: drop-shadow(
+      0 0 5px color-mix(in srgb, var(--color-xmas-gold) var(--alpha-strong), transparent)
+    );
+    animation: xmas-blink 1.8s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes xmas-blink {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0.3;
+    }
+  }
+
+  /* The lights hang over the top of the screen: the page starts below them. */
+  :root[data-skin="christmas"] .topbar {
+    margin-top: 14px;
+  }
+
+  /* Titles in the season's lettering, gold and lit. */
+  :root[data-skin="christmas"] h1,
+  :root[data-skin="christmas"] h2,
+  :root[data-skin="christmas"] .console-title,
+  :root[data-skin="christmas"] .hero-title {
+    color: var(--color-xmas-gold);
+    font-weight: 700;
+    letter-spacing: 0;
+    text-shadow: 0 0 18px color-mix(in srgb, var(--color-xmas-gold) var(--alpha-glow), transparent);
+  }
+
+  :root[data-skin="christmas"] .tile b,
+  :root[data-skin="christmas"] .eyebrow {
+    color: var(--color-xmas-gold);
+  }
+
+  /* Buttons in Christmas red, with a ribbon of light crossing them on hover. */
+  :root[data-skin="christmas"] .button:not(.secondary, .game-about-buy) {
+    background:
+      linear-gradient(
+        105deg,
+        transparent 40%,
+        color-mix(in srgb, var(--color-xmas-snow) var(--alpha-glow), transparent) 50%,
+        transparent 60%
+      )
+      -150% 0 / 250% 100% no-repeat,
+      var(--color-xmas-red);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--color-xmas-red) var(--alpha-glow), transparent);
+    transition: background-position 0.6s ease;
+  }
+
+  :root[data-skin="christmas"] .button:not(.secondary, .game-about-buy):hover {
+    background-position:
+      250% 0,
+      0 0;
+  }
+
+  :root[data-skin="christmas"] button.ghost,
+  :root[data-skin="christmas"] .button.secondary,
+  :root[data-skin="christmas"] .button.game-about-buy {
+    border: 1px solid color-mix(in srgb, var(--color-xmas-gold) var(--alpha-strong), transparent);
+  }
+
+  /* Progress as a candy cane, its stripes running. */
+  :root[data-skin="christmas"] .bar i {
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--color-xmas-red) 0 8px,
+      var(--color-xmas-snow) 8px 16px
+    );
+    background-size: 22.6px 22.6px;
+    animation: xmas-cane 1.2s linear infinite;
+  }
+
+  :root[data-skin="christmas"] .bar.gold i {
+    background: var(--color-trophy-gold);
+    animation: none;
+  }
+
+  @keyframes xmas-cane {
+    to {
+      background-position: 22.6px 0;
+    }
+  }
+
+  /* The menu's active item in red, its glow in gold. */
+  :root[data-skin="christmas"] .nav a.active {
+    background: var(--color-xmas-red);
+    color: var(--color-on-accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  :root[data-skin="christmas"] .nav-indicator {
+    display: none;
+  }
+
+  /* Snow settling on a ledge: a white bank with a soft, uneven top that grows over a few minutes
+     while the app stays open. */
+  :root[data-skin="christmas"] .sidebar-account {
+    position: relative;
+  }
+
+  :root[data-skin="christmas"] .sidebar-account::before,
+  :root[data-skin="christmas"] .sidebar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 4px;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 50% 100% at 50% 100%, var(--color-xmas-snow) 96%, transparent) 0 100%
+      / 26px 100% repeat-x,
+      radial-gradient(ellipse 50% 70% at 50% 100%, var(--color-xmas-snow) 96%, transparent) 13px
+      100% / 38px 100% repeat-x;
+    filter: drop-shadow(
+      0 -1px 2px color-mix(in srgb, var(--color-xmas-blue) var(--alpha-glow), transparent)
+    );
+    animation: xmas-pile 180s ease-out forwards;
+  }
+
+  /* On a computer the sidebar is a column: the bank sits on the account at its foot. */
+  :root[data-skin="christmas"] .sidebar::before {
+    display: none;
+  }
+
+  @keyframes xmas-pile {
+    to {
+      height: 16px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    /* On a phone the bottom bar is the ledge. */
+    :root[data-skin="christmas"] .sidebar::before {
+      display: block;
+    }
+
+    :root[data-skin="christmas"] .sidebar-account::before {
+      display: none;
+    }
+
+    /* The active tab: a red pill behind the icon, wearing a Santa hat. */
+    :root[data-skin="christmas"] .nav a.active {
+      position: relative;
+      isolation: isolate;
+      background: none;
+      color: var(--color-xmas-gold);
+    }
+
+    :root[data-skin="christmas"] .nav a.active::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: 4px;
+      left: 50%;
+      width: 56px;
+      height: 32px;
+      border-radius: var(--radius-pill);
+      background: var(--color-xmas-red);
+      box-shadow: 0 4px 14px
+        color-mix(in srgb, var(--color-xmas-red) var(--alpha-strong), transparent);
+      transform: translateX(-50%);
+    }
+
+    :root[data-skin="christmas"] .nav a.active::after {
+      content: "";
+      position: absolute;
+      top: -14px;
+      left: calc(50% - 40px);
+      width: 34px;
+      height: 28px;
+      background:
+        radial-gradient(circle at 83% 20%, var(--color-xmas-snow) 0 15%, transparent 16%),
+        linear-gradient(to bottom, transparent 70%, var(--color-xmas-snow) 70%),
+        var(--color-xmas-red);
+      mask:
+        url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2020%22%20fill%3D%22black%22%3E%3Cpath%20d%3D%22M3%2015%20C6%206%2012%202%2020%204%20C17%206%2016%209%2017%2015%20Z%22/%3E%3Crect%20x%3D%221%22%20y%3D%2214%22%20width%3D%2219%22%20height%3D%225%22%20rx%3D%222.5%22/%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%224%22%20r%3D%223%22/%3E%3C/svg%3E")
+        center / contain no-repeat;
+      transform: rotate(-18deg);
+      filter: drop-shadow(
+        0 2px 2px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent)
+      );
+      pointer-events: none;
+    }
+
+    :root[data-skin="christmas"] .nav a.active .icon {
+      color: var(--color-on-accent);
+    }
+  }
+
+  /* Without motion: the snow and the lights hold still and the bank is already settled. */
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-skin="christmas"] body::before,
+    :root[data-skin="christmas"] body::after,
+    :root[data-skin="christmas"]::before,
+    :root[data-skin="christmas"]::after,
+    :root[data-skin="christmas"] .bar i {
+      animation: none;
+    }
+
+    :root[data-skin="christmas"] .sidebar::before,
+    :root[data-skin="christmas"] .sidebar-account::before {
+      height: 16px;
+      animation: none;
+    }
   }
 }
