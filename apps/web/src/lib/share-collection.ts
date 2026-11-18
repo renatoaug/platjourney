@@ -27,6 +27,8 @@ export type Period = 'month' | 'year' | 'all'
 
 export interface CollectionCard {
   player: { onlineId: string; avatarUrl: string | null }
+  /** Where the shared card's link opens: the player's public profile on this app. */
+  link: string
   period: Period
   month: number | null
   year: number | null
@@ -146,7 +148,7 @@ export async function drawCollectionCard(card: CollectionCard): Promise<Blob> {
 
   drawHead(ctx, card, t, avatar, crown)
   drawGrid(ctx, card, t, covers, { cols, cellW, cellH })
-  brandFooter(ctx, logo, t('cta'), WIDTH, height - 62)
+  brandFooter(ctx, logo, t('cta'), card.link, WIDTH, height - 62)
 
   return new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('canvas'))), 'image/png'),

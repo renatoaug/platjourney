@@ -70,7 +70,7 @@ export function ShareCollection() {
         blob: await drawCollectionCard(card),
         name: `platinas-${period === 'all' ? 'todas' : period === 'year' ? when : `${now.getFullYear()}-${now.getMonth() + 1}`}.png`,
         text: t(TEXT[period], { count: card.total, when }),
-        onlineId: card.player.onlineId,
+        link: card.link,
       }
     })
   }

@@ -15,6 +15,9 @@ export const config = {
   pollMinutes: Number(process.env.POLL_MINUTES ?? 15),
   // A play session is considered over after this long without a new trophy.
   port: Number(process.env.PORT ?? 3000),
+  // The address players open the app at (https://app.example.com), for links that leave it, like
+  // a shared card's. Empty: the address each request came in on.
+  appUrl: (process.env.APP_URL ?? '').replace(/\/+$/, '') || null,
   // Model work the app starts on its own, without a player asking. Both default on;
   // set to 0 so the instance only spends when a player uses Nexo, a plan or
   // recommendations.

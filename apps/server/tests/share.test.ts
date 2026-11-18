@@ -59,8 +59,10 @@ test("the card numbers the platinum among the player's, counts the base game and
       makeTrophy({ id: 4, type: 'gold', earned: true, earnedAt: at(5), groupId: '001' }),
     ],
     player: { onlineId: 'Kratos', avatarUrl: null },
+    base: 'https://app.example.com',
   })
   expect(card).toMatchObject({
+    link: 'https://app.example.com/profiles/Kratos?ref=share',
     game: { id: 'game:2', artUrl: 'art.jpg' },
     number: 2,
     platform: 'PS5',
@@ -81,6 +83,7 @@ test('no card for a game that is not among the platinums', () => {
       title: makeTitle(),
       trophies: [],
       player: { onlineId: 'Kratos', avatarUrl: null },
+      base: 'https://app.example.com',
     }),
   ).toBeNull()
 })
@@ -113,7 +116,9 @@ class FakeResponse {
 async function call(route: string, url: string) {
   const res = new FakeResponse()
   await SHARE_ROUTES[route]?.({
-    req: {} as IncomingMessage,
+    req: {
+      headers: { host: 'play.example.com', 'x-forwarded-proto': 'https' },
+    } as unknown as IncomingMessage,
     res: res as unknown as ServerResponse,
     url: new URL(url, 'http://localhost'),
     me: makeUser({ avatar_url: 'http://psn.playstation.net/a.png' }),
@@ -182,14 +187,15 @@ test('the collection card takes the month, the year or every platinum, the lates
     p('game:d', '2025-12-31T10:00:00Z'),
   ]
   const player = { onlineId: 'Kratos', avatarUrl: null }
+  const base = 'https://app.example.com'
   const now = new Date('2026-11-18T12:00:00Z')
-  const month = collectionCard({ period: 'month', now, platinums, player })
+  const month = collectionCard({ period: 'month', now, platinums, player, base })
   expect(month.platinums.map((x) => x.game.id)).toEqual(['game:b', 'game:a'])
   expect(month).toMatchObject({ month: 11, year: 2026, total: 2, overall: 4, hours: 10 })
-  const year = collectionCard({ period: 'year', now, platinums, player })
+  const year = collectionCard({ period: 'year', now, platinums, player, base })
   expect(year.platinums.map((x) => x.game.id)).toEqual(['game:b', 'game:a', 'game:c'])
   expect(year.month).toBeNull()
-  const all = collectionCard({ period: 'all', now, platinums, player })
+  const all = collectionCard({ period: 'all', now, platinums, player, base })
   expect(all).toMatchObject({ total: 4, year: null, month: null, hours: 30 })
   expect(all.platinums[0]?.game.coverUrl).toBe('game:b.jpg')
 })
@@ -208,7 +214,12 @@ test('GET /api/share/platinums answers the chosen period and refuses another', a
   spyOn(playtime, 'playtimes').mockResolvedValue(new Map())
   const ok = await call('GET /api/share/platinums', '/api/share/platinums?period=month')
   expect(ok.status).toBe(200)
-  expect(JSON.parse(String(ok.body))).toMatchObject({ total: 1, platinums: [{ platform: 'PS5' }] })
+  expect(JSON.parse(String(ok.body))).toMatchObject({
+    total: 1,
+    platinums: [{ platform: 'PS5' }],
+    // Without APP_URL, the link opens on the address the request came in on.
+    link: 'https://play.example.com/profiles/Kratos?ref=share',
+  })
   expect((await call('GET /api/share/platinums', '/api/share/platinums?period=week')).status).toBe(
     400,
   )
