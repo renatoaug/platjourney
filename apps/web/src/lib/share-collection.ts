@@ -52,7 +52,7 @@ const messages = defineMessages({
       all: 'TODAS AS MINHAS PLATINAS',
     },
     count: { one: '{count} PLATINA', other: '{count} PLATINAS' },
-    hours: 'H JOGADAS',
+    hours: 'JOGADAS',
     rarest: 'A MAIS RARA',
     overall: 'NO TOTAL',
     rarestTag: 'MAIS RARA',
@@ -65,7 +65,7 @@ const messages = defineMessages({
       all: 'ALL MY PLATINUMS',
     },
     count: { one: '{count} PLATINUM', other: '{count} PLATINUMS' },
-    hours: 'H PLAYED',
+    hours: 'PLAYED',
     rarest: 'THE RAREST',
     overall: 'IN TOTAL',
     rarestTag: 'RAREST',
@@ -193,16 +193,20 @@ function drawHead(
     (best, p) => (best === null || p.rarity < best ? p.rarity : best),
     null,
   )
-  const stats: [string, string][] = []
-  if (card.hours !== null) stats.push([`${card.hours}`, t('hours')])
-  if (rarest !== null) stats.push([percent(rarest), t('rarest')])
-  if (card.period !== 'all') stats.push([String(card.overall), t('overall')])
+  // The number, a unit after it in lime (as the platinum card writes its hours) and the name.
+  const stats: [string, string, string][] = []
+  if (card.hours !== null) stats.push([card.hours.toLocaleString(getLocale()), ' H', t('hours')])
+  if (rarest !== null) stats.push([percent(rarest), '', t('rarest')])
+  if (card.period !== 'all') stats.push([String(card.overall), '', t('overall')])
   let x = WIDTH - PAD
-  for (const [value, name] of stats.slice(0, 2).reverse()) {
+  for (const [value, unit, name] of stats.slice(0, 2).reverse()) {
     ctx.font = '700 13px "Chakra Petch"'
     ctx.letterSpacing = '3px'
-    const w = Math.max(ctx.measureText(name).width, 90) + 32
+    const nameWidth = ctx.measureText(name).width
     ctx.letterSpacing = '0px'
+    ctx.font = 'italic 900 40px "Saira Condensed"'
+    const valueWidth = ctx.measureText(value).width + (unit ? 40 : 0)
+    const w = Math.max(nameWidth, valueWidth, 90) + 32
     x -= w
     chamfer(ctx, x, 150, w, 78)
     ctx.fillStyle = PANEL
@@ -213,6 +217,12 @@ function drawHead(
     ctx.font = 'italic 900 40px "Saira Condensed"'
     ctx.fillStyle = TEXT
     ctx.fillText(value, x + 16, 194)
+    if (unit) {
+      const vw = ctx.measureText(value).width
+      ctx.font = 'italic 900 24px "Saira Condensed"'
+      ctx.fillStyle = LIME
+      ctx.fillText(unit, x + 16 + vw + 2, 194)
+    }
     label(ctx, name, x + 16, 216)
     x -= 10
   }
