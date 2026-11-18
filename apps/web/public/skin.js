@@ -6,7 +6,7 @@ try {
     neon: 'https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&display=swap',
     pixel:
       'https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap',
-    sunset: 'https://fonts.googleapis.com/css2?family=Anton&display=swap',
+    vice_city: 'https://fonts.googleapis.com/css2?family=Anton&display=swap',
   }
   const skin = localStorage.getItem('platjourney:skin')
   if (skin && fonts[skin]) {

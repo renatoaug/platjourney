@@ -34,9 +34,9 @@
   --palette-skin-neon-accent: #d08aff;
   --palette-skin-pixel-bg: #14121f;
   --palette-skin-pixel-accent: #4ce26a;
-  --palette-skin-sunset-bg: #3b146b;
-  --palette-skin-sunset-accent: #c9349b;
-  --palette-skin-sunset-sun: #ffb458;
+  --palette-skin-vice_city-bg: #3b146b;
+  --palette-skin-vice_city-accent: #c9349b;
+  --palette-skin-vice_city-sun: #ffb458;
   --palette-accent-950: #16200f;
   --palette-accent-600: #647550;
   --palette-accent-500: #7fa64a;
@@ -90,9 +90,9 @@
   --color-skin-neon-accent: var(--palette-skin-neon-accent);
   --color-skin-pixel-bg: var(--palette-skin-pixel-bg);
   --color-skin-pixel-accent: var(--palette-skin-pixel-accent);
-  --color-skin-sunset-bg: var(--palette-skin-sunset-bg);
-  --color-skin-sunset-accent: var(--palette-skin-sunset-accent);
-  --color-skin-sunset-sun: var(--palette-skin-sunset-sun);
+  --color-skin-vice_city-bg: var(--palette-skin-vice_city-bg);
+  --color-skin-vice_city-accent: var(--palette-skin-vice_city-accent);
+  --color-skin-vice_city-sun: var(--palette-skin-vice_city-sun);
   /* Feedback */
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
@@ -292,9 +292,9 @@
   --shadow-drag: 6px 6px 0 var(--color-shadow), 0 0 0 2px var(--color-accent);
 }
 
-/* Sunset: a beach city in the eighties at dusk. A purple night sky, hot pink, sunset orange and a
- * cyan neon, a rounded display font, soft corners and a warm glow. */
-:root[data-skin="sunset"] {
+/* Vice City: a beach city at dusk. Deep violet through magenta and coral to a warm yellow,
+ * condensed poster headlines, small corners and cards framed like poster panels. */
+:root[data-skin="vice_city"] {
   /* Deep violet nights, white type, and the sunset ramp for everything that should glow. */
   --palette-neutral-950: #1c0836;
   --palette-neutral-925: #220a42;

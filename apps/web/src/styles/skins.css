@@ -7,9 +7,8 @@
  * rim, titles filled with a violet-to-pink gradient, numbers in cyan, gradient buttons and the
  * game's art in a violet duotone.
  *
- * Sunset: a beach city in the eighties at dusk. A purple sky warming to pink and orange at the
- * horizon, a striped sun sinking behind the content, pink glass cards, titles filled with the
- * sunset and the game's art in a pink-and-cyan duotone.
+ * Vice City: a beach city at dusk. A violet sky through magenta and coral to a warm yellow
+ * horizon, palms and a skyline in silhouette, poster headlines and cards framed like poster panels.
  *
  * Pixel: an 8-bit game. The pixel font everywhere, a checkered floor under CRT scanlines, cards
  * drawn as game windows, raised buttons, square icons, progress in blocks and the game's art
@@ -297,10 +296,10 @@
     }
   }
 
-  /* -------------------------------------------------------------- Sunset */
+  /* ---------------------------------------------------------- Vice City */
 
   /* The sky, under a violet veil so text stays readable over it: deep violet overhead through magenta and coral to a warm yellow at the horizon. */
-  :root[data-skin="sunset"] body {
+  :root[data-skin="vice_city"] body {
     background:
       linear-gradient(
         color-mix(in srgb, var(--color-sky-violet) var(--alpha-strong), transparent),
@@ -320,7 +319,7 @@
   }
 
   /* The sun sitting on the sea, with its glow. */
-  :root[data-skin="sunset"] body::before {
+  :root[data-skin="vice_city"] body::before {
     content: "";
     position: fixed;
     z-index: -3;
@@ -337,7 +336,7 @@
   }
 
   /* Palms framing the screen and the city on the horizon, as night silhouettes. */
-  :root[data-skin="sunset"] body::after {
+  :root[data-skin="vice_city"] body::after {
     content: "";
     position: fixed;
     z-index: -2;
@@ -360,7 +359,7 @@
     opacity: 0.45;
   }
 
-  :root[data-skin="sunset"] .sidebar {
+  :root[data-skin="vice_city"] .sidebar {
     border-right: 3px solid var(--color-shadow);
     background: color-mix(in srgb, var(--color-sky-violet) var(--alpha-heavy), transparent);
   }
@@ -369,8 +368,8 @@
      turns into a plain block stays plain. */
   /* Buttons and the active menu item in the sunset ramp. The item keeps its corners, so its
      glow is round; the sliding pill behind it would add a second, square one. */
-  :root[data-skin="sunset"] .button:not(.secondary, .game-about-buy),
-  :root[data-skin="sunset"] .nav a.active {
+  :root[data-skin="vice_city"] .button:not(.secondary, .game-about-buy),
+  :root[data-skin="vice_city"] .nav a.active {
     background: linear-gradient(
       100deg,
       var(--color-sky-magenta),
@@ -385,21 +384,21 @@
 
   /* The menu scrolls and clips anything past its edge, so a glow there ends in a square: the
      active item keeps only its gradient. */
-  :root[data-skin="sunset"] .nav a.active {
+  :root[data-skin="vice_city"] .nav a.active {
     box-shadow: none;
   }
 
   /* On a phone the menu is a tab bar: the active tab is a sunset pill behind its icon and a warm
      label, as in a native tab bar, not a block that fills the cell. */
   @media (max-width: 760px) {
-    :root[data-skin="sunset"] .nav a.active {
+    :root[data-skin="vice_city"] .nav a.active {
       position: relative;
       isolation: isolate;
       background: none;
       color: var(--color-sky-yellow);
     }
 
-    :root[data-skin="sunset"] .nav a.active::before {
+    :root[data-skin="vice_city"] .nav a.active::before {
       content: "";
       position: absolute;
       z-index: -1;
@@ -419,22 +418,22 @@
       transform: translateX(-50%);
     }
 
-    :root[data-skin="sunset"] .nav a.active .icon {
+    :root[data-skin="vice_city"] .nav a.active .icon {
       color: var(--color-shadow);
     }
   }
 
-  :root[data-skin="sunset"] .nav-indicator {
+  :root[data-skin="vice_city"] .nav-indicator {
     display: none;
   }
 
-  :root[data-skin="sunset"] button.ghost,
-  :root[data-skin="sunset"] .button.secondary,
-  :root[data-skin="sunset"] .button.game-about-buy {
+  :root[data-skin="vice_city"] button.ghost,
+  :root[data-skin="vice_city"] .button.secondary,
+  :root[data-skin="vice_city"] .button.game-about-buy {
     border: 2px solid var(--color-sky-coral);
   }
 
-  :root[data-skin="sunset"] .bar i {
+  :root[data-skin="vice_city"] .bar i {
     background: linear-gradient(
       90deg,
       var(--color-sky-magenta),
@@ -443,15 +442,15 @@
     );
   }
 
-  :root[data-skin="sunset"] .bar.gold i {
+  :root[data-skin="vice_city"] .bar.gold i {
     background: var(--color-trophy-gold);
   }
 
   /* Titles tall, condensed, white and upper case, like a poster headline. */
-  :root[data-skin="sunset"] h1,
-  :root[data-skin="sunset"] h2,
-  :root[data-skin="sunset"] .console-title,
-  :root[data-skin="sunset"] .hero-title {
+  :root[data-skin="vice_city"] h1,
+  :root[data-skin="vice_city"] h2,
+  :root[data-skin="vice_city"] .console-title,
+  :root[data-skin="vice_city"] .hero-title {
     color: var(--color-fg);
     font-weight: 400;
     text-transform: uppercase;
@@ -460,19 +459,19 @@
   }
 
   /* Small labels and numbers in the warm yellow of the low sun. */
-  :root[data-skin="sunset"] .tile b,
-  :root[data-skin="sunset"] .eyebrow {
+  :root[data-skin="vice_city"] .tile b,
+  :root[data-skin="vice_city"] .eyebrow {
     color: var(--color-sky-yellow);
   }
 
   /* The game's art fades into the sky instead of ending on a dark edge. */
-  :root[data-skin="sunset"] .game-backdrop {
+  :root[data-skin="vice_city"] .game-backdrop {
     mask-image: linear-gradient(to bottom, black 45%, transparent);
   }
 
   /* The game's art soaked in the sunset: violet above, coral and gold below. */
-  :root[data-skin="sunset"] .game-backdrop::before,
-  :root[data-skin="sunset"] .console-art::after {
+  :root[data-skin="vice_city"] .game-backdrop::before,
+  :root[data-skin="vice_city"] .console-art::after {
     content: "";
     position: absolute;
     z-index: 1;
