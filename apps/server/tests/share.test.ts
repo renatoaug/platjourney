@@ -5,7 +5,13 @@ import * as demo from '../src/demo.ts'
 import * as playtime from '../src/playtime.ts'
 import * as platinumRepo from '../src/repository/platinum.ts'
 import { SHARE_ROUTES } from '../src/routes/share.ts'
-import { JOURNEY_POINTS, journeyOf, platinumCard, shareableImage } from '../src/share.ts'
+import {
+  collectionCard,
+  JOURNEY_POINTS,
+  journeyOf,
+  platinumCard,
+  shareableImage,
+} from '../src/share.ts'
 import { makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
 
 afterEach(() => mock.restore())
@@ -159,4 +165,51 @@ test('GET /api/share/image relays an allowed image and refuses anything else', a
   expect(
     (await call('GET /api/share/image', '/api/share/image?u=https://images.igdb.com/b')).status,
   ).toBe(502)
+})
+
+test('the collection card takes the month, the year or every platinum, the latest first', () => {
+  const p = (id: string, earnedAt: string, hours: number | null = 10) => ({
+    game: makeGame({ id, name: id, cover_url: `${id}.jpg` }),
+    platform: 'PS5',
+    earnedAt,
+    rarity: 5,
+    hours,
+  })
+  const platinums = [
+    p('game:a', '2026-11-02T10:00:00Z'),
+    p('game:b', '2026-11-15T10:00:00Z', null),
+    p('game:c', '2026-03-01T10:00:00Z'),
+    p('game:d', '2025-12-31T10:00:00Z'),
+  ]
+  const player = { onlineId: 'Kratos', avatarUrl: null }
+  const now = new Date('2026-11-18T12:00:00Z')
+  const month = collectionCard({ period: 'month', now, platinums, player })
+  expect(month.platinums.map((x) => x.game.id)).toEqual(['game:b', 'game:a'])
+  expect(month).toMatchObject({ month: 11, year: 2026, total: 2, overall: 4, hours: 10 })
+  const year = collectionCard({ period: 'year', now, platinums, player })
+  expect(year.platinums.map((x) => x.game.id)).toEqual(['game:b', 'game:a', 'game:c'])
+  expect(year.month).toBeNull()
+  const all = collectionCard({ period: 'all', now, platinums, player })
+  expect(all).toMatchObject({ total: 4, year: null, month: null, hours: 30 })
+  expect(all.platinums[0]?.game.coverUrl).toBe('game:b.jpg')
+})
+
+test('GET /api/share/platinums answers the chosen period and refuses another', async () => {
+  spyOn(platinumRepo, 'listPlatinums').mockResolvedValue([
+    {
+      id: 'platinum:1',
+      game: makeGame(),
+      np_communication_id: 'NPWR1',
+      trophy_name: 'Platina',
+      earned_at: new Date().toISOString(),
+      rarity_rate: 4.2,
+    },
+  ] as never)
+  spyOn(playtime, 'playtimes').mockResolvedValue(new Map())
+  const ok = await call('GET /api/share/platinums', '/api/share/platinums?period=month')
+  expect(ok.status).toBe(200)
+  expect(JSON.parse(String(ok.body))).toMatchObject({ total: 1, platinums: [{ platform: 'PS5' }] })
+  expect((await call('GET /api/share/platinums', '/api/share/platinums?period=week')).status).toBe(
+    400,
+  )
 })

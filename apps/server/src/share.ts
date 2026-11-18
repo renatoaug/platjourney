@@ -102,3 +102,71 @@ export const shareableImage = (raw: string | null): URL | null => {
     return null
   }
 }
+
+export type Period = 'month' | 'year' | 'all'
+
+export const isPeriod = (v: string | null): v is Period =>
+  v === 'month' || v === 'year' || v === 'all'
+
+export interface CollectionCard {
+  player: { onlineId: string; avatarUrl: string | null }
+  period: Period
+  /** The month (1 to 12) and year the card covers; null on the whole collection. */
+  month: number | null
+  year: number | null
+  /** How many platinums the period has; `platinums` lists at most MAX_COLLECTION of them. */
+  total: number
+  /** Every platinum the player has, whatever the period. */
+  overall: number
+  hours: number | null
+  platinums: {
+    game: { id: string; name: string; coverUrl: string | null }
+    platform: string
+    earnedAt: string
+    rarity: number
+  }[]
+}
+
+const MAX_COLLECTION = 120
+
+/** The platinums of the month or year of `now` (UTC), or all of them, the latest first. */
+export function collectionCard(args: {
+  period: Period
+  now: Date
+  platinums: {
+    game: Game
+    platform: string
+    earnedAt: string
+    rarity: number
+    hours: number | null
+  }[]
+  player: { onlineId: string; avatarUrl: string | null }
+}): CollectionCard {
+  const year = args.now.getUTCFullYear()
+  const month = args.now.getUTCMonth()
+  const inPeriod = (iso: string) => {
+    const d = new Date(iso)
+    if (args.period === 'all') return true
+    if (d.getUTCFullYear() !== year) return false
+    return args.period === 'year' || d.getUTCMonth() === month
+  }
+  const chosen = args.platinums
+    .filter((p) => inPeriod(p.earnedAt))
+    .sort((a, b) => b.earnedAt.localeCompare(a.earnedAt))
+  const timed = chosen.filter((p) => p.hours != null)
+  return {
+    player: args.player,
+    period: args.period,
+    month: args.period === 'month' ? month + 1 : null,
+    year: args.period === 'all' ? null : year,
+    total: chosen.length,
+    overall: args.platinums.length,
+    hours: timed.length ? Math.round(timed.reduce((n, p) => n + (p.hours ?? 0), 0)) : null,
+    platinums: chosen.slice(0, MAX_COLLECTION).map((p) => ({
+      game: { id: p.game.id, name: p.game.name, coverUrl: p.game.cover_url ?? null },
+      platform: p.platform,
+      earnedAt: p.earnedAt,
+      rarity: p.rarity,
+    })),
+  }
+}

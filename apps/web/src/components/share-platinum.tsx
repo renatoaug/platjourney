@@ -54,32 +54,28 @@ function save(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function SharePlatinum({
-  gameId,
-  name,
-  labeled = false,
-}: {
-  gameId: string
-  name: string
-  /** With its words, as a button of its own; without, an icon beside a list row. */
-  labeled?: boolean
-}) {
+/** Builds an image and shares it: a phone's share sheet takes it with a line and a link to the
+ * player's profile as its caption. A computer's would offer "Copy", which pastes the image twice;
+ * there the image goes to the clipboard on its own, to paste into the post, and is saved too. */
+export function useShare() {
   const t = useMessages(messages)
   const [busy, setBusy] = useState(false)
-
-  const share = async () => {
+  const run = async (
+    build: () => Promise<{ blob: Blob; name: string; text: string; onlineId: string } | string>,
+  ) => {
     setBusy(true)
     try {
-      const card = await fetchPlatinumCard(gameId)
-      const blob = await drawPlatinumCard(card)
-      const file = new File([blob], fileName(card.game.name), { type: 'image/png' })
-      const link = `https://${SHARE_HOST}/profiles/${encodeURIComponent(card.player.onlineId)}?ref=share`
-      const text = `${t('text', { game: card.game.name, number: card.number })}\n${link}`
-      // A phone's share sheet takes the image with the line as its caption. A computer's would
-      // offer "Copy", which pastes the image twice; there the image goes to the clipboard on its
-      // own, to paste into the post, and is saved as a file too.
+      const built = await build()
+      // Nothing to draw: the builder says why.
+      if (typeof built === 'string') {
+        toast(built, 'info')
+        return
+      }
+      const { blob, name, text, onlineId } = built
+      const file = new File([blob], name, { type: 'image/png' })
+      const link = `https://${SHARE_HOST}/profiles/${encodeURIComponent(onlineId)}?ref=share`
       if (touch() && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], text }).catch((e: Error) => {
+        await navigator.share({ files: [file], text: `${text}\n${link}` }).catch((e: Error) => {
           // Closing the share sheet is not a failure.
           if (e.name !== 'AbortError') throw e
         })
@@ -94,6 +90,31 @@ export function SharePlatinum({
       setBusy(false)
     }
   }
+  return { busy, run }
+}
+
+export function SharePlatinum({
+  gameId,
+  name,
+  labeled = false,
+}: {
+  gameId: string
+  name: string
+  /** With its words, as a button of its own; without, an icon beside a list row. */
+  labeled?: boolean
+}) {
+  const t = useMessages(messages)
+  const { busy, run } = useShare()
+  const share = () =>
+    run(async () => {
+      const card = await fetchPlatinumCard(gameId)
+      return {
+        blob: await drawPlatinumCard(card),
+        name: fileName(card.game.name),
+        text: t('text', { game: card.game.name, number: card.number }),
+        onlineId: card.player.onlineId,
+      }
+    })
 
   if (labeled)
     return (

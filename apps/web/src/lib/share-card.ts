@@ -62,17 +62,17 @@ export const SHARE_HOST = 'platjourney.app'
 
 const WIDTH = 1200
 const HEIGHT = 675
-const SCALE = 2
+export const SCALE = 2
 
 // The card's colors: PlatJourney's lime on its olive dark, as on the app's default look. They are
 // pixels in an image, not page styles, so they live here and not in theme.css.
-const LIME = '#c6f36b'
-const LIME_DARK = '#7fa64a'
-const INK = '#10120f'
-const TEXT = '#f1f3eb'
+export const LIME = '#c6f36b'
+export const LIME_DARK = '#7fa64a'
+export const INK = '#10120f'
+export const TEXT = '#f1f3eb'
 const MUTED = '#a0a697'
-const PANEL = 'rgba(16, 18, 15, 0.72)'
-const EDGE = 'rgba(198, 243, 107, 0.38)'
+export const PANEL = 'rgba(16, 18, 15, 0.72)'
+export const EDGE = 'rgba(198, 243, 107, 0.38)'
 
 const FONTS =
   'https://fonts.googleapis.com/css2?family=Saira+Condensed:ital,wght@0,800;1,800;1,900&family=Chakra+Petch:wght@500;600;700&family=Space+Grotesk:wght@700&display=swap'
@@ -85,7 +85,7 @@ const FACES = [
   '700 26px "Space Grotesk"',
 ]
 
-async function loadFonts(): Promise<void> {
+export async function loadFonts(): Promise<void> {
   if (!document.querySelector(`link[href="${FONTS}"]`)) {
     const link = document.createElement('link')
     link.rel = 'stylesheet'
@@ -99,9 +99,9 @@ async function loadFonts(): Promise<void> {
   await Promise.all(FACES.map((f) => document.fonts.load(f).catch(() => [])))
 }
 
-const proxied = (url: string) => `/api/share/image?u=${encodeURIComponent(url)}`
+export const proxied = (url: string) => `/api/share/image?u=${encodeURIComponent(url)}`
 
-function loadImage(src: string | null): Promise<HTMLImageElement | null> {
+export function loadImage(src: string | null): Promise<HTMLImageElement | null> {
   if (!src) return Promise.resolve(null)
   return new Promise((resolve) => {
     const img = new Image()
@@ -128,7 +128,7 @@ export function daysToPlatinum(firstAt: string | null, earnedAt: string): number
 }
 
 // A box with its top-left and bottom-right corners cut, the frame of every panel.
-function chamfer(
+export function chamfer(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -147,7 +147,14 @@ function chamfer(
 }
 
 // A box leaning right, like a racing game's labels.
-function skewed(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, k = 10) {
+export function skewed(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  k = 10,
+) {
   ctx.beginPath()
   ctx.moveTo(x + k, y)
   ctx.lineTo(x + w + k, y)
@@ -166,7 +173,7 @@ function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
 }
 
 // Draws `img` so it covers the box, cropped around (fx, fy) of the image.
-function cover(
+export function cover(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   x: number,
@@ -220,7 +227,13 @@ function figure(ctx: CanvasRenderingContext2D, value: string, unit: string, x: n
   ctx.shadowBlur = 0
 }
 
-function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color = MUTED) {
+export function label(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  color = MUTED,
+) {
   ctx.font = '700 13px "Chakra Petch"'
   ctx.fillStyle = color
   ctx.letterSpacing = '3px'
@@ -287,10 +300,14 @@ function drawBackdrop({ ctx, im }: Draw) {
   for (let y = 0; y < HEIGHT; y += 3) ctx.fillRect(0, y, WIDTH, 1)
 }
 
-function drawPlayer({ ctx, card, im }: Draw) {
+/** The player in a pill, top left: their PSN picture (or initial) and name. */
+export function playerPill(
+  ctx: CanvasRenderingContext2D,
+  name: string,
+  avatar: HTMLImageElement | null,
+) {
   // The player, top left.
   ctx.font = '600 21px "Chakra Petch"'
-  const name = card.player.onlineId
   const pillW = 8 + 42 + 12 + ctx.measureText(name).width + 22
   chamfer(ctx, 30, 26, pillW, 58)
   ctx.fillStyle = PANEL
@@ -304,7 +321,7 @@ function drawPlayer({ ctx, card, im }: Draw) {
   ctx.save()
   chamfer(ctx, 38, 34, 42, 42, 8)
   ctx.clip()
-  if (im.avatar) cover(ctx, im.avatar, 38, 34, 42, 42, 0.5, 0.5)
+  if (avatar) cover(ctx, avatar, 38, 34, 42, 42, 0.5, 0.5)
   else {
     const g = ctx.createLinearGradient(38, 34, 80, 76)
     g.addColorStop(0, '#d2ff86')
@@ -321,6 +338,10 @@ function drawPlayer({ ctx, card, im }: Draw) {
   ctx.font = '600 21px "Chakra Petch"'
   ctx.fillStyle = TEXT
   ctx.fillText(name, 92, 62)
+}
+
+function drawPlayer({ ctx, card, im }: Draw) {
+  playerPill(ctx, card.player.onlineId, im.avatar)
 }
 
 function drawNumber({ ctx, card, im }: Draw) {
@@ -564,25 +585,36 @@ function drawRarity({ ctx, card, t }: Draw) {
   ctx.letterSpacing = '0px'
 }
 
-function drawFooter({ ctx, im, t }: Draw) {
+/** The brand and where to find it, along the bottom from `y`. */
+export function brandFooter(
+  ctx: CanvasRenderingContext2D,
+  logo: HTMLImageElement | null,
+  cta: string,
+  width: number,
+  y: number,
+) {
   // The brand, and where to find it.
-  if (im.logo) ctx.drawImage(im.logo, 30, 618, 38, 38)
+  if (logo) ctx.drawImage(logo, 30, y, 38, 38)
   ctx.font = '700 26px "Space Grotesk"'
   ctx.fillStyle = TEXT
-  ctx.fillText('plat', 78, 646)
+  ctx.fillText('plat', 78, y + 28)
   const pw = ctx.measureText('plat').width
   ctx.fillStyle = LIME
-  ctx.fillText('journey', 78 + pw, 646)
+  ctx.fillText('journey', 78 + pw, y + 28)
   ctx.font = '600 15px "Chakra Petch"'
   ctx.letterSpacing = '1px'
   ctx.textAlign = 'right'
   ctx.fillStyle = LIME
-  ctx.fillText(SHARE_HOST.toUpperCase(), WIDTH - 30, 644)
+  ctx.fillText(SHARE_HOST.toUpperCase(), width - 30, y + 26)
   const hostW = ctx.measureText(SHARE_HOST.toUpperCase()).width
   ctx.fillStyle = MUTED
-  ctx.fillText(`${t('cta')} `, WIDTH - 30 - hostW - 6, 644)
+  ctx.fillText(`${cta} `, width - 30 - hostW - 6, y + 26)
   ctx.textAlign = 'left'
   ctx.letterSpacing = '0px'
+}
+
+function drawFooter({ ctx, im, t }: Draw) {
+  brandFooter(ctx, im.logo, t('cta'), WIDTH, 618)
 }
 
 /** Draws the card and returns it as a PNG. */

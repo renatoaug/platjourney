@@ -263,6 +263,6 @@ test('a platinum of the base game closes its notice with the invitation to share
   expect(bringsPlatinum([makeTrophy({ type: 'gold' })])).toBe(false)
   // A DLC group has no platinum of its own; a stray one there does not count.
   expect(bringsPlatinum([{ ...plat, groupId: '001' }])).toBe(false)
-  expect(celebrateLine(makeUser())).toContain('Bora comemorar com a galera')
-  expect(celebrateLine(makeUser({ locale: 'en' }))).toContain('celebrate with everyone')
+  expect(celebrateLine(makeUser())).toContain('Bora mostrar pra galera')
+  expect(celebrateLine(makeUser({ locale: 'en' }))).toContain('Show it to everyone')
 })

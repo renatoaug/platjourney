@@ -6,7 +6,7 @@ import { ownCopy } from '../mcp-tools/shared.ts'
 import { hours, playtimes } from '../playtime.ts'
 import { secureUrl } from '../psn.ts'
 import { listPlatinums } from '../repository/platinum.ts'
-import { platinumCard, shareableImage } from '../share.ts'
+import { collectionCard, isPeriod, platinumCard, shareableImage } from '../share.ts'
 import type { ApiHandler } from './api.ts'
 
 const MAX_IMAGE = 8 * 1024 * 1024
@@ -33,6 +33,30 @@ const card: ApiHandler = async ({ res, url, me, titles }) => {
   return result ? json(res, 200, result) : json(res, 404, { error: 'not_found' })
 }
 
+// ?period=month|year|all: the player's platinums of this month, this year or all of them.
+const collection: ApiHandler = async ({ res, url, me, titles }) => {
+  const period = url.searchParams.get('period')
+  if (!isPeriod(period)) return json(res, 400, { error: 'invalid' })
+  const [rows, library, played] = await Promise.all([listPlatinums(me.id), titles(), playtimes(me)])
+  const platformOf = new Map(library.map((t) => [t.npCommunicationId, t.platform]))
+  return json(
+    res,
+    200,
+    collectionCard({
+      period,
+      now: new Date(),
+      platinums: rows.map((r) => ({
+        game: r.game,
+        platform: platformOf.get(r.np_communication_id) ?? '',
+        earnedAt: r.earned_at,
+        rarity: r.rarity_rate,
+        hours: hours(played.get(r.game.id)),
+      })),
+      player: { onlineId: me.psn_online_id ?? '', avatarUrl: secureUrl(me.avatar_url) },
+    }),
+  )
+}
+
 // ?u=<image url>: the bytes of one of the hosts the app's art comes from.
 const image: ApiHandler = async ({ res, url }) => {
   const target = shareableImage(url.searchParams.get('u'))
@@ -53,5 +77,6 @@ const image: ApiHandler = async ({ res, url }) => {
 
 export const SHARE_ROUTES: Record<string, ApiHandler> = {
   'GET /api/share/platinum': card,
+  'GET /api/share/platinums': collection,
   'GET /api/share/image': image,
 }

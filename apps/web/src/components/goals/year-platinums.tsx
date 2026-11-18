@@ -9,6 +9,7 @@ import { Pager } from '../../ui/pager'
 import { useKept } from './use-kept'
 import '../guide.css'
 import { TrophyMedal } from '../../ui/trophy-medal'
+import { ShareCollection } from '../share-collection'
 import { SharePlatinum } from '../share-platinum'
 import './year-platinums.css'
 
@@ -173,7 +174,10 @@ export function YearPlatinums({ goals: p, busy = false }: { goals: YearGoals; bu
         <h2>
           <TrophyMedal type="platinum" /> {t('year.title', { year: p.year })}
         </h2>
-        <span className="key-count">{all.length}</span>
+        <span className="year-heading-end">
+          {all.length > 0 && <ShareCollection />}
+          <span className="key-count">{all.length}</span>
+        </span>
       </div>
       {all.length ? (
         <>

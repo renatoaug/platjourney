@@ -36,4 +36,42 @@
     gap: 8px;
     align-items: center;
   }
+
+  /* The collection's three choices drop under its button. */
+  .share-collection {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .share-collection-menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 6px);
+    right: 0;
+    display: grid;
+    min-width: 180px;
+    margin: 0;
+    padding: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .share-collection-menu button {
+    min-height: 40px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-fg);
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .share-collection-menu button:hover,
+  .share-collection-menu button:focus-visible {
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    color: var(--color-accent);
+  }
 }

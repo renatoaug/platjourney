@@ -26,7 +26,7 @@ import {
 const messages = defineMessages({
   [Language.PtBR]: {
     started: 'Você começou {game}. O guia da platina está no PlatJourney.',
-    celebrate: '🎉 Bora comemorar com a galera? Toque em compartilhar e mostre essa platina.',
+    celebrate: '🎉 Bora mostrar pra galera? Toque em compartilhar e exiba essa platina.',
     // The game started was Nexo's recommendation: one of these opens the notice, the same per game.
     followed: {
       a: 'Que bom que você seguiu a minha dica! Tô na torcida por essa platina. 🙌',
@@ -101,7 +101,7 @@ const messages = defineMessages({
   },
   [Language.En]: {
     started: 'You started {game}. The platinum guide is on PlatJourney.',
-    celebrate: '🎉 Time to celebrate with everyone? Tap share and show off this platinum.',
+    celebrate: '🎉 Show it to everyone? Tap share and show off this platinum.',
     followed: {
       a: "So glad you took my tip! I'm rooting for this platinum. 🙌",
       b: "Happy to see you went with my suggestion. Let's do this! 💪",
