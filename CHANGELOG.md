@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.85.0](https://github.com/renatoaug/platjourney/compare/v0.84.0...v0.85.0) (2026-11-18)
+
+### Features
+
+* **web:** share platinums as ready images ([#205](https://github.com/renatoaug/platjourney/issues/205)) ([49eb9b2](https://github.com/renatoaug/platjourney/commit/49eb9b22172fceab12905f5641a2156f3835dfcb))
+
 ## [0.84.0](https://github.com/renatoaug/platjourney/compare/v0.83.2...v0.84.0) (2026-11-18)
 
 ### Features
