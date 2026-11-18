@@ -222,6 +222,12 @@
  * bars) live in styles/skins.css. */
 
 /* Neon: near-black with a violet cast, electric purple, hot pink and real glow. */
+/* Every skin paints a scene or a texture behind the page, so a block in the page's color shows
+   as a block and its content needs room inside it. A new skin gets this without asking. */
+:root[data-skin] {
+  --page-block-inset: 32px;
+}
+
 :root[data-skin="neon"] {
   --palette-neutral-950: #0a0612;
   --palette-neutral-925: #0e0818;
@@ -340,7 +346,6 @@
   --card-border-width: 3px 6px 6px 3px;
   --card-border-color: var(--palette-neutral-950) var(--color-sky-magenta) var(--color-sky-magenta)
     var(--palette-neutral-950);
-  --page-block-inset: 32px;
 
   --shadow-focus: 0 0 0 3px var(--color-accent);
   --shadow-glow:
