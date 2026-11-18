@@ -7,8 +7,8 @@
  * rim, titles filled with a violet-to-pink gradient, numbers in cyan, gradient buttons and the
  * game's art in a violet duotone.
  *
- * Neon moves too: the grid floor rolls toward the screen, stars twinkle, a laser sweeps over the
- * page, the titles' gradient flows, a neon tube runs along the menu and progress pulses.
+ * Neon moves too: the grid floor rolls toward the screen, stars twinkle, the titles' gradient
+ * flows, a neon tube runs along the menu and progress pulses.
  *
  * Vice City: a beach city at dusk. A violet sky through magenta and coral to a warm yellow
  * horizon, palms and a skyline in silhouette, poster headlines and cards framed like poster panels.
@@ -122,40 +122,6 @@
 
     to {
       opacity: 0.9;
-    }
-  }
-
-  /* A laser sweeping down over the whole page every few seconds. */
-  :root[data-skin="neon"] .app::before {
-    content: "";
-    position: fixed;
-    z-index: 14;
-    inset: 0;
-    pointer-events: none;
-    background:
-      linear-gradient(
-        to bottom,
-        transparent 46%,
-        color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent) 49%,
-        color-mix(in srgb, var(--color-fg-tint) var(--alpha-glow), transparent) 50%,
-        color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent) 51%,
-        transparent 54%
-      )
-      0 100% / 100% 250% no-repeat;
-    mix-blend-mode: screen;
-    animation: neon-laser 8s ease-in-out infinite;
-  }
-
-  /* At 100% the beam waits above the top, at 0% below the bottom. */
-  @keyframes neon-laser {
-    0%,
-    20% {
-      background-position: 0 100%;
-    }
-
-    70%,
-    to {
-      background-position: 0 0;
     }
   }
 
@@ -353,10 +319,6 @@
     :root[data-skin="neon"] .bar i,
     :root[data-skin="neon"] :is(h1, .console-title, .hero-title) {
       animation: none;
-    }
-
-    :root[data-skin="neon"] .app::before {
-      display: none;
     }
   }
 
