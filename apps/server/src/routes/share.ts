@@ -1,8 +1,12 @@
 /** Sharing a platinum: the facts its card shows, and the card's images through the app's own
  * address, so the browser can draw them on a canvas and save the result. */
+
+import type { IncomingMessage } from 'node:http'
+import { config } from '../config.ts'
 import { trophiesFor } from '../demo.ts'
 import { json, SECURITY_HEADERS } from '../http.ts'
 import { ownCopy } from '../mcp-tools/shared.ts'
+import { origin } from '../oauth.ts'
 import { hours, playtimes } from '../playtime.ts'
 import { secureUrl } from '../psn.ts'
 import { listPlatinums } from '../repository/platinum.ts'
@@ -11,7 +15,10 @@ import type { ApiHandler } from './api.ts'
 
 const MAX_IMAGE = 8 * 1024 * 1024
 
-const card: ApiHandler = async ({ res, url, me, titles }) => {
+// The app's address for the card's link: APP_URL, or the one the request came in on.
+const base = (req: IncomingMessage) => config.appUrl ?? origin(req)
+
+const card: ApiHandler = async ({ req, res, url, me, titles }) => {
   const gameId = url.searchParams.get('game') ?? ''
   if (!/^game:\w+$/.test(gameId)) return json(res, 400, { error: 'invalid' })
   const [rows, library, played] = await Promise.all([listPlatinums(me.id), titles(), playtimes(me)])
@@ -29,12 +36,13 @@ const card: ApiHandler = async ({ res, url, me, titles }) => {
     title,
     trophies: await trophiesFor(title, me),
     player: { onlineId: me.psn_online_id ?? '', avatarUrl: secureUrl(me.avatar_url) },
+    base: base(req),
   })
   return result ? json(res, 200, result) : json(res, 404, { error: 'not_found' })
 }
 
 // ?period=month|year|all: the player's platinums of this month, this year or all of them.
-const collection: ApiHandler = async ({ res, url, me, titles }) => {
+const collection: ApiHandler = async ({ req, res, url, me, titles }) => {
   const period = url.searchParams.get('period')
   if (!isPeriod(period)) return json(res, 400, { error: 'invalid' })
   const [rows, library, played] = await Promise.all([listPlatinums(me.id), titles(), playtimes(me)])
@@ -53,6 +61,7 @@ const collection: ApiHandler = async ({ res, url, me, titles }) => {
         hours: hours(played.get(r.game.id)),
       })),
       player: { onlineId: me.psn_online_id ?? '', avatarUrl: secureUrl(me.avatar_url) },
+      base: base(req),
     }),
   )
 }

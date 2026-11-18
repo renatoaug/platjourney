@@ -7,7 +7,7 @@ const meta: Meta<typeof ShareTargets> = {
   args: {
     image: '/og.png',
     text: 'Platinei A Plague Tale: Requiem! Platina #38 🏆',
-    link: 'https://platjourney.app/profiles/Kratos?ref=share',
+    link: 'https://app.example.com/profiles/Kratos?ref=share',
     copied: true,
     onClose: () => {},
   },

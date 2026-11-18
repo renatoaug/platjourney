@@ -8,6 +8,8 @@ import { api } from './api'
 export interface PlatinumCard {
   game: { id: string; name: string; artUrl: string | null; coverUrl: string | null }
   player: { onlineId: string; avatarUrl: string | null }
+  /** Where the shared card's link opens: the player's public profile on this app. */
+  link: string
   platform: string
   earnedAt: string
   number: number
@@ -56,9 +58,6 @@ const messages = defineMessages({
     cta: 'TRACK YOURS AT',
   },
 })
-
-/** Where the card sends people. */
-export const SHARE_HOST = 'platjourney.app'
 
 const WIDTH = 1200
 const HEIGHT = 675
@@ -590,9 +589,12 @@ export function brandFooter(
   ctx: CanvasRenderingContext2D,
   logo: HTMLImageElement | null,
   cta: string,
+  /** The card's link: its host is the address printed. */
+  link: string,
   width: number,
   y: number,
 ) {
+  const site = new URL(link).host.toUpperCase()
   // The brand, and where to find it.
   if (logo) ctx.drawImage(logo, 30, y, 38, 38)
   ctx.font = '700 26px "Space Grotesk"'
@@ -605,16 +607,16 @@ export function brandFooter(
   ctx.letterSpacing = '1px'
   ctx.textAlign = 'right'
   ctx.fillStyle = LIME
-  ctx.fillText(SHARE_HOST.toUpperCase(), width - 30, y + 26)
-  const hostW = ctx.measureText(SHARE_HOST.toUpperCase()).width
+  ctx.fillText(site, width - 30, y + 26)
+  const hostW = ctx.measureText(site).width
   ctx.fillStyle = MUTED
   ctx.fillText(`${cta} `, width - 30 - hostW - 6, y + 26)
   ctx.textAlign = 'left'
   ctx.letterSpacing = '0px'
 }
 
-function drawFooter({ ctx, im, t }: Draw) {
-  brandFooter(ctx, im.logo, t('cta'), WIDTH, 618)
+function drawFooter({ ctx, card, im, t }: Draw) {
+  brandFooter(ctx, im.logo, t('cta'), card.link, WIDTH, 618)
 }
 
 /** Draws the card and returns it as a PNG. */

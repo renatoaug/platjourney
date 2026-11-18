@@ -3,7 +3,7 @@
  * files, and on a computer, it copies the image to paste and saves it. */
 import { useEffect, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { drawPlatinumCard, fetchPlatinumCard, SHARE_HOST } from '../lib/share-card'
+import { drawPlatinumCard, fetchPlatinumCard } from '../lib/share-card'
 import { Icon } from '../ui/icon'
 import { toast } from '../ui/toast'
 import { ShareTargets } from './share-targets'
@@ -69,7 +69,7 @@ export function useShare() {
   // The image's address lives while the panel shows it.
   useEffect(() => (ready ? () => URL.revokeObjectURL(ready.image) : undefined), [ready])
   const run = async (
-    build: () => Promise<{ blob: Blob; name: string; text: string; onlineId: string } | string>,
+    build: () => Promise<{ blob: Blob; name: string; text: string; link: string } | string>,
   ) => {
     setBusy(true)
     try {
@@ -79,9 +79,8 @@ export function useShare() {
         toast(built, 'info')
         return
       }
-      const { blob, name, text, onlineId } = built
+      const { blob, name, text, link } = built
       const file = new File([blob], name, { type: 'image/png' })
-      const link = `https://${SHARE_HOST}/profiles/${encodeURIComponent(onlineId)}?ref=share`
       if (touch() && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], text: `${text}\n${link}` }).catch((e: Error) => {
           // Closing the share sheet is not a failure.
@@ -121,7 +120,7 @@ export function SharePlatinum({
         blob: await drawPlatinumCard(card),
         name: fileName(card.game.name),
         text: t('text', { game: card.game.name, number: card.number }),
-        onlineId: card.player.onlineId,
+        link: card.link,
       }
     })
 

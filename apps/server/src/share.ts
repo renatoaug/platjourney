@@ -18,10 +18,16 @@ export interface PlatinumCard {
   trophies: { earned: number; total: number; gold: number; silver: number; bronze: number }
   /** Share of the players who have this platinum, in percent. */
   rarity: number
+  /** Where the shared card's link opens: the player's public profile. */
+  link: string
   /** Base-game trophies earned by the end of each day, from the first trophy's day to the
    * platinum's; at most JOURNEY_POINTS points, a long hunt sampled evenly. */
   journey: number[]
 }
+
+/** The player's public profile, where a shared card's link opens, marked as coming from a share. */
+const profileLink = (base: string, onlineId: string) =>
+  `${base}/profiles/${encodeURIComponent(onlineId)}?ref=share`
 
 export const JOURNEY_POINTS = 40
 const DAY = 86_400_000
@@ -53,6 +59,8 @@ export function platinumCard(args: {
   title: TitleProgress
   trophies: TrophyStatus[]
   player: { onlineId: string; avatarUrl: string | null }
+  /** The app's address, the base of the card's link. */
+  base: string
 }): PlatinumCard | null {
   const ordered = [...args.platinums].sort((a, b) => a.earnedAt.localeCompare(b.earnedAt))
   const index = ordered.findIndex((p) => p.game.id === args.gameId)
@@ -72,6 +80,7 @@ export function platinumCard(args: {
       coverUrl: entry.game.cover_url ?? null,
     },
     player: args.player,
+    link: profileLink(args.base, args.player.onlineId),
     platform: args.title.platform,
     earnedAt: entry.earnedAt,
     number: index + 1,
@@ -110,6 +119,8 @@ export const isPeriod = (v: string | null): v is Period =>
 
 export interface CollectionCard {
   player: { onlineId: string; avatarUrl: string | null }
+  /** Where the shared card's link opens: the player's public profile. */
+  link: string
   period: Period
   /** The month (1 to 12) and year the card covers; null on the whole collection. */
   month: number | null
@@ -141,6 +152,8 @@ export function collectionCard(args: {
     hours: number | null
   }[]
   player: { onlineId: string; avatarUrl: string | null }
+  /** The app's address, the base of the card's link. */
+  base: string
 }): CollectionCard {
   const year = args.now.getUTCFullYear()
   const month = args.now.getUTCMonth()
@@ -156,6 +169,7 @@ export function collectionCard(args: {
   const timed = chosen.filter((p) => p.hours != null)
   return {
     player: args.player,
+    link: profileLink(args.base, args.player.onlineId),
     period: args.period,
     month: args.period === 'month' ? month + 1 : null,
     year: args.period === 'all' ? null : year,

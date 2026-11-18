@@ -154,6 +154,7 @@ Web search follows each feature's provider. An OpenAI model needs its price in `
 |---|---|---|
 | `POLL_MINUTES` | 15 | How often each player's PSN profile is checked |
 | `PORT` | 3000 | The server's port |
+| `APP_URL` | empty | The address players open the app at (`https://app.example.com`), for links that leave the app, like a shared card's. Empty uses the address each request came in on |
 | `PLUGINS`, `PLUGINS_WEB` | empty | Plugin modules to load ([plugins](06-plugins.md)) |
 | `MOBILE_URL` | empty | The instance the native app opens, read by `cap sync` ([mobile](09-mobile.md)); empty ships the web build inside the app |
 | `WEB_DEV_URL` | empty | Development only: the Vite server the page is proxied from (`bun run dev` sets it) |

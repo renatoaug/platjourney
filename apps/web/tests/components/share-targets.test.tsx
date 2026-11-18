@@ -3,7 +3,7 @@ import { fireEvent, screen } from '@testing-library/react'
 import { postLinks, ShareTargets } from '../../src/components/share-targets'
 import { renderApp } from '../support/web'
 
-const LINK = 'https://platjourney.app/profiles/Kratos?ref=share'
+const LINK = 'https://app.example.com/profiles/Kratos?ref=share'
 
 test('each place opens its posting screen with the line and the link filled in', () => {
   const links = Object.fromEntries(postLinks('Platinei Ódin! 🏆', LINK).map((p) => [p.key, p.href]))
