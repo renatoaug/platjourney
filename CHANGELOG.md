@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.84.0](https://github.com/renatoaug/platjourney/compare/v0.83.2...v0.84.0) (2026-11-18)
+
+### Features
+
+* **web:** vice city skin ([#204](https://github.com/renatoaug/platjourney/issues/204)) ([193d170](https://github.com/renatoaug/platjourney/commit/193d170fcdf5e3e0e3e2d7baf96d73156df1bd70))
+
 ## [0.83.2](https://github.com/renatoaug/platjourney/compare/v0.83.1...v0.83.2) (2026-11-17)
 
 ### Bug Fixes
