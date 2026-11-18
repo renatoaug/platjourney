@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.85.1](https://github.com/renatoaug/platjourney/compare/v0.85.0...v0.85.1) (2026-11-18)
+
+### Bug Fixes
+
+* **web:** build shared links from the app's configured address ([#206](https://github.com/renatoaug/platjourney/issues/206)) ([6632951](https://github.com/renatoaug/platjourney/commit/6632951da8920ead065dc84beef6a5ad9fd46ad1))
+
 ## [0.85.0](https://github.com/renatoaug/platjourney/compare/v0.84.0...v0.85.0) (2026-11-18)
 
 ### Features
