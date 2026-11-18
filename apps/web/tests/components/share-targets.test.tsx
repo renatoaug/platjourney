@@ -15,7 +15,9 @@ test('each place opens its posting screen with the line and the link filled in',
     `Platinei Ódin! 🏆\n${LINK}`,
   )
   expect(new URL(links.telegram as string).searchParams.get('url')).toBe(LINK)
-  expect(new URL(links.reddit as string).searchParams.get('title')).toBe('Platinei Ódin! 🏆')
+  const reddit = new URL(links.reddit as string)
+  expect(reddit.searchParams.get('title')).toBe('Platinei Ódin! 🏆')
+  expect(reddit.searchParams.get('text')).toBe(LINK)
 })
 
 test('the panel says the image is copied, links each place in a new tab and closes', () => {

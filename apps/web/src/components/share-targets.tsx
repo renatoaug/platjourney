@@ -57,7 +57,8 @@ export function postLinks(text: string, link: string) {
     {
       key: 'reddit',
       label: 'Reddit',
-      href: `https://www.reddit.com/submit?type=IMAGE&title=${q(text)}`,
+      // A text post: the line as its title, the link in its body, where the image is pasted too.
+      href: `https://www.reddit.com/submit?type=TEXT&title=${q(text)}&text=${q(link)}`,
     },
     { key: 'whatsapp', label: 'WhatsApp', href: `https://wa.me/?text=${q(`${text}\n${link}`)}` },
     {
