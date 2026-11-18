@@ -13,6 +13,7 @@ export const SKIN_FONTS: Record<Skin, string | null> = {
   default: null,
   neon: 'https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&display=swap',
   pixel: 'https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap',
+  vice_city: 'https://fonts.googleapis.com/css2?family=Anton&display=swap',
 }
 
 function loadFont(skin: Skin): void {

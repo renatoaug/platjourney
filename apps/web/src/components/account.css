@@ -253,6 +253,20 @@
     );
   }
 
+  .skin-swatch.is-vice_city {
+    background: linear-gradient(
+      to bottom,
+      var(--color-skin-vice_city-bg) 45%,
+      var(--color-skin-vice_city-accent) 75%,
+      var(--color-skin-vice_city-sun)
+    );
+    border-color: var(--color-skin-vice_city-accent);
+  }
+
+  .skin-swatch.is-vice_city i {
+    background: var(--color-skin-vice_city-sun);
+  }
+
   .accent-swatch {
     display: inline-block;
     width: 14px;

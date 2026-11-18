@@ -47,8 +47,11 @@
     margin-top: auto;
   }
 
-  /* margin-top: auto drops the zone's own spacing; the block above keeps it. */
-  .settings-grid .account-card > :has(+ .danger-zone) {
+  /* margin-top: auto drops the zone's own spacing; the block above keeps it, and when that block
+     is the hidden password form, the one before it does. */
+  .settings-grid
+    .account-card
+    > :not([hidden]):is(:has(+ .danger-zone), :has(+ [hidden] + .danger-zone)) {
     margin-bottom: 18px;
   }
 
