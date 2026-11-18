@@ -124,7 +124,7 @@
     }
 
     .picker-list {
-      inset: auto 0 0 !important;
+      inset: auto 0 0;
       display: grid;
       min-width: 0;
       padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0px));

@@ -2,7 +2,7 @@
  * cards that open the platinum journey, the guide, the session route and the game's facts on their
  * own pages, the trophies by tier, the guide's numbers, and the trophy list. */
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtPlayTime, number, pct } from '../lib/format'

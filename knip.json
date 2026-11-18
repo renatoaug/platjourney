@@ -19,8 +19,7 @@
         "src/**/*.stories.tsx",
         ".storybook/*.{ts,tsx}"
       ],
-      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "tests/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["tailwindcss"]
+      "project": ["src/**/*.{ts,tsx,css}", "scripts/**/*.ts", "tests/**/*.{ts,tsx}"]
     },
     "apps/mobile": {
       "ignoreDependencies": [

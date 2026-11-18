@@ -505,7 +505,6 @@ export function NexoPickPanel({
   spotlight?: boolean
   onAsk: (ask: PickAsk) => void
 }) {
-  const t = useMessages(messages)
   const { section, button, lit } = useSpotlight(spotlight)
   // Folded, unless the player came from their interests: then where it looks shows at once.
   const [open, setOpen] = useState(initialScope === 'interests')

@@ -121,7 +121,9 @@ describe('TrophyList', () => {
   test('collapsing the options preserves filters and leaves the same trigger available', () => {
     show(many)
     const trigger = screen.getByRole('button', { name: 'Filtros' })
-    const panel = document.getElementById(trigger.getAttribute('aria-controls')!)!
+    const panel = document.getElementById(
+      trigger.getAttribute('aria-controls') ?? '',
+    ) as HTMLElement
     expect(panel.hidden).toBe(true)
     fireEvent.click(trigger)
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
