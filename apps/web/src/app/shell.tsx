@@ -1,16 +1,7 @@
 /** The signed-in layout: sidebar, top bar and the screen for the current route. */
 
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import {
-  Link,
-  type Location,
-  Navigate,
-  NavLink,
-  Route,
-  Routes,
-  useLocation,
-  useNavigationType,
-} from 'react-router'
+import { Link, type Location, Navigate, NavLink, Route, Routes, useLocation } from 'react-router'
 import { AccountMenu, signOut } from '../components/account-menu'
 import { CommandPalette } from '../components/command-palette'
 import { connectAccount, DemoBanner } from '../components/demo'

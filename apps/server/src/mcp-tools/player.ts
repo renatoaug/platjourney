@@ -51,7 +51,7 @@ const RECENT = 6
 /** The session plan on screen for this game, its trophies and whether each is done; null without one. */
 async function planRow(user: User, ctx: GameContext) {
   const plan = await currentPlan(user, ctx)
-  if (!plan || plan.status !== 'active') return null
+  if (plan?.status !== 'active') return null
   return {
     summary: plan.summary,
     minutes: plan.minutes,

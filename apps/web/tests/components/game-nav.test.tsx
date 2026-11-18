@@ -60,7 +60,7 @@ test('scroll tracking uses the native anchor clearance instead of a fixed deskto
     </div>,
   )
   const trophies = await screen.findByRole('link', { name: 'Troféus' })
-  const target = document.getElementById('safe-trophies')!
+  const target = document.getElementById('safe-trophies') as HTMLElement
   const box = spyOn(target, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 138, 300, 800))
   const height = Object.getOwnPropertyDescriptor(document.documentElement, 'scrollHeight')
   Object.defineProperty(document.documentElement, 'scrollHeight', {

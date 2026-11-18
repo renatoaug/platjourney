@@ -22,6 +22,8 @@ export interface PickerOption<T extends string> {
   lead?: ReactNode
 }
 
+// On a phone the list is a sheet along the bottom (picker.css), not placed by the button.
+const sheet = () => window.matchMedia?.('(max-width: 760px)').matches === true
 export function Picker<T extends string>({
   id,
   label,
@@ -57,7 +59,7 @@ export function Picker<T extends string>({
   }
   const show = () => {
     const r = button.current?.getBoundingClientRect()
-    if (r) setPlace({ top: r.bottom + 6, right: window.innerWidth - r.right })
+    setPlace(r && !sheet() ? { top: r.bottom + 6, right: window.innerWidth - r.right } : null)
     setActive(
       Math.max(
         0,
@@ -70,7 +72,7 @@ export function Picker<T extends string>({
   // Under the button by default; above it when the list would run past the bottom of the window
   // and there is more room above (a setting near the end of the page).
   useLayoutEffect(() => {
-    if (!open) return
+    if (!open || sheet()) return
     const r = button.current?.getBoundingClientRect()
     const height = list.current?.offsetHeight ?? 0
     if (!r || r.bottom + 6 + height <= window.innerHeight - 8) return
@@ -127,7 +129,6 @@ export function Picker<T extends string>({
               aria-hidden="true"
               onClick={() => close()}
             />
-            {/* biome-ignore lint/a11y/useSemanticElements: a <select> opens the browser's own list, which is what this replaces */}
             <div
               ref={list}
               id={listId}

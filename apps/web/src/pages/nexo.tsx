@@ -400,15 +400,13 @@ function LiveNexo() {
       <div className="nexo-layout nexo-conversation">
         {/* The general conversation is always there, so the list shows as soon as it loads. */}
         {listed?.length ? (
-          <>
-            <ChatThreads
-              threads={listed}
-              active={marked}
-              onPick={pickThread}
-              open={sheet}
-              onClose={closeThreads}
-            />
-          </>
+          <ChatThreads
+            threads={listed}
+            active={marked}
+            onPick={pickThread}
+            open={sheet}
+            onClose={closeThreads}
+          />
         ) : null}
         <NexoChat
           replyVersion={replyVersion}

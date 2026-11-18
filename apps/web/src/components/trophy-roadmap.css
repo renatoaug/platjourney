@@ -1962,9 +1962,6 @@
     }
   }
 
-  @media (max-width: 360px) {
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .roadmap-route::before,
     .roadmap-route-pin {
