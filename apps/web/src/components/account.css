@@ -267,6 +267,19 @@
     background: var(--color-skin-vice_city-sun);
   }
 
+  .skin-swatch.is-christmas {
+    background: var(--color-skin-christmas-bg);
+    border-color: var(--color-skin-christmas-accent);
+  }
+
+  .skin-swatch.is-christmas i {
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--color-skin-christmas-accent) 0 3px,
+      var(--color-skin-christmas-snow) 3px 6px
+    );
+  }
+
   .accent-swatch {
     display: inline-block;
     width: 14px;

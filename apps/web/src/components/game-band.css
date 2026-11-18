@@ -113,7 +113,7 @@
 
   .band-card:hover,
   .band-card:focus-within {
-    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    border-color: var(--color-border-strong);
   }
 
   .band-card:hover {

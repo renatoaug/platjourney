@@ -575,4 +575,66 @@
       padding: 18px;
     }
   }
+
+  /* A card that opens a game: on hover or keyboard focus, a short line of light runs around its
+     border in the accent, so each skin brings its own color. The line is the bright end of a conic
+     gradient turning behind a ring cut by the mask (only the mask's opacity counts, so any opaque
+     token draws it); at rest it is hidden. The angle is registered at the end of this file. */
+  :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile) {
+    position: relative;
+  }
+
+  :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile)::after {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--card-trace),
+      transparent 0 72%,
+      color-mix(in srgb, var(--color-accent) 40%, transparent) 84%,
+      var(--color-accent) 94%,
+      var(--color-fg) 97%,
+      transparent 98%
+    );
+    mask:
+      linear-gradient(var(--color-shadow) 0 0) content-box exclude,
+      linear-gradient(var(--color-shadow) 0 0);
+    opacity: 0;
+    content: "";
+    pointer-events: none;
+    transition: opacity 0.2s;
+    animation: card-trace 2.2s linear infinite paused;
+  }
+
+  :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile):is(
+    :hover,
+    :focus-visible,
+    :has(:focus-visible)
+  )::after {
+    opacity: 1;
+    animation-play-state: running;
+  }
+
+  @keyframes card-trace {
+    to {
+      --card-trace: 360deg;
+    }
+  }
+
+  /* Without motion, the line stays still where it starts. */
+  @media (prefers-reduced-motion: reduce) {
+    :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile)::after {
+      animation: none;
+    }
+  }
+}
+
+/* The angle the card's line turns through, typed so it can animate (outside the layer, where a
+   custom property's registration is read). */
+@property --card-trace {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
 }

@@ -7,12 +7,23 @@
  * rim, titles filled with a violet-to-pink gradient, numbers in cyan, gradient buttons and the
  * game's art in a violet duotone.
  *
+ * Neon moves too: the grid floor rolls toward the screen, stars twinkle, the titles' gradient
+ * flows, a neon tube runs along the menu and progress pulses.
+ *
  * Vice City: a beach city at dusk. A violet sky through magenta and coral to a warm yellow
  * horizon, palms and a skyline in silhouette, poster headlines and cards framed like poster panels.
+ * It moves: the striped sun breathes as it sets, the palms sway, the sea glints, gulls cross the
+ * sky, a neon tube runs along the menu's edge and the headlines flicker like a sign.
+ *
+ * Christmas: a snowy night. Snow falls in two depths, a string of lights blinks along the top,
+ * snow piles up on the bottom bar (and on the account in the sidebar) the longer the app stays
+ * open, progress runs as a candy cane, the active tab wears a Santa hat and titles are gold.
  *
  * Pixel: an 8-bit game. The pixel font everywhere, a checkered floor under CRT scanlines, cards
  * drawn as game windows, raised buttons, square icons, progress in blocks and the game's art
- * pixelated (the #pixelate filter in index.html).
+ * pixelated (the #pixelate filter in index.html). It moves like an old TV and an old game: a
+ * scan band rolls down the tube, a pixel cloud drifts by, a blinking arrow marks the active tab,
+ * bricks line the menu, progress charges in blocks and titles end in a blinking cursor.
  */
 @layer skins {
   /* Both: a display font with longer descenders than the default needs room below the line. */
@@ -75,12 +86,85 @@
     transform: perspective(320px) rotateX(62deg);
     transform-origin: bottom;
     mask-image: linear-gradient(to top, black, transparent);
+    animation: neon-floor 1.6s linear infinite;
+  }
+
+  /* The floor rolls toward the screen: the cross lines move down by one square. */
+  @keyframes neon-floor {
+    to {
+      background-position:
+        0 0,
+        0 48px;
+    }
+  }
+
+  /* Stars in the night above the floor, twinkling. */
+  :root[data-skin="neon"] body::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    inset: 0 0 40vh;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 14% 22%, var(--color-fg) 0 1px, transparent 1.5px),
+      radial-gradient(circle at 36% 64%, var(--color-fg-tint) 0 1px, transparent 1.5px),
+      radial-gradient(circle at 58% 18%, var(--color-fg) 0 1.2px, transparent 1.7px),
+      radial-gradient(circle at 76% 48%, var(--color-accent) 0 1px, transparent 1.5px),
+      radial-gradient(circle at 90% 12%, var(--color-fg) 0 1px, transparent 1.5px);
+    background-size: 260px 220px;
+    animation: neon-stars 3.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes neon-stars {
+    from {
+      opacity: 0.35;
+    }
+
+    to {
+      opacity: 0.9;
+    }
   }
 
   :root[data-skin="neon"] .sidebar {
     border-right-color: color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
     background: color-mix(in srgb, var(--color-bg-subtle) var(--alpha-heavy), transparent);
     box-shadow: 1px 0 24px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+  }
+
+  /* A neon tube along the menu's edge, violet into pink into cyan, running: down the sidebar on a
+     computer, across the top of the bottom bar on a phone. */
+  :root[data-skin="neon"] .sidebar::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 2px;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        to bottom,
+        var(--color-accent),
+        var(--color-fg-tint),
+        var(--color-highlight-warm),
+        var(--color-accent)
+      )
+      0 0 / 100% 200%;
+    box-shadow: 0 0 12px var(--color-accent);
+    animation: neon-tube-down 3s linear infinite;
+  }
+
+  @keyframes neon-tube-down {
+    to {
+      background-position: 0 200%;
+    }
+  }
+
+  @keyframes neon-tube-across {
+    to {
+      background-position: 200% 0;
+    }
   }
 
   :root[data-skin="neon"] .card {
@@ -116,26 +200,50 @@
       color-mix(in srgb, var(--color-highlight-warm) var(--alpha-soft), transparent);
   }
 
+  /* Progress glowing, a pulse of light running along it. */
   :root[data-skin="neon"] .bar i {
-    background: linear-gradient(90deg, var(--color-accent), var(--color-fg-tint));
+    background:
+      linear-gradient(
+        90deg,
+        transparent 30%,
+        color-mix(in srgb, var(--color-fg) var(--alpha-dim), transparent) 50%,
+        transparent 70%
+      )
+      -100% 0 / 40% 100% no-repeat,
+      linear-gradient(90deg, var(--color-accent), var(--color-fg-tint));
     box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) var(--alpha-dim), transparent);
+    animation: neon-pulse 2.4s linear infinite;
+  }
+
+  @keyframes neon-pulse {
+    to {
+      background-position:
+        250% 0,
+        0 0;
+    }
   }
 
   :root[data-skin="neon"] .bar.gold i {
     background: var(--color-trophy-gold);
     box-shadow: none;
+    animation: none;
   }
 
   /* Titles filled with the violet-to-pink gradient, glowing. */
   :root[data-skin="neon"] h1,
   :root[data-skin="neon"] .console-title,
   :root[data-skin="neon"] .hero-title {
-    background: linear-gradient(
-      100deg,
-      var(--color-fg) 10%,
-      var(--color-accent) 55%,
-      var(--color-fg-tint)
-    );
+    background:
+      linear-gradient(
+        100deg,
+        var(--color-fg) 10%,
+        var(--color-accent) 35%,
+        var(--color-fg-tint) 50%,
+        var(--color-accent) 65%,
+        var(--color-fg) 90%
+      )
+      0 0 / 200% 100%;
+    animation: neon-title 6s linear infinite;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
@@ -143,6 +251,13 @@
     filter: drop-shadow(
       0 0 14px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent)
     );
+  }
+
+  /* The title's colors flowing through it. */
+  @keyframes neon-title {
+    to {
+      background-position: 200% 0;
+    }
   }
 
   :root[data-skin="neon"] .tile b,
@@ -178,6 +293,33 @@
       color: var(--color-accent);
       text-shadow: var(--shadow-glow);
     }
+
+    :root[data-skin="neon"] .sidebar::before {
+      left: 0;
+      bottom: auto;
+      width: auto;
+      height: 2px;
+      background:
+        linear-gradient(
+          90deg,
+          var(--color-accent),
+          var(--color-fg-tint),
+          var(--color-highlight-warm),
+          var(--color-accent)
+        )
+        0 0 / 200% 100%;
+      animation-name: neon-tube-across;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-skin="neon"] body::before,
+    :root[data-skin="neon"] body::after,
+    :root[data-skin="neon"] .sidebar::before,
+    :root[data-skin="neon"] .bar i,
+    :root[data-skin="neon"] :is(h1, .console-title, .hero-title) {
+      animation: none;
+    }
   }
 
   /* --------------------------------------------------------------- Pixel */
@@ -188,21 +330,143 @@
       repeating-conic-gradient(var(--color-bg) 0 25%, var(--color-bg-subtle) 0 50%) 0 0 / 16px 16px;
   }
 
+  /* The tube: scanlines over everything, a brighter band rolling down it and a faint flicker. */
   :root[data-skin="pixel"] body::after {
     content: "";
     position: fixed;
     z-index: 999;
     inset: 0;
     pointer-events: none;
-    background: repeating-linear-gradient(
-      0deg,
-      color-mix(in srgb, var(--color-shadow) var(--alpha-soft), transparent) 0 1px,
-      transparent 1px 3px
-    );
+    background:
+      linear-gradient(
+        to bottom,
+        transparent,
+        color-mix(in srgb, var(--color-fg) var(--alpha-wash), transparent) 50%,
+        transparent
+      )
+      0 -30vh / 100% 30vh no-repeat,
+      repeating-linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--color-shadow) var(--alpha-soft), transparent) 0 1px,
+        transparent 1px 3px
+      );
+    animation:
+      pixel-roll 7s linear infinite,
+      pixel-flicker 4s steps(1) infinite;
+  }
+
+  @keyframes pixel-roll {
+    to {
+      background-position:
+        0 130vh,
+        0 0;
+    }
+  }
+
+  @keyframes pixel-flicker {
+    0%,
+    48%,
+    52%,
+    to {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  /* A pixel cloud drifting across the top of the screen, a step at a time. */
+  :root[data-skin="pixel"] body::before {
+    content: "";
+    position: fixed;
+    z-index: 15;
+    top: 9vh;
+    left: 0;
+    width: 96px;
+    height: 48px;
+    pointer-events: none;
+    background: var(--color-fg-subtle);
+    mask:
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%208%22%20shape-rendering%3D%22crispEdges%22%20fill%3D%22black%22%3E%3Crect%20x%3D%224%22%20y%3D%220%22%20width%3D%224%22%20height%3D%221%22/%3E%3Crect%20x%3D%223%22%20y%3D%221%22%20width%3D%227%22%20height%3D%221%22/%3E%3Crect%20x%3D%2210%22%20y%3D%222%22%20width%3D%223%22%20height%3D%221%22/%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%2212%22%20height%3D%221%22/%3E%3Crect%20x%3D%221%22%20y%3D%223%22%20width%3D%2214%22%20height%3D%223%22/%3E%3Crect%20x%3D%222%22%20y%3D%226%22%20width%3D%2212%22%20height%3D%221%22/%3E%3C/svg%3E")
+      center / contain no-repeat;
+    opacity: 0.35;
+    animation: pixel-cloud 60s steps(120) infinite;
+  }
+
+  @keyframes pixel-cloud {
+    from {
+      transform: translateX(-110px);
+    }
+
+    to {
+      transform: translateX(calc(100vw + 10px));
+    }
+  }
+
+  /* A row of bricks along the top of the bottom bar, and on the account in the sidebar. */
+  :root[data-skin="pixel"] .sidebar-account::after,
+  :root[data-skin="pixel"] .sidebar::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 8px;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--color-shadow) 0 0) 0 3px / 100% 1px repeat-x,
+      repeating-linear-gradient(90deg, var(--color-shadow) 0 1px, transparent 1px 16px) 0 0 / 100%
+      4px no-repeat,
+      repeating-linear-gradient(90deg, var(--color-shadow) 0 1px, transparent 1px 16px) 8px 4px /
+      100% 4px no-repeat,
+      var(--color-highlight-warm);
+    border-top: 1px solid var(--color-shadow);
+  }
+
+  /* On the account, the bricks take the place of its divider line. */
+  :root[data-skin="pixel"] .sidebar-account::after {
+    bottom: calc(100% + 6px);
+  }
+
+  :root[data-skin="pixel"] .sidebar-account::before {
+    display: none;
+  }
+
+  :root[data-skin="pixel"] .sidebar::before {
+    display: none;
   }
 
   :root[data-skin="pixel"] .sidebar {
     border-right: 4px solid var(--color-shadow);
+  }
+
+  :root[data-skin="pixel"] .sidebar-account {
+    position: relative;
+  }
+
+  /* The selector of an old game's menu: an arrow blinking beside the active item. */
+  :root[data-skin="pixel"] .nav a.active {
+    position: relative;
+  }
+
+  :root[data-skin="pixel"] .nav a.active::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 8px;
+    height: 10px;
+    background: currentColor;
+    clip-path: polygon(100% 0, 0 50%, 100% 100%);
+    transform: translateY(-50%);
+    animation: pixel-blink 1s steps(1) infinite;
+  }
+
+  @keyframes pixel-blink {
+    50% {
+      opacity: 0;
+    }
   }
 
   /* Cards as game windows: a light frame, a dark inner line and a hard shadow. */
@@ -262,9 +526,21 @@
     height: 8px;
   }
 
-  /* Progress fills in blocks with a 2px gap, like an old health bar. */
+  /* Progress fills in blocks with a 2px gap, like an old health bar, a brighter block charging
+     along it. */
   :root[data-skin="pixel"] .bar i {
-    background: repeating-linear-gradient(90deg, var(--color-accent) 0 6px, transparent 6px 8px);
+    background:
+      linear-gradient(var(--color-accent-hover) 0 0) -8px 0 / 6px 100% no-repeat,
+      repeating-linear-gradient(90deg, var(--color-accent) 0 6px, transparent 6px 8px);
+    animation: pixel-charge 2s steps(16) infinite;
+  }
+
+  @keyframes pixel-charge {
+    to {
+      background-position:
+        120px 0,
+        0 0;
+    }
   }
 
   :root[data-skin="pixel"] .bar.gold i {
@@ -273,6 +549,7 @@
       var(--color-trophy-gold) 0 6px,
       transparent 6px 8px
     );
+    animation: none;
   }
 
   :root[data-skin="pixel"] .eyebrow {
@@ -285,6 +562,19 @@
     text-shadow: 4px 4px 0 var(--color-shadow);
   }
 
+  /* A page's title ends in a blinking block cursor, as if just typed. */
+  :root[data-skin="pixel"] h1::after {
+    content: "";
+    display: inline-block;
+    width: 0.5em;
+    height: 0.75em;
+    margin-left: 0.15em;
+    background: var(--color-accent);
+    box-shadow: 4px 4px 0 var(--color-shadow);
+    vertical-align: baseline;
+    animation: pixel-blink 1.1s steps(1) infinite;
+  }
+
   :root[data-skin="pixel"] body {
     -webkit-font-smoothing: none;
   }
@@ -293,6 +583,38 @@
     :root[data-skin="pixel"] .nav a.active {
       border-color: transparent;
       box-shadow: none;
+    }
+
+    /* On a phone the arrow sits above the tab's icon, pointing down at it. */
+    :root[data-skin="pixel"] .nav a.active::after {
+      top: -2px;
+      right: auto;
+      left: 50%;
+      width: 10px;
+      height: 6px;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+      transform: translateX(-50%);
+    }
+
+    :root[data-skin="pixel"] .sidebar::before {
+      display: block;
+    }
+
+    :root[data-skin="pixel"] .sidebar-account::after {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-skin="pixel"] body::after,
+    :root[data-skin="pixel"] .nav a.active::after,
+    :root[data-skin="pixel"] .bar i,
+    :root[data-skin="pixel"] h1::after {
+      animation: none;
+    }
+
+    :root[data-skin="pixel"] body::before {
+      display: none;
     }
   }
 
@@ -324,15 +646,151 @@
     position: fixed;
     z-index: -3;
     left: 58%;
-    bottom: -9vmin;
-    width: 30vmin;
-    height: 30vmin;
+    bottom: -6vmin;
+    width: 24vmin;
+    height: 24vmin;
     border-radius: 50%;
     pointer-events: none;
-    background: radial-gradient(circle, var(--color-sky-yellow) 55%, transparent 72%);
+    /* The retro sun: solid on top, crossed lower down by bands of the sky that thicken toward
+       the sea (the circle's corners clip them). */
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 9px, var(--color-sky-coral) 9px 13px)
+      bottom / 100% 46% no-repeat,
+      radial-gradient(circle closest-side, var(--color-sky-yellow) 97%, transparent);
     box-shadow: 0 0 120px 40px
       color-mix(in srgb, var(--color-sky-orange) var(--alpha-strong), transparent);
     opacity: 0.6;
+    animation: vc-sun-glow 6s ease-in-out infinite alternate;
+  }
+
+  @keyframes vc-sun-glow {
+    to {
+      opacity: 0.8;
+      box-shadow: 0 0 160px 60px
+        color-mix(in srgb, var(--color-sky-orange) var(--alpha-strong), transparent);
+    }
+  }
+
+  /* The sea at the foot of the sky: glints of the low sun drifting along fine lines of water. */
+  :root[data-skin="vice_city"]::before {
+    content: "";
+    position: fixed;
+    z-index: -2;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 12vh;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--color-sky-yellow) 0 22px,
+      transparent 22px 70px,
+      var(--color-sky-coral) 70px 84px,
+      transparent 84px 150px
+    );
+    mask-image:
+      repeating-linear-gradient(to bottom, var(--color-shadow) 0 2px, transparent 2px 8px),
+      radial-gradient(ellipse 40% 100% at 64% 100%, var(--color-shadow), transparent 70%);
+    mask-composite: intersect;
+    opacity: 0.45;
+    animation: vc-sea 9s linear infinite;
+  }
+
+  @keyframes vc-sea {
+    to {
+      background-position: 150px 0;
+    }
+  }
+
+  /* The low sun reaching over everything: a warm band of light sweeps across the screen every
+     few seconds, and a sunset glow rises from the bottom edge, over the cards too. */
+  :root[data-skin="vice_city"] .app::before,
+  :root[data-skin="vice_city"] .app::after {
+    content: "";
+    position: fixed;
+    z-index: 14;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  :root[data-skin="vice_city"] .app::before {
+    background:
+      linear-gradient(
+        115deg,
+        transparent 38%,
+        color-mix(in srgb, var(--color-sky-coral) var(--alpha-line), transparent) 45%,
+        color-mix(in srgb, var(--color-sky-yellow) var(--alpha-glow), transparent) 50%,
+        color-mix(in srgb, var(--color-sky-coral) var(--alpha-line), transparent) 55%,
+        transparent 62%
+      )
+      100% 0 / 250% 100% no-repeat;
+    mix-blend-mode: screen;
+    animation: vc-sweep 10s ease-in-out infinite;
+  }
+
+  /* At 100% the band waits just past the left edge, at 0% just past the right one. */
+  @keyframes vc-sweep {
+    0%,
+    10% {
+      background-position: 100% 0;
+    }
+
+    80%,
+    to {
+      background-position: 0 0;
+    }
+  }
+
+  :root[data-skin="vice_city"] .app::after {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--color-sky-coral) var(--alpha-soft), transparent),
+      transparent 28%
+    );
+    mix-blend-mode: screen;
+    animation: vc-dusk 6s ease-in-out infinite alternate;
+  }
+
+  @keyframes vc-dusk {
+    from {
+      opacity: 0.6;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Gulls crossing the sky now and then. */
+  :root[data-skin="vice_city"]::after {
+    content: "";
+    position: fixed;
+    z-index: 15;
+    top: 14vh;
+    left: 0;
+    width: 170px;
+    height: 62px;
+    pointer-events: none;
+    background: var(--color-sky-violet);
+    mask:
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20120%2044%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222.2%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M4%2014%20q7%20-8%2013%200%20q6%20-8%2013%200%22/%3E%3Cpath%20d%3D%22M46%2030%20q5%20-6%2010%200%20q5%20-6%2010%200%22/%3E%3Cpath%20d%3D%22M84%2010%20q6%20-7%2011%200%20q5%20-7%2011%200%22/%3E%3C/svg%3E")
+      center / contain no-repeat;
+    opacity: 0.8;
+    animation: vc-gulls 22s linear infinite;
+  }
+
+  @keyframes vc-gulls {
+    from {
+      transform: translate(-140px, 0);
+    }
+
+    50% {
+      transform: translate(50vw, -3vh);
+    }
+
+    to {
+      transform: translate(calc(100vw + 20px), 1vh);
+    }
   }
 
   /* Palms framing the screen and the city on the horizon, as night silhouettes. */
@@ -357,11 +815,59 @@
       auto 62vh,
       100% 22vh;
     opacity: 0.45;
+    animation: vc-palms 7s ease-in-out infinite alternate;
+  }
+
+  /* The palms lean in the sea breeze; the city stays put. */
+  @keyframes vc-palms {
+    to {
+      mask-position:
+        left -34px bottom -20px,
+        right -96px bottom -40px,
+        center bottom;
+    }
   }
 
   :root[data-skin="vice_city"] .sidebar {
     border-right: 3px solid var(--color-shadow);
     background: color-mix(in srgb, var(--color-sky-violet) var(--alpha-heavy), transparent);
+  }
+
+  /* A neon tube along the menu's edge, its sunset colors running: down the sidebar's right side on
+     a computer, across the top of the bottom bar on a phone. */
+  :root[data-skin="vice_city"] .sidebar::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 2px;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        to bottom,
+        var(--color-sky-magenta),
+        var(--color-sky-coral),
+        var(--color-sky-yellow),
+        var(--color-sky-coral),
+        var(--color-sky-magenta)
+      )
+      0 0 / 100% 200%;
+    box-shadow: 0 0 10px var(--color-sky-magenta);
+    animation: vc-tube-down 4s linear infinite;
+  }
+
+  @keyframes vc-tube-down {
+    to {
+      background-position: 0 200%;
+    }
+  }
+
+  @keyframes vc-tube-across {
+    to {
+      background-position: 200% 0;
+    }
   }
 
   /* Cards are framed like the panels of a poster through tokens (theme.css), so a card a screen
@@ -380,6 +886,9 @@
     border-radius: var(--radius-control);
     box-shadow: var(--shadow-glow);
     font-weight: var(--weight-semibold);
+    /* From the border's edge: otherwise the transparent border shows the gradient's far end
+       repeated, a thin stripe of yellow along the left. */
+    background-origin: border-box;
   }
 
   /* The menu scrolls and clips anything past its edge, so a glow there ends in a square: the
@@ -427,23 +936,65 @@
     display: none;
   }
 
+  @media (max-width: 760px) {
+    :root[data-skin="vice_city"] .sidebar::before {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: auto;
+      width: auto;
+      height: 2px;
+      background:
+        linear-gradient(
+          90deg,
+          var(--color-sky-magenta),
+          var(--color-sky-coral),
+          var(--color-sky-yellow),
+          var(--color-sky-coral),
+          var(--color-sky-magenta)
+        )
+        0 0 / 200% 100%;
+      animation-name: vc-tube-across;
+    }
+  }
+
   :root[data-skin="vice_city"] button.ghost,
   :root[data-skin="vice_city"] .button.secondary,
   :root[data-skin="vice_city"] .button.game-about-buy {
     border: 2px solid var(--color-sky-coral);
   }
 
+  /* Progress in the sky's ramp, a glint of sun sliding along it. */
   :root[data-skin="vice_city"] .bar i {
-    background: linear-gradient(
-      90deg,
-      var(--color-sky-magenta),
-      var(--color-sky-orange),
-      var(--color-sky-yellow)
-    );
+    background:
+      linear-gradient(
+        100deg,
+        transparent 35%,
+        color-mix(in srgb, var(--color-fg) var(--alpha-strong), transparent) 50%,
+        transparent 65%
+      )
+      -100% 0 / 50% 100% no-repeat,
+      linear-gradient(
+        90deg,
+        var(--color-sky-magenta),
+        var(--color-sky-orange),
+        var(--color-sky-yellow)
+      );
+    animation: vc-glint 3.2s ease-in-out infinite;
+  }
+
+  @keyframes vc-glint {
+    60%,
+    to {
+      background-position:
+        200% 0,
+        0 0;
+    }
   }
 
   :root[data-skin="vice_city"] .bar.gold i {
     background: var(--color-trophy-gold);
+    animation: none;
   }
 
   /* Titles tall, condensed, white and upper case, like a poster headline. */
@@ -455,7 +1006,44 @@
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.01em;
-    text-shadow: 3px 3px 0 color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+    text-shadow:
+      3px 3px 0 color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent),
+      0 0 18px color-mix(in srgb, var(--color-sky-magenta) var(--alpha-glow), transparent);
+    animation: vc-sign 7s steps(1) infinite;
+  }
+
+  /* Like a neon sign: lit, a quick double flicker, lit again. */
+  @keyframes vc-sign {
+    0%,
+    91%,
+    93.5%,
+    to {
+      opacity: 1;
+    }
+
+    92%,
+    94.5% {
+      opacity: 0.55;
+    }
+  }
+
+  /* Without motion the scene holds still: the sun, the palms, the sea, the gulls and the signs. */
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-skin="vice_city"] body::before,
+    :root[data-skin="vice_city"] body::after,
+    :root[data-skin="vice_city"]::before,
+    :root[data-skin="vice_city"] .app::before,
+    :root[data-skin="vice_city"] .app::after,
+    :root[data-skin="vice_city"] .sidebar::before,
+    :root[data-skin="vice_city"] .bar i,
+    :root[data-skin="vice_city"] :is(h1, h2, .console-title, .hero-title) {
+      animation: none;
+    }
+
+    :root[data-skin="vice_city"]::after,
+    :root[data-skin="vice_city"] .app::before {
+      display: none;
+    }
   }
 
   /* Small labels and numbers in the warm yellow of the low sun. */
@@ -485,5 +1073,349 @@
     mix-blend-mode: color;
     opacity: 0.75;
     pointer-events: none;
+  }
+
+  /* --------------------------------------------------------- Christmas */
+
+  /* The night over a pine forest, with the warm glow of a window low on the screen. */
+  :root[data-skin="christmas"] body {
+    background:
+      radial-gradient(
+        70vw 40vh at 50% 110%,
+        color-mix(in srgb, var(--color-xmas-gold) var(--alpha-tint), transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        50vw 50vh at 100% 0%,
+        color-mix(in srgb, var(--color-xmas-green) var(--alpha-tint), transparent),
+        transparent 70%
+      ),
+      linear-gradient(to bottom, var(--color-xmas-night), var(--color-bg));
+    background-attachment: fixed;
+  }
+
+  /* Snow in two depths: small flakes behind the content drifting slowly, bigger ones in front
+     falling faster. Each layer is one tile of flakes sliding down by its own height, so it loops. */
+  :root[data-skin="christmas"] body::before,
+  :root[data-skin="christmas"] body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  :root[data-skin="christmas"] body::before {
+    z-index: -1;
+    background-image:
+      radial-gradient(circle at 12% 18%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px)),
+      radial-gradient(
+        circle at 38% 62%,
+        var(--color-xmas-snow) 0 1.5px,
+        transparent calc(1.5px + 1px)
+      ),
+      radial-gradient(circle at 64% 8%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px)),
+      radial-gradient(
+        circle at 82% 44%,
+        var(--color-xmas-snow) 0 1.5px,
+        transparent calc(1.5px + 1px)
+      ),
+      radial-gradient(circle at 26% 88%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px)),
+      radial-gradient(circle at 92% 78%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px)),
+      radial-gradient(circle at 52% 36%, var(--color-xmas-snow) 0 1px, transparent calc(1px + 1px));
+    background-size: 180px 180px;
+    opacity: 0.55;
+    animation: xmas-snow-far 18s linear infinite;
+  }
+
+  :root[data-skin="christmas"] body::after {
+    z-index: 15;
+    background-image:
+      radial-gradient(
+        circle at 18% 30%,
+        var(--color-xmas-snow) 0 2.5px,
+        transparent calc(2.5px + 1px)
+      ),
+      radial-gradient(circle at 58% 12%, var(--color-xmas-snow) 0 2px, transparent calc(2px + 1px)),
+      radial-gradient(circle at 78% 66%, var(--color-xmas-snow) 0 3px, transparent calc(3px + 1px)),
+      radial-gradient(circle at 34% 74%, var(--color-xmas-snow) 0 2px, transparent calc(2px + 1px)),
+      radial-gradient(circle at 90% 24%, var(--color-xmas-snow) 0 2px, transparent calc(2px + 1px));
+    background-size: 320px 320px;
+    opacity: 0.8;
+    filter: blur(0.4px);
+    animation: xmas-snow-near 11s linear infinite;
+  }
+
+  @keyframes xmas-snow-far {
+    to {
+      background-position: 30px 180px;
+    }
+  }
+
+  @keyframes xmas-snow-near {
+    to {
+      background-position: -60px 320px;
+    }
+  }
+
+  /* A string of lights along the top: the wire in scallops and four colors of bulbs, two of them
+     on each layer, the layers blinking in turn. */
+  :root[data-skin="christmas"]::before,
+  :root[data-skin="christmas"]::after {
+    content: "";
+    position: fixed;
+    z-index: 40;
+    top: env(safe-area-inset-top, 0px);
+    left: 0;
+    right: 0;
+    height: 26px;
+    pointer-events: none;
+    background-repeat: repeat-x;
+  }
+
+  :root[data-skin="christmas"]::before {
+    background-image:
+      radial-gradient(
+        ellipse 30px 14px at 24px -6px,
+        transparent 84%,
+        var(--color-xmas-wire) 86% 100%,
+        transparent 101%
+      ),
+      radial-gradient(ellipse 4px 6px at 24px 15px, var(--color-xmas-red) 70%, transparent),
+      radial-gradient(ellipse 4px 6px at 24px 15px, var(--color-xmas-green) 70%, transparent);
+    background-size:
+      48px 26px,
+      192px 26px,
+      192px 26px;
+    background-position:
+      0 0,
+      0 0,
+      96px 0;
+    filter: drop-shadow(
+      0 0 4px color-mix(in srgb, var(--color-xmas-gold) var(--alpha-strong), transparent)
+    );
+    animation: xmas-blink 1.8s ease-in-out infinite alternate;
+  }
+
+  :root[data-skin="christmas"]::after {
+    background-image:
+      radial-gradient(ellipse 4px 6px at 24px 15px, var(--color-xmas-gold) 70%, transparent),
+      radial-gradient(ellipse 4px 6px at 24px 15px, var(--color-xmas-blue) 70%, transparent);
+    background-size:
+      192px 26px,
+      192px 26px;
+    background-position:
+      48px 0,
+      144px 0;
+    filter: drop-shadow(
+      0 0 5px color-mix(in srgb, var(--color-xmas-gold) var(--alpha-strong), transparent)
+    );
+    animation: xmas-blink 1.8s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes xmas-blink {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0.3;
+    }
+  }
+
+  /* The lights hang over the top of the screen: the page starts below them. */
+  :root[data-skin="christmas"] .topbar {
+    margin-top: 14px;
+  }
+
+  /* Titles in the season's lettering, gold and lit. */
+  :root[data-skin="christmas"] h1,
+  :root[data-skin="christmas"] h2,
+  :root[data-skin="christmas"] .console-title,
+  :root[data-skin="christmas"] .hero-title {
+    color: var(--color-xmas-gold);
+    font-weight: 700;
+    letter-spacing: 0;
+    text-shadow: 0 0 18px color-mix(in srgb, var(--color-xmas-gold) var(--alpha-glow), transparent);
+  }
+
+  :root[data-skin="christmas"] .tile b,
+  :root[data-skin="christmas"] .eyebrow {
+    color: var(--color-xmas-gold);
+  }
+
+  /* Buttons in Christmas red, with a ribbon of light crossing them on hover. */
+  :root[data-skin="christmas"] .button:not(.secondary, .game-about-buy) {
+    background:
+      linear-gradient(
+        105deg,
+        transparent 40%,
+        color-mix(in srgb, var(--color-xmas-snow) var(--alpha-glow), transparent) 50%,
+        transparent 60%
+      )
+      -150% 0 / 250% 100% no-repeat,
+      var(--color-xmas-red);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--color-xmas-red) var(--alpha-glow), transparent);
+    background-origin: border-box;
+    transition: background-position 0.6s ease;
+  }
+
+  :root[data-skin="christmas"] .button:not(.secondary, .game-about-buy):hover {
+    background-position:
+      250% 0,
+      0 0;
+  }
+
+  :root[data-skin="christmas"] button.ghost,
+  :root[data-skin="christmas"] .button.secondary,
+  :root[data-skin="christmas"] .button.game-about-buy {
+    border: 1px solid color-mix(in srgb, var(--color-xmas-gold) var(--alpha-strong), transparent);
+  }
+
+  /* Progress as a candy cane, its stripes running. */
+  :root[data-skin="christmas"] .bar i {
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--color-xmas-red) 0 8px,
+      var(--color-xmas-snow) 8px 16px
+    );
+    background-size: 22.6px 22.6px;
+    animation: xmas-cane 1.2s linear infinite;
+  }
+
+  :root[data-skin="christmas"] .bar.gold i {
+    background: var(--color-trophy-gold);
+    animation: none;
+  }
+
+  @keyframes xmas-cane {
+    to {
+      background-position: 22.6px 0;
+    }
+  }
+
+  /* The menu's active item in red, its glow in gold. */
+  :root[data-skin="christmas"] .nav a.active {
+    background: var(--color-xmas-red);
+    color: var(--color-on-accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  :root[data-skin="christmas"] .nav-indicator {
+    display: none;
+  }
+
+  /* Snow settling on a ledge: a white bank with a soft, uneven top that grows over a few minutes
+     while the app stays open. */
+  :root[data-skin="christmas"] .sidebar-account {
+    position: relative;
+  }
+
+  :root[data-skin="christmas"] .sidebar-account::before,
+  :root[data-skin="christmas"] .sidebar::before {
+    content: "";
+    position: absolute;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    border-top: 0;
+    height: 4px;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 50% 100% at 50% 100%, var(--color-xmas-snow) 96%, transparent) 0 100%
+      / 26px 100% repeat-x,
+      radial-gradient(ellipse 50% 70% at 50% 100%, var(--color-xmas-snow) 96%, transparent) 13px
+      100% / 38px 100% repeat-x;
+    filter: drop-shadow(
+      0 -1px 2px color-mix(in srgb, var(--color-xmas-blue) var(--alpha-glow), transparent)
+    );
+    animation: xmas-pile 180s ease-out forwards;
+  }
+
+  /* On a computer the sidebar is a column: the bank sits on the account at its foot. */
+  :root[data-skin="christmas"] .sidebar::before {
+    display: none;
+  }
+
+  @keyframes xmas-pile {
+    to {
+      height: 16px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    /* On a phone the bottom bar is the ledge. */
+    :root[data-skin="christmas"] .sidebar::before {
+      display: block;
+    }
+
+    :root[data-skin="christmas"] .sidebar-account::before {
+      display: none;
+    }
+
+    /* The active tab: a red pill behind the icon, wearing a Santa hat. */
+    :root[data-skin="christmas"] .nav a.active {
+      position: relative;
+      isolation: isolate;
+      background: none;
+      color: var(--color-xmas-gold);
+    }
+
+    :root[data-skin="christmas"] .nav a.active::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: 4px;
+      left: 50%;
+      width: 56px;
+      height: 32px;
+      border-radius: var(--radius-pill);
+      background: var(--color-xmas-red);
+      box-shadow: 0 4px 14px
+        color-mix(in srgb, var(--color-xmas-red) var(--alpha-strong), transparent);
+      transform: translateX(-50%);
+    }
+
+    :root[data-skin="christmas"] .nav a.active::after {
+      content: "";
+      position: absolute;
+      top: -14px;
+      left: calc(50% - 40px);
+      width: 34px;
+      height: 28px;
+      background:
+        radial-gradient(circle at 83% 20%, var(--color-xmas-snow) 0 15%, transparent 16%),
+        linear-gradient(to bottom, transparent 70%, var(--color-xmas-snow) 70%),
+        var(--color-xmas-red);
+      mask:
+        url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2020%22%20fill%3D%22black%22%3E%3Cpath%20d%3D%22M3%2015%20C6%206%2012%202%2020%204%20C17%206%2016%209%2017%2015%20Z%22/%3E%3Crect%20x%3D%221%22%20y%3D%2214%22%20width%3D%2219%22%20height%3D%225%22%20rx%3D%222.5%22/%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%224%22%20r%3D%223%22/%3E%3C/svg%3E")
+        center / contain no-repeat;
+      transform: rotate(-18deg);
+      filter: drop-shadow(
+        0 2px 2px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent)
+      );
+      pointer-events: none;
+    }
+
+    :root[data-skin="christmas"] .nav a.active .icon {
+      color: var(--color-on-accent);
+    }
+  }
+
+  /* Without motion: the snow and the lights hold still and the bank is already settled. */
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-skin="christmas"] body::before,
+    :root[data-skin="christmas"] body::after,
+    :root[data-skin="christmas"]::before,
+    :root[data-skin="christmas"]::after,
+    :root[data-skin="christmas"] .bar i {
+      animation: none;
+    }
+
+    :root[data-skin="christmas"] .sidebar::before,
+    :root[data-skin="christmas"] .sidebar-account::before {
+      height: 16px;
+      animation: none;
+    }
   }
 }

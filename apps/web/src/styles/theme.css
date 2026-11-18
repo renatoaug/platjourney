@@ -37,6 +37,9 @@
   --palette-skin-vice_city-bg: #3b146b;
   --palette-skin-vice_city-accent: #c9349b;
   --palette-skin-vice_city-sun: #ffb458;
+  --palette-skin-christmas-bg: #0f2a1e;
+  --palette-skin-christmas-accent: #e5484d;
+  --palette-skin-christmas-snow: #f7fbff;
   --palette-accent-950: #16200f;
   --palette-accent-600: #647550;
   --palette-accent-500: #7fa64a;
@@ -93,6 +96,9 @@
   --color-skin-vice_city-bg: var(--palette-skin-vice_city-bg);
   --color-skin-vice_city-accent: var(--palette-skin-vice_city-accent);
   --color-skin-vice_city-sun: var(--palette-skin-vice_city-sun);
+  --color-skin-christmas-bg: var(--palette-skin-christmas-bg);
+  --color-skin-christmas-accent: var(--palette-skin-christmas-accent);
+  --color-skin-christmas-snow: var(--palette-skin-christmas-snow);
   /* Feedback */
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
@@ -216,6 +222,12 @@
  * bars) live in styles/skins.css. */
 
 /* Neon: near-black with a violet cast, electric purple, hot pink and real glow. */
+/* Every skin paints a scene or a texture behind the page, so a block in the page's color shows
+   as a block and its content needs room inside it. A new skin gets this without asking. */
+:root[data-skin] {
+  --page-block-inset: 32px;
+}
+
 :root[data-skin="neon"] {
   --palette-neutral-950: #0a0612;
   --palette-neutral-925: #0e0818;
@@ -334,7 +346,6 @@
   --card-border-width: 3px 6px 6px 3px;
   --card-border-color: var(--palette-neutral-950) var(--color-sky-magenta) var(--color-sky-magenta)
     var(--palette-neutral-950);
-  --page-block-inset: 32px;
 
   --shadow-focus: 0 0 0 3px var(--color-accent);
   --shadow-glow:
@@ -342,6 +353,60 @@
     0 0 30px color-mix(in srgb, var(--color-highlight-warm) var(--alpha-glow), transparent);
   --shadow-popover:
     6px 6px 0 color-mix(in srgb, var(--color-accent-dim) var(--alpha-dim), transparent),
+    0 18px 50px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+}
+
+:root[data-skin="christmas"] {
+  /* A snowy night in a pine forest: deep green-black, warm white type, Christmas red for what
+     acts and gold for what shines. */
+  --palette-neutral-950: #07120d;
+  --palette-neutral-925: #0a1812;
+  --palette-neutral-900: #0e1f18;
+  --palette-neutral-850: #142a20;
+  --palette-neutral-800: #1c3a2c;
+  --palette-neutral-700: #2a4f3d;
+  --palette-neutral-500: #8fab9b;
+  --palette-neutral-400: #adc4b6;
+  --palette-neutral-300: #d3e1d8;
+  --palette-neutral-50: #fffaf0;
+  --palette-accent-950: #2a0a0c;
+  --palette-accent-600: #9e2a2f;
+  --palette-accent-500: #c8373d;
+  --palette-accent-400: #e5484d;
+  --palette-accent-300: #f07a7d;
+  --palette-olive-300: #f3cf75;
+  --palette-olive-400: #e0b552;
+  --palette-peach-300: #f3cf75;
+
+  /* The season's colors (styles/skins.css): the lights, the snow and the night. */
+  --color-xmas-red: #e5484d;
+  --color-xmas-green: #45c27a;
+  --color-xmas-gold: #f3cf75;
+  --color-xmas-blue: #7cc4ff;
+  --color-xmas-snow: #f7fbff;
+  --color-xmas-night: #061a12;
+  --color-xmas-wire: #3d6b55;
+
+  --font-display: "Mountains of Christmas", "Space Grotesk", serif;
+  --tracking-tight: 0;
+  --tracking-snug: 0.01em;
+
+  --radius-tag: 999px;
+  --radius-control: 14px;
+  --radius-card: 18px;
+  /* Cards are frosted: a hairline of gold, brighter on top where the light falls. */
+  --card-border-width: 1px;
+  --card-border-color: color-mix(in srgb, var(--color-xmas-gold) 45%, transparent)
+    color-mix(in srgb, var(--color-xmas-gold) 18%, transparent)
+    color-mix(in srgb, var(--color-xmas-gold) 12%, transparent)
+    color-mix(in srgb, var(--color-xmas-gold) 18%, transparent);
+
+  --shadow-focus: 0 0 0 3px var(--color-xmas-gold);
+  --shadow-glow:
+    0 0 14px color-mix(in srgb, var(--color-xmas-gold) var(--alpha-strong), transparent),
+    0 0 30px color-mix(in srgb, var(--color-xmas-red) var(--alpha-glow), transparent);
+  --shadow-popover:
+    0 0 0 1px color-mix(in srgb, var(--color-xmas-gold) 30%, transparent),
     0 18px 50px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
 }
 

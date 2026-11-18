@@ -58,7 +58,13 @@ const messages = defineMessages({
       skin: 'Skin',
       skinHint: 'Muda o visual inteiro: cores, fontes, cantos e sombras.',
       skinSaved: 'Skin salva.',
-      skinName: { default: 'Padrão', neon: 'Neon', pixel: 'Pixel', vice_city: 'Vice City' },
+      skinName: {
+        default: 'Padrão',
+        neon: 'Neon',
+        pixel: 'Pixel',
+        vice_city: 'Vice City',
+        christmas: 'Natal',
+      },
       dlc: 'Contar DLCs no progresso',
       community: 'Aparecer na Comunidade',
       communityHint:
@@ -132,7 +138,13 @@ const messages = defineMessages({
       skin: 'Skin',
       skinHint: 'Changes the whole look: colors, fonts, corners and shadows.',
       skinSaved: 'Skin saved.',
-      skinName: { default: 'Default', neon: 'Neon', pixel: 'Pixel', vice_city: 'Vice City' },
+      skinName: {
+        default: 'Default',
+        neon: 'Neon',
+        pixel: 'Pixel',
+        vice_city: 'Vice City',
+        christmas: 'Christmas',
+      },
       dlc: 'Count DLC in progress',
       community: 'Show me in the Community',
       communityHint:
