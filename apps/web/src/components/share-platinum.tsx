@@ -11,6 +11,7 @@ import './share-platinum.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     share: 'Compartilhar a platina de {game}',
+    shareLabel: 'Compartilhar platina',
     text: 'Platinei {game}! Platina #{number} 🏆',
     copied: 'Imagem copiada, é só colar no post. O arquivo também foi salvo.',
     savedOnly: 'Imagem salva.',
@@ -18,6 +19,7 @@ const messages = defineMessages({
   },
   [Language.En]: {
     share: 'Share the {game} platinum',
+    shareLabel: 'Share platinum',
     text: 'Platinumed {game}! Platinum #{number} 🏆',
     copied: 'Image copied, paste it into your post. The file was saved too.',
     savedOnly: 'Image saved.',
@@ -52,7 +54,16 @@ function save(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function SharePlatinum({ gameId, name }: { gameId: string; name: string }) {
+export function SharePlatinum({
+  gameId,
+  name,
+  labeled = false,
+}: {
+  gameId: string
+  name: string
+  /** With its words, as a button of its own; without, an icon beside a list row. */
+  labeled?: boolean
+}) {
   const t = useMessages(messages)
   const [busy, setBusy] = useState(false)
 
@@ -84,6 +95,18 @@ export function SharePlatinum({ gameId, name }: { gameId: string; name: string }
     }
   }
 
+  if (labeled)
+    return (
+      <button
+        type="button"
+        className="button secondary share-platinum-labeled"
+        aria-busy={busy || undefined}
+        disabled={busy}
+        onClick={share}
+      >
+        <Icon name="share" /> {t('shareLabel')}
+      </button>
+    )
   return (
     <button
       type="button"

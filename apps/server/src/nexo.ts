@@ -6,7 +6,15 @@ import type { Guide } from './guide.ts'
 import { hookFor } from './hooks.ts'
 import { defineMessages, Language, translator } from './i18n.ts'
 import { markCheer, progressMark } from './marks.ts'
-import { detailFor, nameFor, ongoingTrophies, openMissables, startLists } from './notices.ts'
+import {
+  bringsPlatinum,
+  celebrateLine,
+  detailFor,
+  nameFor,
+  ongoingTrophies,
+  openMissables,
+  startLists,
+} from './notices.ts'
 import { aroundModel } from './plugins.ts'
 import type { TitleGroups, TitleProgress, TrophyStatus } from './psn.ts'
 import {
@@ -210,9 +218,14 @@ export async function unlockReaction(
     .filter(Boolean)
     .map((line) => `\n\n${line}`)
     .join('')
-  const tail = after ? `\n\n${after}` : ''
+  // The platinum closes with Nexo's invitation to share it; the app shows the button.
+  const platinum = bringsPlatinum(unlocked)
+  const tail = [after, platinum ? celebrateLine(user) : '']
+    .filter(Boolean)
+    .map((line) => `\n\n${line}`)
+    .join('')
   const titled = `${unlocked.map((t) => `🏆 **${nameFor(user, t)}**`).join('\n')}${cheer}\n\n${body}${tail}`
-  await logTip(user.id, 'unlock', titled, ctx.game.id)
+  await logTip(user.id, platinum ? 'platinum' : 'unlock', titled, ctx.game.id)
   return titled
 }
 

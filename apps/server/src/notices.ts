@@ -26,6 +26,7 @@ import {
 const messages = defineMessages({
   [Language.PtBR]: {
     started: 'Você começou {game}. O guia da platina está no PlatJourney.',
+    celebrate: '🎉 Bora comemorar com a galera? Toque em compartilhar e mostre essa platina.',
     // The game started was Nexo's recommendation: one of these opens the notice, the same per game.
     followed: {
       a: 'Que bom que você seguiu a minha dica! Tô na torcida por essa platina. 🙌',
@@ -100,6 +101,7 @@ const messages = defineMessages({
   },
   [Language.En]: {
     started: 'You started {game}. The platinum guide is on PlatJourney.',
+    celebrate: '🎉 Time to celebrate with everyone? Tap share and show off this platinum.',
     followed: {
       a: "So glad you took my tip! I'm rooting for this platinum. 🙌",
       b: "Happy to see you went with my suggestion. Let's do this! 💪",
@@ -414,6 +416,13 @@ export const focusNotice = (user: User, ctx: GameContext, unlocked: GameContext[
 
 const listOf = (user: User, items: string[]) =>
   new Intl.ListFormat(userLocale(user), { type: 'conjunction' }).format(items)
+
+/** Whether the trophies just earned bring the base game's platinum. */
+export const bringsPlatinum = (unlocked: GameContext['trophies']) =>
+  unlocked.some((t) => t.type === 'platinum' && t.groupId === 'default')
+
+/** The line that closes a platinum's notice: Nexo invites the player to share it. */
+export const celebrateLine = (user: User) => translator(messages, user)('celebrate')
 
 // The first trophy, halfway, the final stretch or the platinum, for the plain notice.
 export const markNotice = (user: User, ctx: GameContext, unlocked: GameContext['trophies']) => {

@@ -22,4 +22,18 @@
       animation: none;
     }
   }
+
+  /* Under a platinum's notice, Nexo's invitation turned into the action. */
+  .notif-body > .share-platinum-labeled,
+  .entry-main > .share-platinum-labeled {
+    align-self: flex-start;
+    margin-top: 10px;
+  }
+
+  /* The icon and the words on one line, centered on each other. */
+  .share-platinum-labeled {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+  }
 }

@@ -3,6 +3,8 @@ import { expect, test } from 'bun:test'
 import { todaysFocus } from '../src/focus.ts'
 import type { GameContext } from '../src/nexo.ts'
 import {
+  bringsPlatinum,
+  celebrateLine,
   focusNotice,
   markNotice,
   ongoingTrophies,
@@ -253,4 +255,14 @@ test('the session tip keeps how to do it, without the opening line PSN already s
   ).toBe('Crie três itens lendários.\nO troféu sai no terceiro.')
   // A trick of one paragraph is all the advice there is.
   expect(trickBody('Use o atalho do parque.')).toBe('Use o atalho do parque.')
+})
+
+test('a platinum of the base game closes its notice with the invitation to share it', () => {
+  const plat = makeTrophy({ type: 'platinum', earned: true })
+  expect(bringsPlatinum([makeTrophy({ type: 'gold' }), plat])).toBe(true)
+  expect(bringsPlatinum([makeTrophy({ type: 'gold' })])).toBe(false)
+  // A DLC group has no platinum of its own; a stray one there does not count.
+  expect(bringsPlatinum([{ ...plat, groupId: '001' }])).toBe(false)
+  expect(celebrateLine(makeUser())).toContain('Bora comemorar com a galera')
+  expect(celebrateLine(makeUser({ locale: 'en' }))).toContain('celebrate with everyone')
 })

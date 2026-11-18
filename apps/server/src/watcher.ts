@@ -13,6 +13,8 @@ import {
 import { library } from './library.ts'
 import { type GameContext, proactiveTip, unlockReaction } from './nexo.ts'
 import {
+  bringsPlatinum,
+  celebrateLine,
   focusNotice,
   followedNotice,
   followedRecommendation,
@@ -138,21 +140,22 @@ async function plainNews({
       ctx.game.id,
     )
     await markTipSent(user.id, latest.npCommunicationId)
-  } else if (unlocked.length > 0)
+  } else if (unlocked.length > 0) {
+    const platinum = bringsPlatinum(unlocked)
     await plainNotice(
       user,
-      'unlock',
+      platinum ? 'platinum' : 'unlock',
       together(
         unlockNotice(user, ctx, unlocked),
         missableCheer(user, ctx, unlocked),
         markNotice(user, ctx, unlocked),
-        focusNotice(user, ctx, unlocked),
-        route?.text,
-        route?.collectibles,
+        platinum ? celebrateLine(user) : focusNotice(user, ctx, unlocked),
+        platinum ? undefined : route?.text,
+        platinum ? undefined : route?.collectibles,
       ),
       ctx.game.id,
     )
-  else if (route)
+  } else if (route)
     await plainNotice(user, 'route', together(route.text, route.collectibles), ctx.game.id)
 }
 
@@ -200,7 +203,7 @@ async function nexoNews({
 // What a sweep's news is, as its notice's kind; nothing when there is nothing to tell.
 function newsKind({ justStarted, unlocked, route }: News): TipKind | undefined {
   if (justStarted) return 'start'
-  if (unlocked.length) return 'unlock'
+  if (unlocked.length) return bringsPlatinum(unlocked) ? 'platinum' : 'unlock'
   return route ? 'route' : undefined
 }
 

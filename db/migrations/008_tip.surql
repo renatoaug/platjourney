@@ -4,7 +4,7 @@ DEFINE FIELD IF NOT EXISTS user ON tip TYPE record<user>;
 -- 'deal': a game in the player's interests went on sale. 'assistant': a tip an assistant connected
 -- through MCP saved (the save_tip tool); `assistant` says which ('other' is one the app does not know
 -- by name).
-DEFINE FIELD OVERWRITE kind ON tip TYPE string ASSERT $value IN ['start', 'unlock', 'session', 'server', 'route', 'deal', 'chat', 'assistant'];
+DEFINE FIELD OVERWRITE kind ON tip TYPE string ASSERT $value IN ['start', 'unlock', 'session', 'server', 'route', 'deal', 'chat', 'assistant', 'answer', 'platinum'];
 DEFINE FIELD IF NOT EXISTS content ON tip TYPE string;
 DEFINE FIELD IF NOT EXISTS game ON tip TYPE option<record<game>>;
 -- A notice about several games at once (a digest of deals): the games it names, the first four

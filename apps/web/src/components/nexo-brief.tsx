@@ -45,7 +45,7 @@ export function NexoBrief({ current, tips }: { current: CurrentGame | null; tips
     ? tips.find(
         (tip) =>
           tip.game?.id === current.game?.id &&
-          ['start', 'unlock', 'session', 'route'].includes(tip.kind),
+          ['start', 'unlock', 'platinum', 'session', 'route'].includes(tip.kind),
       )
     : undefined
   const guide = current?.guide

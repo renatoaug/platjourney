@@ -19,6 +19,7 @@ import { pageItems } from '../ui/pager'
 import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import { PushInvite } from './push-invite'
+import { SharePlatinum } from './share-platinum'
 import { KIND_ICON, kindLabel, messages as tipMessages, titleHref } from './tip'
 import './notifications.css'
 
@@ -62,7 +63,8 @@ function NotifItem({ n, i, onNavigate }: { n: Notice; i: number; onNavigate: () 
   const tipT = useMessages(tipMessages)
   const text = useRef<HTMLDivElement>(null)
   const [clamped, setClamped] = useState(false)
-  const [open, setOpen] = useState(false)
+  // A platinum's notice opens whole: its last line is Nexo's invitation to share it.
+  const [open, setOpen] = useState(n.kind === 'platinum')
   // Long notices start clamped; "Ler tudo" only where there is more to read.
   useLayoutEffect(() => {
     const el = text.current
@@ -104,6 +106,9 @@ function NotifItem({ n, i, onNavigate }: { n: Notice; i: number; onNavigate: () 
             </button>
           )}
         </div>
+        {n.kind === 'platinum' && n.game && (
+          <SharePlatinum gameId={n.game.id} name={n.game.name} labeled />
+        )}
       </div>
     </article>
   )

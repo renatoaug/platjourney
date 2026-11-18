@@ -19,6 +19,8 @@ export type TipKind =
   | 'assistant'
   /** An answer Nexo owed: a question it could not answer, once the guide had it. */
   | 'answer'
+  /** A trophy notice that brings the platinum: the app offers to share it. */
+  | 'platinum'
 export interface Tip {
   id: string
   kind: TipKind
