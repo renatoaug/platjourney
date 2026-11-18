@@ -12,6 +12,7 @@ import { Icon } from '../ui/icon'
 import { TrophyMedal } from '../ui/trophy-medal'
 import { GameAbout } from './game-showcase'
 import { UnobtainableBanner } from './hero'
+import { SharePlatinum } from './share-platinum'
 import './game-overview.css'
 
 const messages = defineMessages({
@@ -289,12 +290,18 @@ function GameHead({
           : played && <small className="game-overview-played">{played}</small>}
       </div>
       {!catalog && (
-        <ProgressRing progress={progress} label={t('progress')}>
-          <b>{progress}%</b>
-          <small>
-            {earned}/{total}
-          </small>
-        </ProgressRing>
+        // The share button sits beside the ring, centered on it.
+        <div className="game-overview-end">
+          {c.trophies?.some((t) => t.type === 'platinum' && t.earned) && (
+            <SharePlatinum gameId={c.game.id} name={c.name} labeled />
+          )}
+          <ProgressRing progress={progress} label={t('progress')}>
+            <b>{progress}%</b>
+            <small>
+              {earned}/{total}
+            </small>
+          </ProgressRing>
+        </div>
       )}
       {actions}
     </header>

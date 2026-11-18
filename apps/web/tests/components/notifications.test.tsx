@@ -188,3 +188,16 @@ test('many notification pages keep first, current and last reachable without lis
   )
   expect(screen.getByRole('button', { name: 'Página 1' })).toBeTruthy()
 })
+
+test("a platinum's notice carries the button to share it", async () => {
+  const platinum = { ...items[0], kind: 'platinum', read_at: items[0].created_at }
+  setup(0, {
+    '/api/notifications': { items: [platinum, items[1]], total: 2 },
+    'POST /api/notifications/read': {},
+  })
+  fireEvent.click(bell())
+  const [first, second] = await within(panel()).findAllByRole('article')
+  expect(within(first).getByText('platina')).toBeTruthy()
+  expect(within(first).getByRole('button', { name: /Compartilhar platina/ })).toBeTruthy()
+  expect(within(second).queryByRole('button', { name: /Compartilhar platina/ })).toBeNull()
+})

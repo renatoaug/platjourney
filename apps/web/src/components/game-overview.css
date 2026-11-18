@@ -142,6 +142,26 @@
     flex-wrap: wrap;
   }
 
+  /* The ring at the head's end, with the share button for a platinum earned centered beside it;
+     on a phone the button takes the whole width under the head. */
+  .game-overview-end {
+    display: flex;
+    flex: none;
+    gap: 16px;
+    align-items: center;
+  }
+
+  @media (max-width: 760px) {
+    .game-overview-end {
+      display: contents;
+    }
+
+    .game-overview-end > .share-platinum-labeled {
+      flex-basis: 100%;
+      order: 1;
+    }
+  }
+
   .game-overview-head > .game-overview-cta {
     flex-basis: 100%;
     margin-top: 4px;

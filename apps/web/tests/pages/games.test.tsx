@@ -125,3 +125,16 @@ test('goals and achievements have their own URL without losing interests', async
   fireEvent.click(screen.getByRole('button', { name: 'Metas' }))
   expect(screen.getByTestId('location').textContent).toBe('/games?tab=goals')
 })
+
+test('Jogos from the menu opens on Discover, even after another tab was picked', () => {
+  mockApi({ '/api/library': sampleLibrary })
+  const { unmount } = renderApp(<Games />, {
+    path: '/games?tab=interests',
+    value: { data: { ...SAMPLE_DATA, goals: emptyGoals } },
+  })
+  unmount()
+  renderApp(<Games />, { path: '/games', value: { data: { ...SAMPLE_DATA, goals: emptyGoals } } })
+  expect(screen.getByRole('button', { name: 'Descobrir' }).getAttribute('aria-pressed')).toBe(
+    'true',
+  )
+})

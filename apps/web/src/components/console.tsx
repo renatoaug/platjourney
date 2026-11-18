@@ -130,7 +130,8 @@ function items(data: AppStateData, platinums: Platinum[] | null, includeDlc: boo
     const progress = base ? shownProgress(base, c.groups?.dlc, includeDlc) : c
     const tip = data.tips.find(
       (tip) =>
-        tip.game?.id === c.game.id && ['start', 'unlock', 'session', 'route'].includes(tip.kind),
+        tip.game?.id === c.game.id &&
+        ['start', 'unlock', 'platinum', 'session', 'route'].includes(tip.kind),
     )
     list.push({
       key: `c:${c.game.id}`,

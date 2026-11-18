@@ -83,11 +83,11 @@ test('primary navigation opens the games screen', () => {
   mockApi({ '/api/library': never })
   renderApp(<Shell />, { path: '/' })
   fireEvent.click(screen.getByRole('link', { name: 'Jogos' }))
-  expect(where()).toBe('/games?tab=interests')
+  expect(where()).toBe('/games?tab=discover')
   expect(screen.getByRole('heading', { level: 1, name: 'Seus jogos' })).toBeTruthy()
 })
 
-test('a fresh Games navigation always opens interests, including from another inner tab', () => {
+test('a fresh Games navigation always opens discover, including from another inner tab', () => {
   mockApi({ '/api/library': never })
   renderApp(<Shell />, { path: '/games?tab=library' })
   expect(screen.getByRole('button', { name: 'Biblioteca' }).getAttribute('aria-pressed')).toBe(
@@ -96,8 +96,8 @@ test('a fresh Games navigation always opens interests, including from another in
   for (const tab of ['Metas', 'Biblioteca']) {
     fireEvent.click(screen.getByRole('button', { name: tab }))
     fireEvent.click(screen.getByRole('link', { name: 'Jogos' }))
-    expect(where()).toBe('/games?tab=interests')
-    expect(screen.getByRole('button', { name: 'Interesses' }).getAttribute('aria-pressed')).toBe(
+    expect(where()).toBe('/games?tab=discover')
+    expect(screen.getByRole('button', { name: 'Descobrir' }).getAttribute('aria-pressed')).toBe(
       'true',
     )
   }

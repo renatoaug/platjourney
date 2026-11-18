@@ -18,6 +18,7 @@ import { repeat, Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState, PendingState } from '../ui/states'
 import '../components/goals/year-platinums.css'
 import '../components/trophy-list.css'
+import { ShareCollection } from '../components/share-collection'
 import { TrophyMedal } from '../ui/trophy-medal'
 import './goals.css'
 import './profile.css'
@@ -536,6 +537,12 @@ export function ProfileView({
   )
 }
 
+/** The collection heading's end: one's own collection can be shared; the public one only shows
+ * the medal. */
+function CollectionEnd({ share }: { share: boolean }) {
+  return share ? <ShareCollection /> : <TrophyMedal type="platinum" className="collection-medal" />
+}
+
 /** The anchor under the profile's numbers where plugins add a card (the subscription plan). The
  * rarest platinum it used to show now leads the trophy room, so it draws nothing of its own. */
 function RarestPlatinum() {
@@ -593,7 +600,7 @@ function PlatinumCollection({
             {t('collection.title')} <span>{platinums.length}</span>
           </h2>
         </div>
-        <TrophyMedal type="platinum" className="collection-medal" />
+        <CollectionEnd share={!publicView && platinums.length > 0} />
       </div>
       {/* No platinum yet: nothing to search or count, only what will show up here. */}
       {platinums.length === 0 && !pending ? (

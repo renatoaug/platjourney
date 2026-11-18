@@ -102,17 +102,14 @@ const messages = defineMessages({
 export function Games() {
   const { data, sync, me } = useApp()
   const [params, setParams] = useSearchParams()
-  const [keptSide, setKeptSide] = useKept<'library' | 'interests' | 'goals' | 'discover'>(
-    'games.side',
-    'discover',
-  )
+  // Opening Jogos from the menu lands on Discover; a tab picked inside stays in the address, so
+  // going back returns to it.
   const tab = params.get('tab')
   const side =
     tab === 'library' || tab === 'interests' || tab === 'goals' || tab === 'discover'
       ? tab
-      : keptSide
+      : 'discover'
   const setSide = (value: 'library' | 'interests' | 'goals' | 'discover') => {
-    setKeptSide(value)
     setParams((before) => {
       const next = new URLSearchParams(before)
       next.set('tab', value)

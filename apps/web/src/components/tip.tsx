@@ -15,6 +15,7 @@ import { Markdown } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
 import { AppLogo, assistantName } from './app-logo'
 import { NoticeAsk } from './nexo-asks'
+import { SharePlatinum } from './share-platinum'
 import './tip.css'
 
 /** Also read by the notifications panel, which shows the same items. */
@@ -23,6 +24,7 @@ export const messages = defineMessages({
     kind: {
       start: 'início',
       unlock: 'troféu',
+      platinum: 'platina',
       session: 'sessão',
       route: 'rota',
       server: 'servidor',
@@ -38,6 +40,7 @@ export const messages = defineMessages({
     kind: {
       start: 'start',
       unlock: 'trophy',
+      platinum: 'platinum',
       session: 'session',
       route: 'route',
       server: 'server',
@@ -54,6 +57,7 @@ export const messages = defineMessages({
 const KINDS = [
   'start',
   'unlock',
+  'platinum',
   'session',
   'route',
   'server',
@@ -70,6 +74,7 @@ export const kindLabel = (t: Translator<typeof messages>, kind: string) =>
 export const KIND_ICON: Record<string, string> = {
   start: 'gamepad',
   unlock: 'trophy',
+  platinum: 'crown',
   session: 'clock',
   route: 'compass',
   server: 'globe',
@@ -158,6 +163,9 @@ export function TipItem({
             <span className={`k kind-${t.kind}`}>{kind}</span>
           </div>
           <Markdown className="tip-content" text={t.content} />
+          {t.kind === 'platinum' && t.game?.id && (
+            <SharePlatinum gameId={t.game.id} name={t.game.name} labeled />
+          )}
           {ask && t.game?.id && ABOUT_THE_GAME.includes(t.kind) && (
             <NoticeAsk game={t.game.id} name={t.game.name} />
           )}
@@ -169,7 +177,7 @@ export function TipItem({
 
 // The notices about playing a game: a question about them goes to that game's conversation.
 // A chat tip is already Nexo's answer to the player, so it gets none.
-const ABOUT_THE_GAME = ['start', 'unlock', 'session', 'route', 'answer']
+const ABOUT_THE_GAME = ['start', 'unlock', 'platinum', 'session', 'route', 'answer']
 
 /** Loading layout of a TipItem. */
 export function TipSkeleton({ compact = false }: { compact?: boolean }) {

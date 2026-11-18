@@ -1,0 +1,83 @@
+@layer screens {
+  /* Round, quiet until hovered, and a touch target big enough on a phone. */
+  .share-platinum {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-round);
+  }
+
+  .share-platinum[aria-busy="true"] .icon {
+    animation: share-pulse 0.9s ease-in-out infinite alternate;
+  }
+
+  @keyframes share-pulse {
+    to {
+      opacity: 0.35;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .share-platinum[aria-busy="true"] .icon {
+      animation: none;
+    }
+  }
+
+  /* Under a platinum's notice, Nexo's invitation turned into the action. */
+  .notif-body > .share-platinum-labeled,
+  .entry-main > .share-platinum-labeled {
+    align-self: flex-start;
+    margin-top: 10px;
+  }
+
+  /* The icon and the words on one line, centered on each other. */
+  .share-platinum-labeled {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* The collection's three choices drop under its button. */
+  .share-collection {
+    position: relative;
+    display: inline-flex;
+  }
+
+  /* Beside a heading's count, the button stays as low as that pill. */
+  .share-collection .share-platinum-labeled {
+    gap: 6px;
+    padding: 6px 12px;
+  }
+
+  .share-collection-menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 6px);
+    right: 0;
+    display: grid;
+    min-width: 180px;
+    margin: 0;
+    padding: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .share-collection-menu button {
+    min-height: 40px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-fg);
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .share-collection-menu button:hover,
+  .share-collection-menu button:focus-visible {
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    color: var(--color-accent);
+  }
+}

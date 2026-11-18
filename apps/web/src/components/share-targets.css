@@ -1,0 +1,100 @@
+@layer screens {
+  /* Over a blurred page: the image, what to do with it and the places to post. */
+  .share-targets {
+    width: min(480px, calc(100vw - 32px));
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    color: var(--color-fg);
+  }
+
+  .share-targets::backdrop {
+    background: color-mix(in srgb, var(--color-bg) 60%, transparent);
+    backdrop-filter: blur(4px);
+  }
+
+  .share-targets-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .share-targets-head h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+  }
+
+  .share-targets-image {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+  }
+
+  .share-targets-lead {
+    margin: 14px 0;
+    color: var(--color-fg-soft);
+    font-size: var(--text-body);
+  }
+
+  /* Four places, two by two on a narrow window. */
+  .share-targets-places {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .share-targets-places .button {
+    gap: 8px;
+    padding: 10px 8px;
+    text-decoration: none;
+  }
+
+  /* Each place's own logo, in its own colors. */
+  .share-targets-places img {
+    flex: none;
+    width: 18px;
+    height: 18px;
+  }
+
+  /* A hairline fading at both ends, with the word in the middle. */
+  .share-targets-or {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin: 18px 0 10px;
+    color: var(--color-fg-subtle);
+    font-size: var(--text-md);
+  }
+
+  .share-targets-or::before,
+  .share-targets-or::after {
+    flex: 1;
+    height: 1px;
+    content: "";
+  }
+
+  .share-targets-or::before {
+    background: linear-gradient(90deg, transparent, var(--color-border-strong));
+  }
+
+  .share-targets-or::after {
+    background: linear-gradient(90deg, var(--color-border-strong), transparent);
+  }
+
+  .share-targets-copy {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 480px) {
+    .share-targets-places {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}

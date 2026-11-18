@@ -148,7 +148,7 @@ const NAV: { to: string; label: MessageKey<typeof messages>; icon: string }[] = 
   { to: '/game', label: 'nav.game', icon: 'compass' },
   { to: '/guides', label: 'nav.guides', icon: 'book-open' },
   { to: '/community', label: 'nav.community', icon: 'users' },
-  { to: '/games?tab=interests', label: 'nav.games', icon: 'gamepad' },
+  { to: '/games?tab=discover', label: 'nav.games', icon: 'gamepad' },
 ]
 
 const LABELS: Record<string, MessageKey<typeof messages>> = {
