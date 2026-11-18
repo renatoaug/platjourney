@@ -34,6 +34,9 @@
   --palette-skin-neon-accent: #d08aff;
   --palette-skin-pixel-bg: #14121f;
   --palette-skin-pixel-accent: #4ce26a;
+  --palette-skin-sunset-bg: #3b146b;
+  --palette-skin-sunset-accent: #c9349b;
+  --palette-skin-sunset-sun: #ffb458;
   --palette-accent-950: #16200f;
   --palette-accent-600: #647550;
   --palette-accent-500: #7fa64a;
@@ -87,6 +90,9 @@
   --color-skin-neon-accent: var(--palette-skin-neon-accent);
   --color-skin-pixel-bg: var(--palette-skin-pixel-bg);
   --color-skin-pixel-accent: var(--palette-skin-pixel-accent);
+  --color-skin-sunset-bg: var(--palette-skin-sunset-bg);
+  --color-skin-sunset-accent: var(--palette-skin-sunset-accent);
+  --color-skin-sunset-sun: var(--palette-skin-sunset-sun);
   /* Feedback */
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
@@ -164,6 +170,12 @@
   --radius-tag: 4px;
   --radius-control: 6px;
   --radius-card: 8px;
+  --card-border-width: 1px;
+  --card-border-color: var(--color-border);
+  /* How far content sits inside a block painted in the page's own color. Where the page is one
+     flat color the block melts into it and the content lines up with the page (0); a skin with a
+     scene behind the page shows the block, so its content needs room. */
+  --page-block-inset: 0px;
   --radius-pill: 999px;
   --radius-round: 50%;
 
@@ -278,6 +290,59 @@
   --shadow-glow: 3px 3px 0 var(--color-accent-muted);
   --shadow-popover: 6px 6px 0 var(--color-shadow);
   --shadow-drag: 6px 6px 0 var(--color-shadow), 0 0 0 2px var(--color-accent);
+}
+
+/* Sunset: a beach city in the eighties at dusk. A purple night sky, hot pink, sunset orange and a
+ * cyan neon, a rounded display font, soft corners and a warm glow. */
+:root[data-skin="sunset"] {
+  /* Deep violet nights, white type, and the sunset ramp for everything that should glow. */
+  --palette-neutral-950: #1c0836;
+  --palette-neutral-925: #220a42;
+  --palette-neutral-900: #2a0d50;
+  --palette-neutral-850: #3b146b;
+  --palette-neutral-800: #52208a;
+  --palette-neutral-700: #7b208f;
+  --palette-neutral-500: #c2a6e4;
+  --palette-neutral-400: #d9c4f2;
+  --palette-neutral-300: #eee2fb;
+  --palette-neutral-50: #ffffff;
+  --palette-accent-950: #2b0717;
+  --palette-accent-600: #a8286f;
+  --palette-accent-500: #c9349b;
+  --palette-accent-400: #f36a78;
+  --palette-accent-300: #f99aa3;
+  --palette-olive-300: #ffb458;
+  --palette-olive-400: #ff9b55;
+  --palette-peach-300: #ff9b55;
+
+  /* The sky's ramp, top to horizon (styles/skins.css). */
+  --color-sky-violet: #3b146b;
+  --color-sky-purple: #7b208f;
+  --color-sky-magenta: #c9349b;
+  --color-sky-coral: #f87572;
+  --color-sky-orange: #ff9b55;
+  --color-sky-yellow: #ffb458;
+
+  --font-display: Anton, "Space Grotesk", sans-serif;
+  --tracking-tight: 0.01em;
+  --tracking-snug: 0.02em;
+
+  --radius-tag: 4px;
+  --radius-control: 8px;
+  --radius-card: 6px;
+  /* A poster panel: a dark frame, thicker and magenta on the right and the bottom, like a drop. */
+  --card-border-width: 3px 6px 6px 3px;
+  --card-border-color: var(--palette-neutral-950) var(--color-sky-magenta) var(--color-sky-magenta)
+    var(--palette-neutral-950);
+  --page-block-inset: 32px;
+
+  --shadow-focus: 0 0 0 3px var(--color-accent);
+  --shadow-glow:
+    0 0 14px color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent),
+    0 0 30px color-mix(in srgb, var(--color-highlight-warm) var(--alpha-glow), transparent);
+  --shadow-popover:
+    6px 6px 0 color-mix(in srgb, var(--color-accent-dim) var(--alpha-dim), transparent),
+    0 18px 50px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
 }
 
 /* The accent the player picked in Settings (data-accent on <html>, shared/accent.ts). Each swaps

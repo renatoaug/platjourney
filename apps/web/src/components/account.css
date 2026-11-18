@@ -253,6 +253,20 @@
     );
   }
 
+  .skin-swatch.is-sunset {
+    background: linear-gradient(
+      to bottom,
+      var(--color-skin-sunset-bg) 45%,
+      var(--color-skin-sunset-accent) 75%,
+      var(--color-skin-sunset-sun)
+    );
+    border-color: var(--color-skin-sunset-accent);
+  }
+
+  .skin-swatch.is-sunset i {
+    background: var(--color-skin-sunset-sun);
+  }
+
   .accent-swatch {
     display: inline-block;
     width: 14px;
