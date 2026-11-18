@@ -332,6 +332,7 @@ export type Target =
   | 'SettingsView'
   | 'ShareCollection'
   | 'SharePlatinum'
+  | 'ShareTargets'
   | 'Shelf'
   | 'ShelfSkeleton'
   | 'Shell'

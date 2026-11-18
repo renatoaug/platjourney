@@ -6,6 +6,7 @@ import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { ApiError, api, del } from '../lib/api'
 import { fmtAgo, fmtShortDate } from '../lib/format'
 import type { Me } from '../lib/types'
+import { useCopy } from '../lib/use-copy'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
@@ -278,24 +279,6 @@ export function ConnectedAppsSkeleton() {
 const handled = (e: unknown) => e instanceof ApiError && e.handled
 
 const STEPS = ['step1', 'step2', 'step3', 'step4'] as const
-
-// How long a copy button says it copied.
-const COPIED_MS = 1800
-
-/** Copies `text` and says so for a moment on the button itself, instead of a toast. */
-function useCopy() {
-  const [copied, setCopied] = useState<string | null>(null)
-  useEffect(() => {
-    if (!copied) return
-    const id = setTimeout(() => setCopied(null), COPIED_MS)
-    return () => clearTimeout(id)
-  }, [copied])
-  const copy = async (text: string) => {
-    await navigator.clipboard?.writeText(text).catch(() => {})
-    setCopied(text)
-  }
-  return { copied, copy }
-}
 
 // Something to type or paste, in the accent, with its own copy button.
 function CopyValue({ value }: { value: string }) {

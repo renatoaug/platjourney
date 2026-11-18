@@ -1,11 +1,12 @@
 /** Sharing a platinum: draws its card and hands it to the phone's share sheet (Reddit, WhatsApp,
  * Instagram, whatever the player uses) with a line and a link; where a browser cannot share
  * files, and on a computer, it copies the image to paste and saves it. */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { drawPlatinumCard, fetchPlatinumCard, SHARE_HOST } from '../lib/share-card'
 import { Icon } from '../ui/icon'
 import { toast } from '../ui/toast'
+import { ShareTargets } from './share-targets'
 import './share-platinum.css'
 
 const messages = defineMessages({
@@ -13,16 +14,12 @@ const messages = defineMessages({
     share: 'Compartilhar a platina de {game}',
     shareLabel: 'Compartilhar platina',
     text: 'Platinei {game}! Platina #{number} 🏆',
-    copied: 'Imagem copiada, é só colar no post. O arquivo também foi salvo.',
-    savedOnly: 'Imagem salva.',
     failed: 'Não foi possível montar a imagem. Tente de novo.',
   },
   [Language.En]: {
     share: 'Share the {game} platinum',
     shareLabel: 'Share platinum',
     text: 'Platinumed {game}! Platinum #{number} 🏆',
-    copied: 'Image copied, paste it into your post. The file was saved too.',
-    savedOnly: 'Image saved.',
     failed: 'Could not build the image. Try again.',
   },
 })
@@ -54,12 +51,23 @@ function save(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
+interface Ready {
+  image: string
+  text: string
+  link: string
+  copied: boolean
+}
+
 /** Builds an image and shares it: a phone's share sheet takes it with a line and a link to the
  * player's profile as its caption. A computer's would offer "Copy", which pastes the image twice;
- * there the image goes to the clipboard on its own, to paste into the post, and is saved too. */
+ * there the image goes to the clipboard on its own and is saved too, and `panel` shows the places
+ * to post it, each opening with the line and the link filled in. */
 export function useShare() {
   const t = useMessages(messages)
   const [busy, setBusy] = useState(false)
+  const [ready, setReady] = useState<Ready | null>(null)
+  // The image's address lives while the panel shows it.
+  useEffect(() => (ready ? () => URL.revokeObjectURL(ready.image) : undefined), [ready])
   const run = async (
     build: () => Promise<{ blob: Blob; name: string; text: string; onlineId: string } | string>,
   ) => {
@@ -83,14 +91,15 @@ export function useShare() {
       }
       const copied = await copyImage(blob)
       save(blob, file.name)
-      toast(copied ? t('copied') : t('savedOnly'), 'success')
+      setReady({ image: URL.createObjectURL(blob), text, link, copied })
     } catch {
       toast(t('failed'))
     } finally {
       setBusy(false)
     }
   }
-  return { busy, run }
+  const panel = ready && <ShareTargets {...ready} onClose={() => setReady(null)} />
+  return { busy, run, panel }
 }
 
 export function SharePlatinum({
@@ -104,7 +113,7 @@ export function SharePlatinum({
   labeled?: boolean
 }) {
   const t = useMessages(messages)
-  const { busy, run } = useShare()
+  const { busy, run, panel } = useShare()
   const share = () =>
     run(async () => {
       const card = await fetchPlatinumCard(gameId)
@@ -118,27 +127,33 @@ export function SharePlatinum({
 
   if (labeled)
     return (
+      <>
+        <button
+          type="button"
+          className="button secondary share-platinum-labeled"
+          aria-busy={busy || undefined}
+          disabled={busy}
+          onClick={share}
+        >
+          <Icon name="share" /> {t('shareLabel')}
+        </button>
+        {panel}
+      </>
+    )
+  return (
+    <>
       <button
         type="button"
-        className="button secondary share-platinum-labeled"
+        className="icon-button share-platinum"
+        aria-label={t('share', { game: name })}
+        title={t('share', { game: name })}
         aria-busy={busy || undefined}
         disabled={busy}
         onClick={share}
       >
-        <Icon name="share" /> {t('shareLabel')}
+        <Icon name="share" />
       </button>
-    )
-  return (
-    <button
-      type="button"
-      className="icon-button share-platinum"
-      aria-label={t('share', { game: name })}
-      title={t('share', { game: name })}
-      aria-busy={busy || undefined}
-      disabled={busy}
-      onClick={share}
-    >
-      <Icon name="share" />
-    </button>
+      {panel}
+    </>
   )
 }

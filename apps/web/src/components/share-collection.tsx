@@ -37,7 +37,7 @@ const TEXT = { month: 'textMonth', year: 'textYear', all: 'textAll' } as const
 
 export function ShareCollection() {
   const t = useMessages(messages)
-  const { busy, run } = useShare()
+  const { busy, run, panel } = useShare()
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLSpanElement>(null)
 
@@ -97,6 +97,7 @@ export function ShareCollection() {
           ))}
         </fieldset>
       )}
+      {panel}
     </span>
   )
 }
