@@ -8,6 +8,7 @@ import { useInterests } from '../app/use-interests'
 import { useDemo } from '../components/demo'
 import { type GameStore, StoreOffer } from '../components/game-showcase'
 import { Short } from '../components/hero'
+import { JoinLink, useVisitor } from '../components/join-link'
 import { Journey, JourneySkeleton } from '../components/journey'
 import { PlanCard } from '../components/plan'
 import { SimilarGamesSection, similarGames } from '../components/similar-games'
@@ -89,6 +90,12 @@ function titleQuery(spec: string, search: string) {
 }
 
 function SaveButton({ d }: { d: TitleDetail }) {
+  // Without an account there is nowhere to save it: the way to make one instead.
+  if (useVisitor()) return <JoinLink />
+  return <SaveToggle d={d} />
+}
+
+function SaveToggle({ d }: { d: TitleDetail }) {
   const t = useMessages(messages)
   const { find, toggle } = useInterests()
   const demo = useDemo()
@@ -174,10 +181,12 @@ export function TitleScreen({ load, similar }: { load: TitleLoad; similar?: Reac
   // Back goes where the player came from (Guides, Discover, the library); a page opened from a
   // link, with nothing before it in the app, falls back to Discover.
   const opened = useLocation().key === 'default'
+  // A visitor has no Discover: the guides are where they came from or can go.
+  const home = useVisitor() ? '/guides' : '/games?tab=discover'
   const back = (
     <Link
       className="text-link back-link"
-      to="/games?tab=discover"
+      to={home}
       onClick={(e) => {
         if (opened) return
         e.preventDefault()

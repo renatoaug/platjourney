@@ -24,6 +24,7 @@ const messages = defineMessages({
       or: 'Sem conta na PSN, ou só quer conhecer?',
       demo: 'Ver demonstração',
       demoBusy: 'Abrindo a demonstração…',
+      guides: 'Ver os guias de platina',
     },
     password: {
       title: 'Bom ter você de volta.',
@@ -80,6 +81,7 @@ const messages = defineMessages({
       or: 'No PSN account, or just looking around?',
       demo: 'See a demo',
       demoBusy: 'Opening the demo…',
+      guides: 'Browse the platinum guides',
     },
     password: {
       title: 'Good to have you back.',
@@ -215,6 +217,10 @@ function DemoAction({ onDemo, onFail }: { onDemo: () => Promise<void>; onFail: F
       >
         <Icon name="play" /> {busy ? t('lookup.demoBusy') : t('lookup.demo')}
       </button>
+      {/* The guides open without an account. A plain link: the sign-in screen has no router of its own. */}
+      <a className="button ghost" id="auth-guides" href="/guides">
+        <Icon name="book-open" /> {t('lookup.guides')}
+      </a>
     </div>
   )
 }

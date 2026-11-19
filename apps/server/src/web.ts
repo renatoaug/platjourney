@@ -11,6 +11,7 @@ import { defineMessages, Language, type MessageKey, translator } from './i18n.ts
 import { library } from './library.ts'
 import { mcpRoute } from './mcp.ts'
 import { oauthRoute } from './oauth.ts'
+import { pageMeta, withPageMeta } from './page-meta.ts'
 import { interceptsFor, pluginPagePolicy, pluginRoute, Refused } from './plugins.ts'
 import { PrivateProfile } from './psn.ts'
 import { allow } from './rate-limit.ts'
@@ -26,6 +27,7 @@ import { HOME_ROUTES } from './routes/home.ts'
 import { INTEREST_ROUTES } from './routes/interests.ts'
 import { PLAN_ROUTES } from './routes/plan.ts'
 import { SHARE_ROUTES } from './routes/share.ts'
+import { visitorAnswered } from './routes/visitor.ts'
 
 // What a failed request says, whichever route threw it.
 const messages = defineMessages({
@@ -131,8 +133,7 @@ async function api(
 
 /** The app shell, with the share-preview image as a full URL: link previews (WhatsApp, Telegram)
  * skip a relative one. The address is the one the visitor used, so any instance gets its own. */
-function withShareImage(req: IncomingMessage, file: URL): string {
-  const html = readFileSync(file, 'utf8')
+function withShareImage(req: IncomingMessage, html: string): string {
   const host = req.headers.host
   // A Host header is client data: only a plain host name (and port) goes into the page.
   if (!host || !/^[a-z0-9.-]+(:\d{1,5})?$/i.test(host)) return html
@@ -181,6 +182,20 @@ async function intercepted(
   return false
 }
 
+// The signed-in player. Without a session, only what a visitor may read is answered (a public
+// profile, a game's page, the guides), and anything else gets a 401. Null when answered here.
+async function signedIn(
+  req: IncomingMessage,
+  res: ServerResponse,
+  url: URL,
+  method: string,
+): Promise<User | null> {
+  const me = await authenticate(req)
+  if (me) return me
+  if (!(await visitorAnswered(req, res, url, method))) json(res, 401, { error: 'unauthenticated' })
+  return null
+}
+
 async function apiRoute(
   req: IncomingMessage,
   res: ServerResponse,
@@ -211,8 +226,8 @@ async function apiRoute(
     return json(res, 405, { error: 'method_not_allowed' }, { allow: ext.method })
   if (ext?.public) return ext.handler({ req, res, url, method })
   if (await authRoutes(req, res, path, method)) return
-  const me = await authenticate(req)
-  if (!me) return json(res, 401, { error: 'unauthenticated' })
+  const me = await signedIn(req, res, url, method)
+  if (!me) return
   noteAccess(req, me).catch((e) => console.warn('access not noted:', (e as Error).message))
   const tag = isDemo(me) ? { user: me.id, demo: true } : { user: me.id }
   if (ext) {
@@ -248,19 +263,32 @@ function staticHeaders(path: string, type: string) {
   }
 }
 
+// The app shell for an address: a public page (a guide, a profile) carries its own title,
+// description and picture, so link previews and search engines see them before the app runs.
+async function shell(req: IncomingMessage, file: URL, path: string): Promise<string> {
+  const meta = await pageMeta(req, path).catch((e) => {
+    console.warn('page preview failed:', (e as Error).message)
+    return null
+  })
+  return withShareImage(req, withPageMeta(readFileSync(file, 'utf8'), meta))
+}
+
 // Static files from the built app; anything unknown falls back to the app shell, which routes the address.
 // False when not even the shell is there.
-function servedStatic(req: IncomingMessage, res: ServerResponse, path: string): boolean {
+async function servedStatic(
+  req: IncomingMessage,
+  res: ServerResponse,
+  path: string,
+): Promise<boolean> {
   const file = path === '/' ? 'index.html' : path.slice(1)
   const safe = !file.includes('..') && STATIC_TYPES[extname(file)]
   const target = new URL(safe ? file : 'index.html', PUBLIC_DIR)
   if (!existsSync(target)) return false
   const type = STATIC_TYPES[extname(target.pathname)] ?? STATIC_TYPES['.html']
-  res
-    .writeHead(200, staticHeaders(path, type))
-    .end(
-      target.pathname.endsWith('/index.html') ? withShareImage(req, target) : readFileSync(target),
-    )
+  const body = target.pathname.endsWith('/index.html')
+    ? await shell(req, target, path)
+    : readFileSync(target)
+  res.writeHead(200, staticHeaders(path, type)).end(body)
   return true
 }
 
@@ -274,7 +302,7 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (await mcpRoute(req, res, url, method)) return
   if (path.startsWith('/api/')) return apiRoute(req, res, url, method)
   if (method === 'GET' && DEV_WEB) return devPage(req, res, DEV_WEB)
-  if (method === 'GET' && servedStatic(req, res, path)) return
+  if (method === 'GET' && (await servedStatic(req, res, path))) return
   res.writeHead(404).end('not found')
 }
 

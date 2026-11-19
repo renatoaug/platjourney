@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { DifficultyMeter } from '../components/difficulty-meter'
+import { useVisitor } from '../components/join-link'
 import { titleHref } from '../components/tip'
 import { TrophyRoom, TrophyRoomSkeleton } from '../components/trophy-room'
 import { defineMessages, getLocale, Language, type Translator, useMessages } from '../i18n/i18n'
@@ -41,6 +42,7 @@ const messages = defineMessages({
     publicNoData: 'O ritmo por ano aparece aqui depois da primeira platina.',
     byYear: 'Platinas por ano',
     most: { eyebrow: 'SEU TEMPO', title: 'Mais jogados' },
+    playing: { eyebrow: 'JORNADA', title: 'Jogando agora', publicEyebrow: 'A JORNADA' },
     noDataTitle: 'Sem platinas para contar',
     noData: 'O seu ritmo por ano aparece aqui depois da primeira platina.',
     tiles: {
@@ -103,6 +105,7 @@ const messages = defineMessages({
     publicNoData: 'The pace per year shows up here after the first platinum.',
     byYear: 'Platinums per year',
     most: { eyebrow: 'YOUR TIME', title: 'Most played' },
+    playing: { eyebrow: 'JOURNEY', title: 'Playing now', publicEyebrow: 'THE JOURNEY' },
     noDataTitle: 'No platinums to count',
     noData: 'Your pace per year shows up here after the first platinum.',
     tiles: {
@@ -170,8 +173,22 @@ export interface ProfileData {
   fastestStreak: { from: string; to: string; count: number } | null
   totalHours: number
   mostPlayed: { game: Game; hours: number; difficulty?: number | null }[]
+  /** The journey in progress: the games with the latest trophies and no platinum yet. Older
+   * answers may not have it. */
+  playing?: PlayingEntry[]
   /** Only on one's own profile. */
   user?: Me
+}
+
+interface PlayingEntry {
+  game: Game | null
+  name: string
+  platform: string
+  icon: string
+  progress: number
+  earned: number
+  total: number
+  lastTrophyAt: string
 }
 
 type Load =
@@ -219,7 +236,8 @@ function PlayerProfile({ user }: { user: string }) {
       live = false
     }
   }, [user])
-  const back = (
+  // A visitor came by a link: there is no community to go back to.
+  const back = useVisitor() ? null : (
     <Link to="/community" className="text-link profile-back">
       <Icon name="chevron-left" /> {t('backToCommunity')}
     </Link>
@@ -496,6 +514,7 @@ export function ProfileView({
               </EmptyState>
             )}
           </div>
+          {!!d.playing?.length && <PlayingNow playing={d.playing} publicView={publicView} />}
           {d.mostPlayed.length > 0 && (
             <div className="card profile-most">
               <span className="eyebrow">{publicView ? t('publicMost') : t('most.eyebrow')}</span>
@@ -534,6 +553,42 @@ export function ProfileView({
         />
       </div>
     </>
+  )
+}
+
+/** Where the player is now: each unfinished game with the latest trophies, and how far it is. */
+function PlayingNow({ playing, publicView }: { playing: PlayingEntry[]; publicView: boolean }) {
+  const t = useMessages(messages)
+  return (
+    <div className="card profile-most profile-playing" id="profile-playing">
+      <span className="eyebrow">{t(publicView ? 'playing.publicEyebrow' : 'playing.eyebrow')}</span>
+      <h2>{t('playing.title')}</h2>
+      <ol>
+        {playing.map((p) => {
+          const body = (
+            <>
+              <Cover
+                url={p.game?.cover_url ?? p.icon}
+                name={p.game?.name ?? p.name}
+                className="plat-cover"
+              />
+              <span className="profile-most-name">
+                <span>{p.game?.name ?? p.name}</span>
+                <span className="bar small">
+                  <i style={{ width: `${pct(p.progress)}%` }} />
+                </span>
+              </span>
+              <b>{p.progress}%</b>
+            </>
+          )
+          return (
+            <li key={`${p.name}|${p.platform}`}>
+              {p.game ? <Link to={titleHref(p.game.id)}>{body}</Link> : <span>{body}</span>}
+            </li>
+          )
+        })}
+      </ol>
+    </div>
   )
 }
 

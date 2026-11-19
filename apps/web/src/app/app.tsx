@@ -17,11 +17,11 @@ import { handoffLaunchScreen } from '../lib/native'
 import { nativePushAvailable, startNativePush } from '../lib/native-push'
 import type { Me } from '../lib/types'
 import { Connect, isConnectPage } from '../pages/connect'
-import { Login } from '../pages/login'
 import { ToastHost } from '../ui/toast'
 import { TooltipHost } from '../ui/tooltip'
 import { AppStateProvider, useApp } from './app-state'
 import { Shell } from './shell'
+import { VisitorApp } from './visitor'
 import './app.css'
 
 const messages = defineMessages({
@@ -137,7 +137,8 @@ export function App() {
           </AppStateProvider>
         </BrowserRouter>
       )}
-      {session.kind === 'out' && <Login onSignedIn={signIn} />}
+      {/* Signed out: the public pages a link opens (a profile, a guide), else the sign-in screen. */}
+      {session.kind === 'out' && <VisitorApp onSignedIn={signIn} />}
       {session.kind === 'offline' && <OfflineScreen onRetry={loadSession} />}
       {boot !== 'gone' && <BootScreen leaving={boot === 'leaving'} />}
       <TooltipHost />

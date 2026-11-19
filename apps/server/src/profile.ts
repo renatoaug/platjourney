@@ -8,7 +8,7 @@ import { listPlatinums, savePlatinum } from './repository/platinum.ts'
 import type { User } from './repository/user.ts'
 import { tints } from './tint.ts'
 
-export interface PlatinumEntry {
+interface PlatinumEntry {
   game: Game
   platform: string
   earnedAt: string
@@ -28,6 +28,43 @@ export interface ProfilePage {
   totalHours: number
   /** The guide's platinum difficulty, 1 to 10, when there is a guide with one. */
   mostPlayed: { game: Game; hours: number; difficulty: number | null }[]
+  /** Where the player is now: the games with the latest trophies and no platinum yet, newest first. */
+  playing: PlayingEntry[]
+}
+
+interface PlayingEntry {
+  /** The catalog game, when the catalog knows the title: its page opens from here. */
+  game: Game | null
+  name: string
+  platform: string
+  icon: string
+  progress: number
+  earned: number
+  total: number
+  lastTrophyAt: string
+}
+
+const PLAYING = 3
+
+// The journey in progress: the titles touched last that are not finished yet. The catalog is only
+// read here, never asked to look a title up on IGDB.
+async function playingNow(library: TitleProgress[]): Promise<PlayingEntry[]> {
+  const recent = library
+    .filter((t) => !t.earnedByType.platinum && t.progress < 100 && t.earned > 0 && t.lastUpdated)
+    .sort((a, b) => b.lastUpdated.localeCompare(a.lastUpdated))
+    .slice(0, PLAYING)
+  if (!recent.length) return []
+  const games = await gamesForTitles(recent, false)
+  return recent.map((t) => ({
+    game: games.get(t.npCommunicationId) ?? null,
+    name: t.name,
+    platform: t.platform,
+    icon: t.iconUrl,
+    progress: t.progress,
+    earned: t.earned,
+    total: t.total,
+    lastTrophyAt: t.lastUpdated,
+  }))
 }
 
 // The platinum's own unlock date and rarity live on the trophy, not on the title
@@ -97,11 +134,12 @@ async function platinumList(
 }
 
 export async function profilePage(library: TitleProgress[], user: User): Promise<ProfilePage> {
-  const [summary, { list: platinums, pending }] = await Promise.all([
+  const [summary, { list: platinums, pending }, playing] = await Promise.all([
     isDemo(user)
       ? storedSummary(user, library)
       : profileSummary(user.psn_account_id, user.psn_online_id),
     platinumList(library, user),
+    playingNow(library),
   ])
   const years = new Map<number, number>()
   const platforms = new Map<string, number>()
@@ -142,6 +180,7 @@ export async function profilePage(library: TitleProgress[], user: User): Promise
     fastestStreak: bestMonth(platinums),
     totalHours: Math.round([...played.values()].reduce((sum, p) => sum + p.seconds, 0) / 3600),
     mostPlayed,
+    playing,
   }
 }
 

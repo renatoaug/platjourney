@@ -18,6 +18,7 @@ PlatJourney keeps you company on the way to every PlayStation platinum. It watch
 - **Your account**: change the password or delete the account (everything personal goes; cost records stay without the link to it). A profile whose trophies are private is told how to make them public instead of failing.
 - **Cost records**: every model call is recorded with its tokens, web searches and price (`llm_call`), so whoever runs an instance can see what it really costs.
 - **A read-only demo** for anyone without a PSN account: a fictional player with real games and guides, opened from the sign-in screen.
+- **Public pages** anyone opens without an account: a player's profile, a game's page with its guide, and the guides list ([below](#public-pages)).
 - **Interests** (games you want to platinum, in your own order), yearly platinum goal with the year's pace (average hours per platinum, the quickest and the longest), profile with every platinum and its real unlock date and rarity, and alerts when a game's online servers are shutting down.
 - **Deals**: the PlayStation Store price of every game someone saved is read every day at 10:00 (Brazil time), when the notices go out. Beside the interests, the games the player's own PS Plus tier includes come first, then the sales with the old price, the members' price and the link to the store; each interest shows its tag. A new or deeper sale, or a saved game entering the player's PS Plus catalog, is a notice. PSN does not tell the PS Plus tier, so the player picks it in the account preferences.
 - **Release calendar** on the home: PS4 and PS5 games coming out in the next weeks and the ones that just came out, the most awaited first, with the guide's difficulty and hours when there is one and a button to save the game. Refreshed once a day.
@@ -31,6 +32,18 @@ A new account opens on a full-screen welcome with the player's level, platinums 
 ## Demo
 
 People without a PSN account, or who do not want to connect one, can open the app as PlatJourneyDemo from the sign-in screen ("See a demo"). The demo player is loaded by `bun run seed` and is read-only for everyone: every screen shows its stored data, nothing it does calls PSN or the AI service, and anything that would write (goals, account settings, plans, recommendations, chat, Telegram) answers with a notice instead. The chat shows example conversations in place of the message box. A server without the demo player loaded answers the demo sign-in with "not available".
+
+## Public pages
+
+Some pages open without an account, so a shared link, a search result or the landing shows what PlatJourney does before anyone signs up:
+
+| Page | Address | What a visitor sees |
+|---|---|---|
+| A player's profile | `/profiles/<PSN ID>` | Platinums, collection, level, hours, most played and the games being played now. Only for players who show up in the community; anyone else is "not found". The share cards link here. |
+| A game | `/title/game/<id>` | The trophies, the guide already written (difficulty, hours, missables, roadmap), similar games and the store link. A visitor never starts a guide's research or a catalog lookup: a game without a guide says so. |
+| Guides | `/guides` | The whole guide catalog with its filters. A game missing from the catalog asks the visitor to create an account to request it. |
+
+Every other address is the sign-in screen. On a public page the header carries "Sign in" and "Sign up", and actions that need an account (saving to interests, asking Nexo, requesting a game) lead to the sign-in screen instead. The server answers these reads without a session (`apps/server/src/routes/visitor.ts`): at most 60 a minute per address, and a profile is read from PSN at most once every 10 minutes for all visitors. The page itself is served with that page's own title, description and picture in its head, so link previews and search engines see them before the app runs.
 
 ## Telegram commands
 

@@ -69,6 +69,28 @@ export const profileData: ProfileData = {
   fastestStreak: { from: '2025-03-01T00:00:00Z', to: '2025-03-29T00:00:00Z', count: 4 },
   totalHours: 2140,
   mostPlayed: [{ game: platinums[1].game, hours: 212 }],
+  playing: [
+    {
+      game: game('Astro Bot', 20),
+      name: 'Astro Bot',
+      platform: 'PS5',
+      icon: '/logo.png',
+      progress: 64,
+      earned: 30,
+      total: 47,
+      lastTrophyAt: '2026-11-18T20:00:00Z',
+    },
+    {
+      game: null,
+      name: 'A game outside the catalog',
+      platform: 'PS4',
+      icon: '/logo.png',
+      progress: 12,
+      earned: 4,
+      total: 40,
+      lastTrophyAt: '2026-11-10T20:00:00Z',
+    },
+  ],
   user: SAMPLE_ME,
 }
 
@@ -80,6 +102,11 @@ const inPage = (children: ReactNode) => (
 
 export const Loaded: Story = {
   render: () => inPage(<ProfileView data={profileData} />),
+}
+
+/** Another player's profile, as the community and a visitor with a shared link see it. */
+export const Public: Story = {
+  render: () => inPage(<ProfileView data={profileData} action={false} publicView />),
 }
 
 export const SyncingPlatinums: Story = {
@@ -103,6 +130,7 @@ export const Empty: Story = {
           rarest: null,
           fastestStreak: null,
           mostPlayed: [],
+          playing: [],
         }}
       />,
     ),

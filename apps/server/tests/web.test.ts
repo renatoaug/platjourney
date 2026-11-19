@@ -1136,14 +1136,14 @@ test('without a build or for other methods there is nothing to serve', async () 
   expect(await send('POST', '/')).toMatchObject({ status: 404, body: 'not found' })
 })
 
-test('an error after the answer started is left alone', async () => {
+test('an app shell that cannot be read is a server error, before anything is sent', async () => {
   spyOn(fs, 'existsSync').mockReturnValue(true)
   spyOn(fs, 'readFileSync').mockImplementation(() => {
     throw new Error('disk')
   })
   const res = await send('GET', '/')
-  expect(res).toMatchObject({ status: 200, body: '' })
-  expect(console.error).not.toHaveBeenCalled()
+  expect(res).toMatchObject({ status: 500, body: { error: 'internal error' } })
+  expect(console.error).toHaveBeenCalledWith('web failed:', 'disk')
 })
 
 describe('the demo', () => {
@@ -1728,4 +1728,19 @@ test('trophy visibility persists per authenticated owner and rejects stale accou
   spyOn(auth, 'authenticate').mockResolvedValue(undefined as never)
   expect((await send('POST', '/api/account/trophy-visibility', body)).status).toBe(401)
   expect(save).toHaveBeenCalledTimes(1)
+})
+
+test("a public page's shell carries its own preview: a link shows the game, not the app", async () => {
+  spyOn(fs, 'existsSync').mockReturnValue(true)
+  spyOn(fs, 'readFileSync').mockReturnValue(
+    '<title>PlatJourney</title><meta property="og:image" content="/og.png">' as never,
+  )
+  spyOn(games, 'getGame').mockResolvedValue(
+    makeGame({ name: 'Astro Bot', art_url: 'https://a/b.jpg' }),
+  )
+  spyOn(guides, 'getGuide').mockResolvedValue(undefined)
+  const res = await send('GET', '/title/game/1', undefined, { host: 'app.example' })
+  expect(res.status).toBe(200)
+  expect(res.body).toContain('<title>Guia de platina de Astro Bot · PlatJourney</title>')
+  expect(res.body).toContain('content="https://a/b.jpg"')
 })

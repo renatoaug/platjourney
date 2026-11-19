@@ -40,6 +40,8 @@ export interface Me {
   telegramBot?: { username: string; name: string } | null
   /** The shared, read-only demo player. */
   demo?: boolean
+  /** Nobody signed in: someone reading a public page. */
+  visitor?: boolean
   /** The first-visit introduction was finished or skipped (always false for the demo). */
   onboarded?: boolean
 }
