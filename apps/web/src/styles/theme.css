@@ -40,6 +40,9 @@
   --palette-skin-christmas-bg: #0f2a1e;
   --palette-skin-christmas-accent: #e5484d;
   --palette-skin-christmas-snow: #f7fbff;
+  --palette-skin-aurora-bg: #0a1712;
+  --palette-skin-aurora-glow: #1f4a3a;
+  --palette-skin-aurora-accent: #c6f36a;
   --palette-accent-950: #16200f;
   --palette-accent-600: #647550;
   --palette-accent-500: #7fa64a;
@@ -99,6 +102,9 @@
   --color-skin-christmas-bg: var(--palette-skin-christmas-bg);
   --color-skin-christmas-accent: var(--palette-skin-christmas-accent);
   --color-skin-christmas-snow: var(--palette-skin-christmas-snow);
+  --color-skin-aurora-bg: var(--palette-skin-aurora-bg);
+  --color-skin-aurora-glow: var(--palette-skin-aurora-glow);
+  --color-skin-aurora-accent: var(--palette-skin-aurora-accent);
   /* Feedback */
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
@@ -408,6 +414,42 @@
   --shadow-popover:
     0 0 0 1px color-mix(in srgb, var(--color-xmas-gold) 30%, transparent),
     0 18px 50px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+}
+
+:root[data-skin="aurora"] {
+  /* A clear night over a forest: green-black greys, the brand's lime, and frosted glass where
+     the pine-tinted surfaces let the glow behind them through. Testing as the next identity. */
+  --palette-neutral-950: #08130f;
+  --palette-neutral-925: #0b1913;
+  --palette-neutral-900: #0f2019;
+  --palette-neutral-850: #152b22;
+  --palette-neutral-800: #1d392d;
+  --palette-neutral-700: #2b4f40;
+  --palette-neutral-500: #8aa99a;
+  --palette-neutral-400: #a9c3b6;
+  --palette-neutral-300: #d0e2d8;
+  --palette-neutral-50: #f4fbf6;
+
+  --color-aurora-glow: #2fd3a0;
+  --color-aurora-lime: var(--palette-accent-400);
+  --color-aurora-night: #050d0a;
+
+  /* Surfaces are glass: the same greys, partly see-through (styles/skins.css blurs behind them). */
+  --color-surface: color-mix(in srgb, var(--palette-neutral-900) 72%, transparent);
+  --color-surface-raised: color-mix(in srgb, var(--palette-neutral-850) 78%, transparent);
+
+  --font-display: "Sora", "Space Grotesk", sans-serif;
+
+  /* The corners stay the app's own. A hairline of light, brighter on top where it falls. */
+  --card-border-width: 1px;
+  --card-border-color: color-mix(in srgb, var(--palette-neutral-50) 22%, transparent)
+    color-mix(in srgb, var(--palette-neutral-50) 9%, transparent)
+    color-mix(in srgb, var(--palette-neutral-50) 6%, transparent)
+    color-mix(in srgb, var(--palette-neutral-50) 9%, transparent);
+
+  --shadow-popover:
+    0 0 0 1px color-mix(in srgb, var(--palette-neutral-50) 12%, transparent),
+    0 24px 60px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
 }
 
 /* The accent the player picked in Settings (data-accent on <html>, shared/accent.ts). Each swaps

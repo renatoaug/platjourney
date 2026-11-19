@@ -280,6 +280,19 @@
     );
   }
 
+  .skin-swatch.is-aurora {
+    background: linear-gradient(
+      160deg,
+      var(--color-skin-aurora-glow),
+      var(--color-skin-aurora-bg) 60%
+    );
+    border-color: var(--color-skin-aurora-accent);
+  }
+
+  .skin-swatch.is-aurora i {
+    background: var(--color-skin-aurora-accent);
+  }
+
   .accent-swatch {
     display: inline-block;
     width: 14px;

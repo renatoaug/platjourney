@@ -9,6 +9,7 @@ try {
     vice_city: 'https://fonts.googleapis.com/css2?family=Anton&display=swap',
     christmas:
       'https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&display=swap',
+    aurora: 'https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&display=swap',
   }
   const skin = localStorage.getItem('platjourney:skin')
   if (skin && fonts[skin]) {
