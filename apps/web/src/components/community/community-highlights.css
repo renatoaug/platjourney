@@ -1,7 +1,9 @@
 @layer screens {
+  /* The same room above as the releases before it, so the two sections do not touch. */
   .community-highlights {
     display: grid;
     gap: 14px;
+    margin-top: 32px;
   }
 
   .community-highlight-list {

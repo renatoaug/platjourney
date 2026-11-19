@@ -84,7 +84,7 @@
   }
 
   .guide-tile:hover {
-    border-color: var(--color-border-strong);
+    border-color: transparent;
     transform: translateY(-2px);
   }
 
@@ -483,7 +483,7 @@
   }
 
   .guide-tile:hover {
-    border-color: var(--color-border-strong);
+    border-color: transparent;
     box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 45%, transparent);
   }
 
@@ -664,7 +664,7 @@
   /* The accent on hover is the line running along the border (surfaces.css), so the border
      itself stays quiet. */
   .guide-grid .guide-tile:hover {
-    border-color: var(--color-border-strong);
+    border-color: transparent;
     box-shadow: 0 16px 34px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
   }
 }

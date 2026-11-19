@@ -4,6 +4,7 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
+import { useApp } from '../app/app-state'
 import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtPlayTime, number, pct } from '../lib/format'
 import { trophyName } from '../lib/trophy-text'
@@ -24,6 +25,7 @@ const messages = defineMessages({
     journeyDone: 'Platina conquistada',
     journeyStart: 'O caminho até a platina, passo a passo',
     journeyPreview: 'Prévia do caminho até a platina',
+    journeyLocked: 'Entre na sua conta para ver o caminho até a platina',
     trophyCount: { one: '{count} troféu', other: '{count} troféus' },
     missables: { one: '{count} perdível', other: '{count} perdíveis' },
     hasMissables: 'Tem perdíveis',
@@ -55,6 +57,7 @@ const messages = defineMessages({
     journeyDone: 'Platinum earned',
     journeyStart: 'The way to the platinum, step by step',
     journeyPreview: 'A preview of the way to the platinum',
+    journeyLocked: 'Sign in to your account to see the way to the platinum',
     trophyCount: { one: '{count} trophy', other: '{count} trophies' },
     missables: { one: '{count} missable', other: '{count} missables' },
     hasMissables: 'Has missables',
@@ -89,7 +92,10 @@ export function useGameView() {
   const navigate = useNavigate()
   const location = useLocation()
   const raw = params.get('view')
-  const view = VIEWS.includes(raw as GameView) ? (raw as GameView) : null
+  // An address straight to the journey, without an account, opens the game instead.
+  const closed = useApp().me.visitor === true ? ['journey'] : []
+  const view =
+    VIEWS.includes(raw as GameView) && !closed.includes(raw as string) ? (raw as GameView) : null
   const open = (next: GameView) =>
     setParams((p) => {
       p.set('view', next)
@@ -125,6 +131,7 @@ function GameLink({
   side,
   accent,
   expanded,
+  locked = false,
   onOpen,
 }: {
   icon: string
@@ -134,13 +141,16 @@ function GameLink({
   accent?: boolean
   /** A row that unfolds in place instead of opening a page. */
   expanded?: boolean
+  /** Shown but closed: what it needs is in the lead. */
+  locked?: boolean
   onOpen: () => void
 }) {
   return (
     <button
       type="button"
-      className={`game-link${accent ? ' is-accent' : ''}${expanded !== undefined ? ' is-fold' : ''}`}
+      className={`game-link${accent ? ' is-accent' : ''}${expanded !== undefined ? ' is-fold' : ''}${locked ? ' is-locked' : ''}`}
       aria-expanded={expanded}
+      disabled={locked}
       onClick={onOpen}
     >
       <span className="game-link-icon">
@@ -151,7 +161,7 @@ function GameLink({
         <small>{lead}</small>
       </span>
       {side}
-      <Icon name="chevron-right" />
+      <Icon name={locked ? 'eye-off' : 'chevron-right'} />
     </button>
   )
 }
@@ -338,6 +348,8 @@ function GameLinks({
   const g = c.guide
   const about = [c.game.developers?.[0], c.game.release_year].filter(Boolean).join(' · ')
   const [aboutOpen, setAboutOpen] = useState(false)
+  // The journey needs an account: someone without one sees it closed.
+  const visitor = useApp().me.visitor === true
   return (
     <nav className="game-links" aria-label={c.name}>
       {/* A catalog game without its list yet has no route to preview. */}
@@ -346,7 +358,14 @@ function GameLinks({
           accent
           icon="compass"
           title={t('journey')}
-          lead={catalog ? t('journeyPreview') : journeyLead(t, done, c.focus?.trophy)}
+          lead={
+            visitor
+              ? t('journeyLocked')
+              : catalog
+                ? t('journeyPreview')
+                : journeyLead(t, done, c.focus?.trophy)
+          }
+          locked={visitor}
           side={
             !done && !catalog && hasMissables ? (
               <span className="game-link-pill">

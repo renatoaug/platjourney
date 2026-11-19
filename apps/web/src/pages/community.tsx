@@ -28,7 +28,7 @@ const messages = defineMessages({
     lead: 'As platinas, os troféus raros e as medalhas dos jogadores do PlatJourney, direto da PSN.',
     tabs: 'Seções da comunidade',
     feed: 'Feed',
-    rankings: 'Rankings',
+    rankings: 'Leaderboard',
     games: 'Jogos',
   },
   [Language.En]: {
@@ -37,7 +37,7 @@ const messages = defineMessages({
     lead: 'PlatJourney players’ platinums, rare trophies and medals, straight from PSN.',
     tabs: 'Community sections',
     feed: 'Feed',
-    rankings: 'Rankings',
+    rankings: 'Leaderboard',
     games: 'Games',
   },
 })
