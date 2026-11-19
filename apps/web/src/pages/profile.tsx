@@ -4,7 +4,6 @@ import { Link, useParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
 import { DifficultyMeter } from '../components/difficulty-meter'
-import { useVisitor } from '../components/join-link'
 import { titleHref } from '../components/tip'
 import { TrophyRoom, TrophyRoomSkeleton } from '../components/trophy-room'
 import { defineMessages, getLocale, Language, type Translator, useMessages } from '../i18n/i18n'
@@ -236,8 +235,7 @@ function PlayerProfile({ user }: { user: string }) {
       live = false
     }
   }, [user])
-  // A visitor came by a link: there is no community to go back to.
-  const back = useVisitor() ? null : (
+  const back = (
     <Link to="/community" className="text-link profile-back">
       <Icon name="chevron-left" /> {t('backToCommunity')}
     </Link>

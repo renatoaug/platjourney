@@ -119,11 +119,14 @@ export function CommunityFeed({
   onScope,
   onRetry,
   toolbar,
+  visitor = false,
   ...rest
 }: {
   state: FeedState
   scope: FeedScope
   onScope: (scope: FeedScope) => void
+  /** Someone without an account: everyone's feed only, and nothing about their own place in it. */
+  visitor?: boolean
   /** Beside the filters: the player's own switch to show up in the community. */
   toolbar?: ReactNode
   onReact: (event: CommunityEvent, kind: ReactionKind) => void
@@ -141,7 +144,7 @@ export function CommunityFeed({
     <section className="community-feed" aria-label={t('feed')}>
       <div className="community-feed-bar">
         <fieldset className="chips community-scopes" aria-label={t('scopes')}>
-          {(['all', 'following', 'me'] as const).map((s) => (
+          {(visitor ? (['all'] as const) : (['all', 'following', 'me'] as const)).map((s) => (
             <button
               key={s}
               type="button"
@@ -155,7 +158,9 @@ export function CommunityFeed({
         </fieldset>
         {toolbar}
       </div>
-      {state.status === 'ok' && !state.visible && <p className="community-hidden">{t('hidden')}</p>}
+      {state.status === 'ok' && !state.visible && !visitor && (
+        <p className="community-hidden">{t('hidden')}</p>
+      )}
       {state.status === 'loading' && <FeedSkeleton />}
       {state.status === 'error' && (
         <ErrorState

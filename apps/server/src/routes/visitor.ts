@@ -12,16 +12,18 @@ import { catalogTrophies } from '../psn.ts'
 import { allow } from '../rate-limit.ts'
 import { getGame } from '../repository/game.ts'
 import { getGuide } from '../repository/guide.ts'
-import { userByOnlineId } from '../repository/user.ts'
+import { type User, userByOnlineId } from '../repository/user.ts'
 import { similarToGame } from '../similar.ts'
 import { withTints } from '../tint.ts'
-import { apiMessages, heroArt, requestLocale } from './api.ts'
-import { guides } from './games.ts'
+import { type ApiHandler, apiMessages, heroArt, requestLocale } from './api.ts'
+import { COMMUNITY_ROUTES } from './community.ts'
+import { GAME_ROUTES, guides } from './games.ts'
 
-// What someone without an account may read: the pages a shared link, a search result or the
-// landing opens. A player's profile (when they show up in the community), a game's page with its
-// stored guide, the guides and what the community plays. Only reads: no guide is researched, no
-// game is looked up on IGDB, and a profile is fetched from PSN at most once every few minutes.
+// What someone without an account may read: the app's public side, which a shared link, a search
+// result or the landing opens. A player's profile (when they show up in the community), a game's
+// page with its stored guide, the guides, the catalog search, the releases and the community.
+// Only reads: no guide is researched, no game is looked up on IGDB, and a profile is fetched from
+// PSN at most once every few minutes.
 
 interface Visit {
   req: IncomingMessage
@@ -31,8 +33,32 @@ interface Visit {
 
 type VisitorHandler = (v: Visit) => Promise<void>
 
-// Each address gets its own budget, apart from the one shared with signed-in routes.
-const VISITS_PER_MINUTE = 60
+// Each address gets its own budget, apart from the one shared with signed-in routes. A screen
+// makes a few reads at once, so this is a couple dozen screens a minute.
+const VISITS_PER_MINUTE = 120
+
+// Who the app's own read routes see as the reader: nobody, out of the community, with no library.
+const READER = {
+  id: 'user:visitor',
+  psn_online_id: '',
+  psn_account_id: '',
+  community_visible: false,
+} as User
+
+/** One of the app's read routes, answered for the reader above. */
+const asReader =
+  (handler: ApiHandler | undefined): VisitorHandler =>
+  async ({ req, res, url }) => {
+    if (!handler) return json(res, 404, { error: 'not found' })
+    await handler({
+      req,
+      res,
+      url,
+      me: READER,
+      locale: requestLocale(req),
+      titles: async () => [],
+    })
+  }
 
 // A profile someone shares is opened by many at once: one PSN read serves them all for a while.
 const PROFILE_TTL_MS = 10 * 60_000
@@ -114,6 +140,10 @@ const VISITOR_ROUTES: Record<string, VisitorHandler> = {
   'GET /api/title': title,
   'GET /api/guides': guides,
   'GET /api/community/games': async ({ res }) => json(res, 200, await communityGames()),
+  'GET /api/community/feed': asReader(COMMUNITY_ROUTES['GET /api/community/feed']),
+  'GET /api/community/rankings': asReader(COMMUNITY_ROUTES['GET /api/community/rankings']),
+  'GET /api/releases': asReader(GAME_ROUTES['GET /api/releases']),
+  'GET /api/games/search': asReader(GAME_ROUTES['GET /api/games/search']),
   'GET /api/games/similar': async ({ res, url }) => {
     const game = gameId(url)
     if (!game) return json(res, 400, { error: 'game required' })

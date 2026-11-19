@@ -214,7 +214,10 @@ export function Community() {
             me={me.id.replace(/^user:/, '')}
             english={english}
             readOnly={me.demo === true}
-            toolbar={<CommunityVisibility onChange={() => setFeedTry((v) => v + 1)} />}
+            visitor={me.visitor === true}
+            toolbar={
+              me.visitor ? null : <CommunityVisibility onChange={() => setFeedTry((v) => v + 1)} />
+            }
           />
           <CommunitySide onTab={setTab} />
         </div>

@@ -6,7 +6,11 @@ import { mockApi, reply } from '../support/web'
 
 beforeEach(() => {
   window.location.hash = ''
+  window.history.pushState({}, '', '/')
 })
+
+// The sign-in screen's own address.
+const atSignIn = () => window.history.pushState({}, '', '/entrar')
 // Unmount before the fakes go: an app still on screen would fetch its screens' data (the home's
 // state and releases) against the real fetch, which the setup refuses. CI is slow enough to hit it.
 afterEach(() => {
@@ -36,10 +40,33 @@ test('a signed-in player lands on the app', async () => {
   await waitFor(() => expect(screen.getByText('Dados sincronizados')).toBeTruthy())
 })
 
-test('without a session it asks for the PSN id', async () => {
+test('without a session the app opens on its public side, with the way in', async () => {
   mockApi({ '/api/me': reply(401) })
   render(<App />)
+  expect(await screen.findByRole('navigation', { name: 'Navegação principal' })).toBeTruthy()
+  expect(
+    await screen.findByRole('heading', { name: 'Sua próxima platina começa aqui.' }),
+  ).toBeTruthy()
+  expect(screen.getByRole('link', { name: 'Criar conta' }).getAttribute('href')).toBe('/entrar')
+  // Nothing of an account's: no notices, no sync, no settings in the menu.
+  expect(screen.queryByText('Dados sincronizados')).toBeNull()
+  expect(screen.queryByRole('link', { name: 'Configurações' })).toBeNull()
+})
+
+test('the sign-in screen has its own address and asks for the PSN id', async () => {
+  mockApi({ '/api/me': reply(401) })
+  atSignIn()
+  render(<App />)
   expect(await screen.findByLabelText('Seu PSN ID')).toBeTruthy()
+})
+
+test('a screen of the account, opened without one, asks to sign in and comes back to it', async () => {
+  mockApi({ '/api/me': reply(401) })
+  window.history.pushState({}, '', '/settings')
+  render(<App />)
+  expect(await screen.findByText('Isto é da sua conta')).toBeTruthy()
+  const signIn = screen.getAllByRole('link', { name: 'Entrar' })[0]
+  expect(signIn.getAttribute('href')).toBe('/entrar?next=%2Fsettings')
 })
 
 test('when the server is down it says so instead of asking to sign in', async () => {
@@ -79,15 +106,18 @@ test('trying again opens the app once the server answers, and says so while it d
   expect(await screen.findByRole('navigation', { name: 'Navegação principal' })).toBeTruthy()
 })
 
-test('a session that ends mid-use goes back to the login', async () => {
+test('a session that ends mid-use stays on the page, without the account', async () => {
   mockApi({ '/api/me': { user: SAMPLE_ME }, '/api/state': SAMPLE_DATA })
+  window.history.pushState({}, '', '/guides')
   render(<App />)
-  await screen.findByRole('navigation', { name: 'Navegação principal' })
+  await screen.findByText('Dados sincronizados')
   act(() => {
     document.dispatchEvent(new Event('api:unauthorized'))
   })
-  expect(await screen.findByLabelText('Seu PSN ID')).toBeTruthy()
-  expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).toBeNull()
+  expect(await screen.findByRole('link', { name: 'Criar conta' })).toBeTruthy()
+  expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toBeTruthy()
+  expect(screen.queryByText('Dados sincronizados')).toBeNull()
+  expect(window.location.pathname).toBe('/guides')
 })
 
 test('signing in opens the app', async () => {
@@ -97,6 +127,7 @@ test('signing in opens the app', async () => {
     'POST /api/auth/login': { user: SAMPLE_ME },
     '/api/state': SAMPLE_DATA,
   })
+  atSignIn()
   render(<App />)
   fireEvent.change(await screen.findByLabelText('Seu PSN ID'), { target: { value: 'jogador' } })
   fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
@@ -131,6 +162,7 @@ test('the sign-in screen switches language, and the choice is kept and saved on 
     'POST /api/account/preferences': { user: { ...SAMPLE_ME, locale: 'en' } },
     '/api/state': SAMPLE_DATA,
   })
+  atSignIn()
   render(<App />)
   fireEvent.click(await screen.findByRole('button', { name: 'English' }))
   fireEvent.change(await screen.findByLabelText('Your PSN ID'), { target: { value: 'jogador' } })

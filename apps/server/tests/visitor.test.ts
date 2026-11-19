@@ -11,6 +11,7 @@ import * as lib from '../src/library.ts'
 import * as profile from '../src/profile.ts'
 import * as psn from '../src/psn.ts'
 import { resetRateLimits } from '../src/rate-limit.ts'
+import * as communityRepo from '../src/repository/community.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
@@ -147,8 +148,33 @@ test('everything else still needs an account', async () => {
 
 test('a visitor reading too fast waits a minute', async () => {
   spyOn(browse, 'browseGuides').mockResolvedValue({ items: [] } as never)
-  for (let i = 0; i < 60; i++) await send('GET', '/api/guides')
+  for (let i = 0; i < 120; i++) await send('GET', '/api/guides')
   const over = await send('GET', '/api/guides')
   expect(over.status).toBe(429)
   expect(over.headers['retry-after']).toBe('60')
+})
+
+test("a visitor reads the community's feed and rankings as nobody in particular", async () => {
+  const feed = spyOn(communityModule, 'community').mockResolvedValue({
+    members: [],
+    feed: [],
+  } as never)
+  spyOn(communityModule, 'rankings').mockResolvedValue({
+    platinums: [],
+    rare: [],
+    fastest: [],
+  } as never)
+  spyOn(communityRepo, 'following').mockResolvedValue([])
+  spyOn(communityRepo, 'reactionsOn').mockResolvedValue(new Map())
+  const res = await send('GET', '/api/community/feed?scope=all')
+  expect(res).toMatchObject({ status: 200, body: { events: [], visible: false } })
+  expect((await send('GET', '/api/community/rankings?period=month')).status).toBe(200)
+  expect(feed).toHaveBeenCalled()
+})
+
+test('a visitor searches the catalog and sees the releases', async () => {
+  spyOn(games, 'searchCatalog').mockResolvedValue([])
+  spyOn(games, 'releasesBetween').mockResolvedValue([])
+  expect((await send('GET', '/api/games/search?q=astro')).body).toEqual([])
+  expect((await send('GET', '/api/releases')).body).toEqual([])
 })

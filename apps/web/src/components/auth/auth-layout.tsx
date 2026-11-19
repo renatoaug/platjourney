@@ -104,7 +104,7 @@ export function AuthLayout({
             </div>
             <i />
             <div>
-              <TrophyMedal type="gold" />
+              <TrophyMedal type="platinum" />
               <span>{t('story.earn')}</span>
             </div>
           </div>

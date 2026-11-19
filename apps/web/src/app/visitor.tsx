@@ -1,123 +1,119 @@
-/** Someone without an account: the pages anyone can open (a shared profile, a game's guide, the
- * guides), under a header with the way in. Every other address is the sign-in screen. */
-import { useEffect } from 'react'
-import { BrowserRouter, Link, NavLink, Outlet, Route, Routes } from 'react-router'
-import { SIGN_IN } from '../components/join-link'
+/** Someone without an account: the same app, reading what is public (guides, games, the community,
+ * profiles), with the way in where the account would be. What needs an account asks for one. */
+import { Link, useLocation } from 'react-router'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import type { Me } from '../lib/types'
-import { Guides } from '../pages/guides'
-import { Login } from '../pages/login'
-import { PublicProfile } from '../pages/profile'
-import { Title } from '../pages/title'
 import { Icon } from '../ui/icon'
-import { AppStateProvider } from './app-state'
+import { EmptyState } from '../ui/states'
+import { Page } from './page'
 import './visitor.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    logoLabel: 'PlatJourney, início',
-    guides: 'Guias',
     signIn: 'Entrar',
-    join: 'Criar conta grátis',
-    joinShort: 'Criar conta',
-    pitch:
-      'Conecte sua PSN e o PlatJourney acompanha cada platina sua: o próximo troféu, o que é perdível e o Nexo para tirar dúvidas.',
+    join: 'Criar conta',
+    accountTitle: 'Sua jornada começa aqui',
+    accountBody: 'Conecte sua PSN para acompanhar suas platinas.',
+    promptTitle: 'Isto é da sua conta',
+    promptBody:
+      'Conecte sua PSN e o PlatJourney acompanha cada platina sua: o próximo troféu, o que é perdível, suas metas e o Nexo para tirar dúvidas.',
+    guides: 'Ver os guias',
   },
   [Language.En]: {
-    logoLabel: 'PlatJourney, home',
-    guides: 'Guides',
     signIn: 'Sign in',
-    join: 'Create a free account',
-    joinShort: 'Sign up',
-    pitch:
-      'Connect your PSN and PlatJourney follows every platinum of yours: the next trophy, what is missable and Nexo to answer questions.',
+    join: 'Sign up',
+    accountTitle: 'Your journey starts here',
+    accountBody: 'Connect your PSN to follow your platinums.',
+    promptTitle: 'This is part of your account',
+    promptBody:
+      'Connect your PSN and PlatJourney follows every platinum of yours: the next trophy, what is missable, your goals and Nexo to answer questions.',
+    guides: 'Browse the guides',
   },
 })
 
-const VISITOR: Me = {
+/** Nobody signed in. Read only like the demo, so every action that writes stays closed. */
+export const VISITOR: Me = {
   id: '',
   onlineId: '',
   telegramLinked: false,
   includeDlcProgress: false,
   onboarded: true,
+  demo: true,
   visitor: true,
 }
 
-/** Under a public page: what an account adds, and the way to make one. */
-function JoinBand() {
-  const t = useMessages(messages)
-  return (
-    <aside className="visitor-join card" aria-label={t('join')}>
-      <img src="/logo.png" alt="" width="48" height="48" />
-      <p>{t('pitch')}</p>
-      <Link className="button" to={SIGN_IN}>
-        {t('join')}
-      </Link>
-    </aside>
-  )
+/** The sign-in screen, coming back to `from` once signed in. */
+const signInHref = (from: string) =>
+  from === '/' || from.startsWith('/entrar')
+    ? '/entrar'
+    : `/entrar?next=${encodeURIComponent(from)}`
+
+/** Where the sign-in screen sends the player back: a page of this app, else the home. */
+export function nextAfterSignIn(search: string): string {
+  const next = new URLSearchParams(search).get('next') ?? '/'
+  return next.startsWith('/') && !next.startsWith('//') ? next : '/'
 }
 
-function VisitorShell() {
+/** The sign-in screen, coming back to the page on screen. */
+export function useSignInHref() {
+  const { pathname, search } = useLocation()
+  return signInHref(pathname + search)
+}
+
+/** At the end of the top bar: the way in. A phone keeps only "Sign in". */
+export function VisitorActions() {
   const t = useMessages(messages)
+  const href = useSignInHref()
   return (
-    <div className="visitor" id="visitor">
-      <header className="visitor-bar">
-        <Link className="visitor-logo" to="/guides" aria-label={t('logoLabel')}>
-          <img className="brand-mark" src="/logo.png" alt="" width="32" height="32" />
-          <span className="brand-name">
-            plat<span className="brand-accent">journey</span>
-          </span>
-        </Link>
-        <nav className="visitor-nav">
-          <NavLink to="/guides" className="visitor-link">
-            <Icon name="book-open" /> {t('guides')}
-          </NavLink>
-        </nav>
-        <div className="visitor-actions">
-          <Link className="button secondary sm" to={SIGN_IN} id="visitor-sign-in">
-            {t('signIn')}
-          </Link>
-          <Link className="button sm" to={SIGN_IN} id="visitor-join">
-            {t('joinShort')}
-          </Link>
-        </div>
-      </header>
-      <main className="content visitor-content" id="main-content" tabIndex={-1}>
-        <Outlet />
-        <JoinBand />
-      </main>
+    <div className="visitor-actions">
+      <Link className="button secondary sm" to={href} id="visitor-sign-in">
+        {t('signIn')}
+      </Link>
+      <Link className="button sm visitor-join" to={href} id="visitor-join">
+        {t('join')}
+      </Link>
     </div>
   )
 }
 
-/** The sign-in screen, or a public page under the visitor's header. */
-function VisitorRoutes({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
+/** Where the player's card sits at the end of the menu. */
+export function VisitorAccount() {
+  const t = useMessages(messages)
+  const href = useSignInHref()
   return (
-    <Routes>
-      <Route element={<VisitorShell />}>
-        <Route path="/profiles/:user" element={<PublicProfile />} />
-        <Route path="/title/*" element={<Title />} />
-        <Route path="/guides" element={<Guides />} />
-      </Route>
-      <Route path="*" element={<SignIn onSignedIn={onSignedIn} />} />
-    </Routes>
+    <div className="visitor-account" id="visitor-account">
+      <b>{t('accountTitle')}</b>
+      <small>{t('accountBody')}</small>
+      <Link className="button sm" to={href}>
+        {t('signIn')}
+      </Link>
+    </div>
   )
 }
 
-/** The sign-in screen starts at the top, wherever the visitor scrolled before. */
-function SignIn({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
-  useEffect(() => {
-    window.scrollTo({ top: 0 })
-  }, [])
-  return <Login onSignedIn={onSignedIn} />
-}
-
-export function VisitorApp({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
+/** A screen that needs an account, opened without one. */
+export function SignInPrompt({ path }: { path: string }) {
+  const t = useMessages(messages)
+  const href = useSignInHref()
   return (
-    <BrowserRouter>
-      <AppStateProvider me={VISITOR}>
-        <VisitorRoutes onSignedIn={onSignedIn} />
-      </AppStateProvider>
-    </BrowserRouter>
+    <Page path={path}>
+      <EmptyState
+        className="visitor-prompt"
+        icon="trophy"
+        title={t('promptTitle')}
+        action={
+          <span className="visitor-prompt-actions">
+            <Link className="button" to={href}>
+              {t('signIn')}
+            </Link>
+            <Link className="button secondary" to="/guides">
+              <Icon name="book-open" /> {t('guides')}
+            </Link>
+          </span>
+        }
+      >
+        {t('promptBody')}
+      </EmptyState>
+    </Page>
   )
 }
