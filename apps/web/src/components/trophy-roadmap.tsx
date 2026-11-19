@@ -84,6 +84,22 @@ const messages = defineMessages({
     selected: 'Desafio em foco',
     guidance: 'Objetivo',
     map: 'MAPA DA JORNADA',
+    lead: 'Montada a partir do seu progresso na PSN: o que você já conquistou sai da frente, e a rota segue a ordem do guia até a platina.',
+    leadPreview:
+      'A ordem do guia até a platina. Com o jogo na sua biblioteca, a rota segue o seu progresso na PSN.',
+    route: {
+      label: 'A rota até a platina',
+      dlc: 'Conteúdo adicional',
+      next: 'Próximo',
+      earnedFold: { one: '{count} conquistado', other: '{count} conquistados' },
+      tier: { platinum: 'Platina', gold: 'Ouro', silver: 'Prata', bronze: 'Bronze' },
+      legend: 'O que cada tipo quer dizer',
+      kindHint: {
+        natural: 'vem jogando a história',
+        hunt: 'precisa ir atrás: um item, um lugar, uma condição',
+        grind: 'repetir até o contador fechar',
+      },
+    },
     missable: 'Perdível',
     finale: 'Platina',
     kind: { natural: 'Natural', hunt: 'Caçada', grind: 'Grind' },
@@ -216,6 +232,22 @@ const messages = defineMessages({
     selected: 'Challenge in focus',
     guidance: 'Objective',
     map: 'JOURNEY MAP',
+    lead: 'Built from your PSN progress: what you have earned moves out of the way, and the route follows the guide’s order to the platinum.',
+    leadPreview:
+      'The guide’s order to the platinum. With the game in your library, the route follows your PSN progress.',
+    route: {
+      label: 'The route to the platinum',
+      dlc: 'Additional content',
+      next: 'Next',
+      earnedFold: { one: '{count} earned', other: '{count} earned' },
+      tier: { platinum: 'Platinum', gold: 'Gold', silver: 'Silver', bronze: 'Bronze' },
+      legend: 'What each kind means',
+      kindHint: {
+        natural: 'comes as you play the story',
+        hunt: 'you go after it: an item, a place, a condition',
+        grind: 'repeat until the counter is full',
+      },
+    },
     missable: 'Missable',
     finale: 'Platinum',
     kind: { natural: 'Natural', hunt: 'Hunt', grind: 'Grind' },
@@ -811,6 +843,8 @@ function RoadmapChapters({ game }: { game: RoadmapGame }) {
             <summary>
               <b>{label.title}</b>
               {label.place && <span>{label.place}</span>}
+              {/* Each chapter opens: the arrow says so, and turns when it is open. */}
+              <Icon name="chevron-right" className="roadmap-chapter-arrow" />
             </summary>
             <RoadmapTipsList tips={m.tips} trophies={game.trophies} />
           </details>
@@ -1601,12 +1635,167 @@ function roadmapFocus(game: RoadmapGame, done: boolean) {
   return game.focus?.trophy
 }
 
+/** One trophy on the route: its mark (earned, next, to do, missable), its art and name. */
+function RouteStop({
+  trophy,
+  game,
+  selected,
+  next,
+  onPick,
+}: {
+  trophy: Trophy
+  game: RoadmapGame
+  selected: boolean
+  next: boolean
+  onPick: (trophy: Trophy) => void
+}) {
+  const t = useMessages(messages)
+  const advice = trophyAdvice(trophy, game.guide)
+  const kind = trophyKind(trophy, game.guide)
+  const state = trophy.earned ? 'is-earned' : next ? 'is-next' : advice.warning ? 'is-risk' : ''
+  return (
+    <li className={`jroute-stop ${state}`.trim()}>
+      <button
+        type="button"
+        aria-pressed={selected}
+        aria-current={next ? 'step' : undefined}
+        onClick={() => onPick(trophy)}
+      >
+        <span className="jroute-node" aria-hidden="true">
+          {trophy.earned ? <Icon name="check" /> : advice.warning ? <Icon name="warning" /> : null}
+        </span>
+        <span className="jroute-art">
+          <TrophyArt url={trophy.iconUrl} />
+        </span>
+        <span className="jroute-copy">
+          {next && <small className="jroute-tag is-next">{t('route.next')}</small>}
+          <b>{trophyName(trophy)}</b>
+          <span className="jroute-meta">
+            <span className={`jroute-tier is-${trophy.type}`}>
+              {t(`route.tier.${trophy.type}`)}
+            </span>
+            {kind && <span className={`jroute-kind is-${kind}`}>{t(`kind.${kind}`)}</span>}
+            {advice.warning && !trophy.earned && (
+              <span className="jroute-risk">{t('missable')}</span>
+            )}
+          </span>
+        </span>
+        <Icon name="chevron-right" />
+      </button>
+    </li>
+  )
+}
+
+/** What natural, hunt and grind mean, over the route that tags each trophy with one. */
+function RouteLegend() {
+  const t = useMessages(messages)
+  return (
+    <dl className="jroute-legend" aria-label={t('route.legend')}>
+      {(['natural', 'hunt', 'grind'] as const).map((kind) => (
+        <div key={kind}>
+          <dt className={`jroute-kind is-${kind}`}>{t(`kind.${kind}`)}</dt>
+          <dd>{t(`route.kindHint.${kind}`)}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/** A large screen's journey: the whole route as one list in the guide's order (the earned
+ * trophies folded at its top) beside the chosen trophy. */
+function RouteBoard({
+  game,
+  ordered,
+  selected,
+  next,
+  choose,
+}: {
+  game: RoadmapGame
+  ordered: Trophy[]
+  selected: Trophy
+  next?: Trophy
+  choose: (trophy: Trophy) => void
+}) {
+  const t = useMessages(messages)
+  // The base game ends at its platinum, always last; additional content is its own list after it.
+  const base = ordered.filter((x) => x.groupId === 'default')
+  const route = [
+    ...base.filter((x) => x.type !== 'platinum'),
+    ...base.filter((x) => x.type === 'platinum'),
+  ]
+  const extra = ordered.filter((x) => x.groupId !== 'default')
+  const earned = route.filter((x) => x.earned)
+  const left = route.filter((x) => !x.earned)
+  const [open, setOpen] = useState(false)
+  const showEarned = open || earned.includes(selected)
+  return (
+    <div className="jroute-board">
+      <div className="jroute-columns">
+        <nav className="jroute-list" aria-label={t('route.label')}>
+          {game.guide?.trophyKinds?.length ? <RouteLegend /> : null}
+          <section className="jroute-phase">
+            {earned.length > 0 && (
+              <button
+                type="button"
+                className="jroute-fold"
+                aria-expanded={showEarned}
+                onClick={() => setOpen((o) => !o)}
+              >
+                <Icon name="check" />
+                {t('route.earnedFold', { count: earned.length })}
+                <Icon name="chevron-down" />
+              </button>
+            )}
+            <ul>
+              {[...(showEarned ? earned : []), ...left].map((trophy) => (
+                <RouteStop
+                  key={anchor(trophy)}
+                  trophy={trophy}
+                  game={game}
+                  selected={selected === trophy}
+                  next={next === trophy}
+                  onPick={choose}
+                />
+              ))}
+            </ul>
+          </section>
+          {extra.length > 0 && (
+            <section className="jroute-phase jroute-extra">
+              <h3 className="jroute-extra-title">
+                <Icon name="layers" /> {t('route.dlc')}
+              </h3>
+              <ul>
+                {extra.map((trophy) => (
+                  <RouteStop
+                    key={anchor(trophy)}
+                    trophy={trophy}
+                    game={game}
+                    selected={selected === trophy}
+                    next={false}
+                    onPick={choose}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+        </nav>
+        <div className="jroute-detail">
+          <RoadmapFocus game={game} selected={selected} target={next} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function TrophyRoadmap({
   game: source,
   preview = false,
+  layout = 'path',
 }: {
   game: RoadmapGame
   preview?: boolean
+  /** `route`: a large screen's board, the phases as a list beside the chosen trophy. */
+  layout?: 'path' | 'route'
 }) {
   const t = useMessages(messages)
   const inspecting = preview
@@ -1668,6 +1857,7 @@ export function TrophyRoadmap({
         <div>
           <span className="eyebrow">{t('map')}</span>
           <h2 id="roadmap-heading">{t('title')}</h2>
+          <p className="roadmap-lead">{inspecting ? t('leadPreview') : t('lead')}</p>
         </div>
         <div className="roadmap-intro-actions">
           <span className="roadmap-total">
@@ -1683,16 +1873,29 @@ export function TrophyRoadmap({
         <p>{t('empty')}</p>
       ) : (
         <>
-          <div className="roadmap-expedition">
-            <RoadmapNavigation
+          {layout === 'route' && (
+            <RouteBoard
               game={game}
               ordered={ordered}
               selected={selected}
-              target={suggested}
+              next={suggested}
               choose={choose}
             />
-            <RoadmapFocus game={game} selected={selected} target={suggested} />
-            <RoadmapPhase game={game} trophy={selected} />
+          )}
+          <div className="roadmap-expedition">
+            {layout === 'path' && (
+              <>
+                <RoadmapNavigation
+                  game={game}
+                  ordered={ordered}
+                  selected={selected}
+                  target={suggested}
+                  choose={choose}
+                />
+                <RoadmapFocus game={game} selected={selected} target={suggested} />
+                <RoadmapPhase game={game} trophy={selected} />
+              </>
+            )}
             <RoadmapOngoing game={game} choose={inspect} />
             <RoadmapChapters game={game} />
             {!!past.length && (

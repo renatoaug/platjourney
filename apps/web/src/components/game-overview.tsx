@@ -25,6 +25,7 @@ const messages = defineMessages({
     journeyDone: 'Platina conquistada',
     journeyStart: 'O caminho até a platina, passo a passo',
     journeyPreview: 'Prévia do caminho até a platina',
+    summary: 'Resumo do jogo',
     journeyLocked: 'Entre na sua conta para ver o caminho até a platina',
     trophyCount: { one: '{count} troféu', other: '{count} troféus' },
     missables: { one: '{count} perdível', other: '{count} perdíveis' },
@@ -57,6 +58,7 @@ const messages = defineMessages({
     journeyDone: 'Platinum earned',
     journeyStart: 'The way to the platinum, step by step',
     journeyPreview: 'A preview of the way to the platinum',
+    summary: 'Game summary',
     journeyLocked: 'Sign in to your account to see the way to the platinum',
     trophyCount: { one: '{count} trophy', other: '{count} trophies' },
     missables: { one: '{count} missable', other: '{count} missables' },
@@ -84,8 +86,8 @@ const messages = defineMessages({
 })
 
 /** The pages a game's cards open, kept in the address (`?view=`), so back returns to the game. */
-export type GameView = 'journey' | 'guide' | 'session'
-const VIEWS: GameView[] = ['journey', 'guide', 'session']
+export type GameView = 'journey' | 'trophies' | 'guide' | 'session' | 'about'
+const VIEWS: GameView[] = ['journey', 'trophies', 'guide', 'session', 'about']
 
 export function useGameView() {
   const [params, setParams] = useSearchParams()
@@ -113,13 +115,20 @@ export function useGameView() {
         { replace: true },
       )
   }
-  return { view, open, close }
+  // A large screen's tabs: the trophies (no view) or one of the game's pages.
+  const select = (next: GameView | null) =>
+    setParams((p) => {
+      if (next) p.set('view', next)
+      else p.delete('view')
+      return p
+    })
+  return { view, open, close, select }
 }
 
 const TIERS = ['platinum', 'gold', 'silver', 'bronze'] as const
 
 /** The trophies the progress counts: the base game's, or with the DLC when the player chose so. */
-function countedTrophies(trophies: Trophy[], includeDlc: boolean) {
+export function countedTrophies(trophies: Trophy[], includeDlc: boolean) {
   // A catalog list may come without groups: then every trophy is the base game's.
   return includeDlc ? trophies : trophies.filter((t) => !t.groupId || t.groupId === 'default')
 }
@@ -444,6 +453,7 @@ export function GameOverview({
   /** The trophy list, at the end. */
   trophies: ReactNode
 }) {
+  const t = useMessages(messages)
   const counted = countedTrophies(c.trophies, includeDlc)
   const earned = counted.filter((x) => x.earned).length
   return (
@@ -458,12 +468,16 @@ export function GameOverview({
         actions={catalog}
       />
       <UnobtainableBanner guide={c.guide} />
-      <GameTiers trophies={counted} />
-      <GameNumbers game={c} />
-
-      <GameLinks game={c} catalog={!!catalog} onOpen={onOpen} />
-
-      {trophies}
+      {/* A wide screen keeps the summary beside the list, in place while the trophies scroll; a
+          narrower one puts it above them. */}
+      <div className="game-overview-body">
+        <aside className="game-overview-rail" aria-label={t('summary')}>
+          <GameTiers trophies={counted} />
+          <GameNumbers game={c} />
+          <GameLinks game={c} catalog={!!catalog} onOpen={onOpen} />
+        </aside>
+        <div className="game-overview-main">{trophies}</div>
+      </div>
     </div>
   )
 }
@@ -500,5 +514,5 @@ export function GameSubpage({
 /** The title of each of the game's pages. */
 export function useViewTitle() {
   const t = useMessages(messages)
-  return (view: GameView) => t(view)
+  return (view: GameView) => (view === 'trophies' ? t('tiers') : t(view))
 }

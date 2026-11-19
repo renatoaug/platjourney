@@ -6,11 +6,14 @@ import { shownProgress } from '../lib/progress'
 import { tintStyle } from '../lib/tint'
 import { trophyName } from '../lib/trophy-text'
 import type { CurrentGame, Trophy } from '../lib/types'
+import { useMedia, WIDE } from '../lib/use-media'
 import { Icon } from '../ui/icon'
 import { GuideText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
 import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
+import { GameDesk } from './game-desk'
 import {
+  countedTrophies,
   GameOverview,
   GameSubpage,
   type GameView,
@@ -74,12 +77,15 @@ function JourneyPage({
   plan,
   catalog,
   np,
+  wide = false,
 }: {
   view: GameView
   game: CurrentGame
   plan?: ReactNode
   catalog: boolean
   np: string
+  /** A large screen: the journey as a board, the route beside the chosen trophy. */
+  wide?: boolean
 }) {
   const t = useMessages(messages)
   const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
@@ -92,12 +98,13 @@ function JourneyPage({
             <TrophyRoadmap
               key={np}
               preview
+              layout={wide ? 'route' : 'path'}
               game={{ game: c.game, name: c.name, np, trophies: c.trophies, guide: c.guide }}
             />
           )
         ) : (
           <>
-            <TrophyRoadmap key={c.np} game={c} />
+            <TrophyRoadmap key={c.np} game={c} layout={wide ? 'route' : 'path'} />
             <JourneyWarning warning={focus?.missable} trophies={c.trophies} />
           </>
         ))}
@@ -117,6 +124,11 @@ function JourneyPage({
           />
         </section>
       )}
+      {view === 'about' && (
+        <section className="journey-about is-page" id="journey-about">
+          <GameAbout game={c.game} name={c.name} cover={false} />
+        </section>
+      )}
       {view === 'session' && !catalog && (
         <section className="journey-session" id="journey-session">
           <p>{t('onePlan')}</p>
@@ -125,6 +137,26 @@ function JourneyPage({
       )}
     </>
   )
+}
+
+/** The game's trophy list: with the player's progress, or the catalog's for a game not owned. */
+function JourneyTrophies({ game: c, catalog }: { game: CurrentGame; catalog: boolean }) {
+  return (
+    <section className="card journey-trophies" id="journey-trophies">
+      <TrophyList
+        trophies={c.trophies}
+        np={catalog ? null : c.np}
+        askGame={catalog ? { id: c.game.id, name: c.name } : undefined}
+        prefix="journey-t"
+        guide={c.guide}
+      />
+    </section>
+  )
+}
+
+/** The tab a large screen opens: the one asked for, else the journey when it can be walked. */
+function deskTabOf(asked: GameView | null, visitor: boolean, trophies: number): GameView {
+  return asked ?? (!visitor && trophies > 0 ? 'journey' : 'trophies')
 }
 
 /** The one game page, whether opened from PSN presence, the library or the catalog: the game at a
@@ -155,9 +187,45 @@ export function Journey({
   const np = catalog ? c.game.id : c.np
   // The floating Nexo opens on this game while its page is open.
   useNexoTarget(np ? nexoHref(np, c.name) : null)
-  const { view, open, close } = useGameView()
+  const { view: asked, open, close, select } = useGameView()
+  const wide = useMedia(WIDE)
+  // The trophy list is the overview's own on a phone: its page is the overview there.
+  const view = asked === 'trophies' && !wide ? null : asked
   const title = useViewTitle()
+  const visitor = useApp().me.visitor === true
+  // The journey opens first on a large screen, unless it is closed (no account) or there is no
+  // list to walk yet.
+  const deskTab = deskTabOf(asked, visitor, c.trophies.length)
   const scenes = <ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />
+  const trophyList = trophies ?? <JourneyTrophies game={c} catalog={!!catalog} />
+  // A large screen: the game's pages as tabs beside a summary that stays in place.
+  if (wide)
+    return (
+      <div className="journey" style={tintStyle(c.game.tint)}>
+        <GameBackdrop src={c.game.art_url ?? c.icon} shots={shots} at={scene} tint={c.game.tint} />
+        <GameDesk
+          game={c}
+          trophies={countedTrophies(c.trophies, includeDlc)}
+          progress={progress}
+          np={np}
+          tab={deskTab}
+          onTab={select}
+          // The journey takes the whole width: its board has its own summary.
+          wide={deskTab === 'journey'}
+          catalog={catalog}
+          actions={back}
+          scenes={scenes}
+          page={
+            deskTab === 'trophies' ? (
+              trophyList
+            ) : (
+              <JourneyPage view={deskTab} game={c} plan={plan} catalog={!!catalog} np={np} wide />
+            )
+          }
+        />
+        {similar}
+      </div>
+    )
   return (
     <div className="journey" style={tintStyle(c.game.tint)}>
       <GameBackdrop src={c.game.art_url ?? c.icon} shots={shots} at={scene} tint={c.game.tint} />
@@ -179,19 +247,7 @@ export function Journey({
             }
             onOpen={open}
             catalog={catalog}
-            trophies={
-              trophies ?? (
-                <section className="card journey-trophies" id="journey-trophies">
-                  <TrophyList
-                    trophies={c.trophies}
-                    np={catalog ? null : c.np}
-                    askGame={catalog ? { id: c.game.id, name: c.name } : undefined}
-                    prefix="journey-t"
-                    guide={c.guide}
-                  />
-                </section>
-              )
-            }
+            trophies={trophyList}
           />
           {similar}
         </>

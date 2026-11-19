@@ -17,6 +17,55 @@
     min-width: 0;
   }
 
+  /* The summary (tiers, numbers, the game's pages) and the trophy list. */
+  .game-overview-body,
+  .game-overview-rail {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+
+  .game-overview-body > *,
+  .game-overview-rail > * {
+    min-width: 0;
+  }
+
+  /* A tablet: the tiers beside the numbers, the game's pages under them, then the list. */
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    .game-overview-rail {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      column-gap: 16px;
+    }
+
+    .game-overview-rail > .game-links {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* A wide screen: the list takes the page and the summary stays beside it while it scrolls. */
+  @media (min-width: 1280px) {
+    .game-overview-body {
+      grid-template-columns: minmax(0, 1fr) clamp(320px, 26vw, 400px);
+      align-items: start;
+      gap: 20px;
+    }
+
+    .game-overview-main {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    .game-overview-rail {
+      position: sticky;
+      top: 20px;
+      grid-row: 1;
+      grid-column: 2;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+  }
+
   .game-overview-actions {
     display: flex;
     justify-content: space-between;
@@ -502,14 +551,10 @@
       grid-column: 1 / -1;
     }
 
-    .game-overview > .game-tiers,
-    .game-overview > .game-facts {
-      grid-column: auto;
-    }
-
     .game-overview-head {
       gap: 24px;
-      padding-top: clamp(40px, 14vh, 180px);
+      /* Enough of the picture to set the scene, not a screen of it before the game starts. */
+      padding-top: clamp(16px, 5vh, 56px);
     }
 
     .game-overview-cover {
