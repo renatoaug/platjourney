@@ -478,8 +478,24 @@
       box-shadow 0.15s;
   }
 
-  .collection-tile:hover .collection-art {
+  /* The hover line (surfaces.css) starts just outside the cover, which nothing clips here, and
+     reaches 1px over it: its corner then covers the cover's rounded one with no sliver between. */
+  a.collection-tile::after {
+    inset: -1.5px;
+    padding: 2.5px;
+    border-radius: calc(var(--radius-control) + 1.5px);
+  }
+
+  /* The whole tile rises, so the hover line around it moves with the cover. */
+  .collection-tile {
+    transition: transform 0.15s;
+  }
+
+  .collection-tile:hover {
     transform: translateY(-3px);
+  }
+
+  .collection-tile:hover .collection-art {
     box-shadow: var(--shadow-popover);
   }
 

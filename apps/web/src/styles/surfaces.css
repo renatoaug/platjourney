@@ -587,7 +587,9 @@
   :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile, article.release)::after {
     position: absolute;
     z-index: 1;
-    inset: 0;
+    /* On the card's 1px border, with its corner: the cards clip up to the border
+       (overflow-clip-margin), so nothing of the picture shows between the line and the edge. */
+    inset: -1px;
     padding: 1.5px;
     border-radius: inherit;
     background:

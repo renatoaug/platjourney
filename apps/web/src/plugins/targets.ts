@@ -378,7 +378,6 @@ export type Target =
   | 'TitleGame'
   | 'TitleScreen'
   | 'ToastHost'
-  | 'TodaysGuide'
   | 'TooltipHost'
   | 'TrickBlock'
   | 'TrickSteps'

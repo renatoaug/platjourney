@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MockAppState } from '../app/app-state'
 import { VISITOR } from '../app/visitor'
 import { CommunityHighlightsView } from '../components/community/community-highlights'
-import { GuideSpotlight, GuideSpotlightSkeleton } from '../components/guide-spotlight'
 import { ReleasesView } from '../components/releases'
 import { releasesData } from '../components/releases.stories'
 import { communityEvents, communityPeople } from '../fixtures'
@@ -47,7 +46,7 @@ const community = (
 export const Home: Story = {
   render: () => (
     <PublicHome
-      spotlight={<GuideSpotlight game={spotlight} />}
+      loadSpotlight={() => Promise.resolve(spotlight)}
       releases={releases}
       community={community}
     />
@@ -57,7 +56,7 @@ export const Home: Story = {
 export const Loading: Story = {
   render: () => (
     <PublicHome
-      spotlight={<GuideSpotlightSkeleton />}
+      loadSpotlight={() => new Promise(() => {})}
       releases={<ReleasesView load={{ status: 'loading' }} />}
       community={<CommunityHighlightsView state={{ status: 'loading' }} />}
     />
@@ -65,7 +64,13 @@ export const Loading: Story = {
 }
 
 export const Games: Story = {
-  render: () => <VisitorGames releases={releases} community={community} />,
+  render: () => (
+    <VisitorGames
+      releases={releases}
+      community={community}
+      loadArt={() => Promise.resolve(spotlight)}
+    />
+  ),
 }
 
 export const English: Story = { ...Home, globals: { locale: Language.En } }

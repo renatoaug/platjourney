@@ -33,7 +33,9 @@
   }
 
   .game-card {
-    overflow: hidden;
+    /* Clips up to the border, not inside it, so the hover line (surfaces.css) lies on it. */
+    overflow: clip;
+    overflow-clip-margin: 1px;
     border-radius: var(--radius-control);
     border: 1px solid var(--color-border);
     background: var(--color-surface);
@@ -150,7 +152,7 @@
   }
 
   a.game-card:hover {
-    border-color: transparent;
+    border-color: var(--color-border-strong);
     transform: translateY(-2px);
   }
 

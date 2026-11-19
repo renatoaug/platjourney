@@ -1,20 +1,21 @@
 /** The home of someone without an account: what PlatJourney is, with the guide of the day, the
  * releases and what the community is playing, all things anyone can open. */
-import { type ReactNode, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Page } from '../app/page'
 import { useSignInHref } from '../app/visitor'
 import { CommunityHighlights } from '../components/community/community-highlights'
 import {
+  fetchSpotlight,
   GuideSpotlight,
   GuideSpotlightSkeleton,
-  pickOfTheDay,
   type SpotlightGame,
+  sceneOf,
+  useSpotlight,
 } from '../components/guide-spotlight'
 import { PageTop } from '../components/page-top'
 import { Releases } from '../components/releases'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
-import { api } from '../lib/api'
 import { Icon } from '../ui/icon'
 import './public-home.css'
 
@@ -57,44 +58,35 @@ const messages = defineMessages({
   },
 })
 
-type Spotlight = { status: 'loading' } | { status: 'ok'; game: SpotlightGame | null }
-
-const fetchSpotlight = () =>
-  api<{ items: SpotlightGame[] }>('/api/guides?').then(({ items }) => pickOfTheDay(items))
-
-/** The guide of the day; nothing when the catalog has none or does not answer. */
-function TodaysGuide({ load = fetchSpotlight }: { load?: () => Promise<SpotlightGame | null> }) {
-  const [state, setState] = useState<Spotlight>({ status: 'loading' })
-  useEffect(() => {
-    let live = true
-    load()
-      .then((game) => live && setState({ status: 'ok', game }))
-      .catch(() => live && setState({ status: 'ok', game: null }))
-    return () => {
-      live = false
-    }
-  }, [load])
-  if (state.status === 'loading') return <GuideSpotlightSkeleton />
-  return state.game ? <GuideSpotlight game={state.game} /> : null
-}
-
 export function PublicHome({
-  spotlight = <TodaysGuide />,
+  loadSpotlight = fetchSpotlight,
   releases = <Releases />,
   community = <CommunityHighlights />,
 }: {
-  spotlight?: ReactNode
+  loadSpotlight?: () => Promise<SpotlightGame | null>
   releases?: ReactNode
   community?: ReactNode
 } = {}) {
   const t = useMessages(messages)
   const signIn = useSignInHref()
+  const spotlight = useSpotlight(loadSpotlight)
+  const scene = sceneOf(spotlight)
   return (
     <Page path="/">
-      <section className="card public-home-hero" id="public-home-hero">
-        <span className="eyebrow">{t('eyebrow')}</span>
-        <h1>{t('title')}</h1>
-        <p>{t('lead')}</p>
+      {/* The same top as Guides: the guide of the day's scene behind, its card beside. */}
+      <PageTop
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        lead={t('lead')}
+        art={scene}
+        aside={
+          spotlight.status === 'loading' ? (
+            <GuideSpotlightSkeleton />
+          ) : spotlight.game ? (
+            <GuideSpotlight game={spotlight.game} />
+          ) : null
+        }
+      >
         <ul className="public-home-points">
           <li>
             <Icon name="book-open" /> {t('points.guides')}
@@ -114,8 +106,7 @@ export function PublicHome({
             <Icon name="book-open" /> {t('guides')}
           </Link>
         </div>
-      </section>
-      <div className="public-home-spotlight">{spotlight}</div>
+      </PageTop>
       {releases}
       {community}
     </Page>
@@ -127,15 +118,24 @@ export function PublicHome({
 export function VisitorGames({
   releases = <Releases />,
   community = <CommunityHighlights />,
+  loadArt = fetchSpotlight,
 }: {
   releases?: ReactNode
   community?: ReactNode
+  /** The game whose scene goes across the top: the guide of the day, as on Guides. */
+  loadArt?: () => Promise<SpotlightGame | null>
 } = {}) {
   const t = useMessages(messages)
   const signIn = useSignInHref()
+  const art = sceneOf(useSpotlight(loadArt))
   return (
     <Page path="/games">
-      <PageTop eyebrow={t('games.eyebrow')} title={t('games.title')} lead={t('games.lead')}>
+      <PageTop
+        eyebrow={t('games.eyebrow')}
+        title={t('games.title')}
+        lead={t('games.lead')}
+        art={art}
+      >
         <div className="public-home-actions">
           <Link className="button sm" to={signIn} id="games-sign-in">
             {t('games.signIn')}

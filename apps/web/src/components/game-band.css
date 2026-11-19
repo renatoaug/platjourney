@@ -105,7 +105,9 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-control);
     background: var(--color-surface);
-    overflow: hidden;
+    /* Clips up to the border, not inside it, so the hover line (surfaces.css) lies on it. */
+    overflow: clip;
+    overflow-clip-margin: 1px;
     transition:
       border-color 0.15s,
       transform 0.15s;
@@ -113,7 +115,7 @@
 
   .band-card:hover,
   .band-card:focus-within {
-    border-color: transparent;
+    border-color: var(--color-border-strong);
   }
 
   .band-card:hover {

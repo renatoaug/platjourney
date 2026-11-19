@@ -1,6 +1,8 @@
 /** Someone without an account: the same app, reading what is public (guides, games, the community,
  * profiles), with the way in where the account would be. What needs an account asks for one. */
 import { Link, useLocation } from 'react-router'
+import { GameBackdrop } from '../components/game-backdrop'
+import { fetchSpotlight, sceneOf, useSpotlight } from '../components/guide-spotlight'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import type { Me } from '../lib/types'
 import { Icon } from '../ui/icon'
@@ -146,8 +148,11 @@ export function SignInPrompt({ path }: { path: string }) {
   const t = useMessages(messages)
   const href = useSignInHref()
   const screen = PROMPTS.find((p) => path === `/${p}`) ?? 'other'
+  // The guide of the day's scene behind, as on the public home.
+  const scene = sceneOf(useSpotlight(fetchSpotlight))
   return (
     <Page path={path}>
+      {scene && <GameBackdrop src={scene} />}
       <section className="card visitor-prompt" aria-labelledby="visitor-prompt-title">
         <TrophyMedal type="platinum" className="visitor-prompt-medal" />
         <span className="eyebrow">{t('prompt.eyebrow')}</span>
