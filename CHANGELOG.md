@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.87.0](https://github.com/renatoaug/platjourney/compare/v0.86.0...v0.87.0) (2026-11-19)
+
+### Features
+
+* **web:** the app opens without an account ([#209](https://github.com/renatoaug/platjourney/issues/209)) ([1ccbd04](https://github.com/renatoaug/platjourney/commit/1ccbd046aff4e06fd5f62ca1611c0a48cc50e3e0))
+
 ## [0.86.0](https://github.com/renatoaug/platjourney/compare/v0.85.2...v0.86.0) (2026-11-18)
 
 ### Features
