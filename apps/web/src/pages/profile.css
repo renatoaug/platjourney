@@ -364,11 +364,13 @@
     margin-top: 12px;
   }
 
+  /* Rounded like its cover, so the hover line (surfaces.css) follows the same corners. */
   .collection-tile {
     display: flex;
     flex-direction: column;
     gap: 8px;
     min-width: 0;
+    border-radius: var(--radius-control);
     color: var(--color-fg);
     text-decoration: none;
   }
