@@ -22,7 +22,7 @@ const messages = defineMessages({
   [Language.PtBR]: {
     top: 'Top platinas do mês',
     playing: 'Em alta agora',
-    seeRankings: 'Ver rankings',
+    seeRankings: 'Ver leaderboard',
     seeGames: 'Ver jogos',
     platinums: { one: '{count} platina', other: '{count} platinas' },
     players: { one: '{count} jogador', other: '{count} jogadores' },
@@ -32,7 +32,7 @@ const messages = defineMessages({
   [Language.En]: {
     top: 'Top platinums this month',
     playing: 'Trending now',
-    seeRankings: 'See rankings',
+    seeRankings: 'See the leaderboard',
     seeGames: 'See games',
     platinums: { one: '{count} platinum', other: '{count} platinums' },
     players: { one: '{count} player', other: '{count} players' },

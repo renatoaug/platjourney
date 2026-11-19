@@ -173,7 +173,10 @@ const sessionSeen = () => {
 export function Onboarding() {
   const { me, setMe, data, warming } = useApp()
   const navigate = useNavigate()
-  const [open, setOpen] = useState(() => (me.demo ? !sessionSeen() : !me.onboarded))
+  // Someone without an account has no story to tell yet.
+  const [open, setOpen] = useState(() =>
+    me.visitor ? false : me.demo ? !sessionSeen() : !me.onboarded,
+  )
   const [installStep, setInstallStep] = useState(
     () => !me.demo && !me.onboarded && installGuideDue(),
   )

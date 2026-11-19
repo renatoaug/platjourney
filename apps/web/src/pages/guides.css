@@ -77,7 +77,9 @@
     background: var(--color-surface);
     color: inherit;
     text-decoration: none;
-    overflow: hidden;
+    /* Clips up to the border, not inside it, so the hover line (surfaces.css) lies on it. */
+    overflow: clip;
+    overflow-clip-margin: 1px;
     transition:
       border-color 0.15s,
       transform 0.15s;

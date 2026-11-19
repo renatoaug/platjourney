@@ -1,0 +1,34 @@
+@layer screens {
+  /* The home's title is a sentence: wider than the other tops, so it takes two lines, not three. */
+  .page[data-page="/"] .page-top-text {
+    max-width: 880px;
+  }
+
+  .public-home-points {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin: 16px 0 0;
+    padding: 0;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    list-style: none;
+  }
+
+  .public-home-points li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .public-home-points .icon {
+    color: var(--color-accent);
+  }
+
+  .public-home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+}

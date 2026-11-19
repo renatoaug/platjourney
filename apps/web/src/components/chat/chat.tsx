@@ -112,6 +112,9 @@ const messages = defineMessages({
       eyebrow: 'COMO O NEXO RESPONDE',
       lead: 'Na demonstração o chat fica fechado. Estas são perguntas de exemplo sobre o jogo atual, com as respostas do Nexo a partir do guia:',
       connect: 'Conecte sua conta da PSN para conversar com o Nexo sobre os seus jogos.',
+      visitorLead:
+        'Para conversar com o Nexo é preciso entrar. Estas são perguntas de exemplo sobre um jogo, com as respostas do Nexo a partir do guia:',
+      visitorConnect: 'Entre com sua conta da PSN para perguntar ao Nexo sobre os seus jogos.',
       missable: {
         q: 'Tem algum troféu perdível no capítulo em que estou?',
         a: 'Tem, e eles se concentram nos Capítulos 2 a 4:\n\n- **Doe aos Pobres**: a caixa de doações da gangue some depois do Capítulo 4. Doe os 250 dólares aos poucos.\n- **Garoto de Recados**: entregue 5 itens que os companheiros do acampamento pedem; os pedidos só existem entre os Capítulos 2 e 4.\n- **Amigo do Peito**: faça uma atividade com companheiros no acampamento em cada um desses capítulos.\n\nFonte: Trophy Guides, Game Wiki e Platinum Forum',
@@ -205,6 +208,9 @@ const messages = defineMessages({
       eyebrow: 'HOW NEXO ANSWERS',
       lead: 'The chat is closed in the demo. These are a player’s questions about the current game, with Nexo’s answers from the guide:',
       connect: 'Connect your PSN account to talk to Nexo about your own games.',
+      visitorLead:
+        'Talking to Nexo needs an account. These are a player’s questions about a game, with Nexo’s answers from the guide:',
+      visitorConnect: 'Sign in with your PSN account to ask Nexo about your own games.',
       missable: {
         q: 'Is there a missable trophy in the chapter I am in?',
         a: 'Yes, and they sit in Chapters 2 to 4:\n\n- **The camp donation box** disappears after Chapter 4. Donate the 250 dollars a little at a time.\n- **Camp requests**: hand in 5 items your camp companions ask for; the requests only exist between Chapters 2 and 4.\n- **Companion activities**: do one with your camp companions in each of those chapters.\n\nSource: Trophy Guides, Game Wiki and Platinum Forum',
@@ -394,13 +400,13 @@ export function ChatSkeleton() {
 }
 
 /** The demo's chat: a player's questions and Nexo's answers, written out, instead of a conversation. */
-function DemoExamples() {
+function DemoExamples({ visitor = false }: { visitor?: boolean }) {
   const t = useMessages(messages)
   return (
     <>
       <div className="demo-lead">
         <span className="eyebrow">{t('demo.eyebrow')}</span>
-        <p>{t('demo.lead')}</p>
+        <p>{t(visitor ? 'demo.visitorLead' : 'demo.lead')}</p>
       </div>
       {DEMO_EXCHANGES.map((key, i) => (
         <div key={key} className="demo-exchange" data-example={key}>
@@ -538,11 +544,13 @@ function ChatSubtitle({
 /** Under the log: the demo's invitation to connect, the read-only note, or the message box. */
 function ChatBottom({
   demo,
+  visitor = false,
   onConnect,
   readOnly,
   children,
 }: {
   demo: boolean
+  visitor?: boolean
   onConnect?: () => void
   readOnly?: ReactNode
   children: ReactNode
@@ -551,7 +559,7 @@ function ChatBottom({
   if (demo)
     return (
       <div className="demo-connect" id="chat-demo-connect">
-        <p>{t('demo.connect')}</p>
+        <p>{t(visitor ? 'demo.visitorConnect' : 'demo.connect')}</p>
         <DemoConnectButton onConnect={onConnect} />
       </div>
     )
@@ -722,6 +730,7 @@ export function NexoChat({
   subtitle,
   onSend,
   demo = false,
+  visitor = false,
   onConnect,
   searchGames,
   onPickGame,
@@ -743,6 +752,8 @@ export function NexoChat({
   onSend: (text: string) => void
   /** The read-only demo: sample exchanges instead of the conversation, and no message box. */
   demo?: boolean
+  /** The same closed chat, for someone without an account. */
+  visitor?: boolean
   /** Leaves the demo to connect an account. */
   onConnect?: () => void
   /** The player's games by name, for "/game" and the subtitle; without it, no game switch. */
@@ -907,14 +918,14 @@ export function NexoChat({
         tabIndex={0}
       >
         {demo ? (
-          <DemoExamples />
+          <DemoExamples visitor={visitor} />
         ) : (
           <TalkAboutGame.Provider value={talkFrom(onPickGame)}>
             <ChatLog chat={chat} sending={sending} />
           </TalkAboutGame.Provider>
         )}
       </div>
-      <ChatBottom demo={demo} onConnect={onConnect} readOnly={readOnly}>
+      <ChatBottom demo={demo} visitor={visitor} onConnect={onConnect} readOnly={readOnly}>
         <ChatForm
           formRef={form}
           inputRef={input}

@@ -6,6 +6,7 @@ import { Page } from '../app/page'
 import { DifficultyMeter } from '../components/difficulty-meter'
 import { GENRES_PT, image } from '../components/game-showcase'
 import { GuideSpotlight, GuideSpotlightSkeleton, pickOfTheDay } from '../components/guide-spotlight'
+import { JoinLink, useVisitor } from '../components/join-link'
 import { PageTop } from '../components/page-top'
 import { titleHref } from '../components/tip'
 import { defineMessages, getLocale, Language, useLocale, useMessages } from '../i18n/i18n'
@@ -495,11 +496,17 @@ function GuideResults({
   ask: (name: string) => Promise<GameRequestAnswer>
 }) {
   const t = useMessages(messages)
+  const visitor = useVisitor()
   if (!items.length)
     return (
       <EmptyState>
         <b>{t('empty')}</b> {t('emptyHint')}
-        {missing !== null && <MissingGame key={missing} name={missing} ask={ask} />}
+        {missing !== null &&
+          (visitor ? (
+            <JoinLink why="request" className="button ghost sm guides-missing-button" />
+          ) : (
+            <MissingGame key={missing} name={missing} ask={ask} />
+          ))}
       </EmptyState>
     )
   if (view === 'list')

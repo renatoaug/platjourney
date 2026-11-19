@@ -18,6 +18,7 @@ PlatJourney keeps you company on the way to every PlayStation platinum. It watch
 - **Your account**: change the password or delete the account (everything personal goes; cost records stay without the link to it). A profile whose trophies are private is told how to make them public instead of failing.
 - **Cost records**: every model call is recorded with its tokens, web searches and price (`llm_call`), so whoever runs an instance can see what it really costs.
 - **A read-only demo** for anyone without a PSN account: a fictional player with real games and guides, opened from the sign-in screen.
+- **The app without an account**: anyone browses the guides, the games' pages, the community and the players' profiles, and sees what Nexo answers; the sign-in screen is at `/entrar` ([below](#without-an-account)).
 - **Interests** (games you want to platinum, in your own order), yearly platinum goal with the year's pace (average hours per platinum, the quickest and the longest), profile with every platinum and its real unlock date and rarity, and alerts when a game's online servers are shutting down.
 - **Deals**: the PlayStation Store price of every game someone saved is read every day at 10:00 (Brazil time), when the notices go out. Beside the interests, the games the player's own PS Plus tier includes come first, then the sales with the old price, the members' price and the link to the store; each interest shows its tag. A new or deeper sale, or a saved game entering the player's PS Plus catalog, is a notice. PSN does not tell the PS Plus tier, so the player picks it in the account preferences.
 - **Release calendar** on the home: PS4 and PS5 games coming out in the next weeks and the ones that just came out, the most awaited first, with the guide's difficulty and hours when there is one and a button to save the game. Refreshed once a day.
@@ -31,6 +32,21 @@ A new account opens on a full-screen welcome with the player's level, platinums 
 ## Demo
 
 People without a PSN account, or who do not want to connect one, can open the app as PlatJourneyDemo from the sign-in screen ("See a demo"). The demo player is loaded by `bun run seed` and is read-only for everyone: every screen shows its stored data, nothing it does calls PSN or the AI service, and anything that would write (goals, account settings, plans, recommendations, chat, Telegram) answers with a notice instead. The chat shows example conversations in place of the message box. A server without the demo player loaded answers the demo sign-in with "not available".
+
+## Without an account
+
+The app opens for anyone. Without a session the same layout shows (the menu, the search, every screen), reading only what is public, and the sign-in screen moves to its own address, `/entrar`. Signing out keeps the page on screen and takes away only what belongs to the account.
+
+| Screen | Without an account |
+|---|---|
+| Home | What PlatJourney does, the way to connect the PSN, the guide of the day, the releases and the community's latest. |
+| Guides, a game's page | Whole: the catalog with its filters, each game's trophies, the guide already written, similar games and the store. A visitor never starts a guide's research or a catalog lookup; a game missing from the catalog asks for an account to request it. |
+| Community | The feed of everyone, the rankings and the trending games, and each player's profile (platinums, collection, level, hours, most played and the games being played now). Only players who chose to show up in the community appear, as for anyone signed in. |
+| Games | The releases and the community's games. The library, the interests and the goals wait for the sign-in. |
+| Nexo | Example conversations and the way in, like the demo; the message box is closed. |
+| Journey, history, profile, settings, a plugin's page | An invitation to sign in that comes back to the same page afterwards (`/entrar?next=`). |
+
+The top bar carries "Sign in" and "Sign up" in place of the notices, the sync and the account menu (a phone keeps only "Sign in"), and the menu's end shows the way in where the player's card would be. Every action that writes stays closed, as in the demo. The server answers these reads without a session (`apps/server/src/routes/visitor.ts`): at most 120 a minute per address, and a profile is read from PSN at most once every 10 minutes for all visitors. A guide's page, a profile and the guides are served with their own title, description and picture in the page's head, so link previews and search engines see them before the app runs.
 
 ## Telegram commands
 

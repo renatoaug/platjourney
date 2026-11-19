@@ -48,6 +48,7 @@ const messages = defineMessages({
     search: 'Buscar troféu',
     searchPlaceholder: 'Buscar troféu',
     statusLabel: 'Status dos troféus',
+    signInToFilter: 'Entre na sua conta para ver os seus troféus',
     kindLabel: 'Tipo',
     kind: { natural: 'Natural', hunt: 'Caçada', grind: 'Grind' },
     kinds: { all: 'Todos', natural: 'Naturais', hunt: 'Caçadas', grind: 'Grinds' },
@@ -107,6 +108,7 @@ const messages = defineMessages({
     search: 'Search trophies',
     searchPlaceholder: 'Search trophies',
     statusLabel: 'Trophy status',
+    signInToFilter: 'Sign in to your account to see your own trophies',
     kindLabel: 'Type',
     kind: { natural: 'Natural', hunt: 'Hunt', grind: 'Grind' },
     kinds: { all: 'All', natural: 'Natural', hunt: 'Hunts', grind: 'Grinds' },
@@ -467,7 +469,8 @@ export function TrophyList({
   const t = useMessages(messages)
   const { me } = useApp()
   const [saved] = useState(savedFilters)
-  const [status, setStatus] = useState<Status>(() => savedStatus(saved))
+  // Without an account there are no own trophies to split: always all of them.
+  const [status, setStatus] = useState<Status>(() => (me.visitor ? 'all' : savedStatus(saved)))
   const [group, setGroup] = useState<Group>(() => savedGroup(saved, me.includeDlcProgress))
   const [onlyProgress, setOnlyProgress] = useState(!!saved.onlyProgress)
   // A sort picked by hand sticks, here and on the next games; until then it follows the game.
@@ -568,6 +571,9 @@ export function TrophyList({
                     type="button"
                     data-status={value}
                     aria-pressed={status === value}
+                    // Pending and earned are a player's own: without an account only "all" opens.
+                    disabled={me.visitor === true && value !== 'all'}
+                    title={me.visitor && value !== 'all' ? t('signInToFilter') : undefined}
                     onClick={() => refilter(setStatus)(value)}
                   >
                     {t(`status.${value}`)}

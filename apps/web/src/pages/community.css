@@ -28,6 +28,14 @@
     transition: color var(--motion-tab);
   }
 
+  /* No box around a tab: the keyboard's focus lights its name and underlines it instead. */
+  .community-tabs button:focus-visible {
+    box-shadow: none;
+    color: var(--color-fg);
+    text-decoration: underline;
+    text-underline-offset: 6px;
+  }
+
   .community-tabs button::after {
     content: "";
     position: absolute;

@@ -1,0 +1,134 @@
+@layer screens {
+  .visitor-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .visitor-account {
+    display: grid;
+    gap: 6px;
+    padding: 4px 8px;
+  }
+
+  .visitor-account small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+
+  .visitor-account .button {
+    justify-self: stretch;
+    margin-top: 4px;
+  }
+
+  .visitor-prompt {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    max-width: 620px;
+    margin: 40px auto 0;
+    padding: 48px 40px 36px;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  /* A soft light behind the medal, in the accent color. */
+  .visitor-prompt::before {
+    position: absolute;
+    top: -140px;
+    left: 50%;
+    width: 420px;
+    height: 320px;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    filter: blur(70px);
+    content: "";
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .visitor-prompt > * {
+    position: relative;
+  }
+
+  .visitor-prompt .visitor-prompt-medal {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 6px;
+  }
+
+  .visitor-prompt h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    line-height: 1.1;
+  }
+
+  .visitor-prompt-lead {
+    max-width: 480px;
+    margin: 0;
+    color: var(--color-fg-muted);
+  }
+
+  .visitor-perks {
+    display: grid;
+    gap: 10px;
+    margin: 10px 0 6px;
+    padding: 0;
+    color: var(--color-fg);
+    font-size: var(--text-sm);
+    list-style: none;
+    text-align: left;
+  }
+
+  .visitor-perks li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .visitor-perks .icon {
+    flex: none;
+    color: var(--color-accent);
+  }
+
+  .visitor-prompt-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .visitor-prompt-free {
+    color: var(--color-fg-subtle);
+    font-size: var(--text-xs);
+  }
+
+  .visitor-prompt-guides {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  @media (max-width: 760px) {
+    .visitor-join {
+      display: none;
+    }
+
+    .visitor-prompt {
+      margin-top: 16px;
+      padding: 36px 22px 28px;
+    }
+
+    .visitor-prompt h1 {
+      font-size: var(--text-2xl);
+    }
+
+    .visitor-prompt-actions {
+      flex-direction: column;
+      align-self: stretch;
+    }
+  }
+}

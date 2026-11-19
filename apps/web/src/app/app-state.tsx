@@ -62,11 +62,11 @@ export function AppStateProvider({ me: initial, children }: { me: Me; children: 
   useEffect(() => applySkin(me.skin), [me.skin])
   const [data, setDataState] = useState<AppStateData | null>(null)
   const [loading, setLoading] = useState(false)
-  const [sync, setSync] = useState<SyncStatus>('connecting')
+  const [sync, setSync] = useState<SyncStatus>(initial.visitor ? 'connected' : 'connecting')
   const [syncedAt, setSyncedAt] = useState<Date | null>(null)
   const busy = useRef(false)
   const cache = useRef<Record<string, unknown>>({}).current
-  const [warming, setWarming] = useState(!initial.demo)
+  const [warming, setWarming] = useState(!initial.demo && !initial.visitor)
   const dataRef = useRef<AppStateData | null>(null)
   dataRef.current = data
 
@@ -91,6 +91,8 @@ export function AppStateProvider({ me: initial, children }: { me: Me; children: 
   }, [])
 
   useEffect(() => {
+    // A visitor has no state of their own: each public page loads what it shows.
+    if (initial.visitor) return
     loadState()
     const timer = setInterval(loadState, 60_000)
     // Progress numbers depend on the DLC preference; reload when it changes.
@@ -99,7 +101,7 @@ export function AppStateProvider({ me: initial, children }: { me: Me; children: 
       clearInterval(timer)
       document.removeEventListener('preferences:changed', loadState)
     }
-  }, [loadState])
+  }, [loadState, initial.visitor])
 
   // Signing in starts a PSN sync on the server that takes a few seconds; until the current game
   // arrives, ask again every 3 s for up to 30 s instead of waiting for the next minute.

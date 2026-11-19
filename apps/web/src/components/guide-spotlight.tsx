@@ -1,7 +1,9 @@
 /** The guide of the day on the Guides page: one game with a guide, a new one each day, as a glass
  * card beside the page's title (its scene fills the backdrop behind them). */
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
+import { api } from '../lib/api'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
@@ -131,3 +133,28 @@ export function GuideSpotlightSkeleton() {
     </aside>
   )
 }
+
+export type Spotlight = { status: 'loading' } | { status: 'ok'; game: SpotlightGame | null }
+
+export const fetchSpotlight = () =>
+  api<{ items: SpotlightGame[] }>('/api/guides?').then(({ items }) => pickOfTheDay(items))
+
+/** The guide of the day (for the public home and the screens without an account): its card and
+ * its scene across the top. Nothing when the catalog has none
+ * or does not answer. */
+export function useSpotlight(load: () => Promise<SpotlightGame | null>): Spotlight {
+  const [state, setState] = useState<Spotlight>({ status: 'loading' })
+  useEffect(() => {
+    let live = true
+    load()
+      .then((game) => live && setState({ status: 'ok', game }))
+      .catch(() => live && setState({ status: 'ok', game: null }))
+    return () => {
+      live = false
+    }
+  }, [load])
+  return state
+}
+
+export const sceneOf = (s: Spotlight) =>
+  s.status === 'ok' && s.game?.shot ? image(s.game.shot, 't_1080p') : null

@@ -89,6 +89,7 @@ function LatestNexo() {
 }
 
 function DemoNexo() {
+  const visitor = useApp().me.visitor === true
   return (
     <Page path="/nexo">
       <NexoChat
@@ -97,6 +98,7 @@ function DemoNexo() {
         subtitle=""
         onSend={() => {}}
         demo
+        visitor={visitor}
         onConnect={connectAccount}
       />
     </Page>

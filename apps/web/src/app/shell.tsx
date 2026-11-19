@@ -1,6 +1,13 @@
 /** The signed-in layout: sidebar, top bar and the screen for the current route. */
 
-import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { Link, type Location, Navigate, NavLink, Route, Routes, useLocation } from 'react-router'
 import { AccountMenu, signOut } from '../components/account-menu'
 import { CommandPalette } from '../components/command-palette'
@@ -27,6 +34,7 @@ import { History } from '../pages/history'
 import { Home } from '../pages/home'
 import { Nexo } from '../pages/nexo'
 import { Profile, PublicProfile } from '../pages/profile'
+import { PublicHome, VisitorGames } from '../pages/public-home'
 import { Settings } from '../pages/settings'
 import { Title } from '../pages/title'
 import { menuPages, pluginPages } from '../plugins'
@@ -34,6 +42,7 @@ import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { useApp } from './app-state'
 import { screenOf, useArrival, useScrollMemory } from './navigation'
+import { nextAfterSignIn, SignInPrompt, VisitorAccount, VisitorActions } from './visitor'
 import './shell.css'
 
 const messages = defineMessages({
@@ -218,6 +227,7 @@ function SignOut() {
 /** The whole menu, in two groups: playing (the bottom bar on a phone) and the account, with the plugins' pages before the settings. A pill slides under the active link. */
 export function Nav() {
   const { pathname } = useLocation()
+  const visitor = useApp().me.visitor === true
   const active = pathname.startsWith('/title/') || pathname === '/goals' ? '/games' : pathname
   const t = useMessages(messages)
   const locale = useLocale()
@@ -250,13 +260,18 @@ export function Nav() {
     items: { to: string; label: string; icon: string }[]
   }[] = [
     { key: 'play', items: NAV.map((n) => ({ to: n.to, label: t(n.label), icon: n.icon })) },
-    {
-      key: 'account',
-      items: [
-        ...menuPages().map((p) => ({ to: p.path, label: p.label[locale], icon: p.icon })),
-        { to: '/settings', label: t('nav.settings'), icon: 'settings' },
-      ],
-    },
+    // Someone without an account has no account pages to list.
+    ...(visitor
+      ? []
+      : [
+          {
+            key: 'account',
+            items: [
+              ...menuPages().map((p) => ({ to: p.path, label: p.label[locale], icon: p.icon })),
+              { to: '/settings', label: t('nav.settings'), icon: 'settings' },
+            ],
+          },
+        ]),
   ]
   let order = 0
   return (
@@ -361,6 +376,29 @@ function SyncButton() {
   )
 }
 
+/** The end of the menu: the player's card and the way out, or the way in without an account. */
+function SidebarAccount() {
+  if (useApp().me.visitor) return <VisitorAccount />
+  return (
+    <>
+      <SidebarProfile />
+      <SignOut />
+    </>
+  )
+}
+
+/** The end of the top bar: notices, the sync and the account menu, or the way in. */
+function AccountActions() {
+  if (useApp().me.visitor) return <VisitorActions />
+  return (
+    <>
+      <Notifications />
+      <SyncButton />
+      <AccountMenu />
+    </>
+  )
+}
+
 export function Shell() {
   const t = useMessages(messages)
   const location = useLocation()
@@ -368,6 +406,9 @@ export function Shell() {
   const modal = location.pathname === '/nexo' && background
   const pathname = modal ? background.pathname : location.pathname
   const { me } = useApp()
+  // A screen of the account, for someone without one: the way in instead.
+  const own = (screen: ReactNode, path: string) =>
+    me.visitor ? <SignInPrompt path={path} /> : screen
   const [privateProfile, setPrivateProfile] = useState(false)
   const locale = useLocale()
   const isTitle = pathname.startsWith('/title/')
@@ -412,8 +453,7 @@ export function Shell() {
           <span className="app-version">v{__APP_VERSION__}</span>
         </div>
         <div className="sidebar-account">
-          <SidebarProfile />
-          <SignOut />
+          <SidebarAccount />
         </div>
       </aside>
 
@@ -421,7 +461,7 @@ export function Shell() {
         <header className="topbar">
           <div className="breadcrumb">
             <span className="breadcrumb-root">
-              {t('breadcrumb')} <span>/</span>{' '}
+              {me.visitor ? 'PlatJourney' : t('breadcrumb')} <span>/</span>{' '}
             </span>
             <b id="route-label">{label}</b>
           </div>
@@ -429,31 +469,34 @@ export function Shell() {
             <CommandPalette
               screens={NAV.map((n) => ({ to: n.to, label: t(n.label), icon: n.icon }))}
             />
-            <Notifications />
-            <SyncButton />
-            <AccountMenu />
+            <AccountActions />
           </div>
         </header>
-        {me.demo && <DemoBanner />}
+        {me.demo && !me.visitor && <DemoBanner />}
         <Onboarding />
         {privateProfile && <PrivateNotice />}
         <Routes location={modal ? background : location}>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={me.visitor ? <PublicHome /> : <Home />} />
           <Route path="/overview" element={<Navigate to="/" replace />} />
-          <Route path="/games" element={<Games />} />
-          <Route path="/game" element={<Game />} />
+          <Route path="/games" element={me.visitor ? <VisitorGames /> : <Games />} />
+          <Route path="/game" element={own(<Game />, '/game')} />
           <Route path="/nexo" element={<Nexo />} />
           <Route path="/goals" element={<Navigate to="/games?tab=goals" replace />} />
           <Route path="/discover" element={<DiscoverMoved />} />
           <Route path="/community" element={<Community />} />
           <Route path="/guides" element={<Guides />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/history" element={own(<History />, '/history')} />
+          <Route path="/profile" element={own(<Profile />, '/profile')} />
           <Route path="/profiles/:user" element={<PublicProfile />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings" element={own(<Settings />, '/settings')} />
           <Route path="/title/*" element={<Title />} />
+          {/* Signed in from the sign-in screen: back to the page that sent there. */}
+          <Route
+            path="/entrar"
+            element={<Navigate to={nextAfterSignIn(location.search)} replace />}
+          />
           {pluginPages.map((p) => (
-            <Route key={p.path} path={p.path} element={<p.component />} />
+            <Route key={p.path} path={p.path} element={own(<p.component />, p.path)} />
           ))}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

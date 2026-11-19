@@ -180,7 +180,7 @@ async function catalogDetail(user: User, found: Game, platform: string) {
   }
 }
 
-async function guides({ res, url }: Api) {
+export async function guides({ res, url }: Pick<Api, 'res' | 'url'>) {
   const p = url.searchParams
   return json(
     res,

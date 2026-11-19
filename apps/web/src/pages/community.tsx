@@ -28,7 +28,7 @@ const messages = defineMessages({
     lead: 'As platinas, os troféus raros e as medalhas dos jogadores do PlatJourney, direto da PSN.',
     tabs: 'Seções da comunidade',
     feed: 'Feed',
-    rankings: 'Rankings',
+    rankings: 'Leaderboard',
     games: 'Jogos',
   },
   [Language.En]: {
@@ -37,7 +37,7 @@ const messages = defineMessages({
     lead: 'PlatJourney players’ platinums, rare trophies and medals, straight from PSN.',
     tabs: 'Community sections',
     feed: 'Feed',
-    rankings: 'Rankings',
+    rankings: 'Leaderboard',
     games: 'Games',
   },
 })
@@ -214,7 +214,10 @@ export function Community() {
             me={me.id.replace(/^user:/, '')}
             english={english}
             readOnly={me.demo === true}
-            toolbar={<CommunityVisibility onChange={() => setFeedTry((v) => v + 1)} />}
+            visitor={me.visitor === true}
+            toolbar={
+              me.visitor ? null : <CommunityVisibility onChange={() => setFeedTry((v) => v + 1)} />
+            }
           />
           <CommunitySide onTab={setTab} />
         </div>

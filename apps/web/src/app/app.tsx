@@ -1,7 +1,7 @@
 /** Nothing renders until we know who is signed in: the login screen, the app, or an offline notice.
  * The boot screen covers the start, until the session is known and, signed in, the first data. */
 import { useCallback, useEffect, useState } from 'react'
-import { BrowserRouter } from 'react-router'
+import { BrowserRouter, Route, Routes } from 'react-router'
 import { BootScreen } from '../components/boot-screen'
 import { OfflineScreen } from '../components/offline-screen'
 import {
@@ -22,6 +22,7 @@ import { ToastHost } from '../ui/toast'
 import { TooltipHost } from '../ui/tooltip'
 import { AppStateProvider, useApp } from './app-state'
 import { Shell } from './shell'
+import { VISITOR } from './visitor'
 import './app.css'
 
 const messages = defineMessages({
@@ -109,7 +110,8 @@ export function App() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: loads once, on the first render.
   useEffect(() => {
     loadSession()
-    const out = () => setSession({ kind: 'out' })
+    // Already out (a visitor's page asked for something of an account's): nothing changes.
+    const out = () => setSession((s) => (s.kind === 'out' ? s : { kind: 'out' }))
     document.addEventListener('api:unauthorized', out)
     return () => document.removeEventListener('api:unauthorized', out)
   }, [])
@@ -137,7 +139,19 @@ export function App() {
           </AppStateProvider>
         </BrowserRouter>
       )}
-      {session.kind === 'out' && <Login onSignedIn={signIn} />}
+      {/* Signed out: an assistant asking to connect needs the sign-in first; anyone else reads the
+          app's public side, with the sign-in screen at /entrar. */}
+      {session.kind === 'out' && isConnectPage() && <Login onSignedIn={signIn} />}
+      {session.kind === 'out' && !isConnectPage() && (
+        <BrowserRouter>
+          <AppStateProvider me={VISITOR}>
+            <Routes>
+              <Route path="/entrar" element={<Login onSignedIn={signIn} />} />
+              <Route path="*" element={<Shell />} />
+            </Routes>
+          </AppStateProvider>
+        </BrowserRouter>
+      )}
       {session.kind === 'offline' && <OfflineScreen onRetry={loadSession} />}
       {boot !== 'gone' && <BootScreen leaving={boot === 'leaving'} />}
       <TooltipHost />

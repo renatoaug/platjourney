@@ -580,24 +580,28 @@
      border in the accent, so each skin brings its own color. The line is the bright end of a conic
      gradient turning behind a ring cut by the mask (only the mask's opacity counts, so any opaque
      token draws it); at rest it is hidden. The angle is registered at the end of this file. */
-  :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile) {
+  :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile, article.release) {
     position: relative;
   }
 
-  :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile)::after {
+  :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile, article.release)::after {
     position: absolute;
     z-index: 1;
-    inset: 0;
+    /* On the card's 1px border, with its corner: the cards clip up to the border
+       (overflow-clip-margin), so nothing of the picture shows between the line and the edge. */
+    inset: -1px;
     padding: 1.5px;
     border-radius: inherit;
-    background: conic-gradient(
-      from var(--card-trace),
-      transparent 0 72%,
-      color-mix(in srgb, var(--color-accent) 40%, transparent) 84%,
-      var(--color-accent) 94%,
-      var(--color-fg) 97%,
-      transparent 98%
-    );
+    background:
+      conic-gradient(
+        from var(--card-trace),
+        transparent 0 72%,
+        color-mix(in srgb, var(--color-accent) 40%, transparent) 84%,
+        var(--color-accent) 94%,
+        var(--color-fg) 97%,
+        transparent 98%
+      ),
+      linear-gradient(var(--color-border-strong) 0 0);
     mask:
       linear-gradient(var(--color-shadow) 0 0) content-box exclude,
       linear-gradient(var(--color-shadow) 0 0);
@@ -608,7 +612,7 @@
     animation: card-trace 2.2s linear infinite paused;
   }
 
-  :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile):is(
+  :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile, article.release):is(
     :hover,
     :focus-visible,
     :has(:focus-visible)
@@ -625,7 +629,7 @@
 
   /* Without motion, the line stays still where it starts. */
   @media (prefers-reduced-motion: reduce) {
-    :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile)::after {
+    :is(a.game-card, article.band-card, a.guide-tile, a.collection-tile, article.release)::after {
       animation: none;
     }
   }

@@ -66,6 +66,7 @@ test('an empty profile has nothing to show', async () => {
     fastestStreak: null,
     totalHours: 0,
     mostPlayed: [],
+    playing: [],
   })
 })
 
@@ -186,4 +187,24 @@ test('the demo profile comes from the stored library and platinums, without PSN'
   expect(psn.profileSummary).not.toHaveBeenCalled()
   expect(titleTrophies).not.toHaveBeenCalled()
   expect(save).not.toHaveBeenCalled()
+})
+
+test('playing now is the unfinished games with the latest trophies, newest first, never looked up on IGDB', async () => {
+  const titles = [
+    makeTitle({ npCommunicationId: 'OLD', name: 'Old', lastUpdated: '2026-01-01T00:00:00Z' }),
+    makeTitle({ npCommunicationId: 'NEW', name: 'New', lastUpdated: '2026-03-01T00:00:00Z' }),
+    makeTitle({ npCommunicationId: 'MID', name: 'Mid', lastUpdated: '2026-02-01T00:00:00Z' }),
+    makeTitle({ npCommunicationId: 'LAST', name: 'Last', lastUpdated: '2025-01-01T00:00:00Z' }),
+    makeTitle({ npCommunicationId: 'DONE', progress: 100, lastUpdated: '2026-04-01T00:00:00Z' }),
+    platinumed('PLAT', '2026-04-03T00:00:00Z'),
+    makeTitle({ npCommunicationId: 'ZERO', earned: 0, lastUpdated: '2026-04-02T00:00:00Z' }),
+  ]
+  const page = await profilePage(titles, makeUser())
+  expect(page.playing.map((p) => p.name)).toEqual(['New', 'Mid', 'Old'])
+  expect(page.playing[0]).toMatchObject({
+    game: { id: 'game:NEW' },
+    progress: 50,
+    lastTrophyAt: '2026-03-01T00:00:00Z',
+  })
+  expect(games.gamesForTitles).toHaveBeenCalledWith(expect.any(Array), false)
 })

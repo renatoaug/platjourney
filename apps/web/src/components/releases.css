@@ -26,7 +26,11 @@
     grid-auto-columns: 168px;
     gap: 14px;
     overflow-x: auto;
-    padding-bottom: 6px;
+    /* Room for a card that rises on hover with its line around it: a row that scrolls clips what
+       passes its edges. The negative margins keep the cards where they were. */
+    margin: -4px -4px 0;
+    padding: 4px 4px 6px;
+    scroll-padding-inline: 4px;
     scroll-snap-type: x proximity;
     scrollbar-width: thin;
   }
@@ -39,15 +43,18 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-control);
     background: var(--color-surface);
-    overflow: hidden;
+    /* Clips up to the border, not inside it, so the hover line (surfaces.css) lies on it. */
+    overflow: clip;
+    overflow-clip-margin: 1px;
     scroll-snap-align: start;
     transition:
       border-color 0.15s,
       transform 0.15s;
   }
 
+  /* The accent on hover is the line running along the border (surfaces.css). */
   .release:hover {
-    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    border-color: var(--color-border-strong);
     transform: translateY(-2px);
   }
 

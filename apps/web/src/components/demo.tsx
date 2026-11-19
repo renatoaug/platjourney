@@ -25,9 +25,13 @@ const messages = defineMessages({
 /** True while the signed-in player is the shared demo one. */
 export const useDemo = (): boolean => useApp().me.demo === true
 
-/** Leaves the demo for the sign-in screen. */
+/** Leaves the demo, or the public side, for the sign-in screen. */
 export async function connectAccount(): Promise<void> {
   await api('/api/auth/logout', {}).catch(() => {})
+  // The app starts over without the account, on the sign-in screen's address.
+  window.history.pushState({}, '', '/entrar')
+  // Already without one (the public side), the router only has to follow the new address.
+  window.dispatchEvent(new PopStateEvent('popstate'))
   document.dispatchEvent(new Event('api:unauthorized'))
 }
 

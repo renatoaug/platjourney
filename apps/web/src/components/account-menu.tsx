@@ -40,7 +40,8 @@ const CLOSE_MS = 140
 /** Ends the session when the server confirms it, then starts over from the sign-in screen. */
 export async function signOut(): Promise<void> {
   await api('/api/auth/logout', {})
-  location.assign('/')
+  // The same page comes back without the account: what is public stays on screen.
+  location.reload()
 }
 
 export function AccountMenu({
