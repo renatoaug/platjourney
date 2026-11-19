@@ -330,6 +330,47 @@ function _hasFacts(g: CurrentGame['game']) {
   )
 }
 
+/** The journey's row: where the player is and the missables, a preview of a catalog game, or
+ * closed for someone without an account. */
+function JourneyRow({
+  game: c,
+  catalog,
+  done,
+  onOpen,
+}: {
+  game: CurrentGame
+  catalog: boolean
+  done: boolean
+  onOpen: () => void
+}) {
+  const t = useMessages(messages)
+  const visitor = useApp().me.visitor === true
+  const missables = c.guide?.missables?.length ?? 0
+  const hasMissables = missables > 0 || !!c.guide?.hasMissables
+  const lead = visitor
+    ? t('journeyLocked')
+    : catalog
+      ? t('journeyPreview')
+      : journeyLead(t, done, c.focus?.trophy)
+  return (
+    <GameLink
+      accent
+      icon="compass"
+      title={t('journey')}
+      lead={lead}
+      locked={visitor}
+      side={
+        !done && !catalog && hasMissables ? (
+          <span className="game-link-pill">
+            {missables ? t('missables', { count: missables }) : t('hasMissables')}
+          </span>
+        ) : undefined
+      }
+      onOpen={onOpen}
+    />
+  )
+}
+
 /** The game's pages as rows: the journey, the guide, the session route, and the facts, which
  * unfold in place. A catalog game has no session and shows the journey only with its list. */
 function GameLinks({
@@ -343,38 +384,14 @@ function GameLinks({
 }) {
   const t = useMessages(messages)
   const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
-  const missables = c.guide?.missables?.length ?? 0
-  const hasMissables = missables > 0 || !!c.guide?.hasMissables
   const g = c.guide
   const about = [c.game.developers?.[0], c.game.release_year].filter(Boolean).join(' · ')
   const [aboutOpen, setAboutOpen] = useState(false)
-  // The journey needs an account: someone without one sees it closed.
-  const visitor = useApp().me.visitor === true
   return (
     <nav className="game-links" aria-label={c.name}>
       {/* A catalog game without its list yet has no route to preview. */}
       {(!catalog || c.trophies.length > 0) && (
-        <GameLink
-          accent
-          icon="compass"
-          title={t('journey')}
-          lead={
-            visitor
-              ? t('journeyLocked')
-              : catalog
-                ? t('journeyPreview')
-                : journeyLead(t, done, c.focus?.trophy)
-          }
-          locked={visitor}
-          side={
-            !done && !catalog && hasMissables ? (
-              <span className="game-link-pill">
-                {missables ? t('missables', { count: missables }) : t('hasMissables')}
-              </span>
-            ) : undefined
-          }
-          onOpen={() => onOpen('journey')}
-        />
+        <JourneyRow game={c} catalog={catalog} done={done} onOpen={() => onOpen('journey')} />
       )}
       <GameLink
         icon="book-open"

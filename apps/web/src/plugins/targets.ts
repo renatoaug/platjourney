@@ -178,6 +178,7 @@ export type Target =
   | 'JourneyChat'
   | 'JourneyLink'
   | 'JourneyPage'
+  | 'JourneyRow'
   | 'JourneySkeleton'
   | 'JourneyWarning'
   | 'KeyArt'
