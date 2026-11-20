@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.91.0](https://github.com/renatoaug/platjourney/compare/v0.90.1...v0.91.0) (2026-11-20)
+
+### Features
+
+* **web:** without an account a game opens on the guide and the journey shows blurred ([#214](https://github.com/renatoaug/platjourney/issues/214)) ([1fc68fd](https://github.com/renatoaug/platjourney/commit/1fc68fd4b0fdb340ece4929e70be514055e03a70))
+
 ## [0.90.1](https://github.com/renatoaug/platjourney/compare/v0.90.0...v0.90.1) (2026-11-20)
 
 ### Bug Fixes
