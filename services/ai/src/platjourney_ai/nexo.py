@@ -814,10 +814,15 @@ async def ask_reply(
     conversation: bool = False,
     extra: str = '',
     search: bool = False,
+    must_search: bool = False,
 ) -> llm.Reply:
     """The answer, with whether it searched the web and what it cited. `search` lets this one
-    call search even when the instance has web search off."""
+    call search even when the instance has web search off; `must_search` makes it search before
+    answering instead of leaving the choice to the model."""
     turns = [t.model_dump() for t in history or []]
+    forced: dict[str, Any] = (
+        {'tool_choice': {'type': 'web_search'}} if search and must_search else {}
+    )
     response = await llm.respond(
         search=search,
         instructions=(
@@ -827,6 +832,7 @@ async def ask_reply(
             + LANGUAGE.get(locale, '')
         ),
         tools=[{'type': 'web_search'}],
+        **forced,
         reasoning={'effort': 'low'},
         max_output_tokens=settings.chat_max_output_tokens,
         input=[*turns, {'role': 'user', 'content': f'{context}\n\n---\n{ASKED}\n{user_text}'}],
@@ -988,9 +994,12 @@ async def reply(
             await record_gap(ctx, text, answered=False)
         return cite(answered, used)
     # The deep guide has nothing on this: one web search, within the day's budget, then the
-    # question is kept for the guides either way, with what the search found.
+    # question is kept for the guides either way, with what the search found. The search is not
+    # left to the model: without a guide, an answer from the trophy list alone would be a guess.
     search = await gap_search_left()
-    answer = await ask_reply(text, context, history, ctx.locale, conversation=True, search=search)
+    answer = await ask_reply(
+        text, context, history, ctx.locale, conversation=True, search=search, must_search=search
+    )
     await record_gap(
         ctx,
         text,

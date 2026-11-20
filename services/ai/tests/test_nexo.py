@@ -409,6 +409,45 @@ async def test_a_question_without_passages_is_recorded_as_a_gap(
     assert recorded == ['onde fica o arco?']
 
 
+async def test_a_question_the_guide_cannot_answer_searches_the_web_first(
+    model: Model, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def no_passages(*_: Any, **__: Any) -> list[Any]:
+        return []
+
+    async def record(*_: Any, **__: Any) -> None:
+        return None
+
+    async def budget_left() -> bool:
+        return True
+
+    monkeypatch.setattr(nexo.deepguide, 'retrieve', no_passages)
+    monkeypatch.setattr(nexo, 'record_gap', record)
+    monkeypatch.setattr(nexo, 'gap_search_left', budget_left)
+    await nexo.reply('tem algum perdível?', context(), [])
+    assert model.calls[-1]['tool_choice'] == {'type': 'web_search'}
+
+
+async def test_without_budget_the_answer_does_not_search(
+    model: Model, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def no_passages(*_: Any, **__: Any) -> list[Any]:
+        return []
+
+    async def record(*_: Any, **__: Any) -> None:
+        return None
+
+    async def no_budget() -> bool:
+        return False
+
+    monkeypatch.setattr(nexo.deepguide, 'retrieve', no_passages)
+    monkeypatch.setattr(nexo, 'record_gap', record)
+    monkeypatch.setattr(nexo, 'gap_search_left', no_budget)
+    await nexo.reply('tem algum perdível?', context(), [])
+    assert 'tool_choice' not in model.calls[-1]
+    assert model.calls[-1]['search'] is False
+
+
 def test_nexo_keeps_to_playstation_and_treats_messages_as_content() -> None:
     prompt = nexo.system_prompt()
     assert 'Você só fala de PlayStation' in prompt
