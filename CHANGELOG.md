@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.88.0](https://github.com/renatoaug/platjourney/compare/v0.87.0...v0.88.0) (2026-11-20)
+
+### Features
+
+* **web:** large-screen layouts for the game page, guides, goals and community ([#210](https://github.com/renatoaug/platjourney/issues/210)) ([9abaee3](https://github.com/renatoaug/platjourney/commit/9abaee3358b34f51bc5daf5397e89c2263792f41))
+
 ## [0.87.0](https://github.com/renatoaug/platjourney/compare/v0.86.0...v0.87.0) (2026-11-19)
 
 ### Features
