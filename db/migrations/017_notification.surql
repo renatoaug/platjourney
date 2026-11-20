@@ -2,8 +2,9 @@
 -- session, server warnings), shown under the bell. The full text stays in tip.
 DEFINE TABLE IF NOT EXISTS notification SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS user ON notification TYPE record<user>;
--- 'deal': a game in the player's interests went on sale.
-DEFINE FIELD IF NOT EXISTS kind ON notification TYPE string ASSERT $value IN ['start', 'unlock', 'session', 'server', 'route', 'deal'];
+-- 'deal': a game in the player's interests went on sale. 'answer': a question Nexo could not
+-- answer, once the guide had it. 'platinum': a trophy notice that brings the platinum.
+DEFINE FIELD OVERWRITE kind ON notification TYPE string ASSERT $value IN ['start', 'unlock', 'session', 'server', 'route', 'deal', 'answer', 'platinum'];
 DEFINE FIELD IF NOT EXISTS content ON notification TYPE string;
 DEFINE FIELD IF NOT EXISTS game ON notification TYPE option<record<game>>;
 DEFINE FIELD IF NOT EXISTS tip ON notification TYPE option<record<tip>>;
