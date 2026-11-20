@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.90.1](https://github.com/renatoaug/platjourney/compare/v0.90.0...v0.90.1) (2026-11-20)
+
+### Bug Fixes
+
+* **db:** notifications accept the answer and platinum kinds ([#213](https://github.com/renatoaug/platjourney/issues/213)) ([bdd8d88](https://github.com/renatoaug/platjourney/commit/bdd8d88a1ed758de7f4d03e32ad89bb7103fe574))
+
 ## [0.90.0](https://github.com/renatoaug/platjourney/compare/v0.89.0...v0.90.0) (2026-11-20)
 
 ### Features
