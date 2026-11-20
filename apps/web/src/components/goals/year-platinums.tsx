@@ -296,6 +296,86 @@ export function YearPlatinums({ goals: p, busy = false }: { goals: YearGoals; bu
   )
 }
 
+/** The year's platinums for a large screen: every cover at once, grouped by month, most recent
+ * first. The season card above already draws the months, so there is no bar chart and no pages. */
+export function YearPlatinumWall({ goals: p }: { goals: YearGoals }) {
+  const t = useMessages(messages)
+  const all = [...p.platinumed].sort((a, b) => b.at.localeCompare(a.at))
+  const groups = new Map<number, Platinum[]>()
+  for (const g of all) groups.set(monthOf(g), [...(groups.get(monthOf(g)) ?? []), g])
+  return (
+    <section className="card year-wall" id="year-platinums">
+      <div className="year-heading">
+        <h2>
+          <TrophyMedal type="platinum" /> {t('year.title', { year: p.year })}
+        </h2>
+        <span className="key-count">{all.length}</span>
+      </div>
+      {all.length ? (
+        <div className="year-wall-flow">
+          {[...groups].map(([month, games]) => (
+            <section key={month} className="year-wall-month">
+              <h3>
+                {new Date(p.year, month, 1).toLocaleDateString(getLocale(), { month: 'long' })}
+                <span>{games.length}</span>
+              </h3>
+              <ul>
+                {games.map((g) => {
+                  const order = all.length - all.indexOf(g)
+                  return (
+                    <li key={`${g.game.id}-${g.at}`} className="year-tile">
+                      <Link to={`/title/game/${encodeURIComponent(g.game.id)}`}>
+                        <Cover
+                          url={g.game.cover_url}
+                          name={g.game.name}
+                          className="year-tile-cover"
+                        />
+                        {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: the badge reads as "platina número N" */}
+                        <span
+                          className="year-tile-order"
+                          aria-label={t('year.order', { n: order })}
+                        >
+                          #{String(order).padStart(2, '0')}
+                        </span>
+                        <b>{g.game.name}</b>
+                        <small>
+                          <time dateTime={g.at}>
+                            {new Date(`${g.at}T12:00:00`).toLocaleDateString(getLocale(), {
+                              day: '2-digit',
+                              month: '2-digit',
+                            })}
+                          </time>
+                          {g.hours != null && ` ${t('year.played', { hours: fmtHours(g.hours) })}`}
+                        </small>
+                      </Link>
+                      <SharePlatinum gameId={g.game.id} name={g.game.name} />
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="year-empty">{t('year.empty')}</div>
+      )}
+    </section>
+  )
+}
+
+/** The year in numbers beside the wall: the pace and the share of the whole collection. */
+export function YearRail({ goals: p }: { goals: YearGoals }) {
+  const t = useMessages(messages)
+  if (!p.platinumed.length) return null
+  return (
+    <aside className="card year-rail" aria-label={t('year.pace')}>
+      <h2>{t('year.pace')}</h2>
+      <YearPace platinums={p.platinumed} />
+      <ShareCollection />
+    </aside>
+  )
+}
+
 /** The year's pace from the platinums with play time: the average, the quickest and the longest.
  * Needs two to compare. */
 function YearPace({ platinums }: { platinums: Platinum[] }) {

@@ -365,3 +365,87 @@
     transform: scale(1.06);
   }
 }
+
+@layer screens {
+  /* The column beside the feed: the scopes as a short menu, the visibility switch under it. */
+  .community-rail {
+    display: grid;
+    gap: 12px;
+  }
+
+  .community-rail-scopes.card {
+    display: grid;
+    gap: 2px;
+    padding: 8px;
+  }
+
+  .community-rail-scopes button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    min-height: 40px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-fg-soft);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .community-rail-scopes button .icon {
+    width: 16px;
+    height: 16px;
+    color: var(--color-fg-muted);
+  }
+
+  .community-rail-scopes button:hover {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg);
+  }
+
+  .community-rail-scopes button[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    color: var(--color-accent);
+  }
+
+  .community-rail-scopes button[aria-pressed="true"] .icon {
+    color: var(--color-accent);
+  }
+
+  .community-rail-toolbar.card {
+    padding: 12px 14px;
+  }
+
+  /* In the reading column a post is tighter: the player's line, then what happened beside a small
+     box art, then the reactions; no tall empty middle. */
+  .community-feed-layout.is-wide .community-event {
+    grid-template-columns: minmax(0, 1fr) 64px;
+    gap: 10px 14px;
+    padding: 14px 16px;
+  }
+
+  .community-feed-layout.is-wide .community-event-body {
+    gap: 8px;
+  }
+
+  .community-feed-layout.is-wide .community-event-quote {
+    padding: 8px 12px;
+  }
+
+  .community-feed-layout.is-wide .community-event-cover {
+    width: 64px;
+    align-self: start;
+  }
+
+  .community-feed-layout.is-wide .community-event-title {
+    font-size: var(--text-lg);
+  }
+
+  .community-feed-layout.is-wide .community-event-scene {
+    opacity: 0.18;
+  }
+}

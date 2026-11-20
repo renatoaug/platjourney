@@ -290,3 +290,35 @@
     }
   }
 }
+
+@layer screens {
+  /* A large screen: the three boards side by side, each its own podium and list, the period
+     switch alone on the bar above them. */
+  .community-rankings.is-wide .community-rankings-bar {
+    max-width: none;
+    justify-content: flex-end;
+  }
+
+  .community-boards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 20px;
+  }
+
+  .community-board-column {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .community-board-column h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+  }
+
+  .community-board-column .community-board.card {
+    max-width: none;
+  }
+}

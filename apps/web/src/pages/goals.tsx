@@ -13,10 +13,11 @@ import { NextPickLink } from '../components/goals/next-pick'
 import { NextUp, nextUp } from '../components/goals/next-up'
 import type { GoalFilter } from '../components/goals/season'
 import { useKept } from '../components/goals/use-kept'
-import { YearPlatinums } from '../components/goals/year-platinums'
+import { YearPlatinums, YearPlatinumWall, YearRail } from '../components/goals/year-platinums'
 import { PageTop } from '../components/page-top'
 import { defineMessages, Language, translator, useMessages } from '../i18n/i18n'
 import type { Game, Interest, YearGoals } from '../lib/types'
+import { useMedia, WIDE } from '../lib/use-media'
 import { Icon } from '../ui/icon'
 import { Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
@@ -172,6 +173,36 @@ function SeasonHeader({
   )
 }
 
+/** The goals tab: the season, then the year's platinums. A large screen shows every cover at once
+ * beside the year's numbers; a phone keeps the month chart and the pages. */
+function GoalsYear({
+  season,
+  goals,
+  busy,
+}: {
+  season: ReactNode
+  goals: YearGoals
+  busy: boolean
+}) {
+  const wide = useMedia(WIDE)
+  if (!wide)
+    return (
+      <>
+        {season}
+        <YearPlatinums goals={goals} busy={busy} />
+      </>
+    )
+  return (
+    <div className="goals-desk">
+      {season}
+      <div className="goals-desk-body">
+        <YearPlatinumWall goals={goals} />
+        <YearRail goals={goals} />
+      </div>
+    </div>
+  )
+}
+
 /**
  * Everything below the page head. Open editors, the add panel and its draft live in state kept
  * across navigation, so the periodic /api/state refresh never discards them.
@@ -271,13 +302,7 @@ export function GoalsView({
       onSet={(target) => save(`set ${target}`)}
     />
   )
-  if (section === 'goals')
-    return (
-      <>
-        {seasonView}
-        <YearPlatinums goals={p} busy={busy} />
-      </>
-    )
+  if (section === 'goals') return <GoalsYear season={seasonView} goals={p} busy={busy} />
   return (
     <>
       <SeasonHeader compact={compact} section={section} goals={p}>
