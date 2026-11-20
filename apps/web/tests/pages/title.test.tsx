@@ -1,7 +1,8 @@
-import { afterEach, expect, jest, mock, test } from 'bun:test'
+import { afterEach, expect, jest, mock, spyOn, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { MockAppState, SAMPLE_DATA } from '../../src/app/app-state'
+import { VISITOR } from '../../src/app/visitor'
 import { NexoBubble } from '../../src/components/nexo-bubble'
 import { similarGamesData } from '../../src/components/similar-games.stories'
 import type { GuideDetail } from '../../src/lib/types'
@@ -25,7 +26,11 @@ const quickFacts = () => document.querySelector('.journey-guide .quick-facts')?.
 const titleCalls = (calls: { path: string }[]) =>
   calls.filter((c) => c.path.startsWith('/api/title'))
 
-function open(path: string, detail: TitleDetail | ReturnType<typeof reply>) {
+function open(
+  path: string,
+  detail: TitleDetail | ReturnType<typeof reply>,
+  value?: Parameters<typeof MockAppState>[0]['value'],
+) {
   // The page also asks for similar games once it has the game; none here unless a test says so.
   const calls = mockApi({ '/api/title': () => detail, '/api/games/similar': { items: [] } })
   // The shell's floating Nexo, which follows the game on screen.
@@ -34,7 +39,7 @@ function open(path: string, detail: TitleDetail | ReturnType<typeof reply>) {
       <Title />
       <NexoBubble initial={{ x: 0, y: 0 }} />
     </>,
-    { path, route: '/title/*' },
+    { path, route: '/title/*', value },
   )
   return { calls, ...view }
 }
@@ -323,6 +328,15 @@ test('a catalog game offers a roadmap preview without asserting ownership or per
   expect(document.querySelector('.roadmap-total')?.textContent).not.toContain('progresso')
   expect(screen.queryByRole('button', { name: 'Voltar ao meu progresso' })).toBeNull()
   expect(document.querySelector('.roadmap-past')).toBeNull()
+})
+
+test('on a large screen, without an account, a game with a guide opens on the guide', async () => {
+  const wide = { matches: true, addEventListener() {}, removeEventListener() {} }
+  spyOn(window, 'matchMedia').mockReturnValue(wide as unknown as MediaQueryList)
+  open('/title/game/game%3A19561', recommendedData, { me: VISITOR })
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
+  expect(screen.getByRole('button', { name: 'Guia' }).getAttribute('aria-pressed')).toBe('true')
+  expect(document.querySelector('#journey-guide-section')).toBeTruthy()
 })
 
 test('a game the player does not own offers Nexo on its trophies, by the catalog game', async () => {

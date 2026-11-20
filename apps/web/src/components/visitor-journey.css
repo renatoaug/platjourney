@@ -1,0 +1,109 @@
+@layer screens {
+  /* The journey drawn from placeholders, blurred, with the way in on top. */
+  .visitor-journey {
+    display: grid;
+    margin-block: 8px 28px;
+  }
+
+  .visitor-journey > * {
+    grid-area: 1 / 1;
+  }
+
+  .visitor-journey-preview {
+    max-height: 640px;
+    padding: 24px 28px;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    opacity: 0.8;
+    filter: blur(4px) saturate(0.85);
+    mask-image: linear-gradient(var(--color-fg) 85%, transparent);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .visitor-journey-card.card {
+    z-index: 1;
+    display: grid;
+    gap: 16px;
+    align-self: center;
+    justify-self: center;
+    width: min(560px, 100%);
+    margin-block: 24px;
+    padding: 28px;
+    box-shadow: 0 24px 60px color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+  }
+
+  .visitor-journey-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .visitor-journey-head h3 {
+    margin: 2px 0 0;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+  }
+
+  .visitor-journey-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-round);
+    color: var(--color-accent);
+  }
+
+  .visitor-journey-lead {
+    margin: 0;
+    color: var(--color-fg-muted);
+  }
+
+  .visitor-journey-perks {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .visitor-journey-perks li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+  }
+
+  .visitor-journey-perks .icon {
+    flex: none;
+    color: var(--color-accent);
+  }
+
+  .visitor-journey-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .visitor-journey-actions .button {
+    gap: 8px;
+  }
+
+  @media (max-width: 560px) {
+    .visitor-journey-preview {
+      padding: 16px;
+    }
+
+    .visitor-journey-card.card {
+      padding: 20px;
+    }
+
+    .visitor-journey-actions .button {
+      flex: 1 1 100%;
+    }
+  }
+}
