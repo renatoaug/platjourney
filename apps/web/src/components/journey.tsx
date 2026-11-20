@@ -24,6 +24,7 @@ import { GameAbout } from './game-showcase'
 import { Guide } from './guide'
 import { TrophyList, TrophyListSkeleton } from './trophy-list'
 import { TrophyRoadmap } from './trophy-roadmap'
+import { VisitorJourney } from './visitor-journey'
 import './journey.css'
 import { useNexoTarget } from './nexo-bubble'
 import { nexoHref } from './tip'
@@ -69,6 +70,43 @@ function JourneyWarning({
   )
 }
 
+/** The journey's page: the player's route; for a catalog game the preview from scratch, blurred
+ * with the way in on top for someone without an account. */
+function JourneyRoute({
+  game: c,
+  catalog,
+  np,
+  wide,
+}: {
+  game: CurrentGame
+  catalog: boolean
+  np: string
+  wide: boolean
+}) {
+  const visitor = useApp().me.visitor === true
+  const layout = wide ? 'route' : 'path'
+  if (!catalog) {
+    const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
+    const focus = done || c.guide?.unobtainable ? null : c.focus
+    return (
+      <>
+        <TrophyRoadmap key={c.np} game={c} layout={layout} />
+        <JourneyWarning warning={focus?.missable} trophies={c.trophies} />
+      </>
+    )
+  }
+  if (!c.trophies.length) return null
+  if (visitor) return <VisitorJourney game={{ ...c, np }} />
+  return (
+    <TrophyRoadmap
+      key={np}
+      preview
+      layout={layout}
+      game={{ game: c.game, name: c.name, np, trophies: c.trophies, guide: c.guide }}
+    />
+  )
+}
+
 /** What one of the game's own pages holds: the route (a preview for a catalog game), the guide,
  * the session route or the facts. */
 function JourneyPage({
@@ -88,26 +126,9 @@ function JourneyPage({
   wide?: boolean
 }) {
   const t = useMessages(messages)
-  const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
-  const focus = done || c.guide?.unobtainable || catalog ? null : c.focus
   return (
     <>
-      {view === 'journey' &&
-        (catalog ? (
-          c.trophies.length > 0 && (
-            <TrophyRoadmap
-              key={np}
-              preview
-              layout={wide ? 'route' : 'path'}
-              game={{ game: c.game, name: c.name, np, trophies: c.trophies, guide: c.guide }}
-            />
-          )
-        ) : (
-          <>
-            <TrophyRoadmap key={c.np} game={c} layout={wide ? 'route' : 'path'} />
-            <JourneyWarning warning={focus?.missable} trophies={c.trophies} />
-          </>
-        ))}
+      {view === 'journey' && <JourneyRoute game={c} catalog={catalog} np={np} wide={wide} />}
       {view === 'guide' && (
         <section className="journey-guide is-page" id="journey-guide-section">
           {!c.guide && <GameAbout game={c.game} name={c.name} />}
@@ -154,9 +175,17 @@ function JourneyTrophies({ game: c, catalog }: { game: CurrentGame; catalog: boo
   )
 }
 
-/** The tab a large screen opens: the one asked for, else the journey when it can be walked. */
-function deskTabOf(asked: GameView | null, visitor: boolean, trophies: number): GameView {
-  return asked ?? (!visitor && trophies > 0 ? 'journey' : 'trophies')
+/** The tab a large screen opens: the one asked for, else the journey when it can be walked, else
+ * the guide when there is one (what someone without an account came for), else the trophies. */
+function deskTabOf(
+  asked: GameView | null,
+  visitor: boolean,
+  trophies: number,
+  guide: boolean,
+): GameView {
+  if (asked) return asked
+  if (!visitor && trophies > 0) return 'journey'
+  return guide ? 'guide' : 'trophies'
 }
 
 /** The one game page, whether opened from PSN presence, the library or the catalog: the game at a
@@ -194,8 +223,8 @@ export function Journey({
   const title = useViewTitle()
   const visitor = useApp().me.visitor === true
   // The journey opens first on a large screen, unless it is closed (no account) or there is no
-  // list to walk yet.
-  const deskTab = deskTabOf(asked, visitor, c.trophies.length)
+  // list to walk yet: then the guide.
+  const deskTab = deskTabOf(asked, visitor, c.trophies.length, !!c.guide)
   const scenes = <ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />
   const trophyList = trophies ?? <JourneyTrophies game={c} catalog={!!catalog} />
   // A large screen: the game's pages as tabs beside a summary that stays in place.

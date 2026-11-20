@@ -4,7 +4,6 @@
  * missable trophies, and Nexo on this game. Phones and tablets keep the overview with its rows. */
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { fmtHours, fmtPlayTime, number, pct } from '../lib/format'
 import { trophyName } from '../lib/trophy-text'
@@ -52,7 +51,6 @@ const messages = defineMessages({
     nexo: 'Pergunte ao Nexo',
     nexoLead: 'Dúvidas sobre {name}, com o guia e o seu progresso.',
     nexoAsk: 'Abrir conversa',
-    locked: 'Entre na sua conta',
   },
   [Language.En]: {
     tabs: "The game's pages",
@@ -87,7 +85,6 @@ const messages = defineMessages({
     nexo: 'Ask Nexo',
     nexoLead: 'Questions about {name}, with the guide and your progress.',
     nexoAsk: 'Open a chat',
-    locked: 'Sign in to your account',
   },
 })
 
@@ -336,12 +333,11 @@ export function GameDesk({
   wide?: boolean
 }) {
   const t = useMessages(messages)
-  const visitor = useApp().me.visitor === true
   const earned = trophies.filter((x) => x.earned).length
   const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
-  const tabs: { key: GameView; icon: string; label: string; locked?: boolean }[] = [
+  const tabs: { key: GameView; icon: string; label: string }[] = [
     ...(c.trophies.length || !catalog
-      ? [{ key: 'journey' as const, icon: 'compass', label: t('tab.journey'), locked: visitor }]
+      ? [{ key: 'journey' as const, icon: 'compass', label: t('tab.journey') }]
       : []),
     { key: 'guide', icon: 'book-open', label: t('tab.guide') },
     { key: 'trophies', icon: 'trophy', label: t('tab.trophies') },
@@ -391,11 +387,9 @@ export function GameDesk({
             type="button"
             className={`game-desk-tab is-${x.key}`}
             aria-pressed={tab === x.key}
-            disabled={x.locked}
-            title={x.locked ? t('locked') : undefined}
             onClick={() => onTab(x.key)}
           >
-            <Icon name={x.locked ? 'eye-off' : x.icon} />
+            <Icon name={x.icon} />
             {x.label}
           </button>
         ))}
@@ -413,7 +407,7 @@ export function GameDesk({
                 earned={earned}
                 total={trophies.length}
                 progress={progress}
-                onJourney={visitor || tab === 'journey' ? undefined : () => onTab('journey')}
+                onJourney={tab === 'journey' ? undefined : () => onTab('journey')}
               />
             )}
             <MissablesCard game={c} onGuide={() => onTab('guide')} />

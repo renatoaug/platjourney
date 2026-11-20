@@ -100,10 +100,11 @@ test('a game without a guide shows no guide numbers and no missables', () => {
   expect(document.querySelector('.game-desk-missables')).toBeNull()
 })
 
-test('a visitor sees the journey tab locked', () => {
-  desk(current, { visitor: true })
+test('a visitor can open the journey too: the hosted instance draws it blurred, with the way in', () => {
+  const onTab = mock()
+  desk(current, { visitor: true, onTab })
   const journey = screen.getByRole('button', { name: 'Jornada' }) as HTMLButtonElement
-  expect(journey.disabled).toBe(true)
-  expect(journey.title).toBe('Entre na sua conta')
-  expect(screen.queryByRole('button', { name: /Seguir a jornada/ })).toBeNull()
+  expect(journey.disabled).toBe(false)
+  fireEvent.click(journey)
+  expect(onTab).toHaveBeenLastCalledWith('journey')
 })
