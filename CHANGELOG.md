@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.89.0](https://github.com/renatoaug/platjourney/compare/v0.88.0...v0.89.0) (2026-11-20)
+
+### Features
+
+* **web:** the default look is the new identity ([#211](https://github.com/renatoaug/platjourney/issues/211)) ([ff7f11c](https://github.com/renatoaug/platjourney/commit/ff7f11c3eb44e3f26c18dcd09dc926ba2722b316))
+
 ## [0.88.0](https://github.com/renatoaug/platjourney/compare/v0.87.0...v0.88.0) (2026-11-20)
 
 ### Features
