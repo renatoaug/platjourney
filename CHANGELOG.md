@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.90.0](https://github.com/renatoaug/platjourney/compare/v0.89.0...v0.90.0) (2026-11-20)
+
+### Features
+
+* **ai:** a question the guide cannot answer searches the web first ([#212](https://github.com/renatoaug/platjourney/issues/212)) ([36350ca](https://github.com/renatoaug/platjourney/commit/36350caeccbf83fef30c2515e90ae40a8eb32fb9))
+
 ## [0.89.0](https://github.com/renatoaug/platjourney/compare/v0.88.0...v0.89.0) (2026-11-20)
 
 ### Features
