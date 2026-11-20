@@ -2055,6 +2055,7 @@
   /* The chosen trophy as one card: the trophy on top, then its objective and how to do it, each a
      block under a hairline, close together. */
   .jroute-detail {
+    align-content: start;
     overflow: hidden;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
@@ -2063,6 +2064,7 @@
 
   .jroute-detail .roadmap-focus {
     grid-template-columns: minmax(0, 1fr);
+    align-content: start;
     gap: 0;
   }
 
@@ -2115,6 +2117,12 @@
 
   .jroute-detail .roadmap-advice-head .roadmap-ask {
     margin-left: 12px;
+  }
+
+  /* Alone (no tip to head it), the way to Nexo starts on the text's edge. */
+  .jroute-detail .roadmap-advice-head > .roadmap-ask:first-child {
+    margin-left: 0;
+    padding-left: 0;
   }
 
   /* Under the board, the journey's box has no route above it: no line along its top. */

@@ -417,6 +417,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
           {!quiet && <AdviceAsk trophy={trophy} game={game} />}
         </div>
       )}
+
       {/* On a wide screen the lists of places sit beside the steps instead of under them. */}
       <div className="roadmap-advice-body">
         <div className="roadmap-advice-main">
