@@ -218,8 +218,14 @@
     border-radius: 2px;
   }
 
+  /* The default look: its night with the green glow and the brand's lime. */
   .skin-swatch.is-default {
-    background: var(--color-skin-default-bg);
+    background: linear-gradient(
+      160deg,
+      var(--color-skin-default-glow),
+      var(--color-skin-default-bg) 60%
+    );
+    border-color: var(--color-skin-default-accent);
   }
 
   .skin-swatch.is-default i {
@@ -278,19 +284,6 @@
       var(--color-skin-christmas-accent) 0 3px,
       var(--color-skin-christmas-snow) 3px 6px
     );
-  }
-
-  .skin-swatch.is-aurora {
-    background: linear-gradient(
-      160deg,
-      var(--color-skin-aurora-glow),
-      var(--color-skin-aurora-bg) 60%
-    );
-    border-color: var(--color-skin-aurora-accent);
-  }
-
-  .skin-swatch.is-aurora i {
-    background: var(--color-skin-aurora-accent);
   }
 
   .accent-swatch {
