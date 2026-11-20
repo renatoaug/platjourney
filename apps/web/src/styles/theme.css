@@ -7,16 +7,19 @@
  * each semantic token points to.
  */
 :root {
-  --palette-neutral-950: #10120f;
-  --palette-neutral-925: #151814;
-  --palette-neutral-900: #191c18;
-  --palette-neutral-850: #22271d;
-  --palette-neutral-800: #2b3028;
-  --palette-neutral-700: #3c4336;
-  --palette-neutral-500: #818b76;
-  --palette-neutral-400: #a0a697;
-  --palette-neutral-300: #c3cbb9;
-  --palette-neutral-50: #f1f3eb;
+  --palette-neutral-950: #08130f;
+  --palette-neutral-925: #0b1913;
+  --palette-neutral-900: #0f2019;
+  --palette-neutral-850: #152b22;
+  --palette-neutral-800: #1d392d;
+  --palette-neutral-700: #2b4f40;
+  --palette-neutral-500: #8aa99a;
+  --palette-neutral-400: #a9c3b6;
+  --palette-neutral-300: #d0e2d8;
+  --palette-neutral-50: #f4fbf6;
+  /* The night behind the page and the green light high in it. */
+  --palette-night: #050d0a;
+  --palette-glow: #2fd3a0;
   --palette-white: #ffffff;
   --palette-black: #000000;
   /* Each accent color the player can pick, its main shade, also its dot in Settings (shared/accent.ts). */
@@ -28,8 +31,9 @@
   --palette-swatch-amber: #ffb43f;
   --palette-swatch-red: #ff3b47;
   /* Each skin's background and accent, for its miniature in Settings (shared/skin.ts). */
-  --palette-skin-default-bg: #10120f;
-  --palette-skin-default-accent: #c2f366;
+  --palette-skin-default-bg: #0a1712;
+  --palette-skin-default-glow: #1f4a3a;
+  --palette-skin-default-accent: #c6f36a;
   --palette-skin-neon-bg: #0a0612;
   --palette-skin-neon-accent: #d08aff;
   --palette-skin-pixel-bg: #14121f;
@@ -40,9 +44,6 @@
   --palette-skin-christmas-bg: #0f2a1e;
   --palette-skin-christmas-accent: #e5484d;
   --palette-skin-christmas-snow: #f7fbff;
-  --palette-skin-aurora-bg: #0a1712;
-  --palette-skin-aurora-glow: #1f4a3a;
-  --palette-skin-aurora-accent: #c6f36a;
   --palette-accent-950: #16200f;
   --palette-accent-600: #647550;
   --palette-accent-500: #7fa64a;
@@ -62,8 +63,14 @@
   /* Surfaces */
   --color-bg: var(--palette-neutral-950);
   --color-bg-subtle: var(--palette-neutral-925);
-  --color-surface: var(--palette-neutral-900);
-  --color-surface-raised: var(--palette-neutral-850);
+  /* Surfaces are glass: the greys partly see-through, blurred behind (styles/skins.css). What
+     opens over the page sits on an almost solid one, so the page behind does not get in the way. */
+  --color-surface: color-mix(in srgb, var(--palette-neutral-900) 72%, transparent);
+  --color-surface-raised: color-mix(in srgb, var(--palette-neutral-850) 78%, transparent);
+  --color-surface-float: color-mix(in srgb, var(--palette-neutral-900) 95%, transparent);
+  /* The night behind the page and its two lights. */
+  --color-night: var(--palette-night);
+  --color-glow: var(--palette-glow);
   --color-border: var(--palette-neutral-800);
   --color-border-strong: var(--palette-neutral-700);
   --color-overlay: var(--palette-white);
@@ -91,6 +98,7 @@
   --color-swatch-red: var(--palette-swatch-red);
   /* The miniature of each skin in Settings */
   --color-skin-default-bg: var(--palette-skin-default-bg);
+  --color-skin-default-glow: var(--palette-skin-default-glow);
   --color-skin-default-accent: var(--palette-skin-default-accent);
   --color-skin-neon-bg: var(--palette-skin-neon-bg);
   --color-skin-neon-accent: var(--palette-skin-neon-accent);
@@ -102,9 +110,6 @@
   --color-skin-christmas-bg: var(--palette-skin-christmas-bg);
   --color-skin-christmas-accent: var(--palette-skin-christmas-accent);
   --color-skin-christmas-snow: var(--palette-skin-christmas-snow);
-  --color-skin-aurora-bg: var(--palette-skin-aurora-bg);
-  --color-skin-aurora-glow: var(--palette-skin-aurora-glow);
-  --color-skin-aurora-accent: var(--palette-skin-aurora-accent);
   /* Feedback */
   --color-danger: var(--palette-red-400);
   --color-danger-surface: var(--palette-red-950);
@@ -138,7 +143,7 @@
   --screen-pop-from: -22%;
 
   /* Typography */
-  --font-display: "Space Grotesk", sans-serif;
+  --font-display: "Sora", "Space Grotesk", sans-serif;
   --font-body: Inter, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
   /* The "platjourney" wordmark: brand identity, the same in every skin. */
@@ -182,8 +187,12 @@
   --radius-tag: 4px;
   --radius-control: 6px;
   --radius-card: 8px;
+  /* A hairline of light on every card, brighter on top where it falls. */
   --card-border-width: 1px;
-  --card-border-color: var(--color-border);
+  --card-border-color: color-mix(in srgb, var(--palette-neutral-50) 22%, transparent)
+    color-mix(in srgb, var(--palette-neutral-50) 9%, transparent)
+    color-mix(in srgb, var(--palette-neutral-50) 6%, transparent)
+    color-mix(in srgb, var(--palette-neutral-50) 9%, transparent);
   /* How far content sits inside a block painted in the page's own color. Where the page is one
      flat color the block melts into it and the content lines up with the page (0); a skin with a
      scene behind the page shows the block, so its content needs room. */
@@ -194,8 +203,9 @@
   /* Elevation */
   --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
   --shadow-glow: 0 0 12px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
-  --shadow-popover: 0 18px 50px
-    color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+  --shadow-popover:
+    0 0 0 1px color-mix(in srgb, var(--palette-neutral-50) 12%, transparent),
+    0 24px 60px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
   --shadow-drag:
     0 18px 44px color-mix(in srgb, var(--color-shadow) var(--alpha-dim), transparent),
     0 0 0 1px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
@@ -232,6 +242,11 @@
    as a block and its content needs room inside it. A new skin gets this without asking. */
 :root[data-skin] {
   --page-block-inset: 32px;
+  /* A skin paints its own scene: its surfaces are solid and its cards keep a plain border. */
+  --color-surface: var(--palette-neutral-900);
+  --color-surface-raised: var(--palette-neutral-850);
+  --color-surface-float: var(--palette-neutral-900);
+  --card-border-color: var(--color-border);
 }
 
 :root[data-skin="neon"] {
@@ -414,42 +429,6 @@
   --shadow-popover:
     0 0 0 1px color-mix(in srgb, var(--color-xmas-gold) 30%, transparent),
     0 18px 50px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
-}
-
-:root[data-skin="aurora"] {
-  /* A clear night over a forest: green-black greys, the brand's lime, and frosted glass where
-     the pine-tinted surfaces let the glow behind them through. Testing as the next identity. */
-  --palette-neutral-950: #08130f;
-  --palette-neutral-925: #0b1913;
-  --palette-neutral-900: #0f2019;
-  --palette-neutral-850: #152b22;
-  --palette-neutral-800: #1d392d;
-  --palette-neutral-700: #2b4f40;
-  --palette-neutral-500: #8aa99a;
-  --palette-neutral-400: #a9c3b6;
-  --palette-neutral-300: #d0e2d8;
-  --palette-neutral-50: #f4fbf6;
-
-  --color-aurora-glow: #2fd3a0;
-  --color-aurora-lime: var(--palette-accent-400);
-  --color-aurora-night: #050d0a;
-
-  /* Surfaces are glass: the same greys, partly see-through (styles/skins.css blurs behind them). */
-  --color-surface: color-mix(in srgb, var(--palette-neutral-900) 72%, transparent);
-  --color-surface-raised: color-mix(in srgb, var(--palette-neutral-850) 78%, transparent);
-
-  --font-display: "Sora", "Space Grotesk", sans-serif;
-
-  /* The corners stay the app's own. A hairline of light, brighter on top where it falls. */
-  --card-border-width: 1px;
-  --card-border-color: color-mix(in srgb, var(--palette-neutral-50) 22%, transparent)
-    color-mix(in srgb, var(--palette-neutral-50) 9%, transparent)
-    color-mix(in srgb, var(--palette-neutral-50) 6%, transparent)
-    color-mix(in srgb, var(--palette-neutral-50) 9%, transparent);
-
-  --shadow-popover:
-    0 0 0 1px color-mix(in srgb, var(--palette-neutral-50) 12%, transparent),
-    0 24px 60px color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
 }
 
 /* The accent the player picked in Settings (data-accent on <html>, shared/accent.ts). Each swaps
