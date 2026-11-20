@@ -80,7 +80,7 @@ async def respond(step: str | None = None, search: bool = False, **params: Any) 
     params = params | {'model': chosen.model}
     if not (web_search_on() or search) and params.get('tools'):
         tools = [t for t in params['tools'] if t.get('type') != 'web_search']
-        params = {k: v for k, v in params.items() if k != 'tools'} | (
+        params = {k: v for k, v in params.items() if k not in ('tools', 'tool_choice')} | (
             {'tools': tools} if tools else {}
         )
     # The pages a search opened only come back when asked for.
