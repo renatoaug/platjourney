@@ -9,7 +9,7 @@ export function Cover({
   name?: string | null
   className?: string
 }) {
-  if (url) return <img className={className} src={url} alt="" loading="lazy" />
+  if (url) return <img className={className} src={url} alt="" loading="lazy" decoding="async" />
   return (
     <span className={`${className} cover-placeholder`.trim()} aria-hidden="true">
       {String(name ?? '?')

@@ -1075,6 +1075,37 @@
     pointer-events: none;
   }
 
+  /* --------------------------------------------------------- Aurora */
+
+  /* The night with two soft lights: a green glow high on the right and the lime low on the left,
+     fixed, so the glass surfaces show them as the page scrolls. */
+  :root[data-skin="aurora"] body {
+    background:
+      radial-gradient(
+        60vw 50vh at 85% -5%,
+        color-mix(in srgb, var(--color-aurora-glow) 22%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        55vw 45vh at 10% 105%,
+        color-mix(in srgb, var(--color-aurora-lime) 12%, transparent),
+        transparent 70%
+      ),
+      linear-gradient(to bottom, var(--color-aurora-night), var(--color-bg));
+    background-attachment: fixed;
+  }
+
+  /* Glass: what sits on the page blurs what is behind it. A guide card is all cover, so a blur
+     there shows nothing and makes a scrolled grid of 24 of them repaint each frame. */
+  :root[data-skin="aurora"]
+  :is(.card, .sidebar, .topbar-right .icon-button, .game-card, .release, .band-card) {
+    backdrop-filter: blur(18px) saturate(1.25);
+  }
+
+  :root[data-skin="aurora"] .sidebar {
+    background: color-mix(in srgb, var(--color-bg-subtle) 70%, transparent);
+  }
+
   /* --------------------------------------------------------- Christmas */
 
   /* The night over a pine forest, with the warm glow of a window low on the screen. */

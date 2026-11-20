@@ -587,10 +587,13 @@ export function GameAbout({
   game,
   name,
   store = null,
+  cover = true,
 }: {
   game: Game
   name: string
   store?: GameStore
+  /** False where the page already shows the cover above. */
+  cover?: boolean
 }) {
   const t = useMessages(messages)
   const locale = useLocale()
@@ -612,7 +615,9 @@ export function GameAbout({
   return (
     <section className="card game-about" aria-label={t('about', { name })}>
       <div className="game-about-head">
-        {game.cover_url && <Cover url={game.cover_url} name={name} className="game-about-cover" />}
+        {cover && game.cover_url && (
+          <Cover url={game.cover_url} name={name} className="game-about-cover" />
+        )}
         <div className="game-about-title">
           <span className="eyebrow">{t('about', { name })}</span>
           {genres.length > 0 && (

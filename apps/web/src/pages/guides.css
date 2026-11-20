@@ -422,6 +422,55 @@
     }
   }
 
+  /* A large screen: the filters as a column on the left, always open and in place while the list
+     scrolls; search, sort and view on one line over the games. */
+  .guides-layout.is-wide {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    align-items: start;
+    gap: 28px;
+  }
+
+  .guides-side {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: 18px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  .guides-side .guide-filters {
+    gap: 20px;
+  }
+
+  .guides-side .guide-filters legend {
+    padding-inline: 8px;
+  }
+
+  .guides-toolbar.is-wide {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .guides-toolbar.is-wide .guides-sort select {
+    min-height: 44px;
+  }
+
+  .guides-toolbar.is-wide .guides-view {
+    padding: 5px;
+  }
+
+  .guides-toolbar.is-wide .guides-view button {
+    width: 36px;
+    height: 34px;
+  }
+
   .guides-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -504,8 +553,8 @@
     padding: 0 10px;
     border: 1px solid color-mix(in srgb, var(--dm-color) var(--alpha-glow), transparent);
     border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--color-bg) var(--alpha-dim), transparent);
-    backdrop-filter: blur(10px);
+    /* A solid dark chip, not a blur: a blur on every card makes a fast scroll stutter. */
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-strong), transparent);
     white-space: nowrap;
   }
 

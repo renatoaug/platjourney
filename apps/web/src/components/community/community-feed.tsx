@@ -113,6 +113,35 @@ export type FeedState =
       loadingMore?: boolean
     }
 
+/** Who the feed shows (everyone, the people followed, the player) as a column beside it on a large
+ * screen, with the player's own visibility switch under it. */
+export function CommunityFeedRail({
+  scope,
+  onScope,
+  toolbar,
+  visitor = false,
+}: {
+  scope: FeedScope
+  onScope: (scope: FeedScope) => void
+  toolbar?: ReactNode
+  visitor?: boolean
+}) {
+  const t = useMessages(messages)
+  const icons: Record<FeedScope, string> = { all: 'globe', following: 'users', me: 'trophy' }
+  return (
+    <aside className="community-rail">
+      <nav className="card community-rail-scopes" aria-label={t('scopes')}>
+        {(visitor ? (['all'] as const) : (['all', 'following', 'me'] as const)).map((s) => (
+          <button key={s} type="button" aria-pressed={scope === s} onClick={() => onScope(s)}>
+            <Icon name={icons[s]} /> {t(s)}
+          </button>
+        ))}
+      </nav>
+      {toolbar && <div className="card community-rail-toolbar">{toolbar}</div>}
+    </aside>
+  )
+}
+
 export function CommunityFeed({
   state,
   scope,
@@ -120,8 +149,11 @@ export function CommunityFeed({
   onRetry,
   toolbar,
   visitor = false,
+  rail = false,
   ...rest
 }: {
+  /** The scopes live in the column beside the feed (a large screen), not over it. */
+  rail?: boolean
   state: FeedState
   scope: FeedScope
   onScope: (scope: FeedScope) => void
@@ -142,22 +174,24 @@ export function CommunityFeed({
   const t = useMessages(messages)
   return (
     <section className="community-feed" aria-label={t('feed')}>
-      <div className="community-feed-bar">
-        <fieldset className="chips community-scopes" aria-label={t('scopes')}>
-          {(visitor ? (['all'] as const) : (['all', 'following', 'me'] as const)).map((s) => (
-            <button
-              key={s}
-              type="button"
-              className={`chip${scope === s ? ' active' : ''}`}
-              aria-pressed={scope === s}
-              onClick={() => onScope(s)}
-            >
-              {t(s)}
-            </button>
-          ))}
-        </fieldset>
-        {toolbar}
-      </div>
+      {!rail && (
+        <div className="community-feed-bar">
+          <fieldset className="chips community-scopes" aria-label={t('scopes')}>
+            {(visitor ? (['all'] as const) : (['all', 'following', 'me'] as const)).map((s) => (
+              <button
+                key={s}
+                type="button"
+                className={`chip${scope === s ? ' active' : ''}`}
+                aria-pressed={scope === s}
+                onClick={() => onScope(s)}
+              >
+                {t(s)}
+              </button>
+            ))}
+          </fieldset>
+          {toolbar}
+        </div>
+      )}
       {state.status === 'ok' && !state.visible && !visitor && (
         <p className="community-hidden">{t('hidden')}</p>
       )}

@@ -10,6 +10,7 @@ import { menuPages } from '../plugins'
 import { Icon } from '../ui/icon'
 import { connectAccount } from './demo'
 import './account-menu.css'
+import './notifications.css'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -101,84 +102,95 @@ export function AccountMenu({
 
   const avatar = p?.avatarUrl
   return (
-    <div className="account-menu">
-      <button
-        ref={button}
-        type="button"
-        className="topbar-avatar"
-        aria-label={t('open')}
-        aria-haspopup="menu"
-        aria-expanded={state === 'open'}
-        aria-controls="account-menu-panel"
-        onClick={() => (state === 'open' ? close() : setState('open'))}
-      >
-        {avatar ? <img src={avatar} alt="" /> : <Icon name="circle" />}
-      </button>
-      {/* The photo stays the player's; the gear says there is a menu with the settings behind it. */}
-      <span className="topbar-avatar-badge" aria-hidden="true">
-        <Icon name="settings" />
-      </span>
+    <>
+      {/* Dims and blurs the page behind the open menu, the same as the notifications panel. */}
       {state !== 'closed' && (
         <div
-          className={`account-menu-panel${state === 'closing' ? ' is-closing' : ''}`}
-          id="account-menu-panel"
-          role="menu"
-        >
-          {/* Who is signed in, and the way to their profile. */}
-          {p && (
-            <Link
-              to="/profile"
-              role="menuitem"
-              className="account-menu-who"
-              aria-label={t('profile')}
-              onClick={close}
-            >
-              {avatar ? <img src={avatar} alt="" /> : <Icon name="circle" />}
-              <div>
-                <b>{p.onlineId}</b>
-                <small>{t('line', { level: p.level, platinums: number(p.earned.platinum) })}</small>
-              </div>
-              <Icon name="chevron-right" />
-            </Link>
-          )}
-          {menuPages().map((p) => (
-            <Link
-              key={p.path}
-              to={p.path}
-              role="menuitem"
-              className="account-menu-item"
-              onClick={close}
-            >
-              <Icon name={p.icon} />
-              {p.label[locale]}
-            </Link>
-          ))}
-          <Link to="/settings" role="menuitem" className="account-menu-item" onClick={close}>
-            <Icon name="settings" />
-            {t('settings')}
-          </Link>
-          <button
-            type="button"
-            role="menuitem"
-            className="account-menu-item account-menu-logout"
-            onClick={logout}
-            disabled={leaving}
-            aria-busy={leaving}
-          >
-            {leaving ? (
-              <span className="account-menu-spinner" aria-hidden="true" />
-            ) : (
-              <Icon name="arrow-right" />
-            )}
-            {leaving ? t('leaving') : t(me.demo ? 'leaveDemo' : 'logout')}
-          </button>
-          {failed && (
-            <p className="account-menu-error" role="alert">
-              {t('failed')}
-            </p>
-          )}
-        </div>
+          className={`notif-scrim${state === 'closing' ? ' is-closing' : ''}`}
+          aria-hidden="true"
+        />
       )}
-    </div>
+      <div className="account-menu">
+        <button
+          ref={button}
+          type="button"
+          className="topbar-avatar"
+          aria-label={t('open')}
+          aria-haspopup="menu"
+          aria-expanded={state === 'open'}
+          aria-controls="account-menu-panel"
+          onClick={() => (state === 'open' ? close() : setState('open'))}
+        >
+          {avatar ? <img src={avatar} alt="" /> : <Icon name="circle" />}
+        </button>
+        {/* The photo stays the player's; the gear says there is a menu with the settings behind it. */}
+        <span className="topbar-avatar-badge" aria-hidden="true">
+          <Icon name="settings" />
+        </span>
+        {state !== 'closed' && (
+          <div
+            className={`account-menu-panel${state === 'closing' ? ' is-closing' : ''}`}
+            id="account-menu-panel"
+            role="menu"
+          >
+            {/* Who is signed in, and the way to their profile. */}
+            {p && (
+              <Link
+                to="/profile"
+                role="menuitem"
+                className="account-menu-who"
+                aria-label={t('profile')}
+                onClick={close}
+              >
+                {avatar ? <img src={avatar} alt="" /> : <Icon name="circle" />}
+                <div>
+                  <b>{p.onlineId}</b>
+                  <small>
+                    {t('line', { level: p.level, platinums: number(p.earned.platinum) })}
+                  </small>
+                </div>
+                <Icon name="chevron-right" />
+              </Link>
+            )}
+            {menuPages().map((p) => (
+              <Link
+                key={p.path}
+                to={p.path}
+                role="menuitem"
+                className="account-menu-item"
+                onClick={close}
+              >
+                <Icon name={p.icon} />
+                {p.label[locale]}
+              </Link>
+            ))}
+            <Link to="/settings" role="menuitem" className="account-menu-item" onClick={close}>
+              <Icon name="settings" />
+              {t('settings')}
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              className="account-menu-item account-menu-logout"
+              onClick={logout}
+              disabled={leaving}
+              aria-busy={leaving}
+            >
+              {leaving ? (
+                <span className="account-menu-spinner" aria-hidden="true" />
+              ) : (
+                <Icon name="arrow-right" />
+              )}
+              {leaving ? t('leaving') : t(me.demo ? 'leaveDemo' : 'logout')}
+            </button>
+            {failed && (
+              <p className="account-menu-error" role="alert">
+                {t('failed')}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   )
 }

@@ -284,6 +284,9 @@ export function Nav() {
             <NavLink
               key={n.to}
               to={n.to}
+              // The name in a tooltip, only while the tablet's menu shows the icon alone.
+              data-tip={n.label}
+              data-tip-hidden-label
               end={n.to === '/'}
               className={active === n.to.split('?')[0] ? 'active' : ''}
               style={{ '--i': order++ } as CSSProperties}

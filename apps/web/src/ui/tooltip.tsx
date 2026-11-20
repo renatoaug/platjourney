@@ -49,6 +49,9 @@ export function TooltipHost() {
       if (!el) return
       if (e.type === 'mouseover' && hover && !hover.matches) return
       if (e.type === 'focusin' && touched) return
+      // A tip that repeats the element's own name (`data-tip-hidden-label`) only shows while that
+      // name is hidden, as in the icon-only menu.
+      if (el.dataset.tipHiddenLabel !== undefined && getComputedStyle(el).fontSize !== '0px') return
       show(el)
     }
     const out = (e: Event) => {

@@ -965,3 +965,72 @@
     }
   }
 }
+
+@layer screens {
+  /* A tablet (and a narrow desktop window): the menu keeps only its icons, so the screen gets two
+     columns. Each link still carries its name for screen readers and in its tooltip. */
+  @media (min-width: 761px) and (max-width: 1199px) {
+    .app {
+      --sidebar: 76px;
+    }
+
+    .sidebar {
+      padding-right: 12px;
+      padding-left: 12px;
+    }
+
+    .sidebar > .logo {
+      justify-content: center;
+      padding-right: 0;
+      padding-left: 0;
+    }
+
+    .sidebar .brand-name,
+    .nav-label,
+    .nav-ai,
+    .sidebar .app-version {
+      display: none;
+    }
+
+    .nav.journey-nav a {
+      justify-content: center;
+      padding: 12px 0;
+      font-size: 0;
+    }
+
+    .nav.journey-nav a .icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .nav-group + .nav-group {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .sidebar-account {
+      flex-direction: column;
+    }
+
+    .sidebar-account > .profile {
+      justify-content: center;
+    }
+
+    .sidebar-account > .profile > div,
+    .visitor-account b,
+    .visitor-account small {
+      display: none;
+    }
+
+    .visitor-account {
+      padding: 0;
+    }
+
+    .visitor-account .button {
+      padding-right: 0;
+      padding-left: 0;
+      font-size: var(--text-xs);
+    }
+  }
+}

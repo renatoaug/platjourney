@@ -2,7 +2,11 @@ import { type ReactNode, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useApp } from '../app/app-state'
 import { Page } from '../app/page'
-import { CommunityFeed, type FeedState } from '../components/community/community-feed'
+import {
+  CommunityFeed,
+  CommunityFeedRail,
+  type FeedState,
+} from '../components/community/community-feed'
 import { CommunityGames, type GamesState } from '../components/community/community-games'
 import { CommunityRankings, type RankingsState } from '../components/community/community-rankings'
 import { CommunitySide } from '../components/community/community-side'
@@ -19,6 +23,8 @@ import {
   type ReactionKind,
   react,
 } from '../lib/community'
+import { useMedia, WIDE } from '../lib/use-media'
+import { Icon } from '../ui/icon'
 import './community.css'
 
 const messages = defineMessages({
@@ -44,6 +50,7 @@ const messages = defineMessages({
 
 type Tab = 'feed' | 'rankings' | 'games'
 const TABS: Tab[] = ['feed', 'rankings', 'games']
+const TAB_ICONS: Record<Tab, string> = { feed: 'flame', rankings: 'crown', games: 'gamepad' }
 
 // What this screen last showed, kept while the app is open: going back to it from a player's
 // profile shows the same feed at once instead of its skeleton.
@@ -195,6 +202,11 @@ export function Community() {
     }
   }, [tab, gamesTry])
 
+  const wide = useMedia(WIDE)
+  const visibility = me.visitor ? null : (
+    <CommunityVisibility onChange={() => setFeedTry((v) => v + 1)} />
+  )
+
   // The page's backdrop: the art of the newest event that has some.
   const art =
     feed.status === 'ok' ? (feed.events.find((e) => e.game?.artUrl)?.game?.artUrl ?? null) : null
@@ -202,8 +214,17 @@ export function Community() {
   return (
     <CommunityView tab={tab} onTab={setTab} art={art}>
       {tab === 'feed' ? (
-        <div className="community-feed-layout">
+        <div className={`community-feed-layout${wide ? ' is-wide' : ''}`}>
+          {wide && (
+            <CommunityFeedRail
+              scope={scope}
+              onScope={setScope}
+              visitor={me.visitor === true}
+              toolbar={visibility}
+            />
+          )}
           <CommunityFeed
+            rail={wide}
             state={feed}
             scope={scope}
             onScope={setScope}
@@ -215,9 +236,7 @@ export function Community() {
             english={english}
             readOnly={me.demo === true}
             visitor={me.visitor === true}
-            toolbar={
-              me.visitor ? null : <CommunityVisibility onChange={() => setFeedTry((v) => v + 1)} />
-            }
+            toolbar={wide ? null : visibility}
           />
           <CommunitySide onTab={setTab} />
         </div>
@@ -255,7 +274,7 @@ export function CommunityView({
         <fieldset className="community-tabs" aria-label={t('tabs')}>
           {TABS.map((key) => (
             <button key={key} type="button" aria-pressed={tab === key} onClick={() => onTab(key)}>
-              {t(key)}
+              <Icon name={TAB_ICONS[key]} /> {t(key)}
             </button>
           ))}
         </fieldset>

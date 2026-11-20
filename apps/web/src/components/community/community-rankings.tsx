@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { defineMessages, Language, useMessages } from '../../i18n/i18n'
 import { type Board, playerLink, type Rankings, type RankRow } from '../../lib/community'
+import { useMedia, WIDE } from '../../lib/use-media'
 import { Icon } from '../../ui/icon'
 import { repeat, Sk } from '../../ui/skeleton'
 import { EmptyState, ErrorState } from '../../ui/states'
@@ -72,16 +73,20 @@ export function CommunityRankings({
 }) {
   const t = useMessages(messages)
   const [board, setBoard] = useState<Board>(initialBoard)
+  // A large screen has room for the three boards side by side, so there is nothing to pick.
+  const wide = useMedia(WIDE)
   return (
-    <section className="community-rankings" aria-label={t('boards')}>
+    <section className={`community-rankings${wide ? ' is-wide' : ''}`} aria-label={t('boards')}>
       <div className="community-rankings-bar">
-        <fieldset className="community-board-tabs" aria-label={t('boards')}>
-          {BOARDS.map((b) => (
-            <button key={b} type="button" aria-pressed={board === b} onClick={() => setBoard(b)}>
-              {t(b)}
-            </button>
-          ))}
-        </fieldset>
+        {!wide && (
+          <fieldset className="community-board-tabs" aria-label={t('boards')}>
+            {BOARDS.map((b) => (
+              <button key={b} type="button" aria-pressed={board === b} onClick={() => setBoard(b)}>
+                {t(b)}
+              </button>
+            ))}
+          </fieldset>
+        )}
         {/* The period as one quiet toggle: tap to switch between this month and this year. */}
         <button
           type="button"
@@ -104,6 +109,15 @@ export function CommunityRankings({
         >
           {t('failed')}
         </ErrorState>
+      ) : wide ? (
+        <div className="community-boards">
+          {BOARDS.map((b) => (
+            <section key={b} className="community-board-column" aria-label={t(b)}>
+              <h2>{t(b)}</h2>
+              <BoardView data={state.data} board={b} />
+            </section>
+          ))}
+        </div>
       ) : (
         <BoardView data={state.data} board={board} />
       )}

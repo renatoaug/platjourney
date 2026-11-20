@@ -1,6 +1,6 @@
 /** Guides: every game with a platinum guide, or any catalog game by name, filtered by platform, sorted and paged. */
 
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Page } from '../app/page'
 import { DifficultyMeter } from '../components/difficulty-meter'
@@ -11,6 +11,7 @@ import { PageTop } from '../components/page-top'
 import { titleHref } from '../components/tip'
 import { defineMessages, getLocale, Language, useLocale, useMessages } from '../i18n/i18n'
 import { ApiError, api } from '../lib/api'
+import { useMedia, WIDE } from '../lib/use-media'
 import { Cover } from '../ui/cover'
 import { Icon } from '../ui/icon'
 import { Pager } from '../ui/pager'
@@ -303,15 +304,18 @@ function Option({
   )
 }
 
-/** The filters beside the list: each option shows how many games it would leave. */
+/** The filters beside the list: each option shows how many games it would leave. On a large screen
+ * the platform joins them (`platform`), since the column replaces the tabs above the list. */
 function GuideFilters({
   facets,
   values,
   onChange,
+  platform,
 }: {
   facets?: GuideFacets
   values: Record<string, string>
   onChange: (next: Record<string, string>) => void
+  platform?: string
 }) {
   const t = useMessages(messages)
   const locale = useLocale()
@@ -320,6 +324,20 @@ function GuideFilters({
     onChange({ [key]: values[key] === value ? '' : value })
   return (
     <div className="guide-filters">
+      {platform !== undefined && (
+        <fieldset>
+          <legend>{t('platformLabel')}</legend>
+          {['', ...PLATFORMS].map((value) => (
+            <Option
+              key={value || 'all'}
+              round
+              label={value || t('platform.all')}
+              on={platform === value}
+              onToggle={() => onChange({ platform: value })}
+            />
+          ))}
+        </fieldset>
+      )}
       <fieldset>
         <legend>{t('bandLabel')}</legend>
         {BANDS.map((b) => (
@@ -547,6 +565,127 @@ function GuidesTop({ featured, count }: { featured: GuideCardItem | null; count:
   )
 }
 
+/** How the list is sorted and shown: the sort menu and the grid/list switch. */
+function GuideOrder({
+  sort,
+  view,
+  searching,
+  onSort,
+  onView,
+}: {
+  sort: string
+  view: 'grid' | 'list'
+  searching: boolean
+  onSort: (sort: string) => void
+  onView: (view: 'grid' | 'list') => void
+}) {
+  const t = useMessages(messages)
+  return (
+    <div className="guides-toolbar-end">
+      <label className="guides-sort">
+        <select aria-label={t('sortLabel')} value={sort} onChange={(e) => onSort(e.target.value)}>
+          <option value="">{t(searching ? 'sort.relevance' : 'sort.rating')}</option>
+          {SORTS.filter((s) => searching || s !== 'rating').map((s) => (
+            <option key={s} value={s}>
+              {t(`sort.${s}`)}
+            </option>
+          ))}
+        </select>
+      </label>
+      {/* biome-ignore lint/a11y/useSemanticElements: a pair of toggle buttons; the group role names it */}
+      <div className="guides-view" role="group" aria-label={t('viewLabel')}>
+        {(['grid', 'list'] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            aria-pressed={view === v}
+            aria-label={t(`view.${v}`)}
+            data-tip={t(`view.${v}`)}
+            onClick={() => onView(v)}
+          >
+            <Icon name={v} />
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** The controls over the list on a phone or tablet: the platform tabs with the sort beside them,
+ * then the search with the filters folded behind a button. */
+function GuideControls({
+  platform,
+  order,
+  search,
+  filters,
+  activeFilters,
+  onChange,
+}: {
+  platform: string
+  order: ReactNode
+  search: ReactNode
+  filters: ReactNode
+  activeFilters: number
+  onChange: (next: Record<string, string>) => void
+}) {
+  const t = useMessages(messages)
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div className="guides-toolbar">
+        {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
+        <div className="trophy-status section-tabs" role="group" aria-label={t('platformLabel')}>
+          {['', ...PLATFORMS].map((value) => (
+            <button
+              key={value || 'all'}
+              type="button"
+              aria-pressed={platform === value}
+              onClick={() => onChange({ platform: value })}
+            >
+              {value || t('platform.all')}
+            </button>
+          ))}
+        </div>
+        {order}
+      </div>
+      <div className="guides-search-row">
+        {search}
+        <button
+          type="button"
+          className="guides-filters-toggle"
+          aria-expanded={open}
+          aria-controls="guides-filter-panel"
+          onClick={() => setOpen((o) => !o)}
+        >
+          <Icon name="layers" />
+          {activeFilters ? t('filtersOn', { count: activeFilters }) : t('filters')}
+          <Icon name="chevron-down" />
+        </button>
+      </div>
+      <div id="guides-filter-panel" className="guides-filter-panel" hidden={!open}>
+        {filters}
+      </div>
+    </>
+  )
+}
+
+/** The search field over the list. */
+function GuideSearch({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const t = useMessages(messages)
+  return (
+    <label className="guides-search">
+      <Icon name="search" />
+      <input
+        type="search"
+        aria-label={t('search')}
+        placeholder={t('searchPlaceholder')}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  )
+}
+
 /** `load` answers a query string with a page of games; stories pass sample data instead of the API. */
 export function Guides({
   load: loadPage = fetchGuides,
@@ -561,7 +700,7 @@ export function Guides({
   const filters = Object.fromEntries(FILTER_KEYS.map((k) => [k, params.get(k) ?? '']))
   const filterKey = FILTER_KEYS.map((k) => filters[k]).join('|')
   const activeFilters = FILTER_KEYS.filter((k) => filters[k]).length
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const wide = useMedia(WIDE)
   const [typed, setTyped] = useState(q)
   // The address changed from outside the field (the Guides link in the menu, back, a link):
   // the field follows it, or the pending search below would put the old text back.
@@ -623,87 +762,45 @@ export function Guides({
     setCount(data.total)
     setFeatured(pickOfTheDay(data.items))
   }
+  const order = (
+    <GuideOrder
+      sort={sort}
+      view={view}
+      searching={searching}
+      onSort={(s) => change({ sort: s })}
+      onView={(v) => change({ view: v === 'grid' ? '' : v, page: String(page) })}
+    />
+  )
   return (
     <Page path="/guides">
       <GuidesTop featured={featured} count={count} />
-      <div className="guides-layout">
+      <div className={`guides-layout${wide ? ' is-wide' : ''}`}>
+        {wide && (
+          <aside className="guides-side" aria-label={t('filters')}>
+            <GuideFilters
+              facets={data?.facets}
+              values={filters}
+              onChange={change}
+              platform={platform}
+            />
+          </aside>
+        )}
         <div className="guides-main">
-          <div className="guides-toolbar">
-            {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would restyle the segmented control; the group role names it */}
-            <div
-              className="trophy-status section-tabs"
-              role="group"
-              aria-label={t('platformLabel')}
-            >
-              {['', ...PLATFORMS].map((value) => (
-                <button
-                  key={value || 'all'}
-                  type="button"
-                  aria-pressed={platform === value}
-                  onClick={() => change({ platform: value })}
-                >
-                  {value || t('platform.all')}
-                </button>
-              ))}
+          {wide ? (
+            <div className="guides-toolbar is-wide">
+              <GuideSearch value={typed} onChange={setTyped} />
+              {order}
             </div>
-            <div className="guides-toolbar-end">
-              <label className="guides-sort">
-                <select
-                  aria-label={t('sortLabel')}
-                  value={sort}
-                  onChange={(e) => change({ sort: e.target.value })}
-                >
-                  <option value="">{t(searching ? 'sort.relevance' : 'sort.rating')}</option>
-                  {SORTS.filter((s) => searching || s !== 'rating').map((s) => (
-                    <option key={s} value={s}>
-                      {t(`sort.${s}`)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {/* biome-ignore lint/a11y/useSemanticElements: a pair of toggle buttons; the group role names it */}
-              <div className="guides-view" role="group" aria-label={t('viewLabel')}>
-                {(['grid', 'list'] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    aria-pressed={view === v}
-                    aria-label={t(`view.${v}`)}
-                    data-tip={t(`view.${v}`)}
-                    onClick={() => change({ view: v === 'grid' ? '' : v, page: String(page) })}
-                  >
-                    <Icon name={v} />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="guides-search-row">
-            <label className="guides-search">
-              <Icon name="search" />
-              <input
-                type="search"
-                aria-label={t('search')}
-                placeholder={t('searchPlaceholder')}
-                value={typed}
-                onChange={(e) => setTyped(e.target.value)}
-              />
-            </label>
-            <button
-              type="button"
-              className="guides-filters-toggle"
-              aria-expanded={filtersOpen}
-              aria-controls="guides-filter-panel"
-              onClick={() => setFiltersOpen((open) => !open)}
-            >
-              <Icon name="layers" />
-              {activeFilters ? t('filtersOn', { count: activeFilters }) : t('filters')}
-              <Icon name="chevron-down" />
-            </button>
-          </div>
-          <div id="guides-filter-panel" className="guides-filter-panel" hidden={!filtersOpen}>
-            <GuideFilters facets={data?.facets} values={filters} onChange={change} />
-          </div>
+          ) : (
+            <GuideControls
+              platform={platform}
+              order={order}
+              search={<GuideSearch value={typed} onChange={setTyped} />}
+              filters={<GuideFilters facets={data?.facets} values={filters} onChange={change} />}
+              activeFilters={activeFilters}
+              onChange={change}
+            />
+          )}
           {load.status === 'loading' && <GuideGridSkeleton />}
           {load.status === 'error' && <ErrorState>{t('failed')}</ErrorState>}
           {data && (
