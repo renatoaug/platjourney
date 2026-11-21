@@ -1493,6 +1493,11 @@
       column-gap: 48px;
       align-items: start;
     }
+
+    /* A story trophy's one line has no steps to sit beside: what comes after it goes under it. */
+    .roadmap-advice-body:has(> .roadmap-advice-main > .roadmap-advice-natural:only-child) {
+      grid-template-columns: none;
+    }
   }
 
   .roadmap-objective,
