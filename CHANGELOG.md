@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.91.3](https://github.com/renatoaug/platjourney/compare/v0.91.2...v0.91.3) (2026-11-21)
+
+### Bug Fixes
+
+* quieter session notices, nexo in the player's language and a clearer page for visitors ([#217](https://github.com/renatoaug/platjourney/issues/217)) ([1357c86](https://github.com/renatoaug/platjourney/commit/1357c86ad3399c8eb3c857a55be10bdec74c150b))
+
 ## [0.91.2](https://github.com/renatoaug/platjourney/compare/v0.91.1...v0.91.2) (2026-11-21)
 
 ### Bug Fixes
