@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.92.0](https://github.com/renatoaug/platjourney/compare/v0.91.3...v0.92.0) (2026-11-21)
+
+### Features
+
+* **web:** the native app asks once to turn on nexo's notices ([#218](https://github.com/renatoaug/platjourney/issues/218)) ([7fba94c](https://github.com/renatoaug/platjourney/commit/7fba94cab7fc017bb017fa3583362ac111c817ab))
+
 ## [0.91.3](https://github.com/renatoaug/platjourney/compare/v0.91.2...v0.91.3) (2026-11-21)
 
 ### Bug Fixes
