@@ -976,7 +976,7 @@ test('a collection indexes its pieces by stretch, the stretches list by chapter,
   expect(chapters?.querySelector('summary')?.textContent).toContain('Por capítulo')
   expect(chapters?.textContent).toContain('Siga pela direita até a flor 2.')
   pick(story.name)
-  expect(advice()).toContain('Nesse trecho')
+  expect(advice()).toContain('Pra aproveitar depois deste troféu')
   expect(advice()).toContain('Guarde as pedras para o chefe.')
   expect(advice()).toContain('Souvenir 1/2 no barco.')
 })
@@ -1205,7 +1205,9 @@ test('with places in the guide, a trophy says when it falls instead of leaving a
   // Where the player is now stays unsaid: their trophies only say where they have been at least.
   expect(when()).toBe('Você ganha seguindo a história, no capítulo 3.')
   // A story trophy with no tip of its own shows what its stretch holds (a collectible after it).
-  expect(container.querySelector('#roadmap-advice')?.textContent).toContain('Nesse trecho')
+  expect(container.querySelector('#roadmap-advice')?.textContent).toContain(
+    'Pra aproveitar depois deste troféu',
+  )
   pick(/^Mira Certeira/)
   expect(when()).toBe(
     'Acontecia no capítulo 1, que ficou para trás. Dá para voltar pela seleção de capítulos.',
