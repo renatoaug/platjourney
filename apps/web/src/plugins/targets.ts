@@ -49,6 +49,7 @@ export type Target =
   | 'ChatWelcome'
   | 'ClaimStep'
   | 'CollectionEnd'
+  | 'ComesNaturally'
   | 'CommandMenu'
   | 'CommandPalette'
   | 'Community'

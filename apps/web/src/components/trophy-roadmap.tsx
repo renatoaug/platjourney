@@ -56,7 +56,7 @@ const messages = defineMessages({
     chapterAfter: 'Depois de {trophy}',
     forTrophy: 'Para o troféu {trophy}',
     where: 'Onde estão',
-    stretch: 'Nesse trecho',
+    stretch: 'Pra aproveitar depois deste troféu',
     titledCount: '{title} ({count})',
     track: 'Trilha da rota',
     baseTrack: 'Base',
@@ -135,6 +135,7 @@ const messages = defineMessages({
     whySend: 'Enviar',
     talk: 'Conversar com Nexo',
     ask: 'Perguntar ao Nexo',
+    natural: 'Esse troféu cai naturalmente durante a história.',
     warning: 'Atenção antes de avançar',
     online: 'Objetivo online',
     bug: 'Problema relatado no guia',
@@ -204,7 +205,7 @@ const messages = defineMessages({
     chapterAfter: 'After {trophy}',
     forTrophy: 'For the {trophy} trophy',
     where: 'Where they are',
-    stretch: 'In this stretch',
+    stretch: 'To do after this trophy',
     titledCount: '{title} ({count})',
     track: 'Route track',
     baseTrack: 'Base',
@@ -283,6 +284,7 @@ const messages = defineMessages({
     whySend: 'Send',
     talk: 'Talk to Nexo',
     ask: 'Ask Nexo',
+    natural: 'This trophy comes naturally as you play the story.',
     warning: 'Before moving on',
     online: 'Online objective',
     bug: 'Issue reported in the guide',
@@ -388,12 +390,16 @@ function adviceParts(trophy: Trophy, game: RoadmapGame) {
       : trophyMentions(trophy, game.trophies, game.guide).filter((s) => !said.includes(s)),
     // Once earned there is nothing left to lose.
     warning: trophy.earned ? undefined : advice.warning,
+    natural: trophyKind(trophy, game.guide) === 'natural',
   }
 }
 
 function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
   const t = useMessages(messages)
-  const { advice, trick, tips, locations, stretch, steps, warning } = adviceParts(trophy, game)
+  const { advice, trick, tips, locations, stretch, steps, warning, natural } = adviceParts(
+    trophy,
+    game,
+  )
   const hasAdvice =
     trick ||
     warning ||
@@ -403,7 +409,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
     !!steps.length ||
     !!stretch.length
   // A story trophy with nothing to watch for has nothing to ask: it comes by playing.
-  const quiet = !hasAdvice && trophyKind(trophy, game.guide) === 'natural'
+  const quiet = !hasAdvice && natural
   return (
     <div className="roadmap-advice">
       {(hasAdvice || !quiet) && (
@@ -422,6 +428,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
       <div className="roadmap-advice-body">
         <div className="roadmap-advice-main">
           {trick && <TrickSteps text={trick} />}
+          <ComesNaturally show={natural && !trick && !tips.length && !steps.length} />
           <RoadmapTips tips={tips} trophy={trophy} trophies={game.trophies} />
           {steps.map((step) => (
             <p key={step}>
@@ -475,6 +482,12 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
       {hasAdvice && <TipRating trophy={trophy} />}
     </div>
   )
+}
+
+/** A story trophy without steps of its own says so, instead of an empty "How to do it". */
+function ComesNaturally({ show }: { show: boolean }) {
+  const t = useMessages(messages)
+  return show ? <p>{t('natural')}</p> : null
 }
 
 /** Asks the Nexo about this trophy, beside "How to do it". */
