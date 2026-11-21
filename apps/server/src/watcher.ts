@@ -394,6 +394,15 @@ async function nothingNew(user: User, ctx: GameContext): Promise<boolean> {
   return !ctx.trophies.some((x) => x.earnedAt && new Date(x.earnedAt).getTime() > at)
 }
 
+// A trophy this recent means the player is mid-session and already heard from us about it: a
+// "time to play" on top of the trophy notices is noise.
+export const PLAYING_HOURS = 3
+
+const earnedLately = (ctx: GameContext) =>
+  ctx.trophies.some(
+    (t) => t.earnedAt && Date.now() - new Date(t.earnedAt).getTime() < PLAYING_HOURS * 3_600_000,
+  )
+
 function recentNotice(user: User): boolean {
   const last = user.session_notice_at ? new Date(user.session_notice_at).getTime() : 0
   return Date.now() - last < SESSION_NOTICE_HOURS * 3_600_000
@@ -412,8 +421,9 @@ async function sessionStart(
   // Checks queued behind each other (sign-up and the first home load) carry the user as it was
   // read before the first one ran: the stored stamp is the one that counts.
   if (recentNotice((await getUser(user.id)) ?? user)) return
-  // The start notice of a new game already went out in this sweep: it counts as this one.
-  if (!noticed) {
+  // The start notice of a new game already went out in this sweep: it counts as this one. A trophy
+  // in the last hours does too: the player is playing and got its notice.
+  if (!noticed && !earnedLately(ctx)) {
     // A game picked from presence is the one being played, whatever the catalog calls it.
     const same = !!ctx.unlisted || comparable(playing) === comparable(ctx.title.name)
     if (same) await gameSession(user, ctx, playing)

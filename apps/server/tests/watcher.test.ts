@@ -198,12 +198,24 @@ describe('session start', () => {
       spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
       spyOn(psn, 'titleTrophies').mockResolvedValue([
         ...trophies.slice(0, 2),
-        makeTrophy({ id: 4, name: 'Novo', earned: true, earnedAt: hoursAgo(1) }),
+        makeTrophy({ id: 4, name: 'Novo', earned: true, earnedAt: hoursAgo(4) }),
         trophies[2],
       ])
       expect(await open({ game: game.id, created_at: hoursAgo(7), content: '' })).toStartWith(
         '🎮 Hora de jogar! ',
       )
+    })
+
+    test('no "time to play" while trophies are still popping', async () => {
+      spyOn(nexo, 'unlockReaction').mockResolvedValue('Boa!')
+      spyOn(psn, 'titleTrophies').mockResolvedValue([
+        ...trophies.slice(0, 2),
+        makeTrophy({ id: 4, name: 'Novo', earned: true, earnedAt: hoursAgo(1) }),
+        trophies[2],
+      ])
+      expect(await open({ game: game.id, created_at: hoursAgo(7), content: '' })).toBeUndefined()
+      // It counts as this window's notice: none right after the trophies stop either.
+      expect(updateUser.mock.calls.at(-1)?.[1].session_notice_at).toBeInstanceOf(Date)
     })
 
     test('a notice that would read exactly like the last one within a day is not sent again', async () => {
