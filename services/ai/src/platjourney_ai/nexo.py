@@ -43,6 +43,7 @@ O que responder:
 - Quando sugerir um troféu para buscar (o próximo, o mais fácil, o que fazer agora), diga em uma frase por que esse, agora, com os dados do jogador: o último que ele conquistou (o nome e quando, dos "Conquistados") ou onde ele está no jogo, e o que torna esse o melhor passo (sai junto com o que ele já vai fazer, é rápido, abre o próximo). Ex.: "Você pegou **X** ontem e já está em **Niflheim**: **Digno** sai em ~30 min, no upgrade que você ia fazer." Use só o que está nos dados; sem dado, não invente o motivo. Quando o contexto trouxer "Próximos troféus na rota" e perguntarem o que fazer agora ou qual o próximo troféu, diga quantos vêm naturalmente e siga para o próximo que exige ação, com a dica dele ("Os próximos 3 são naturais, é só seguir a história. O próximo que exige ação é **X**: ..."). "Agora" quer dizer o que cabe na próxima sessão de onde o jogador está: um troféu rápido, que sai junto com a história ou com o que ele já vai fazer. Uma coleta longa ou um grind (analisar todas as máquinas, subir de nível muito acima do atual) não é "agora": entra só se ele pedir o que falta ou o mais importante. Quando não souber em que ponto da história ele está e isso mudar a sugestão, sugira o que vale em qualquer ponto e termine com uma pergunta curta sobre onde ele está (o capítulo ou a missão). Esse motivo é só para sugestão de qual troféu buscar: quando perguntarem como fazer um troféu ou pedirem dicas dele, não cite o que o jogador já conquistou, e nunca cite uma conquista de mais de 30 dias como motivo.
 - Pergunta de onde achar algo: dê os locais concretos que os trechos trazem (área, ponto de referência, inimigo ou personagem). "Cai de inimigos" sem dizer quais nem onde não responde a pergunta.
 - Quando pedirem mais detalhe ou repetirem o pedido, traga o que você ainda não disse nesta conversa (os próximos passos, outros troféus, os detalhes de um ponto). Nunca repita a resposta anterior com outras palavras. Um alerta que você já deu nesta conversa (um perdível, um ponto sem volta) não volta nas respostas seguintes, a não ser que o jogador pergunte dele ou esteja chegando nesse ponto agora. Se não tiver nada novo para dizer, diga isso em uma frase, sem repetir o que já disse.
+- Quando o jogador disser que o que você indicou não funcionou ou não está lá ("ele não está na base", "não apareceu", "já fiz e não caiu"), não repita a indicação: diga o que pode estar faltando (um requisito, uma missão antes, a hora do dia, um bug conhecido) ou outro jeito de chegar lá, com base no guia ou nos trechos. Sem isso nos dados, diga que não tem o motivo mapeado.
 - O progresso (%) diz o quanto o jogador conhece o jogo. Abaixo de 20%, ele ainda não sabe os termos do jogo: toda sigla, nome de sistema, local ou atividade ganha uma explicação de meia linha na primeira vez que aparece (use o glossário). Se explicar tornar a dica longa demais, corte a dica.
 - Responda só o que foi perguntado. Cumprimento ou papo casual recebe resposta curta e casual, sem lista de dicas. Dicas só quando pedirem ou quando você for o primeiro a falar.
 
@@ -203,7 +204,7 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
         else ''
     )
     parts = [
-        f'Jogo: {title.name} ({title.platform}) — {shown.progress}% — '
+        f'Jogo: {ctx.game.name or title.name} ({title.platform}) — {shown.progress}% — '
         f'{shown.earned}/{shown.total} troféus{shown.label}{dlc_line}'
     ]
     left = platinum_left(ctx, guide, missing)
@@ -413,11 +414,12 @@ def start_prompt(
     to say yet."""
     names = ', '.join(t.name for t in unlocked or [])
     opening = (
-        f'O jogador acabou de começar {ctx.title.name} e já desbloqueou: {names}. A mensagem '
+        f'O jogador acabou de começar {ctx.game.name or ctx.title.name} e já desbloqueou: {names}. '
+        'A mensagem '
         'já abre com o nome do troféu como título e uma frase nossa comemorando o primeiro '
         'troféu: não comemore de novo e não repita o nome, vá direto ao conteúdo.'
         if names
-        else f'O jogador acabou de começar {ctx.title.name}.'
+        else f'O jogador acabou de começar {ctx.game.name or ctx.title.name}.'
     )
     if focus and focus.trophy:
         trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
@@ -647,6 +649,12 @@ LANGUAGE = {
     ),
 }
 
+# The same rule again after the player's message: the prompts are in Portuguese, and a notice's long
+# Portuguese instructions won over the rule at the top of the instructions about half the time.
+LANGUAGE_REMINDER = {
+    'en': '\n\n(Write the whole reply in English, trophy names included. No Portuguese.)',
+}
+
 
 # Only in a conversation: a notice arrives while the player is playing and asks for nothing.
 CLOSING = """
@@ -835,7 +843,14 @@ async def ask_reply(
         **forced,
         reasoning={'effort': 'low'},
         max_output_tokens=settings.chat_max_output_tokens,
-        input=[*turns, {'role': 'user', 'content': f'{context}\n\n---\n{ASKED}\n{user_text}'}],
+        input=[
+            *turns,
+            {
+                'role': 'user',
+                'content': f'{context}\n\n---\n{ASKED}\n{user_text}'
+                + LANGUAGE_REMINDER.get(locale, ''),
+            },
+        ],
     )
     return llm.Reply(
         llm.strip_urls(response.output_text),

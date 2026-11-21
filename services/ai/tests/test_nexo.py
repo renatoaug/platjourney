@@ -688,14 +688,22 @@ async def test_an_account_in_english_gets_the_answer_in_english(monkeypatch: pyt
 
     async def respond(**kw: Any):
         seen['instructions'] = kw['instructions']
+        seen['input'] = kw['input'][-1]['content']
         return SimpleNamespace(output_text='Do it now.\nSource: Guia A and Guia B')
 
     monkeypatch.setattr(nexo.llm, 'respond', respond)
     text = await nexo.ask('How do I get it?', 'ctx', locale='en')
     assert 'Escreva a resposta inteira em inglês' in seen['instructions']
+    # Repeated after the request, where the model reads it last.
+    assert seen['input'].endswith('No Portuguese.)')
     assert text.endswith('Source: Guia A and Guia B')
     await nexo.ask('Como pego?', 'ctx')
     assert 'Idioma: o jogador usa o app em inglês' not in seen['instructions']
+    assert 'English' not in seen['input']
+
+
+def test_when_the_player_says_it_did_not_work_nexo_does_not_repeat_itself():
+    assert 'não repita a indicação' in nexo.SYSTEM
 
 
 def test_the_progress_summary_is_only_for_what_is_left():

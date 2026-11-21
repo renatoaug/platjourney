@@ -207,8 +207,9 @@ function journeyLead(t: Translator<typeof messages>, done: boolean, next?: Troph
   return next ? t('journeyNext', { name: trophyName(next) }) : t('journeyStart')
 }
 
-/** Each tier's cup, with how many of its trophies are earned of how many there are. */
-function GameTiers({ trophies }: { trophies: Trophy[] }) {
+/** Each tier's cup, with how many of its trophies are earned of how many there are. Someone
+ * without an account sees only how many there are: "0/46" would read as their own progress. */
+function GameTiers({ trophies, totals }: { trophies: Trophy[]; totals?: boolean }) {
   const t = useMessages(messages)
   if (!trophies.length) return null
   return (
@@ -220,7 +221,11 @@ function GameTiers({ trophies }: { trophies: Trophy[] }) {
         return (
           <div key={tier} className={`game-tier is-${tier}`}>
             <TrophyMedal type={tier} />
-            <b>{`${number(all.filter((x) => x.earned).length)}/${number(all.length)}`}</b>
+            <b>
+              {totals
+                ? number(all.length)
+                : `${number(all.filter((x) => x.earned).length)}/${number(all.length)}`}
+            </b>
             <span className="sr-only">{t(tier)}</span>
           </div>
         )
@@ -424,6 +429,7 @@ export function GameOverview({
   onOpen,
   trophies,
   catalog,
+  visitor,
 }: {
   game: CurrentGame
   progress: number
@@ -436,6 +442,8 @@ export function GameOverview({
   onOpen: (view: GameView) => void
   /** The trophy list, at the end. */
   trophies: ReactNode
+  /** Nobody signed in: the tiers show totals, not progress. */
+  visitor?: boolean
 }) {
   const t = useMessages(messages)
   const counted = countedTrophies(c.trophies, includeDlc)
@@ -456,7 +464,7 @@ export function GameOverview({
           narrower one puts it above them. */}
       <div className="game-overview-body">
         <aside className="game-overview-rail" aria-label={t('summary')}>
-          <GameTiers trophies={counted} />
+          <GameTiers trophies={counted} totals={visitor} />
           <GameNumbers game={c} />
           <GameLinks game={c} catalog={!!catalog} onOpen={onOpen} />
         </aside>
