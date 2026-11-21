@@ -945,6 +945,7 @@ test('a collection indexes its pieces by stretch, the stretches list by chapter,
     tricks: [
       { trophy: collection.name, trick: 'Esse troféu é da coleção.\n\nPegue as três flores.' },
     ],
+    trophyKinds: [{ trophy: story.name, kind: 'natural' as const }],
     milestones: [
       {
         after: story.name,
@@ -975,7 +976,10 @@ test('a collection indexes its pieces by stretch, the stretches list by chapter,
   const chapters = container.querySelector('.roadmap-chapters')
   expect(chapters?.querySelector('summary')?.textContent).toContain('Por capítulo')
   expect(chapters?.textContent).toContain('Siga pela direita até a flor 2.')
+  expect(advice()).not.toContain('cai naturalmente')
   pick(story.name)
+  // A story trophy with no steps of its own says it comes with the story.
+  expect(advice()).toContain('Esse troféu cai naturalmente durante a história.')
   expect(advice()).toContain('Pra aproveitar depois deste troféu')
   expect(advice()).toContain('Guarde as pedras para o chefe.')
   expect(advice()).toContain('Souvenir 1/2 no barco.')
