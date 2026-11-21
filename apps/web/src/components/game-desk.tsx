@@ -94,7 +94,16 @@ const MISSABLES_SHOWN = 5
 /** The game's numbers along the bottom of its art, in two bars: first what settles the platinum
  * (the guide's difficulty, hours and missables, and the critics' score), each with its icon, then
  * the trophies by tier. What is unknown is left out. */
-function NumbersStrip({ game: c, trophies }: { game: CurrentGame; trophies: Trophy[] }) {
+function NumbersStrip({
+  game: c,
+  trophies,
+  totals,
+}: {
+  game: CurrentGame
+  trophies: Trophy[]
+  /** Nobody signed in: how many trophies each tier has, never "0/46" as if it were progress. */
+  totals?: boolean
+}) {
   const t = useMessages(messages)
   const g = c.guide
   const missables = g?.missables?.length ?? 0
@@ -156,7 +165,11 @@ function NumbersStrip({ game: c, trophies }: { game: CurrentGame; trophies: Trop
                 <TrophyMedal type={tier} />
                 <span className="sr-only">{t(`tier.${tier}`)}</span>
               </dt>
-              <dd>{`${number(all.filter((x) => x.earned).length)}/${number(all.length)}`}</dd>
+              <dd>
+                {totals
+                  ? number(all.length)
+                  : `${number(all.filter((x) => x.earned).length)}/${number(all.length)}`}
+              </dd>
             </div>
           ))}
         </dl>
@@ -311,6 +324,7 @@ export function GameDesk({
   catalog,
   page,
   wide = false,
+  visitor,
 }: {
   game: CurrentGame
   /** The trophies the progress counts (the base game's, or with DLC when the player chose so). */
@@ -331,6 +345,8 @@ export function GameDesk({
   page: ReactNode
   /** The page takes the whole width, without the summary beside it (the journey's board). */
   wide?: boolean
+  /** Nobody signed in: the tiers show totals, not progress. */
+  visitor?: boolean
 }) {
   const t = useMessages(messages)
   const earned = trophies.filter((x) => x.earned).length
@@ -376,7 +392,7 @@ export function GameDesk({
             </div>
             {catalog && <div className="game-desk-hero-actions">{catalog}</div>}
           </div>
-          <NumbersStrip game={c} trophies={trophies} />
+          <NumbersStrip game={c} trophies={trophies} totals={visitor} />
         </div>
       </header>
       {/* The journey first: it is where the platinum is followed. */}

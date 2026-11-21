@@ -7,11 +7,11 @@ import { Icon } from '../ui/icon'
 
 const messages = defineMessages({
   [Language.PtBR]: {
-    save: 'Crie sua conta para salvar',
+    save: 'Conectar minha PSN',
     request: 'Crie sua conta para pedir este jogo',
   },
   [Language.En]: {
-    save: 'Create your account to save',
+    save: 'Connect my PSN',
     request: 'Create your account to ask for this game',
   },
 })
@@ -23,7 +23,8 @@ export function JoinLink({
   why = 'save',
   className = 'button',
 }: {
-  /** What the account would let them do here. */
+  /** What the account would let them do here. Saving a game says only "connect my PSN", the
+   * same words as the journey's card: short enough for one line beside the store button. */
   why?: 'save' | 'request'
   className?: string
 }) {

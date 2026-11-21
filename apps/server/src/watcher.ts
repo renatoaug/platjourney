@@ -396,7 +396,7 @@ async function nothingNew(user: User, ctx: GameContext): Promise<boolean> {
 
 // A trophy this recent means the player is mid-session and already heard from us about it: a
 // "time to play" on top of the trophy notices is noise.
-export const PLAYING_HOURS = 3
+const PLAYING_HOURS = 3
 
 const earnedLately = (ctx: GameContext) =>
   ctx.trophies.some(

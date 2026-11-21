@@ -242,6 +242,7 @@ export function Journey({
           // The journey takes the whole width: its board has its own summary.
           wide={deskTab === 'journey'}
           catalog={catalog}
+          visitor={visitor}
           actions={back}
           scenes={scenes}
           page={
@@ -277,6 +278,7 @@ export function Journey({
             onOpen={open}
             catalog={catalog}
             trophies={trophyList}
+            visitor={visitor}
           />
           {similar}
         </>

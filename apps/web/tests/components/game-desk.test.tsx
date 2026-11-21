@@ -39,6 +39,7 @@ function desk(
       catalog={catalog ? <button type="button">Salvar</button> : undefined}
       page={<section>conteúdo da aba</section>}
       wide={wide}
+      visitor={visitor}
     />,
     { value: { me: { ...SAMPLE_ME, visitor } } },
   )
@@ -107,4 +108,14 @@ test('a visitor can open the journey too: the hosted instance draws it blurred, 
   expect(journey.disabled).toBe(false)
   fireEvent.click(journey)
   expect(onTab).toHaveBeenLastCalledWith('journey')
+})
+
+test('a visitor sees how many trophies each tier has, not progress', () => {
+  desk(current, { visitor: true })
+  expect(document.querySelector('.game-desk-strip.is-tiers')?.textContent).not.toContain('/')
+})
+
+test('a player sees each tier as earned of total', () => {
+  desk(current)
+  expect(document.querySelector('.game-desk-strip.is-tiers')?.textContent).toContain('/')
 })

@@ -330,6 +330,21 @@ test('a catalog game offers a roadmap preview without asserting ownership or per
   expect(document.querySelector('.roadmap-past')).toBeNull()
 })
 
+test('without an account the tiers show how many trophies there are, never 0/46', async () => {
+  open('/title/game/game%3A19561', recommendedData, { me: VISITOR })
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
+  const tiers = document.querySelector('.game-tiers')?.textContent ?? ''
+  expect(tiers).not.toBe('')
+  expect(tiers).not.toContain('/')
+  expect(screen.getByRole('link', { name: /Conectar minha PSN/ })).toBeTruthy()
+})
+
+test('signed in, a game outside the library still counts its tiers from zero', async () => {
+  open('/title/game/game%3A19561', recommendedData)
+  await screen.findByRole('heading', { name: 'DAYS GONE' })
+  expect(document.querySelector('.game-tiers')?.textContent).toContain('0/')
+})
+
 test('on a large screen, without an account, a game with a guide opens on the guide', async () => {
   const wide = { matches: true, addEventListener() {}, removeEventListener() {} }
   spyOn(window, 'matchMedia').mockReturnValue(wide as unknown as MediaQueryList)
