@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, test } from 'bun:test'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MockAppState, SAMPLE_ME } from '../../src/app/app-state'
 import { PushInvite } from '../../src/components/push-invite'
+import { PUSH_INVITE_EVENT } from '../../src/lib/push'
 import type { Me } from '../../src/lib/types'
 import { ToastHost } from '../../src/ui/toast'
 import { mockApi } from '../support/web'
@@ -75,8 +76,11 @@ test('the card asks only after the tap, then goes away once notices are on', asy
 test('dismissed, the card stays away on this device', async () => {
   browser('default')
   mockApi({})
+  const events: unknown[] = []
+  document.addEventListener(PUSH_INVITE_EVENT, (e) => events.push((e as CustomEvent).detail))
   const { unmount } = show('card')
   fireEvent.click(await screen.findByRole('button', { name: 'Dispensar' }, { timeout: 5000 }))
+  expect(events).toEqual([{ where: 'card', result: 'later' }])
   expect(screen.queryByRole('button', { name: 'Ativar' })).toBeNull()
   unmount()
   show('card')

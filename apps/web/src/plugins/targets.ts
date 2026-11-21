@@ -295,6 +295,8 @@ export type Target =
   | 'PsnProgress'
   | 'PublicHome'
   | 'PublicProfile'
+  | 'PushAsk'
+  | 'PushAskView'
   | 'PushInvite'
   | 'PushInviteView'
   | 'QuickFacts'
