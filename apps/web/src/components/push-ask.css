@@ -1,57 +1,94 @@
 @layer screens {
-  /* The notices screen: the introduction's look, with a bell over the words and three lines of what
-     arrives. */
-  /* A few lines of text: a narrow card, not the introduction's wide one (the iPad app). */
-  .push-ask .onb-card {
-    width: min(520px, 100%);
-  }
-
-  .push-ask .onb-body {
-    grid-template-columns: 1fr;
-    min-height: 0;
-  }
-
-  .push-ask-icon {
-    display: grid;
-    place-items: center;
-    width: 56px;
-    height: 56px;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-round);
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
-    color: var(--color-accent);
-  }
-
-  .push-ask-icon .icon {
-    width: 26px;
-    height: 26px;
-  }
-
-  .push-ask-perks {
-    display: grid;
-    gap: 10px;
-    margin: 4px 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .push-ask-perks li {
+  /* The notices bar: floating over the bottom of the screen, above the tab bar on a phone, in frosted
+     glass, with the way out on the left and the button on the right. The screen stays usable. */
+  .push-ask {
+    position: fixed;
+    right: 12px;
+    bottom: calc(var(--bottom-bar, 0px) + 12px);
+    left: 12px;
+    z-index: 30;
+    box-sizing: border-box;
     display: flex;
     gap: 10px;
     align-items: center;
-    color: var(--color-fg);
-    text-align: left;
+    padding: 10px 12px 10px 8px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-surface-float) var(--alpha-dim), transparent);
+    backdrop-filter: blur(20px) saturate(1.2);
+    box-shadow: var(--shadow-popover);
+    animation: push-ask-rise 0.4s cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
   }
 
-  .push-ask-perks .icon {
+  .push-ask-close {
+    display: grid;
     flex: none;
-    width: 18px;
-    height: 18px;
-    color: var(--color-accent);
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-fg) var(--alpha-tint), transparent);
+    color: var(--color-fg-muted);
   }
 
-  .push-ask-off {
-    color: var(--color-fg-subtle);
-    font-size: var(--text-sm);
+  .push-ask-close .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .push-ask .push-ask-trophy {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(
+      0 2px 10px color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent)
+    );
+  }
+
+  .push-ask-copy {
+    display: grid;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .push-ask-copy b {
+    color: var(--color-fg);
+    font-size: var(--text-body);
+    line-height: var(--leading-tight);
+  }
+
+  .push-ask-copy small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-md);
+  }
+
+  .push-ask .push-ask-enable {
+    flex: none;
+  }
+
+  /* On a large screen it keeps to a corner instead of the whole width. */
+  @media (min-width: 761px) {
+    .push-ask {
+      right: 24px;
+      bottom: 24px;
+      left: auto;
+      width: min(440px, calc(100vw - 48px));
+    }
+  }
+
+  @keyframes push-ask-rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .push-ask {
+      animation: none;
+    }
   }
 }
