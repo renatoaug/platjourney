@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.91.1](https://github.com/renatoaug/platjourney/compare/v0.91.0...v0.91.1) (2026-11-21)
+
+### Bug Fixes
+
+* **web:** the tips after a story trophy say they come after it ([#215](https://github.com/renatoaug/platjourney/issues/215)) ([2052c61](https://github.com/renatoaug/platjourney/commit/2052c618936fb5350f5e3d0e1f2f4352b7e7479e))
+
 ## [0.91.0](https://github.com/renatoaug/platjourney/compare/v0.90.1...v0.91.0) (2026-11-20)
 
 ### Features
