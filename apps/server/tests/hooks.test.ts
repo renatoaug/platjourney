@@ -34,16 +34,9 @@ test('a progress mark a trophy or two away is the next reason', () => {
   expect(pickHook(makeContext({ trophies: list(6) }))).toBeNull()
 })
 
-test('else the rarest trophy missing, never a hidden one', () => {
-  const trophies = list(6, [
-    ...Array.from({ length: 10 }, () => ({})),
-    { earnedRate: 3.2 },
-    { earnedRate: 1.1, hidden: true },
-    { earnedRate: 4 },
-  ])
-  expect(pickHook(makeContext({ trophies }))).toStartWith(
-    'o troféu mais raro que falta é T11 (3.2%',
-  )
+test('the rarest trophy missing is no reason to close an answer', () => {
+  const trophies = list(6, [...Array.from({ length: 10 }, () => ({})), { earnedRate: 3.2 }])
+  expect(pickHook(makeContext({ trophies }))).toBeNull()
 })
 
 test('nothing for a platinum earned, a game not owned or nothing to say', () => {

@@ -3,8 +3,10 @@ import type { TrophyStatus } from './psn.ts'
 
 /**
  * A reason to come back, for the end of a chat answer: one fact from the player's own game that
- * something is ahead (a missable not done yet, a progress mark a trophy or two away, the rarest
- * trophy still missing). Nexo closes with it at most once a day per game, so it stays a nudge.
+ * something is ahead that changes what they do now (a missable not done yet, a progress mark a
+ * trophy or two away). The rarest trophy still missing is not one: it closed answers about anything
+ * else with an offer nobody asked for. Nexo closes with it at most once a day per game, so it stays
+ * a nudge.
  * The fact is written for the model, in Portuguese like the rest of its context.
  */
 export function pickHook(ctx: GameContext): string | null {
@@ -24,21 +26,12 @@ export function pickHook(ctx: GameContext): string | null {
     if (left <= 2)
       return `${left > 1 ? `faltam ${left} troféus` : 'falta 1 troféu'} pra ${mark}% da platina: ofereça ajudar a fechar esse marco`
   }
-  const rare = rarest(missing)
-  if (rare)
-    return `o troféu mais raro que falta é ${rare.name} (${rare.earnedRate}% dos jogadores têm): ofereça um plano pra ele quando o jogador quiser`
   return null
 }
 
 function nextMissable(ctx: GameContext, missing: TrophyStatus[]) {
   const open = new Set(missing.filter((t) => !t.hidden).map((t) => t.name.toLowerCase()))
   return ctx.guide?.missables?.find((m) => open.has(m.trophy.toLowerCase()))
-}
-
-function rarest(missing: TrophyStatus[]) {
-  return missing
-    .filter((t) => !t.hidden && t.earnedRate > 0 && t.earnedRate < 5)
-    .sort((a, b) => a.earnedRate - b.earnedRate)[0]
 }
 
 // Per player and game, the day a hook was last offered. In memory: a restart only means one more
