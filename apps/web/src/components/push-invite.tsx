@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { isNativePush, nativePlatform, nativePushAvailable } from '../lib/native-push'
-import { enablePush, type PushState, pushState } from '../lib/push'
+import { enablePush, type PushState, pushState, reportPushInvite } from '../lib/push'
 import { Icon } from '../ui/icon'
 import { toast } from '../ui/toast'
 import './push-invite.css'
@@ -55,7 +55,7 @@ function dismissed(): boolean {
 }
 
 /** Where push stands on this device, and the tap that turns it on. */
-function usePush() {
+function usePush(variant: 'card' | 'row') {
   const { me } = useApp()
   const t = useMessages(messages)
   const available = !me.demo && (isNativePush() ? nativePushAvailable(me) : !!me.pushKey)
@@ -75,9 +75,11 @@ function usePush() {
     setBusy(true)
     try {
       const next = await enablePush(me.pushKey ?? '')
+      reportPushInvite(variant, next)
       setState(next)
       toast(next === 'on' ? t('on') : t('notAllowed'), next === 'on' ? 'success' : 'info')
     } catch {
+      reportPushInvite(variant, 'failed')
       toast(t('failed'))
     }
     setBusy(false)
@@ -86,7 +88,7 @@ function usePush() {
 }
 
 export function PushInvite({ variant }: { variant: 'card' | 'row' }) {
-  const { state, busy, enable } = usePush()
+  const { state, busy, enable } = usePush(variant)
   const [hidden, setHidden] = useState(dismissed)
   if (state !== 'off' && state !== 'denied') return null
   if (variant === 'card' && (hidden || state === 'denied')) return null
@@ -94,6 +96,7 @@ export function PushInvite({ variant }: { variant: 'card' | 'row' }) {
     try {
       localStorage.setItem(DISMISSED, '1')
     } catch {}
+    reportPushInvite('card', 'later')
     setHidden(true)
   }
   return (
