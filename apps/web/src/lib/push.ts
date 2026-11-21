@@ -82,10 +82,10 @@ export async function disablePush(): Promise<PushState> {
 }
 
 /** The page event an invitation to turn notices on sends with what the player did, for whoever
- * counts it (a plugin): where it was asked (the first-launch screen, the Home card, the
- * bell's line) and how it ended. The permission dialog's answer is the state it left. */
+ * counts it (a plugin): where it was asked (the first-launch sheet, the sheet again over a missed
+ * trophy, the Home card, the bell's line) and how it ended. The permission dialog's answer is the state it left. */
 export const PUSH_INVITE_EVENT = 'push:invite'
-export type PushInviteWhere = 'ask' | 'card' | 'row'
+export type PushInviteWhere = 'ask' | 'again' | 'card' | 'row'
 export type PushInviteResult = PushState | 'later' | 'failed'
 export interface PushInviteDetail {
   where: PushInviteWhere
