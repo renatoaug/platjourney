@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.93.0](https://github.com/renatoaug/platjourney/compare/v0.92.0...v0.93.0) (2026-11-21)
+
+### Features
+
+* **web:** the notices invitation is a bar at the bottom and asks again over a missed trophy ([#219](https://github.com/renatoaug/platjourney/issues/219)) ([15e69fb](https://github.com/renatoaug/platjourney/commit/15e69fb8f7d2e71313dc8d7ea88c2012ab4855b2))
+
 ## [0.92.0](https://github.com/renatoaug/platjourney/compare/v0.91.3...v0.92.0) (2026-11-21)
 
 ### Features
