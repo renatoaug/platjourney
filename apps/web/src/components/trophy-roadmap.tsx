@@ -487,7 +487,7 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
 /** A story trophy without steps of its own says so, instead of an empty "How to do it". */
 function ComesNaturally({ show }: { show: boolean }) {
   const t = useMessages(messages)
-  return show ? <p>{t('natural')}</p> : null
+  return show ? <p className="roadmap-advice-natural">{t('natural')}</p> : null
 }
 
 /** Asks the Nexo about this trophy, beside "How to do it". */
