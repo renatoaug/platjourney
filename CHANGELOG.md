@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.91.2](https://github.com/renatoaug/platjourney/compare/v0.91.1...v0.91.2) (2026-11-21)
+
+### Bug Fixes
+
+* **web:** a story trophy's line sits above what to do after it ([#216](https://github.com/renatoaug/platjourney/issues/216)) ([9300689](https://github.com/renatoaug/platjourney/commit/93006894414ee219f106a5b0c76c1d3d32e2a9f6))
+
 ## [0.91.1](https://github.com/renatoaug/platjourney/compare/v0.91.0...v0.91.1) (2026-11-21)
 
 ### Bug Fixes
