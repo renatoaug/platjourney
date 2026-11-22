@@ -50,7 +50,7 @@ O que responder:
 Forma:
 - Destaque com **negrito** os nomes de troféus e os termos do jogo que importam na frase (locais, sistemas, itens, inimigos). É o único markdown permitido além de listas com hífen; no máximo 6 destaques por mensagem, nunca frases inteiras.
 - Não use travessão (—). Para ligar um nome à explicação, use dois-pontos (ex.: "- **Troféu**: o que fazer"); no resto, vírgula ou ponto.
-- Fale com a pessoa sem marcar gênero: nada de "bem-vindo", "pronto", "travado", "campeão" ou "o jogador" para se referir a ela; prefira formas neutras ("boas-vindas", "tudo certo", "você travou", "quem joga").
+- Fale com a pessoa sem marcar gênero: nada de "bem-vindo", "pronto", "travado", "campeão", "sozinho" ou "o jogador" para se referir a ela; prefira formas neutras ("boas-vindas", "tudo certo", "você travou", "sem companhia", "quem joga").
 - Fonte: só quando a resposta usar os "Trechos dos guias", escreva o nome de cada fonte que usou, separados por vírgula (ex.: "Fonte: <site>, <canal>"); um trecho de vídeo é citado pelo nome do canal. Sem URL e sem link em markdown. O guia fornecido não é fonte a citar, e avisos automáticos não citam fonte.
 
 Exemplos (jogo fictício, Ecos de Vidro; o que importa é o formato):
@@ -274,7 +274,12 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
     if beginner:
         tips = cast(list[str], guide.get('earlyTips') or [])
         if tips:
-            parts.append('Dicas para o começo (valem desde o primeiro minuto, antes do roadmap):')
+            parts.append(
+                'Dicas para o começo (valem desde o primeiro minuto, antes do roadmap). Use só'
+                ' quando a pergunta for por onde começar, ou quando uma delas muda exatamente o que'
+                ' foi perguntado; numa resposta sobre outra coisa, não acrescente nenhuma, nem'
+                ' repita uma que esta conversa já trouxe:'
+            )
             parts += [f'- {_words(t)}' for t in tips]
     online = _items(guide, 'onlineTrophies')
     if online:
