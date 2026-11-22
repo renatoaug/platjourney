@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MockAppState, SAMPLE_DATA, SAMPLE_ME } from '../../src/app/app-state'
+import * as installGuide from '../../src/components/install-guide'
 import { ASK_AGAIN_MS, askReason, MAX_ASKS, PushAsk } from '../../src/components/push-ask'
 import * as nativePush from '../../src/lib/native-push'
 import * as push from '../../src/lib/push'
@@ -102,6 +103,17 @@ test('it waits for the introduction, and a browser or the demo never sees it', a
   mock.restore()
   device('off', false)
   show()
+  await settle()
+  expect(screen.queryByRole('button', { name: 'Ativar' })).toBeNull()
+})
+
+test('PlatJourney installed from the browser asks too, with Web Push; a browser tab does not', async () => {
+  device('off', false)
+  spyOn(installGuide, 'installed').mockReturnValue(true)
+  show({ ...player, pushKey: 'AQID' })
+  expect(await screen.findByRole('button', { name: 'Ativar' })).toBeTruthy()
+  cleanup()
+  show({ ...player, pushKey: undefined })
   await settle()
   expect(screen.queryByRole('button', { name: 'Ativar' })).toBeNull()
 })
