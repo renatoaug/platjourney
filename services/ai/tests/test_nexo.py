@@ -303,8 +303,14 @@ def test_a_new_player_gets_the_starting_tips_right_after_the_missables() -> None
     tips = text.index('Dicas para o começo')
     assert text.index('Perdíveis:') < tips < text.index('Roadmap:')
     assert '- Saqueie tudo desde cedo.' in text
+    # They answer how to start, and do not close an answer about something else.
+    assert 'não acrescente nenhuma' in text
     # Past the start, the tips stay out.
     assert 'Dicas para o começo' not in nexo.lean_context(context(guide=GUIDE))
+
+
+def test_nexo_does_not_mark_gender_when_sending_the_player_somewhere_alone() -> None:
+    assert '"sozinho"' in nexo.SYSTEM and '"sem companhia"' in nexo.SYSTEM
 
 
 def test_the_guide_marks_trophies_the_player_already_has() -> None:
