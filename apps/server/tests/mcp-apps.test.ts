@@ -1,5 +1,5 @@
 import './env.ts'
-import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test'
+import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiClient from '../src/ai.ts'
 import * as demo from '../src/demo.ts'
 import * as lib from '../src/library.ts'
@@ -10,7 +10,6 @@ import { changedPrefs, emptyPrefs } from '../src/recommend.ts'
 import * as interests from '../src/repository/interest.ts'
 import * as similar from '../src/repository/similar.ts'
 import * as users from '../src/repository/user.ts'
-import { withTrophyCards } from '../src/routes/chat.ts'
 import * as watcher from '../src/watcher.ts'
 import { makeContext, makeGame, makeTitle, makeTrophy, makeUser } from './api-fixtures.ts'
 
@@ -180,60 +179,6 @@ test('every view blocks connections and only allows images from the PSN', () => 
     expect(resource.text).not.toContain('</script</')
     expect(resource._meta?.ui?.csp?.connectDomains).toEqual([])
   }
-})
-
-describe('the trophy card on a chat answer', () => {
-  const ctx = makeContext({
-    game: makeGame({ id: 'game:1' }),
-    trophies: [
-      makeTrophy({ id: 1, name: 'Mira Certeira', earned: false }),
-      makeTrophy({ id: 2, name: 'Piedade', earned: true }),
-      makeTrophy({ id: 3, name: 'Segredo', earned: false, hidden: true }),
-    ],
-  })
-  const game = { id: 'game:1', name: 'Jogo' } as never
-  const answerTo = (content: string, user = makeUser()) =>
-    withTrophyCards(
-      [
-        { id: 'm1', role: 'user', content, created_at: '', game },
-        { id: 'm2', role: 'assistant', content: 'resposta', created_at: '', game },
-      ],
-      user,
-      ctx,
-    )[1] as { trophy?: { name: string; earned: boolean } }
-
-  test('comes from the trophy the question names', () => {
-    expect(answerTo('Sobre o troféu **Mira Certeira**: como?').trophy?.name).toBe('Mira Certeira')
-    expect(answerTo('como pego mira certeira?').trophy?.name).toBe('Mira Certeira')
-  })
-
-  test('a one-word name needs the bold, since it may be an ordinary word', () => {
-    expect(answerTo('tenha piedade de mim').trophy).toBeUndefined()
-    expect(answerTo('Sobre o troféu **Piedade**: como?').trophy?.earned).toBe(true)
-  })
-
-  test('a question naming two trophies has no card', () => {
-    expect(answerTo('**Piedade** ou **Mira Certeira**?').trophy).toBeUndefined()
-  })
-
-  test('a hidden trophy has no card until the player reveals it', () => {
-    expect(answerTo('Sobre **Segredo**').trophy).toBeUndefined()
-    const reveals = makeUser({ revealed_trophy_games: ['game:1'] } as never)
-    expect(answerTo('Sobre **Segredo**', reveals).trophy?.name).toBe('Segredo')
-  })
-
-  test('an answer about another game has no card', () => {
-    const other = { id: 'game:2', name: 'Outro' } as never
-    const [, answer] = withTrophyCards(
-      [
-        { id: 'm1', role: 'user', content: '**Piedade**', created_at: '', game: other },
-        { id: 'm2', role: 'assistant', content: 'x', created_at: '', game: other },
-      ],
-      makeUser(),
-      ctx,
-    ) as { trophy?: unknown }[]
-    expect(answer.trophy).toBeUndefined()
-  })
 })
 
 test('a refusal wrapped by the host shows only the tool message', () => {

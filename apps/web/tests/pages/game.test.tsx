@@ -53,7 +53,9 @@ test('the overview leads with progress; the route, the plan and the guide open o
   fireEvent.click(screen.getByRole('button', { name: /^Jornada da platina/ }))
   expect(screen.getByRole('heading', { level: 1, name: 'Jornada da platina' })).toBeTruthy()
   expect(
-    document.querySelector('.roadmap-step.is-suggested .roadmap-ask')?.getAttribute('href'),
+    document
+      .querySelector('.roadmap-step.is-suggested :is(.roadmap-ask, .roadmap-ask-chip)')
+      ?.getAttribute('href'),
   ).toContain('trophy=')
   fireEvent.click(screen.getByRole('button', { name: 'Voltar para o jogo' }))
 

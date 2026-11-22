@@ -32,6 +32,7 @@ import { Sk } from '../ui/skeleton'
 import { TrophyArt } from '../ui/trophy-art'
 import { image } from './game-showcase'
 import { JourneyLink } from './journey-link'
+import { TrophyAsks } from './nexo-asks'
 import { nexoHref } from './tip'
 import './trophy-roadmap.css'
 import { TrophyMedal } from '../ui/trophy-medal'
@@ -408,21 +409,21 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
     !!tips.length ||
     !!steps.length ||
     !!stretch.length
-  // A story trophy with nothing to watch for has nothing to ask: it comes by playing.
-  const quiet = !hasAdvice && natural
+  // A story trophy with nothing to watch for has nothing to ask: it comes by playing. A hunt the
+  // guide has no trick for gets the ready questions instead, in place of the advice.
+  const bare = !hasAdvice && !natural
   return (
     <div className="roadmap-advice">
-      {(hasAdvice || !quiet) && (
+      {hasAdvice && (
         <div className="roadmap-advice-head">
-          {hasAdvice && (
-            <span className="roadmap-advice-label">
-              <Icon name="nexo" />
-              {t('note')}
-            </span>
-          )}
-          {!quiet && <AdviceAsk trophy={trophy} game={game} />}
+          <span className="roadmap-advice-label">
+            <Icon name="nexo" />
+            {t('note')}
+          </span>
+          <AdviceAsk trophy={trophy} game={game} />
         </div>
       )}
+      <NoAdvice show={bare} trophy={trophy} game={game} />
 
       {/* On a wide screen the lists of places sit beside the steps instead of under them. */}
       <div className="roadmap-advice-body">
@@ -481,6 +482,19 @@ function TrophyAdvice({ trophy, game }: { trophy: Trophy; game: RoadmapGame }) {
       </div>
       {hasAdvice && <TipRating trophy={trophy} />}
     </div>
+  )
+}
+
+/** A trophy the guide has no trick for: one tap sends Nexo the question, instead of a lone link. */
+function NoAdvice({ show, trophy, game }: { show: boolean; trophy: Trophy; game: RoadmapGame }) {
+  if (!show || !game.np) return null
+  return (
+    <TrophyAsks
+      np={game.np}
+      name={game.name}
+      trophy={trophyName(trophy)}
+      className="roadmap-ask-chip"
+    />
   )
 }
 

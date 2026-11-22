@@ -7,7 +7,6 @@ import {
   GameCardNoGuide,
   Loaded,
   Pending,
-  TrophyCard,
 } from '../../../src/components/chat/chat.stories'
 import { fakeRecorder } from '../../support/recorder'
 import { mockApi, renderApp } from '../../support/web'
@@ -118,6 +117,32 @@ describe('NexoChat', () => {
       screen.getByRole('button', { name: 'Tirar o troféu Variedade dá gosto à vida da pergunta' }),
     )
     expect(onClearTrophy).toHaveBeenCalled()
+  })
+
+  test('a trophy over a conversation that already has messages keeps its ready questions above the box', () => {
+    const onSend = mock()
+    render(
+      <MemoryRouter>
+        <NexoChat
+          chat={messages}
+          sending={false}
+          subtitle="Falando sobre DAYS GONE (13%)."
+          onSend={onSend}
+          trophy="Variedade dá gosto à vida"
+          onClearTrophy={() => {}}
+        />
+      </MemoryRouter>,
+    )
+    expect(document.querySelector('#chat-chips')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Dá pra perder?' }))
+    expect(onSend).toHaveBeenCalledWith(
+      'Sobre o troféu **Variedade dá gosto à vida**: Dá pra perder?',
+    )
+  })
+
+  test('without a trophy a conversation has no ready questions above the box', () => {
+    show(messages)
+    expect(document.querySelector('.chat-trophy-asks')).toBeNull()
   })
 
   test('an empty conversation suggestion sends its full question', () => {
@@ -318,19 +343,6 @@ describe('mic', () => {
     await screen.findByDisplayValue('No Plague Tale: onde fica a cripta?')
     recorder.restore()
   })
-})
-
-test('an answer about a trophy shows its art, what PSN asks and where to see it', () => {
-  show(TrophyCard.args?.chat as ChatLoad)
-  const card = document.querySelector('.answer-card')
-  expect(card?.textContent).toContain('Mira Certeira')
-  expect(card?.textContent).toContain('Pendente')
-  expect(card?.textContent).toContain('Acerte os cinco alvos')
-  expect(
-    within(card as HTMLElement)
-      .getByRole('link')
-      .getAttribute('href'),
-  ).toContain('game')
 })
 
 test('an answer about no trophy has no card', () => {

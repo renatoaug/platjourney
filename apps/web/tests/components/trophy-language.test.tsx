@@ -1,6 +1,5 @@
 import { afterEach, expect, mock, test } from 'bun:test'
 import { screen } from '@testing-library/react'
-import { AnswerTrophy } from '../../src/components/chat/answer-cards'
 import { NextTrophy } from '../../src/components/next-trophy'
 import { TrophyRoadmap } from '../../src/components/trophy-roadmap'
 import { routeGame } from '../../src/fixtures/route'
@@ -35,7 +34,7 @@ test('the journey names its trophies in English for a player reading English', (
   expect(container.textContent).not.toMatch(/(Primeiro Passo|Segundo Ato)(?! \(EN\))/)
 })
 
-test('the next trophy card and a chat answer’s trophy card read English too', () => {
+test('the next trophy card reads English too', () => {
   setLocale('en', { persist: false })
   mockApi({ '/api/plan': { plan: null } })
   const trophy = {
@@ -49,13 +48,8 @@ test('the next trophy card and a chat answer’s trophy card read English too', 
     earnedRate: 40,
     groupId: 'default',
   } as Trophy
-  renderApp(
-    <>
-      <NextTrophy trophies={[trophy]} game="game:1" />
-      <AnswerTrophy trophy={{ ...trophy, rarity: 40 }} />
-    </>,
-  )
-  expect(screen.getAllByText('Scoring')).toHaveLength(2)
-  expect(screen.getAllByText('Win a race')).toHaveLength(2)
+  renderApp(<NextTrophy trophies={[trophy]} game="game:1" />)
+  expect(screen.getAllByText('Scoring')).toHaveLength(1)
+  expect(screen.getAllByText('Win a race')).toHaveLength(1)
   expect(screen.queryByText('Marcando o gol')).toBeNull()
 })

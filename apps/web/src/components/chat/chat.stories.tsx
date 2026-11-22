@@ -90,27 +90,6 @@ export const GameCardNoGuide: Story = {
     ],
   },
 }
-export const TrophyCard: Story = {
-  args: {
-    ...base,
-    chat: [
-      { role: 'user', content: 'Sobre o troféu **Mira Certeira**: como faço?' },
-      {
-        role: 'assistant',
-        content: 'Carregue cada disparo antes de soltar: errar um alvo reinicia o desafio.',
-        game: { id: 'game:1', name: 'Caminho de Exemplo' },
-        trophy: {
-          id: 2,
-          name: 'Mira Certeira',
-          detail: 'Acerte os cinco alvos do capítulo 2.',
-          type: 'bronze',
-          earned: false,
-          rarity: 12.4,
-        },
-      },
-    ],
-  },
-}
 export const TrophyContext: Story = {
   args: { ...base, chat: [], trophy: 'Laboratório de bolso' },
   render: function Context(args) {
@@ -118,6 +97,12 @@ export const TrophyContext: Story = {
     return <NexoChat {...args} trophy={trophy} onClearTrophy={() => setTrophy(null)} />
   },
 }
+// A trophy asked about from the journey over a conversation that already has messages: its ready
+// questions sit above the box.
+export const TrophyOverConversation: Story = {
+  args: { ...base, chat: MESSAGES, trophy: 'Laboratório de bolso' },
+}
+
 export const LongTrophyContext: Story = {
   ...TrophyContext,
   args: { ...TrophyContext.args, trophy: 'Uma jornada muito longa até a última conquista' },
