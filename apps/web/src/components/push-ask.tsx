@@ -1,7 +1,7 @@
-/** In the native app: a bar over the bottom of the screen asking to turn on Nexo's notices, before
- * the system's own dialog; the screen stays usable under it. iOS asks only once, so the app asks
- * when the player can see why. The first time the app is used on a
- * device, after the introduction; after a "not now", at most twice more, a week apart at least, and
+/** In the native app, or PlatJourney installed from the browser: a bar over the bottom of the screen
+ * asking to turn on Nexo's notices, before the system's own dialog; the screen stays usable under
+ * it. iOS asks only once, so the app asks when the player can see why. The first time the app is
+ * used on a device, after the introduction; after a "not now", at most twice more, a week apart at least, and
  * only when a trophy notice came in that the player has not read: the moment the notices would have
  * helped. Whatever the answer, the Home card and the bell's line stay as the way back. */
 import { useEffect, useState } from 'react'
@@ -10,10 +10,11 @@ import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { fmtAgo } from '../lib/format'
 import { isNativePush, nativePushAvailable } from '../lib/native-push'
 import { enablePush, type PushInviteWhere, pushState, reportPushInvite } from '../lib/push'
-import type { AppStateData, Tip } from '../lib/types'
+import type { AppStateData, Me, Tip } from '../lib/types'
 import { Icon } from '../ui/icon'
 import { toast } from '../ui/toast'
 import { TrophyMedal } from '../ui/trophy-medal'
+import { installed } from './install-guide'
 import './push-ask.css'
 
 const messages = defineMessages({
@@ -94,18 +95,19 @@ export function askReason(
   return { missed }
 }
 
+/** Where the bar may ask: the native app with its push, or PlatJourney installed from the browser
+ * with Web Push. A browser tab is left to the Home card and the bell. */
+function canAsk(me: Me): boolean {
+  if (isNativePush()) return nativePushAvailable(me)
+  return installed() && !!me.pushKey
+}
+
 /** Mounted in the shell: decides whether this device has to be asked now. */
 export function PushAsk() {
   const { me, data } = useApp()
   const t = useMessages(messages)
   // After the account's first data, so native push has its session, and after the introduction.
-  const ready =
-    !!data &&
-    !me.demo &&
-    !me.visitor &&
-    me.onboarded === true &&
-    isNativePush() &&
-    nativePushAvailable(me)
+  const ready = !!data && !me.demo && !me.visitor && me.onboarded === true && canAsk(me)
   const reason = ready && data ? askReason(readAsked(), data) : null
   const due = reason !== null
   const [open, setOpen] = useState<{ missed?: Tip } | null>(null)
