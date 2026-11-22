@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useInterests } from '../../app/use-interests'
-import { defineMessages, getLocale, Language, useLocale, useMessages } from '../../i18n/i18n'
-import { trophyDetail, trophyName } from '../../lib/trophy-text'
+import { defineMessages, getLocale, Language, useMessages } from '../../i18n/i18n'
 import { Cover } from '../../ui/cover'
 import { Icon } from '../../ui/icon'
-import { TrophyArt } from '../../ui/trophy-art'
 import { useDemo } from '../demo'
 import { titleHref } from '../tip'
 import './answer-cards.css'
@@ -21,16 +19,6 @@ const messages = defineMessages({
     hours: 'Tempo até a platina',
     hoursUnit: ' horas',
     progress: 'Progresso',
-    tier: 'Tipo',
-    status: 'Status',
-    rarity: 'Raridade',
-    earned: 'Conquistado',
-    pending: 'Pendente',
-    objective: 'Objetivo',
-    platinum: 'Platina',
-    gold: 'Ouro',
-    silver: 'Prata',
-    bronze: 'Bronze',
   },
   [Language.En]: {
     pick: 'Your next platinum',
@@ -42,16 +30,6 @@ const messages = defineMessages({
     hours: 'Time to platinum',
     hoursUnit: ' hours',
     progress: 'Progress',
-    tier: 'Tier',
-    status: 'Status',
-    rarity: 'Rarity',
-    earned: 'Earned',
-    pending: 'Pending',
-    objective: 'Objective',
-    platinum: 'Platinum',
-    gold: 'Gold',
-    silver: 'Silver',
-    bronze: 'Bronze',
   },
 })
 
@@ -65,19 +43,6 @@ export interface ChatGameCard {
   difficulty?: number | null
   hours?: number | null
   progress?: number | null
-}
-
-/** The trophy a question was about, as it is now. */
-export interface ChatTrophyCard {
-  id: number
-  name: string
-  detail?: string | null
-  nameEn?: string | null
-  detailEn?: string | null
-  type: string
-  iconUrl?: string | null
-  earned: boolean
-  rarity?: number | null
 }
 
 const number = (value: number) => value.toLocaleString(getLocale())
@@ -185,67 +150,6 @@ export function AnswerGame({ card, onTalk }: { card: ChatGameCard; onTalk?: () =
               unit="%"
             />
           )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-const TIERS = ['platinum', 'gold', 'silver', 'bronze'] as const
-type Tier = (typeof TIERS)[number]
-const isTier = (type: string): type is Tier => (TIERS as readonly string[]).includes(type)
-
-/** The trophy an answer is about: its image, what PSN asks for and where it stands. */
-export function AnswerTrophy({
-  trophy,
-  game,
-}: {
-  trophy: ChatTrophyCard
-  game?: { id: string; name: string; art_url?: string | null } | null
-}) {
-  const t = useMessages(messages)
-  const locale = useLocale()
-  const detail = trophyDetail(trophy, locale)
-  return (
-    <div className="answer-card" data-tier={trophy.type}>
-      <AnswerHero art={game?.art_url}>
-        <div className="answer-title">
-          <span className="answer-medal">
-            <TrophyArt url={trophy.iconUrl ?? undefined} />
-          </span>
-          <div>
-            {game?.name && <span>{game.name}</span>}
-            <strong>{trophyName(trophy, locale)}</strong>
-          </div>
-        </div>
-        {game?.id && (
-          <div className="answer-actions">
-            <Link className="answer-link" to={titleHref(game.id)}>
-              <Icon name="arrow" />
-              {t('open')}
-            </Link>
-          </div>
-        )}
-      </AnswerHero>
-      <div className="answer-stats">
-        <AnswerStat
-          icon="trophy"
-          label={t('tier')}
-          value={isTier(trophy.type) ? t(trophy.type) : trophy.type}
-        />
-        <AnswerStat
-          icon={trophy.earned ? 'check' : 'target'}
-          label={t('status')}
-          value={t(trophy.earned ? 'earned' : 'pending')}
-        />
-        {!!trophy.rarity && (
-          <AnswerStat icon="layers" label={t('rarity')} value={number(trophy.rarity)} unit="%" />
-        )}
-      </div>
-      {detail && (
-        <div className="answer-objective">
-          <span>{t('objective')}</span>
-          <p>{detail}</p>
         </div>
       )}
     </div>

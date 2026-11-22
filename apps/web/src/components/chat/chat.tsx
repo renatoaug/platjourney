@@ -31,7 +31,7 @@ import { askMessages, TROPHY_ASKS } from '../nexo-asks'
 import { NexoHero } from '../nexo-hero'
 import { titleHref } from '../tip'
 import '../demo.css'
-import { AnswerGame, AnswerTrophy, type ChatGameCard, type ChatTrophyCard } from './answer-cards'
+import { AnswerGame, type ChatGameCard } from './answer-cards'
 import { CommandMenu, type MenuItem } from './command-menu'
 import './chat.css'
 
@@ -238,7 +238,6 @@ export interface ChatMessage {
   content: string
   created_at?: string
   game?: Pick<Game, 'id' | 'name' | 'cover_url' | 'art_url'> | null
-  trophy?: ChatTrophyCard | null
   card?: ChatGameCard | null
   optimistic?: boolean
 }
@@ -316,7 +315,6 @@ function AssistantMessage({
       id={pending ? 'pending' : undefined}
     >
       {!pending && message && <MessageMeta message={message} />}
-      {!pending && message?.trophy && <AnswerTrophy trophy={message.trophy} game={message.game} />}
       {!pending && card?.kind === 'game' && (
         <AnswerGame card={card} onTalk={talk ? () => talk(card) : undefined} />
       )}

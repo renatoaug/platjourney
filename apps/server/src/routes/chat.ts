@@ -6,7 +6,6 @@ import { getChat, getCurrent, setChat, setChatFromCatalog } from '../game-contex
 import { json, readBody } from '../http.ts'
 import { defineMessages, Language, translator, userLocale } from '../i18n.ts'
 import type { library } from '../library.ts'
-import type { GameContext } from '../nexo.ts'
 import { reply } from '../nexo.ts'
 import { nextPick } from '../next-pick.ts'
 import { shownProgress } from '../progress.ts'
@@ -14,7 +13,6 @@ import { loadGroups } from '../ranking.ts'
 import { allow } from '../rate-limit.ts'
 import {
   appendMessage,
-  type ChatMessage,
   chatThreads,
   type GameCard,
   logTip,
@@ -28,58 +26,13 @@ import type { User } from '../repository/user.ts'
 import { chatOrCheck } from '../watcher.ts'
 import { type Api, type ApiHandler, currentView } from './api.ts'
 
-// A trophy named in a question, in bold as the app writes it or by a name of several words, puts its
-// card on the answer. It reads the trophies as they are now, so a card follows what the player
-// earned, and a hidden trophy has no card until the player reveals that game's hidden trophies.
-const named = (text: string, name?: string) => {
-  const key = name?.trim().toLocaleLowerCase()
-  if (!key) return false
-  const lower = text.toLocaleLowerCase()
-  return lower.includes(`**${key}**`) || (key.includes(' ') && lower.includes(key))
-}
-
-export function withTrophyCards(messages: ChatMessage[], user: User, ctx?: GameContext) {
-  if (!ctx) return messages
-  const visible = ctx.trophies.filter(
-    (t) => !t.hidden || t.earned || user.revealed_trophy_games?.includes(ctx.game.id),
-  )
-  return messages.map((message, i) => {
-    const asked = messages[i - 1]
-    if (message.role !== 'assistant' || asked?.role !== 'user') return message
-    if (message.game?.id !== ctx.game.id) return message
-    const found = visible.filter(
-      (t) => named(asked.content, t.name) || named(asked.content, t.nameEn),
-    )
-    // A question naming several trophies has no single trophy to show.
-    if (found.length !== 1) return message
-    const t = found[0]
-    return {
-      ...message,
-      trophy: {
-        id: t.id,
-        name: t.name,
-        detail: t.detail ?? null,
-        // The page shows the one in the player's language.
-        nameEn: t.nameEn || null,
-        detailEn: t.detailEn || null,
-        type: t.type,
-        iconUrl: t.iconUrl ?? null,
-        earned: t.earned,
-        rarity: t.earnedRate || null,
-      },
-    }
-  })
-}
-
 // Each game is its own conversation: `?game=game:…` reads that one, `?game=none` the messages
 // without a game, and no parameter the current game's.
 async function chatMessages({ res, url, me }: Api) {
   const asked = url.searchParams.get('game')
   const game =
     asked === 'none' ? null : asked?.startsWith('game:') ? asked : (getChat(me)?.game.id ?? null)
-  const context = getChat(me)
-  const list = await recentMessages(me.id, 40, game)
-  return json(res, 200, context?.game.id === game ? withTrophyCards(list, me, context) : list)
+  return json(res, 200, await recentMessages(me.id, 40, game))
 }
 
 const messages = defineMessages({
@@ -182,7 +135,7 @@ async function chatSend({ req, res, me, titles }: Api) {
   const response = await reply(me, question, ctx)
   return json(res, 200, {
     text: response,
-    messages: withTrophyCards(await recentMessages(me.id, 40, ctx?.game.id ?? null), me, ctx),
+    messages: await recentMessages(me.id, 40, ctx?.game.id ?? null),
   })
 }
 

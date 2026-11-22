@@ -386,12 +386,12 @@ test('objective and stored guidance have distinct icons, while missing advice ad
   expect(screen.queryByText('Como fazer')).toBeNull()
   expect(screen.queryByRole('group', { name: 'Essa dica ajudou?' })).toBeNull()
   expect(screen.queryByText('Sem dica específica no guia.')).toBeNull()
-  // A trophy still to get with no advice: one link to ask the Nexo about it, no quick questions.
-  const ask = screen.getByRole('link', { name: 'Perguntar ao Nexo' })
-  expect(ask.classList.contains('roadmap-ask')).toBe(true)
-  expect(ask.getAttribute('href')).toContain('trophy=')
-  expect(ask.getAttribute('href')).not.toContain('ask=')
-  expect(screen.queryByRole('link', { name: 'Como pegar?' })).toBeNull()
+  // A trophy still to get with no advice: the ready questions, each sending itself to the Nexo.
+  expect(screen.queryByRole('link', { name: 'Perguntar ao Nexo' })).toBeNull()
+  const how = screen.getByRole('link', { name: 'Como pegar?' })
+  expect(how.getAttribute('href')).toContain('trophy=')
+  expect(how.getAttribute('href')).toContain('ask=how')
+  expect(screen.getByRole('link', { name: 'Quando fazer?' })).toBeTruthy()
 })
 
 test('selection stays on the visible page, crosses its boundary symmetrically and keeps order', () => {
@@ -693,9 +693,9 @@ test('a trophy the guide does not explain gets its description and Nexo, with no
   expect(container.querySelector('.roadmap-objective')?.textContent).toContain('não explica')
   expect(container.querySelector('.roadmap-advice .roadmap-tips')).toBeNull()
   expect(container.querySelector('.roadmap-advice-label')).toBeNull()
-  expect(container.querySelector('.roadmap-advice .roadmap-ask')?.getAttribute('href')).toContain(
-    'trophy=',
-  )
+  expect(
+    container.querySelector('.roadmap-advice .roadmap-ask-chip')?.getAttribute('href'),
+  ).toContain('ask=how')
 })
 
 test('live progress moves the suggestion on an unselected route', () => {

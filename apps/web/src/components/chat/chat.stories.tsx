@@ -90,27 +90,6 @@ export const GameCardNoGuide: Story = {
     ],
   },
 }
-export const TrophyCard: Story = {
-  args: {
-    ...base,
-    chat: [
-      { role: 'user', content: 'Sobre o troféu **Mira Certeira**: como faço?' },
-      {
-        role: 'assistant',
-        content: 'Carregue cada disparo antes de soltar: errar um alvo reinicia o desafio.',
-        game: { id: 'game:1', name: 'Caminho de Exemplo' },
-        trophy: {
-          id: 2,
-          name: 'Mira Certeira',
-          detail: 'Acerte os cinco alvos do capítulo 2.',
-          type: 'bronze',
-          earned: false,
-          rarity: 12.4,
-        },
-      },
-    ],
-  },
-}
 export const TrophyContext: Story = {
   args: { ...base, chat: [], trophy: 'Laboratório de bolso' },
   render: function Context(args) {

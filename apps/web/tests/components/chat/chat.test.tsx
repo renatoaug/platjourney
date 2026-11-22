@@ -7,7 +7,6 @@ import {
   GameCardNoGuide,
   Loaded,
   Pending,
-  TrophyCard,
 } from '../../../src/components/chat/chat.stories'
 import { fakeRecorder } from '../../support/recorder'
 import { mockApi, renderApp } from '../../support/web'
@@ -344,19 +343,6 @@ describe('mic', () => {
     await screen.findByDisplayValue('No Plague Tale: onde fica a cripta?')
     recorder.restore()
   })
-})
-
-test('an answer about a trophy shows its art, what PSN asks and where to see it', () => {
-  show(TrophyCard.args?.chat as ChatLoad)
-  const card = document.querySelector('.answer-card')
-  expect(card?.textContent).toContain('Mira Certeira')
-  expect(card?.textContent).toContain('Pendente')
-  expect(card?.textContent).toContain('Acerte os cinco alvos')
-  expect(
-    within(card as HTMLElement)
-      .getByRole('link')
-      .getAttribute('href'),
-  ).toContain('game')
 })
 
 test('an answer about no trophy has no card', () => {
