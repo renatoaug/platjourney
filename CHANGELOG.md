@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.95.1](https://github.com/renatoaug/platjourney/compare/v0.95.0...v0.95.1) (2026-11-22)
+
+### Bug Fixes
+
+* **ai:** nexo keeps the starting tips for how to start and does not mark gender ([#222](https://github.com/renatoaug/platjourney/issues/222)) ([376e90f](https://github.com/renatoaug/platjourney/commit/376e90ff8e67a7097f42c5b5a0265a3ada237285))
+
 ## [0.95.0](https://github.com/renatoaug/platjourney/compare/v0.94.0...v0.95.0) (2026-11-22)
 
 ### Features
