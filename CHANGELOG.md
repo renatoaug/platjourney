@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.95.0](https://github.com/renatoaug/platjourney/compare/v0.94.0...v0.95.0) (2026-11-22)
+
+### Features
+
+* **web:** the notices bar also asks in platjourney installed from the browser ([#221](https://github.com/renatoaug/platjourney/issues/221)) ([33adda2](https://github.com/renatoaug/platjourney/commit/33adda278f75032350933daf37f3311b304486f2))
+
 ## [0.94.0](https://github.com/renatoaug/platjourney/compare/v0.93.0...v0.94.0) (2026-11-22)
 
 ### Features
