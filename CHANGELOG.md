@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.94.0](https://github.com/renatoaug/platjourney/compare/v0.93.0...v0.94.0) (2026-11-22)
+
+### Features
+
+* **web:** ready questions for a trophy in the chat and the journey, and no trophy card in the chat ([#220](https://github.com/renatoaug/platjourney/issues/220)) ([65f4d0c](https://github.com/renatoaug/platjourney/commit/65f4d0c776479f6b900ba6e70b0c951e0755d77d))
+
 ## [0.93.0](https://github.com/renatoaug/platjourney/compare/v0.92.0...v0.93.0) (2026-11-21)
 
 ### Features
