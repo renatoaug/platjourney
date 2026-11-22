@@ -632,6 +632,43 @@ function ChatChips({
   )
 }
 
+/** With a trophy attached over a conversation that already has messages, the chips at the top are
+ * gone: the trophy's ready questions sit right above the box instead, one tap to send. */
+function ChatTrophyAsks({
+  trophy,
+  demo,
+  chat,
+  sending,
+  busy,
+  onSend,
+}: {
+  trophy?: string | null
+  demo: boolean
+  chat: ChatLoad
+  sending: boolean
+  /** Switching games: the questions wait for the new conversation. */
+  busy: boolean
+  onSend: (text: string) => void
+}) {
+  const ask = useMessages(askMessages)
+  if (!trophy || demo || sending || !Array.isArray(chat) || !chat.length) return null
+  return (
+    <div className="chips chat-trophy-asks">
+      {TROPHY_ASKS.map((k) => (
+        <button
+          key={k}
+          type="button"
+          className="chip"
+          disabled={busy}
+          onClick={() => onSend(ask(`trophy.${k}`))}
+        >
+          {ask(`trophy.${k}`)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 /** The trophy the question is about, on the message box, with a button to drop it. */
 function ChatTrophy({ trophy, onClear }: { trophy: string; onClear: () => void }) {
   const t = useMessages(messages)
@@ -926,6 +963,14 @@ export function NexoChat({
         )}
       </div>
       <ChatBottom demo={demo} visitor={visitor} onConnect={onConnect} readOnly={readOnly}>
+        <ChatTrophyAsks
+          trophy={trophy}
+          demo={demo}
+          chat={chat}
+          sending={sending}
+          busy={Boolean(switching)}
+          onSend={send}
+        />
         <ChatForm
           formRef={form}
           inputRef={input}

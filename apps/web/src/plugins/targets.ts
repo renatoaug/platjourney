@@ -46,6 +46,7 @@ export type Target =
   | 'ChatThreads'
   | 'ChatThreadsToggle'
   | 'ChatTrophy'
+  | 'ChatTrophyAsks'
   | 'ChatWelcome'
   | 'ClaimStep'
   | 'CollectionEnd'

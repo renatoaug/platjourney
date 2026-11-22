@@ -118,6 +118,12 @@ export const TrophyContext: Story = {
     return <NexoChat {...args} trophy={trophy} onClearTrophy={() => setTrophy(null)} />
   },
 }
+// A trophy asked about from the journey over a conversation that already has messages: its ready
+// questions sit above the box.
+export const TrophyOverConversation: Story = {
+  args: { ...base, chat: MESSAGES, trophy: 'Laboratório de bolso' },
+}
+
 export const LongTrophyContext: Story = {
   ...TrophyContext,
   args: { ...TrophyContext.args, trophy: 'Uma jornada muito longa até a última conquista' },

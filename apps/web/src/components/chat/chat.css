@@ -564,6 +564,28 @@
     }
   }
 
+  /* The trophy's ready questions over a conversation that already has messages: one row right above
+     the box, scrolling sideways on a narrow screen. */
+  .chat-trophy-asks {
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin: 0 0 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .chat-trophy-asks::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chat-trophy-asks .chip {
+    flex: none;
+    min-height: 32px;
+    padding: 5px 11px;
+    font-size: var(--text-sm);
+    white-space: nowrap;
+  }
+
   /* The trophy a question is about: a tag at the start of the box, with a way to take it out. */
   .chat-trophy {
     display: inline-flex;

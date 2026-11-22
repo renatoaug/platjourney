@@ -120,6 +120,32 @@ describe('NexoChat', () => {
     expect(onClearTrophy).toHaveBeenCalled()
   })
 
+  test('a trophy over a conversation that already has messages keeps its ready questions above the box', () => {
+    const onSend = mock()
+    render(
+      <MemoryRouter>
+        <NexoChat
+          chat={messages}
+          sending={false}
+          subtitle="Falando sobre DAYS GONE (13%)."
+          onSend={onSend}
+          trophy="Variedade dá gosto à vida"
+          onClearTrophy={() => {}}
+        />
+      </MemoryRouter>,
+    )
+    expect(document.querySelector('#chat-chips')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Dá pra perder?' }))
+    expect(onSend).toHaveBeenCalledWith(
+      'Sobre o troféu **Variedade dá gosto à vida**: Dá pra perder?',
+    )
+  })
+
+  test('without a trophy a conversation has no ready questions above the box', () => {
+    show(messages)
+    expect(document.querySelector('.chat-trophy-asks')).toBeNull()
+  })
+
   test('an empty conversation suggestion sends its full question', () => {
     const onSend = mock()
     show([], { onSend })
