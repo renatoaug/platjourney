@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.96.1](https://github.com/renatoaug/platjourney/compare/v0.96.0...v0.96.1) (2026-11-23)
+
+### Bug Fixes
+
+* **web:** feedback round on the notices bar, bottom bar, rankings, medals and profiles ([#225](https://github.com/renatoaug/platjourney/issues/225)) ([a2115ec](https://github.com/renatoaug/platjourney/commit/a2115ec196a1f5ebf422cba419f9950542e36ecb))
+
 ## [0.96.0](https://github.com/renatoaug/platjourney/compare/v0.95.2...v0.96.0) (2026-11-23)
 
 ### Features
