@@ -192,4 +192,32 @@ describe('the bottom bar in the app', () => {
     expect(el.style.getPropertyValue('--bar-lift')).toBe('59px')
     stop()
   })
+
+  test('a field still focused after the keyboard closed does not hold the bar down', () => {
+    w.Capacitor = { isNativePlatform: () => true }
+    if (window.innerHeight < window.innerWidth) return
+    const el = bar(window.screen.height + 59)
+    document.body.append(el)
+    const field = document.createElement('input')
+    document.body.append(field)
+    // The visible area is the whole window: no keyboard, whatever has the focus.
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: Object.assign(new EventTarget(), {
+        scale: 1,
+        offsetTop: 0,
+        height: window.innerHeight,
+      }),
+    })
+    try {
+      const stop = keepBottomBarOnScreen(el)
+      field.focus()
+      window.dispatchEvent(new Event('resize'))
+      expect(el.style.getPropertyValue('--bar-lift')).toBe('59px')
+      stop()
+    } finally {
+      Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined })
+      field.remove()
+    }
+  })
 })

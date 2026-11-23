@@ -4,7 +4,7 @@
  * used on a device, after the introduction; after a "not now", at most twice more, a week apart at least, and
  * only when a trophy notice came in that the player has not read: the moment the notices would have
  * helped. Whatever the answer, the Home card and the bell's line stay as the way back. */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { fmtAgo } from '../lib/format'
@@ -95,6 +95,24 @@ export function askReason(
   return { missed }
 }
 
+// Whether the bar is on screen now: the Home card asking the same thing steps aside meanwhile.
+let asking = false
+const listeners = new Set<() => void>()
+function setAsking(on: boolean) {
+  if (on === asking) return
+  asking = on
+  for (const fn of listeners) fn()
+}
+const subscribe = (fn: () => void) => {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+
+/** True while the notices bar is on screen. */
+export function usePushAsking(): boolean {
+  return useSyncExternalStore(subscribe, () => asking)
+}
+
 /** Where the bar may ask: the native app with its push, or PlatJourney installed from the browser
  * with Web Push. A browser tab is left to the Home card and the bell. */
 function canAsk(me: Me): boolean {
@@ -126,6 +144,10 @@ export function PushAsk() {
       live = false
     }
   }, [due])
+  useEffect(() => {
+    setAsking(!!open)
+    return () => setAsking(false)
+  }, [open])
   if (!open) return null
   const where: PushInviteWhere = open.missed ? 'again' : 'ask'
   const close = () => {
@@ -175,29 +197,34 @@ export function PushAskView({
       : t('missedTitleNoGame', { ago: missed.ago })
     : t('title')
   return (
-    <section className="push-ask" aria-label={t('label')}>
-      <button
-        type="button"
-        className="push-ask-close"
-        aria-label={t('later')}
-        disabled={busy}
-        onClick={onLater}
-      >
-        <Icon name="close" />
-      </button>
-      <TrophyMedal type="platinum" className="push-ask-trophy" />
-      <span className="push-ask-copy">
-        <b>{title}</b>
-        <small>{missed ? t('missedBody') : t('body')}</small>
-      </span>
-      <button
-        type="button"
-        className="button sm push-ask-enable"
-        disabled={busy}
-        onClick={onEnable}
-      >
-        {t('enable')}
-      </button>
-    </section>
+    <>
+      {/* The screen behind dims and blurs a little, so the eye goes to the question; it stays
+          usable, the bar is no dialog. */}
+      <div className="push-ask-scrim" aria-hidden="true" />
+      <section className="push-ask" aria-label={t('label')}>
+        <button
+          type="button"
+          className="push-ask-close"
+          aria-label={t('later')}
+          disabled={busy}
+          onClick={onLater}
+        >
+          <Icon name="close" />
+        </button>
+        <TrophyMedal type="platinum" className="push-ask-trophy" />
+        <span className="push-ask-copy">
+          <b>{title}</b>
+          <small>{missed ? t('missedBody') : t('body')}</small>
+        </span>
+        <button
+          type="button"
+          className="button sm push-ask-enable"
+          disabled={busy}
+          onClick={onEnable}
+        >
+          {t('enable')}
+        </button>
+      </section>
+    </>
   )
 }

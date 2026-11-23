@@ -43,6 +43,8 @@ const messages = defineMessages({
     most: { eyebrow: 'SEU TEMPO', title: 'Mais jogados' },
     playing: { eyebrow: 'JORNADA', title: 'Jogando agora', publicEyebrow: 'A JORNADA' },
     noDataTitle: 'Sem platinas para contar',
+    syncingTitle: 'Buscando as platinas',
+    syncingYears: 'O ritmo por ano aparece assim que as datas chegarem da PSN.',
     noData: 'O seu ritmo por ano aparece aqui depois da primeira platina.',
     tiles: {
       platinums: 'Platinas',
@@ -82,6 +84,11 @@ const messages = defineMessages({
       played: '{hours} jogadas',
       tryAnother: 'Tente buscar por outro jogo.',
       syncing: 'Sua coleção está sendo sincronizada.',
+      stalled: {
+        one: 'Não deu para buscar a data de {count} platina na PSN agora. Tentamos de novo na próxima visita.',
+        other:
+          'Não deu para buscar a data de {count} platinas na PSN agora. Tentamos de novo na próxima visita.',
+      },
       emptyTitle: 'Nenhuma platina ainda',
       empty: 'Sua primeira platina vai aparecer aqui, com a data e a raridade.',
       pages: 'Páginas de platinas',
@@ -106,6 +113,8 @@ const messages = defineMessages({
     most: { eyebrow: 'YOUR TIME', title: 'Most played' },
     playing: { eyebrow: 'JOURNEY', title: 'Playing now', publicEyebrow: 'THE JOURNEY' },
     noDataTitle: 'No platinums to count',
+    syncingTitle: 'Fetching the platinums',
+    syncingYears: 'The pace by year shows up as soon as the dates arrive from PSN.',
     noData: 'Your pace per year shows up here after the first platinum.',
     tiles: {
       platinums: 'Platinums',
@@ -145,6 +154,11 @@ const messages = defineMessages({
       played: '{hours} played',
       tryAnother: 'Try searching for another game.',
       syncing: 'Your collection is syncing.',
+      stalled: {
+        one: 'Could not fetch the date of {count} platinum from PSN now. We try again on the next visit.',
+        other:
+          'Could not fetch the date of {count} platinums from PSN now. We try again on the next visit.',
+      },
       emptyTitle: 'No platinum yet',
       empty: 'Your first platinum will show up here, with its date and rarity.',
       pages: 'Platinum pages',
@@ -207,6 +221,36 @@ let platinumQuery = ''
 
 const lower = (s: string) => s.toLocaleLowerCase(getLocale())
 
+// While PSN dates arrive the page refreshes itself, quietly; with no new date for this long, it
+// stops and says so instead of fetching forever.
+const CATCH_UP_MS = 8000
+const STALL_MS = 5 * 60_000
+
+/** Refreshes the profile while platinum dates are still arriving, never under a search in
+ * progress. True once nothing arrived for a while: the page stops asking and says so. */
+function useCatchUp(load: Load, refresh: () => void, searching: { current: boolean }): boolean {
+  const pending = load.kind === 'ready' ? load.data.pendingPlatinums : 0
+  const progress = useRef({ pending, at: Date.now() })
+  if (pending !== progress.current.pending) progress.current = { pending, at: Date.now() }
+  const [stalled, setStalled] = useState(false)
+  // Each arrival is a new object, so the wait restarts after every refresh.
+  const data = load.kind === 'ready' && pending > 0 ? load.data : null
+  useEffect(() => {
+    if (!data) return
+    let timer: ReturnType<typeof setTimeout>
+    const wait = () => {
+      timer = setTimeout(() => {
+        if (Date.now() - progress.current.at > STALL_MS) setStalled(true)
+        else if (searching.current) wait()
+        else refresh()
+      }, CATCH_UP_MS)
+    }
+    wait()
+    return () => clearTimeout(timer)
+  }, [data, refresh, searching])
+  return stalled && pending > 0
+}
+
 /** A player's public profile, opened from the community: what everyone sees, one's own included. */
 export function PublicProfile() {
   const { user = '' } = useParams()
@@ -217,24 +261,34 @@ export function PublicProfile() {
 function PlayerProfile({ user }: { user: string }) {
   const t = useMessages(messages)
   const [load, setLoad] = useState<Load>({ kind: 'loading' })
-  useEffect(() => {
-    let live = true
-    api<ProfileData>(`/api/profile?user=${encodeURIComponent(user)}`)
-      .then((data) => live && setLoad({ kind: 'ready', data }))
-      .catch(
-        (e) =>
-          live &&
+  const searching = useRef(false)
+  const live = useRef(true)
+  // quiet: a refresh while platinums arrive keeps what is on screen if it fails.
+  const fetchProfile = useCallback(
+    (quiet = false) => {
+      api<ProfileData>(`/api/profile?user=${encodeURIComponent(user)}`)
+        .then((data) => live.current && setLoad({ kind: 'ready', data }))
+        .catch((e) => {
+          if (!live.current || quiet) return
           setLoad({
             kind:
               e instanceof ApiError && (e.status === 404 || e.code === 'trophies_private')
                 ? 'missing'
                 : 'error',
-          }),
-      )
+          })
+        })
+    },
+    [user],
+  )
+  useEffect(() => {
+    live.current = true
+    fetchProfile()
     return () => {
-      live = false
+      live.current = false
     }
-  }, [user])
+  }, [fetchProfile])
+  const refresh = useCallback(() => fetchProfile(true), [fetchProfile])
+  const stalled = useCatchUp(load, refresh, searching)
   const back = (
     <Link to="/community" className="text-link profile-back">
       <Icon name="chevron-left" /> {t('backToCommunity')}
@@ -254,7 +308,15 @@ function PlayerProfile({ user }: { user: string }) {
           <>
             {back}
             {/* The public version: no Settings, even on one's own. */}
-            <ProfileView data={load.data} action={false} publicView />
+            <ProfileView
+              data={load.data}
+              action={false}
+              publicView
+              stalled={stalled}
+              onSearching={(focused) => {
+                searching.current = focused
+              }}
+            />
           </>
         )}
       </div>
@@ -295,20 +357,8 @@ export function Profile() {
   }, [fetchProfile, cache])
 
   // Keep the list growing while PSN dates arrive, but never under a search in progress.
-  // Each arrival is a new object, so the wait restarts after every refresh.
-  const syncing = load.kind === 'ready' && load.data.pendingPlatinums > 0 ? load.data : null
-  useEffect(() => {
-    if (!syncing) return
-    let timer: ReturnType<typeof setTimeout>
-    const wait = () => {
-      timer = setTimeout(() => {
-        if (searching.current) wait()
-        else fetchProfile(true)
-      }, 8000)
-    }
-    wait()
-    return () => clearTimeout(timer)
-  }, [syncing, fetchProfile])
+  const refresh = useCallback(() => fetchProfile(true), [fetchProfile])
+  const stalled = useCatchUp(load, refresh, searching)
 
   return (
     <Page path="/profile">
@@ -319,6 +369,7 @@ export function Profile() {
         {load.kind === 'ready' && (
           <ProfileView
             data={load.data}
+            stalled={stalled}
             onSearching={(on) => {
               searching.current = on
             }}
@@ -361,8 +412,11 @@ export function ProfileView({
   onSearching,
   action,
   publicView = false,
+  stalled = false,
 }: {
   data: ProfileData
+  /** Platinum dates stopped arriving: the collection says so instead of waiting. */
+  stalled?: boolean
   onSearching?: (focused: boolean) => void
   /** In the corner of the card: Settings on one's own profile, the way back on another's. */
   action?: ReactNode
@@ -496,21 +550,12 @@ export function ProfileView({
           <div className="card">
             <span className="eyebrow">{t(publicView ? 'publicPace' : 'pace')}</span>
             <h2>{t('byYear')}</h2>
-            {d.byYear.length ? (
-              <div className="years">
-                {d.byYear.map((y) => (
-                  <div key={y.year} className="year">
-                    <b>{y.count}</b>
-                    <i style={{ '--share': y.count / maxYear } as CSSProperties} />
-                    <small>{y.year}</small>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState icon="dashboard" title={t('noDataTitle')}>
-                {t(publicView ? 'publicNoData' : 'noData')}
-              </EmptyState>
-            )}
+            <ProfileYearPace
+              data={d}
+              max={maxYear}
+              syncing={d.pendingPlatinums > 0 && !stalled}
+              publicView={publicView}
+            />
           </div>
           {!!d.playing?.length && <PlayingNow playing={d.playing} publicView={publicView} />}
           {d.mostPlayed.length > 0 && (
@@ -546,11 +591,48 @@ export function ProfileView({
         <PlatinumCollection
           platinums={d.platinums}
           pending={d.pendingPlatinums}
+          stalled={stalled}
           onSearching={onSearching}
           publicView={publicView}
         />
       </div>
     </>
+  )
+}
+
+/** The platinums of each year as bars; while their dates still arrive from PSN, it says so. */
+function ProfileYearPace({
+  data: d,
+  max,
+  syncing,
+  publicView,
+}: {
+  data: ProfileData
+  max: number
+  syncing: boolean
+  publicView: boolean
+}) {
+  const t = useMessages(messages)
+  if (d.byYear.length)
+    return (
+      <div className="years">
+        {d.byYear.map((y) => (
+          <div key={y.year} className="year">
+            <b>{y.count}</b>
+            <i style={{ '--share': y.count / max } as CSSProperties} />
+            <small>{y.year}</small>
+          </div>
+        ))}
+      </div>
+    )
+  return syncing ? (
+    <EmptyState icon="dashboard" title={t('syncingTitle')}>
+      {t('syncingYears')}
+    </EmptyState>
+  ) : (
+    <EmptyState icon="dashboard" title={t('noDataTitle')}>
+      {t(publicView ? 'publicNoData' : 'noData')}
+    </EmptyState>
   )
 }
 
@@ -619,14 +701,39 @@ function collectionWords(t: Translator<typeof messages>, publicView: boolean) {
       }
 }
 
+/** The dates still on their way from PSN, or, once they stopped arriving, that they did. */
+function PendingNote({ pending, stalled }: { pending: number; stalled: boolean }) {
+  const t = useMessages(messages)
+  if (pending <= 0) return null
+  return stalled ? (
+    <p className="muted small">{t('collection.stalled', { count: pending })}</p>
+  ) : (
+    <PendingState>{t('collection.pending', { count: pending })}</PendingState>
+  )
+}
+
+/** What an empty collection says with no search: still syncing, the dates not found, or empty. */
+function emptyText(
+  t: Translator<typeof messages>,
+  words: ReturnType<typeof collectionWords>,
+  pending: number,
+  stalled: boolean,
+): string {
+  if (pending && !stalled) return words.syncing
+  return stalled ? t('collection.none') : words.empty
+}
+
 function PlatinumCollection({
   platinums,
   pending,
+  stalled = false,
   onSearching,
   publicView = false,
 }: {
   platinums: Platinum[]
   pending: number
+  /** The dates stopped arriving: said once, without the waiting dots. */
+  stalled?: boolean
   onSearching?: (focused: boolean) => void
   publicView?: boolean
 }) {
@@ -688,9 +795,7 @@ function PlatinumCollection({
                 })
               : t('collection.none')}
           </div>
-          {pending > 0 && (
-            <PendingState>{t('collection.pending', { count: pending })}</PendingState>
-          )}
+          <PendingNote pending={pending} stalled={stalled} />
           <div id="platinum-list" className="collection-grid">
             {matches.length ? (
               matches.slice(start, start + PAGE_SIZE).map((p) => (
@@ -719,7 +824,7 @@ function PlatinumCollection({
               ))
             ) : (
               <EmptyState>
-                {query ? t('collection.tryAnother') : pending ? words.syncing : words.empty}
+                {query ? t('collection.tryAnother') : emptyText(t, words, pending, stalled)}
               </EmptyState>
             )}
           </div>

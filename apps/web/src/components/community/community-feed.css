@@ -180,9 +180,14 @@
     );
   }
 
+  /* The medal sits like the other badges: no frame, the size of the controller and the trophies,
+     with the same glow. */
   .community-event-badge.medal {
-    font-size: var(--text-3xl);
-    border: 1px solid color-mix(in srgb, var(--event-accent) var(--alpha-strong), transparent);
+    font-size: 30px;
+    line-height: 1;
+    filter: drop-shadow(
+      0 0 10px color-mix(in srgb, var(--event-accent) var(--alpha-strong), transparent)
+    );
   }
 
   /* Starting a game: a controller in the accent, with no frame, so it never reads as an avatar. */

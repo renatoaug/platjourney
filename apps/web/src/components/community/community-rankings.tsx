@@ -151,13 +151,19 @@ function BoardView({ data, board }: { data: Rankings; board: Board }) {
   const mine = data.mine?.[board] ?? null
   if (!rows.length) return <EmptyState icon="trophy">{t('empty')}</EmptyState>
   const rest = rows.slice(3, 20)
+  // The reader already on the board is lit up in place; the row at the foot is for who is not.
+  const shown = rows.slice(0, 20).some((r) => r.user === data.me)
   return (
     <div className={`card community-board is-${board}`}>
       <ol className="community-podium">
         {PODIUM.filter((i) => rows[i]).map((i) => {
           const r = rows[i]
           return (
-            <li key={r.user} className={`community-podium-step place-${i + 1}`} value={i + 1}>
+            <li
+              key={r.user}
+              className={`community-podium-step place-${i + 1}${r.user === data.me ? ' mine' : ''}`}
+              value={i + 1}
+            >
               <span className="community-podium-face">
                 {i === 0 && (
                   <span className="community-podium-crown" aria-hidden="true">
@@ -193,19 +199,21 @@ function BoardView({ data, board }: { data: Rankings; board: Board }) {
           ))}
         </ol>
       )}
-      {/* The reader's own place, pinned at the foot of the board. */}
-      <div className={`community-rank-mine${mine ? '' : ' none'}`}>
-        {mine ? (
-          <>
-            <span className="community-rank-pos">{mine.place}</span>
-            <Avatar person={data.people[data.me]} />
-            <span className="community-rank-who">{t('yourPlace')}</span>
-            <b className="community-rank-value">{scoreOf(t, board, mine)}</b>
-          </>
-        ) : (
-          <span className="community-rank-who">{t('notRanked')}</span>
-        )}
-      </div>
+      {/* The reader's own place, pinned at the foot of the board when the board does not show it. */}
+      {!shown && (
+        <div className={`community-rank-mine${mine ? '' : ' none'}`}>
+          {mine ? (
+            <>
+              <span className="community-rank-pos">{mine.place}</span>
+              <Avatar person={data.people[data.me]} />
+              <span className="community-rank-who">{t('yourPlace')}</span>
+              <b className="community-rank-value">{scoreOf(t, board, mine)}</b>
+            </>
+          ) : (
+            <span className="community-rank-who">{t('notRanked')}</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

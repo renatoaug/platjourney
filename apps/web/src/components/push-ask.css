@@ -4,7 +4,8 @@
   .push-ask {
     position: fixed;
     right: 12px;
-    bottom: calc(var(--bottom-bar, 0px) + 12px);
+    /* Clear of the tab bar's top edge and what a skin hangs on it (the Christmas snow). */
+    bottom: calc(var(--bottom-bar, 0px) + 22px);
     left: 12px;
     z-index: 30;
     box-sizing: border-box;
@@ -18,6 +19,18 @@
     backdrop-filter: blur(20px) saturate(1.2);
     box-shadow: var(--shadow-popover);
     animation: push-ask-rise 0.4s cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
+  }
+
+  /* Behind the bar: the screen darkens and blurs a little so the question is what the eye reads.
+     It takes no taps: the screen stays usable. */
+  .push-ask-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    background: color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
+    backdrop-filter: blur(3px);
+    pointer-events: none;
+    animation: push-ask-fade 0.4s ease-out both;
   }
 
   .push-ask-close {
@@ -79,6 +92,12 @@
     }
   }
 
+  @keyframes push-ask-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
   @keyframes push-ask-rise {
     from {
       opacity: 0;
@@ -87,7 +106,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .push-ask {
+    .push-ask,
+    .push-ask-scrim {
       animation: none;
     }
   }
