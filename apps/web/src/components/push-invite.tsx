@@ -11,6 +11,7 @@ import { isNativePush, nativePlatform, nativePushAvailable } from '../lib/native
 import { enablePush, type PushState, pushState, reportPushInvite } from '../lib/push'
 import { Icon } from '../ui/icon'
 import { toast } from '../ui/toast'
+import { usePushAsking } from './push-ask'
 import './push-invite.css'
 
 const messages = defineMessages({
@@ -90,8 +91,10 @@ function usePush(variant: 'card' | 'row') {
 export function PushInvite({ variant }: { variant: 'card' | 'row' }) {
   const { state, busy, enable } = usePush(variant)
   const [hidden, setHidden] = useState(dismissed)
+  // The notices bar is asking the same thing right now: one question at a time.
+  const asking = usePushAsking()
   if (state !== 'off' && state !== 'denied') return null
-  if (variant === 'card' && (hidden || state === 'denied')) return null
+  if (variant === 'card' && (hidden || asking || state === 'denied')) return null
   const dismiss = () => {
     try {
       localStorage.setItem(DISMISSED, '1')

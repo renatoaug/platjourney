@@ -71,23 +71,48 @@ async function playingNow(library: TitleProgress[]): Promise<PlayingEntry[]> {
 // summary: one PSN call per platinumed game, stored forever since it never
 // changes. A new account can have hundreds, so they are fetched in the
 // background, a few at a time, and the page shows what is ready.
-const backfilling = new Set<string>()
+// Who has a backfill running, since when: one that never ended (a call that hung) stops counting
+// after a while, so the next view starts another instead of waiting forever.
+const backfilling = new Map<string, number>()
+const BACKFILL_STALE_MS = 10 * 60_000
+// One title's trophy list: past this, it is left for the next run and the others go on.
+const TITLE_TIMEOUT_MS = 30_000
+
+function within<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms),
+    ),
+  ])
+}
+
+/** Whether a backfill is running for the player now. */
+const backfillRunning = (user: string): boolean => {
+  const since = backfilling.get(user)
+  return since !== undefined && Date.now() - since < BACKFILL_STALE_MS
+}
 // Collectors can have thousands of platinums; the service account is not going
 // to make thousands of calls for one page. The most recent ones are fetched.
 const MAX_PLATINUM_DATES = 500
 async function backfill(user: User, missing: TitleProgress[]): Promise<void> {
-  const games = await gamesForTitles(missing)
   const queue = [...missing]
   const worker = async () => {
     for (let title = queue.shift(); title; title = queue.shift()) {
       try {
-        const trophies = await titleTrophies(title, user.psn_account_id)
+        // Each title finds its game on its own: one the catalog cannot place (or a lookup that
+        // fails) costs only itself, and the platinums before it are already saved.
+        const game = (await within(gamesForTitles([title]), TITLE_TIMEOUT_MS)).get(
+          title.npCommunicationId,
+        )
+        if (!game) continue
+        const trophies = await within(titleTrophies(title, user.psn_account_id), TITLE_TIMEOUT_MS)
         // The whole list is here already: its unlock times feed where long trophies close (ADR-015).
         keepUnlocks(user.id, title.npCommunicationId, trophies)
         const plat = trophies.find((t) => t.type === 'platinum' && t.earned)
         if (!plat?.earnedAt) continue
         await savePlatinum(user.id, {
-          game: (games.get(title.npCommunicationId) as Game).id,
+          game: game.id,
           np_communication_id: title.npCommunicationId,
           trophy_name: plat.name,
           earned_at: plat.earnedAt,
@@ -112,8 +137,8 @@ async function platinumList(
     .slice(0, MAX_PLATINUM_DATES)
     .filter((t) => !cached.has(t.npCommunicationId))
   // The demo player's platinums are all stored; there is no PSN account to ask.
-  if (missing.length && !isDemo(user) && !backfilling.has(user.id)) {
-    backfilling.add(user.id)
+  if (missing.length && !isDemo(user) && !backfillRunning(user.id)) {
+    backfilling.set(user.id, Date.now())
     backfill(user, missing)
       .catch((e) => console.error('platinum backfill failed:', (e as Error).message))
       .finally(() => backfilling.delete(user.id))

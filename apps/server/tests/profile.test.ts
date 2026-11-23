@@ -166,13 +166,16 @@ test('platinums without a date are fetched in the background', async () => {
   expect(kept.mock.calls[0]?.slice(0, 2)).toEqual(['user:backfill', 'NEW'])
 })
 
-test('a failed backfill is logged and tried again on the next visit', async () => {
+test('a title that fails is logged, costs only itself and is tried again on the next visit', async () => {
   spyOn(console, 'error').mockImplementation(() => {})
   const lookup = spyOn(games, 'gamesForTitles').mockRejectedValue(new Error('db down'))
   const user = makeUser({ id: 'user:retry' })
   await profilePage([platinumed('X')], user)
   await settle()
-  expect(console.error).toHaveBeenCalledWith('platinum backfill failed:', 'db down')
+  expect(console.error).toHaveBeenCalledWith(
+    expect.stringContaining('platinum lookup failed for'),
+    'db down',
+  )
   await profilePage([platinumed('X')], user)
   expect(lookup).toHaveBeenCalledTimes(2)
 })

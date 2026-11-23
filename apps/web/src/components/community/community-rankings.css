@@ -227,8 +227,16 @@
     border-radius: var(--radius-control);
   }
 
+  /* The reader on the board: their row lit up in place, as the foot row looks when they are not. */
   .community-rank-list li.mine {
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-wash), transparent);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+    box-shadow: inset 0 0 0 1px
+      color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+  }
+
+  .community-rank-list li.mine .community-rank-name,
+  .community-podium-step.mine .community-rank-name {
+    color: var(--color-accent);
   }
 
   .community-rank-list .community-avatar,

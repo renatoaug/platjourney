@@ -85,9 +85,20 @@ export function barOverflow(
 // How long the page stays still before the bottom bar is measured again after a scroll.
 const SCROLL_SETTLE_MS = 150
 
-/** A field the keyboard is open for. */
-const typing = () =>
-  !!document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]')
+/** A field the keyboard is open for. Focus alone is not enough where the visible area is known:
+ * iOS can close the keyboard and leave the field focused, and a bar held down for a keyboard that
+ * is gone stayed below the edge. The keyboard takes well over this much of the screen. */
+const KEYBOARD_PX = 150
+const typing = () => {
+  if (!document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]'))
+    return false
+  const viewport = window.visualViewport
+  return !viewport || viewport.height < window.innerHeight - KEYBOARD_PX
+}
+
+// Every so often the bar is measured again, whatever happened: an event iOS did not send (a
+// keyboard closed, a rotation undone, a screen left mid-bounce) must not leave it off screen.
+const RECHECK_MS = 2_000
 
 /**
  * The iOS app's web view can lay the page out taller than the screen, which leaves the fixed bottom
@@ -106,11 +117,12 @@ export function keepBottomBarOnScreen(bar: HTMLElement): () => void {
     // Zoomed in, the visible area is not the layout's: leave the bar as it is until it is back.
     if (viewport && viewport.scale !== 1) return
     const visible = viewport ? viewport.offsetTop + viewport.height : window.innerHeight
-    const portrait = window.innerHeight >= window.innerWidth
-    const next =
-      portrait && !typing()
-        ? barOverflow(bar.getBoundingClientRect().bottom + lift, visible, window.screen.height)
-        : 0
+    // A moment out of portrait (a rotation, a resize on the way) keeps the lift it had: dropping it
+    // then sank the bar, with nothing to bring it back.
+    if (window.innerHeight < window.innerWidth) return
+    const next = typing()
+      ? 0
+      : barOverflow(bar.getBoundingClientRect().bottom + lift, visible, window.screen.height)
     if (next === lift) return
     lift = next
     bar.style.setProperty('--bar-lift', `${lift}px`)
@@ -124,10 +136,16 @@ export function keepBottomBarOnScreen(bar: HTMLElement): () => void {
   // the bar: measured then, the lift dropped to nothing and the bar sank below the edge, with no
   // event left to bring it back. Scrolling measures once it has stopped.
   let scrolling: ReturnType<typeof setTimeout> | undefined
+  let scrolledAt = 0
   const scrolled = () => {
+    scrolledAt = Date.now()
     clearTimeout(scrolling)
     scrolling = setTimeout(check, SCROLL_SETTLE_MS)
   }
+  // The safety net waits for a still page, like a scroll does.
+  const recheck = setInterval(() => {
+    if (Date.now() - scrolledAt > SCROLL_SETTLE_MS) check()
+  }, RECHECK_MS)
   check()
   const targets: EventTarget[] = [window, window.visualViewport].filter((x) => !!x) as EventTarget[]
   for (const target of targets) target.addEventListener('resize', check)
@@ -136,7 +154,12 @@ export function keepBottomBarOnScreen(bar: HTMLElement): () => void {
   document.addEventListener('visibilitychange', check)
   document.addEventListener('focusin', check)
   document.addEventListener('focusout', settle)
+  window.addEventListener('pageshow', settle)
+  window.addEventListener('popstate', settle)
   return () => {
+    clearInterval(recheck)
+    window.removeEventListener('pageshow', settle)
+    window.removeEventListener('popstate', settle)
     for (const target of targets) target.removeEventListener('resize', check)
     window.visualViewport?.removeEventListener('scroll', scrolled)
     window.removeEventListener('scroll', scrolled)
