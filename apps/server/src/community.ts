@@ -25,10 +25,10 @@ import {
 
 const DAY = 86_400_000
 /** A trophy fewer players than this share (in %) counts as rare. */
-export const RARE = 5
+const RARE = 5
 const FEED_DAYS = 30
 
-export interface FeedGame {
+interface FeedGame {
   np: string
   name: string
   iconUrl: string | null
@@ -47,7 +47,7 @@ const feedGame = (np: string, g: GameOn): FeedGame => ({
   artUrl: g.artUrl,
 })
 
-export type FeedEvent = {
+type FeedEvent = {
   key: string
   user: string
   at: string
@@ -176,15 +176,36 @@ export interface Community {
 }
 
 let cached: { at: number; data: Community } | undefined
+let building: Promise<Community> | undefined
+// Bumped when the community is forgotten: a build started before that is not kept.
+let generation = 0
 const TTL = 3 * 60_000
 
-/** The last 30 days of the community, newest first; kept for a few minutes. */
+/** The last 30 days of the community, newest first; kept for a few minutes. Building it reads a
+ * month of everyone's trophies and takes seconds: once there is one, a stale copy is answered at
+ * once while a fresh one is built behind it, and only the very first visit waits. */
 export async function community(): Promise<Community> {
   if (cached && Date.now() - cached.at < TTL) return cached.data
+  building ??= buildCommunity().finally(() => {
+    building = undefined
+  })
+  if (!cached) return building
+  building.catch((e) => console.error('community:', (e as Error).message))
+  return cached.data
+}
+
+async function buildCommunity(): Promise<Community> {
+  const started = generation
   const people = await members()
+  // Medals look back a whole year: worked out behind the feed, never in front of it. The feed
+  // shows them on its next build.
   if (Date.now() - medalsAt > 60 * 60_000) {
     medalsAt = Date.now()
-    await refreshMedals(people).catch((e) => console.error('medals:', (e as Error).message))
+    refreshMedals(people)
+      .then(() => {
+        if (cached) cached.at = 0
+      })
+      .catch((e) => console.error('medals:', (e as Error).message))
   }
   const users = people.map((m) => m.id)
   const since = new Date(Date.now() - FEED_DAYS * DAY)
@@ -246,13 +267,21 @@ export async function community(): Promise<Community> {
   }
   feed.sort((a, b) => b.at.localeCompare(a.at))
   const data = { members: people, feed }
-  cached = { at: Date.now(), data }
+  if (started === generation) cached = { at: Date.now(), data }
   return data
 }
 
-/** Forgets the kept community, as when a player leaves it or reacts. */
+/** Forgets the kept community, as when a player leaves it: nobody sees them again, not even for
+ * the moment a stale copy would last. */
 export const forgetCommunity = () => {
+  generation++
   cached = undefined
+  rankingsCache.clear()
+}
+
+/** Builds the community before anyone asks, so the first visit after a start does not wait. */
+export function warmCommunity(): void {
+  community().catch((e) => console.error('community warm-up:', (e as Error).message))
 }
 
 export interface RankRow {
@@ -262,11 +291,33 @@ export interface RankRow {
 }
 
 /** Who platinumed most, earned the most rare trophies and platinumed fastest since a date. */
-export async function rankings(since: Date): Promise<{
-  platinums: RankRow[]
-  rare: RankRow[]
-  fastest: RankRow[]
-}> {
+type Rankings = { platinums: RankRow[]; rare: RankRow[]; fastest: RankRow[] }
+
+// Each period's boards, kept like the feed: a stale copy answers while a fresh one is built.
+const rankingsCache = new Map<string, { at: number; data: Rankings }>()
+const rankingsBuilding = new Map<string, Promise<Rankings>>()
+
+/** The boards since a date (the month's or the year's start), kept for a few minutes. */
+export async function rankings(since: Date): Promise<Rankings> {
+  const key = since.toISOString()
+  const kept = rankingsCache.get(key)
+  if (kept && Date.now() - kept.at < TTL) return kept.data
+  let run = rankingsBuilding.get(key)
+  if (!run) {
+    run = buildRankings(since)
+      .then((data) => {
+        rankingsCache.set(key, { at: Date.now(), data })
+        return data
+      })
+      .finally(() => rankingsBuilding.delete(key))
+    rankingsBuilding.set(key, run)
+  }
+  if (!kept) return run
+  run.catch((e) => console.error('rankings:', (e as Error).message))
+  return kept.data
+}
+
+async function buildRankings(since: Date): Promise<Rankings> {
   // Only players who show up: rankings are what everyone sees.
   const people = (await members()).filter((m) => m.visible)
   const users = people.map((m) => m.id)
