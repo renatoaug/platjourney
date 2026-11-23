@@ -1,6 +1,7 @@
 import { startAccessCleanup } from './access.ts'
 import { warmBrowse } from './browse.ts'
 import { commandMenu, handleCommand, help } from './commands.ts'
+import { warmCommunity } from './community.ts'
 import { config, version } from './config.ts'
 import { migrate } from './db.ts'
 import { startDeals } from './deals.ts'
@@ -49,6 +50,8 @@ async function main(): Promise<void> {
   await loadPlugins()
   console.log(`platjourney ${version} up — sweeping users every ${config.pollMinutes} min`)
   startWatcher(config.pollMinutes)
+  // The community takes seconds to build: built now, the first visit after a start does not wait.
+  warmCommunity()
   startReleaseSync()
   startDeals()
   startSimilarSync()

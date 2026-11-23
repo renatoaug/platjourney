@@ -291,3 +291,24 @@ test('a player out of the community still sees their own, and nobody else does',
   const mine = await call('GET /api/community/feed', '/api/community/feed?scope=me')
   expect(mine.body.events).toHaveLength(1)
 })
+
+test('a stale community answers at once while a fresh one is built behind it', async () => {
+  const people = [{ id: 'a', onlineId: 'A', avatarUrl: null, visible: true }]
+  const read = spyOn(repo, 'members').mockResolvedValue(people)
+  spyOn(repo, 'platinumsSince').mockResolvedValue([])
+  spyOn(repo, 'unlocksSince').mockResolvedValue([])
+  spyOn(repo, 'medalsOf').mockResolvedValue([])
+  spyOn(repo, 'goalTargets').mockResolvedValue(new Map())
+  const now = Date.now()
+  const clock = spyOn(Date, 'now').mockReturnValue(now)
+  // The first visit has nothing to show yet: it waits for the build.
+  const first = await community.community()
+  expect(first.members).toEqual(people)
+  // Minutes later the copy is stale: it comes back at once, and a new build starts behind it.
+  clock.mockReturnValue(now + 10 * 60_000)
+  const builds = read.mock.calls.length
+  const later = community.community()
+  expect(await later).toBe(first)
+  await new Promise((done) => setTimeout(done, 0))
+  expect(read.mock.calls.length).toBeGreaterThan(builds)
+})

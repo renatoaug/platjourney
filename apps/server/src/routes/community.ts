@@ -1,4 +1,4 @@
-import { community, communityGames, forgetCommunity, type RankRow, rankings } from '../community.ts'
+import { community, communityGames, type RankRow, rankings } from '../community.ts'
 import { isDemo } from '../demo.ts'
 import { json, readBody } from '../http.ts'
 import { secureUrl } from '../psn.ts'
@@ -132,8 +132,8 @@ export const COMMUNITY_ROUTES: Record<string, ApiHandler> = {
     const { members } = await community()
     if (on && !members.some((m) => m.id === user && m.visible))
       return json(res, 404, { error: 'not_found' })
+    // Follows are read on their own for each page: the kept community does not change.
     await setFollow(myId(me.id), user, on)
-    forgetCommunity()
     return json(res, 200, { following: await following(myId(me.id)) })
   },
 }
