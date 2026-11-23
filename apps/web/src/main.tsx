@@ -5,11 +5,14 @@ import { createRoot } from 'react-dom/client'
 import { App } from './app/app'
 import { isNative, tickOnChoices } from './lib/native'
 import { listenNativePush } from './lib/native-push'
+import { markScrolling } from './lib/scrolling'
 
 // The native app goes back with the iPhone's own swipe, which already animates (page.css).
 if (isNative()) document.documentElement.dataset.native = ''
 listenNativePush().catch(() => {})
 tickOnChoices()
+// The skins' moving decor holds still while the page scrolls (lib/scrolling.ts).
+markScrolling()
 
 // Links from before the addresses lost their "#" (old notices, a checkout's way back, a plugin's
 // "#/subscription"): /#/history opens /history, on arrival or when such a link is followed.
