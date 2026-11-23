@@ -301,9 +301,12 @@ function MessageMeta({ message: m }: { message: ChatMessage }) {
 function AssistantMessage({
   message,
   pending = false,
+  fresh = false,
 }: {
   message?: ChatMessage
   pending?: boolean
+  /** Written while the player was away and opened from the floating Nexo: it lights up a moment. */
+  fresh?: boolean
 }) {
   const t = useMessages(messages)
   const [body, source] = splitSource(message?.content ?? '')
@@ -311,7 +314,7 @@ function AssistantMessage({
   const card = message?.card
   return (
     <div
-      className={`msg assistant${pending ? ' pending' : ''}`}
+      className={`msg assistant${pending ? ' pending' : ''}${fresh ? ' is-fresh' : ''}`}
       id={pending ? 'pending' : undefined}
     >
       {!pending && message && <MessageMeta message={message} />}
@@ -430,16 +433,26 @@ function DemoExamples({ visitor = false }: { visitor?: boolean }) {
   )
 }
 
-function ChatLog({ chat, sending }: { chat: ChatLoad; sending: boolean }) {
+function ChatLog({
+  chat,
+  sending,
+  fresh,
+}: {
+  chat: ChatLoad
+  sending: boolean
+  fresh?: string | null
+}) {
   const t = useMessages(messages)
   if (chat === 'loading') return <ChatSkeleton />
   if (chat === 'error') return <ErrorState>{t('loadFailed')}</ErrorState>
   if (!chat.length && !sending) return <ChatWelcome />
+  // The latest answer with the text the floating Nexo announced.
+  const lit = fresh ? chat.findLastIndex((m) => m.role === 'assistant' && m.content === fresh) : -1
   return (
     <>
       {chat.map((m, i) =>
         m.role === 'assistant' ? (
-          <AssistantMessage key={m.id ?? i} message={m} />
+          <AssistantMessage key={m.id ?? i} message={m} fresh={i === lit} />
         ) : (
           <UserMessage key={m.id ?? i} message={m} />
         ),
@@ -779,6 +792,7 @@ export function NexoChat({
   replyVersion = 0,
   autoAsk = null,
   onAutoAsked,
+  fresh = null,
 }: {
   chat: ChatLoad
   /** A question is out: the pending bubble shows and the send controls are disabled. */
@@ -811,6 +825,9 @@ export function NexoChat({
   /** A question a link brought (nexo-asks.tsx): sent once the conversation is there. */
   autoAsk?: string | null
   onAutoAsked?: () => void
+  /** The text of an answer written while the player was away, opened from the floating Nexo: that
+   * message lights up a moment. */
+  fresh?: string | null
 }) {
   const t = useMessages(messages)
   const [text, setText] = useState('')
@@ -956,7 +973,7 @@ export function NexoChat({
           <DemoExamples visitor={visitor} />
         ) : (
           <TalkAboutGame.Provider value={talkFrom(onPickGame)}>
-            <ChatLog chat={chat} sending={sending} />
+            <ChatLog chat={chat} sending={sending} fresh={fresh} />
           </TalkAboutGame.Provider>
         )}
       </div>

@@ -129,6 +129,8 @@ beforeEach(() => {
   spyOn(activity, 'recentTips').mockResolvedValue([])
   spyOn(activity, 'unreadNotifications').mockResolvedValue(0)
   spyOn(activity, 'hasAskedNexo').mockResolvedValue(true)
+  spyOn(activity, 'nexoNews').mockResolvedValue(null)
+  spyOn(activity, 'markNexoNewsRead').mockResolvedValue()
   spyOn(activity, 'recentMessages').mockResolvedValue([])
   spyOn(games, 'getGame').mockResolvedValue(game)
   spyOn(games, 'gamesForTitles').mockResolvedValue(new Map())
@@ -319,6 +321,9 @@ test("the chat reads the current game's conversation, another game's, or the one
   expect(read).toHaveBeenLastCalledWith(me.id, 40, 'game:9')
   await send('GET', '/api/chat?game=none')
   expect(read).toHaveBeenLastCalledWith(me.id, 40, null)
+  // Opening a conversation is seeing what Nexo left there.
+  expect(activity.markNexoNewsRead).toHaveBeenCalledWith(me.id, 'game:9')
+  expect(activity.markNexoNewsRead).toHaveBeenLastCalledWith(me.id, null)
   spyOn(nexo, 'reply').mockResolvedValue('ok')
   await send('POST', '/api/chat', { text: 'oi' })
   expect(read).toHaveBeenLastCalledWith(me.id, 40, makeContext().game.id)
@@ -602,6 +607,22 @@ test('state without a current game starts watching and ranks the library', async
   expect(body.profile).toEqual({ onlineId: 'Kratos' })
   await send('GET', '/api/state')
   expect(psn.profileSummary).toHaveBeenCalledTimes(1)
+})
+
+test('state carries what Nexo wrote while the player was away, or null', async () => {
+  const news = {
+    count: 1,
+    latest: {
+      game: 'game:9',
+      np: 'NPWR9',
+      name: 'LEGO Marvel Super Heroes',
+      content: 'Voltei com a resposta.',
+      created_at: '2026-11-23T12:00:00Z',
+    },
+  }
+  expect((await send('GET', '/api/state')).body.nexo).toBeNull()
+  spyOn(activity, 'nexoNews').mockResolvedValue(news)
+  expect((await send('GET', '/api/state')).body.nexo).toEqual(news)
 })
 
 test('state shows the current game and leaves it out of the ranking', async () => {

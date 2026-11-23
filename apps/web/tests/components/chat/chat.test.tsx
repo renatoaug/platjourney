@@ -403,3 +403,16 @@ test('a game with no guide facts shows only what it has', () => {
   expect(card?.textContent).toContain('Jogo sem guia')
   expect(card?.querySelector('.answer-stats')).toBeNull()
 })
+
+test('an answer opened from the floating Nexo lights up, and only that one', () => {
+  const list = messages as Exclude<ChatLoad, string>
+  const answer = list.findLast((m) => m.role === 'assistant')
+  render(
+    <MemoryRouter>
+      <NexoChat chat={list} sending={false} subtitle="" onSend={() => {}} fresh={answer?.content} />
+    </MemoryRouter>,
+  )
+  const lit = document.querySelectorAll('.msg.assistant.is-fresh')
+  expect(lit).toHaveLength(1)
+  expect(lit[0]?.textContent).toContain('Hellfire')
+})

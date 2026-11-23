@@ -1214,4 +1214,32 @@
   .chat-composer .chat-hint {
     display: none;
   }
+
+  /* An answer written while the player was away, opened from the floating Nexo: an accent ring and
+     a glow that fade out, so the eye lands on it. Without motion, a quiet ring stays instead. */
+  .msg.assistant.is-fresh {
+    outline: 2px solid color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
+    outline-offset: 4px;
+    animation: chat-fresh 3.2s ease-out 0.3s forwards;
+  }
+
+  @keyframes chat-fresh {
+    0%,
+    40% {
+      outline-color: color-mix(in srgb, var(--color-accent) var(--alpha-strong), transparent);
+      box-shadow: 0 0 24px color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    }
+
+    100% {
+      outline-color: transparent;
+      box-shadow: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .msg.assistant.is-fresh {
+      outline-color: color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+      animation: none;
+    }
+  }
 }

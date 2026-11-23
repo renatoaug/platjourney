@@ -228,6 +228,7 @@ export type Target =
   | 'NexoHero'
   | 'NexoInvite'
   | 'NexoLine'
+  | 'NexoNote'
   | 'NexoPickAsk'
   | 'NexoPickBox'
   | 'NexoPickPanel'

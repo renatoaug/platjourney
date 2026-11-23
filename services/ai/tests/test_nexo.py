@@ -976,12 +976,55 @@ async def test_an_answer_that_does_not_have_it_yet_keeps_the_question(
     async def clean(_: str) -> bool:
         return False
 
+    async def no_budget() -> bool:
+        return False
+
     monkeypatch.setattr(llm, 'flagged', clean)
     monkeypatch.setattr(nexo, 'passages', passages)
     monkeypatch.setattr(nexo, 'ask', answer)
     monkeypatch.setattr(nexo, 'record_gap', record)
+    monkeypatch.setattr(nexo, 'gap_search_left', no_budget)
     await nexo.reply('qual a melhor build?', context(), [])
     assert recorded == ['qual a melhor build?']
+
+
+async def test_passages_that_do_not_cover_it_search_the_web_before_saying_so(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    searched: list[dict[str, Any]] = []
+    recorded: list[dict[str, Any]] = []
+
+    async def passages(*_: Any, **__: Any) -> tuple[str, list[Any]]:
+        return ('\nTrechos dos guias: algo perto', [])
+
+    async def not_yet(*_: Any, **__: Any) -> str:
+        return f'{nexo.NOT_YET} Ainda não tenho isso mapeado em Days Gone.'
+
+    async def from_the_web(*args: Any, **kwargs: Any) -> llm.Reply:
+        searched.append({'context': args[1], **kwargs})
+        return llm.Reply('Use o arco no Difícil.', searches=1, urls=('https://a.example/x',))
+
+    async def record(ctx: Any, question: str, **found: Any) -> None:
+        recorded.append(found)
+
+    async def clean(_: str) -> bool:
+        return False
+
+    async def budget_left() -> bool:
+        return True
+
+    monkeypatch.setattr(llm, 'flagged', clean)
+    monkeypatch.setattr(nexo, 'passages', passages)
+    monkeypatch.setattr(nexo, 'ask', not_yet)
+    monkeypatch.setattr(nexo, 'ask_reply', from_the_web)
+    monkeypatch.setattr(nexo, 'record_gap', record)
+    monkeypatch.setattr(nexo, 'gap_search_left', budget_left)
+    text = await nexo.reply('qual a melhor build?', context(), [])
+    assert text == 'Use o arco no Difícil.'
+    # The search keeps the passages that came back, and must search before answering.
+    assert searched[0]['search'] is True and searched[0]['must_search'] is True
+    assert 'algo perto' in searched[0]['context']
+    assert recorded == [{'searched': True, 'urls': ['https://a.example/x'], 'answered': True}]
 
 
 async def test_one_call_may_search_with_web_search_off(monkeypatch: pytest.MonkeyPatch) -> None:
