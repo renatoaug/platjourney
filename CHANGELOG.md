@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.96.2](https://github.com/renatoaug/platjourney/compare/v0.96.1...v0.96.2) (2026-11-23)
+
+### Performance Improvements
+
+* **server:** the community opens at once, from a copy kept while a fresh one is built ([#226](https://github.com/renatoaug/platjourney/issues/226)) ([8160e7a](https://github.com/renatoaug/platjourney/commit/8160e7a9b9913339fec7ec5a31404cae03cfd79d))
+
 ## [0.96.1](https://github.com/renatoaug/platjourney/compare/v0.96.0...v0.96.1) (2026-11-23)
 
 ### Bug Fixes
