@@ -312,3 +312,19 @@ test('a stale community answers at once while a fresh one is built behind it', a
   await new Promise((done) => setTimeout(done, 0))
   expect(read.mock.calls.length).toBeGreaterThan(builds)
 })
+
+test('starting the server builds the feed and the month and year boards', async () => {
+  const read = spyOn(repo, 'members').mockResolvedValue([])
+  spyOn(repo, 'platinumsSince').mockResolvedValue([])
+  spyOn(repo, 'unlocksSince').mockResolvedValue([])
+  spyOn(repo, 'medalsOf').mockResolvedValue([])
+  spyOn(repo, 'goalTargets').mockResolvedValue(new Map())
+  community.warmCommunity(new Date(2026, 10, 23))
+  await new Promise((done) => setTimeout(done, 0))
+  // The feed, the month and the year: three builds, each reading the players.
+  expect(read.mock.calls.length).toBeGreaterThanOrEqual(3)
+  const calls = read.mock.calls.length
+  await community.rankings(new Date(2026, 10, 1))
+  await community.rankings(new Date(2026, 0, 1))
+  expect(read.mock.calls.length).toBe(calls)
+})

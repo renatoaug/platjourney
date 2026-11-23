@@ -279,9 +279,14 @@ export const forgetCommunity = () => {
   rankingsCache.clear()
 }
 
-/** Builds the community before anyone asks, so the first visit after a start does not wait. */
-export function warmCommunity(): void {
-  community().catch((e) => console.error('community warm-up:', (e as Error).message))
+/** Builds the community and the month's and year's boards before anyone asks, so the first visit
+ * after a start does not wait. */
+export function warmCommunity(now = new Date()): void {
+  const warm = (p: Promise<unknown>) =>
+    p.catch((e) => console.error('community warm-up:', (e as Error).message))
+  warm(community())
+  warm(rankings(new Date(now.getFullYear(), now.getMonth(), 1)))
+  warm(rankings(new Date(now.getFullYear(), 0, 1)))
 }
 
 export interface RankRow {
