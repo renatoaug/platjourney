@@ -11,7 +11,7 @@ const card = (x: HTMLElement) => x.closest('article') as HTMLElement
 test('a library card: rank, progress, hours played and the DLC apart', () => {
   renderApp(<LibraryCard item={daysGone} index={0} />)
   const link = cardLink()
-  expect(link.getAttribute('href')).toBe('/title/game/game%3A19561')
+  expect(link.getAttribute('href')).toBe('/title/game/19561')
   expect(document.querySelector('.band-tag')?.textContent).toBe('1')
   expect(link.textContent).toContain('12/46 · faltam 33')
   expect(link.textContent).toContain('26%')

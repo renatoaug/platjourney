@@ -11,7 +11,7 @@ import { defineMessages, Language, type MessageKey, translator } from './i18n.ts
 import { library } from './library.ts'
 import { mcpRoute } from './mcp.ts'
 import { oauthRoute } from './oauth.ts'
-import { pageMeta, withPageMeta } from './page-meta.ts'
+import { pageMeta, siteBase, withPageMeta } from './page-meta.ts'
 import { interceptsFor, pluginPagePolicy, pluginRoute, Refused } from './plugins.ts'
 import { PrivateProfile } from './psn.ts'
 import { allow } from './rate-limit.ts'
@@ -270,7 +270,7 @@ async function shell(req: IncomingMessage, file: URL, path: string): Promise<str
     console.warn('page preview failed:', (e as Error).message)
     return null
   })
-  return withShareImage(req, withPageMeta(readFileSync(file, 'utf8'), meta))
+  return withShareImage(req, withPageMeta(readFileSync(file, 'utf8'), meta, siteBase(req)))
 }
 
 // Static files from the built app; anything unknown falls back to the app shell, which routes the address.
@@ -288,7 +288,8 @@ async function servedStatic(
   const body = target.pathname.endsWith('/index.html')
     ? await shell(req, target, path)
     : readFileSync(target)
-  res.writeHead(200, staticHeaders(path, type)).end(body)
+  // A HEAD asks only whether the page is there (crawlers and link checkers do).
+  res.writeHead(200, staticHeaders(path, type)).end(req.method === 'HEAD' ? undefined : body)
   return true
 }
 
@@ -302,7 +303,8 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (await mcpRoute(req, res, url, method)) return
   if (path.startsWith('/api/')) return apiRoute(req, res, url, method)
   if (method === 'GET' && DEV_WEB) return devPage(req, res, DEV_WEB)
-  if (method === 'GET' && (await servedStatic(req, res, path))) return
+  const reading = method === 'GET' || method === 'HEAD'
+  if (reading && (await servedStatic(req, res, path))) return
   res.writeHead(404).end('not found')
 }
 

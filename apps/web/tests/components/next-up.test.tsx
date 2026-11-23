@@ -24,7 +24,7 @@ test('the card shows the progress, or that it was never started, and the whole c
   const { unmount } = renderApp(<NextUp interest={interest(1, 1, { progress: 38 })} />)
   expect(screen.getByText('38% dos troféus')).toBeTruthy()
   expect(screen.getByRole('link', { name: /Próxima platina/ }).getAttribute('href')).toContain(
-    'game%3A1',
+    '/title/game/1',
   )
   unmount()
   renderApp(<NextUp interest={interest(2, 1)} />)

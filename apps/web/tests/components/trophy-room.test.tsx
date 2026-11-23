@@ -29,7 +29,7 @@ test('the records: the rarest, the fastest, the longest and the first, each link
   expect(card('A mais rápida').textContent).toContain('Spider')
   expect(card('A mais longa').textContent).toContain('Hogwarts')
   expect(card('A primeira').textContent).toContain('Old')
-  expect(card('A mais rara').getAttribute('href')).toBe('/title/game/game%3ADetroit')
+  expect(card('A mais rara').getAttribute('href')).toBe('/title/game/Detroit')
 })
 
 test('without hours the time records are left out', () => {

@@ -83,7 +83,10 @@ export const KIND_ICON: Record<string, string> = {
   chat: 'nexo',
 }
 
-export const titleHref = (gameId: string) => `/title/game/${encodeURIComponent(gameId)}`
+/** A game's page. The catalog id without its `game:` prefix: one clean address per game, the one
+ * search engines and shared links know (the page reads both). */
+export const titleHref = (gameId: string) =>
+  `/title/game/${encodeURIComponent(gameId.replace(/^game:/, ''))}`
 
 export { nexoHref } from './nexo-asks'
 

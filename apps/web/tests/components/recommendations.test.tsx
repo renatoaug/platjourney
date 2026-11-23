@@ -15,7 +15,7 @@ const card = (x: HTMLElement) => x.closest('article') as HTMLElement
 test('each card: difficulty, time, the facts as icons and Nexo’s reason', () => {
   renderApp(<Recommendations state={ok} onDismiss={() => {}} />)
   const h = row('Horizon Zero Dawn')
-  expect(h.getAttribute('href')).toBe('/title/game/game%3A10')
+  expect(h.getAttribute('href')).toBe('/title/game/10')
   // The difficulty sits on the cover.
   expect(within(card(h)).getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(h.textContent).toContain('~50h')

@@ -1,7 +1,7 @@
 import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
 import type { IncomingMessage } from 'node:http'
-import { pageMeta, withPageMeta } from '../src/page-meta.ts'
+import { pageMeta, siteBase, withPageMeta } from '../src/page-meta.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as users from '../src/repository/user.ts'
@@ -40,8 +40,11 @@ test("a game's page is previewed with its guide's facts and its art", async () =
     title: 'Guia de platina de Astro Bot · PlatJourney',
     description: 'Dificuldade 3/10, cerca de 25h, 1 jogatina. 1 troféu perdível.',
     image: 'https://img/art.jpg',
+    canonical: '/title/game/7',
   })
   expect(games.getGame).toHaveBeenCalledWith('game:7')
+  // The address the app's links once wrote, the id encoded, is the same page.
+  expect((await pageMeta(req(), '/title/game/game%3A7'))?.canonical).toBe('/title/game/7')
   expect((await pageMeta(req('en'), '/title/game/game:7'))?.title).toBe(
     'Astro Bot platinum guide · PlatJourney',
   )
@@ -81,4 +84,21 @@ test("the shell takes the page's preview, escaped, and drops the app picture's s
   expect(withPageMeta(SHELL, null)).toBe(SHELL)
   // Without its own picture, the app's stays with its size.
   expect(withPageMeta(SHELL, { title: 't', description: 'd' })).toContain('og:image:width')
+})
+
+test('a public page names its one address for search engines when the app address is known', () => {
+  const html = `${SHELL}</head>`
+  const meta = { title: 't', description: 'd', canonical: '/title/game/7' }
+  const out = withPageMeta(html, meta, 'https://app.example')
+  expect(out).toContain('<link rel="canonical" href="https://app.example/title/game/7">')
+  expect(out).toContain('<meta property="og:url" content="https://app.example/title/game/7">')
+  expect(withPageMeta(html, meta)).not.toContain('canonical')
+})
+
+test('the app address comes from the request when none is set, and only from a plain host', () => {
+  const r = (headers: Record<string, string>) => ({ headers }) as unknown as IncomingMessage
+  expect(siteBase(r({ host: 'app.example', 'x-forwarded-proto': 'https' }))).toBe(
+    'https://app.example',
+  )
+  expect(siteBase(r({ host: 'evil"<x>' }))).toBeNull()
 })

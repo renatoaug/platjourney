@@ -69,7 +69,7 @@ test('typing finds games, the ones with a guide marked, and Enter opens the chos
   fireEvent.keyDown(screen.getByRole('combobox'), { key: 'ArrowDown' })
   expect(screen.getAllByRole('option')[1].getAttribute('aria-selected')).toBe('true')
   fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Enter' })
-  expect(path).toBe('/title/game/game%3A2')
+  expect(path).toBe('/title/game/2')
   expect(closed).toBe(true)
   // The game opened comes first next time, before anything is typed.
   expect(JSON.parse(localStorage.getItem('palette.recent') ?? '[]')[0].name).toBe('Days of War')

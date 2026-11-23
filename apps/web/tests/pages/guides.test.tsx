@@ -31,7 +31,7 @@ test('the games with a guide, each linking to its page', async () => {
   mockApi({ '/api/guides': page([item(1), item(2)]) })
   renderApp(<Guides />, { path: '/guides', route: '/guides' })
   const first = (await inList('Game 1')).closest('a') as HTMLElement
-  expect(first.getAttribute('href')).toContain('/title/game/game%3A1')
+  expect(first.getAttribute('href')).toContain('/title/game/1')
   expect(within(first).getByRole('img', { name: 'Dificuldade 3 de 10: Fácil' })).toBeTruthy()
   expect(within(first).getByText('~12h')).toBeTruthy()
   expect(within(first).getByRole('img', { name: 'Tem troféus perdíveis' })).toBeTruthy()
@@ -120,9 +120,7 @@ test('a game found outside the catalog opens its page', async () => {
   const ask = mock(async () => ({ game: 'game:9' }))
   renderApp(<Guides ask={ask} />, { path: '/guides?q=Jogo%20Novo', route: '/guides' })
   fireEvent.click(await screen.findByRole('button', { name: 'Pedir “Jogo Novo”' }))
-  await waitFor(() =>
-    expect(screen.getByTestId('location').textContent).toBe('/title/game/game%3A9'),
-  )
+  await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/title/game/9'))
 })
 
 test('a failed lookup says so and the button stays', async () => {

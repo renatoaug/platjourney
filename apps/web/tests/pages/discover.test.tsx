@@ -53,7 +53,7 @@ test('by default: games like the player’s, with the games that led to each one
   expect(similar().querySelector('.sk')).toBeTruthy()
   expect(await askNexo()).toBeTruthy()
   const horizon = await within(similar()).findByRole('link', { name: /Horizon Zero Dawn/ })
-  expect(horizon.getAttribute('href')).toBe('/title/game/game%3A10')
+  expect(horizon.getAttribute('href')).toBe('/title/game/10')
   const because = horizon.querySelector('.band-reason') as HTMLElement
   expect(because.textContent).toBe('Parecido com Days Gone e Ghost of Tsushima')
   expect([...because.querySelectorAll('strong')].map((b) => b.textContent)).toEqual([
@@ -91,7 +91,7 @@ test('short platinums and the same series in their bands', () => {
   const quick = screen.getByRole('region', { name: 'Platina relâmpago' })
   expect(within(quick).getAllByRole('link')).toHaveLength(2)
   const astro = within(quick).getByRole('link', { name: /Astro/ })
-  expect(astro.getAttribute('href')).toBe('/title/game/game%3A20')
+  expect(astro.getAttribute('href')).toBe('/title/game/20')
   expect(astro.textContent).toContain('~6h')
   expect(
     within(astro.closest('article') as HTMLElement).getByRole('img', {
@@ -372,7 +372,7 @@ test('the library: one card per game in the ranking order, six a page', () => {
   expect(within(ranking).getByRole('heading', { name: 'Próxima platina' })).toBeTruthy()
   const links = within(ranking).getAllByRole('link')
   expect(links).toHaveLength(6)
-  expect(links[0].getAttribute('href')).toBe('/title/game/game%3Ar0')
+  expect(links[0].getAttribute('href')).toBe('/title/game/r0')
   expect(ranking.querySelector('.band-tag')?.textContent).toBe('1')
   expect(within(ranking).getByText('1/2')).toBeTruthy()
   fireEvent.click(within(ranking).getByRole('button', { name: 'Próxima página' }))

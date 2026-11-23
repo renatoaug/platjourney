@@ -37,7 +37,7 @@ test('the profile: identity, tiles, the collection and the yearly rhythm', async
   expect(results()).toBe('1–10 de 10 platinas')
   const rows = within(list()).getAllByRole('link')
   expect(rows).toHaveLength(10)
-  expect(rows[0].getAttribute('href')).toBe('/title/game/game%3A0')
+  expect(rows[0].getAttribute('href')).toBe('/title/game/0')
   expect(rows[1].textContent).toContain('PS5 · 27h')
   expect(rows[0].textContent).not.toContain('jogadas')
   expect(container.querySelectorAll('.years .year')).toHaveLength(5)
