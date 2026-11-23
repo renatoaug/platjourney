@@ -36,11 +36,15 @@ beforeEach(() => {
 afterEach(() => mock.restore())
 
 test("a game's page is previewed with its guide's facts and its art", async () => {
-  expect(await pageMeta(req(), '/title/game/7')).toEqual({
+  expect(await pageMeta(req(), '/title/game/7')).toMatchObject({
     title: 'Guia de platina de Astro Bot · PlatJourney',
     description: 'Dificuldade 3/10, cerca de 25h, 1 jogatina. 1 troféu perdível.',
     image: 'https://img/art.jpg',
     canonical: '/title/game/7',
+    trail: [
+      { name: 'Guias de platina', path: '/guides' },
+      { name: 'Astro Bot', path: '/title/game/7' },
+    ],
   })
   expect(games.getGame).toHaveBeenCalledWith('game:7')
   // The address the app's links once wrote, the id encoded, is the same page.
@@ -101,4 +105,69 @@ test('the app address comes from the request when none is set, and only from a p
     'https://app.example',
   )
   expect(siteBase(r({ host: 'evil"<x>' }))).toBeNull()
+})
+
+test("a game's page carries its guide as text, escaped, in the guide's sections", async () => {
+  spyOn(guides, 'getGuide').mockResolvedValue({
+    difficulty: 3,
+    hours: 25,
+    playthroughs: 1,
+    overview: 'A <short> **Astro** platinum.',
+    missables: [{ trophy: 'Lost & Found', when: 'Chapter 2', how: '' }],
+    roadmap: [{ phase: 'Story', goal: 'Beat the game.\n1. Then the rest', trophies: [] }],
+    earlyTips: ['Turn on the hints.'],
+    easiest: { trophy: 'Hello', why: 'The first level' },
+    hardest: null,
+    mostTedious: null,
+  })
+  const content = (await pageMeta(req(), '/title/game/7'))?.content ?? ''
+  expect(content).toStartWith('<h1>Guia de platina de Astro Bot</h1>')
+  expect(content).toContain('<p>A &lt;short&gt; <b>Astro</b> platinum.</p>')
+  expect(content).toContain(
+    '<h2>Troféus perdíveis</h2><ul><li><b>Lost &amp; Found</b>: Chapter 2</li></ul>',
+  )
+  expect(content).toContain(
+    '<h2>Roteiro até a platina</h2><ol><li><b>Story</b>: Beat the game.<br>1. Then the rest</li></ol>',
+  )
+  expect(content).toContain('<li>Turn on the hints.</li>')
+  expect(content).toContain('<li>Mais fácil: <b>Hello</b>: The first level</li>')
+  expect(content).toContain('<a href="/guides">Guias de platina</a>')
+  // A guide without a section has no empty heading for it.
+  spyOn(guides, 'getGuide').mockResolvedValue(undefined)
+  const bare = (await pageMeta(req(), '/title/game/7'))?.content ?? ''
+  expect(bare).not.toContain('<h2>')
+})
+
+test("the shell holds the page's text for readers without the app, and its place as a trail", () => {
+  const html = `${SHELL}</head><div id="root">\n<div class="boot-screen"></div>`
+  const meta = {
+    title: 't',
+    description: 'd',
+    content: '<h1>Astro</h1>',
+    trail: [
+      { name: 'Guias', path: '/guides' },
+      { name: 'A </script>', path: '/title/game/7' },
+    ],
+  }
+  const out = withPageMeta(html, meta, 'https://app.example')
+  expect(out).toContain(
+    '<div id="root">\n<article class="page-preview" hidden><h1>Astro</h1></article>',
+  )
+  const block = out.match(/<script type="application\/ld\+json">(.*)<\/script>/)?.[1] ?? ''
+  expect(block).not.toContain('</script>')
+  expect(JSON.parse(block)).toEqual({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Guias', item: 'https://app.example/guides' },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'A </script>',
+        item: 'https://app.example/title/game/7',
+      },
+    ],
+  })
+  // Without the app's address there is no trail; the text stays.
+  expect(withPageMeta(html, meta)).not.toContain('BreadcrumbList')
 })
