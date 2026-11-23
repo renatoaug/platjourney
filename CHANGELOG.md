@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.96.0](https://github.com/renatoaug/platjourney/compare/v0.95.2...v0.96.0) (2026-11-23)
+
+### Features
+
+* **web:** nexo calls attention to answers left while away, and searches before saying it does not know ([#224](https://github.com/renatoaug/platjourney/issues/224)) ([95e7369](https://github.com/renatoaug/platjourney/commit/95e7369133890019a010d377cd7359c8e50fab8f))
+
 ## [0.95.2](https://github.com/renatoaug/platjourney/compare/v0.95.1...v0.95.2) (2026-11-23)
 
 ### Bug Fixes
