@@ -97,7 +97,7 @@ export const follow = (user: string, on: boolean) =>
 
 /** A game's page in the app: its catalog page when the catalog knows it. */
 export const gameLink = (game: CommunityGame | null) =>
-  game?.id ? `/title/game/${encodeURIComponent(`game:${game.id.replace(/^game:/, '')}`)}` : null
+  game?.id ? `/title/game/${encodeURIComponent(game.id.replace(/^game:/, ''))}` : null
 
 /** The PSN rarity tier of a share of players: under 5% ultra rare, under 15% very rare, under 50%
  * rare, otherwise common. */

@@ -12,6 +12,7 @@ import { TrophyMedal } from '../../ui/trophy-medal'
 import { ShareCollection } from '../share-collection'
 import { SharePlatinum } from '../share-platinum'
 import './year-platinums.css'
+import { titleHref } from '../tip'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -238,10 +239,7 @@ export function YearPlatinums({ goals: p, busy = false }: { goals: YearGoals; bu
                       const order = all.length - all.indexOf(g)
                       return (
                         <li key={`${g.game.id}-${g.at}`}>
-                          <Link
-                            className="year-platinum"
-                            to={`/title/game/${encodeURIComponent(g.game.id)}`}
-                          >
+                          <Link className="year-platinum" to={titleHref(g.game.id)}>
                             <Cover
                               url={g.game.cover_url}
                               name={g.game.name}
@@ -324,7 +322,7 @@ export function YearPlatinumWall({ goals: p }: { goals: YearGoals }) {
                   const order = all.length - all.indexOf(g)
                   return (
                     <li key={`${g.game.id}-${g.at}`} className="year-tile">
-                      <Link to={`/title/game/${encodeURIComponent(g.game.id)}`}>
+                      <Link to={titleHref(g.game.id)}>
                         <Cover
                           url={g.game.cover_url}
                           name={g.game.name}

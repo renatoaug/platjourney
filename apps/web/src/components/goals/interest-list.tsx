@@ -14,6 +14,7 @@ import { EmptyState } from '../../ui/states'
 import { useSlide } from '../../ui/use-slide'
 import { type GoalFilter, goalState, started } from './season'
 import './interest-list.css'
+import { titleHref } from '../tip'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -201,7 +202,7 @@ function Row({
         {g.done || !rank ? <Icon name={g.done ? 'check' : 'circle'} /> : <b>{rank}</b>}
       </span>
       <Cover url={g.game.cover_url} name={g.game.name} className="goal-cover" />
-      <Link className="name" to={`/title/game/${encodeURIComponent(g.game.id)}`}>
+      <Link className="name" to={titleHref(g.game.id)}>
         {g.game.name}
         {g.nextPickAt && !g.done ? (
           <small className="goal-recommended next">

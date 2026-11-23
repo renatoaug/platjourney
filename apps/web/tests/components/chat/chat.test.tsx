@@ -41,7 +41,7 @@ describe('NexoChat', () => {
       within(log())
         .getAllByRole('link', { name: /Days Gone/ })[0]
         .getAttribute('href'),
-    ).toBe('/title/game/game%3A19561')
+    ).toBe('/title/game/19561')
     expect(log().querySelectorAll('time')).toHaveLength(4)
     expect(within(log()).getByText(/Trophy Guides e Platinum Forum/)).toBeTruthy()
   })

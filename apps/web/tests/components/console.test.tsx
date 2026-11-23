@@ -32,7 +32,9 @@ test('the arrows move along the shelf; a second press on the focused cover opens
   expect(screen.getByText('No radar da platina')).toBeTruthy()
   const second = screen.getByRole('button', { name: rankingData[1].name })
   fireEvent.click(second)
-  expect(path()).toBe(`/title/game/${encodeURIComponent(rankingData[1].game)}`)
+  expect(path()).toBe(
+    `/title/game/${encodeURIComponent(rankingData[1].game.replace(/^game:/, ''))}`,
+  )
 })
 
 test('the game played opens on its own screen', () => {

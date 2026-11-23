@@ -26,7 +26,7 @@ describe('YearPlatinums', () => {
     expect(month(/^Set: 1 platina$/)).toBeTruthy()
     const links = screen.getAllByRole('link')
     expect(links).toHaveLength(6)
-    expect(links[0].getAttribute('href')).toBe('/title/game/game%3Adays-gone')
+    expect(links[0].getAttribute('href')).toBe('/title/game/days-gone')
     expect(within(links[0]).getByLabelText('Platina 7 do ano')).toBeTruthy()
     expect(screen.getByText('· 61h de jogo')).toBeTruthy()
   })

@@ -154,7 +154,7 @@ test('following a game closes the panel', async () => {
   fireEvent.click(bell())
   const [first] = await within(panel()).findAllByRole('article')
   fireEvent.click(within(first).getByRole('link', { name: 'Days Gone' }))
-  expect(screen.getByTestId('location').textContent).toBe('/title/game/game%3A19561')
+  expect(screen.getByTestId('location').textContent).toBe('/title/game/19561')
   await waitFor(() => expect(panel().hidden).toBe(true))
 })
 

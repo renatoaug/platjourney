@@ -31,7 +31,7 @@ test('the guide of the day is the same all day and another the next, never one w
 test('the card links to the guide with its facts', () => {
   renderApp(<GuideSpotlight game={game(2)} />)
   expect(screen.getByRole('link', { name: /Abrir guia/ }).getAttribute('href')).toContain(
-    'game%3A2',
+    '/title/game/2',
   )
   expect(screen.getByText('Tem perdíveis')).toBeTruthy()
   expect(screen.getByTitle('~40h até a platina')).toBeTruthy()

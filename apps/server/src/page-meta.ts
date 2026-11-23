@@ -1,4 +1,5 @@
 import type { IncomingMessage } from 'node:http'
+import { config } from './config.ts'
 import type { Guide } from './guide.ts'
 import { defineMessages, fromAcceptLanguage, Language, translator } from './i18n.ts'
 import { getGame } from './repository/game.ts'
@@ -43,9 +44,12 @@ export interface PageMeta {
   description: string
   /** A full or site-relative image address; none keeps the app's own picture. */
   image?: string
+  /** The page's one address (`/title/game/52189`), for search engines: the same page reached as
+   * `game%3A52189` or with a `?view=` counts as this one. */
+  canonical?: string
 }
 
-const GAME_PAGE = /^\/title\/game\/((?:game:)?[\w-]{1,60})\/?$/
+const GAME_PAGE = /^\/title\/game\/(?:game:)?([\w-]{1,60})\/?$/
 const PROFILE_PAGE = /^\/profiles\/([A-Za-z0-9_-]{3,16})\/?$/
 
 type T = ReturnType<typeof translator<typeof messages>>
@@ -65,9 +69,10 @@ function guideFacts(t: T, name: string, guide: Partial<Guide> | undefined): stri
 }
 
 async function gamePage(t: T, id: string): Promise<PageMeta | null> {
-  const found = await getGame(id.startsWith('game:') ? id : `game:${id}`)
+  const found = await getGame(`game:${id}`)
   if (!found) return null
   return {
+    canonical: `/title/game/${encodeURIComponent(found.id.replace(/^game:/, ''))}`,
     title: t('guideTitle', { name: found.name }),
     description: guideFacts(t, found.name, await getGuide<Partial<Guide>>(found.id)),
     image: found.art_url ?? found.cover_url?.replace('/t_cover_big/', '/t_1080p/') ?? undefined,
@@ -79,16 +84,22 @@ async function profilePage(t: T, name: string): Promise<PageMeta | null> {
   if (!player || player.demo || player.community_visible === false) return null
   const shown = player.psn_online_id ?? name
   return {
+    canonical: `/profiles/${encodeURIComponent(shown)}`,
     title: t('profileTitle', { name: shown }),
     description: t('profileDescription', { name: shown }),
   }
 }
 
 /** The preview of a public page, or null for any other address. */
-export async function pageMeta(req: IncomingMessage, path: string): Promise<PageMeta | null> {
+export async function pageMeta(req: IncomingMessage, raw: string): Promise<PageMeta | null> {
   const t = translator(messages, fromAcceptLanguage(req.headers['accept-language']) ?? undefined)
+  // The app's own links once wrote the game's id encoded (`game%3A52189`): read as the same page.
+  let path = raw
+  try {
+    path = decodeURIComponent(raw)
+  } catch {}
   if (/^\/guides\/?$/.test(path))
-    return { title: t('guidesTitle'), description: t('guidesDescription') }
+    return { title: t('guidesTitle'), description: t('guidesDescription'), canonical: '/guides' }
   const game = path.match(GAME_PAGE)?.[1]
   if (game) return gamePage(t, game)
   const name = path.match(PROFILE_PAGE)?.[1]
@@ -101,8 +112,9 @@ const escapeHtml = (s: string) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
   )
 
-/** The app shell with a page's own title, description and picture in place of the general ones. */
-export function withPageMeta(html: string, meta: PageMeta | null): string {
+/** The app shell with a page's own title, description and picture in place of the general ones,
+ * and its one address when `base` (the app's address) is known. */
+export function withPageMeta(html: string, meta: PageMeta | null, base?: string | null): string {
   if (!meta) return html
   const title = escapeHtml(meta.title)
   const description = escapeHtml(meta.description)
@@ -116,5 +128,22 @@ export function withPageMeta(html: string, meta: PageMeta | null): string {
       .replace(/(<meta property="og:image" content=")[^"]*(")/, `$1${escapeHtml(meta.image)}$2`)
       // The app's picture is 1200×630; another one has its own size.
       .replace(/<meta property="og:image:(width|height|alt)"[^>]*>\n?/g, '')
+  if (meta.canonical && base) {
+    const url = escapeHtml(`${base}${meta.canonical}`)
+    out = out.replace(
+      '</head>',
+      `<link rel="canonical" href="${url}">\n<meta property="og:url" content="${url}">\n</head>`,
+    )
+  }
   return out
+}
+
+/** The app's address, for a page's canonical link: APP_URL, or the one the request came in on (a
+ * plain host name only). */
+export function siteBase(req: IncomingMessage): string | null {
+  if (config.appUrl) return config.appUrl
+  const host = req.headers.host
+  if (!host || !/^[a-z0-9.-]+(:\d{1,5})?$/i.test(host)) return null
+  const proto = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'
+  return `${proto}://${host}`
 }
