@@ -1102,6 +1102,15 @@
     backdrop-filter: blur(18px) saturate(1.25);
   }
 
+  /* On a phone the cards keep their tint without the blur: behind them is only the page's own
+     gradient, so the blur barely shows, and the phone worked it out again for every card on every
+     frame of a scroll. */
+  @media (hover: none) {
+    :root:not([data-skin]) :is(.card, .game-card, .release, .band-card) {
+      backdrop-filter: none;
+    }
+  }
+
   /* What opens over the page (dialogs, menus, the notifications, a picker's list) stays almost
      solid: through the glass the page behind gets in the way of reading. */
   :root:not([data-skin])
@@ -1475,5 +1484,19 @@
     :root[data-skin="christmas"] .sidebar-account::before {
       animation: none;
     }
+  }
+
+  /* --------------------------------------------------------- While scrolling */
+
+  /* The moving decor of every skin holds still while the page scrolls (lib/scrolling.ts sets the
+     class), and picks up where it was once the page is still. Most of it moves by repainting (a
+     rolling floor, a sea, swaying palms, a glint on the bars), which a phone cannot afford on the
+     same frames as the scroll. */
+  :root.is-scrolling[data-skin] :is(body, .app, .sidebar, .sidebar-account)::before,
+  :root.is-scrolling[data-skin] :is(body, .app)::after,
+  :root.is-scrolling[data-skin]::before,
+  :root.is-scrolling[data-skin]::after,
+  :root.is-scrolling[data-skin] :is(.bar i, .bar i::before, h1, h2, .console-title, .hero-title) {
+    animation-play-state: paused;
   }
 }
