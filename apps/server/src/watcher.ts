@@ -26,7 +26,7 @@ import {
   together,
   unlockNotice,
 } from './notices.ts'
-import { deliver } from './notify.ts'
+import { deliver, reachable } from './notify.ts'
 import { expirePlans } from './planner.ts'
 import { aroundNotice, projectGame, Refused } from './plugins.ts'
 import { nowPlaying, PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
@@ -373,8 +373,8 @@ async function check(user: User): Promise<void> {
   await sessionStart(user, ctx, justStarted, playing)
 }
 
-// One session-start notice every few hours at most.
-export const SESSION_NOTICE_HOURS = 6
+// One session-start notice every two days at most: a reminder, not a report of every session.
+export const SESSION_NOTICE_HOURS = 48
 
 const comparable = (name: string) =>
   name
@@ -409,7 +409,9 @@ function recentNotice(user: User): boolean {
 }
 
 // Tells the player once when they open a game, from PSN presence (players who hide their online
-// status never get it). The game they play is the one in context when the names match.
+// status never get it). The game they play is the one in context when the names match. Only a
+// player the notice reaches outside the app gets it: a "time to play" seen later in the bell came
+// too late to mean anything.
 // `playing`: the presence this check already read.
 async function sessionStart(
   user: User,
@@ -418,6 +420,7 @@ async function sessionStart(
   playing: string | null,
 ): Promise<void> {
   if (!playing || recentNotice(user)) return
+  if (!(await reachable(user))) return
   // Checks queued behind each other (sign-up and the first home load) carry the user as it was
   // read before the first one ran: the stored stamp is the one that counts.
   if (recentNotice((await getUser(user.id)) ?? user)) return

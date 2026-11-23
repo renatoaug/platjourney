@@ -34,7 +34,9 @@ import * as sessions from '../src/repository/auth.ts'
 import * as games from '../src/repository/game.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
+import * as nativePush from '../src/repository/native-push.ts'
 import * as oauthRepo from '../src/repository/oauth.ts'
+import * as pushSubs from '../src/repository/push-subscription.ts'
 import * as recs from '../src/repository/recommendation.ts'
 import type { TitleRow } from '../src/repository/title.ts'
 import * as titles from '../src/repository/title.ts'
@@ -274,8 +276,27 @@ describe('session start', () => {
     playing.mockResolvedValue('DAYS GONE')
     await checkUser({ ...user, session_notice_at: new Date(Date.now() - 3_600_000) })
     expect(logTip.mock.calls.some((c) => c[1] === 'session')).toBe(false)
-    await checkUser({ ...user, session_notice_at: new Date(Date.now() - 7 * 3_600_000) })
+    await checkUser({
+      ...user,
+      session_notice_at: new Date(Date.now() - (SESSION_NOTICE_HOURS + 1) * 3_600_000),
+    })
     expect(logTip.mock.calls.some((c) => c[1] === 'session')).toBe(true)
+  })
+
+  test('a player no notice reaches outside the app gets no session notice, and no stamp', async () => {
+    unchanged()
+    playing.mockResolvedValue('DAYS GONE')
+    const devices = spyOn(nativePush, 'nativeDevices').mockResolvedValue([])
+    const subs = spyOn(pushSubs, 'pushSubscriptions').mockResolvedValue([])
+    const quiet = { ...user, telegram_chat_id: null }
+    await checkUser(quiet)
+    expect(logTip.mock.calls.some((c) => c[1] === 'session')).toBe(false)
+    expect(updateUser).not.toHaveBeenCalled()
+    // Push turned on in the native app: the notice goes out.
+    devices.mockResolvedValue([{ transport: 'fcm', installation: 'i1', token: 't1' }])
+    await checkUser(quiet)
+    expect(logTip.mock.calls.some((c) => c[1] === 'session')).toBe(true)
+    subs.mockRestore()
   })
 
   test('a check queued behind one that just sent the notice reads the stamp it left', async () => {
