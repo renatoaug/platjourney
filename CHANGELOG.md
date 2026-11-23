@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.97.0](https://github.com/renatoaug/platjourney/compare/v0.96.4...v0.97.0) (2026-11-23)
+
+### Features
+
+* **server:** one address per guide, named as canonical ([#229](https://github.com/renatoaug/platjourney/issues/229)) ([7c99db9](https://github.com/renatoaug/platjourney/commit/7c99db9989b9e631c1d04de397a10ef9fea27277))
+
 ## [0.96.4](https://github.com/renatoaug/platjourney/compare/v0.96.3...v0.96.4) (2026-11-23)
 
 ### Performance Improvements
