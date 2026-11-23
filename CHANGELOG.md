@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.95.2](https://github.com/renatoaug/platjourney/compare/v0.95.1...v0.95.2) (2026-11-23)
+
+### Bug Fixes
+
+* **server:** session notice only for players reached outside the app, every two days at most ([#223](https://github.com/renatoaug/platjourney/issues/223)) ([c4b34be](https://github.com/renatoaug/platjourney/commit/c4b34be3b29a237357f0621c1efec7533e543864))
+
 ## [0.95.1](https://github.com/renatoaug/platjourney/compare/v0.95.0...v0.95.1) (2026-11-22)
 
 ### Bug Fixes
