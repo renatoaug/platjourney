@@ -52,6 +52,10 @@ const MESSAGES: ChatMessage[] = [
 const base = { subtitle: 'Falando sobre DAYS GONE (13%).', sending: false, onSend: () => {} }
 
 export const Loaded: Story = { args: { ...base, chat: MESSAGES } }
+/** Opened from the floating Nexo over an answer written while the player was away: it lights up. */
+export const FreshAnswer: Story = {
+  args: { ...base, chat: MESSAGES, fresh: MESSAGES[3]?.content ?? null },
+}
 /** The demo: the chat is closed, with sample exchanges and a call to connect an account. */
 export const Demo: Story = { args: { ...base, chat: [], demo: true } }
 export const DemoEnglish: Story = { ...Demo, globals: { locale: Language.En } }

@@ -191,6 +191,60 @@ export async function markNotificationsRead(user: string): Promise<void> {
   })
 }
 
+/** What Nexo wrote while the player was away and they have not seen yet: the answers it owed (an
+ * `answer` notice still unread). The floating Nexo calls attention to them until the player opens
+ * that game's conversation, or the bell. */
+export interface NexoNews {
+  count: number
+  latest: {
+    /** The game's id, or null for the conversation without a game. */
+    game: string | null
+    /** The player's PSN list for the game, to open its conversation; null when not in the library. */
+    np: string | null
+    name: string | null
+    content: string
+    created_at: string
+  }
+}
+
+export async function nexoNews(user: string): Promise<NexoNews | null> {
+  const rows = plain(
+    await q<{ game: string | null; name: string | null; content: string; created_at: string }[]>(
+      "SELECT game, game.name AS name, content, created_at FROM notification WHERE user = $user AND kind = 'answer' AND read_at = NONE ORDER BY created_at DESC",
+      { user: userRef(user) },
+    ),
+  )
+  const latest = rows[0]
+  if (!latest) return null
+  const game = latest.game ? String(latest.game) : null
+  const [np] = game
+    ? plain(
+        await q<string[]>(
+          'SELECT VALUE np_communication_id FROM title WHERE user = $user AND game = $game LIMIT 1',
+          { user: userRef(user), game: gameRef(game) },
+        ),
+      )
+    : []
+  return {
+    count: rows.length,
+    latest: {
+      game,
+      np: np ?? null,
+      name: latest.name ?? null,
+      content: latest.content,
+      created_at: latest.created_at,
+    },
+  }
+}
+
+/** The player opened a conversation: what Nexo left there for them counts as seen, in the bell too. */
+export async function markNexoNewsRead(user: string, game: string | null): Promise<void> {
+  await q(
+    `UPDATE notification SET read_at = time::now() WHERE user = $user AND kind = 'answer' AND read_at = NONE AND ${game ? 'game = $game' : 'game = NONE'}`,
+    { user: userRef(user), ...(game ? { game: gameRef(game) } : {}) },
+  )
+}
+
 // Games whose server closing the user was already warned about.
 export async function serverWarnedGames(user: string): Promise<Set<string>> {
   const rows = plain(

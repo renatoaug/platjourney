@@ -255,11 +255,18 @@ function LiveNexo() {
     if (!data || leaving.current === key) return
     const known = chats[key]
     setChat(known ?? 'loading')
-    if (known) return
+    // Nexo left a message here while the player was away: it is read again, and once on screen
+    // the app's state learns it was seen (the floating Nexo and the bell stop calling).
+    const news = data.nexo?.latest
+    const fresh = !!news && (news.game ?? 'none') === key
+    if (known && !fresh) return
     api<ChatMessage[]>(`/api/chat?game=${encodeURIComponent(key)}`)
-      .then((list) => write(key, list))
+      .then((list) => {
+        write(key, list)
+        if (fresh) void loadState()
+      })
       .catch(() => shown.current === key && setChat('error'))
-  }, [data, key, chats, write])
+  }, [data, key, chats, write, loadState])
 
   // What to platinum next is not about this game: its answer lives in the general conversation.
   const landReply = (r: ChatReply, k: string) => {
@@ -412,6 +419,7 @@ function LiveNexo() {
         ) : null}
         <NexoChat
           replyVersion={replyVersion}
+          fresh={(location.state as { fresh?: string } | null)?.fresh ?? null}
           historyControl={
             listed?.length ? <ChatThreadsToggle onOpen={() => setSheet(true)} /> : undefined
           }

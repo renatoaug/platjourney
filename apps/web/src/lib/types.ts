@@ -313,6 +313,22 @@ export interface AppStateData {
   servers: ServerStatus[]
   /** False until the player first writes to Nexo; missing on an older server. */
   askedNexo?: boolean
+  /** What Nexo wrote while the player was away and they have not seen: the floating Nexo calls
+   * attention to it until its conversation is opened. Null or missing when nothing. */
+  nexo?: NexoNews | null
+}
+
+export interface NexoNews {
+  count: number
+  latest: {
+    /** The game's id, or null for the conversation without a game. */
+    game: string | null
+    /** The player's PSN list for the game; null when it is not in the library. */
+    np: string | null
+    name: string | null
+    content: string
+    created_at: string
+  }
 }
 
 /** A game the chat's game switch lists: the player's own titles first (by their PSN list), then

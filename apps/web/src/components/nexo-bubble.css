@@ -86,4 +86,110 @@
       transition: none;
     }
   }
+
+  /* A message waiting: a count on Nexo's shoulder and a soft ring that breathes out from it. */
+  .nexo-bubble-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    display: grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border: 2px solid var(--color-bg);
+    border-radius: var(--radius-pill);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nexo-bubble.is-calling::after {
+      position: absolute;
+      inset: -1px;
+      border: 2px solid var(--color-accent);
+      border-radius: var(--radius-round);
+      content: "";
+      pointer-events: none;
+      animation: nexo-bubble-call 2.4s ease-out infinite;
+    }
+  }
+
+  @keyframes nexo-bubble-call {
+    from {
+      opacity: 0.8;
+      scale: 1;
+    }
+
+    to {
+      opacity: 0;
+      scale: 1.45;
+    }
+  }
+
+  /* Beside Nexo, on the side with more room: whose conversation it is and how the message starts. */
+  .nexo-bubble-note {
+    position: fixed;
+    z-index: 30;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    width: max-content;
+    max-width: min(260px, calc(100vw - 100px));
+    padding: 10px 6px 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-line), transparent);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-surface-float) var(--alpha-heavy), transparent);
+    box-shadow: var(--shadow-popover);
+    backdrop-filter: blur(12px);
+    translate: 0 -50%;
+    animation: nexo-bubble-note-in 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+
+  .nexo-bubble-note-open {
+    display: grid;
+    gap: 2px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-fg);
+    font-size: var(--text-sm);
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .nexo-bubble-note-open b {
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+    font-weight: 700;
+  }
+
+  .nexo-bubble-note-close {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-round);
+    background: none;
+    color: var(--color-fg-muted);
+    cursor: pointer;
+  }
+
+  .nexo-bubble-note-close:hover {
+    color: var(--color-fg);
+  }
+
+  @keyframes nexo-bubble-note-in {
+    from {
+      opacity: 0;
+      scale: 0.9;
+    }
+  }
 }

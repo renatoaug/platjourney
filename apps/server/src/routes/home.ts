@@ -9,6 +9,7 @@ import { rankNextPlatinum } from '../ranking.ts'
 import {
   hasAskedNexo,
   markNotificationsRead,
+  nexoNews,
   notificationsPage,
   recentTips,
   tipById,
@@ -77,7 +78,7 @@ async function state({ res, me, titles }: Api) {
   const ctx = getCurrent(me) ?? (isDemo(me) ? await demoContext(me) : undefined)
   if (!ctx) watchNow(me)
   const chatCtx = getChat(me)
-  const [ranked, summary, current, chat, tips, unread, goals, asked] = await Promise.all([
+  const [ranked, summary, current, chat, tips, unread, goals, asked, news] = await Promise.all([
     rankNextPlatinum(list, me, 20, ctx ? [ctx.title.npCommunicationId] : []),
     profile(me),
     currentView(me, ctx),
@@ -86,6 +87,7 @@ async function state({ res, me, titles }: Api) {
     unreadNotifications(me.id),
     yearProgress(me, list, undefined, played),
     hasAskedNexo(me.id),
+    nexoNews(me.id),
   ])
   const ids = ranked.map((r) => r.game.id)
   const [guides, tinted, servers] = await Promise.all([
@@ -107,6 +109,8 @@ async function state({ res, me, titles }: Api) {
     servers: servers.filter((s) => s.status !== 'unknown'),
     // False until the player first writes to Nexo: the home shows them questions to start with.
     askedNexo: asked,
+    // What Nexo wrote while the player was away and they have not seen yet; null when nothing.
+    nexo: news,
   })
 }
 

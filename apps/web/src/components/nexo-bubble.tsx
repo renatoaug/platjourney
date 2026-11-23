@@ -1,7 +1,9 @@
 /** Nexo floating over every screen, like a chat head: drag it anywhere, it stays where it was left
  * (this browser only), and a tap opens a conversation above the screen, which stays mounted
  * underneath: about the game on screen when there is one, else the latest. It hides on the
- * conversation page itself. */
+ * conversation page itself. When Nexo wrote while the player was away (an answer it owed), it
+ * calls for attention: a count, a soft pulse and, once per message, a note beside it with how the
+ * message starts. A tap then opens that conversation, and opening it is what clears the call. */
 import {
   type PointerEvent,
   useCallback,
@@ -11,13 +13,24 @@ import {
   useSyncExternalStore,
 } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import { useApp } from '../app/app-state'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { tick } from '../lib/native'
+import type { NexoNews } from '../lib/types'
+import { Icon } from '../ui/icon'
 import './nexo-bubble.css'
 
 const messages = defineMessages({
-  [Language.PtBR]: { open: 'Falar com o Nexo' },
-  [Language.En]: { open: 'Talk to Nexo' },
+  [Language.PtBR]: {
+    open: 'Falar com o Nexo',
+    news: { one: 'O Nexo tem uma mensagem nova', other: 'O Nexo tem {count} mensagens novas' },
+    closeNote: 'Fechar aviso',
+  },
+  [Language.En]: {
+    open: 'Talk to Nexo',
+    news: { one: 'Nexo has a new message', other: 'Nexo has {count} new messages' },
+    closeNote: 'Close note',
+  },
 })
 
 const SIZE = 60
@@ -27,6 +40,11 @@ const BAR_GAP = 4
 // A press that moves less than this is a tap, not a drag.
 const DRAG_PX = 5
 const KEY = 'platjourney:nexo-bubble'
+// The note beside Nexo shows once per message: the last one this browser already showed.
+const NOTED = 'platjourney:nexo-noted'
+const NOTE_MS = 8000
+// The note says how the message starts, in one short line.
+const NOTE_CHARS = 90
 
 type Point = { x: number; y: number }
 
@@ -51,6 +69,34 @@ export function useNexoTarget(href: string | null) {
       for (const fn of listeners) fn()
     }
   }, [href])
+}
+
+/** The conversation a message from Nexo is in: its game's (by the PSN list when the player has
+ * it), else the one without a game. */
+export function newsHref(news: NexoNews): string {
+  const { game, np, name } = news.latest
+  if (!game) return '/nexo?history=none'
+  return `/nexo?game=${encodeURIComponent(np ?? game)}&name=${encodeURIComponent(name ?? '')}`
+}
+
+/** The first line of a message, without its markdown, short enough for the note. */
+export function noteText(content: string): string {
+  const line =
+    content
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[*_`#>]/g, '')
+      .split('\n')
+      .map((l) => l.trim())
+      .find(Boolean) ?? ''
+  return line.length > NOTE_CHARS ? `${line.slice(0, NOTE_CHARS - 1).trimEnd()}…` : line
+}
+
+function noted(): string | null {
+  try {
+    return localStorage.getItem(NOTED)
+  } catch {
+    return null
+  }
 }
 
 /** The window's width without a scrollbar, so the bubble can reach the visible right edge. */
@@ -92,11 +138,30 @@ export function NexoBubble({ initial }: { initial?: Point }) {
   const t = useMessages(messages)
   const location = useLocation()
   const navigate = useNavigate()
+  const { data, cache } = useApp()
+  const news = data?.nexo ?? null
   const [point, setPoint] = useState<Point>(() => initial ?? start())
   const [dragging, setDragging] = useState(false)
   // Pressed, before or while dragging: Nexo grows and glows under the finger.
   const [held, setHeld] = useState(false)
-  const href = useSyncExternalStore(subscribe, () => target) ?? LATEST
+  const screenHref = useSyncExternalStore(subscribe, () => target) ?? LATEST
+  // A message waiting takes the tap to its conversation, whatever the screen is about.
+  const href = news ? newsHref(news) : screenHref
+  // The note shows once per message, and leaves after a while or when closed.
+  const [noteFor, setNoteFor] = useState<string | null>(() => noted())
+  const note = news && noteFor !== news.latest.created_at ? news : null
+  const closeNote = useCallback(() => {
+    if (!news) return
+    setNoteFor(news.latest.created_at)
+    try {
+      localStorage.setItem(NOTED, news.latest.created_at)
+    } catch {}
+  }, [news])
+  useEffect(() => {
+    if (!note) return
+    const timer = setTimeout(closeNote, NOTE_MS)
+    return () => clearTimeout(timer)
+  }, [note, closeNote])
   const press = useRef<{ dx: number; dy: number; x: number; y: number } | null>(null)
   // A drag ends with a click on the same button: this tells it apart from a tap.
   const dragged = useRef(false)
@@ -173,26 +238,79 @@ export function NexoBubble({ initial }: { initial?: Point }) {
       dragged.current = false
       return
     }
-    navigate(href, { state: { journey: location } })
+    go()
+  }
+  const go = () => {
+    // The conversation kept in the app's cache is from before the message: it is read again.
+    if (news) {
+      const chats = cache.chats as Record<string, unknown> | undefined
+      if (chats) delete chats[news.latest.game ?? 'none']
+      closeNote()
+    }
+    // The conversation lights up the message it opens for.
+    navigate(href, { state: { journey: location, fresh: news?.latest.content } })
   }
 
   if (location.pathname === '/nexo') return null
   return (
-    <button
-      ref={button}
-      type="button"
-      className={`nexo-bubble${held ? ' is-held' : ''}${dragging ? ' is-dragging' : ''}`}
-      data-no-pull
-      style={{ transform: `translate3d(${point.x}px, ${point.y}px, 0)` }}
-      aria-label={t('open')}
-      data-tip={t('open')}
-      onPointerDown={down}
-      onPointerMove={move}
-      onPointerUp={up}
-      onPointerCancel={up}
-      onClick={open}
-    >
-      <img src="/nexo-avatar.svg" alt="" width={SIZE} height={SIZE} draggable={false} />
-    </button>
+    <>
+      {note && <NexoNote news={note} point={point} onOpen={go} onClose={closeNote} />}
+      <button
+        ref={button}
+        type="button"
+        className={`nexo-bubble${held ? ' is-held' : ''}${dragging ? ' is-dragging' : ''}${news ? ' is-calling' : ''}`}
+        data-no-pull
+        style={{ transform: `translate3d(${point.x}px, ${point.y}px, 0)` }}
+        aria-label={news ? t('news', { count: news.count }) : t('open')}
+        data-tip={news ? t('news', { count: news.count }) : t('open')}
+        onPointerDown={down}
+        onPointerMove={move}
+        onPointerUp={up}
+        onPointerCancel={up}
+        onClick={open}
+      >
+        <img src="/nexo-avatar.svg" alt="" width={SIZE} height={SIZE} draggable={false} />
+        {news && (
+          <span className="nexo-bubble-badge" aria-hidden="true">
+            {news.count > 9 ? '9+' : news.count}
+          </span>
+        )}
+      </button>
+    </>
+  )
+}
+
+/** Beside Nexo, on the side with more room: whose conversation it is and how the message starts. */
+function NexoNote({
+  news,
+  point,
+  onOpen,
+  onClose,
+}: {
+  news: NexoNews
+  point: Point
+  onOpen: () => void
+  onClose: () => void
+}) {
+  const t = useMessages(messages)
+  const left = point.x + SIZE / 2 > width() / 2
+  const place = left
+    ? { right: width() - point.x + 10, top: point.y + SIZE / 2 }
+    : { left: point.x + SIZE + 10, top: point.y + SIZE / 2 }
+  return (
+    <div className={`nexo-bubble-note${left ? ' is-left' : ''}`} role="status" style={place}>
+      <button type="button" className="nexo-bubble-note-open" onClick={onOpen}>
+        {news.latest.name && <b>{news.latest.name}</b>}
+        <span>{noteText(news.latest.content)}</span>
+      </button>
+      <button
+        type="button"
+        className="nexo-bubble-note-close"
+        aria-label={t('closeNote')}
+        onClick={onClose}
+      >
+        <Icon name="close" />
+      </button>
+    </div>
   )
 }

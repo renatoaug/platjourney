@@ -16,6 +16,7 @@ import {
   chatThreads,
   type GameCard,
   logTip,
+  markNexoNewsRead,
   recentMessages,
 } from '../repository/activity.ts'
 import { gamesForTitles, getGame, searchCatalog } from '../repository/game.ts'
@@ -32,6 +33,8 @@ async function chatMessages({ res, url, me }: Api) {
   const asked = url.searchParams.get('game')
   const game =
     asked === 'none' ? null : asked?.startsWith('game:') ? asked : (getChat(me)?.game.id ?? null)
+  // Opening the conversation is seeing what Nexo left there while the player was away.
+  await markNexoNewsRead(me.id, game)
   return json(res, 200, await recentMessages(me.id, 40, game))
 }
 
