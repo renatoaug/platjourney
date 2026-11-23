@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.96.3](https://github.com/renatoaug/platjourney/compare/v0.96.2...v0.96.3) (2026-11-23)
+
+### Performance Improvements
+
+* **server:** build the month and year rankings when the server starts ([#227](https://github.com/renatoaug/platjourney/issues/227)) ([1af8fc6](https://github.com/renatoaug/platjourney/commit/1af8fc654595b2956c959eb1d5ed4a90476bc982))
+
 ## [0.96.2](https://github.com/renatoaug/platjourney/compare/v0.96.1...v0.96.2) (2026-11-23)
 
 ### Performance Improvements
