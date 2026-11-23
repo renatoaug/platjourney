@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.96.4](https://github.com/renatoaug/platjourney/compare/v0.96.3...v0.96.4) (2026-11-23)
+
+### Performance Improvements
+
+* **web:** smoother scrolling on phones, the skins stop repainting the screen ([#228](https://github.com/renatoaug/platjourney/issues/228)) ([7e24b02](https://github.com/renatoaug/platjourney/commit/7e24b020a4d2ff23354ecf231c09941aa7930f63))
+
 ## [0.96.3](https://github.com/renatoaug/platjourney/compare/v0.96.2...v0.96.3) (2026-11-23)
 
 ### Performance Improvements
