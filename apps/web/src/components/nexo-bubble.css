@@ -16,7 +16,8 @@
     box-shadow:
       var(--shadow-popover),
       0 0 18px color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
-    backdrop-filter: blur(10px);
+    /* No backdrop blur: the button is nearly solid anyway, and a blur over a scrolling screen is
+       worked out again on every frame. */
     cursor: grab;
     touch-action: none;
     overscroll-behavior: none;
