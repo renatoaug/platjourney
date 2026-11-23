@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.98.0](https://github.com/renatoaug/platjourney/compare/v0.97.0...v0.98.0) (2026-11-23)
+
+### Features
+
+* **server:** a guide's page carries its text and its place for readers without the app ([#230](https://github.com/renatoaug/platjourney/issues/230)) ([94c7089](https://github.com/renatoaug/platjourney/commit/94c70897b4c37656305da022de856ea811b7c934))
+
 ## [0.97.0](https://github.com/renatoaug/platjourney/compare/v0.96.4...v0.97.0) (2026-11-23)
 
 ### Features
