@@ -1008,15 +1008,26 @@ async def reply(
     )
     if found:
         answered = await ask(text, context, history, ctx.locale, conversation=True)
-        # Passages came back but did not cover it: the answer promised to look into it, so the
-        # question is kept like any other gap.
-        if NOT_YET in answered:
+        if NOT_YET not in answered:
+            return cite(answered, used)
+        # Passages came back but did not cover it. Before telling the player it does not know, one
+        # web search, within the day's budget, with the passages still in hand; the question is
+        # kept for the guides either way. Without the budget, the promise stands as written.
+        if not await gap_search_left():
             await record_gap(ctx, text, answered=False)
-        return cite(answered, used)
+            return cite(answered, used)
+        return await searched_answer(text, context, history, ctx)
     # The deep guide has nothing on this: one web search, within the day's budget, then the
     # question is kept for the guides either way, with what the search found. The search is not
     # left to the model: without a guide, an answer from the trophy list alone would be a guess.
-    search = await gap_search_left()
+    return await searched_answer(text, context, history, ctx, search=await gap_search_left())
+
+
+async def searched_answer(
+    text: str, context: str, history: list[Turn], ctx: GameContext, search: bool = True
+) -> str:
+    """The answer to a question the deep guide does not cover, searching the web first when
+    `search`, and the question kept as a gap with what the search found."""
     answer = await ask_reply(
         text, context, history, ctx.locale, conversation=True, search=search, must_search=search
     )
