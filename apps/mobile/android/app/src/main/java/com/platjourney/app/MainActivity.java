@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.ViewGroup;
+import android.webkit.CookieManager;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
@@ -42,6 +43,14 @@ public class MainActivity extends BridgeActivity {
                 );
         }
         main.postDelayed(this::hideBootCover, 12_000);
+    }
+
+    /** The web view keeps cookies in memory and writes them to disk only now and then: an app
+     * swiped away before that loses the sign-in. Leaving the screen writes them first. */
+    @Override
+    public void onPause() {
+        super.onPause();
+        CookieManager.getInstance().flush();
     }
 
     void hideBootCover() {
