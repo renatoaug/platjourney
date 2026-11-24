@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.99.0](https://github.com/renatoaug/platjourney/compare/v0.98.0...v0.99.0) (2026-11-24)
+
+### Features
+
+* **web:** a buddy of the player's choice, named as they like ([#231](https://github.com/renatoaug/platjourney/issues/231)) ([e7eca4b](https://github.com/renatoaug/platjourney/commit/e7eca4b63b49c307aca37a5528f6b2495aedc462))
+
 ## [0.98.0](https://github.com/renatoaug/platjourney/compare/v0.97.0...v0.98.0) (2026-11-23)
 
 ### Features
