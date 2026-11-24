@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.101.1](https://github.com/renatoaug/platjourney/compare/v0.101.0...v0.101.1) (2026-11-24)
+
 ## [0.101.0](https://github.com/renatoaug/platjourney/compare/v0.100.0...v0.101.0) (2026-11-24)
 
 ### Features
