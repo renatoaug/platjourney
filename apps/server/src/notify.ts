@@ -44,6 +44,8 @@ const PUSH_CHARS = 900
 export async function deliver(
   user: Pick<User, 'id' | 'psn_online_id' | 'telegram_chat_id' | 'notify_telegram' | 'buddy_name'>,
   text: string,
+  // The screen the push opens; by default the history, where the notice is kept.
+  url?: string,
 ): Promise<void> {
   if (user.telegram_chat_id && user.notify_telegram !== false)
     await sendMessage(user.telegram_chat_id, text).catch((e) =>
@@ -58,7 +60,7 @@ export async function deliver(
     // Signed by the buddy, with the name the player gave it.
     title: user.buddy_name || 'Nexo',
     body: body.length > PUSH_CHARS ? `${body.slice(0, PUSH_CHARS - 1)}…` : body,
-    url: tip ? `${HISTORY}?tip=${encodeURIComponent(tip)}` : HISTORY,
+    url: url ?? (tip ? `${HISTORY}?tip=${encodeURIComponent(tip)}` : HISTORY),
   }).catch((e) =>
     console.warn(`${user.psn_online_id}: push failed:`, (e as Error).message.slice(0, 80)),
   )

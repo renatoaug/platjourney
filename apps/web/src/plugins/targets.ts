@@ -279,6 +279,8 @@ export type Target =
   | 'Picker'
   | 'Plan'
   | 'PlanActions'
+  | 'PlanBar'
+  | 'PlanBarView'
   | 'PlanCard'
   | 'PlanPicker'
   | 'PlanReasonAsk'

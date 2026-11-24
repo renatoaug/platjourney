@@ -2,9 +2,10 @@
  * cards that open the platinum journey, the guide, the session route and the game's facts on their
  * own pages, the trophies by tier, the guide's numbers, and the trophy list. */
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { defineMessages, Language, type Translator, useMessages } from '../i18n/i18n'
+import { api } from '../lib/api'
 import { fmtHours, fmtPlayTime, number, pct } from '../lib/format'
 import { trophyName } from '../lib/trophy-text'
 import type { CurrentGame, Trophy } from '../lib/types'
@@ -12,6 +13,8 @@ import { Icon } from '../ui/icon'
 import { TrophyMedal } from '../ui/trophy-medal'
 import { GameAbout } from './game-showcase'
 import { UnobtainableBanner } from './hero'
+import type { SessionPlan } from './plan'
+import { planOn } from './plan-bar'
 import { SharePlatinum } from './share-platinum'
 import './game-overview.css'
 
@@ -36,6 +39,9 @@ const messages = defineMessages({
     guidePreparing: 'Sendo preparado',
     session: 'Planejar sessão',
     sessionLead: 'Um roteiro do que dá para fazer hoje',
+    // A plan is on for this game: the card opens it instead of a new one.
+    sessionOn: 'Seu roteiro de hoje',
+    sessionOnLead: 'Passo {step} de {total}: {trophy}',
     about: 'Sobre o jogo',
     aboutLead: 'Quem fez, quando saiu e como se joga',
     tiers: 'Troféus por tipo',
@@ -68,6 +74,8 @@ const messages = defineMessages({
     guidePreparing: 'Being prepared',
     session: 'Plan a session',
     sessionLead: 'A route of what fits in today',
+    sessionOn: "Today's route",
+    sessionOnLead: 'Step {step} of {total}: {trophy}',
     about: 'About the game',
     aboutLead: 'Who made it, when it came out and how it plays',
     tiers: 'Trophies by tier',
@@ -371,6 +379,25 @@ function JourneyRow({
 
 /** The game's pages as rows: the journey, the guide, the session route, and the facts, which
  * unfold in place. A catalog game has no session and shows the journey only with its list. */
+/** The player's session plan when it is on for this game (null: no game to ask about). */
+function usePlanOn(game: string | null): SessionPlan | null {
+  const [plan, setPlan] = useState<SessionPlan | null>(null)
+  useEffect(() => {
+    if (!game) return
+    let live = true
+    api<{ plan: SessionPlan | null }>('/api/plan')
+      .then((r) => {
+        const on = planOn(r.plan)
+        if (live) setPlan(on && on.game === game ? on : null)
+      })
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [game])
+  return plan
+}
+
 function GameLinks({
   game: c,
   catalog,
@@ -385,6 +412,8 @@ function GameLinks({
   const g = c.guide
   const about = [c.game.developers?.[0], c.game.release_year].filter(Boolean).join(' · ')
   const [aboutOpen, setAboutOpen] = useState(false)
+  const plan = usePlanOn(catalog || done ? null : c.game.id)
+  const next = plan?.steps[plan.nextIndex]
   return (
     <nav className="game-links" aria-label={c.name}>
       {/* A catalog game without its list yet has no route to preview. */}
@@ -400,8 +429,17 @@ function GameLinks({
       {!done && !catalog && (
         <GameLink
           icon="clock"
-          title={t('session')}
-          lead={t('sessionLead')}
+          title={plan ? t('sessionOn') : t('session')}
+          lead={
+            plan && next
+              ? t('sessionOnLead', {
+                  step: plan.nextIndex + 1,
+                  total: plan.steps.length,
+                  trophy: trophyName({ name: next.trophy, nameEn: next.nameEn }),
+                })
+              : t('sessionLead')
+          }
+          accent={!!plan}
           onOpen={() => onOpen('session')}
         />
       )}

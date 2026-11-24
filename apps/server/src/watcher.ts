@@ -20,6 +20,8 @@ import {
   followedRecommendation,
   markNotice,
   missableCheer,
+  nameFor,
+  type PlanNext,
   routeFor,
   sessionNotice,
   startNotice,
@@ -27,7 +29,7 @@ import {
   unlockNotice,
 } from './notices.ts'
 import { deliver, reachable } from './notify.ts'
-import { expirePlans } from './planner.ts'
+import { currentPlan, expirePlans } from './planner.ts'
 import { aroundNotice, projectGame, Refused } from './plugins.ts'
 import { nowPlaying, PrivateProfile, recentTitles, type TitleProgress } from './psn.ts'
 import { lastTip, logTip, type TipKind } from './repository/activity.ts'
@@ -41,9 +43,9 @@ import { checkServers } from './servers.ts'
 // Proactive messages go to Telegram when the user linked it; they are always in
 // the web history through the tip log. Plain notices are written in the player's language.
 // A notice without the model: logged like any tip (so it reaches the bell) and sent to Telegram.
-async function plainNotice(user: User, kind: TipKind, text: string, game?: string) {
+async function plainNotice(user: User, kind: TipKind, text: string, game?: string, url?: string) {
   await logTip(user.id, kind, text, game)
-  await notify(user, text)
+  await notify(user, text, url)
 }
 
 // The session notice says nothing new when it would read exactly like the last one sent within a
@@ -54,9 +56,9 @@ async function repeatsLastSession(user: User, text: string): Promise<boolean> {
   return Date.now() - new Date(last.created_at).getTime() < SESSION_AGAIN_HOURS * 3_600_000
 }
 
-async function sessionNoticeOnce(user: User, text: string, game?: string) {
+async function sessionNoticeOnce(user: User, text: string, game?: string, url?: string) {
   if (await repeatsLastSession(user, text)) return
-  await plainNotice(user, 'session', text, game)
+  await plainNotice(user, 'session', text, game, url)
 }
 
 // Nexo writes the notices when the instance allows it (AI_NOTICES) and the player wants it
@@ -66,8 +68,8 @@ const nexoNotices = (user: User) => config.automatic.notices && user.ai_notices 
 // A send that fails (the player blocked the bot, Telegram is down, a push service errs) must not
 // stop the sweep: the notice is already in the web history, and the trophies still get saved as
 // seen, or the next sweep would write and pay for the same notice again.
-async function notify(user: User, text: string): Promise<void> {
-  await deliver(user, text)
+async function notify(user: User, text: string, url?: string): Promise<void> {
+  await deliver(user, text, url)
 }
 
 // One check per player at a time: the sweep and a sign-in (watchNow) running together would both
@@ -445,9 +447,31 @@ async function gameSession(user: User, ctx: GameContext, playing: string): Promi
       { ctx, route: undefined },
     )
     const again = await nothingNew(user, ctx)
-    await sessionNoticeOnce(user, sessionNotice(user, playing, view.ctx, again), ctx.game.id)
+    // A session plan still on for this game: the notice leads with its next step and opens it.
+    const plan = await planNext(user, view.ctx)
+    await sessionNoticeOnce(
+      user,
+      sessionNotice(user, playing, view.ctx, again, plan),
+      ctx.game.id,
+      plan ? `${titlePath(ctx.game.id)}?view=session&from=notice` : undefined,
+    )
   })
 }
+
+// The step of the player's plan for this game to do now, named in the player's language.
+async function planNext(user: User, ctx: GameContext): Promise<PlanNext | undefined> {
+  const plan = await currentPlan(user, ctx).catch(() => null)
+  if (!plan || plan.status !== 'active' || plan.nextIndex < 0) return undefined
+  const step = plan.steps[plan.nextIndex]
+  const trophy = ctx.trophies.find((x) => step.trophyId != null && x.id === step.trophyId)
+  return {
+    step: plan.nextIndex + 1,
+    total: plan.steps.length,
+    trophy: trophy ? nameFor(user, trophy) : step.trophy,
+  }
+}
+
+const titlePath = (game: string) => `/title/game/${encodeURIComponent(game.replace(/^game:/, ''))}`
 
 // Users are visited one after the other so PSN sees a steady, modest stream.
 async function sweep(each: (user: User) => Promise<void>, label: string): Promise<void> {
