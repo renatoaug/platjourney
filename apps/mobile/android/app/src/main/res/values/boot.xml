@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app's background (styles/theme.css), under the launch screen and the native loading screen. -->
+    <color name="boot_background">#08130F</color>
+</resources>
