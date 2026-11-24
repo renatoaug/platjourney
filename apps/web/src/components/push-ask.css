@@ -7,7 +7,8 @@
     /* Clear of the tab bar's top edge and what a skin hangs on it (the Christmas snow). */
     bottom: calc(var(--bottom-bar, 0px) + 22px);
     left: 12px;
-    z-index: 30;
+    /* Over everything on the screen, the floating buddy included; only a toast goes above it. */
+    z-index: 45;
     box-sizing: border-box;
     display: flex;
     gap: 10px;
@@ -26,7 +27,7 @@
   .push-ask-scrim {
     position: fixed;
     inset: 0;
-    z-index: 29;
+    z-index: 44;
     background: color-mix(in srgb, var(--color-shadow) var(--alpha-strong), transparent);
     backdrop-filter: blur(3px);
     pointer-events: none;
