@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.101.3](https://github.com/renatoaug/platjourney/compare/v0.101.2...v0.101.3) (2026-11-24)
+
+### Bug Fixes
+
+* **web:** the notices bar over the floating buddy ([#236](https://github.com/renatoaug/platjourney/issues/236)) ([8de9fd1](https://github.com/renatoaug/platjourney/commit/8de9fd1db925c1288ce81c1935150eae7182c57d))
+
 ## [0.101.2](https://github.com/renatoaug/platjourney/compare/v0.101.1...v0.101.2) (2026-11-24)
 
 ### Bug Fixes
