@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.101.2](https://github.com/renatoaug/platjourney/compare/v0.101.1...v0.101.2) (2026-11-24)
+
+### Bug Fixes
+
+* **mobile:** the Android app keeps the sign-in when swiped away ([#235](https://github.com/renatoaug/platjourney/issues/235)) ([a74ba61](https://github.com/renatoaug/platjourney/commit/a74ba61196ecc2adc228a5230b9f3a28a6266d66))
+
 ## [0.101.1](https://github.com/renatoaug/platjourney/compare/v0.101.0...v0.101.1) (2026-11-24)
 
 ## [0.101.0](https://github.com/renatoaug/platjourney/compare/v0.100.0...v0.101.0) (2026-11-24)
