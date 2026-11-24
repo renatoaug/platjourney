@@ -16,6 +16,7 @@ import { JourneyChat } from '../components/journey-chat'
 import { NexoBubble } from '../components/nexo-bubble'
 import { Notifications } from '../components/notifications'
 import { Onboarding } from '../components/onboarding'
+import { PlanBar } from '../components/plan-bar'
 import { PrivateNotice } from '../components/private-notice'
 import { PushAsk } from '../components/push-ask'
 import {
@@ -476,6 +477,7 @@ export function Shell() {
             <AccountActions />
           </div>
         </header>
+        {!me.visitor && <PlanBar />}
         {me.demo && !me.visitor && <DemoBanner />}
         <Onboarding />
         <PushAsk />

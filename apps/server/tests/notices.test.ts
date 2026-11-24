@@ -167,6 +167,20 @@ test('a notice in English names trophies in English and pastes none of the pt-BR
   expect(pt).toContain('Corra na pista do porto.')
 })
 
+test('a session plan still on leads the session notice with its next step, in place of the suggestion', () => {
+  const plan = { step: 2, total: 4, trophy: 'Marcando o gol' }
+  const text = sessionNotice(user, 'GTA', bilingual(), false, plan)
+  expect(text).toContain('📋 **Seu roteiro de hoje**: passo 2 de 4, **Marcando o gol**.')
+  expect(text).not.toContain('Sugestão de próximo troféu')
+  // Played again with nothing new: still the plan, never the suggestion again.
+  const again = sessionNotice(user, 'GTA', bilingual(), true, plan)
+  expect(again).toContain('passo 2 de 4')
+  expect(again).not.toContain('continua sendo')
+  expect(sessionNotice(makeUser({ locale: 'en' }), 'GTA', bilingual(), false, plan)).toContain(
+    "📋 **Today's route**: step 2 of 4",
+  )
+})
+
 test('the next trophy is never an ending a graph calls ready before the roadmap gets there', () => {
   // Elden Ring: the graph puts nothing before the last boss, so its step to two endings looked
   // ready to a player who had just started, and the start notice suggested Lorde Prístino.

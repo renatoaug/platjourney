@@ -1,0 +1,112 @@
+@layer screens {
+  /* Right under the header, then stuck to the top of the screen while the page scrolls: the plan
+     on, in one line, frosted over what passes under it. */
+  .plan-bar {
+    /* Edge to edge across the content column: its side padding taken back, given to the link. */
+    --edge: 40px;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    margin: -33px calc(var(--edge) * -1) 16px;
+    padding: 0 calc(var(--edge) - 10px);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    background: color-mix(in srgb, var(--color-surface-float) var(--alpha-dim), transparent);
+    backdrop-filter: blur(16px);
+  }
+
+  .plan-bar-link {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 4px 4px 4px 10px;
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+
+  .plan-bar-link > .icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--color-accent);
+  }
+
+  .plan-bar-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-accent) var(--alpha-soft), transparent);
+    color: var(--color-accent);
+  }
+
+  .plan-bar-icon .icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .plan-bar-copy {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    line-height: var(--leading-snug);
+  }
+
+  .plan-bar-copy small,
+  .plan-bar-copy b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .plan-bar-copy small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-xs);
+  }
+
+  .plan-bar-copy b {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  .plan-bar-close {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 40px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-fg-muted);
+  }
+
+  .plan-bar-close:hover {
+    color: var(--color-fg);
+  }
+
+  .plan-bar-close .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  @media (max-width: 1100px) {
+    .plan-bar {
+      --edge: 26px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .plan-bar {
+      --edge: 22px;
+      margin-top: -25px;
+      margin-bottom: 14px;
+    }
+  }
+}

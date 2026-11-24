@@ -37,6 +37,8 @@ const messages = defineMessages({
     // The session-start notice's first line: the game, then what is left, no greeting.
     playing: '🎮 Hora de jogar **{game}**.',
     goodSession: 'Boa jogatina! 🍀',
+    // The player's session plan for this game, still on: its next step leads the notice.
+    plan: '📋 **Seu roteiro de hoje**: passo {step} de {total}, **{trophy}**. Toque aqui para abrir o roteiro.',
     // The game opened again with nothing earned since the last session notice: a short one.
     again: '🎮 Hora de jogar **{game}** de novo.',
     heading: '🎮 Hora de jogar! {left} **{game}**.',
@@ -110,6 +112,7 @@ const messages = defineMessages({
     },
     playing: '🎮 Time to play **{game}**.',
     goodSession: 'Have a good session! 🍀',
+    plan: "📋 **Today's route**: step {step} of {total}, **{trophy}**. Tap here to open the route.",
     again: '🎮 Time to play **{game}** again.',
     heading: '🎮 Time to play! {left} **{game}**.',
     left: {
@@ -446,21 +449,42 @@ export const together = (...parts: (string | undefined)[]) => parts.filter(Boole
 // only the suggestion, in one line, and the collectibles of the stretch they are in.
 // Names and descriptions are PSN's in the player's language; the guide's own words (a trick, when a
 // missable closes) are pt-BR and stay out of a notice in English.
-export function sessionNotice(user: User, game: string, ctx?: GameContext, again = false): string {
+/** The step of the player's session plan to do now, for the session notice. */
+export interface PlanNext {
+  step: number
+  total: number
+  trophy: string
+}
+
+export function sessionNotice(
+  user: User,
+  game: string,
+  ctx?: GameContext,
+  again = false,
+  plan?: PlanNext,
+): string {
   const t = translator(messages, user)
   if (!ctx) return `${t('playing', { game })} ${t('goodSession')}`
+  // A plan for this game is what the player chose to do now: it takes the suggestion's place.
+  const planLine = plan ? t('plan', { ...plan }) : undefined
   const missing = ctx.trophies.filter(
     (x) => !x.earned && x.groupId === 'default' && x.type !== 'platinum',
   )
   const focus = todaysFocus(ctx)
-  if (again) return againNotice(user, ctx, focus.trophy && nameFor(user, focus.trophy))
+  if (again)
+    return againNotice(
+      user,
+      ctx,
+      planLine ? undefined : focus.trophy && nameFor(user, focus.trophy),
+      planLine,
+    )
 
   const stretch = hereTips(user, ctx)
   const blocks = [
     missing.length
       ? t('heading', { game: gameName(ctx), left: t('left', { count: missing.length }) })
       : t('playing', { game: gameName(ctx) }),
-    ...focusBlocks(user, focus),
+    ...(planLine ? [planLine] : focusBlocks(user, focus)),
     stretch,
     missableLine(user, ctx, focus.missable, stretch),
     almostLine(user, missing, focus.trophy?.id),
@@ -518,12 +542,16 @@ function almostLine(user: User, missing: Trophy[], focus?: number): string {
 }
 
 // The guide's tips for the stretch the player is in, without those about trophies they have.
-function againNotice(user: User, ctx: GameContext, focus?: string): string {
+function againNotice(user: User, ctx: GameContext, focus?: string, planLine?: string): string {
   const t = translator(messages, user)
   const still = focus ? t('focusStill', { trophy: focus }) : undefined
   const line = [t('again', { game: gameName(ctx) }), still, t('goodSession')]
     .filter(Boolean)
     .join(' ')
+  if (planLine)
+    return [line, planLine, hereTips(user, ctx, ['missable', 'collectible'])]
+      .filter(Boolean)
+      .join('\n\n')
   const stretch = hereTips(user, ctx, ['missable', 'collectible'])
   return stretch ? `${line}\n\n${stretch}` : line
 }
