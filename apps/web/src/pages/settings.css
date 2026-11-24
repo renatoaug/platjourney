@@ -15,9 +15,9 @@
     align-items: stretch;
   }
 
-  /* The lists of rows close the page, one after the other: appearance, notifications, then preferences (on
-     a wide screen across both columns). */
-  .settings-grid > #notifications-card {
+  /* The lists of rows close the page, one after the other: appearance, notifications (and what a
+     plugin adds right after them), then preferences (on a wide screen across both columns). */
+  .settings-grid > .settings-list {
     order: 9;
   }
 
@@ -30,9 +30,7 @@
   }
 
   @container (min-width: 721px) {
-    .settings-grid > #notifications-card,
-    .settings-grid > #preferences-card,
-    .settings-grid > #appearance-card {
+    .settings-grid > .settings-list {
       grid-column: 1 / -1;
     }
   }
@@ -90,21 +88,18 @@
    lists: each group's name above a rounded block of rows, a hairline between rows, the help behind
    each setting's ⓘ. */
 @layer screens {
-  .settings-grid #notifications-card.card,
-  .settings-grid :is(#preferences-card, #appearance-card).card {
+  .settings-grid .settings-list.card {
     margin-top: -12px;
   }
 
-  .settings-grid #notifications-card.card,
-  .settings-grid :is(#preferences-card, #appearance-card).card {
+  .settings-grid .settings-list.card {
     padding: 0;
     border: 0;
     background: transparent;
     overflow: visible;
   }
 
-  .settings-grid #notifications-card.card > h2:first-child,
-  .settings-grid :is(#preferences-card, #appearance-card).card > h2:first-child {
+  .settings-grid .settings-list.card > h2:first-child {
     height: auto;
     margin: 24px 0 10px;
     padding: 0 4px;
@@ -114,19 +109,25 @@
     font-size: var(--text-xs);
   }
 
-  #notifications-card .settings-lead {
+  .settings-list .settings-lead {
     margin: 0 0 10px;
     padding: 0 4px;
     font-size: var(--text-sm);
   }
 
-  /* A group: hairlines above and below its rows, its name above it and room between groups. */
+  /* A group: its rows in a rounded box, a hairline between them, its name above it. */
   .setting-group,
-  /* Right under the preferences, as more rows of the same group: no gap, no line of its own on
-     top (the group's last line is it). */
   .settings-links {
     display: grid;
-    border-bottom: 1px solid var(--color-border);
+    padding: 0 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  /* The plugin pages close the preferences in a box of their own, right under them. */
+  .settings-links {
+    margin-top: 12px;
   }
 
   /* The quietest line at the foot of the page. */

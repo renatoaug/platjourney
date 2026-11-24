@@ -274,7 +274,7 @@ export async function nextPick(
   if (!choices.length && !draw) return null
 
   const answer = await aroundModel({ user, action: 'next_pick' }, async () =>
-    tagged({ user: user.id, action: 'next_pick' }, async () =>
+    tagged({ user: user.id, buddyName: user.buddy_name, action: 'next_pick' }, async () =>
       ai<{ game: string; why: string; firstStep: string; fits: boolean } | null>('/pick', {
         choices,
         playing,

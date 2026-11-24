@@ -31,6 +31,7 @@ import { askMessages, TROPHY_ASKS } from '../nexo-asks'
 import { NexoHero } from '../nexo-hero'
 import { titleHref } from '../tip'
 import '../demo.css'
+import { BuddyName } from '../buddy-avatar'
 import { AnswerGame, type ChatGameCard } from './answer-cards'
 import { CommandMenu, type MenuItem } from './command-menu'
 import './chat.css'
@@ -953,7 +954,7 @@ export function NexoChat({
         </div>
         <div className="nexo-chat-heading">
           <NexoHero reaction={replyVersion} blink />
-          <h1>Nexo</h1>
+          <BuddyName as="h1" />
         </div>
         {note && <p className="nexo-note">{note}</p>}
         {!demo && Array.isArray(chat) && !chat.length && !sending && (

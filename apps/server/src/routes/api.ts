@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { DEFAULT_ACCENT } from '../../../../shared/accent.ts'
+import { DEFAULT_BUDDY, isBuddy } from '../../../../shared/buddy.ts'
 import { DEFAULT_SKIN } from '../../../../shared/skin.ts'
 import { apnsEnabled } from '../apns.ts'
 import { config } from '../config.ts'
@@ -58,6 +59,8 @@ export const publicUser = (u: User) => ({
   psPlus: u.ps_plus ?? 'none',
   accent: u.accent ?? DEFAULT_ACCENT,
   skin: u.skin ?? DEFAULT_SKIN,
+  buddy: isBuddy(u.buddy) ? u.buddy : DEFAULT_BUDDY,
+  buddyName: u.buddy_name ?? null,
   aiNotices: u.ai_notices !== false,
   notifyTelegram: u.notify_telegram !== false,
   communityVisible: u.community_visible !== false,

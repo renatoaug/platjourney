@@ -48,10 +48,12 @@ async function refreshStatuses(
   toCheck: Awaited<ReturnType<typeof rankNextPlatinum>>,
 ): Promise<void> {
   console.log(`checking servers for ${toCheck.length} games`)
-  const result = await tagged({ user: user.id, action: 'server_check' }, () =>
-    ai<{
-      games: { name: string; status: ServerState; date: string | null; note: string | null }[]
-    }>('/servers/check', { names: toCheck.map((r) => r.game.name) }),
+  const result = await tagged(
+    { user: user.id, buddyName: user.buddy_name, action: 'server_check' },
+    () =>
+      ai<{
+        games: { name: string; status: ServerState; date: string | null; note: string | null }[]
+      }>('/servers/check', { names: toCheck.map((r) => r.game.name) }),
   )
   const byName = new Map(toCheck.map((r) => [r.game.name, r.game]))
   for (const g of result.games) {

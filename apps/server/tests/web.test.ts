@@ -194,6 +194,8 @@ test('register and login sign in, start watching and set the cookie', async () =
       psPlus: 'none',
       accent: 'lime',
       skin: 'default',
+      buddy: 'nexo',
+      buddyName: null,
       aiNotices: true,
       aiNoticesAvailable: config.automatic.notices,
       notifyTelegram: true,
@@ -437,6 +439,26 @@ test('preferences take one of the skins, and the account says default until one 
   const res = await send('POST', '/api/account/preferences', { skin: 'neon' })
   expect(res.body.user.skin).toBe('neon')
   expect(users.updateUser).toHaveBeenCalledWith(me.id, { skin: 'neon' })
+})
+
+test('preferences take one of the buddies and its name, and the account says Nexo until then', async () => {
+  const before = (await send('GET', '/api/me')).body.user
+  expect([before.buddy, before.buddyName]).toEqual(['nexo', null])
+  expect((await send('POST', '/api/account/preferences', { buddy: 'dragon' })).status).toBe(400)
+  const tooLong = { buddyName: 'x'.repeat(21) }
+  expect((await send('POST', '/api/account/preferences', tooLong)).status).toBe(400)
+  const res = await send('POST', '/api/account/preferences', {
+    buddy: 'coffee',
+    buddyName: '  Zé   da  Silva ',
+  })
+  expect([res.body.user.buddy, res.body.user.buddyName]).toEqual(['coffee', 'Zé da Silva'])
+  expect(users.updateUser).toHaveBeenCalledWith(me.id, {
+    buddy: 'coffee',
+    buddy_name: 'Zé da Silva',
+  })
+  // An empty name goes back to the buddy's own.
+  await send('POST', '/api/account/preferences', { buddyName: '   ' })
+  expect(users.updateUser).toHaveBeenLastCalledWith(me.id, { buddy_name: null })
 })
 
 test('preferences take the Telegram notices choice', async () => {

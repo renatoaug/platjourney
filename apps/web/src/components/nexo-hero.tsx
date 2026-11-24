@@ -1,5 +1,6 @@
 /** Decorative Nexo illustration. Working adds floating guide fragments, not measured progress. */
 import { Icon } from '../ui/icon'
+import { BuddyAvatar } from './buddy-avatar'
 import './nexo-hero.css'
 
 export function NexoHero({
@@ -16,12 +17,7 @@ export function NexoHero({
       className={`nexo-hero${working ? ' working' : ''}${reaction > 0 ? ' received' : ''}`}
       aria-hidden="true"
     >
-      <img
-        key={reaction}
-        className="nexo-avatar"
-        src={blink ? '/nexo-avatar.svg#blink' : '/nexo-avatar.svg'}
-        alt=""
-      />
+      <BuddyAvatar key={reaction} className="nexo-avatar" blink={blink} />
       {working && (
         <span className="nexo-processing">
           <span className="nexo-orbit" />

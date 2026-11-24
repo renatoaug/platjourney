@@ -162,7 +162,7 @@ async function catalogContext(user: User, game: Game): Promise<GameContext | nul
 
 // The demo player's current game is its stored title played last that has no platinum yet.
 export async function demoContext(user: User): Promise<GameContext | undefined> {
-  return tagged({ user: user.id, demo: true }, async () => {
+  return tagged({ user: user.id, buddyName: user.buddy_name, demo: true }, async () => {
     const titles = await library(user.psn_account_id)
     const latest = titles.find((t) => t.earnedByType.platinum === 0) ?? titles[0]
     return latest && setCurrent(user, latest)

@@ -19,6 +19,7 @@ import {
   type TastePrefs,
 } from './taste-editor'
 import './recommendations.css'
+import { BuddyAvatar } from './buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -384,7 +385,7 @@ function NexoInvite({ onAsk, disabled }: { onAsk?: () => void; disabled?: boolea
   const t = useMessages(messages)
   return (
     <div className="nexo-invite">
-      <img src="/nexo-avatar.svg" alt="" />
+      <BuddyAvatar />
       <p>{t('ask')}</p>
       <button type="button" className="button sm" disabled={disabled} onClick={onAsk}>
         <Icon name="nexo" /> {t('askButton')}
@@ -410,7 +411,7 @@ function RecsFallback({
     return (
       <>
         <div className="recs-thinking" role="status">
-          <img src="/nexo-avatar.svg" alt="" />
+          <BuddyAvatar />
           <span>{t('thinking')}</span>
         </div>
         <ShelfSkeleton />

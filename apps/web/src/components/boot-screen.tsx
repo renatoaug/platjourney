@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import './boot-screen.css'
+import { BuddyAvatar } from './buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -134,7 +135,7 @@ export function BootScreen({ leaving = false }: { leaving?: boolean }) {
             </svg>
           </span>
         ))}
-        <img className="boot-nexo" src="/nexo-avatar.svg" alt="" />
+        <BuddyAvatar className="boot-nexo" />
       </div>
       <span className="boot-bar" aria-hidden="true" />
       <span className="boot-line" aria-hidden="true">

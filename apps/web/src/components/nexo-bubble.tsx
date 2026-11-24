@@ -19,6 +19,7 @@ import { tick } from '../lib/native'
 import type { NexoNews } from '../lib/types'
 import { Icon } from '../ui/icon'
 import './nexo-bubble.css'
+import { BuddyAvatar } from './buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -269,7 +270,7 @@ export function NexoBubble({ initial }: { initial?: Point }) {
         onPointerCancel={up}
         onClick={open}
       >
-        <img src="/nexo-avatar.svg" alt="" width={SIZE} height={SIZE} draggable={false} />
+        <BuddyAvatar width={SIZE} height={SIZE} />
         {news && (
           <span className="nexo-bubble-badge" aria-hidden="true">
             {news.count > 9 ? '9+' : news.count}

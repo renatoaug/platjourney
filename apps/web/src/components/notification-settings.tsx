@@ -117,7 +117,7 @@ export function NotificationSettingsView({
   const deviceNote = locked ?? (switchable || push === 'loading' ? null : t(`deviceHint.${push}`))
   const telegramNote = locked ?? (telegramLinked ? null : t('telegramLinkFirst'))
   return (
-    <div className="card" id="notifications-card">
+    <div className="card settings-list" id="notifications-card">
       <h2>{t('title')}</h2>
       <p className="muted settings-lead">{t('lead')}</p>
       <div className="setting-group">

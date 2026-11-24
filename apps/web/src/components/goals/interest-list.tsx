@@ -14,6 +14,7 @@ import { EmptyState } from '../../ui/states'
 import { useSlide } from '../../ui/use-slide'
 import { type GoalFilter, goalState, started } from './season'
 import './interest-list.css'
+import { BuddyAvatar } from '../buddy-avatar'
 import { titleHref } from '../tip'
 
 const messages = defineMessages({
@@ -147,7 +148,7 @@ function SavedFrom({ g }: { g: Interest }) {
   if (g.recommendedAt)
     return (
       <small className="goal-recommended">
-        <img src="/nexo-avatar.svg" alt="" />
+        <BuddyAvatar />
         {t('list.recommended', { date: fmtDate(g.recommendedAt) })}
       </small>
     )
@@ -206,7 +207,7 @@ function Row({
         {g.game.name}
         {g.nextPickAt && !g.done ? (
           <small className="goal-recommended next">
-            <img src="/nexo-avatar.svg" alt="" />
+            <BuddyAvatar />
             {t('list.nextPick', { date: fmtDate(g.nextPickAt) })}
           </small>
         ) : null}

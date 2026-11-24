@@ -8,6 +8,7 @@ import logging
 import secrets
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from urllib.parse import unquote
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -51,6 +52,7 @@ async def internal_only(
         CostTag(
             user=request.headers.get('x-cost-user') or None,
             action=request.headers.get('x-cost-action') or 'other',
+            buddy_name=unquote(request.headers.get('x-buddy-name') or '')[:20].strip() or None,
         )
     )
     try:

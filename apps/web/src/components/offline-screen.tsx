@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { Icon } from '../ui/icon'
 import './offline-screen.css'
+import { BuddyAvatar } from './buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -69,7 +70,7 @@ function WaitingForSignal() {
         </g>
       </svg>
       <div className="offline-float">
-        <img className="offline-nexo" src="/nexo-avatar.svg" alt="" />
+        <BuddyAvatar className="offline-nexo" />
       </div>
     </div>
   )

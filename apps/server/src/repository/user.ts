@@ -1,4 +1,5 @@
 import type { Accent } from '../../../../shared/accent.ts'
+import type { Buddy } from '../../../../shared/buddy.ts'
 import type { Skin } from '../../../../shared/skin.ts'
 import { camelKeys, one, plain, q, type RecordId, rid, snakeKeys } from '../db.ts'
 import type { Locale } from '../i18n.ts'
@@ -23,6 +24,9 @@ export interface User {
   accent?: Accent | null
   // The app's skin picked in Settings; none means the default look.
   skin?: Skin | null
+  // The buddy picked in Settings and the name given to it; none means Nexo.
+  buddy?: Buddy | null
+  buddy_name?: string | null
   // Nexo's words in automatic notices; off, plain templates (no model).
   ai_notices?: boolean
   // Notices also go to the linked Telegram chat; off, only the web and push.

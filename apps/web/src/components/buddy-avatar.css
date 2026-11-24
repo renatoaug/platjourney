@@ -1,0 +1,106 @@
+@layer screens {
+  /* Under :where(), so a screen's own animation of the same picture still wins. */
+  :where(.buddy-avatar) {
+    object-fit: contain;
+    transform-origin: 50% 100%;
+    animation: buddy-breathe 2.5s ease-in-out infinite;
+  }
+
+  :where(.buddy-avatar[data-buddy-motion="shake"]) {
+    animation: buddy-shake 0.18s linear infinite;
+  }
+
+  :where(.buddy-avatar[data-buddy-motion="hop"]) {
+    animation: buddy-hop 0.5s ease-out infinite;
+  }
+
+  :where(.buddy-avatar[data-buddy-motion="stretch"]) {
+    animation: buddy-stretch 1.3s ease-in-out;
+  }
+
+  :where(.buddy-avatar[data-buddy-motion="tilt"]) {
+    animation: buddy-tilt 1.3s ease-in-out;
+  }
+
+  :where(.buddy-avatar[data-buddy-motion="wobble"]) {
+    animation: buddy-wobble 1.3s ease-out;
+  }
+
+  :where(.buddy-avatar[data-buddy-motion="bounce"]) {
+    animation: buddy-bounce 0.42s ease-in-out infinite;
+  }
+
+  :where(.buddy-avatar[data-buddy-motion="flicker"]) {
+    animation: buddy-flicker 0.15s steps(2) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :where(.buddy-avatar) {
+      animation: none;
+    }
+  }
+
+  @keyframes buddy-breathe {
+    50% {
+      transform: scale(1.02, 0.98);
+    }
+  }
+
+  @keyframes buddy-shake {
+    25% {
+      transform: translateX(-2%) rotate(-2deg);
+    }
+
+    75% {
+      transform: translateX(2%) rotate(2deg);
+    }
+  }
+
+  @keyframes buddy-hop {
+    40% {
+      transform: translateY(-9%) scale(0.97, 1.03);
+    }
+
+    80% {
+      transform: translateY(0) scale(1.03, 0.97);
+    }
+  }
+
+  @keyframes buddy-stretch {
+    50% {
+      transform: scale(0.95, 1.06);
+    }
+  }
+
+  @keyframes buddy-tilt {
+    50% {
+      transform: rotate(9deg);
+    }
+  }
+
+  @keyframes buddy-wobble {
+    20% {
+      transform: rotate(-7deg);
+    }
+
+    45% {
+      transform: rotate(5deg);
+    }
+
+    70% {
+      transform: rotate(-3deg);
+    }
+  }
+
+  @keyframes buddy-bounce {
+    50% {
+      transform: translateY(-4%) scale(1.03, 0.97);
+    }
+  }
+
+  @keyframes buddy-flicker {
+    50% {
+      opacity: 0.55;
+    }
+  }
+}

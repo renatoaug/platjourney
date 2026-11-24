@@ -25,6 +25,10 @@ DEFINE FIELD IF NOT EXISTS ps_plus ON user TYPE option<string> ASSERT $value = N
 DEFINE FIELD OVERWRITE accent ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['lime', 'cyan', 'cobalt', 'violet', 'magenta', 'amber', 'red'];
 -- The app's skin the player picked in Settings (shared/skin.ts); none means the default look.
 DEFINE FIELD OVERWRITE skin ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['default', 'neon', 'pixel', 'vice_city', 'christmas', 'aurora'];
+-- The buddy the player picked in Settings (shared/buddy.ts); none means Nexo.
+DEFINE FIELD OVERWRITE buddy ON user TYPE option<string> ASSERT $value = NONE OR $value IN ['nexo', 'controller', 'cartridge', 'trophy', 'coffee', 'heart', 'crt', 'arcade', 'headset', 'bomb', 'energy', 'handheld'];
+-- The name the player gave their buddy, shown in place of Nexo's; none means Nexo.
+DEFINE FIELD OVERWRITE buddy_name ON user TYPE option<string> ASSERT $value = NONE OR string::len($value) <= 20;
 -- Nexo writes this player's automatic notices (when the instance allows it); off, they are plain
 -- templates that need no model.
 DEFINE FIELD IF NOT EXISTS ai_notices ON user TYPE bool DEFAULT true;
