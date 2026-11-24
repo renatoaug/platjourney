@@ -44,6 +44,8 @@ const messages = defineMessages({
       bomb: 'Bomba',
       energy: 'Energético',
       handheld: 'Portátil',
+      pizza: 'Pizza',
+      burger: 'Hambúrguer',
     },
   },
   [Language.En]: {
@@ -72,6 +74,8 @@ const messages = defineMessages({
       bomb: 'Bomb',
       energy: 'Energy drink',
       handheld: 'Handheld',
+      pizza: 'Pizza',
+      burger: 'Burger',
     },
   },
 })

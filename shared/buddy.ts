@@ -16,6 +16,8 @@ export const BUDDIES = [
   'bomb',
   'energy',
   'handheld',
+  'pizza',
+  'burger',
 ] as const
 
 export type Buddy = (typeof BUDDIES)[number]
@@ -41,6 +43,8 @@ export const BUDDY_GESTURES: Record<Exclude<Buddy, 'nexo'>, [BuddyMotion, BuddyM
   bomb: ['tilt', 'shake'],
   energy: ['hop', 'shake'],
   handheld: ['hop', 'stretch'],
+  pizza: ['stretch', 'tilt'],
+  burger: ['bounce', 'hop'],
 }
 
 /** The longest name a player can give their buddy. */
