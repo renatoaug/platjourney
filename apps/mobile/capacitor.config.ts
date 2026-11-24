@@ -12,16 +12,17 @@ const config: CapacitorConfig = {
   webDir: '../web/dist',
   backgroundColor: '#10120f',
   ...(url ? { server: { url, cleartext: url.startsWith('http://') } } : {}),
-  // The launch screen (Nexo) stays until the page's own boot screen is drawn (lib/native.ts hides
-  // it), then fades into it; the long duration only covers a page that never loads.
+  // The launch screen is only the background: the app draws the loading screen itself from the
+  // first frame (MainViewController's BootCoverView on iOS), with the player's buddy, until the
+  // page's own copy is on screen (lib/native.ts hides it). The plugin's cover is not needed.
   plugins: {
     // iOS otherwise receives foreground pushes silently, including Settings' test.
     PushNotifications: {
       presentationOptions: ['banner', 'list', 'sound'],
     },
     SplashScreen: {
-      launchShowDuration: 6000,
-      launchFadeOutDuration: 200,
+      launchShowDuration: 0,
+      launchFadeOutDuration: 0,
       backgroundColor: '#10120f',
       showSpinner: false,
     },

@@ -2,6 +2,7 @@
  * the texts say that name wherever they say Nexo, and `BuddyAvatar` draws that buddy. */
 import { useSyncExternalStore } from 'react'
 import { type Buddy, DEFAULT_BUDDY, isBuddy } from '../../../../shared/buddy'
+import { rememberBuddyNatively } from './native'
 
 interface BuddyChoice {
   buddy: Buddy
@@ -21,21 +22,28 @@ function remembered(): BuddyChoice {
   return { buddy: DEFAULT_BUDDY, name: null }
 }
 
+// On the page too, like the skin's data-skin: plugins can read it (absent means Nexo).
+function mark(choice: BuddyChoice): void {
+  const root = document.documentElement
+  if (choice.buddy === DEFAULT_BUDDY) delete root.dataset.buddy
+  else root.dataset.buddy = choice.buddy
+  if (choice.name) root.dataset.buddyName = choice.name
+  else delete root.dataset.buddyName
+}
+
 let current: BuddyChoice = remembered()
+mark(current)
 const listeners = new Set<() => void>()
 
 export const getBuddy = (): BuddyChoice => current
 
 export function setBuddy(buddy: Buddy | undefined, name: string | null | undefined): void {
   const next = { buddy: buddy ?? DEFAULT_BUDDY, name: name ?? null }
+  // Every time, not only on a change: an app updated since the last pick learns it on launch.
+  rememberBuddyNatively(next.buddy)
   if (next.buddy === current.buddy && next.name === current.name) return
   current = next
-  // On the page too, like the skin's data-skin: plugins can read it (absent means Nexo).
-  const root = document.documentElement
-  if (next.buddy === DEFAULT_BUDDY) delete root.dataset.buddy
-  else root.dataset.buddy = next.buddy
-  if (next.name) root.dataset.buddyName = next.name
-  else delete root.dataset.buddyName
+  mark(next)
   try {
     if (next.buddy === DEFAULT_BUDDY && !next.name) localStorage.removeItem(KEY)
     else localStorage.setItem(KEY, JSON.stringify(next))
