@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.102.0](https://github.com/renatoaug/platjourney/compare/v0.101.3...v0.102.0) (2026-11-24)
+
+### Features
+
+* **web:** pizza and burger buddies ([#237](https://github.com/renatoaug/platjourney/issues/237)) ([06e537e](https://github.com/renatoaug/platjourney/commit/06e537e37b4d43c9f350e6b05d73544eb1351e18))
+
 ## [0.101.3](https://github.com/renatoaug/platjourney/compare/v0.101.2...v0.101.3) (2026-11-24)
 
 ### Bug Fixes
