@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.101.0](https://github.com/renatoaug/platjourney/compare/v0.100.0...v0.101.0) (2026-11-24)
+
+### Features
+
+* **mobile:** the Android loading screen drawn by the app itself, with the player's buddy ([#233](https://github.com/renatoaug/platjourney/issues/233)) ([04b47fb](https://github.com/renatoaug/platjourney/commit/04b47fb315cb4bedcfaa01f933ca86a03399e8da))
+
 ## [0.100.0](https://github.com/renatoaug/platjourney/compare/v0.99.0...v0.100.0) (2026-11-24)
 
 ### Features
