@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.103.0](https://github.com/renatoaug/platjourney/compare/v0.102.0...v0.103.0) (2026-11-24)
+
+### Features
+
+* **web:** the session plan in sight while it is on ([#238](https://github.com/renatoaug/platjourney/issues/238)) ([668066b](https://github.com/renatoaug/platjourney/commit/668066be20ed89f96bc19890be5795073e5d3b98))
+
 ## [0.102.0](https://github.com/renatoaug/platjourney/compare/v0.101.3...v0.102.0) (2026-11-24)
 
 ### Features
