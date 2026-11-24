@@ -6,6 +6,8 @@ interface Bridge {
   Plugins?: {
     Haptics?: { selectionChanged?: () => Promise<void> }
     SplashScreen?: { hide?: (options?: { fadeOutDuration?: number }) => Promise<void> }
+    /** The app's own loading screen, drawn from the first frame (MainViewController.swift). */
+    BootCover?: { hide?: () => Promise<void>; remember?: (o: { buddy: string }) => Promise<void> }
   }
 }
 
@@ -59,6 +61,17 @@ export function tick(): void {
 export function hideLaunchScreen(): void {
   bridge()
     ?.Plugins?.SplashScreen?.hide?.({ fadeOutDuration: 200 })
+    ?.catch(() => {})
+  bridge()
+    ?.Plugins?.BootCover?.hide?.()
+    ?.catch(() => {})
+}
+
+/** Tells the app which buddy the player picked, so its own loading screen shows it on the next
+ * launch, before the page loads. An app without that screen ignores it. */
+export function rememberBuddyNatively(buddy: string): void {
+  bridge()
+    ?.Plugins?.BootCover?.remember?.({ buddy })
     ?.catch(() => {})
 }
 
