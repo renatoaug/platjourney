@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { defineMessages, Language, useMessages } from '../../i18n/i18n'
 import { Icon } from '../../ui/icon'
 import './next-pick.css'
+import { BuddyAvatar } from '../buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -20,7 +21,7 @@ export function NextPickLink() {
   const t = useMessages(messages)
   return (
     <div className="next-pick-ask">
-      <img className="next-pick-nexo" src="/nexo-avatar.svg" alt="" />
+      <BuddyAvatar className="next-pick-nexo" />
       <span>{t('hint')}</span>
       <Link className="next-pick-go" to="/games?tab=discover&scope=interests">
         {t('ask')} <Icon name="arrow-right" />

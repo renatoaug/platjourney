@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { defineMessages, Language, useMessages } from '../i18n/i18n'
 import { Nexo } from '../pages/nexo'
 import { Icon } from '../ui/icon'
+import { BuddyName } from './buddy-avatar'
 import { NexoHero } from './nexo-hero'
 import './journey-chat.css'
 
@@ -67,7 +68,7 @@ export function JourneyChat() {
         </button>
         <div className="journey-chat-brand">
           <NexoHero />
-          <h1>Nexo</h1>
+          <BuddyName as="h1" />
         </div>
       </header>
       <Nexo />

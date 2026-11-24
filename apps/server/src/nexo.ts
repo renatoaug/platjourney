@@ -87,7 +87,7 @@ function ask(
   game?: string,
 ): Promise<string> {
   return aroundModel({ user, action, game: game ?? remember?.game }, () =>
-    tagged({ user: user.id, action }, async () => {
+    tagged({ user: user.id, buddyName: user.buddy_name, action }, async () => {
       const history = remember ? { history: await conversation(user, remember.game) } : {}
       const { text } = await ai<{ text: string }>(path, { ...body, ...history })
       if (remember) {
@@ -245,7 +245,7 @@ export function withoutTitle(text: string, names: string[]): string {
 
 // Help for one trophy the player has not earned yet, asked from the trophy list.
 export function trophyHelp(user: User, ctx: GameContext, trophy: TrophyStatus): Promise<string> {
-  return tagged({ user: user.id, action: 'chat' }, async () => {
+  return tagged({ user: user.id, buddyName: user.buddy_name, action: 'chat' }, async () => {
     const text = await ask(
       user,
       'chat',
@@ -333,7 +333,7 @@ export function reply(
   player?: PlayerFacts,
 ): Promise<string> {
   // The guide lookup is part of the answer's cost.
-  return tagged({ user: user.id, action: 'chat' }, async () => {
+  return tagged({ user: user.id, buddyName: user.buddy_name, action: 'chat' }, async () => {
     let text: string
     try {
       text = await ask(user, 'chat', '/nexo/reply', await replyBody(user, userText, ctx, player), {

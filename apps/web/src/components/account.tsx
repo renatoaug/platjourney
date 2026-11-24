@@ -12,6 +12,7 @@ import { SettingTitle } from '../ui/setting-title'
 import { Sk } from '../ui/skeleton'
 import { toast } from '../ui/toast'
 import { type AuthForm, useAuthForm } from './auth/use-auth-form'
+import { BuddySettings } from './buddy-setting'
 import { DemoNote, useDemoLock } from './demo'
 import { LanguageSetting } from './language-switcher'
 import { NotificationSettings, NotificationSettingsSkeleton } from './notification-settings'
@@ -462,7 +463,7 @@ function PreferencesCard({ user }: { user: Me }) {
     document.dispatchEvent(new Event('preferences:changed'))
   }
   return (
-    <div className="card" id="preferences-card">
+    <div className="card settings-list" id="preferences-card">
       <h2>{t('preferences.title')}</h2>
       <div className="setting-group">
         <label className="setting-row" htmlFor="pref-dlc">
@@ -501,15 +502,16 @@ function PreferencesCard({ user }: { user: Me }) {
   )
 }
 
-/** How the app looks: the skin, then the color that paints it. */
+/** How the app looks: the skin, the color that paints it, and the buddy with its name. */
 function AppearanceCard({ user }: { user: Me }) {
   const t = useMessages(messages)
   return (
-    <div className="card" id="appearance-card">
+    <div className="card settings-list" id="appearance-card">
       <h2>{t('preferences.appearance')}</h2>
       <div className="setting-group">
         <SkinSetting user={user} />
         <AccentSetting user={user} />
+        <BuddySettings user={user} />
       </div>
     </div>
   )

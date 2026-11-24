@@ -17,6 +17,7 @@ import { Sk } from '../ui/skeleton'
 import { AppLogo, assistantName } from './app-logo'
 import { titleHref } from './tip'
 import './nexo-pick.css'
+import { BuddyAvatar } from './buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -373,7 +374,7 @@ function PickResult({
     <div className="nexo-pick-result" aria-live="polite" aria-busy={asking || picks === null}>
       {asking ? (
         <div className="nexo-pick-wait">
-          <img className="nexo-pick-nexo" src="/nexo-avatar.svg" alt="" />
+          <BuddyAvatar className="nexo-pick-nexo" />
           <div>
             <span>{t('thinking')}</span>
             <Sk w="80%" h={10} style={{ marginTop: 8 }} />
@@ -459,7 +460,7 @@ function NexoPickAsk({
   const t = useMessages(messages)
   return (
     <div className="nexo-pick-top">
-      <img className="nexo-pick-nexo" src="/nexo-avatar.svg" alt="" />
+      <BuddyAvatar className="nexo-pick-nexo" />
       <div className="nexo-pick-main">
         <PickCopy />
         <button

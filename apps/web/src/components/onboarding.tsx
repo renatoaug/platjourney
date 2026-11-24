@@ -17,6 +17,7 @@ import { Icon } from '../ui/icon'
 import { TrophyMedal } from '../ui/trophy-medal'
 import { InstallGuide, installGuideDue, installPlatform } from './install-guide'
 import './onboarding.css'
+import { BuddyAvatar } from './buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -615,7 +616,7 @@ function Welcome({ me, onGo }: { me: Me; onGo: () => void }) {
           />
         ))}
       </div>
-      <img className="story-welcome-nexo rise story-center" src="/nexo-avatar.svg" alt="" />
+      <BuddyAvatar className="story-welcome-nexo rise story-center" />
       <span className="eyebrow rise story-center" style={rise(1)}>
         {t('welcome.eyebrow')}
       </span>

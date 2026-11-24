@@ -1,4 +1,5 @@
 import type { Accent } from '../../../../shared/accent'
+import type { Buddy } from '../../../../shared/buddy'
 import type { TrophyGraph } from '../../../../shared/journey/graph'
 import type { PlayerStep, StoryUnit } from '../../../../shared/journey/places'
 import type { Skin } from '../../../../shared/skin'
@@ -23,6 +24,9 @@ export interface Me {
   accent?: Accent
   /** The app's skin picked in Settings. */
   skin?: Skin
+  /** The buddy picked in Settings and the name given to it (null: its own). */
+  buddy?: Buddy
+  buddyName?: string | null
   /** Nexo writes this player's automatic notices; off, they are plain and free. */
   aiNotices?: boolean
   /** Whether this instance lets Nexo write notices at all. */

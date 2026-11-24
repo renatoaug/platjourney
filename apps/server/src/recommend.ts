@@ -332,7 +332,7 @@ export async function recommendations(
   // rank, verify and explain them. A fresh batch is model work; serving the cached one above
   // is not.
   const result = await aroundModel({ user, action: 'recommend' }, () =>
-    tagged({ user: user.id, action: 'recommend' }, () =>
+    tagged({ user: user.id, buddyName: user.buddy_name, action: 'recommend' }, () =>
       ai<Researched>('/recommend', {
         library: library.map((t) => ({
           name: t.name,

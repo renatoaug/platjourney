@@ -124,7 +124,7 @@ export async function planSession(
       ? current.steps.map((s) => s.trophy)
       : []
   const plan = await aroundModel({ user, action: 'plan', game: ctx.game.id }, () =>
-    tagged({ user: user.id, action: 'plan' }, () =>
+    tagged({ user: user.id, buddyName: user.buddy_name, action: 'plan' }, () =>
       ai<Omit<SessionPlan, 'game' | 'gameName' | 'minutes' | 'createdAt'>>('/plans/session', {
         context: aiContext(ctx, user),
         minutes,

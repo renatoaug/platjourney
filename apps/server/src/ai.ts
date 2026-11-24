@@ -30,6 +30,8 @@ export async function ai<T>(path: string, body: unknown): Promise<T> {
       'x-internal-token': config.ai.token,
       ...(tag.user ? { 'x-cost-user': tag.user } : {}),
       ...(tag.action ? { 'x-cost-action': tag.action } : {}),
+      // Header values are Latin-1: the name travels percent-encoded.
+      ...(tag.buddyName ? { 'x-buddy-name': encodeURIComponent(tag.buddyName) } : {}),
     },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(TIMEOUT_MS),

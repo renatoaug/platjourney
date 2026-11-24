@@ -33,17 +33,10 @@
     line-height: 1.08;
   }
 
-  /* Settings draws notifications and preferences as bare lists with no padding; a skin frames
+  /* Settings draws its lists of rows with no frame of their own, each group in a box; a skin frames
    * every card, so these get room inside their frame. */
-  :root[data-skin] .settings-grid #notifications-card.card,
-  :root[data-skin] .settings-grid :is(#preferences-card, #appearance-card).card {
-    padding: 0 16px 8px;
-  }
-
-  /* The frame closes the list, so its own closing line would be a second edge. */
-  :root[data-skin] .settings-grid #notifications-card .setting-group,
-  :root[data-skin] .settings-grid :is(#preferences-card, #appearance-card) .setting-group {
-    border-bottom: 0;
+  :root[data-skin] .settings-grid .settings-list.card {
+    padding: 0 16px 16px;
   }
 
   /* ---------------------------------------------------------------- Neon */

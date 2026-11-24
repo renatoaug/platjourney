@@ -19,6 +19,8 @@ log = logging.getLogger(__name__)
 class CostTag:
     user: str | None = None
     action: str = 'other'
+    # The name the player gave their buddy (header X-Buddy-Name): written in place of Nexo's.
+    buddy_name: str | None = None
 
 
 _NO_TAG = CostTag()

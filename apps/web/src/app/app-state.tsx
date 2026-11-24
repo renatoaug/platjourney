@@ -5,12 +5,14 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
 import { defineMessages, Language, translator } from '../i18n/i18n'
 import { applyAccent } from '../lib/accent'
 import { api } from '../lib/api'
+import { setBuddy } from '../lib/buddy'
 import { applySkin } from '../lib/skin'
 import type { AppStateData, Me } from '../lib/types'
 import { toast } from '../ui/toast'
@@ -60,6 +62,8 @@ export function AppStateProvider({ me: initial, children }: { me: Me; children: 
   useEffect(() => applyAccent(me.accent), [me.accent])
   // And its skin, with the same instant change.
   useEffect(() => applySkin(me.skin), [me.skin])
+  // And its buddy, before the first paint, so no screen flashes Nexo's name first.
+  useLayoutEffect(() => setBuddy(me.buddy, me.buddyName), [me.buddy, me.buddyName])
   const [data, setDataState] = useState<AppStateData | null>(null)
   const [loading, setLoading] = useState(false)
   const [sync, setSync] = useState<SyncStatus>(initial.visitor ? 'connected' : 'connecting')

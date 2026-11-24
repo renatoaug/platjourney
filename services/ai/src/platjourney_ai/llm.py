@@ -68,11 +68,21 @@ def web_search_on() -> bool:
     return settings.ai_web_search and route().provider in ('openai', 'codex')
 
 
+def with_buddy_name(params: dict[str, Any]) -> dict[str, Any]:
+    """The instructions with Nexo's name swapped for the one the player gave their buddy."""
+    name = current_tag.get().buddy_name
+    instructions = params.get('instructions')
+    if not name or name == 'Nexo' or not isinstance(instructions, str):
+        return params
+    return params | {'instructions': re.sub(r'\bNexo\b', lambda _: name, instructions)}
+
+
 async def respond(step: str | None = None, search: bool = False, **params: Any) -> Reply:
     """A Responses API call (instructions, input, tools, reasoning, text); the model comes
     from the feature's route, or the step's. Web search stays off unless the instance turns it on,
     or `search` asks for it on this one call (only OpenAI can search)."""
     chosen = route(step)
+    params = with_buddy_name(params)
     if chosen.provider == 'local':
         return await _respond_locally(params, chosen.model)
     if chosen.provider == 'codex':

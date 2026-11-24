@@ -80,7 +80,9 @@ async function callTool({ user, connection, assistant }: Caller, params: Args, b
   try {
     const args = (params.arguments ?? {}) as Args
     await beforeTool({ user, tool: tool.name, arguments: args })
-    const result = await tagged({ user: user.id }, () => tool.run(user, args, { assistant, base }))
+    const result = await tagged({ user: user.id, buddyName: user.buddy_name }, () =>
+      tool.run(user, args, { assistant, base }),
+    )
     const value =
       tool.next && result && typeof result === 'object' ? { ...result, next: tool.next } : result
     // What a view shows goes in _meta, which reaches the view and not the model: with the result in

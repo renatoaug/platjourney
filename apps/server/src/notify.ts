@@ -42,7 +42,7 @@ const PUSH_CHARS = 900
  * the others, nor the sweep that wrote the notice.
  */
 export async function deliver(
-  user: Pick<User, 'id' | 'psn_online_id' | 'telegram_chat_id' | 'notify_telegram'>,
+  user: Pick<User, 'id' | 'psn_online_id' | 'telegram_chat_id' | 'notify_telegram' | 'buddy_name'>,
   text: string,
 ): Promise<void> {
   if (user.telegram_chat_id && user.notify_telegram !== false)
@@ -55,7 +55,8 @@ export async function deliver(
   const tip = await deliveredTip(user.id, text).catch(() => undefined)
   const body = plainText(text)
   await pushTo(user, {
-    title: 'Nexo',
+    // Signed by the buddy, with the name the player gave it.
+    title: user.buddy_name || 'Nexo',
     body: body.length > PUSH_CHARS ? `${body.slice(0, PUSH_CHARS - 1)}…` : body,
     url: tip ? `${HISTORY}?tip=${encodeURIComponent(tip)}` : HISTORY,
   }).catch((e) =>

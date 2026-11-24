@@ -4,6 +4,8 @@
  * and code outside React render (helpers, toasts) uses `translator(messages)`.
  */
 import { type ReactNode, useLayoutEffect, useMemo, useSyncExternalStore } from 'react'
+import { withBuddyName } from '../../../../shared/buddy'
+import { getBuddy, subscribeBuddy } from '../lib/buddy'
 import { getLocale, Language, type Locale, setLocale, subscribeLocale } from './locale'
 import { type Keys, type Params, type Shape, type Tree, translate } from './translate'
 
@@ -55,7 +57,11 @@ export function translator<M extends MessageSet>(messages: M, locale?: Locale): 
   const fallback = messages[Language.PtBR]
   return (key, params) => {
     const active = locale ?? getLocale()
-    return translate(messages[active] as Tree, fallback, active, key, params)
+    // A player who named their buddy reads that name wherever the texts say Nexo.
+    return withBuddyName(
+      translate(messages[active] as Tree, fallback, active, key, params),
+      getBuddy().name,
+    )
   }
 }
 
@@ -66,7 +72,9 @@ export function useLocale(): Locale {
 /** `t` bound to the active locale; a new function when it changes, so memos see the change. */
 export function useMessages<M extends MessageSet>(messages: M): Translator<M> {
   const locale = useLocale()
-  return useMemo(() => translator(messages, locale), [messages, locale])
+  const buddy = useSyncExternalStore(subscribeBuddy, getBuddy, getBuddy)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new name makes a new `t`
+  return useMemo(() => translator(messages, locale), [messages, locale, buddy])
 }
 
 /** Optional: forces a locale for what it wraps (Storybook's toolbar, a test). */

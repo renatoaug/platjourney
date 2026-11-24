@@ -6,6 +6,7 @@ import { Icon } from '../ui/icon'
 import { UserText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
 import './nexo-brief.css'
+import { BuddyAvatar } from './buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -66,7 +67,7 @@ export function NexoBrief({ current, tips }: { current: CurrentGame | null; tips
   return (
     <>
       <div className="nexo-heading">
-        <img className="nexo-avatar" src="/nexo-avatar.svg" alt="" />
+        <BuddyAvatar className="nexo-avatar" />
         <div>
           <h2>
             Nexo <span className="nexo-badge">{t('badge')}</span>

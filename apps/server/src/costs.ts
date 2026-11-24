@@ -7,6 +7,8 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 interface CostTag {
   user?: string
   action?: string
+  // The name the player gave their buddy: the AI service writes it in place of Nexo's.
+  buddyName?: string | null
   // Work for the demo player, which must never reach PSN or the AI service.
   demo?: boolean
 }

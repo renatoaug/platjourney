@@ -1,0 +1,137 @@
+@layer screens {
+  .setting-row.buddy-current {
+    cursor: default;
+  }
+
+  .buddy-current-pick {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+  }
+
+  .buddy-current-art {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* The dialog is only the card, centred over the page, which shows dimmed and blurred behind it
+     like under the notifications. (A full-screen dialog would take the skins' dialog fill.) */
+  dialog.buddy-dialog {
+    width: min(620px, calc(100% - 24px));
+    max-height: calc(100% - 24px);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-card);
+    background: transparent;
+    color: var(--color-fg);
+    overflow: hidden;
+  }
+
+  .buddy-dialog-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 1;
+    min-width: 36px;
+    padding: 0;
+  }
+
+  dialog.buddy-dialog::backdrop {
+    background: color-mix(in srgb, var(--color-bg) 60%, transparent);
+    backdrop-filter: blur(4px);
+  }
+
+  /* The dialog is the gallery alone: one column, the text over the tiles. */
+  .buddy-dialog .onb-card {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+  }
+
+  .buddy-dialog .onb-body {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .buddy-dialog .onb-card .onb-copy {
+    justify-items: stretch;
+    text-align: start;
+  }
+
+  .buddy-dialog .buddy-gallery {
+    margin-top: 6px;
+  }
+
+  .buddy-gallery {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 8px;
+  }
+
+  .buddy-option {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 10px 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-raised);
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .buddy-option:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-fg);
+  }
+
+  .buddy-option.is-on {
+    border-color: var(--color-accent);
+    color: var(--color-fg);
+    box-shadow: var(--shadow-focus);
+  }
+
+  .buddy-option > .icon {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    color: var(--color-accent);
+  }
+
+  .buddy-option-art {
+    width: 56px;
+    height: 56px;
+  }
+
+  .setting-row.buddy-name {
+    flex-wrap: wrap;
+    cursor: default;
+  }
+
+  .buddy-name-field {
+    display: flex;
+    gap: 8px;
+    flex: 1 1 220px;
+    max-width: 360px;
+  }
+
+  .buddy-name-field input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@layer screens {
+  /* On a phone the picture says who it is: the name beside it would push the button out. */
+  @media (max-width: 480px) {
+    .buddy-current-pick > b {
+      display: none;
+    }
+  }
+}

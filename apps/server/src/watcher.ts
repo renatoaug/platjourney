@@ -453,7 +453,7 @@ async function gameSession(user: User, ctx: GameContext, playing: string): Promi
 async function sweep(each: (user: User) => Promise<void>, label: string): Promise<void> {
   for (const user of await listUsers()) {
     if (isDemo(user)) continue
-    await tagged({ user: user.id }, () => each(user)).catch((e) => {
+    await tagged({ user: user.id, buddyName: user.buddy_name }, () => each(user)).catch((e) => {
       // Hidden trophies are the player's choice, not a failure; the page tells them.
       if (!(e instanceof PrivateProfile))
         console.error(`${label} failed for ${user.psn_online_id}:`, e.message)
@@ -506,7 +506,7 @@ export function watchNow(user: User): void {
     if (isDemo(user)) await demoContext(user)
     else await checkUser(user)
   }
-  tagged({ user: user.id }, work).catch((e) =>
+  tagged({ user: user.id, buddyName: user.buddy_name }, work).catch((e) =>
     console.error(`watcher failed for ${user.psn_online_id}:`, e.message),
   )
 }

@@ -65,11 +65,13 @@ export const searchDeepGuide: Tool = {
     const game = await gameFrom(args)
     const question = typeof args.question === 'string' ? args.question.trim().slice(0, 500) : ''
     if (!question) throw new ToolError('Ask a question.')
-    const found = await tagged({ user: user.id, action: 'mcp_deep_guide' }, () =>
-      ai<{ passages: { source: string; url: string; heading: string; content: string }[] }>(
-        '/deep-guide/retrieve',
-        { game, question, terms: [], limit: 6 },
-      ),
+    const found = await tagged(
+      { user: user.id, buddyName: user.buddy_name, action: 'mcp_deep_guide' },
+      () =>
+        ai<{ passages: { source: string; url: string; heading: string; content: string }[] }>(
+          '/deep-guide/retrieve',
+          { game, question, terms: [], limit: 6 },
+        ),
     )
     return {
       game: gameRow(game),

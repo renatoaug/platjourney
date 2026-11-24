@@ -2,6 +2,8 @@
 // language. Each module declares its own texts with `defineMessages` at the top of the file and
 // reads them with `translator(messages, user)`; what the model writes is not translated here.
 
+import { withBuddyName } from '../../../shared/buddy.ts'
+
 /** The languages the bot and the notices speak. Every message set has one entry per member. */
 export enum Language {
   PtBR = 'pt-BR',
@@ -135,11 +137,16 @@ export function translate(
 /** `t` for a message set, bound to a locale or to a player's saved one. */
 export function translator<M extends MessageSet>(
   messages: M,
-  who: Locale | { locale?: string | null } | null | undefined,
+  who: Locale | { locale?: string | null; buddy_name?: string | null } | null | undefined,
 ): Translator<M> {
   const locale = typeof who === 'string' ? who : userLocale(who)
+  // A player who named their buddy reads that name wherever the texts say Nexo.
+  const name = typeof who === 'object' ? who?.buddy_name : null
   return (key, params) =>
-    translate(messages[locale] as Tree, messages[Language.PtBR], locale, key, params)
+    withBuddyName(
+      translate(messages[locale] as Tree, messages[Language.PtBR], locale, key, params),
+      name,
+    )
 }
 
 /** Every key of a tree, for the parity test. */

@@ -23,6 +23,7 @@ import { FirstAsks } from './nexo-asks'
 import { nexoHref, titleHref } from './tip'
 import './console.css'
 import { TrophyMedal } from '../ui/trophy-medal'
+import { BuddyAvatar, BuddyName } from './buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -243,7 +244,9 @@ function NexoLine({ item, platinums }: { item: Item; platinums: number }) {
     <p className="console-nexo">
       <span className="dot" aria-hidden="true" />
       <span>
-        <b>Nexo:</b>{' '}
+        <b>
+          <BuddyName />:
+        </b>{' '}
         {item.tip ? (
           plain(item.tip)
         ) : item.kind === 'platinum' ? (
@@ -317,7 +320,7 @@ function Focus({
             className="button secondary"
             to={nexoHref(item.context, item.name, item.target)}
           >
-            <img className="icon" src="/nexo-avatar.svg" alt="" /> {t('askNexo')}
+            <BuddyAvatar className="icon" /> {t('askNexo')}
           </JourneyLink>
         )}
       </div>

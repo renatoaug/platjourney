@@ -159,17 +159,20 @@ async function transcribe({ req, res, me }: Api) {
   const ctx = getChat(me)
   const trophies = [...(ctx?.trophies ?? [])].sort((a, b) => Number(a.earned) - Number(b.earned))
   const words = [
-    'Nexo',
+    // The words the player may say: the buddy's name first.
+    me.buddy_name || 'Nexo',
     ...(ctx ? [ctx.game.name] : []),
     ...trophies.map((t) => (me.locale === 'en' ? (t.nameEn ?? t.name) : t.name)),
   ].slice(0, VOICE_WORDS)
-  const { text } = await tagged({ user: me.id, action: 'transcribe' }, () =>
-    ai<{ text: string }>('/voice/transcribe', {
-      audio,
-      mime,
-      locale: me.locale === 'en' ? 'en' : 'pt-BR',
-      words,
-    }),
+  const { text } = await tagged(
+    { user: me.id, buddyName: me.buddy_name, action: 'transcribe' },
+    () =>
+      ai<{ text: string }>('/voice/transcribe', {
+        audio,
+        mime,
+        locale: me.locale === 'en' ? 'en' : 'pt-BR',
+        words,
+      }),
   )
   return json(res, 200, { text })
 }

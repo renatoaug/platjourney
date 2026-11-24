@@ -16,6 +16,7 @@ import { UnobtainableBanner } from './hero'
 import { nexoHref } from './nexo-asks'
 import { SharePlatinum } from './share-platinum'
 import './game-desk.css'
+import { BuddyAvatar } from './buddy-avatar'
 
 const messages = defineMessages({
   [Language.PtBR]: {
@@ -298,7 +299,7 @@ function NexoCard({ game: c, np }: { game: CurrentGame; np: string }) {
   const t = useMessages(messages)
   return (
     <section className="card game-desk-card game-desk-nexo" aria-label={t('nexo')}>
-      <img src="/nexo-avatar.svg" alt="" width="40" height="40" />
+      <BuddyAvatar width="40" height="40" />
       <div>
         <b>{t('nexo')}</b>
         <small>{t('nexoLead', { name: c.name })}</small>

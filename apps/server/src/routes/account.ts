@@ -1,4 +1,5 @@
 import { isAccent } from '../../../../shared/accent.ts'
+import { BUDDY_NAME_MAX, cleanBuddyName, isBuddy, withBuddyName } from '../../../../shared/buddy.ts'
 import { isSkin } from '../../../../shared/skin.ts'
 import { apnsEnabled } from '../apns.ts'
 import {
@@ -51,11 +52,11 @@ const messages = defineMessages({
 
 const PLUS_TIERS = ['none', 'essential', 'extra', 'deluxe'] as const
 
-// The choices picked from a fixed list (PS Plus tier, accent color, skin): each one sent must be
-// one of its list. Returns the fields to save, or null when a choice is not on its list.
+// The choices picked from a fixed list (PS Plus tier, accent color, skin, buddy): each one sent
+// must be one of its list. Returns the fields to save, or null when a choice is not on its list.
 function listChoices(body: Record<string, unknown>): Partial<User> | null {
   const fields: Partial<User> = {}
-  const { psPlus, accent, skin } = body
+  const { psPlus, accent, skin, buddy } = body
   if (psPlus !== undefined) {
     const tier = PLUS_TIERS.find((x) => x === psPlus)
     if (!tier) return null
@@ -69,12 +70,24 @@ function listChoices(body: Record<string, unknown>): Partial<User> | null {
     if (!isSkin(skin)) return null
     fields.skin = skin
   }
-  return fields
+  if (buddy !== undefined) {
+    if (!isBuddy(buddy)) return null
+    fields.buddy = buddy
+  }
+  return buddyNameChoice(body.buddyName, fields)
+}
+
+// The buddy's name, when sent: an empty one goes back to the buddy's own; a long one is refused.
+function buddyNameChoice(value: unknown, fields: Partial<User>): Partial<User> | null {
+  if (value === undefined) return fields
+  const name = cleanBuddyName(value)
+  if (name && name.length > BUDDY_NAME_MAX) return null
+  return { ...fields, buddy_name: name }
 }
 
 // Any of the preferences, alone or together: DLC, Nexo's notices, Telegram notices, showing up in
 // the community, the language,
-// the PS Plus tier, the app's accent color and its skin.
+// the PS Plus tier, the app's accent color, its skin and the buddy with its name.
 async function savePreferences({ req, res, me, locale: language }: Api) {
   const t = translator(messages, language)
   const body = await readBody(req)
@@ -173,7 +186,11 @@ async function dropNativePush({ req, res, me }: Api) {
 // A test notice to every device of the player, so they see it works.
 async function testPush({ res, me, locale }: Api) {
   const t = translator(messages, locale)
-  const sent = await pushTo(me, { title: 'Nexo', body: t('pushTest'), url: '/history' })
+  const sent = await pushTo(me, {
+    title: me.buddy_name || 'Nexo',
+    body: withBuddyName(t('pushTest'), me.buddy_name),
+    url: '/history',
+  })
   return json(res, 200, { sent })
 }
 
