@@ -1,3 +1,4 @@
+import { BOLD } from '../../../../shared/bold'
 import { achievementHistory } from '../../../../shared/journey/history'
 import {
   normalized,
@@ -120,7 +121,7 @@ function guideSteps(text: string) {
 function names(step: string, name: string | undefined) {
   if (!name) return false
   const key = normalized(name)
-  const bold = [...step.matchAll(/\*\*(.+?)\*\*/g)].some((m) => normalized(m[1]) === key)
+  const bold = [...step.matchAll(BOLD)].some((m) => normalized(m[1]) === key)
   return bold || (key.includes(' ') && words(step).includes(words(name)))
 }
 

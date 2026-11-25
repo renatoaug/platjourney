@@ -1,6 +1,7 @@
 // Where a notice goes once it is written: the linked Telegram chat, when the player kept it on, and
 // every device that turned push on. The web history already has it (logTip) before this runs.
 
+import { BOLD } from '../../../shared/bold.ts'
 import { pushEnabled, pushTo } from './push.ts'
 import { deliveredTip } from './repository/activity.ts'
 import { nativeDevices } from './repository/native-push.ts'
@@ -14,7 +15,7 @@ const HISTORY = '/history'
 /** Notices are written in markdown for Telegram; a push notification shows plain text. */
 export function plainText(markdown: string): string {
   return markdown
-    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(BOLD, '$1')
     .replace(/__(.+?)__/g, '$1')
     .replace(/`([^`]+)`/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')

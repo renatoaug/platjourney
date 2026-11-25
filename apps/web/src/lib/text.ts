@@ -1,3 +1,5 @@
+import { BOLD } from '../../../../shared/bold'
+
 /** Text helpers: HTML escaping and the small markdown Nexo writes (rendered as trusted HTML after escaping). */
 
 const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
@@ -13,14 +15,13 @@ const EMOJI =
 export const plainText = (value: unknown) => String(value ?? '').replace(EMOJI, '')
 
 /** A name the interface already sets apart (a phase or glossary title): plain, without the **bold** markers. */
-export const nameText = (value: unknown) => plainText(value).replace(/\*\*/g, '')
+export const nameText = (value: unknown) => plainText(value).replace(BOLD, '$1')
 
 /** Generated text for an HTML string. */
 export const uiText = (value: unknown) => esc(plainText(value))
 
 // What the player sent: plain text, with **bold** kept (the trophy tips name the trophy that way).
-export const userText = (value: unknown) =>
-  uiText(value).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+export const userText = (value: unknown) => uiText(value).replace(BOLD, '<strong>$1</strong>')
 
 // A guide's text: plain, with the game's names in **bold** and a tip's steps on separate lines.
 export const guideText = (value: unknown) => userText(value).replace(/\n/g, '<br>')
@@ -55,7 +56,7 @@ export const md = (value: unknown): string => {
   return (
     blocks
       .join('')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(BOLD, '<strong>$1</strong>')
       // Older messages quote trophy names instead of bolding them; highlight those too.
       .replace(/(?<!<strong>)“([^”<]{2,60})”(?!<\/strong>)/g, '<strong>“$1”</strong>')
       .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')

@@ -76,3 +76,10 @@ test('md links a cited source, https only, opening in a new tab', () => {
     '<p>[x](http://evil.example) [y](javascript:alert(1))</p>',
   )
 })
+
+test('a trophy name with asterisks of its own stays whole in bold', () => {
+  expect(md('Pegou **T***, rabeta, droga e grana** agora')).toBe(
+    '<p>Pegou <strong>T***, rabeta, droga e grana</strong> agora</p>',
+  )
+  expect(nameText('**T***, rabeta, droga e grana**')).toBe('T***, rabeta, droga e grana')
+})
