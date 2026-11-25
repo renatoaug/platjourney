@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.103.3](https://github.com/renatoaug/platjourney/compare/v0.103.2...v0.103.3) (2026-11-25)
+
+### Bug Fixes
+
+* **server:** every new account gets a first notice for the game it is playing ([#241](https://github.com/renatoaug/platjourney/issues/241)) ([71ecb15](https://github.com/renatoaug/platjourney/commit/71ecb15e248fe8f83fb07ed450e2c6252cff5eb3))
+
 ## [0.103.2](https://github.com/renatoaug/platjourney/compare/v0.103.1...v0.103.2) (2026-11-25)
 
 ### Bug Fixes
