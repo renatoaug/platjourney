@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.103.2](https://github.com/renatoaug/platjourney/compare/v0.103.1...v0.103.2) (2026-11-25)
+
+### Bug Fixes
+
+* **server:** a new account's first notice counts its trophies instead of celebrating them ([#240](https://github.com/renatoaug/platjourney/issues/240)) ([ed93940](https://github.com/renatoaug/platjourney/commit/ed93940dc00fe8f695be6f56092868109e2c1f59))
+
 ## [0.103.1](https://github.com/renatoaug/platjourney/compare/v0.103.0...v0.103.1) (2026-11-25)
 
 ### Bug Fixes
