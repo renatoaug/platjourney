@@ -329,7 +329,11 @@ async function whatIsNew(
   const told = !prev && (await announced(user, ctx))
   // A first sync of an account must not greet every old game as new.
   const firstSync = !prev && latest.earned > 0 && latest.progress >= 10
-  const justStarted = !firstSync && !told && !prev?.last_tip_at && latest.progress < 10
+  // A new account's game gets a first notice at any progress short of done: the welcome counts its
+  // trophies and points at the next one.
+  const welcomed = fresh && !told && latest.progress < 100
+  const justStarted =
+    welcomed || (!firstSync && !told && !prev?.last_tip_at && latest.progress < 10)
   // The ids seen are trusted when there are some, or when the stored title had none earned: the
   // first trophy of a game is news too. A title stored with trophies but no ids was never watched
   // (another game was in front then), and announcing its old trophies would be wrong.
@@ -386,7 +390,8 @@ async function check(user: User): Promise<void> {
     user,
     ctx,
     unlocked.map((t) => t.name),
-    justStarted,
+    // The guide's opening stretch only fits a game that is starting, not one welcomed midway.
+    justStarted && latest.progress < 10,
   )
   await tellNews({ user, ctx, latest, justStarted, unlocked, firsts, welcome, route })
   if (told) await markTipSent(user.id, latest.npCommunicationId)

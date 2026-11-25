@@ -867,6 +867,34 @@ describe('checkUser', () => {
     expect(text).toEndWith('Antes de começar:\n• Jogue no Difícil.')
   })
 
+  test('a new account midway through its game still gets a first notice', async () => {
+    config.automatic.notices = false
+    getTitle.mockResolvedValue(undefined)
+    hasTitles.mockResolvedValue(false)
+    recent.mockResolvedValue([makeTitle({ progress: 18, earned: 2 })])
+    await checkUser(user)
+    const text = logTip.mock.calls.find((c) => c[1] === 'start')?.[2] ?? ''
+    expect(text).toStartWith('Vi que você está jogando **Days Gone**: 2 troféus até agora.')
+    expect(text).not.toContain('🏆')
+  })
+
+  test('a new account whose game is done gets no first notice for it', async () => {
+    config.automatic.notices = false
+    getTitle.mockResolvedValue(undefined)
+    hasTitles.mockResolvedValue(false)
+    recent.mockResolvedValue([makeTitle({ progress: 100, earned: 2 })])
+    await checkUser(user)
+    expect(logTip.mock.calls.find((c) => c[1] === 'start')).toBeUndefined()
+  })
+
+  test('an account with games stored does not greet a game it lists midway', async () => {
+    config.automatic.notices = false
+    getTitle.mockResolvedValue(undefined)
+    recent.mockResolvedValue([makeTitle({ progress: 18, earned: 2 })])
+    await checkUser(user)
+    expect(logTip.mock.calls.find((c) => c[1] === 'start')).toBeUndefined()
+  })
+
   test('when Nexo is down the player still gets the plain notice', async () => {
     spyOn(nexo, 'unlockReaction').mockRejectedValue(new Error('model down'))
     await checkUser(user)
