@@ -412,20 +412,31 @@ def start_prompt(
     focus: Focus | None = None,
     ongoing: list[str] | None = None,
     missables: list[str] | None = None,
+    welcome: int | None = None,
 ) -> str:
     """The notice for a game just started. PSN lists a game only once its first trophy pops, so the
     notice usually comes with it: the trophy is the message's title and our cheer opens it. It gives
     Nexo's take on the platinum, never asks what the player thought: minutes in, there is nothing
     to say yet."""
     names = ', '.join(t.name for t in unlocked or [])
-    opening = (
-        f'O jogador acabou de começar {ctx.game.name or ctx.title.name} e já desbloqueou: {names}. '
-        'A mensagem '
-        'já abre com o nome do troféu como título e uma frase nossa comemorando o primeiro '
-        'troféu: não comemore de novo e não repita o nome, vá direto ao conteúdo.'
-        if names
-        else f'O jogador acabou de começar {ctx.game.name or ctx.title.name}.'
-    )
+    game = ctx.game.name or ctx.title.name
+    if welcome is not None:
+        # A new account: the game was already under way, so its trophies are not news.
+        opening = (
+            f'O jogador acabou de entrar no PlatJourney e já estava jogando {game}, com {welcome} '
+            'troféu(s). A mensagem já abre com uma linha nossa dizendo isso: não repita, não '
+            'comemore troféus já conquistados e não diga que ele começou agora; vá direto à sua '
+            'opinião sobre a platina.'
+        )
+    else:
+        opening = (
+            f'O jogador acabou de começar {game} e já desbloqueou: {names}. '
+            'A mensagem '
+            'já abre com o nome do troféu como título e uma frase nossa comemorando o primeiro '
+            'troféu: não comemore de novo e não repita o nome, vá direto ao conteúdo.'
+            if names
+            else f'O jogador acabou de começar {game}.'
+        )
     if focus and focus.trophy:
         trick = f' Macete do guia: {focus.trick}' if focus.trick else ''
         target = (
@@ -881,6 +892,7 @@ async def tip(
     recommended: Recommended | None = None,
     ongoing: list[str] | None = None,
     missables: list[str] | None = None,
+    welcome: int | None = None,
 ) -> str:
     """An automatic notice: the player started a game or unlocked trophies.
     With `route`, the guide's note on what comes next goes into the same message; with `mark`, the
@@ -888,7 +900,7 @@ async def tip(
     `recommended`, the game started was Nexo's recommendation and the notice says it is glad."""
     match kind:
         case 'start':
-            prompt = start_prompt(ctx, unlocked, focus, ongoing, missables)
+            prompt = start_prompt(ctx, unlocked, focus, ongoing, missables, welcome)
             if recommended:
                 prompt += recommended_prompt(recommended)
         case 'unlock':

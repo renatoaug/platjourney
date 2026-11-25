@@ -26,6 +26,11 @@ import {
 const messages = defineMessages({
   [Language.PtBR]: {
     started: 'Você começou {game}. O guia da platina está no PlatJourney.',
+    // A new account's first look: the game was already under way, so its trophies are not news.
+    welcome: {
+      one: 'Vi que você está jogando **{game}**: 1 troféu até agora.',
+      other: 'Vi que você está jogando **{game}**: {count} troféus até agora.',
+    },
     celebrate: '🎉 Bora mostrar pra galera? Toque em compartilhar e exiba essa platina.',
     // The game started was Nexo's recommendation: one of these opens the notice, the same per game.
     followed: {
@@ -103,6 +108,10 @@ const messages = defineMessages({
   },
   [Language.En]: {
     started: 'You started {game}. The platinum guide is on PlatJourney.',
+    welcome: {
+      one: "I see you're playing **{game}**: 1 trophy so far.",
+      other: "I see you're playing **{game}**: {count} trophies so far.",
+    },
     celebrate: '🎉 Show it to everyone? Tap share and show off this platinum.',
     followed: {
       a: "So glad you took my tip! I'm rooting for this platinum. 🙌",
@@ -222,16 +231,25 @@ function readable(user: User, ctx: GameContext, tips: RouteTip[]): RouteTip[] {
 /** The plain notice for a game just started: its first trophies when it came with some (PSN lists a
  * game only once one pops), then the next trophy, the missables and what to keep at the whole game.
  * `after`: the stretch's checklist that follows it, whose missables are not listed again. */
+/** A new account's opening line: the game it was already playing and its trophies so far. */
+export const welcomeLine = (user: User, ctx: GameContext, count: number) =>
+  translator(messages, user)('welcome', { game: gameName(ctx), count })
+
 export const startNotice = (
   user: User,
   ctx: GameContext,
   firsts: GameContext['trophies'] = [],
   after = '',
+  /** A new account: the trophies it already had, told as a count, not celebrated. */
+  welcome?: number,
 ) => {
   const t = translator(messages, user)
-  const opening = firsts.length
-    ? together(unlockNotice(user, ctx, firsts), markNotice(user, ctx, firsts))
-    : t('started', { game: gameName(ctx) })
+  const opening =
+    welcome !== undefined
+      ? welcomeLine(user, ctx, welcome)
+      : firsts.length
+        ? together(unlockNotice(user, ctx, firsts), markNotice(user, ctx, firsts))
+        : t('started', { game: gameName(ctx) })
   const { trophy, behind } = todaysFocus(ctx)
   const next = trophy
     ? t(behind ? 'focusNewBehind' : 'focusNew', {

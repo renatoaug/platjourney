@@ -33,6 +33,9 @@ class TipRequest(Wire):
     ongoing: list[str] = Field(default_factory=list[str], max_length=10)
     # The guide's missables still open, listed by the server after Nexo's words ("start").
     missables: list[str] = Field(default_factory=list[str], max_length=50)
+    # The account was just made: the game was already being played, with this many trophies, none
+    # of them new ("start").
+    welcome: int | None = Field(default=None, ge=0)
 
 
 class FollowUpRequest(Wire):
@@ -74,6 +77,7 @@ async def tip(body: TipRequest) -> Answer:
         body.recommended,
         body.ongoing,
         body.missables,
+        body.welcome,
     )
     return Answer(text=text)
 

@@ -14,6 +14,7 @@ import {
   ongoingTrophies,
   openMissables,
   startLists,
+  welcomeLine,
 } from './notices.ts'
 import { aroundModel } from './plugins.ts'
 import type { TitleGroups, TitleProgress, TrophyStatus } from './psn.ts'
@@ -111,6 +112,8 @@ export async function proactiveTip(
   after?: string,
   /** The trophies the game came with: PSN lists a game only once its first trophy pops. */
   firsts: TrophyStatus[] = [],
+  /** A new account: the game was already under way with this many trophies, none of them news. */
+  welcome?: number,
 ): Promise<string> {
   // The next trophy is the server's, the same the session notice names.
   const focus = todaysFocus(ctx)
@@ -142,15 +145,19 @@ export async function proactiveTip(
         : {}),
       ...(route ? { route } : {}),
       ...(recommended ? { recommended } : {}),
+      ...(welcome !== undefined ? { welcome } : {}),
     },
     undefined,
     ctx.game.id,
   )
   // The first trophy as the message's title with our cheer, as on any unlock notice.
   const names = firsts.map((t) => nameFor(user, t))
-  const titled = firsts.length
-    ? `${names.map((n) => `🏆 **${n}**`).join('\n')}\n\n${markCheer(user, 'first')}\n\n${withoutTitle(said, [...names, ...firsts.map((t) => t.name)])}`
-    : said
+  const titled =
+    welcome !== undefined
+      ? `${welcomeLine(user, ctx, welcome)}\n\n${said}`
+      : firsts.length
+        ? `${names.map((n) => `🏆 **${n}**`).join('\n')}\n\n${markCheer(user, 'first')}\n\n${withoutTitle(said, [...names, ...firsts.map((t) => t.name)])}`
+        : said
   const text = [titled, startLists(user, ctx, ongoing, after), after].filter(Boolean).join('\n\n')
   await logTip(user.id, 'start', text, ctx.game.id)
   return text
