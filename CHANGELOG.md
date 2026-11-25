@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.103.1](https://github.com/renatoaug/platjourney/compare/v0.103.0...v0.103.1) (2026-11-25)
+
+### Bug Fixes
+
+* **web:** bold trophy names that carry asterisks of their own ([#239](https://github.com/renatoaug/platjourney/issues/239)) ([a7a3195](https://github.com/renatoaug/platjourney/commit/a7a3195f56112207be10916aee42775267ec9c47))
+
 ## [0.103.0](https://github.com/renatoaug/platjourney/compare/v0.102.0...v0.103.0) (2026-11-24)
 
 ### Features
