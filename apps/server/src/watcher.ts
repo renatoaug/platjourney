@@ -36,7 +36,7 @@ import { lastTip, logTip, type TipKind } from './repository/activity.ts'
 import { pruneExpired } from './repository/auth.ts'
 import { gameByName } from './repository/game.ts'
 import { pruneOauth } from './repository/oauth.ts'
-import { getTitle, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
+import { getTitle, hasTitles, markTipSent, saveEarnedIds, upsertTitle } from './repository/title.ts'
 import { getUser, listUsers, type User, updateUser } from './repository/user.ts'
 import { checkServers } from './servers.ts'
 
@@ -114,6 +114,9 @@ interface News {
   unlocked: GameContext['trophies']
   /** On a game just started, the trophies it came with: PSN lists a game only once one pops. */
   firsts: GameContext['trophies']
+  /** A new account's first look at a game it was already playing: its trophies so far, told as a
+   * count instead of celebrated. */
+  welcome?: number
   route: ReturnType<typeof routeFor>
 }
 
@@ -126,6 +129,7 @@ async function plainNews({
   justStarted,
   unlocked,
   firsts,
+  welcome,
   route,
 }: News): Promise<void> {
   if (justStarted) {
@@ -135,7 +139,7 @@ async function plainNews({
       'start',
       together(
         followed ? followedNotice(user, ctx.game.id) : undefined,
-        startNotice(user, ctx, firsts, route?.collectibles),
+        startNotice(user, ctx, firsts, route?.collectibles, welcome),
         route?.text,
         route?.collectibles,
       ),
@@ -168,6 +172,7 @@ async function nexoNews({
   justStarted,
   unlocked,
   firsts,
+  welcome,
   route,
 }: News): Promise<void> {
   if (justStarted) {
@@ -182,6 +187,7 @@ async function nexoNews({
         followed ?? undefined,
         route?.collectibles,
         firsts,
+        welcome,
       ),
     )
     await markTipSent(user.id, latest.npCommunicationId)
@@ -315,6 +321,8 @@ async function whatIsNew(
   ctx: GameContext,
   latest: TitleProgress,
   prev: Awaited<ReturnType<typeof getTitle>>,
+  /** The account's first sync: no game of it was stored before this check. */
+  fresh = false,
 ) {
   const knownIds = new Set<number>(prev?.earned_ids ?? [])
   // A game picked from presence already had its start notice: its first listing brings trophies.
@@ -327,9 +335,12 @@ async function whatIsNew(
   // (another game was in front then), and announcing its old trophies would be wrong.
   const watched = knownIds.size > 0 || prev?.earned === 0 || told
   const unlocked = watched ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
-  // The start notice celebrates them: no trophy goes unannounced because it came with the game.
-  const firsts = justStarted ? ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id)) : []
-  return { told, justStarted, unlocked, firsts }
+  // The start notice celebrates them: no trophy goes unannounced because it came with the game. On
+  // a new account they came before it, so the notice counts them instead.
+  const earned = ctx.trophies.filter((t) => t.earned && !knownIds.has(t.id))
+  const firsts = justStarted && !fresh ? earned : []
+  const welcome = justStarted && fresh ? earned.length : undefined
+  return { told, justStarted, unlocked, firsts, welcome }
 }
 
 // Compares the user's PSN title list against the stored snapshot. A title we
@@ -350,6 +361,8 @@ async function check(user: User): Promise<void> {
   const current = getCurrent(user)
   const switched = current?.title.npCommunicationId !== latest.npCommunicationId
   const prev = await getTitle(user.id, latest.npCommunicationId)
+  // Read before this check stores the titles: a new account has none yet.
+  const fresh = !prev && !(await hasTitles(user.id))
   const ctx =
     switched || titleChanged(prev, latest) || listStale(current, latest) || !current
       ? await setCurrent(user, latest)
@@ -361,7 +374,13 @@ async function check(user: User): Promise<void> {
   for (const t of titles) await upsertTitle(user.id, t)
 
   const earnedIds = ctx.trophies.filter((t) => t.earned).map((t) => t.id)
-  const { told, justStarted, unlocked, firsts } = await whatIsNew(user, ctx, latest, prev)
+  const { told, justStarted, unlocked, firsts, welcome } = await whatIsNew(
+    user,
+    ctx,
+    latest,
+    prev,
+    fresh,
+  )
 
   const route = routeFor(
     user,
@@ -369,7 +388,7 @@ async function check(user: User): Promise<void> {
     unlocked.map((t) => t.name),
     justStarted,
   )
-  await tellNews({ user, ctx, latest, justStarted, unlocked, firsts, route })
+  await tellNews({ user, ctx, latest, justStarted, unlocked, firsts, welcome, route })
   if (told) await markTipSent(user.id, latest.npCommunicationId)
   await saveEarnedIds(user.id, latest.npCommunicationId, earnedIds)
   await sessionStart(user, ctx, justStarted, playing)

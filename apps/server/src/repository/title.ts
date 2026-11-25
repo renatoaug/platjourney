@@ -40,6 +40,15 @@ export async function getTitle(user: string, np: string): Promise<TitleRow | und
 }
 
 /** The player's title for a catalog game, when they have one. */
+/** Whether the account has any game stored: none before its first sync. */
+export async function hasTitles(user: string): Promise<boolean> {
+  return Boolean(
+    await one<{ id: unknown }>('SELECT id FROM title WHERE user = $user LIMIT 1', {
+      user: userRef(user),
+    }),
+  )
+}
+
 export async function titleOfGame(user: string, game: string): Promise<TitleRow | undefined> {
   return fromRow(
     plain(

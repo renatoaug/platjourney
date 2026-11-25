@@ -195,6 +195,16 @@ def test_the_start_notice_skips_the_first_trophy_title_and_names_the_server_s_ne
     assert 'vão em listas nossas logo depois da sua mensagem: não fale deles.' in kept
 
 
+def test_a_new_account_s_start_notice_counts_its_trophies_without_celebrating_them() -> None:
+    focus = nexo.Focus(trophy='Pá, Pum', detail='50 tiros na cabeça', trick=None)
+    prompt = nexo.start_prompt(context(), [], focus, welcome=5)
+    assert 'acabou de entrar no PlatJourney e já estava jogando' in prompt
+    assert 'com 5 troféu(s)' in prompt
+    assert 'não comemore troféus já conquistados' in prompt
+    assert 'acabou de começar' not in prompt
+    assert 'aponte como próximo troféu Pá, Pum (50 tiros na cabeça)' in prompt
+
+
 def test_a_psn_description_is_quoted_without_its_closing_period() -> None:
     # Marvel's Spider-Man: "Derrote Li." copied with its period into the model's own sentence read
     # as a name cut short ("derrote Li. para avançar na história").

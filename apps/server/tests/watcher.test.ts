@@ -87,6 +87,7 @@ const row = (over: Partial<TitleRow> = {}): TitleRow => ({
 
 let recent: ReturnType<typeof spyOn<typeof psn, 'recentTitles'>>
 let getTitle: ReturnType<typeof spyOn<typeof titles, 'getTitle'>>
+let hasTitles: ReturnType<typeof spyOn<typeof titles, 'hasTitles'>>
 let send: ReturnType<typeof spyOn<typeof telegram, 'sendMessage'>>
 let logTip: ReturnType<typeof spyOn<typeof activity, 'logTip'>>
 let lastTip: ReturnType<typeof spyOn<typeof activity, 'lastTip'>>
@@ -126,6 +127,8 @@ beforeEach(() => {
   spyOn(psn, 'titleCounters').mockResolvedValue(new Map())
   getTitle = spyOn(titles, 'getTitle').mockResolvedValue(row())
   spyOn(titles, 'upsertTitle').mockResolvedValue(row())
+  // An account that already had games stored: a game it starts is news.
+  hasTitles = spyOn(titles, 'hasTitles').mockResolvedValue(true)
   saveEarned = spyOn(titles, 'saveEarnedIds').mockResolvedValue(undefined)
   markTip = spyOn(titles, 'markTipSent').mockResolvedValue(undefined)
   logTip = spyOn(activity, 'logTip').mockResolvedValue(undefined)
@@ -850,6 +853,18 @@ describe('checkUser', () => {
     )
     expect(text).toEndWith('Antes de começar:\n• Jogue no Difícil.')
     expect(markTip).toHaveBeenCalled()
+  })
+
+  test('a new account playing a game counts the trophies it had instead of celebrating them', async () => {
+    config.automatic.notices = false
+    getTitle.mockResolvedValue(undefined)
+    hasTitles.mockResolvedValue(false)
+    recent.mockResolvedValue([started()])
+    await checkUser(user)
+    const text = logTip.mock.calls.find((c) => c[1] === 'start')?.[2] ?? ''
+    expect(text).toStartWith('Vi que você está jogando **Days Gone**: 2 troféus até agora.')
+    expect(text).not.toContain('🏆')
+    expect(text).toEndWith('Antes de começar:\n• Jogue no Difícil.')
   })
 
   test('when Nexo is down the player still gets the plain notice', async () => {
