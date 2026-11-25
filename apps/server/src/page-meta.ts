@@ -1,4 +1,5 @@
 import type { IncomingMessage } from 'node:http'
+import { BOLD } from '../../../shared/bold.ts'
 import { config } from './config.ts'
 import type { Guide } from './guide.ts'
 import { defineMessages, fromAcceptLanguage, Language, translator } from './i18n.ts'
@@ -103,10 +104,7 @@ const section = (heading: string, items: string[], tag: 'ul' | 'ol' = 'ul') =>
     : ''
 
 // The guide's text is light Markdown: bold names and lines of steps.
-const md = (s: string) =>
-  escapeHtml(s.trim())
-    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-    .replace(/\n+/g, '<br>')
+const md = (s: string) => escapeHtml(s.trim()).replace(BOLD, '<b>$1</b>').replace(/\n+/g, '<br>')
 
 // A line that leads with a name: "<b>Trophy</b>: what to know".
 const named = (name: string, text?: string | null) =>

@@ -1,3 +1,4 @@
+import { BOLD } from '../../../shared/bold.ts'
 import { config } from './config.ts'
 import { defineMessages, Language } from './i18n.ts'
 
@@ -57,7 +58,7 @@ function toTelegramHtml(text: string): string {
       .replace(/>/g, '&gt;')
       // Telegram has no headings: a markdown heading line goes out bold.
       .replace(/^#{1,6}\s+(.+)$/gm, '<b>$1</b>')
-      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(BOLD, '<b>$1</b>')
       .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>')
       .replace(/`([^`]+)`/g, '<code>$1</code>')
       // A cited source: the guide page or the video at its minute (https only, from the guide store).
