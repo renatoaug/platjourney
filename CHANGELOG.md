@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.106.0](https://github.com/renatoaug/platjourney/compare/v0.105.0...v0.106.0) (2026-11-26)
+
+### Features
+
+* **ai:** session plans and recommendations in the player's language ([#245](https://github.com/renatoaug/platjourney/issues/245)) ([5b647ca](https://github.com/renatoaug/platjourney/commit/5b647caaf5083326820e8772785635fc41debcad))
+
 ## [0.105.0](https://github.com/renatoaug/platjourney/compare/v0.104.1...v0.105.0) (2026-11-26)
 
 ### Features
