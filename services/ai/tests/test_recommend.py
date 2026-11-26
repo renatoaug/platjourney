@@ -509,3 +509,9 @@ def test_graph_candidates_must_be_game_ids() -> None:
         RecommendRequest.model_validate(
             {'library': [], 'candidates': [f'game:{i}' for i in range(101)]}
         )
+
+
+def test_the_recommendations_are_written_in_the_players_language() -> None:
+    assert 'Write everything in English' in recommend.instructions_for('en')
+    assert 'Write everything in Brazilian Portuguese' in recommend.instructions_for('pt-BR')
+    assert '{language}' not in recommend.instructions_for('pt-BR')

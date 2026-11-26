@@ -161,6 +161,7 @@ test('a stale or forced batch is researched, filtered and stored', async () => {
     ],
     exclude: ['game:1', 'game:2', 'game:5'],
     candidates: ['game:8', 'game:7'],
+    locale: 'pt-BR',
     dismissed: [{ name: 'Dismissed', reason: 'too_long' }],
     seen: [],
     preferences: { likes: [], avoid: [], wrong: [], filters: {} },

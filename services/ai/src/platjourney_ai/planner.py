@@ -1,5 +1,6 @@
 """The session plan: which trophies fit in one sitting, in which order, with the trick for each."""
 
+import copy
 import json
 from datetime import date
 from typing import Any
@@ -97,6 +98,35 @@ INSTRUCTIONS = (
 )
 
 
+# The player's language, when it is not Portuguese: what they read follows it. The trophy field
+# keeps the exact name from the list, which is how the app finds the trophy.
+LANGUAGE = {
+    'en': (
+        ' Idioma: o jogador usa o app em inglês. Escreva summary, how, why, trick, warnings e '
+        'ifTimeLeft em inglês, sem misturar português; o campo trophy continua com o nome exato da '
+        'lista.'
+    ),
+}
+
+
+def schema_for(locale: str) -> dict[str, Any]:
+    """The plan's shape, its texts asked in the player's language; the trophy name stays pt-BR."""
+    if locale not in LANGUAGE:
+        return SCHEMA
+    schema = copy.deepcopy(SCHEMA)
+    props = schema['properties']
+    step = props['steps']['items']['properties']
+    for field in (
+        props['summary'],
+        props['warnings'],
+        props['ifTimeLeft'],
+        step['how'],
+        step['why'],
+    ):
+        field['description'] = field['description'].replace('pt-BR', 'English')
+    return schema
+
+
 def js_number(n: float) -> str:
     """Numbers as JavaScript prints them (12, not 12.0), so the prompt reads as before."""
     return str(int(n)) if isinstance(n, float) and n.is_integer() else str(n)
@@ -164,13 +194,13 @@ async def plan_session(
 ) -> dict[str, Any]:
     """Base-game trophies come first; the platinum itself is never a step."""
     response = await llm.respond(
-        instructions=INSTRUCTIONS,
+        instructions=INSTRUCTIONS + LANGUAGE.get(ctx.locale, ''),
         reasoning={'effort': 'low'},
         text={
             'format': {
                 'type': 'json_schema',
                 'name': 'session_plan',
-                'schema': SCHEMA,
+                'schema': schema_for(ctx.locale),
                 'strict': True,
             }
         },
