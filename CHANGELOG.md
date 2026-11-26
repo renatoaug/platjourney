@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.107.0](https://github.com/renatoaug/platjourney/compare/v0.106.0...v0.107.0) (2026-11-26)
+
+### Features
+
+* **guides:** an English version of each guide for English readers ([#246](https://github.com/renatoaug/platjourney/issues/246)) ([645f6ac](https://github.com/renatoaug/platjourney/commit/645f6acdb6146158b7dd2d357f9db885d7a7a240))
+
 ## [0.106.0](https://github.com/renatoaug/platjourney/compare/v0.105.0...v0.106.0) (2026-11-26)
 
 ### Features
