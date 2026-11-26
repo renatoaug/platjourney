@@ -30,6 +30,7 @@ export const messages = defineMessages({
       server: 'servidor',
       deal: 'promoção',
       answer: 'resposta',
+      guide: 'guia',
       chat: 'chat',
       assistant: 'assistente',
     },
@@ -46,6 +47,7 @@ export const messages = defineMessages({
       server: 'server',
       deal: 'deal',
       answer: 'answer',
+      guide: 'guide',
       chat: 'chat',
       assistant: 'assistant',
     },
@@ -63,6 +65,7 @@ const KINDS = [
   'server',
   'deal',
   'answer',
+  'guide',
   'chat',
   'assistant',
 ]
@@ -80,6 +83,7 @@ export const KIND_ICON: Record<string, string> = {
   server: 'globe',
   deal: 'tag',
   answer: 'nexo',
+  guide: 'book-open',
   chat: 'nexo',
 }
 
@@ -180,7 +184,7 @@ export function TipItem({
 
 // The notices about playing a game: a question about them goes to that game's conversation.
 // A chat tip is already Nexo's answer to the player, so it gets none.
-const ABOUT_THE_GAME = ['start', 'unlock', 'platinum', 'session', 'route', 'answer']
+const ABOUT_THE_GAME = ['start', 'unlock', 'platinum', 'session', 'route', 'answer', 'guide']
 
 /** Loading layout of a TipItem. */
 export function TipSkeleton({ compact = false }: { compact?: boolean }) {
