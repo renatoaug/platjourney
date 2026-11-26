@@ -99,6 +99,40 @@ test('a public page names its one address for search engines when the app addres
   expect(withPageMeta(html, meta)).not.toContain('canonical')
 })
 
+test('each language has its own address, and every version names the others', async () => {
+  const byAddress = (url: string, language = 'pt-BR') =>
+    ({ url, headers: { 'accept-language': language } }) as unknown as IncomingMessage
+  // The address's language wins over the reader's.
+  const en = await pageMeta(byAddress('/title/game/7?lang=en', 'pt-BR'), '/title/game/7')
+  expect(en).toMatchObject({
+    title: 'Astro Bot platinum guide · PlatJourney',
+    lang: 'en',
+    language: 'en',
+  })
+  // An unknown one is ignored: the page follows the reader.
+  const plain = await pageMeta(byAddress('/title/game/7?lang=fr', 'pt-BR'), '/title/game/7')
+  expect(plain?.lang).toBeUndefined()
+  expect(plain?.language).toBe('pt-BR')
+
+  const html = `<html lang="pt-BR">${SHELL}</head>`
+  const out = withPageMeta(html, en, 'https://app.example')
+  expect(out).toContain('<html lang="en">')
+  expect(out).toContain('<link rel="canonical" href="https://app.example/title/game/7?lang=en">')
+  expect(out).toContain(
+    '<link rel="alternate" hreflang="pt-BR" href="https://app.example/title/game/7?lang=pt-BR">',
+  )
+  expect(out).toContain(
+    '<link rel="alternate" hreflang="en" href="https://app.example/title/game/7?lang=en">',
+  )
+  expect(out).toContain(
+    '<link rel="alternate" hreflang="x-default" href="https://app.example/title/game/7">',
+  )
+  // The plain address is its own canonical, the version that follows the reader.
+  expect(withPageMeta(html, plain, 'https://app.example')).toContain(
+    '<link rel="canonical" href="https://app.example/title/game/7">',
+  )
+})
+
 test('the app address comes from the request when none is set, and only from a plain host', () => {
   const r = (headers: Record<string, string>) => ({ headers }) as unknown as IncomingMessage
   expect(siteBase(r({ host: 'app.example', 'x-forwarded-proto': 'https' }))).toBe(

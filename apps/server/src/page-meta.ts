@@ -2,7 +2,14 @@ import type { IncomingMessage } from 'node:http'
 import { BOLD } from '../../../shared/bold.ts'
 import { config } from './config.ts'
 import type { Guide } from './guide.ts'
-import { defineMessages, fromAcceptLanguage, Language, translator } from './i18n.ts'
+import {
+  defineMessages,
+  fromAcceptLanguage,
+  isLocale,
+  Language,
+  type Locale,
+  translator,
+} from './i18n.ts'
 import { getGame } from './repository/game.ts'
 import { getGuide } from './repository/guide.ts'
 import { userByOnlineId } from './repository/user.ts'
@@ -71,7 +78,22 @@ export interface PageMeta {
   content?: string
   /** Where the page sits, from the top (`Guias de platina › Astro Bot`), as site-relative links. */
   trail?: { name: string; path: string }[]
+  /** The language the address asked for (`?lang=en`): the page is that language's version, and
+   * its canonical carries it. Without one, the page follows the reader's language. */
+  lang?: Locale
+  /** The language the page's text is in, for the document's `lang`. */
+  language?: Locale
 }
+
+/** The language an address asks for with `?lang=`, when it is one the app speaks. */
+function addressLanguage(url: string | undefined): Locale | undefined {
+  const lang = new URLSearchParams(url?.split('?')[1] ?? '').get('lang')
+  return isLocale(lang) ? lang : undefined
+}
+
+/** A page's address in one language's version: the plain one is the version that follows the reader. */
+const inLanguage = (path: string, lang?: Locale) =>
+  lang ? `${path}?lang=${encodeURIComponent(lang)}` : path
 
 const GAME_PAGE = /^\/title\/game\/(?:game:)?([\w-]{1,60})\/?$/
 const PROFILE_PAGE = /^\/profiles\/([A-Za-z0-9_-]{3,16})\/?$/
@@ -168,7 +190,15 @@ async function profilePage(t: T, name: string): Promise<PageMeta | null> {
 
 /** The preview of a public page, or null for any other address. */
 export async function pageMeta(req: IncomingMessage, raw: string): Promise<PageMeta | null> {
-  const t = translator(messages, fromAcceptLanguage(req.headers['accept-language']) ?? undefined)
+  // An address that names its language is that language's version, for search engines that index
+  // each one apart; any other follows the reader.
+  const lang = addressLanguage(req.url)
+  const language = lang ?? fromAcceptLanguage(req.headers['accept-language']) ?? Language.PtBR
+  const meta = await pageFor(translator(messages, language), raw)
+  return meta && { ...meta, language, ...(lang ? { lang } : {}) }
+}
+
+async function pageFor(t: T, raw: string): Promise<PageMeta | null> {
   // The app's own links once wrote the game's id encoded (`game%3A52189`): read as the same page.
   let path = raw
   try {
@@ -198,11 +228,20 @@ export function withPageMeta(html: string, meta: PageMeta | null, base?: string 
       .replace(/(<meta property="og:image" content=")[^"]*(")/, `$1${escapeHtml(meta.image)}$2`)
       // The app's picture is 1200×630; another one has its own size.
       .replace(/<meta property="og:image:(width|height|alt)"[^>]*>\n?/g, '')
+  if (meta.language) out = out.replace(/<html lang="[^"]*"/, `<html lang="${meta.language}"`)
   if (meta.canonical && base) {
-    const url = escapeHtml(`${base}${meta.canonical}`)
+    const url = escapeHtml(`${base}${inLanguage(meta.canonical, meta.lang)}`)
+    // Each language's version, and the plain address as the one that follows the reader.
+    const alternates = [
+      ...Object.values(Language).map(
+        (l) =>
+          `<link rel="alternate" hreflang="${l}" href="${escapeHtml(`${base}${inLanguage(meta.canonical as string, l)}`)}">`,
+      ),
+      `<link rel="alternate" hreflang="x-default" href="${escapeHtml(`${base}${meta.canonical}`)}">`,
+    ].join('\n')
     out = out.replace(
       '</head>',
-      `<link rel="canonical" href="${url}">\n<meta property="og:url" content="${url}">\n</head>`,
+      `<link rel="canonical" href="${url}">\n${alternates}\n<meta property="og:url" content="${url}">\n</head>`,
     )
   }
   if (meta.trail?.length && base)
