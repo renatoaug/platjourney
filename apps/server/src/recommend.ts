@@ -1,7 +1,14 @@
 import { ai } from './ai.ts'
 import { tagged } from './costs.ts'
 import { isDemo } from './demo.ts'
-import { DEFAULT_LOCALE, defineMessages, Language, type Locale, translator } from './i18n.ts'
+import {
+  DEFAULT_LOCALE,
+  defineMessages,
+  Language,
+  type Locale,
+  translator,
+  userLocale,
+} from './i18n.ts'
 import { aroundModel } from './plugins.ts'
 import type { TitleProgress } from './psn.ts'
 import { type Game, gameByName, gamesForTitles, getGame } from './repository/game.ts'
@@ -343,6 +350,8 @@ export async function recommendations(
         })),
         exclude: [...exclude],
         candidates,
+        // The profile and the reasons are written in the player's language.
+        locale: userLocale(user),
         // Already shown, the longest ago first: they come back only when the unseen run out.
         seen,
         // A game turned down before the player bought it says nothing about their taste now.

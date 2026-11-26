@@ -37,10 +37,17 @@ INSTRUCTIONS = (
     'without a reason only stays out of the picks. The player may also have said what they like '
     'and what to avoid, and set rules: they win over anything the library suggests, so the '
     'profile keeps what they said in its lists and no pick breaks a rule. '
-    'Write everything in Brazilian Portuguese, '
-    'second person, without the '
-    'player\'s grammatical gender (no "bem-vindo", "pronto", "campeão"; use neutral wording).'
+    "Write everything in {language}, second person, without the player's grammatical gender "
+    '(no "bem-vindo", "pronto", "campeão"; use neutral wording).'
 )
+
+# The language each app locale reads, for everything the player reads.
+LANGUAGES = {'pt-BR': 'Brazilian Portuguese', 'en': 'English'}
+
+
+def instructions_for(locale: str) -> str:
+    return INSTRUCTIONS.replace('{language}', LANGUAGES.get(locale, LANGUAGES['pt-BR']))
+
 
 SCHEMA: dict[str, Any] = {
     'type': 'object',
@@ -51,8 +58,8 @@ SCHEMA: dict[str, Any] = {
             'type': 'object',
             'additionalProperties': False,
             'required': ['summary', 'genres', 'traits', 'avoid'],
-            'description': 'What the library says about the player, written in pt-BR, '
-            'second person',
+            'description': 'What the library says about the player, in the language the '
+            'instructions ask, second person',
             'properties': {
                 'summary': {
                     'type': 'string',
@@ -176,6 +183,8 @@ class RecommendRequest(Wire):
     # Catalog games ("game:123") a similarity graph chose, best first: drawn before the vector
     # search, which only fills what they leave short.
     candidates: list[str] = Field(default_factory=list[str], max_length=MAX_GRAPH_CANDIDATES)
+    # The app's language for this player: the profile and the reasons are written in it.
+    locale: Literal['pt-BR', 'en'] = 'pt-BR'
 
     @field_validator('candidates')
     @classmethod
@@ -416,7 +425,7 @@ async def recommend(req: RecommendRequest) -> RecommendResponse:
     facts = {i: line for i, r in known.items() if (line := facts_line(r))}
     result = await llm.answer_json(
         'recommendations',
-        INSTRUCTIONS,
+        instructions_for(req.locale),
         build_input(req.library, found, req.dismissed, facts, req.preferences),
         SCHEMA,
     )

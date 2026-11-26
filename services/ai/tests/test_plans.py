@@ -158,6 +158,29 @@ async def test_plan_session_calls_the_model_as_before(monkeypatch: pytest.Monkey
     assert params['input'] == planner.plan_input(ctx(), 60)
 
 
+async def test_a_player_in_english_reads_the_plan_in_english(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[dict[str, Any]] = []
+
+    async def respond(**params: Any) -> Any:
+        calls.append(params)
+        return SimpleNamespace(output_text=json.dumps(PLAN))
+
+    monkeypatch.setattr(llm, 'respond', respond)
+    await planner.plan_session(ctx().model_copy(update={'locale': 'en'}), 60)
+    (params,) = calls
+    assert params['instructions'] == planner.INSTRUCTIONS + planner.LANGUAGE['en']
+    schema = params['text']['format']['schema']
+    assert 'English' in schema['properties']['summary']['description']
+    assert 'English' in schema['properties']['ifTimeLeft']['description']
+    # The trophy keeps the exact pt-BR name from the list: the app finds the trophy by it.
+    trophy = schema['properties']['steps']['items']['properties']['trophy']['description']
+    assert trophy == 'Exact pt-BR trophy name from the missing list'
+    # The Portuguese player's schema is the one it always was.
+    assert planner.schema_for('pt-BR') is planner.SCHEMA
+
+
 def test_plan_route(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[tuple[GameContext, float, list[str] | None]] = []
 
