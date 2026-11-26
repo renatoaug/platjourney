@@ -18,13 +18,16 @@ const isLocale = (v: unknown): v is Locale => (LOCALES as readonly string[]).inc
 export const fromLanguage = (tag: string | null | undefined): Locale =>
   tag?.toLowerCase().startsWith('pt') ? Language.PtBR : Language.En
 
-/** The user's saved setting, then what this browser chose before, then the browser's language. */
+/** The user's saved setting, then the language the address names (`?lang=en`, the version a
+ * search result links to), then what this browser chose before, then the browser's language. */
 export function resolveLocale(sources: {
   saved?: string | null
+  address?: string | null
   stored?: string | null
   language?: string | null
 }): Locale {
   if (isLocale(sources.saved)) return sources.saved
+  if (isLocale(sources.address)) return sources.address
   if (isLocale(sources.stored)) return sources.stored
   return fromLanguage(sources.language)
 }
@@ -47,7 +50,21 @@ function writeStored(locale: Locale) {
 
 const browserLanguage = () => (typeof navigator === 'undefined' ? null : navigator.language)
 
-let current: Locale = resolveLocale({ stored: readStored(), language: browserLanguage() })
+/** The language the page was opened in, from `?lang=`: read once, so the app keeps it while the
+ * visitor moves around without it in the address. Not saved: it is this visit's, not a choice. */
+const addressLanguage = (() => {
+  try {
+    return new URLSearchParams(location.search).get('lang')
+  } catch {
+    return null
+  }
+})()
+
+let current: Locale = resolveLocale({
+  address: addressLanguage,
+  stored: readStored(),
+  language: browserLanguage(),
+})
 const listeners = new Set<() => void>()
 
 function applyToDocument(locale: Locale) {
@@ -94,9 +111,17 @@ export function takePickedLocale(): boolean {
 
 /** After sign-in: the account's saved locale wins over the browser's guess. */
 export function applySavedLocale(saved: string | null | undefined): void {
-  setLocale(resolveLocale({ saved, stored: readStored(), language: browserLanguage() }), {
-    persist: isLocale(saved),
-  })
+  setLocale(
+    resolveLocale({
+      saved,
+      address: addressLanguage,
+      stored: readStored(),
+      language: browserLanguage(),
+    }),
+    {
+      persist: isLocale(saved),
+    },
+  )
 }
 
 export function subscribeLocale(listener: () => void): () => void {

@@ -184,6 +184,10 @@ describe('locale resolution', () => {
     expect(resolveLocale({ saved: 'fr', stored: 'xx', language: 'pt-PT' })).toBe('pt-BR')
     expect(resolveLocale({ language: 'de-DE' })).toBe('en')
     expect(resolveLocale({})).toBe('en')
+    // The address's language (a search result's version) wins over the browser, not the account.
+    expect(resolveLocale({ address: 'en', stored: 'pt-BR', language: 'pt-BR' })).toBe('en')
+    expect(resolveLocale({ saved: 'pt-BR', address: 'en' })).toBe('pt-BR')
+    expect(resolveLocale({ address: 'fr', language: 'pt-BR' })).toBe('pt-BR')
     expect(fromLanguage('PT')).toBe('pt-BR')
   })
 
