@@ -107,7 +107,7 @@ function gameId(url: URL): string | null {
 
 // A catalog game's page as anyone sees it before owning it: the trophies, the guide already
 // written and where to buy it. Asked by catalog id only.
-async function title({ res, url }: Visit) {
+async function title({ req, res, url }: Visit) {
   const id = gameId(url)
   if (!id) return json(res, 400, { error: 'game required' })
   const found = await getGame(id)
@@ -115,7 +115,7 @@ async function title({ res, url }: Visit) {
   const [game] = await withTints([found])
   const [list, stored] = await Promise.all([
     game.np_communication_ids.length ? catalogTrophies(game.np_communication_ids) : null,
-    getGuide<Parameters<typeof withPlayerSteps>[0]>(game.id),
+    getGuide<Parameters<typeof withPlayerSteps>[0]>(game.id, requestLocale(req)),
   ])
   const guide = await withPlayerSteps(stored ?? null, list?.trophies, list?.np)
   return json(res, 200, {
