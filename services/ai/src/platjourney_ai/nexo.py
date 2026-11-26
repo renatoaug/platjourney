@@ -192,6 +192,8 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
     shown = shown_progress(ctx)
     beginner = shown.progress < 20
     wanted = {f.lower() for f in focus or []}
+    # The focus comes in English (the deep guide's language); the guide names trophies in pt-BR.
+    wanted |= {t.name.lower() for t in ctx.trophies if t.name_en.lower() in wanted}
     asked = question.lower()
     earned = sorted(
         (t for t in ctx.trophies if t.earned), key=lambda t: t.earned_at or '', reverse=True
@@ -225,15 +227,18 @@ def lean_context(ctx: GameContext, focus: list[str] | None = None, question: str
     if ctx.hours_played is not None:
         estimate = f' (o guia estima ~{num(guide["hours"])}h)' if guide.get('hours') else ''
         parts.append(f'Tempo jogado: {num(ctx.hours_played)}h{estimate}')
-    # Where the player is comes from the latest trophies; older ones only need their names.
+
+    # Where the player is comes from the latest trophies; older ones only need their names. The
+    # latest also carry what PSN says each one asks, so "what was each one?" has an answer even
+    # for a story trophy the guide only places.
+    def got(i: int, t: Trophy) -> str:
+        when = f' ({t.earned_at[:10]})' if i < 5 and t.earned_at and recent(t.earned_at) else ''
+        what = f': {t.detail}' if i < EARNED_DETAILS and t.detail else ''
+        return f'{t.name}{when}{what}'
+
     parts.append(
         f'Conquistados ({len(earned)}), mais recentes primeiro: '
-        + '; '.join(
-            f'{t.name} ({t.earned_at[:10]})'
-            if i < 5 and t.earned_at and recent(t.earned_at)
-            else t.name
-            for i, t in enumerate(earned)
-        )
+        + '; '.join(got(i, t) for i, t in enumerate(earned))
     )
     parts.append(f'Faltando ({len(missing)}):')
     for t in missing:
@@ -741,6 +746,8 @@ def natural_notes(guide: dict[str, Any], names: list[str]) -> list[str]:
 
 
 RECENT_DAYS = 30
+# How many of the latest earned trophies carry their PSN description in the context.
+EARNED_DETAILS = 10
 
 
 class InProgress(Wire):

@@ -55,7 +55,7 @@ def test_context_lists_progress_earned_and_missing() -> None:
         [
             'Jogo: Days Gone (PS4) — 20% — 1/3 troféus',
             'Conquistados (1), mais recentes primeiro: '
-            f'Primeiro Passo ({date.today().isoformat()})',
+            f'Primeiro Passo ({date.today().isoformat()}): Sobreviva à horda',
             'Faltando (2):',
             '- [gold] Sobrevivente (Survivor): Sobreviva à horda — progresso 3/10',
             '- [gold] Colecionador (Collector): Ache tudo',
@@ -366,6 +366,9 @@ def test_a_question_about_a_natural_trophy_gets_where_the_story_hands_it_over() 
     # Not placed: the roadmap phase that lists it.
     without = guide | {'tricks': []}
     text = nexo.lean_context(context(guide=without), [], 'e o Colecionador?')
+    assert '- Colecionador: vem com a história, na fase "Fase 1" do roteiro.' in text
+    # The focus names it in English, as the deep guide does: the pt-BR guide line still comes.
+    text = nexo.lean_context(context(guide=without), ['Collector'], 'e esse?')
     assert '- Colecionador: vem com a história, na fase "Fase 1" do roteiro.' in text
 
 
