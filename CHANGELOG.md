@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.104.0](https://github.com/renatoaug/platjourney/compare/v0.103.3...v0.104.0) (2026-11-26)
+
+### Features
+
+* **server:** a notice that a game the player opened without a guide now has one ([#242](https://github.com/renatoaug/platjourney/issues/242)) ([fd30cfe](https://github.com/renatoaug/platjourney/commit/fd30cfea6e5e1cc04491b0369a70625c4b7a83b3))
+
 ## [0.103.3](https://github.com/renatoaug/platjourney/compare/v0.103.2...v0.103.3) (2026-11-25)
 
 ### Bug Fixes
