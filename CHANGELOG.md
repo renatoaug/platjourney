@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.104.1](https://github.com/renatoaug/platjourney/compare/v0.104.0...v0.104.1) (2026-11-26)
+
+### Bug Fixes
+
+* **db:** the guide notice kind is allowed in tips and notifications ([#243](https://github.com/renatoaug/platjourney/issues/243)) ([9f1311a](https://github.com/renatoaug/platjourney/commit/9f1311a9a02b469cd5732f1b8be28bfded4c7ee2))
+
 ## [0.104.0](https://github.com/renatoaug/platjourney/compare/v0.103.3...v0.104.0) (2026-11-26)
 
 ### Features
