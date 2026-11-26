@@ -3,6 +3,7 @@ import { tagged } from './costs.ts'
 import { ensureDeepGuide } from './deepguide.ts'
 import { isDemo, storedProgress, trophiesFor } from './demo.ts'
 import { ensureGuide, type Guide } from './guide.ts'
+import { userLocale } from './i18n.ts'
 import { library } from './library.ts'
 import type { GameContext } from './nexo.ts'
 import { withPlayerSteps } from './player-steps.ts'
@@ -32,7 +33,7 @@ export const dropChat = (id: string) => chatContexts.delete(id)
 // With automatic research off, the stored guide is used as it is and a missing one is only listed.
 async function guideFor(user: User, title: TitleProgress, ctxTrophies: GameContext['trophies']) {
   const game = await gameForTitle(title)
-  const cached = await getGuide<Guide>(game.id)
+  const cached = await getGuide<Guide>(game.id, userLocale(user))
   // The demo player reads the stored guide and never asks for one.
   if (isDemo(user)) return cached
   if (!config.automatic.research) {
@@ -147,7 +148,7 @@ async function catalogContext(user: User, game: Game): Promise<GameContext | nul
     },
     lastUpdated: '',
   }
-  const guide = await getGuide<Guide>(game.id)
+  const guide = await getGuide<Guide>(game.id, userLocale(user))
   if (!guide && !isDemo(user)) await requestGuide(game.id, user.id)
   const ctx: GameContext = {
     game,

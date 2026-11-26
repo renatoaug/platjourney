@@ -158,10 +158,10 @@ function guideContent(t: T, name: string, summary: string, guide: Partial<Guide>
   ].join('')
 }
 
-async function gamePage(t: T, id: string): Promise<PageMeta | null> {
+async function gamePage(t: T, id: string, language: Locale): Promise<PageMeta | null> {
   const found = await getGame(`game:${id}`)
   if (!found) return null
-  const guide = await getGuide<Partial<Guide>>(found.id)
+  const guide = await getGuide<Partial<Guide>>(found.id, language)
   const canonical = `/title/game/${encodeURIComponent(found.id.replace(/^game:/, ''))}`
   const description = guideFacts(t, found.name, guide)
   return {
@@ -194,11 +194,11 @@ export async function pageMeta(req: IncomingMessage, raw: string): Promise<PageM
   // each one apart; any other follows the reader.
   const lang = addressLanguage(req.url)
   const language = lang ?? fromAcceptLanguage(req.headers['accept-language']) ?? Language.PtBR
-  const meta = await pageFor(translator(messages, language), raw)
+  const meta = await pageFor(translator(messages, language), raw, language)
   return meta && { ...meta, language, ...(lang ? { lang } : {}) }
 }
 
-async function pageFor(t: T, raw: string): Promise<PageMeta | null> {
+async function pageFor(t: T, raw: string, language: Locale): Promise<PageMeta | null> {
   // The app's own links once wrote the game's id encoded (`game%3A52189`): read as the same page.
   let path = raw
   try {
@@ -207,7 +207,7 @@ async function pageFor(t: T, raw: string): Promise<PageMeta | null> {
   if (/^\/guides\/?$/.test(path))
     return { title: t('guidesTitle'), description: t('guidesDescription'), canonical: '/guides' }
   const game = path.match(GAME_PAGE)?.[1]
-  if (game) return gamePage(t, game)
+  if (game) return gamePage(t, game, language)
   const name = path.match(PROFILE_PAGE)?.[1]
   return name ? profilePage(t, name) : null
 }

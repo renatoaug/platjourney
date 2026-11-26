@@ -2,6 +2,7 @@ import { trophiesFor } from '../demo.ts'
 import { getCurrent } from '../game-context.ts'
 import type { Guide } from '../guide.ts'
 import { json, readBody } from '../http.ts'
+import { userLocale } from '../i18n.ts'
 import { trophyHelp } from '../nexo.ts'
 import { currentPlan, discardPlan, PLAN_REASONS, type PlanReason, planSession } from '../planner.ts'
 import { hours, playtimes } from '../playtime.ts'
@@ -24,7 +25,7 @@ async function planContext(a: Api, np: unknown) {
   const [trophies, groups, guide] = await Promise.all([
     trophiesFor(title, a.me),
     loadGroups(title, a.me),
-    getGuide<Guide>(game.id),
+    getGuide<Guide>(game.id, userLocale(a.me)),
   ])
   return { game, title, trophies, groups, guide }
 }

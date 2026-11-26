@@ -11,9 +11,29 @@ test('a stored guide is read by its game', async () => {
   const one = spyOn(db, 'one').mockResolvedValue({ guide: { hours: 30 } })
   expect(await getGuide<{ hours: number }>('game:7')).toEqual({ hours: 30 })
   expect(one.mock.calls[0]).toEqual([
-    'SELECT guide FROM guide WHERE game = $game LIMIT 1',
+    'SELECT guide, guide_en FROM guide WHERE game = $game LIMIT 1',
     { game },
   ])
+})
+
+test('a reader in English gets the translation over the guide, when there is one', async () => {
+  spyOn(db, 'one').mockResolvedValue({
+    guide: { hours: 30, overview: 'Tranquilo.', early_tips: ['a'] },
+    guide_en: { overview: 'Easy.', early_tips: ['b'] },
+  })
+  expect(await getGuide('game:7', 'en')).toEqual({ hours: 30, overview: 'Easy.', earlyTips: ['b'] })
+  // Portuguese, or no language (what matches trophies by name), keeps the guide as written.
+  expect(await getGuide('game:7', 'pt-BR')).toEqual({
+    hours: 30,
+    overview: 'Tranquilo.',
+    earlyTips: ['a'],
+  })
+  expect(await getGuide('game:7')).toMatchObject({ overview: 'Tranquilo.' })
+})
+
+test('a reader in English gets the Portuguese guide while it has no translation', async () => {
+  spyOn(db, 'one').mockResolvedValue({ guide: { overview: 'Tranquilo.' } })
+  expect(await getGuide('game:7', 'en')).toEqual({ overview: 'Tranquilo.' })
 })
 
 test('a game without a guide reads as undefined', async () => {

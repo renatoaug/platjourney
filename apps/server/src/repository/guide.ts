@@ -1,13 +1,21 @@
 import { camelKeys, one, plain, q, snakeKeys } from '../db.ts'
+import { Language, type Locale } from '../i18n.ts'
 import { gameRef } from './game.ts'
 
-export async function getGuide<T>(game: string): Promise<T | undefined> {
+/** A game's guide. In English when the reader's language is English and the guide has been
+ * translated; the Portuguese one otherwise (and for anything that matches trophies by name, which
+ * passes no language). The translation's trophy fields keep the pt-BR names, so both match alike. */
+export async function getGuide<T>(game: string, locale?: Locale): Promise<T | undefined> {
   const row = plain(
-    await one<{ guide: T }>('SELECT guide FROM guide WHERE game = $game LIMIT 1', {
-      game: gameRef(game),
-    }),
+    await one<{ guide?: T; guide_en?: Partial<T> }>(
+      'SELECT guide, guide_en FROM guide WHERE game = $game LIMIT 1',
+      { game: gameRef(game) },
+    ),
   )
-  return row?.guide ? camelKeys(row.guide) : undefined
+  if (!row?.guide) return undefined
+  const read =
+    locale === Language.En && row.guide_en ? { ...row.guide, ...row.guide_en } : row.guide
+  return camelKeys(read)
 }
 
 export async function saveGuide(game: string, guide: unknown): Promise<void> {

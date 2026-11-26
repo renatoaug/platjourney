@@ -5,7 +5,7 @@ import { isDemo, trophiesFor } from '../demo.ts'
 import { todaysFocus } from '../focus.ts'
 import { ensureGuide, GUIDE_VERSION, type Guide } from '../guide.ts'
 import { json, readBody } from '../http.ts'
-import { translator } from '../i18n.ts'
+import { translator, userLocale } from '../i18n.ts'
 import { storeFor } from '../interests.ts'
 import { library } from '../library.ts'
 import { withPlayerSteps } from '../player-steps.ts'
@@ -58,7 +58,7 @@ async function guideOrBuild(
   game: Game,
   build: () => Promise<Guide>,
 ): Promise<{ guide: Guide | null; queued: boolean }> {
-  const cached = await getGuide<Guide>(game.id)
+  const cached = await getGuide<Guide>(game.id, userLocale(user))
   // The demo shows the guides it has and never asks for one.
   if (isDemo(user)) return { guide: cached ?? null, queued: false }
   if (cached && (cached.version ?? 1) >= GUIDE_VERSION) return { guide: cached, queued: false }
