@@ -4,6 +4,9 @@
 DEFINE TABLE IF NOT EXISTS guide SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS game ON guide TYPE record<game>;
 DEFINE FIELD IF NOT EXISTS guide ON guide TYPE option<object> FLEXIBLE;
+-- The guide in English, for players who use the app in English: the same object, its text
+-- translated and every trophy field kept with the pt-BR name the app matches trophies by.
+DEFINE FIELD IF NOT EXISTS guide_en ON guide TYPE option<object> FLEXIBLE;
 DEFINE FIELD IF NOT EXISTS fetched_at ON guide TYPE datetime DEFAULT time::now();
 DEFINE FIELD IF NOT EXISTS indexed_at ON guide TYPE option<datetime>;
 DEFINE FIELD IF NOT EXISTS trophy_total ON guide TYPE option<int>;
@@ -12,3 +15,8 @@ DEFINE FIELD IF NOT EXISTS passages ON guide TYPE int DEFAULT 0;
 DEFINE FIELD IF NOT EXISTS created_at ON guide TYPE datetime DEFAULT time::now() READONLY;
 DEFINE FIELD IF NOT EXISTS updated_at ON guide TYPE datetime DEFAULT time::now() VALUE time::now();
 DEFINE INDEX IF NOT EXISTS guide_game ON guide FIELDS game UNIQUE;
+-- A change to the guide leaves its translation out of date: it is dropped, and the English reader
+-- gets the Portuguese guide until it is translated again.
+DEFINE EVENT IF NOT EXISTS guide_en_stale ON guide
+  WHEN $event = 'UPDATE' AND $before.guide != $after.guide AND $after.guide_en != NONE
+  THEN (UPDATE $after.id SET guide_en = NONE);
