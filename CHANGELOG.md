@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.105.0](https://github.com/renatoaug/platjourney/compare/v0.104.1...v0.105.0) (2026-11-26)
+
+### Features
+
+* **web:** each language has its own address for public pages ([#244](https://github.com/renatoaug/platjourney/issues/244)) ([2d211dc](https://github.com/renatoaug/platjourney/commit/2d211dc8fb935d5b8be537f4caefc446941bd6ab))
+
 ## [0.104.1](https://github.com/renatoaug/platjourney/compare/v0.104.0...v0.104.1) (2026-11-26)
 
 ### Bug Fixes
