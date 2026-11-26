@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.107.1](https://github.com/renatoaug/platjourney/compare/v0.107.0...v0.107.1) (2026-11-26)
+
+### Bug Fixes
+
+* **ai:** nexo knows what each recent trophy asked and matches English focus to the guide ([#247](https://github.com/renatoaug/platjourney/issues/247)) ([ca3d567](https://github.com/renatoaug/platjourney/commit/ca3d567b8bef61092c1f52742ec964a2b48cc241))
+
 ## [0.107.0](https://github.com/renatoaug/platjourney/compare/v0.106.0...v0.107.0) (2026-11-26)
 
 ### Features
