@@ -1,7 +1,7 @@
 import './env.ts'
 import { afterEach, expect, mock, spyOn, test } from 'bun:test'
 import * as aiModule from '../src/ai.ts'
-import { followUpAnswer, sendFollowUp } from '../src/followups.ts'
+import { followUpAnswer, sendFollowUp, sendGuideNotice } from '../src/followups.ts'
 import * as contexts from '../src/game-context.ts'
 import * as notify from '../src/notify.ts'
 import * as plugins from '../src/plugins.ts'
@@ -62,4 +62,21 @@ test('a sent answer is a notice, joins the conversation and closes the question'
   expect(mark).toHaveBeenCalledWith(waiting)
   spyOn(users, 'getUser').mockResolvedValue(undefined)
   expect(sendFollowUp(waiting, 'x')).rejects.toThrow('no player')
+})
+
+test('a guide notice names its game, or its games, and goes out on every channel', async () => {
+  const { user } = setup(null)
+  const tip = spyOn(activity, 'logTip').mockResolvedValue()
+  const deliver = spyOn(notify, 'deliver').mockResolvedValue()
+  await sendGuideNotice('user:ana', ['game:7'], 'O guia chegou.')
+  expect(tip).toHaveBeenCalledWith('user:ana', 'guide', 'O guia chegou.', 'game:7', [])
+  await sendGuideNotice('user:ana', ['game:7', 'game:8'], 'Dois guias.')
+  expect(tip).toHaveBeenLastCalledWith('user:ana', 'guide', 'Dois guias.', undefined, [
+    'game:7',
+    'game:8',
+  ])
+  expect(deliver).toHaveBeenCalledWith(user, 'O guia chegou.')
+  expect(sendGuideNotice('user:ana', [], 'x')).rejects.toThrow('at least one game')
+  spyOn(users, 'getUser').mockResolvedValue(undefined)
+  expect(sendGuideNotice('user:ana', ['game:7'], 'x')).rejects.toThrow('no player')
 })

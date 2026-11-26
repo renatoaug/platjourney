@@ -40,3 +40,24 @@ export async function sendFollowUp(w: WaitingQuestion, text: string): Promise<vo
   await deliver(user, text)
   await markAnswered(w)
 }
+
+/** Tells a player that games they opened while they had no guide now have one: a `guide` notice on
+ * every channel, naming the game, or the games when there are several. Sent by whoever fills the
+ * guides (`scripts/guide-notice.ts`), after reviewing the text. */
+export async function sendGuideNotice(
+  userId: string,
+  games: string[],
+  text: string,
+): Promise<void> {
+  const user = await getUser(userId)
+  if (!user) throw new Error(`no player ${userId}`)
+  if (!games.length) throw new Error('a guide notice names at least one game')
+  await logTip(
+    user.id,
+    'guide',
+    text,
+    games.length === 1 ? games[0] : undefined,
+    games.length > 1 ? games : [],
+  )
+  await deliver(user, text)
+}
