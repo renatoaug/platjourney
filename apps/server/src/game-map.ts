@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { config } from './config.ts'
 
-export interface MapCategory {
+interface MapCategory {
   id: string
   /** The trophy these spots are for (its English name). */
   trophy?: string
@@ -14,7 +14,7 @@ export interface MapCategory {
   icon: string
 }
 
-export interface MapPoint {
+interface MapPoint {
   id: string
   category: string
   lng: number

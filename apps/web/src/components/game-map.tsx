@@ -9,7 +9,7 @@ import { Sk } from '../ui/skeleton'
 import { EmptyState, ErrorState } from '../ui/states'
 import './game-map.css'
 
-export const messages = defineMessages({
+const messages = defineMessages({
   [Language.PtBR]: {
     title: 'Mapa',
     lead: '{count, plural, one {# ponto} other {# pontos}} para coletar',
@@ -112,7 +112,7 @@ export function useGameMap(game: string | undefined) {
   return { loaded, retry: () => setAttempt((n) => n + 1) }
 }
 
-export const categoryName = (c: MapCategory) => c.name[getLocale()] ?? c.name[Language.PtBR] ?? c.id
+const categoryName = (c: MapCategory) => c.name[getLocale()] ?? c.name[Language.PtBR] ?? c.id
 
 /** A spot's text in the page's language, else pt-BR, else the one text it has. */
 const inLanguage = (text: string | Record<string, string> | undefined) =>
