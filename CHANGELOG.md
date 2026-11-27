@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.108.0](https://github.com/renatoaug/platjourney/compare/v0.107.1...v0.108.0) (2026-11-27)
+
+### Features
+
+* **web:** interactive game maps with the trophy collectibles ([#248](https://github.com/renatoaug/platjourney/issues/248)) ([448663d](https://github.com/renatoaug/platjourney/commit/448663d6b3b7dd592335b697c059f530b9c61c65))
+
 ## [0.107.1](https://github.com/renatoaug/platjourney/compare/v0.107.0...v0.107.1) (2026-11-26)
 
 ### Bug Fixes
