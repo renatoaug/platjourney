@@ -6,6 +6,7 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-csp-worker?url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef } from 'react'
 import type { GameMapData, MapPoint } from './game-map'
+import { type MarkerLike, type Spots, syncMarkers } from './game-map-pins'
 
 maplibregl.setWorkerUrl(workerUrl)
 
@@ -17,80 +18,6 @@ const FIT_PADDING = { top: 100, bottom: 16, left: 60, right: 60 }
 
 const css = (name: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-
-function pin(icon: string, label: string) {
-  const el = document.createElement('button')
-  el.type = 'button'
-  el.className = 'map-pin'
-  el.setAttribute('aria-label', label)
-  // The sprite's symbol, like <Icon>; the marker lives outside React.
-  el.innerHTML = `<span class="map-pin-head"><svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-${icon}"></use></svg></span>`
-  return el
-}
-
-type Entry = { marker: maplibregl.Marker; el: HTMLButtonElement }
-type Shown = {
-  points: MapPoint[]
-  done: Set<string>
-  selected: string | null
-  icons: Record<string, string>
-}
-
-/** The spots the source has on screen now, by id. Only those get a pin: hundreds of HTML
- * markers across the whole world would make panning stutter. */
-function onScreen(m: maplibregl.Map) {
-  const want = new Map<string, [number, number]>()
-  for (const f of m.querySourceFeatures('spots')) {
-    const id = (f.properties as { id?: string }).id
-    if (id) want.set(id, (f.geometry as GeoJSON.Point).coordinates as [number, number])
-  }
-  return want
-}
-
-function element(
-  m: maplibregl.Map,
-  id: string,
-  lngLat: [number, number],
-  point: MapPoint | undefined,
-  icons: Record<string, string>,
-  select: (id: string | null) => void,
-): Entry {
-  const el = pin(icons[point?.category ?? ''] ?? 'map', point?.title ?? point?.category ?? '')
-  el.addEventListener('click', (e) => {
-    e.stopPropagation()
-    select(id)
-  })
-  const marker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(lngLat).addTo(m)
-  return { marker, el }
-}
-
-/** The HTML markers in step with the source: new ones added, gone ones removed, pins restyled. */
-function syncMarkers(
-  m: maplibregl.Map,
-  markers: Map<string, Entry>,
-  shown: Shown,
-  select: (id: string | null) => void,
-) {
-  const byId = new Map(shown.points.map((p) => [p.id, p]))
-  const want = onScreen(m)
-  for (const [id, { marker }] of markers)
-    if (!want.has(id)) {
-      marker.remove()
-      markers.delete(id)
-    }
-  for (const [id, lngLat] of want) {
-    const point = byId.get(id)
-    let entry = markers.get(id)
-    if (!entry) {
-      entry = element(m, id, lngLat, point, shown.icons, select)
-      markers.set(id, entry)
-    }
-    entry.el.classList.toggle('is-done', shown.done.has(id))
-    entry.el.classList.toggle('is-approx', !!point?.approx)
-    entry.el.classList.toggle('is-selected', shown.selected === id)
-    entry.el.setAttribute('aria-pressed', String(shown.selected === id))
-  }
-}
 
 export default function GameMapCanvas({
   game,
@@ -114,7 +41,7 @@ export default function GameMapCanvas({
 }) {
   const box = useRef<HTMLDivElement>(null)
   const engine = useRef<maplibregl.Map | null>(null)
-  const markers = useRef(new Map<string, { marker: maplibregl.Marker; el: HTMLButtonElement }>())
+  const markers = useRef(new Map<string, { marker: MarkerLike; el: HTMLButtonElement }>())
 
   // The latest handler, read by the map's own click listener, which is set up once.
   const select = useRef(onSelect)
@@ -195,7 +122,11 @@ export default function GameMapCanvas({
   sync.current = () => {
     const m = engine.current
     if (!m?.getSource('spots') || !m.isSourceLoaded('spots')) return
-    syncMarkers(m, markers.current, state.current, (id) => select.current(id))
+    syncMarkers(m as unknown as Spots, markers.current, state.current, {
+      select: (id) => select.current(id),
+      place: (el, lngLat) =>
+        new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(lngLat).addTo(m),
+    })
   }
 
   // The spots as a source, kept in step with the filters.
