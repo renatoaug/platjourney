@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.109.1](https://github.com/renatoaug/platjourney/compare/v0.109.0...v0.109.1) (2026-11-27)
+
+### Bug Fixes
+
+* **server:** a game's map opens without an account ([#253](https://github.com/renatoaug/platjourney/issues/253)) ([7b236ee](https://github.com/renatoaug/platjourney/commit/7b236ee58ff9410915feacfa3557767333904cef))
+
 ## [0.109.0](https://github.com/renatoaug/platjourney/compare/v0.108.2...v0.109.0) (2026-11-27)
 
 ### Features
