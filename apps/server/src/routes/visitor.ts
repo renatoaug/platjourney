@@ -21,7 +21,8 @@ import { GAME_ROUTES, guides } from './games.ts'
 
 // What someone without an account may read: the app's public side, which a shared link, a search
 // result or the landing opens. A player's profile (when they show up in the community), a game's
-// page with its stored guide, the guides, the catalog search, the releases and the community.
+// page with its stored guide and its map (the marks of what was collected stay on the visitor's
+// device), the guides, the catalog search, the releases and the community.
 // Only reads: no guide is researched, no game is looked up on IGDB, and a profile is fetched from
 // PSN at most once every few minutes.
 
@@ -144,6 +145,8 @@ const VISITOR_ROUTES: Record<string, VisitorHandler> = {
   'GET /api/community/rankings': asReader(COMMUNITY_ROUTES['GET /api/community/rankings']),
   'GET /api/releases': asReader(GAME_ROUTES['GET /api/releases']),
   'GET /api/games/search': asReader(GAME_ROUTES['GET /api/games/search']),
+  'GET /api/game-map': asReader(GAME_ROUTES['GET /api/game-map']),
+  'GET /api/game-map/tile': asReader(GAME_ROUTES['GET /api/game-map/tile']),
   'GET /api/games/similar': async ({ res, url }) => {
     const game = gameId(url)
     if (!game) return json(res, 400, { error: 'game required' })

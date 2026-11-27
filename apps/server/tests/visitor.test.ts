@@ -5,6 +5,7 @@ import { Readable } from 'node:stream'
 import * as auth from '../src/auth.ts'
 import * as browse from '../src/browse.ts'
 import * as communityModule from '../src/community.ts'
+import * as gameMap from '../src/game-map.ts'
 import { GUIDE_VERSION, type Guide } from '../src/guide.ts'
 import * as interests from '../src/interests.ts'
 import * as lib from '../src/library.ts'
@@ -139,6 +140,8 @@ test('everything else still needs an account', async () => {
     ['GET', '/api/me'],
     ['POST', '/api/goals'],
     ['GET', '/api/community'],
+    ['GET', '/api/game-map/collected?game=52189'],
+    ['POST', '/api/game-map/collected'],
   ])
     expect(await send(method, path, method === 'POST' ? {} : undefined)).toMatchObject({
       status: 401,
@@ -177,4 +180,10 @@ test('a visitor searches the catalog and sees the releases', async () => {
   spyOn(games, 'releasesBetween').mockResolvedValue([])
   expect((await send('GET', '/api/games/search?q=astro')).body).toEqual([])
   expect((await send('GET', '/api/releases')).body).toEqual([])
+})
+
+test("a visitor opens a game's map; the marks of what was collected need an account", async () => {
+  const map = { categories: [], points: [] }
+  spyOn(gameMap, 'gameMap').mockResolvedValue(map as never)
+  expect(await send('GET', '/api/game-map?game=52189')).toMatchObject({ status: 200, body: map })
 })
