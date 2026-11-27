@@ -106,9 +106,16 @@ The AI service can run on your own machine, for free, with any server that speak
 - Calls are still recorded in `llm_call`, at $0.
 - After changing the embedding model, run `bun run embed --all`: vectors from different models do not compare.
 
+## Claude
+
+The features can run on Claude too, through the Anthropic API: `ANTHROPIC_API_KEY`, and `AI_PROVIDER=anthropic` or `AI_MODEL_<FEATURE>=anthropic[:model]`. Without a model of its own a feature runs `ANTHROPIC_MODEL` (`claude-opus-5-5`); the `search` step runs `claude-haiku-5-5`.
+
+- Web search is Anthropic's own. Opus and Sonnet rerun a refused request on another model by themselves (server-side fallback); Haiku has no fallback.
+- Embeddings, moderation and the chat's speech to text stay on OpenAI, so `OPENAI_API_KEY` is still needed.
+
 ## A model per feature
 
-`AI_MODEL_<FEATURE>=provider` or `provider:model` overrides `AI_PROVIDER` for one feature, e.g. `AI_MODEL_CHAT=openai:gpt-5.5`, `AI_MODEL_TIP=local`.
+`AI_MODEL_<FEATURE>=provider` or `provider:model` overrides `AI_PROVIDER` for one feature, e.g. `AI_MODEL_CHAT=openai:gpt-5.5`, `AI_MODEL_TIP=anthropic:claude-haiku-5-5`, `AI_MODEL_SERVER_CHECK=local`.
 
 | Feature | What it is |
 |---|---|
@@ -120,9 +127,9 @@ The AI service can run on your own machine, for free, with any server that speak
 | `guide_index` | Finding deep guide pages |
 | `server_check` | Online server checks |
 | `judge` | The model that grades Nexo's answers in the evals ([evals](08-evals.md)) |
-| `search` | Putting the player's question in English before the deep guide search ([retrieval](07-nexo.md)); unset on OpenAI it is `gpt-5.4-nano` |
+| `search` | Putting the player's question in English before the deep guide search ([retrieval](07-nexo.md)); unset it is `gpt-5.4-nano` on OpenAI and `claude-haiku-5-5` on Anthropic |
 
-Web search follows each feature's provider. An OpenAI model needs its price in `services/ai/src/platjourney_ai/costs.py`, or its calls are recorded at $0.
+Web search follows each feature's provider. An OpenAI or Claude model needs its price in `services/ai/src/platjourney_ai/costs.py`, or its calls are recorded at $0.
 
 ## Accounts and access
 

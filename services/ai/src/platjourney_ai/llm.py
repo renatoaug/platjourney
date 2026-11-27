@@ -1,8 +1,10 @@
 """Every model call goes through here, so its tokens and web searches are recorded.
 
-Three providers: OpenAI (the Responses API, with web search), a local server that speaks the
-OpenAI API (chat completions and embeddings) and, for development only, the Codex CLI signed in
-on this machine. Features call the same functions either way.
+Four providers: OpenAI (the Responses API, with web search), Anthropic (the Messages API, with
+web search), a local server that speaks the OpenAI API (chat completions and embeddings) and, for
+development only, the Codex CLI signed in on this machine. Features call the same functions
+either way, written for the Responses API; the other providers translate. Embeddings, moderation
+and speech to text stay on OpenAI whatever the feature's provider.
 """
 
 import asyncio
@@ -15,6 +17,8 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 import httpx
+from anthropic import AsyncAnthropic
+from anthropic.types.beta import BetaMessage
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion
 from openai.types.responses import Response
@@ -25,6 +29,9 @@ from .costs import LOCAL_PREFIX, Usage, current_tag, record_call
 # Research calls stream web results and can run for minutes; a hung request must
 # not sit for the SDK's default 10 min x 3 attempts.
 openai = AsyncOpenAI(api_key=settings.openai_api_key or 'unset', timeout=5 * 60, max_retries=1)
+anthropic = AsyncAnthropic(
+    api_key=settings.anthropic_api_key or 'unset', timeout=5 * 60, max_retries=1
+)
 # A local model on a laptop can take minutes on a long context too; nothing to retry.
 local = AsyncOpenAI(
     base_url=settings.local_base_url, api_key='local', timeout=10 * 60, max_retries=0
@@ -42,13 +49,15 @@ class Reply:
 
 @dataclass(frozen=True)
 class Route:
-    provider: Literal['openai', 'local', 'codex']
+    provider: Literal['openai', 'anthropic', 'local', 'codex']
     model: str
 
 
 # Steps that run inside another feature's request with a model of their own (the cost still goes
 # to that request's tag), and the OpenAI model each uses when its AI_MODEL_<STEP> is unset.
 STEP_MODELS = {'search': 'gpt-5.4-nano'}
+# The same on Anthropic: a small model for a one-line job.
+ANTHROPIC_STEP_MODELS = {'search': 'claude-haiku-5-5'}
 
 
 def route(step: str | None = None) -> Route:
@@ -61,11 +70,16 @@ def route(step: str | None = None) -> Route:
     default = STEP_MODELS.get(step or '', settings.openai_model)
     if (provider or settings.ai_provider) == 'codex':
         return Route('codex', model or default)
+    if (provider or settings.ai_provider) == 'anthropic':
+        return Route(
+            'anthropic',
+            model or ANTHROPIC_STEP_MODELS.get(step or '', settings.anthropic_model),
+        )
     return Route('openai', model or default)
 
 
 def web_search_on() -> bool:
-    return settings.ai_web_search and route().provider in ('openai', 'codex')
+    return settings.ai_web_search and route().provider in ('openai', 'anthropic', 'codex')
 
 
 def with_buddy_name(params: dict[str, Any]) -> dict[str, Any]:
@@ -80,7 +94,7 @@ def with_buddy_name(params: dict[str, Any]) -> dict[str, Any]:
 async def respond(step: str | None = None, search: bool = False, **params: Any) -> Reply:
     """A Responses API call (instructions, input, tools, reasoning, text); the model comes
     from the feature's route, or the step's. Web search stays off unless the instance turns it on,
-    or `search` asks for it on this one call (only OpenAI can search)."""
+    or `search` asks for it on this one call (a local model never searches)."""
     chosen = route(step)
     params = with_buddy_name(params)
     if chosen.provider == 'local':
@@ -93,6 +107,8 @@ async def respond(step: str | None = None, search: bool = False, **params: Any) 
         params = {k: v for k, v in params.items() if k not in ('tools', 'tool_choice')} | (
             {'tools': tools} if tools else {}
         )
+    if chosen.provider == 'anthropic':
+        return await _respond_with_anthropic(params, chosen.model)
     # The pages a search opened only come back when asked for.
     tools = cast(list[dict[str, Any]], params.get('tools') or [])
     if any(t.get('type') == 'web_search' for t in tools):
@@ -117,6 +133,112 @@ async def respond(step: str | None = None, search: bool = False, **params: Any) 
         searches=sum(1 for item in response.output if item.type == 'web_search_call'),
         urls=cited_urls(response),
     )
+
+
+# Claude models that rerun a refused request on another model by themselves (the API's
+# server-side fallback); a Haiku has none and a refusal comes back as one.
+FALLBACK_MODELS = ('claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-2')
+FALLBACK_BETA = 'server-side-fallback-2026-07-01'
+# The web search with dynamic filtering; Haiku only has the basic one.
+WEB_SEARCH_TOOL = {'type': 'web_search_20260209', 'name': 'web_search'}
+BASIC_WEB_SEARCH_TOOL = {'type': 'web_search_20250305', 'name': 'web_search'}
+# The searches a long research call may need: the server pauses its own loop after 10 steps and
+# the request is sent again to resume it.
+MAX_RESUMES = 3
+# Effort names the Responses API takes that the Messages API does not.
+EFFORT = {'none': 'low', 'minimal': 'low'}
+# Forcing a tool is refused by the current Claude models: the instructions ask for it instead.
+MUST_SEARCH = '\nSearch the web before answering.'
+
+
+def anthropic_request(params: dict[str, Any], model: str) -> dict[str, Any]:
+    """A Responses API request (instructions, input, tools, tool_choice, reasoning, text,
+    max_output_tokens) as a Messages API one."""
+    system = str(params.get('instructions') or '')
+    tools = cast(list[dict[str, Any]], params.get('tools') or [])
+    searching = any(t.get('type') == 'web_search' for t in tools)
+    choice = cast(dict[str, Any], params.get('tool_choice') or {})
+    if searching and choice.get('type') == 'web_search':
+        system += MUST_SEARCH
+    turns = [m for m in chat_messages(params) if m['role'] != 'system']
+    request: dict[str, Any] = {
+        'model': model,
+        'max_tokens': params.get('max_output_tokens') or 16000,
+        'messages': turns,
+    }
+    if system:
+        request['system'] = system
+    if searching:
+        basic = model.startswith('claude-haiku')
+        request['tools'] = [BASIC_WEB_SEARCH_TOOL if basic else WEB_SEARCH_TOOL]
+    output: dict[str, Any] = {}
+    effort = cast(dict[str, Any], params.get('reasoning') or {}).get('effort')
+    if effort:
+        output['effort'] = EFFORT.get(effort, effort)
+    fmt = chat_format(params)
+    if fmt:
+        output['format'] = {'type': 'json_schema', 'schema': fmt['json_schema']['schema']}
+    if output:
+        request['output_config'] = output
+    if model in FALLBACK_MODELS:
+        request['betas'] = [FALLBACK_BETA]
+        request['fallbacks'] = 'default'
+    return request
+
+
+def anthropic_text(message: BetaMessage) -> str:
+    return ''.join(block.text for block in message.content if block.type == 'text')
+
+
+def anthropic_urls(message: BetaMessage) -> tuple[str, ...]:
+    """The pages behind the answer, each once: those it cites, in order, then those its searches
+    found."""
+    urls: list[str] = []
+    for block in message.content:
+        if block.type != 'text':
+            continue
+        for note in block.citations or []:
+            url = cast(str | None, getattr(note, 'url', None))
+            if url and url not in urls:
+                urls.append(url)
+    for block in message.content:
+        if block.type != 'web_search_tool_result':
+            continue
+        found = block.content if isinstance(block.content, list) else []
+        for result in found:
+            if result.url not in urls:
+                urls.append(result.url)
+    return tuple(urls)
+
+
+async def _respond_with_anthropic(params: dict[str, Any], model: str) -> Reply:
+    request = anthropic_request(params, model)
+    started = time.monotonic()
+    usage = Usage()
+    texts: list[str] = []
+    urls: list[str] = []
+    for _ in range(MAX_RESUMES + 1):
+        message = cast(BetaMessage, await anthropic.beta.messages.create(**request))
+        u = message.usage
+        cached = u.cache_read_input_tokens or 0
+        tools = u.server_tool_use
+        usage = Usage(
+            input=usage.input + u.input_tokens + cached + (u.cache_creation_input_tokens or 0),
+            cached=usage.cached + cached,
+            output=usage.output + u.output_tokens,
+            searches=usage.searches + (tools.web_search_requests if tools else 0),
+        )
+        texts.append(anthropic_text(message))
+        urls.extend(url for url in anthropic_urls(message) if url not in urls)
+        if message.stop_reason != 'pause_turn':
+            break
+        # The server stopped its search loop midway: sent back as it is, the turn resumes.
+        request['messages'] = [
+            *request['messages'],
+            {'role': 'assistant', 'content': [b.model_dump() for b in message.content]},
+        ]
+    await record_call(model, usage, int((time.monotonic() - started) * 1000))
+    return Reply(''.join(texts), searches=usage.searches, urls=tuple(urls))
 
 
 def cited_urls(response: Response) -> tuple[str, ...]:

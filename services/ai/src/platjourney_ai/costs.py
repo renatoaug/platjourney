@@ -44,6 +44,12 @@ PRICES: dict[str, tuple[float, float, float]] = {
     'text-embedding-3-small': (0.02, 0.02, 0),
     # Audio input is $3 and the text prompt (the words to expect) $1.25; both counted at $3.
     'gpt-4o-mini-transcribe': (3, 3, 5),
+    # https://platform.claude.com/docs/en/about-claude/pricing (2026-11-27). The cached price is
+    # the cache read; the cache writes are counted as fresh input.
+    'claude-fable-5-2': (8, 0.2, 40),
+    'claude-opus-5-5': (4, 0.2, 20),
+    'claude-sonnet-5-5': (2, 0.1, 10),
+    'claude-haiku-5-5': (0.1, 0.01, 0.5),
     # https://typesafe.ai (2026-11-10): output is free. Versions (jev-1.14.0) cost the same.
     'jev': (0.042, 0.042, 0),
 }
