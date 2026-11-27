@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.108.1](https://github.com/renatoaug/platjourney/compare/v0.108.0...v0.108.1) (2026-11-27)
+
+### Bug Fixes
+
+* **web:** the map row counts its spots and nexo's map link always shows ([#249](https://github.com/renatoaug/platjourney/issues/249)) ([bf57cd0](https://github.com/renatoaug/platjourney/commit/bf57cd065ad664e6c368aa3f2881845c40cb345c))
+
 ## [0.108.0](https://github.com/renatoaug/platjourney/compare/v0.107.1...v0.108.0) (2026-11-27)
 
 ### Features
