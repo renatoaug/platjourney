@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # Where the text and the vectors come from. `local` is any server that speaks the OpenAI
     # API on your machine (LM Studio, mlx-lm, llama.cpp, Ollama): free, no web search, and
     # the answers are only as good as the model you run.
-    ai_provider: Literal['openai', 'local', 'codex'] = 'openai'
+    ai_provider: Literal['openai', 'anthropic', 'local', 'codex'] = 'openai'
     embedding_provider: Literal['openai', 'local'] = 'openai'
     local_base_url: str = 'http://localhost:1234/v1'
     local_model: str = ''
@@ -30,8 +30,9 @@ class Settings(BaseSettings):
     chat_max_output_tokens: int = 1500
 
     # A provider and model per feature, as `provider` or `provider:model` (`openai:gpt-5.5`,
-    # `local:qwen3.6:35b-a3b`). Unset, a feature uses AI_PROVIDER with OPENAI_MODEL or
-    # LOCAL_MODEL. The feature is the action the server tags each request with.
+    # `anthropic:claude-haiku-5-5`, `local:qwen3.6:35b-a3b`). Unset, a feature uses AI_PROVIDER
+    # with OPENAI_MODEL, ANTHROPIC_MODEL or LOCAL_MODEL. The feature is the action the server
+    # tags each request with.
     ai_model_chat: str = ''
     ai_model_tip: str = ''
     ai_model_plan: str = ''
@@ -59,6 +60,9 @@ class Settings(BaseSettings):
     typesafe_api_key: str = ''
     decision_model: str = 'jev-latest'
     openai_model: str = 'gpt-5.5'
+    anthropic_api_key: str = ''
+    # The Claude model a feature routed to `anthropic` with no model of its own runs.
+    anthropic_model: str = 'claude-opus-5-5'
     embedding_model: str = 'text-embedding-3-small'
     # Speech to text for the chat's mic: always OpenAI, whatever AI_PROVIDER says.
     transcribe_model: str = 'gpt-4o-mini-transcribe'
