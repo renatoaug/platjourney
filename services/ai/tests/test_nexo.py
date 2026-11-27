@@ -1146,3 +1146,7 @@ def test_a_collectibles_answer_ends_with_the_link_to_the_game_map() -> None:
     # Without a map the mark goes; an answer without it is left alone.
     assert nexo.map_link(text, None, 'pt-BR') == 'São 18 conjuntos; o troféu pede 3.'
     assert nexo.map_link('Só texto.', game_map, 'pt-BR') == 'Só texto.'
+    # Written in English or before the source line, the link still lands last.
+    assert nexo.map_link('Resumo.\n[map]\nFonte: Guia', game_map, 'pt-BR') == (
+        'Resumo.\n\nFonte: Guia\n\n[Abrir o mapa](/title/game/52189?view=map)'
+    )
