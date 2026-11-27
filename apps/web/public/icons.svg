@@ -56,4 +56,12 @@
   <symbol id="sparkles" viewBox="0 0 24 24"><path d="M10 3.5 11.7 8.3 16.5 10l-4.8 1.7L10 16.5l-1.7-4.8L3.5 10l4.8-1.7Z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9Z"/><path d="M18.5 3.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6Z"/></symbol>
   <symbol id="crown" viewBox="0 0 24 24"><path d="M3.5 8.5 8 12l4-6 4 6 4.5-3.5L19 18H5Z" fill="currentColor"/><path d="M5 20.5h14"/></symbol>
   <symbol id="swap" viewBox="0 0 24 24"><path d="M7 4 3.5 7.5 7 11"/><path d="M3.5 7.5H17"/><path d="m17 13 3.5 3.5L17 20"/><path d="M20.5 16.5H7"/></symbol>
+  <symbol id="map" viewBox="0 0 24 24"><path d="M14.11 5.45 9.9 3.34a2 2 0 0 0-1.79 0L3.55 5.62A1 1 0 0 0 3 6.52v12.86a1 1 0 0 0 1.45.9l3.66-1.83a2 2 0 0 1 1.79 0l4.21 2.11a2 2 0 0 0 1.79 0l4.56-2.28a1 1 0 0 0 .55-.9V4.52a1 1 0 0 0-1.45-.9l-3.66 1.83a2 2 0 0 1-1.79 0ZM9 3.24v14.88M15 5.76v14.88"/></symbol>
+  <symbol id="bone" viewBox="0 0 24 24"><path d="M17 10c.7-.7 1.69 0 2.5 0a2.5 2.5 0 1 0 0-5 .5.5 0 0 1-.5-.5 2.5 2.5 0 1 0-5 0c0 .81.7 1.8 0 2.5l-7 7c-.7.7-1.69 0-2.5 0a2.5 2.5 0 0 0 0 5c.28 0 .5.22.5.5a2.5 2.5 0 1 0 5 0c0-.81-.7-1.8 0-2.5Z"/></symbol>
+  <symbol id="gem" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 13L2 9ZM11 3 8 9l4 13 4-13-3-6M2 9h20"/></symbol>
+  <symbol id="feather" viewBox="0 0 24 24"><path d="M12.67 19a2 2 0 0 0 1.42-.59l6.25-6.26a6 6 0 0 0-8.49-8.49L5.6 9.92A2 2 0 0 0 5 11.33V19ZM16 8 2 22M17.5 15H9"/></symbol>
+  <symbol id="cards" viewBox="0 0 24 24"><path d="M8 4h11a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1ZM4 7v12M13.5 9l1.5 3-1.5 3-1.5-3Z"/></symbol>
+  <symbol id="help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+  <symbol id="home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></symbol>
+  <symbol id="stone" viewBox="0 0 24 24"><path d="M7 21h10l3-7-2-8-6-3-6 3-2 8ZM9 10l3 2 3-2M12 12v4"/></symbol>
 </svg>

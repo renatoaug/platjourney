@@ -197,6 +197,7 @@ export async function wipeUserData(id: string): Promise<void> {
     'unlock',
     'medal',
     'reaction',
+    'map_collected',
   ])
     await q(`DELETE ${table} WHERE user = $user`, { user })
   await q('DELETE follow WHERE user = $user OR target = $user', { user })

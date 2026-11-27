@@ -1,7 +1,10 @@
 import './env.ts'
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import * as fs from 'node:fs'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import * as aiModule from '../src/ai.ts'
 import * as apns from '../src/apns.ts'
@@ -13,6 +16,7 @@ import * as deepguide from '../src/deepguide.ts'
 import { DEMO_ACCOUNT_ID } from '../src/demo.ts'
 import * as fcm from '../src/fcm.ts'
 import * as gameContext from '../src/game-context.ts'
+import { forgetPublishedMaps } from '../src/game-map.ts'
 import * as guide from '../src/guide.ts'
 import { GUIDE_VERSION, type Guide } from '../src/guide.ts'
 import { pagePolicy, SECURITY_HEADERS } from '../src/http.ts'
@@ -35,6 +39,7 @@ import * as games from '../src/repository/game.ts'
 import * as missing from '../src/repository/game-request.ts'
 import * as guides from '../src/repository/guide.ts'
 import * as requests from '../src/repository/guide-request.ts'
+import * as mapCollected from '../src/repository/map-collected.ts'
 import * as nativeSubs from '../src/repository/native-push.ts'
 import type { Playtime } from '../src/repository/playtime.ts'
 import * as pushSubs from '../src/repository/push-subscription.ts'
@@ -1786,4 +1791,64 @@ test("a public page's shell carries its own preview: a link shows the game, not 
   expect(res.status).toBe(200)
   expect(res.body).toContain('<title>Guia de platina de Astro Bot · PlatJourney</title>')
   expect(res.body).toContain('content="https://a/b.jpg"')
+})
+
+test('a game map comes from its folder; tiles and marks too, and nothing outside it', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'pj-maps-'))
+  await mkdir(join(dir, '52189', 'tiles', '3', '4'), { recursive: true })
+  await writeFile(join(dir, '52189', 'map.json'), JSON.stringify({ points: [], categories: [] }))
+  await writeFile(join(dir, '52189', 'tiles', '3', '4', '5.webp'), 'tile')
+  const before = config.mapsDir
+  config.mapsDir = dir
+  try {
+    expect((await send('GET', '/api/game-map?game=game:52189')).status).toBe(200)
+    expect((await send('GET', '/api/game-map?game=game:1')).status).toBe(404)
+    expect((await send('GET', '/api/game-map?game=../etc')).status).toBe(404)
+    const tile = await send('GET', '/api/game-map/tile?game=game:52189&z=3&x=4&y=5')
+    expect(tile.status).toBe(200)
+    expect((await send('GET', '/api/game-map/tile?game=game:52189&z=3&x=4&y=-1')).status).toBe(404)
+  } finally {
+    config.mapsDir = before
+  }
+  spyOn(mapCollected, 'collectedSpots').mockResolvedValue(['cards-1'])
+  const set = spyOn(mapCollected, 'setCollected').mockResolvedValue(['cards-1', 'cards-2'])
+  expect((await send('GET', '/api/game-map/collected?game=game:52189')).body).toEqual({
+    spots: ['cards-1'],
+  })
+  const marked = await send('POST', '/api/game-map/collected', {
+    game: 'game:52189',
+    spot: 'cards-2',
+    collected: true,
+  })
+  expect(marked.body).toEqual({ spots: ['cards-1', 'cards-2'] })
+  expect(set.mock.calls[0]?.slice(1)).toEqual(['game:52189', 'cards-2', true])
+  expect(
+    (
+      await send('POST', '/api/game-map/collected', {
+        game: 'game:52189',
+        spot: '../x',
+        collected: true,
+      })
+    ).status,
+  ).toBe(400)
+})
+
+test('published maps are read from their host, and their tiles load straight from it', async () => {
+  const before = config.mapsUrl
+  config.mapsUrl = 'https://maps.example.com'
+  forgetPublishedMaps()
+  const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation((async (url: string) =>
+    String(url).includes('/52189/')
+      ? new Response(JSON.stringify({ version: 7, points: [], categories: [] }))
+      : new Response('no', { status: 404 })) as never)
+  try {
+    const found = await send('GET', '/api/game-map?game=game:52189')
+    expect(found.body.tiles).toBe('https://maps.example.com/52189/tiles/{z}/{x}/{y}.webp?v=7')
+    await send('GET', '/api/game-map?game=game:52189')
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect((await send('GET', '/api/game-map?game=game:1')).status).toBe(404)
+  } finally {
+    config.mapsUrl = before
+    forgetPublishedMaps()
+  }
 })

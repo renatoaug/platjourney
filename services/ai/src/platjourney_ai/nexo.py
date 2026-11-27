@@ -806,6 +806,49 @@ def resume_note(resume: Resume | None) -> str:
     )
 
 
+class MapCategory(Wire):
+    name: str = Field(max_length=120)
+    count: int
+    trophy: str | None = Field(default=None, max_length=120)
+
+
+class MapSummary(Wire):
+    """A game's interactive map in the app: its categories and the page that shows them."""
+
+    path: str = Field(max_length=200, pattern=r'^/title/game/\d+\?view=map$')
+    categories: list[MapCategory] = Field(max_length=40)
+
+
+# Where the answer points at the map; turned into the link by map_link().
+MAP_MARK = '[mapa]'
+
+
+def map_note(game_map: MapSummary | None) -> str:
+    """The map's categories, and when to send the player to it."""
+    if not game_map or not game_map.categories:
+        return ''
+    lines = '; '.join(
+        f'{c.name}: {c.count}' + (f' (troféu {c.trophy})' if c.trophy else '')
+        for c in game_map.categories
+    )
+    return (
+        f'\n\nMapa interativo do jogo no app, com a posição de cada um: {lines}.'
+        ' Quando a pergunta for onde ficam colecionáveis, locais ou atividades dessas categorias,'
+        ' responda com um resumo curto (quantos são, quantos o troféu pede, a dica que mais ajuda)'
+        f' e termine com {MAP_MARK} sozinho na última linha, sem mais nada; o app troca pelo link'
+        ' do mapa. Não liste os locais um por um. Em qualquer outra pergunta, não fale do mapa.'
+    )
+
+
+def map_link(text: str, game_map: MapSummary | None, locale: str) -> str:
+    """The mark becomes the link to the game's map; without a map, it goes."""
+    if MAP_MARK not in text:
+        return text
+    label = 'Open the map' if locale == 'en' else 'Abrir o mapa'
+    link = f'[{label}]({game_map.path})' if game_map else ''
+    return re.sub(r'\n{3,}', '\n\n', text.replace(MAP_MARK, link)).strip()
+
+
 def hook_note(hook: str | None) -> str:
     """A reason for the player to come back, said once at the end of a full answer."""
     if not hook:
@@ -1009,6 +1052,21 @@ async def reply(
     resume: Resume | None = None,
     player: PlayerFacts | None = None,
     hook: str | None = None,
+    game_map: MapSummary | None = None,
+) -> str:
+    answer = await _reply(text, ctx, history, locale, resume, player, hook, game_map)
+    return map_link(answer, game_map, ctx.locale if ctx else locale)
+
+
+async def _reply(
+    text: str,
+    ctx: GameContext | None,
+    history: list[Turn],
+    locale: str,
+    resume: Resume | None,
+    player: PlayerFacts | None,
+    hook: str | None,
+    game_map: MapSummary | None,
 ) -> str:
     if await llm.flagged(text):
         raise Moderated
@@ -1023,7 +1081,7 @@ async def reply(
     found, used = await passages(ctx, query, focus)
     context = (
         f'Contexto PSN do jogo atual:\n{lean_context(ctx, focus, text)}{resume_note(resume)}'
-        f'{hook_note(hook)}{found}'
+        f'{hook_note(hook)}{map_note(game_map)}{found}'
     )
     if found:
         answered = await ask(text, context, history, ctx.locale, conversation=True)

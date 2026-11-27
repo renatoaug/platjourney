@@ -2,11 +2,17 @@ import jpeg from 'jpeg-js'
 import { plain, q, rid } from './db.ts'
 import { type Game, gameRef } from './repository/game.ts'
 
-// A game's color: the strongest hue of its catalog picture, as a light color the pages tint their
-// background and labels with. Read once per picture and kept in game_tint; a new picture is read
-// again. The picture comes at a small IGDB size, which is plenty for an average.
+// A game's color: the strongest hue of its cover, as a light color the pages tint their background
+// and labels with. The cover is the game's face (the art behind the page is often sky and sea, which
+// would make every open world blue); without one, its art. Read once per picture and kept in
+// game_tint; a new picture is read again. The picture comes at a small IGDB size, which is plenty
+// for an average.
 
-const picture = (g: Pick<Game, 'art_url' | 'cover_url'>) => g.art_url ?? g.cover_url ?? null
+const picture = (g: Pick<Game, 'art_url' | 'cover_url'>) => g.cover_url ?? g.art_url ?? null
+
+// Kept beside the picture: a change to how the color is read makes every game read it again.
+const TINT_VERSION = 2
+const readKey = (url: string) => `${url}#v${TINT_VERSION}`
 
 const small = (url: string) => url.replace(/\/t_[a-z0-9_]+\//, '/t_screenshot_med/')
 
@@ -54,7 +60,8 @@ export function tintOf(px: Uint8Array): string {
   const best = bins.reduce((a, b) => (b.w > a.w ? b : a))
   // A grey picture keeps the brand's own hue.
   if (!best.w) return hex(82, 0.6, 0.64)
-  return hex(best.h / best.w, Math.min(0.75, Math.max(0.45, best.s / best.w)), 0.64)
+  // Vivid, like the game's own art: a washed-out average reads as a different color.
+  return hex(best.h / best.w, Math.min(0.9, Math.max(0.65, best.s / best.w)), 0.66)
 }
 
 const reading = new Set<string>()
@@ -71,7 +78,7 @@ async function readTint(game: Pick<Game, 'id' | 'name'>, url: string): Promise<v
     id: rid('game_tint', key),
     game: gameRef(game.id),
     color: tintOf(data),
-    url,
+    url: readKey(url),
   })
 }
 
@@ -96,7 +103,7 @@ export async function tints(games: Tinted[]): Promise<Map<string, string>> {
     const url = picture(game)
     const row = stored.get(game.id)
     if (row) out.set(game.id, row.color)
-    if (!url || row?.picture === url || reading.has(game.id)) continue
+    if (!url || row?.picture === readKey(url) || reading.has(game.id)) continue
     reading.add(game.id)
     readTint(game, url)
       .catch((e) => console.error(`tint of ${game.name} failed:`, (e as Error).message))

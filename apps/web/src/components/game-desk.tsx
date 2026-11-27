@@ -27,6 +27,7 @@ const messages = defineMessages({
       guide: 'Guia',
       session: 'Sessão',
       about: 'Sobre',
+      map: 'Mapa',
     },
     numbers: 'Os números do jogo',
     tiers: 'Troféus por tipo',
@@ -61,6 +62,7 @@ const messages = defineMessages({
       guide: 'Guide',
       session: 'Session',
       about: 'About',
+      map: 'Map',
     },
     numbers: "The game's numbers",
     tiers: 'Trophies by tier',
@@ -326,6 +328,7 @@ export function GameDesk({
   page,
   wide = false,
   visitor,
+  hasMap,
 }: {
   game: CurrentGame
   /** The trophies the progress counts (the base game's, or with DLC when the player chose so). */
@@ -348,6 +351,8 @@ export function GameDesk({
   wide?: boolean
   /** Nobody signed in: the tiers show totals, not progress. */
   visitor?: boolean
+  /** The game has an interactive map: its tab shows. */
+  hasMap?: boolean
 }) {
   const t = useMessages(messages)
   const earned = trophies.filter((x) => x.earned).length
@@ -357,6 +362,7 @@ export function GameDesk({
       ? [{ key: 'journey' as const, icon: 'compass', label: t('tab.journey') }]
       : []),
     { key: 'guide', icon: 'book-open', label: t('tab.guide') },
+    ...(hasMap ? [{ key: 'map' as const, icon: 'map', label: t('tab.map') }] : []),
     { key: 'trophies', icon: 'trophy', label: t('tab.trophies') },
     ...(!catalog && !done
       ? [{ key: 'session' as const, icon: 'clock', label: t('tab.session') }]

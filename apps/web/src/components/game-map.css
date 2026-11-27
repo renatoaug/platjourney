@@ -1,0 +1,346 @@
+@layer screens {
+  /* The map fills the page below the game's header; on a phone it takes the whole screen. */
+  .game-map {
+    /* The game's own color (the strongest hue of its cover), else the app's accent. */
+    --map-accent: var(--game-tint, var(--color-accent));
+
+    position: relative;
+    /* Tall: the worlds are taller than wide (an island, a state); a wide box shrinks them. */
+    height: clamp(520px, 86dvh, 1000px);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-map-water);
+  }
+
+  .game-map.is-paper {
+    background: var(--color-map-paper);
+  }
+
+  .game-map.is-dark {
+    background: var(--color-bg);
+  }
+
+  /* The engine's own stylesheet makes its box relative (and it sits outside the layers), so the
+     size is set outright rather than through inset. */
+  .game-map-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* The filters float over the map, in the app's own glass. */
+  .game-map-top {
+    position: absolute;
+    z-index: 2;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .game-map-progress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .game-map-progress .icon {
+    color: var(--map-accent);
+  }
+
+  .game-map-chips {
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .game-map-chips .chip {
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+  }
+
+  /* Apart from the categories: "only what is left" goes with any of them. */
+  .game-map-chips-gap {
+    flex: none;
+    width: 1px;
+    margin: 6px 2px;
+    background: var(--color-border-strong);
+  }
+
+  .game-map-chips .chip small {
+    color: var(--color-fg-subtle);
+  }
+
+  .game-map-chips .chip[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--map-accent) var(--alpha-tint), transparent);
+    color: var(--map-accent);
+    border-color: color-mix(in srgb, var(--map-accent) var(--alpha-glow), transparent);
+  }
+
+  .game-map-chips .chip[aria-pressed="true"] small {
+    color: color-mix(in srgb, var(--map-accent) var(--alpha-dim), transparent);
+  }
+
+  /* A pin: a small disc with the category's icon, centred on the spot; many fit side by side. */
+  .map-pin {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  .map-pin-head {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid var(--color-bg);
+    border-radius: var(--radius-round);
+    background: var(--map-accent);
+    color: var(--color-on-accent);
+    /* A light shadow: hundreds of pins together would darken the map under them. */
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-shadow) var(--alpha-line), transparent);
+    transition: transform var(--motion-tab);
+  }
+
+  .map-pin-head .icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .map-pin:hover .map-pin-head,
+  .map-pin.is-selected .map-pin-head {
+    border-color: var(--color-fg);
+    transform: scale(1.35);
+  }
+
+  .map-pin.is-selected {
+    z-index: 1;
+  }
+
+  .map-pin.is-approx .map-pin-head {
+    border-style: dashed;
+    border-color: var(--color-fg);
+  }
+
+  .map-pin.is-done .map-pin-head {
+    background: var(--color-surface);
+    color: var(--color-fg-subtle);
+  }
+
+  .map-pin:focus-visible {
+    outline: none;
+  }
+
+  .map-pin:focus-visible .map-pin-head {
+    box-shadow: var(--shadow-focus);
+  }
+
+  .game-map-zoom {
+    position: absolute;
+    z-index: 2;
+    right: 10px;
+    bottom: 64px;
+    display: grid;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+  }
+
+  .game-map-zoom button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--color-fg);
+  }
+
+  .game-map-zoom button + button {
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* The chosen spot: a card along the bottom, never a balloon cut by the edge. */
+  .game-map-spot.card {
+    position: absolute;
+    z-index: 3;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 4px 12px;
+    padding: 14px;
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-popover);
+  }
+
+  .game-map-spot-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--map-accent) var(--alpha-tint), transparent);
+    color: var(--map-accent);
+  }
+
+  .game-map-spot-copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .game-map-spot-copy small {
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .game-map-spot-copy b {
+    font-family: var(--font-display);
+  }
+
+  .game-map-spot-copy p {
+    margin: 4px 0 0;
+    color: var(--color-fg-soft);
+    font-size: var(--text-base);
+  }
+
+  .game-map-spot-copy .game-map-spot-approx {
+    color: var(--color-fg-tint);
+    font-size: var(--text-sm);
+  }
+
+  .game-map-close.ghost,
+  .game-map-close {
+    align-self: start;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: none;
+    color: var(--color-fg-muted);
+  }
+
+  .game-map-collect:not(.ghost) {
+    background: var(--map-accent);
+    color: var(--color-on-accent);
+  }
+
+  .game-map-collect {
+    grid-column: 1 / -1;
+    display: inline-flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .game-map-filtered {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    bottom: 20px;
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-float);
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+    transform: translateX(-50%);
+  }
+
+  /* The credit a map's license asks for: an info button in the corner that shows it. */
+  .game-map-credit {
+    position: absolute;
+    z-index: 2;
+    left: 10px;
+    bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* The journey gives every button a 44px minimum height; these two keep their own shape. */
+  .game-map .game-map-credit button {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+    color: var(--color-fg-muted);
+  }
+
+  .game-map-credit p {
+    margin: 0;
+    padding: 6px 10px;
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--color-bg) var(--alpha-heavy), transparent);
+    color: var(--color-fg-muted);
+    font-size: var(--text-sm);
+  }
+
+  .game-map-spot ~ .game-map-credit {
+    display: none;
+  }
+
+  /* On a phone the spot's card covers the bottom of the map: the zoom goes up out of its way. */
+  .game-map:has(.game-map-spot) .game-map-zoom {
+    bottom: auto;
+    top: 120px;
+  }
+
+  /* A large screen has room to spare: the card stays small in the bottom corner. */
+  @media (min-width: 768px) {
+    .game-map-spot.card {
+      right: auto;
+      width: 340px;
+      padding: 12px;
+    }
+
+    .game-map-spot-icon {
+      width: 34px;
+      height: 34px;
+    }
+
+    .game-map-collect {
+      margin-top: 4px;
+      padding-block: 8px;
+      font-size: var(--text-sm);
+    }
+
+    .game-map:has(.game-map-spot) .game-map-zoom {
+      top: auto;
+      bottom: 64px;
+    }
+  }
+}

@@ -6,6 +6,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { openSession, sessionCookie } from './auth.ts'
+import { config } from './config.ts'
 import { q } from './db.ts'
 import { isDemo } from './demo.ts'
 import { json, type PageDirective, pagePolicy, pageSourceProblem, readBody } from './http.ts'
@@ -381,7 +382,13 @@ export function interceptsFor(pathname: string, method: string): Handler[] {
 
 /** The content security policy of the app's page, with what plugins allowed on it. */
 export function pluginPagePolicy(): string {
-  return pagePolicy(pageSources)
+  // The maps' own host, when they are published apart: the map engine fetches its tiles.
+  const maps = config.mapsUrl ? new URL(config.mapsUrl).origin : null
+  return pagePolicy(
+    maps
+      ? { ...pageSources, 'connect-src': [...(pageSources['connect-src'] ?? []), maps] }
+      : pageSources,
+  )
 }
 
 /** For tests: how long a hook may take; resetPlugins puts HOOK_TIMEOUT_MS back. */

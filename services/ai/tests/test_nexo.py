@@ -1126,3 +1126,23 @@ async def test_the_hook_reaches_the_answer_context(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(nexo, 'ask_reply', answer_reply)
     await nexo.reply('onde fica o arco?', context(), [], hook='o perdível Arco ainda falta')
     assert 'Gancho para fechar (opcional): o perdível Arco ainda falta.' in seen[0]
+
+
+def test_a_collectibles_answer_ends_with_the_link_to_the_game_map() -> None:
+    game_map = nexo.MapSummary(
+        path='/title/game/52189?view=map',
+        categories=[nexo.MapCategory(name='Cartas', count=131, trophy="Don't Touch My Deck")],
+    )
+    note = nexo.map_note(game_map)
+    assert 'Cartas: 131 (troféu Don' in note and nexo.MAP_MARK in note
+    assert nexo.map_note(None) == ''
+    text = 'São 18 conjuntos; o troféu pede 3.\n\n[mapa]'
+    assert nexo.map_link(text, game_map, 'pt-BR') == (
+        'São 18 conjuntos; o troféu pede 3.\n\n[Abrir o mapa](/title/game/52189?view=map)'
+    )
+    assert nexo.map_link(text, game_map, 'en').endswith(
+        '[Open the map](/title/game/52189?view=map)'
+    )
+    # Without a map the mark goes; an answer without it is left alone.
+    assert nexo.map_link(text, None, 'pt-BR') == 'São 18 conjuntos; o troféu pede 3.'
+    assert nexo.map_link('Só texto.', game_map, 'pt-BR') == 'Só texto.'

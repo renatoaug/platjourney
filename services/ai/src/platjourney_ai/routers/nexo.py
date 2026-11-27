@@ -63,6 +63,8 @@ class ReplyRequest(Wire):
     player: nexo.PlayerFacts | None = None
     # A fact from the player's game to close with, picked by the server at most once a day per game.
     hook: str | None = Field(default=None, max_length=300)
+    # The game's interactive map, when it has one.
+    map: nexo.MapSummary | None = None
 
 
 @router.post('/tip')
@@ -105,6 +107,7 @@ async def reply(body: ReplyRequest) -> Answer:
                 body.resume,
                 body.player,
                 body.hook,
+                body.map,
             )
         )
     except nexo.Moderated:

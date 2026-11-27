@@ -20,6 +20,9 @@
   /* The night behind the page and the green light high in it. */
   --palette-night: #050d0a;
   --palette-glow: #2fd3a0;
+  /* Under a game's map where its picture ends: the sea, or the paper of a hand-drawn map. */
+  --palette-map-water: #2f90b0;
+  --palette-map-paper: #d9c4a0;
   --palette-white: #ffffff;
   --palette-black: #000000;
   /* Each accent color the player can pick, its main shade, also its dot in Settings (shared/accent.ts). */
@@ -70,6 +73,8 @@
   --color-surface-float: color-mix(in srgb, var(--palette-neutral-900) 95%, transparent);
   /* The night behind the page and its two lights. */
   --color-night: var(--palette-night);
+  --color-map-water: var(--palette-map-water);
+  --color-map-paper: var(--palette-map-paper);
   --color-glow: var(--palette-glow);
   --color-border: var(--palette-neutral-800);
   --color-border-strong: var(--palette-neutral-700);

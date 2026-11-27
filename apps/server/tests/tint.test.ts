@@ -25,7 +25,7 @@ test('a grey picture keeps the brand’s own hue', () => {
 
 test('stored tints come back by game; one read from the same picture is not read again', async () => {
   spyOn(db, 'q').mockResolvedValue([
-    { game: 'game:1', color: '#cdae7a', picture: 'https://images.igdb.com/a/t_1080p/x.jpg' },
+    { game: 'game:1', color: '#cdae7a', picture: 'https://images.igdb.com/a/t_1080p/x.jpg#v2' },
   ] as never)
   const fetch = spyOn(globalThis, 'fetch')
   const found = await tints([
@@ -46,4 +46,20 @@ test('a failed read sends no tint and reads nothing new', async () => {
   const found = await tints([{ id: 'game:1', name: 'One', art_url: 'x.jpg', cover_url: null }])
   expect(found.size).toBe(0)
   expect(fetch).not.toHaveBeenCalled()
+})
+
+test('the cover gives the color when there is one: a tint read from the art is read again', async () => {
+  spyOn(db, 'q').mockResolvedValue([
+    { game: 'game:1', color: '#7a9acd', picture: 'https://images.igdb.com/a/t_1080p/art.jpg' },
+  ] as never)
+  const fetch = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 404 }))
+  await tints([
+    {
+      id: 'game:1',
+      name: 'One',
+      art_url: 'https://images.igdb.com/a/t_1080p/art.jpg',
+      cover_url: 'https://images.igdb.com/a/t_cover_big/cover.jpg',
+    },
+  ])
+  expect(String(fetch.mock.calls[0]?.[0])).toContain('cover.jpg')
 })

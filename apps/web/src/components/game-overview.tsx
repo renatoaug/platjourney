@@ -44,6 +44,8 @@ const messages = defineMessages({
     sessionOnLead: 'Passo {step} de {total}: {trophy}',
     about: 'Sobre o jogo',
     aboutLead: 'Quem fez, quando saiu e como se joga',
+    map: 'Mapa',
+    mapLead: '{count, plural, one {# ponto} other {# pontos}} para coletar, no mapa do jogo',
     tiers: 'Troféus por tipo',
     platinum: 'Platina',
     gold: 'Ouro',
@@ -78,6 +80,8 @@ const messages = defineMessages({
     sessionOnLead: 'Step {step} of {total}: {trophy}',
     about: 'About the game',
     aboutLead: 'Who made it, when it came out and how it plays',
+    map: 'Map',
+    mapLead: "{count, plural, one {# spot} other {# spots}} to collect, on the game's map",
     tiers: 'Trophies by tier',
     platinum: 'Platinum',
     gold: 'Gold',
@@ -91,8 +95,8 @@ const messages = defineMessages({
 })
 
 /** The pages a game's cards open, kept in the address (`?view=`), so back returns to the game. */
-export type GameView = 'journey' | 'trophies' | 'guide' | 'session' | 'about'
-const VIEWS: GameView[] = ['journey', 'trophies', 'guide', 'session', 'about']
+export type GameView = 'journey' | 'trophies' | 'guide' | 'session' | 'about' | 'map'
+const VIEWS: GameView[] = ['journey', 'trophies', 'guide', 'session', 'about', 'map']
 
 export function useGameView() {
   const [params, setParams] = useSearchParams()
@@ -402,10 +406,13 @@ function GameLinks({
   game: c,
   catalog,
   onOpen,
+  mapCount = 0,
 }: {
   game: CurrentGame
   catalog: boolean
   onOpen: (view: GameView) => void
+  /** Spots on the game's interactive map; none: no map row. */
+  mapCount?: number
 }) {
   const t = useMessages(messages)
   const done = c.trophies.some((x) => x.type === 'platinum' && x.earned)
@@ -426,6 +433,14 @@ function GameLinks({
         lead={g ? t('guideReady') : c.queued ? t('guideQueued') : t('guidePreparing')}
         onOpen={() => onOpen('guide')}
       />
+      {mapCount > 0 && (
+        <GameLink
+          icon="map"
+          title={t('map')}
+          lead={t('mapLead', { count: mapCount })}
+          onOpen={() => onOpen('map')}
+        />
+      )}
       {!done && !catalog && (
         <GameLink
           icon="clock"
@@ -468,6 +483,7 @@ export function GameOverview({
   trophies,
   catalog,
   visitor,
+  mapCount,
 }: {
   game: CurrentGame
   progress: number
@@ -482,6 +498,8 @@ export function GameOverview({
   trophies: ReactNode
   /** Nobody signed in: the tiers show totals, not progress. */
   visitor?: boolean
+  /** Spots on the game's interactive map (0: it has none). */
+  mapCount?: number
 }) {
   const t = useMessages(messages)
   const counted = countedTrophies(c.trophies, includeDlc)
@@ -504,7 +522,7 @@ export function GameOverview({
         <aside className="game-overview-rail" aria-label={t('summary')}>
           <GameTiers trophies={counted} totals={visitor} />
           <GameNumbers game={c} />
-          <GameLinks game={c} catalog={!!catalog} onOpen={onOpen} />
+          <GameLinks game={c} catalog={!!catalog} onOpen={onOpen} mapCount={mapCount} />
         </aside>
         <div className="game-overview-main">{trophies}</div>
       </div>

@@ -3,8 +3,9 @@ import { config } from '../config.ts'
 import { ensureDeepGuide } from '../deepguide.ts'
 import { isDemo, trophiesFor } from '../demo.ts'
 import { todaysFocus } from '../focus.ts'
+import { gameMap, mapTile } from '../game-map.ts'
 import { ensureGuide, GUIDE_VERSION, type Guide } from '../guide.ts'
-import { json, readBody } from '../http.ts'
+import { json, readBody, SECURITY_HEADERS } from '../http.ts'
 import { translator, userLocale } from '../i18n.ts'
 import { storeFor } from '../interests.ts'
 import { library } from '../library.ts'
@@ -27,6 +28,7 @@ import {
 import { requestMissingGame } from '../repository/game-request.ts'
 import { getGuide } from '../repository/guide.ts'
 import { requestGuide } from '../repository/guide-request.ts'
+import { collectedSpots, setCollected } from '../repository/map-collected.ts'
 import type { User } from '../repository/user.ts'
 import { similarToGame } from '../similar.ts'
 import { withTints } from '../tint.ts'
@@ -217,6 +219,8 @@ async function requestGame({ req, res, me, locale }: Api) {
 }
 
 // The catalog: a game's page, the guides, the releases calendar and the search.
+const GAME_ID = /^game:[\w-]{1,100}$/
+
 export const GAME_ROUTES: Record<string, ApiHandler> = {
   'GET /api/title': async ({ req, res, url, me, locale }) => {
     // A name the catalog does not know costs an IGDB lookup and a new catalog row, and may start
@@ -247,6 +251,47 @@ export const GAME_ROUTES: Record<string, ApiHandler> = {
   'GET /api/games/search': async ({ res, url }) =>
     json(res, 200, await searchCatalog(url.searchParams.get('q') ?? '')),
   'POST /api/games/request': requestGame,
+  // A game's interactive map: its categories and points; 404 when the game has none.
+  'GET /api/game-map': async ({ res, url }) => {
+    const map = await gameMap(url.searchParams.get('game') ?? '')
+    return map ? json(res, 200, map) : json(res, 404, { error: 'no map' })
+  },
+  // The spots of that map the player marked as collected; a mark goes with the account.
+  'GET /api/game-map/collected': async ({ res, url, me }) => {
+    const game = url.searchParams.get('game') ?? ''
+    if (!GAME_ID.test(game)) return json(res, 400, { error: 'game required' })
+    return json(res, 200, { spots: await collectedSpots(me.id, game) })
+  },
+  'POST /api/game-map/collected': async ({ req, res, me }) => {
+    const { game, spot, collected } = await readBody(req)
+    if (
+      typeof game !== 'string' ||
+      !GAME_ID.test(game) ||
+      typeof spot !== 'string' ||
+      !/^[\w-]{1,80}$/.test(spot) ||
+      typeof collected !== 'boolean'
+    )
+      return json(res, 400, { error: 'invalid' })
+    return json(res, 200, { spots: await setCollected(me.id, game, spot, collected) })
+  },
+  // One picture of it. Tiles never change once cut: the browser keeps them for a week.
+  'GET /api/game-map/tile': async ({ res, url }) => {
+    const p = url.searchParams
+    const tile = await mapTile(
+      p.get('game') ?? '',
+      Number(p.get('z')),
+      Number(p.get('x')),
+      Number(p.get('y')),
+    )
+    if (!tile) return json(res, 404, { error: 'no tile' })
+    res
+      .writeHead(200, {
+        ...SECURITY_HEADERS,
+        'content-type': 'image/webp',
+        'cache-control': 'public, max-age=604800',
+      })
+      .end(tile)
+  },
   'GET /api/games/similar': async ({ res, url }) => {
     const game = url.searchParams.get('game') ?? ''
     if (!/^game:[\w-]+$/.test(game)) return json(res, 400, { error: 'game required' })

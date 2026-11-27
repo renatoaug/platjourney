@@ -32,6 +32,8 @@ erDiagram
     user ||--o{ platinum : "earned"
     game ||--o{ platinum : "of"
     user ||--o{ unlock : "earned trophies"
+    user ||--o{ map_collected : "marked on a map"
+    game ||--o{ map_collected : "spots of"
     user ||--o{ follow : "follows"
     user ||--o{ follow : "is followed by"
     user ||--o{ reaction : "reacts"
@@ -98,6 +100,14 @@ erDiagram
         trophy_name string
         earned_at datetime
         rarity_rate float
+        created_at datetime
+        updated_at datetime
+    }
+    map_collected {
+        id record(map_collected) PK
+        user record(user) FK
+        game record(game) FK
+        spots array(string)
         created_at datetime
         updated_at datetime
     }
@@ -533,6 +543,7 @@ erDiagram
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `unlock` | trophy a player earned, with its PSN unlock time | `user, np_communication_id, trophy_id` | Written whenever the server fetches a game's trophy list from PSN (`keepUnlocks`: the watcher, a game's page, the chat, a session plan, and the profile's platinum dates for every platinumed game of a new account) and once for the whole library by `bun run backfill-unlocks`; only read back as aggregates: where players usually close a long trophy (ADR-015). Never updated, deleted with the account |
+| `map_collected` | player and game with a spot of its interactive map marked as collected | `user, game` | `spots` are the ids of the game's map spots (its `map.json`, served from `MAP_DATA_DIR`) the player marked; the server writes them from the map page. Wiped with the player's data |
 | `trophy_rarity` | trophy on a PSN list | `np_communication_id, trophy_id` | Its share of players on PSN (`earned_rate`, in %), with its grade and names, from the last list a player who owns the game opened (a catalog list has no rates); kept at most every six hours per list by `keepRarities` (`community.ts`). Shared, not personal. Feeds the community's rare trophies and medals |
 | `follow` | player and a player they follow in the community | `user, target` | Written by `POST /api/community/follow`, only for a player who shows up in the community; deleted with either account |
 | `reaction` | player, feed event and kind | `user, event, kind` | `kind`: `like`, `gg`, `fire`, `wow`, `skull`. `event` is the feed event's stable key (`plat:<user>:<np>`, `rare:<user>:<np>:<trophy>`, `start:<user>:<np>`, `medal:<user>:<kind>`): the feed itself is never stored, it is read from `unlock`, `platinum`, `trophy_rarity` and `medal`. Deleted with the account |
@@ -560,7 +571,7 @@ erDiagram
 | `guide_request` | game asked for without a guide | `game` | The players who opened it without a guide (`users`, written by the server; reloading or opening it again adds no one), how many they are (`requests`) and the questions Nexo could not answer from the deep guide (`questions[*]`: `question`, `asked_at`, `user` who asked, `searched` when it searched the web for it, `urls` the pages behind the answer (those it cited, then those the search opened), `answered` whether Nexo still answered it, written by the AI service; `notified_at` when the answer reached the player, written by `scripts/answer-question.ts`), for whoever runs the instance |
 | `game_request` | name searched on Guides that neither the catalog nor IGDB had | `key` (the name normalized for search) | Who asked, each account once, and how many; for whoever runs the instance to add by hand |
 | `store_price` | game someone saved in their interests, per store region | `game, region` | Its PlayStation Store price in a region (`region`, upper case; only `BR` is read today), in cents, read every day at 10:00 (Brazil time) and overwritten: price, full price, percent off, when the sale ends, whether PS Plus includes it and what members pay when the store gives them a lower price (`plus_price`), and the lowest tier whose catalog includes it (`plus_tier`). A game the player's own tier includes is a `deal` notice too, once. A new or deeper sale is a `deal` notice to everyone who saved the game |
-| `game_tint` | catalog game whose picture was read for its color | `game` | `color` is the strongest hue of the game's catalog picture (`art_url`, else `cover_url`), as a light hex color the pages tint their background and labels with; `picture` is the address it was read from. The server reads it in the background the first time it sends the game and reads it again when the picture changes. Kept apart from `game` so reading it is not a change to the catalog row |
+| `game_tint` | catalog game whose picture was read for its color | `game` | `color` is the strongest hue of the game's cover (`cover_url`, else `art_url`), as a light, vivid hex color the pages tint their background and labels with; `picture` is the address it was read from with the reading's version (`…jpg#v2`). The server reads it in the background the first time it sends the game and reads it again when the picture or the way of reading it changes. Kept apart from `game` so reading it is not a change to the catalog row |
 | `similar_to` | IGDB "similar game" link between two catalog games (`in -> similar_to -> out`) | `in, out` | A relation table. `rank` is the position of `out` in IGDB's list of `in` (0 the most similar). `bun run catalog:similar` deletes a game's outgoing edges and writes them again, only to games in the catalog; the server does it at 4:30 every night for games without edges yet and for the whole catalog on Sundays, so older games also point at new ones. The recommendations by similarity walk the player's games through these edges |
 | `expansion_of` | standalone expansion or episode in the catalog (`expansion -> expansion_of -> base game`) | `in, out` | A relation table, from IGDB's `parent_game` of games that add to another one (a remaster or a port is not an expansion). Written by `bun run catalog:similar`; read in both directions for the "same series" picks and a game's page |
 | `server_status` | game whose online servers were checked | `game` | `status`: `active`, `announced`, `closed` or `unknown`; shared by everyone, and who was already warned is in `notification` |
