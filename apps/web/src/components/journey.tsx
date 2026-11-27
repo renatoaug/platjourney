@@ -12,6 +12,7 @@ import { GuideText } from '../ui/markdown'
 import { Sk } from '../ui/skeleton'
 import { GameBackdrop, ScenesButton, useScene } from './game-backdrop'
 import { GameDesk } from './game-desk'
+import { GameMap, useGameMap } from './game-map'
 import {
   countedTrophies,
   GameOverview,
@@ -145,6 +146,7 @@ function JourneyPage({
           />
         </section>
       )}
+      {view === 'map' && <GameMap game={c.game.id} />}
       {view === 'about' && (
         <section className="journey-about is-page" id="journey-about">
           <GameAbout game={c.game} name={c.name} cover={false} />
@@ -225,6 +227,8 @@ export function Journey({
   // The journey opens first on a large screen, unless it is closed (no account) or there is no
   // list to walk yet: then the guide.
   const deskTab = deskTabOf(asked, visitor, c.trophies.length, !!c.guide)
+  const gameMap = useGameMap(c.game.id)
+  const mapCount = gameMap.loaded.state === 'ready' ? gameMap.loaded.map.points.length : 0
   const scenes = <ScenesButton shots={shots} at={scene} name={c.name} onGo={setScene} />
   const trophyList = trophies ?? <JourneyTrophies game={c} catalog={!!catalog} />
   // A large screen: the game's pages as tabs beside a summary that stays in place.
@@ -243,6 +247,7 @@ export function Journey({
           wide={deskTab === 'journey'}
           catalog={catalog}
           visitor={visitor}
+          hasMap={mapCount > 0}
           actions={back}
           scenes={scenes}
           page={
@@ -279,6 +284,7 @@ export function Journey({
             catalog={catalog}
             trophies={trophyList}
             visitor={visitor}
+            mapCount={mapCount}
           />
           {similar}
         </>

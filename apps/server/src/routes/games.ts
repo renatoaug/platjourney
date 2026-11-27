@@ -3,8 +3,9 @@ import { config } from '../config.ts'
 import { ensureDeepGuide } from '../deepguide.ts'
 import { isDemo, trophiesFor } from '../demo.ts'
 import { todaysFocus } from '../focus.ts'
+import { gameMap, mapTile } from '../game-map.ts'
 import { ensureGuide, GUIDE_VERSION, type Guide } from '../guide.ts'
-import { json, readBody } from '../http.ts'
+import { json, readBody, SECURITY_HEADERS } from '../http.ts'
 import { translator, userLocale } from '../i18n.ts'
 import { storeFor } from '../interests.ts'
 import { library } from '../library.ts'
@@ -247,6 +248,29 @@ export const GAME_ROUTES: Record<string, ApiHandler> = {
   'GET /api/games/search': async ({ res, url }) =>
     json(res, 200, await searchCatalog(url.searchParams.get('q') ?? '')),
   'POST /api/games/request': requestGame,
+  // A game's interactive map: its categories and points; 404 when the game has none.
+  'GET /api/game-map': async ({ res, url }) => {
+    const map = await gameMap(url.searchParams.get('game') ?? '')
+    return map ? json(res, 200, map) : json(res, 404, { error: 'no map' })
+  },
+  // One picture of it. Tiles never change once cut: the browser keeps them for a week.
+  'GET /api/game-map/tile': async ({ res, url }) => {
+    const p = url.searchParams
+    const tile = await mapTile(
+      p.get('game') ?? '',
+      Number(p.get('z')),
+      Number(p.get('x')),
+      Number(p.get('y')),
+    )
+    if (!tile) return json(res, 404, { error: 'no tile' })
+    res
+      .writeHead(200, {
+        ...SECURITY_HEADERS,
+        'content-type': 'image/webp',
+        'cache-control': 'public, max-age=604800',
+      })
+      .end(tile)
+  },
   'GET /api/games/similar': async ({ res, url }) => {
     const game = url.searchParams.get('game') ?? ''
     if (!/^game:[\w-]+$/.test(game)) return json(res, 400, { error: 'game required' })

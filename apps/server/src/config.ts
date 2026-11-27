@@ -110,4 +110,7 @@ export const config = {
     clientId: required('IGDB_CLIENT_ID'),
     clientSecret: required('IGDB_CLIENT_SECRET'),
   },
+  // Where the games' interactive maps are: one folder per catalog id with map.json and its tiles
+  // (tiles/{z}/{x}/{y}.webp). Empty: no game has a map.
+  mapsDir: process.env.MAP_DATA_DIR || null,
 }
