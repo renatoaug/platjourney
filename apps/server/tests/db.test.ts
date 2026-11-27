@@ -1,6 +1,6 @@
 import './env.ts'
 import { afterEach, beforeEach, expect, mock, spyOn, test } from 'bun:test'
-import { readdirSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { Surreal } from 'surrealdb'
 import { config } from '../src/config.ts'
 import {
@@ -164,4 +164,15 @@ test('stored objects swap camelCase and snake_case keys at any depth', () => {
   expect(camelKeys(stored) as unknown).toEqual(app)
   expect(snakeKeys(null)).toBeNull()
   expect(camelKeys('plain_text')).toBe('plain_text')
+})
+
+test('the guide migration drops the old translation event before it moves the guide', () => {
+  // The event cleared guide_en whenever guide changed, and removing guide is a change.
+  const sql = readFileSync(
+    new URL('../../../db/migrations/003_guide.surql', import.meta.url),
+    'utf8',
+  )
+  const dropped = sql.indexOf('REMOVE EVENT IF EXISTS guide_en_stale')
+  expect(dropped).toBeGreaterThan(-1)
+  expect(dropped).toBeLessThan(sql.indexOf('UPDATE guide'))
 })

@@ -19,9 +19,11 @@ DEFINE FIELD IF NOT EXISTS passages ON guide TYPE int DEFAULT 0;
 DEFINE FIELD IF NOT EXISTS created_at ON guide TYPE datetime DEFAULT time::now() READONLY;
 DEFINE FIELD IF NOT EXISTS updated_at ON guide TYPE datetime DEFAULT time::now() VALUE time::now();
 DEFINE INDEX IF NOT EXISTS guide_game ON guide FIELDS game UNIQUE;
--- Before guide_pt, the pt-BR guide was the field guide (and guide_en dropped on every change). Moved
--- once: copied into guide_pt, then removed; a run after that finds no guide field and does nothing.
+-- Before guide_pt, the pt-BR guide was the field guide, and an event dropped guide_en whenever guide
+-- changed. The event goes first: removing guide is a change, and it would drop every translation.
+-- Then the guide is moved once, copied into guide_pt and removed; a run after that finds no guide
+-- field and does nothing.
+REMOVE EVENT IF EXISTS guide_en_stale ON guide;
 UPDATE guide SET guide_pt = guide WHERE guide != NONE AND guide_pt = NONE;
 UPDATE guide UNSET guide WHERE guide != NONE AND guide_pt != NONE;
 REMOVE FIELD IF EXISTS guide ON guide;
-REMOVE EVENT IF EXISTS guide_en_stale ON guide;
