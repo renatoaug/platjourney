@@ -61,6 +61,11 @@ export const md = (value: unknown): string => {
       .replace(/(?<!<strong>)“([^”<]{2,60})”(?!<\/strong>)/g, '<strong>“$1”</strong>')
       .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
       .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // A page of the app itself (a game's map), opened in place. Only the app's own paths.
+      .replace(
+        /\[([^\]<]+)\]\((\/title\/game\/\d+\?view=map)\)/g,
+        '<a class="md-app-link" href="$2">$1</a>',
+      )
       // A cited source links to the guide page or the video minute; https only. The model cannot
       // write addresses, so these come from the guide store (services/ai, nexo.cite).
       .replace(

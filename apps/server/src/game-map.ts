@@ -6,6 +6,8 @@ import { config } from './config.ts'
 
 export interface MapCategory {
   id: string
+  /** The trophy these spots are for (its English name). */
+  trophy?: string
   /** The name in each language the app speaks. */
   name: Record<string, string>
   /** An icon of the app's sprite. */
@@ -98,5 +100,21 @@ export async function mapTile(
     return await readFile(join(config.mapsDir, n, 'tiles', String(z), String(x), `${y}.webp`))
   } catch {
     return null
+  }
+}
+
+/** What Nexo is told about a game's map: each category with how many spots and the trophy it is
+ * for, and the map page's address. Null when the game has none. */
+export async function mapSummary(game: string, locale: string) {
+  const map = await gameMap(game)
+  const n = gameNumber(game)
+  if (!map || !n || !map.points.length) return null
+  return {
+    path: `/title/game/${n}?view=map`,
+    categories: map.categories.map((c) => ({
+      name: c.name[locale] ?? c.name['pt-BR'] ?? c.id,
+      count: map.points.filter((p) => p.category === c.id).length,
+      ...(c.trophy ? { trophy: c.trophy } : {}),
+    })),
   }
 }

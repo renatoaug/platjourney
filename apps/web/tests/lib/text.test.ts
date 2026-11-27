@@ -83,3 +83,10 @@ test('a trophy name with asterisks of its own stays whole in bold', () => {
   )
   expect(nameText('**T***, rabeta, droga e grana**')).toBe('T***, rabeta, droga e grana')
 })
+
+test('md links a game map page of the app, and no other path', () => {
+  expect(md('[Abrir o mapa](/title/game/52189?view=map)')).toBe(
+    '<p><a class="md-app-link" href="/title/game/52189?view=map">Abrir o mapa</a></p>',
+  )
+  expect(md('[x](/settings)')).toBe('<p>[x](/settings)</p>')
+})
