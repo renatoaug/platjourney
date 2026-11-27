@@ -1,9 +1,12 @@
 @layer screens {
   /* The map fills the page below the game's header; on a phone it takes the whole screen. */
   .game-map {
+    /* The game's own color (the strongest hue of its cover), else the app's accent. */
+    --map-accent: var(--game-tint, var(--color-accent));
+
     position: relative;
-    height: calc(100dvh - 180px);
-    min-height: 420px;
+    /* Tall: the worlds are taller than wide (an island, a state); a wide box shrinks them. */
+    height: clamp(520px, 86dvh, 1000px);
     overflow: hidden;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
@@ -53,7 +56,7 @@
   }
 
   .game-map-progress .icon {
-    color: var(--color-accent);
+    color: var(--map-accent);
   }
 
   .game-map-chips {
@@ -75,31 +78,34 @@
     white-space: nowrap;
   }
 
+  /* Apart from the categories: "only what is left" goes with any of them. */
+  .game-map-chips-gap {
+    flex: none;
+    width: 1px;
+    margin: 6px 2px;
+    background: var(--color-border-strong);
+  }
+
   .game-map-chips .chip small {
     color: var(--color-fg-subtle);
   }
 
   .game-map-chips .chip[aria-pressed="true"] {
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
-    color: var(--color-accent);
-    border-color: color-mix(in srgb, var(--color-accent) var(--alpha-glow), transparent);
+    background: color-mix(in srgb, var(--map-accent) var(--alpha-tint), transparent);
+    color: var(--map-accent);
+    border-color: color-mix(in srgb, var(--map-accent) var(--alpha-glow), transparent);
   }
 
   .game-map-chips .chip[aria-pressed="true"] small {
-    color: var(--color-accent-dim);
+    color: color-mix(in srgb, var(--map-accent) var(--alpha-dim), transparent);
   }
 
-  /* A pin: a drop in the app's surface with the category's icon, its point on the spot. */
-  /* The engine adds its own class to each pin: with it, this beats the journey's 44px rule. */
-  .game-map .map-pin.maplibregl-marker {
-    min-height: 0;
-  }
-
+  /* A pin: a small disc with the category's icon, centred on the spot; many fit side by side. */
   .map-pin {
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
+    width: 26px;
+    height: 26px;
     padding: 0;
     border: 0;
     background: none;
@@ -109,40 +115,40 @@
   .map-pin-head {
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
-    border: 2px solid var(--color-accent);
-    border-radius: 50% 50% 50% 0;
-    background: var(--color-surface-float);
-    color: var(--color-accent);
-    box-shadow: var(--shadow-popover);
-    transform: rotate(-45deg);
-    transition:
-      transform var(--motion-tab),
-      background var(--motion-tab);
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid var(--color-bg);
+    border-radius: var(--radius-round);
+    background: var(--map-accent);
+    color: var(--color-on-accent);
+    /* A light shadow: hundreds of pins together would darken the map under them. */
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-shadow) var(--alpha-line), transparent);
+    transition: transform var(--motion-tab);
   }
 
   .map-pin-head .icon {
-    width: 15px;
-    height: 15px;
-    transform: rotate(45deg);
+    width: 12px;
+    height: 12px;
   }
 
   .map-pin:hover .map-pin-head,
   .map-pin.is-selected .map-pin-head {
-    background: var(--color-accent);
-    color: var(--color-on-accent);
-    transform: rotate(-45deg) scale(1.15);
+    border-color: var(--color-fg);
+    transform: scale(1.35);
+  }
+
+  .map-pin.is-selected {
+    z-index: 1;
   }
 
   .map-pin.is-approx .map-pin-head {
     border-style: dashed;
+    border-color: var(--color-fg);
   }
 
   .map-pin.is-done .map-pin-head {
-    border-color: var(--color-border-strong);
-    color: var(--color-fg-subtle);
     background: var(--color-surface);
+    color: var(--color-fg-subtle);
   }
 
   .map-pin:focus-visible {
@@ -201,8 +207,8 @@
     width: 40px;
     height: 40px;
     border-radius: var(--radius-control);
-    background: color-mix(in srgb, var(--color-accent) var(--alpha-tint), transparent);
-    color: var(--color-accent);
+    background: color-mix(in srgb, var(--map-accent) var(--alpha-tint), transparent);
+    color: var(--map-accent);
   }
 
   .game-map-spot-copy {
@@ -239,6 +245,11 @@
     padding: 0;
     background: none;
     color: var(--color-fg-muted);
+  }
+
+  .game-map-collect:not(.ghost) {
+    background: var(--map-accent);
+    color: var(--color-on-accent);
   }
 
   .game-map-collect {

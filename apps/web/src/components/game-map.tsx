@@ -63,7 +63,7 @@ export interface MapPoint {
   lng: number
   lat: number
   title?: string
-  detail?: string
+  detail?: string | Record<string, string>
   approx?: boolean
 }
 
@@ -74,6 +74,7 @@ export interface GameMapData {
   version?: number
   tileMaxZoom: number
   center: [number, number]
+  bounds?: [number, number, number, number]
   zoom: number
   attribution: string
   categories: MapCategory[]
@@ -110,6 +111,10 @@ export function useGameMap(game: string | undefined) {
 }
 
 export const categoryName = (c: MapCategory) => c.name[getLocale()] ?? c.name[Language.PtBR] ?? c.id
+
+/** A spot's text in the page's language, else pt-BR, else the one text it has. */
+const inLanguage = (text: string | Record<string, string> | undefined) =>
+  typeof text === 'string' ? text : text ? (text[getLocale()] ?? text[Language.PtBR]) : undefined
 
 // What the player marked as collected, per game, on this device.
 const collectedKey = (game: string) => `pj-map-collected:${game}`
@@ -162,24 +167,18 @@ export function GameMap({ game }: { game: string }) {
 export function GameMapView({ game, map }: { game: string; map: GameMapData }) {
   const t = useMessages(messages)
   const { done, toggle } = useCollected(game)
-  const [hidden, setHidden] = useState<Set<string>>(new Set())
+  // One category at a time; null shows them all.
+  const [only, setOnly] = useState<string | null>(null)
   const [missing, setMissing] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
   const [credit, setCredit] = useState(false)
   const icons = useMemo(() => Object.fromEntries(map.categories.map((c) => [c.id, c.icon])), [map])
   const shown = useMemo(
-    () => map.points.filter((p) => !hidden.has(p.category) && !(missing && done.has(p.id))),
-    [map, hidden, missing, done],
+    () => map.points.filter((p) => (!only || p.category === only) && !(missing && done.has(p.id))),
+    [map, only, missing, done],
   )
   const point = map.points.find((p) => p.id === selected) ?? null
   const category = point ? map.categories.find((c) => c.id === point.category) : undefined
-  const flip = (id: string) =>
-    setHidden((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
   return (
     <section className={`game-map is-${map.background}`} aria-label={t('title')}>
       <Suspense fallback={<div className="game-map-canvas" aria-busy="true" />}>
@@ -214,13 +213,18 @@ export function GameMapView({ game, map }: { game: string; map: GameMapData }) {
           >
             <Icon name="check" /> {t('missing')}
           </button>
+          <span className="game-map-chips-gap" aria-hidden="true" />
+          <button type="button" className="chip" aria-pressed={!only} onClick={() => setOnly(null)}>
+            {t('all')}
+            <small>{map.points.length}</small>
+          </button>
           {map.categories.map((c) => (
             <button
               key={c.id}
               type="button"
               className="chip"
-              aria-pressed={!hidden.has(c.id)}
-              onClick={() => flip(c.id)}
+              aria-pressed={only === c.id}
+              onClick={() => setOnly(only === c.id ? null : c.id)}
             >
               <Icon name={c.icon} /> {categoryName(c)}
               <small>{map.points.filter((p) => p.category === c.id).length}</small>
@@ -238,7 +242,7 @@ export function GameMapView({ game, map }: { game: string; map: GameMapData }) {
             {/* A spot without a name of its own is named by its category, said once. */}
             {point.title && <small>{category ? categoryName(category) : ''}</small>}
             <b>{point.title ?? (category ? categoryName(category) : '')}</b>
-            {point.detail && <p>{point.detail}</p>}
+            {inLanguage(point.detail) && <p>{inLanguage(point.detail)}</p>}
             {point.approx && <p className="game-map-spot-approx">{t('approx')}</p>}
           </div>
           <button

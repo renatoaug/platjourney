@@ -18,7 +18,8 @@ export interface MapPoint {
   lng: number
   lat: number
   title?: string
-  detail?: string
+  /** How to get there, in each language the app speaks (or one text for all). */
+  detail?: string | Record<string, string>
   /** Placed on its district, not on its spot. */
   approx?: boolean
 }
@@ -34,6 +35,8 @@ export interface GameMap {
   /** The deepest zoom the tiles have; past it the map enlarges the last ones. */
   tileMaxZoom: number
   center: [number, number]
+  /** The whole world [west, south, east, north]: the map opens fitting it on any screen. */
+  bounds?: [number, number, number, number]
   zoom: number
   /** The credit the map's license asks for; empty when it asks none (public domain). */
   attribution: string
