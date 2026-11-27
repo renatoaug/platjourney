@@ -113,4 +113,7 @@ export const config = {
   // Where the games' interactive maps are: one folder per catalog id with map.json and its tiles
   // (tiles/{z}/{x}/{y}.webp). Empty: no game has a map.
   mapsDir: process.env.MAP_DATA_DIR || null,
+  // Or the address the maps are published at (https://maps.example.com, the same layout): map.json
+  // is read from there and the tiles load straight from it. Takes the place of MAP_DATA_DIR.
+  mapsUrl: (process.env.MAP_BASE_URL ?? '').replace(/\/+$/, '') || null,
 }

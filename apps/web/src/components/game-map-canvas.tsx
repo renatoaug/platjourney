@@ -131,8 +131,10 @@ export default function GameMapCanvas({
         sources: {
           game: {
             type: 'raster',
+            // Published maps load their tiles straight from where they live; else through the app.
             tiles: [
-              `${location.origin}/api/game-map/tile?game=${encodeURIComponent(game)}&v=${map.version ?? 1}&z={z}&x={x}&y={y}`,
+              map.tiles ??
+                `${location.origin}/api/game-map/tile?game=${encodeURIComponent(game)}&v=${map.version ?? 1}&z={z}&x={x}&y={y}`,
             ],
             // On a dense screen each tile covers half the space, so the map loads one level
             // sharper instead of enlarging blurry tiles.

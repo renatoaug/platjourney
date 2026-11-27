@@ -78,6 +78,7 @@ export interface GameMapData {
   bounds?: [number, number, number, number]
   zoom: number
   attribution: string
+  tiles?: string
   categories: MapCategory[]
   points: MapPoint[]
 }

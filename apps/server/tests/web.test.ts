@@ -16,6 +16,7 @@ import * as deepguide from '../src/deepguide.ts'
 import { DEMO_ACCOUNT_ID } from '../src/demo.ts'
 import * as fcm from '../src/fcm.ts'
 import * as gameContext from '../src/game-context.ts'
+import { forgetPublishedMaps } from '../src/game-map.ts'
 import * as guide from '../src/guide.ts'
 import { GUIDE_VERSION, type Guide } from '../src/guide.ts'
 import { pagePolicy, SECURITY_HEADERS } from '../src/http.ts'
@@ -1830,4 +1831,24 @@ test('a game map comes from its folder; tiles and marks too, and nothing outside
       })
     ).status,
   ).toBe(400)
+})
+
+test('published maps are read from their host, and their tiles load straight from it', async () => {
+  const before = config.mapsUrl
+  config.mapsUrl = 'https://maps.example.com'
+  forgetPublishedMaps()
+  const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation((async (url: string) =>
+    String(url).includes('/52189/')
+      ? new Response(JSON.stringify({ version: 7, points: [], categories: [] }))
+      : new Response('no', { status: 404 })) as never)
+  try {
+    const found = await send('GET', '/api/game-map?game=game:52189')
+    expect(found.body.tiles).toBe('https://maps.example.com/52189/tiles/{z}/{x}/{y}.webp?v=7')
+    await send('GET', '/api/game-map?game=game:52189')
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect((await send('GET', '/api/game-map?game=game:1')).status).toBe(404)
+  } finally {
+    config.mapsUrl = before
+    forgetPublishedMaps()
+  }
 })
