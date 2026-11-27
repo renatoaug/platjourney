@@ -32,6 +32,8 @@ erDiagram
     user ||--o{ platinum : "earned"
     game ||--o{ platinum : "of"
     user ||--o{ unlock : "earned trophies"
+    user ||--o{ map_collected : "marked on a map"
+    game ||--o{ map_collected : "spots of"
     user ||--o{ follow : "follows"
     user ||--o{ follow : "is followed by"
     user ||--o{ reaction : "reacts"
@@ -98,6 +100,14 @@ erDiagram
         trophy_name string
         earned_at datetime
         rarity_rate float
+        created_at datetime
+        updated_at datetime
+    }
+    map_collected {
+        id record(map_collected) PK
+        user record(user) FK
+        game record(game) FK
+        spots array(string)
         created_at datetime
         updated_at datetime
     }
@@ -533,6 +543,7 @@ erDiagram
 | `title` | game in the player's PSN library | `user, np_communication_id` | Progress, earned trophy ids and the trophy list snapshot from PSN |
 | `platinum` | platinum earned | `user, np_communication_id` | Real unlock date and rarity |
 | `unlock` | trophy a player earned, with its PSN unlock time | `user, np_communication_id, trophy_id` | Written whenever the server fetches a game's trophy list from PSN (`keepUnlocks`: the watcher, a game's page, the chat, a session plan, and the profile's platinum dates for every platinumed game of a new account) and once for the whole library by `bun run backfill-unlocks`; only read back as aggregates: where players usually close a long trophy (ADR-015). Never updated, deleted with the account |
+| `map_collected` | player and game with a spot of its interactive map marked as collected | `user, game` | `spots` are the ids of the game's map spots (its `map.json`, served from `MAP_DATA_DIR`) the player marked; the server writes them from the map page. Wiped with the player's data |
 | `trophy_rarity` | trophy on a PSN list | `np_communication_id, trophy_id` | Its share of players on PSN (`earned_rate`, in %), with its grade and names, from the last list a player who owns the game opened (a catalog list has no rates); kept at most every six hours per list by `keepRarities` (`community.ts`). Shared, not personal. Feeds the community's rare trophies and medals |
 | `follow` | player and a player they follow in the community | `user, target` | Written by `POST /api/community/follow`, only for a player who shows up in the community; deleted with either account |
 | `reaction` | player, feed event and kind | `user, event, kind` | `kind`: `like`, `gg`, `fire`, `wow`, `skull`. `event` is the feed event's stable key (`plat:<user>:<np>`, `rare:<user>:<np>:<trophy>`, `start:<user>:<np>`, `medal:<user>:<kind>`): the feed itself is never stored, it is read from `unlock`, `platinum`, `trophy_rarity` and `medal`. Deleted with the account |

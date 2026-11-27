@@ -1,6 +1,7 @@
 /** A game's interactive map: what there is to collect and where, over the game's own map. The
  * map engine loads only with this page (game-map-canvas.tsx); the points come from the server. */
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { useApp } from '../app/app-state'
 import { defineMessages, getLocale, Language, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
 import { Icon } from '../ui/icon'
@@ -116,26 +117,54 @@ export const categoryName = (c: MapCategory) => c.name[getLocale()] ?? c.name[La
 const inLanguage = (text: string | Record<string, string> | undefined) =>
   typeof text === 'string' ? text : text ? (text[getLocale()] ?? text[Language.PtBR]) : undefined
 
-// What the player marked as collected, per game, on this device.
+// What the player marked as collected goes with the account. Someone without one (the public
+// game page) keeps the marks on this device.
 const collectedKey = (game: string) => `pj-map-collected:${game}`
-function useCollected(game: string) {
-  const [done, setDone] = useState<Set<string>>(() => {
-    try {
-      return new Set(JSON.parse(localStorage.getItem(collectedKey(game)) ?? '[]') as string[])
-    } catch {
-      return new Set()
+const readLocal = (game: string) => {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(collectedKey(game)) ?? '[]') as string[])
+  } catch {
+    return new Set<string>()
+  }
+}
+
+function useCollected(game: string, signedIn: boolean) {
+  const [done, setDone] = useState<Set<string>>(() => (signedIn ? new Set() : readLocal(game)))
+  useEffect(() => {
+    if (!signedIn) return
+    let live = true
+    api<{ spots: string[] }>(`/api/game-map/collected?game=${encodeURIComponent(game)}`)
+      .then((r) => live && setDone(new Set(r.spots)))
+      .catch(() => {})
+    return () => {
+      live = false
     }
-  })
-  const toggle = (id: string) =>
+  }, [game, signedIn])
+  const toggle = (id: string) => {
+    const collected = !done.has(id)
+    // The mark shows at once; the server's answer then holds every spot, from any device.
     setDone((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      try {
-        localStorage.setItem(collectedKey(game), JSON.stringify([...next]))
-      } catch {}
+      if (collected) next.add(id)
+      else next.delete(id)
+      if (!signedIn)
+        try {
+          localStorage.setItem(collectedKey(game), JSON.stringify([...next]))
+        } catch {}
       return next
     })
+    if (signedIn)
+      api<{ spots: string[] }>('/api/game-map/collected', { game, spot: id, collected })
+        .then((r) => setDone(new Set(r.spots)))
+        .catch(() =>
+          setDone((prev) => {
+            const back = new Set(prev)
+            if (collected) back.delete(id)
+            else back.add(id)
+            return back
+          }),
+        )
+  }
   return { done, toggle }
 }
 
@@ -166,7 +195,8 @@ export function GameMap({ game }: { game: string }) {
 /** The map with its filters and the card of the chosen spot; takes the data as it is. */
 export function GameMapView({ game, map }: { game: string; map: GameMapData }) {
   const t = useMessages(messages)
-  const { done, toggle } = useCollected(game)
+  const signedIn = useApp().me.visitor !== true
+  const { done, toggle } = useCollected(game, signedIn)
   // One category at a time; null shows them all.
   const [only, setOnly] = useState<string | null>(null)
   const [missing, setMissing] = useState(false)
