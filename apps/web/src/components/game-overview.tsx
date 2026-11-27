@@ -45,7 +45,10 @@ const messages = defineMessages({
     about: 'Sobre o jogo',
     aboutLead: 'Quem fez, quando saiu e como se joga',
     map: 'Mapa',
-    mapLead: '{count, plural, one {# ponto} other {# pontos}} para coletar, no mapa do jogo',
+    mapLead: {
+      one: '{count} ponto para coletar, no mapa do jogo',
+      other: '{count} pontos para coletar, no mapa do jogo',
+    },
     tiers: 'Troféus por tipo',
     platinum: 'Platina',
     gold: 'Ouro',
@@ -81,7 +84,10 @@ const messages = defineMessages({
     about: 'About the game',
     aboutLead: 'Who made it, when it came out and how it plays',
     map: 'Map',
-    mapLead: "{count, plural, one {# spot} other {# spots}} to collect, on the game's map",
+    mapLead: {
+      one: "{count} spot to collect, on the game's map",
+      other: "{count} spots to collect, on the game's map",
+    },
     tiers: 'Trophies by tier',
     platinum: 'Platinum',
     gold: 'Gold',

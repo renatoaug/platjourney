@@ -840,13 +840,20 @@ def map_note(game_map: MapSummary | None) -> str:
     )
 
 
+# The mark as models write it: [mapa], [map], [Mapa], alone on its line or after the text.
+_MAP_MARK = re.compile(r'[ \t]*\[(?:mapa|map)\][ \t]*', re.I)
+
+
 def map_link(text: str, game_map: MapSummary | None, locale: str) -> str:
-    """The mark becomes the link to the game's map; without a map, it goes."""
-    if MAP_MARK not in text:
+    """The mark becomes the link to the game's map, always at the very end (after the source line);
+    without a map, it goes."""
+    if not _MAP_MARK.search(text):
         return text
+    body = re.sub(r'\n{3,}', '\n\n', _MAP_MARK.sub('', text)).strip()
+    if not game_map:
+        return body
     label = 'Open the map' if locale == 'en' else 'Abrir o mapa'
-    link = f'[{label}]({game_map.path})' if game_map else ''
-    return re.sub(r'\n{3,}', '\n\n', text.replace(MAP_MARK, link)).strip()
+    return f'{body}\n\n[{label}]({game_map.path})'
 
 
 def hook_note(hook: str | None) -> str:

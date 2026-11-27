@@ -12,7 +12,6 @@ import './game-map.css'
 const messages = defineMessages({
   [Language.PtBR]: {
     title: 'Mapa',
-    lead: '{count, plural, one {# ponto} other {# pontos}} para coletar',
     categories: 'O que mostrar',
     all: 'Tudo',
     missing: 'Só o que falta',
@@ -32,7 +31,6 @@ const messages = defineMessages({
   },
   [Language.En]: {
     title: 'Map',
-    lead: '{count, plural, one {# spot} other {# spots}} to collect',
     categories: 'What to show',
     all: 'All',
     missing: 'Only what is left',
