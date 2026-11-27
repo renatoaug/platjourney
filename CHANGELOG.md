@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.108.2](https://github.com/renatoaug/platjourney/compare/v0.108.1...v0.108.2) (2026-11-27)
+
+### Bug Fixes
+
+* **web:** no stray pin from the previous filter on a game's map ([#251](https://github.com/renatoaug/platjourney/issues/251)) ([e00ea16](https://github.com/renatoaug/platjourney/commit/e00ea16b056c36fb78ab868aee9e46b34d385007))
+
 ## [0.108.1](https://github.com/renatoaug/platjourney/compare/v0.108.0...v0.108.1) (2026-11-27)
 
 ### Bug Fixes
