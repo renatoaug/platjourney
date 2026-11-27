@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.109.0](https://github.com/renatoaug/platjourney/compare/v0.108.2...v0.109.0) (2026-11-27)
+
+### Features
+
+* **ai:** anthropic as a model provider ([#252](https://github.com/renatoaug/platjourney/issues/252)) ([e07b24a](https://github.com/renatoaug/platjourney/commit/e07b24af56e19af0724998426daf46c90bd0f032))
+
 ## [0.108.2](https://github.com/renatoaug/platjourney/compare/v0.108.1...v0.108.2) (2026-11-27)
 
 ### Bug Fixes
