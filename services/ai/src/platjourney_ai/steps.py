@@ -124,7 +124,8 @@ async def predict(game: str, name: str, trophies: list[Trophy]) -> list[dict[str
     if not llm.decide_on():
         return []
     rows = await db.rows(
-        'SELECT guide FROM guide WHERE game = type::record($game) LIMIT 1', {'game': game}
+        'SELECT guide_pt ?? guide_en AS guide FROM guide WHERE game = type::record($game) LIMIT 1',
+        {'game': game},
     )
     guide = cast(dict[str, Any] | None, rows[0].get('guide') if rows else None)
     if not guide:
@@ -149,7 +150,10 @@ async def predict(game: str, name: str, trophies: list[Trophy]) -> list[dict[str
                     found.append({'trophy': _name(asked[k]), 'step': round(step)})
     # Stored even when empty, so the same guide is not asked about again.
     await db.query(
-        'UPDATE guide SET guide.predicted_steps = $steps WHERE game = type::record($game)',
+        # The steps hold no text: both languages carry the same ones.
+        'UPDATE guide SET guide_pt.predicted_steps = IF guide_pt != NONE { $steps }, '
+        'guide_en.predicted_steps = IF guide_en != NONE { $steps } '
+        'WHERE game = type::record($game)',
         {'game': game, 'steps': found},
     )
     log.info('predicted steps for %s: %d trophies', game, len(found))
