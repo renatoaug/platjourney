@@ -330,7 +330,7 @@ export async function releasesBetween(
     .map(({ hypes: _hypes, ...g }) => g)
   const guides = plain(
     await qEach<{ game: string; difficulty: number | null; hours: number | null }>(
-      'SELECT game, guide.difficulty AS difficulty, guide.hours AS hours FROM guide WHERE game = $each AND guide != NONE',
+      'SELECT game, g.difficulty AS difficulty, g.hours AS hours FROM (SELECT game, guide_pt ?? guide_en AS g FROM guide WHERE game = $each) WHERE g != NONE',
       games.map((g) => gameRef(String(g.id))),
     ),
   )

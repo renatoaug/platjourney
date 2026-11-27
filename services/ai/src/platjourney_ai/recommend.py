@@ -234,7 +234,10 @@ def candidate_line(c: Candidate, facts: str = '') -> str:
 async def guided_games() -> list[str]:
     """Every game PlatJourney has a guide for."""
     return [
-        str(g) for g in await db.rows('SELECT VALUE <string> game FROM guide WHERE guide != NONE')
+        str(g)
+        for g in await db.rows(
+            'SELECT VALUE <string> game FROM guide WHERE guide_pt != NONE OR guide_en != NONE'
+        )
     ]
 
 
@@ -242,10 +245,11 @@ async def guide_rows(ids: Sequence[str]) -> dict[str, dict[str, Any]]:
     """What the guides we already have say about each game: the numbers and the traits a
     player's rules look at."""
     rows = await db.rows(
-        'SELECT game, guide.difficulty AS difficulty, guide.hours AS hours, '
-        'guide.playthroughs AS playthroughs, guide.has_missables AS has_missables, '
-        'guide.has_online AS has_online, guide.difficulty_trophy AS difficulty_trophy FROM guide '
-        'WHERE game IN $ids.map(|$i| type::record($i)) AND guide != NONE',
+        'SELECT game, g.difficulty AS difficulty, g.hours AS hours, '
+        'g.playthroughs AS playthroughs, g.has_missables AS has_missables, '
+        'g.has_online AS has_online, g.difficulty_trophy AS difficulty_trophy FROM '
+        '(SELECT game, guide_pt ?? guide_en AS g FROM guide '
+        'WHERE game IN $ids.map(|$i| type::record($i))) WHERE g != NONE',
         {'ids': list(ids)},
     )
     return {str(r['game']): r for r in rows}

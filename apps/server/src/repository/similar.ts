@@ -69,11 +69,11 @@ export async function guideFacts(ids: string[]): Promise<GuideFacts[]> {
   if (ids.length === 0) return []
   return plain(
     await qEach<GuideFacts>(
-      `SELECT game, guide.difficulty AS difficulty, guide.hours AS hours,
-         guide.playthroughs AS playthroughs, guide.has_missables AS has_missables,
-         guide.has_online AS has_online, array::len(guide.online_trophies ?? []) AS online_trophies,
-         guide.difficulty_trophy AS difficulty_trophy
-       FROM guide WHERE game = $each AND guide != NONE`,
+      `SELECT game, g.difficulty AS difficulty, g.hours AS hours, g.playthroughs AS playthroughs,
+         g.has_missables AS has_missables, g.has_online AS has_online,
+         array::len(g.online_trophies ?? []) AS online_trophies,
+         g.difficulty_trophy AS difficulty_trophy
+       FROM (SELECT game, guide_pt ?? guide_en AS g FROM guide WHERE game = $each) WHERE g != NONE`,
       refs(ids),
     ),
   ).map(camelKeys)
@@ -115,7 +115,7 @@ export async function guidedInSeries(
   const games = await qEach<RecordId>('SELECT VALUE id FROM game WHERE series = $each', series)
   return plain(
     await qEach<{ id: string; series: number[] }>(
-      'SELECT game AS id, game.series AS series FROM guide WHERE game = $each AND guide != NONE',
+      'SELECT game AS id, game.series AS series FROM guide WHERE game = $each AND (guide_pt != NONE OR guide_en != NONE)',
       games,
     ),
   )

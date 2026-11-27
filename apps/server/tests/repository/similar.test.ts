@@ -61,7 +61,9 @@ test("a series' guided games: its games through the series index, then which hav
     .mockResolvedValueOnce([g(8), g(9)])
     .mockResolvedValueOnce([{ id: g(9), series: [7] }])
   expect(await guidedInSeries([7])).toEqual([{ id: 'game:9', series: [7] }])
-  expect(q.mock.calls[1][0]).toContain('FROM guide WHERE game = $each0 AND guide != NONE')
+  expect(q.mock.calls[1][0]).toContain(
+    'FROM guide WHERE game = $each0 AND (guide_pt != NONE OR guide_en != NONE)',
+  )
   expect(q.mock.calls[1][1]).toEqual({ each0: g(8), each1: g(9) })
 })
 
