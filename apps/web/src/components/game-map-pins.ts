@@ -57,7 +57,9 @@ export function syncMarkers(
   },
 ) {
   const byId = new Map(shown.points.map((p) => [p.id, p]))
-  const want = onScreen(m)
+  // Right after a filter changes, the map's source can still hand back the spots it showed before;
+  // only the spots shown now get a pin, or a pin of another category would linger.
+  const want = new Map([...onScreen(m)].filter(([id]) => byId.has(id)))
   for (const [id, { marker }] of markers)
     if (!want.has(id)) {
       marker.remove()

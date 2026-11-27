@@ -56,3 +56,16 @@ test('pins follow what is on screen: added, restyled, removed, and a click choos
   expect(b.getAttribute('aria-pressed')).toBe('false')
   expect(placed).toHaveLength(2)
 })
+
+test('a spot the source still has from before the filter changed gets no pin', () => {
+  const map = { querySourceFeatures: () => [feature('old', [1, 1]), feature('new', [2, 2])] }
+  const markers = new Map()
+  const shown = {
+    points: [{ id: 'new', category: 'cards', lng: 2, lat: 2 }],
+    done: new Set<string>(),
+    selected: null,
+    icons: { cards: 'cards' },
+  }
+  syncMarkers(map, markers, shown, { select: () => {}, place: () => ({ remove: () => {} }) })
+  expect([...markers.keys()]).toEqual(['new'])
+})
