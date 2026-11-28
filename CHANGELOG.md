@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.110.1](https://github.com/renatoaug/platjourney/compare/v0.110.0...v0.110.1) (2026-11-28)
+
+### Bug Fixes
+
+* **web:** the share row keeps the line above it in the settings ([#255](https://github.com/renatoaug/platjourney/issues/255)) ([d88893c](https://github.com/renatoaug/platjourney/commit/d88893c7819ff8834d2bc53cfe6968b55b24784f))
+
 ## [0.110.0](https://github.com/renatoaug/platjourney/compare/v0.109.1...v0.110.0) (2026-11-28)
 
 ### Features
