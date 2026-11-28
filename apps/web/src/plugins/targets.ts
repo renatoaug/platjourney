@@ -365,6 +365,7 @@ export type Target =
   | 'ServersSkeleton'
   | 'SettingTitle'
   | 'Settings'
+  | 'SettingsApp'
   | 'SettingsLinks'
   | 'SettingsTop'
   | 'SettingsVersion'

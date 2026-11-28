@@ -3,7 +3,10 @@
 
 interface Bridge {
   isNativePlatform?: () => boolean
+  getPlatform?: () => string
   Plugins?: {
+    /** The Android share sheet (AppSharePlugin.java); the iOS web view has the page's own. */
+    AppShare?: { share?: (o: { title: string; text: string; url: string }) => Promise<void> }
     Haptics?: { selectionChanged?: () => Promise<void> }
     SplashScreen?: { hide?: (options?: { fadeOutDuration?: number }) => Promise<void> }
     /** The app's own loading screen, drawn from the first frame (MainViewController.swift). */
@@ -46,6 +49,43 @@ export function handoffLaunchScreen(): () => void {
     cancelled = true
     clearTimeout(timeout)
     cancelAnimationFrame(frame)
+  }
+}
+
+/** Which store app this is, or null in a browser. */
+export function nativeStore(): 'ios' | 'android' | null {
+  if (!isNative()) return null
+  const platform = bridge()?.getPlatform?.()
+  return platform === 'ios' || platform === 'android' ? platform : null
+}
+
+/** How a share ended: the system's share sheet opened, the link was copied for want of one, or
+ * neither worked. Closing the sheet without picking anyone counts as shared. */
+export type Shared = 'shared' | 'copied' | 'failed'
+
+/** Opens the system's share sheet with a link: the page's own (a browser, the iOS app), the
+ * Android app's, or, with neither, copies the link. */
+export async function share(o: { title: string; text: string; url: string }): Promise<Shared> {
+  if (typeof navigator.share === 'function') {
+    try {
+      await navigator.share(o)
+      return 'shared'
+    } catch (e) {
+      if ((e as Error | null)?.name === 'AbortError') return 'shared'
+    }
+  }
+  const sheet = bridge()?.Plugins?.AppShare?.share
+  if (sheet) {
+    try {
+      await sheet(o)
+      return 'shared'
+    } catch {}
+  }
+  try {
+    await navigator.clipboard.writeText(o.url)
+    return 'copied'
+  } catch {
+    return 'failed'
   }
 }
 
