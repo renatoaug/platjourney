@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.110.2](https://github.com/renatoaug/platjourney/compare/v0.110.1...v0.110.2) (2026-11-28)
+
+### Bug Fixes
+
+* **ai:** a cut, refused or empty claude answer is a failed call ([#256](https://github.com/renatoaug/platjourney/issues/256)) ([f97dfae](https://github.com/renatoaug/platjourney/commit/f97dfaee2df3b2dcfda4117ed3a6c1ddf94fdf4a))
+
 ## [0.110.1](https://github.com/renatoaug/platjourney/compare/v0.110.0...v0.110.1) (2026-11-28)
 
 ### Bug Fixes
