@@ -68,6 +68,8 @@ export const publicUser = (u: User) => ({
   pushKey: pushEnabled() ? config.push.publicKey : null,
   nativePush: apnsEnabled(),
   androidPush: fcmEnabled(),
+  // The store pages to rate the app on and the address to share it with (settings).
+  appLinks: config.appLinks,
   // Whether this instance lets Nexo write notices at all; the profile's switch only shows then.
   aiNoticesAvailable: config.automatic.notices,
   locale: u.locale ?? null,

@@ -60,6 +60,13 @@ export const config = {
     // The interactive views for assistants (MCP Apps): off until a host has been tested end to end.
     apps: process.env.MCP_APPS === '1',
   },
+  // Where the settings send a player to rate the store apps and which address they share; a link
+  // left empty hides its row.
+  appLinks: {
+    android: process.env.APP_STORE_ANDROID_URL || null,
+    ios: process.env.APP_STORE_IOS_URL || null,
+    share: process.env.APP_SHARE_URL || null,
+  },
   // Notices as push to the browser and the installed web app (Web Push). Off without both VAPID
   // keys; `bun run --cwd apps/server push:keys` makes a pair. The contact goes to the push services
   // with every message, so they can reach whoever runs the instance.
