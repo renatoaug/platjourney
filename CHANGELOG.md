@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.110.0](https://github.com/renatoaug/platjourney/compare/v0.109.1...v0.110.0) (2026-11-28)
+
+### Features
+
+* **web:** rate and share the app from the settings, and back asks before leaving android ([#254](https://github.com/renatoaug/platjourney/issues/254)) ([d5e682d](https://github.com/renatoaug/platjourney/commit/d5e682d5faaf0163c80fae8aa598c6a16c4b04b0))
+
 ## [0.109.1](https://github.com/renatoaug/platjourney/compare/v0.109.0...v0.109.1) (2026-11-27)
 
 ### Bug Fixes
