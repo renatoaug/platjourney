@@ -138,7 +138,7 @@ export function SettingsView({
           )}
         </div>
       )}
-      <SettingsApp />
+      {load.kind === 'ready' && <SettingsApp links={load.user.appLinks} />}
       <SettingsLinks />
       <SettingsVersion />
     </div>
@@ -152,37 +152,35 @@ function SettingsVersion() {
   return <p className="settings-version">{t('version', { version: __APP_VERSION__ })}</p>
 }
 
-// Where the store apps are rated: the review form itself where the store has a link to it.
-const RATE_URL = {
-  android: 'https://play.google.com/store/apps/details?id=com.platjourney.app',
-  ios: 'https://apps.apple.com/app/id6829343019?action=write-review',
-}
-
-/** The app itself: rating it in its store (only in the store apps) and sharing it with a friend. */
-function SettingsApp() {
+/** The app itself: rating it in its store (only in the store apps) and sharing it with a friend,
+ * where the instance gives the links. */
+function SettingsApp({ links }: { links: Me['appLinks'] }) {
   const t = useMessages(messages)
-  const locale = useLocale()
   const store = nativeStore()
-  const shareApp = async () => {
-    const url = locale === Language.En ? 'https://platjourney.com/en/' : 'https://platjourney.com/'
+  const rate = store ? links?.[store] : null
+  const url = links?.share
+  if (!rate && !url) return null
+  const shareApp = async (url: string) => {
     const done = await share({ title: 'PlatJourney', text: t('shareText'), url })
     if (done === 'copied') toast(t('copied'), 'success')
     else if (done === 'failed') toast(t('shareFailed'))
   }
   return (
     <nav className="settings-links settings-app">
-      {store && (
-        <a href={RATE_URL[store]} target="_blank" rel="noopener noreferrer">
+      {rate && (
+        <a href={rate} target="_blank" rel="noopener noreferrer">
           <Icon name="thumbs-up" />
           <b>{t('rate')}</b>
           <Icon name="chevron-right" />
         </a>
       )}
-      <button type="button" onClick={shareApp}>
-        <Icon name="share" />
-        <b>{t('share')}</b>
-        <Icon name="chevron-right" />
-      </button>
+      {url && (
+        <button type="button" onClick={() => shareApp(url)}>
+          <Icon name="share" />
+          <b>{t('share')}</b>
+          <Icon name="chevron-right" />
+        </button>
+      )}
     </nav>
   )
 }

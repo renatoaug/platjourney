@@ -208,6 +208,7 @@ test('register and login sign in, start watching and set the cookie', async () =
       pushKey: null,
       nativePush: false,
       androidPush: false,
+      appLinks: config.appLinks,
       locale: 'pt-BR',
       demo: false,
       onboarded: false,

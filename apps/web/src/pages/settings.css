@@ -178,6 +178,11 @@
     text-align: left;
   }
 
+  /* Its reset took the line every row draws above it. */
+  .settings-links > * + button {
+    border-top: 1px solid var(--color-border);
+  }
+
   .settings-links :is(a, button) b {
     font-weight: var(--weight-medium);
   }

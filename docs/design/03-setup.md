@@ -145,6 +145,13 @@ Web search follows each feature's provider. An OpenAI or Claude model needs its 
 | `MCP_RATE_LIMIT` | 60 | Tool calls per minute one connected assistant may make on `/mcp`; over it, the tool answers that it is busy. 0 turns it off |
 | `MCP_REFRESH_DAYS` | 14 | Days a connected assistant stays signed in without being used; each use renews it |
 
+## Rating and sharing the app
+
+| Setting | Default | What it is |
+|---|---|---|
+| `APP_STORE_ANDROID_URL`, `APP_STORE_IOS_URL` | empty | The store page the settings' "Rate" row opens in the Android and iOS apps. Empty hides the row in that app; a browser never shows it |
+| `APP_SHARE_URL` | empty | The address the settings' "Share" row shares. Empty hides the row |
+
 ## Push notifications
 
 | Setting | Default | What it is |

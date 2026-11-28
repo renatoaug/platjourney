@@ -39,6 +39,8 @@ export interface Me {
   nativePush?: boolean
   /** The server can push to the Android app (FCM). */
   androidPush?: boolean
+  /** Where the store apps are rated and which address is shared; null hides that row. */
+  appLinks?: { android: string | null; ios: string | null; share: string | null }
   /** The language the player chose; null until they pick one. */
   locale?: Locale | null
   telegramBot?: { username: string; name: string } | null

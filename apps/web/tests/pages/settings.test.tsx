@@ -82,8 +82,17 @@ test('loading stays on the skeleton', () => {
   expect(container.querySelector('#settings-page .sk')).toBeTruthy()
 })
 
+const LINKS = {
+  android: 'https://play.example/app',
+  ios: 'https://apps.example/app',
+  share: 'https://app.example/',
+}
+
 test('a browser shares the app from the settings but has no store to rate it in', async () => {
-  mockApi({ '/api/me': { user: SAMPLE_ME }, '/api/connections': { connections: [] } })
+  mockApi({
+    '/api/me': { user: { ...SAMPLE_ME, appLinks: LINKS } },
+    '/api/connections': { connections: [] },
+  })
   const sent = mock((_: unknown) => Promise.resolve())
   Object.defineProperty(navigator, 'share', { value: sent, configurable: true, writable: true })
   renderApp(<Settings />)
@@ -91,18 +100,32 @@ test('a browser shares the app from the settings but has no store to rate it in'
   expect(screen.queryByRole('link', { name: 'Avaliar o PlatJourney' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Compartilhar o PlatJourney' }))
   await waitFor(() => expect(sent).toHaveBeenCalled())
-  expect(sent.mock.calls[0]?.[0]).toMatchObject({ url: 'https://platjourney.com/' })
+  expect(sent.mock.calls[0]?.[0]).toMatchObject({ url: 'https://app.example/' })
   delete (navigator as unknown as { share?: unknown }).share
 })
 
-test('the Android app rates the app on Google Play', async () => {
+test("the Android app rates the app on the instance's Android store page", async () => {
+  mockApi({
+    '/api/me': { user: { ...SAMPLE_ME, appLinks: LINKS } },
+    '/api/connections': { connections: [] },
+  })
+  const w = window as Window & { Capacitor?: unknown }
+  w.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' }
+  renderApp(<Settings />)
+  expect(await screen.findAllByRole('button', { name: 'Como conectar' })).toHaveLength(2)
+  expect(screen.getByRole('link', { name: 'Avaliar o PlatJourney' }).getAttribute('href')).toBe(
+    LINKS.android,
+  )
+  delete w.Capacitor
+})
+
+test('an instance without the links shows neither row', async () => {
   mockApi({ '/api/me': { user: SAMPLE_ME }, '/api/connections': { connections: [] } })
   const w = window as Window & { Capacitor?: unknown }
   w.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' }
   renderApp(<Settings />)
   expect(await screen.findAllByRole('button', { name: 'Como conectar' })).toHaveLength(2)
-  expect(
-    screen.getByRole('link', { name: 'Avaliar o PlatJourney' }).getAttribute('href'),
-  ).toContain('play.google.com/store/apps/details?id=com.platjourney.app')
+  expect(screen.queryByRole('link', { name: 'Avaliar o PlatJourney' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Compartilhar o PlatJourney' })).toBeNull()
   delete w.Capacitor
 })
