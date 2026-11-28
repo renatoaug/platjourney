@@ -74,7 +74,7 @@ export function PasswordInput({
             own.current?.focus()
           }}
         >
-          <Icon name={shown ? 'eye-off' : 'eye'} />
+          <Icon name={shown ? 'eye' : 'eye-off'} />
         </button>
       </div>
     </>

@@ -140,14 +140,14 @@
   }
 
   .setting-group .setting-row,
-  .settings-links a {
+  .settings-links :is(a, button) {
     min-height: 54px;
     margin: 0;
     padding: 10px 4px;
   }
 
   .setting-group > * + *,
-  .settings-links a + a {
+  .settings-links > * + * {
     border-top: 1px solid var(--color-border);
   }
 
@@ -161,22 +161,36 @@
     padding: 10px 4px;
   }
 
-  .settings-links a {
+  .settings-links :is(a, button) {
     display: flex;
     align-items: center;
     gap: 12px;
     color: var(--color-fg);
   }
 
-  .settings-links a b {
+  /* A row that acts (sharing) looks like the rows that open a page. */
+  .settings-links button {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    font: inherit;
+    text-align: left;
+  }
+
+  .settings-links :is(a, button) b {
     font-weight: var(--weight-medium);
   }
 
-  .settings-links a:hover {
+  .settings-links :is(a, button):hover {
     background: color-mix(in srgb, var(--color-overlay) var(--alpha-faint), transparent);
   }
 
-  .settings-links a > .icon:last-child {
+  .settings-links :is(a, button) > .icon:first-child:not(:last-child) {
+    color: var(--color-fg-muted);
+  }
+
+  .settings-links :is(a, button) > .icon:last-child {
     margin-left: auto;
     color: var(--color-fg-subtle);
   }

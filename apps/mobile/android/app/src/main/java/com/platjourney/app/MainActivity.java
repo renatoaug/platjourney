@@ -3,9 +3,12 @@ package com.platjourney.app;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
+import android.widget.Toast;
+import androidx.activity.OnBackPressedCallback;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
 
@@ -15,12 +18,43 @@ public class MainActivity extends BridgeActivity {
 
     private BootCoverView bootCover;
     private final Handler main = new Handler(Looper.getMainLooper());
+    // When back last reached the first screen: a second press within this long leaves the app.
+    private long lastBack;
+    private static final long EXIT_WINDOW_MS = 2_000;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(BootCoverPlugin.class);
+        registerPlugin(AppSharePlugin.class);
         super.onCreate(savedInstanceState);
         showBootCover();
+        confirmExitOnBack();
+    }
+
+    /** Back goes back through the app's screens; on the first one it asks for a second press
+     * before leaving, so a stray press does not close the app. */
+    private void confirmExitOnBack() {
+        getOnBackPressedDispatcher()
+            .addCallback(
+                this,
+                new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        WebView web = getBridge() != null ? getBridge().getWebView() : null;
+                        if (web != null && web.canGoBack()) {
+                            web.goBack();
+                            return;
+                        }
+                        long now = SystemClock.uptimeMillis();
+                        if (now - lastBack < EXIT_WINDOW_MS) {
+                            finish();
+                            return;
+                        }
+                        lastBack = now;
+                        Toast.makeText(MainActivity.this, R.string.press_back_again, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            );
     }
 
     /** The page hides it once its copy is on screen; a page that does not say so (an older

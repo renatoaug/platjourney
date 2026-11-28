@@ -5,6 +5,8 @@ import {
   hideLaunchScreen,
   isNative,
   keepBottomBarOnScreen,
+  nativeStore,
+  share,
   tick,
   tickOnChoices,
 } from '../../src/lib/native'
@@ -219,5 +221,53 @@ describe('the bottom bar in the app', () => {
       Object.defineProperty(window, 'visualViewport', { configurable: true, value: undefined })
       field.remove()
     }
+  })
+})
+
+describe('sharing the app', () => {
+  const link = { title: 'PlatJourney', text: 'Oi', url: 'https://platjourney.com/' }
+  const nav = navigator as unknown as { share?: unknown }
+  const own = Object.getOwnPropertyDescriptor(nav, 'share')
+  afterEach(() => {
+    if (own) Object.defineProperty(nav, 'share', own)
+    else delete nav.share
+  })
+  const pageShare = (fn: unknown) =>
+    Object.defineProperty(nav, 'share', { value: fn, configurable: true, writable: true })
+
+  test("the page's own share sheet comes first, and closing it is not a failure", async () => {
+    pageShare(mock(() => Promise.resolve()))
+    expect(await share(link)).toBe('shared')
+    pageShare(mock(() => Promise.reject(Object.assign(new Error('x'), { name: 'AbortError' }))))
+    expect(await share(link)).toBe('shared')
+  })
+
+  test("without one, the Android app's sheet opens; without either, the link is copied", async () => {
+    pageShare(undefined)
+    const sheet = mock(() => Promise.resolve())
+    w.Capacitor = { isNativePlatform: () => true, Plugins: { AppShare: { share: sheet } } }
+    expect(await share(link)).toBe('shared')
+    expect(sheet).toHaveBeenCalledWith(link)
+    delete w.Capacitor
+    const copy = mock(() => Promise.resolve())
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: copy },
+      configurable: true,
+    })
+    expect(await share(link)).toBe('copied')
+    expect(copy).toHaveBeenCalledWith(link.url)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: () => Promise.reject(new Error('no')) },
+      configurable: true,
+    })
+    expect(await share(link)).toBe('failed')
+  })
+
+  test('the store is known only inside the store apps', () => {
+    expect(nativeStore()).toBeNull()
+    w.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' }
+    expect(nativeStore()).toBe('android')
+    w.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'web' }
+    expect(nativeStore()).toBeNull()
   })
 })

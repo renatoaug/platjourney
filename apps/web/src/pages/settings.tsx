@@ -10,11 +10,13 @@ import { image } from '../components/game-showcase'
 import { PageTop } from '../components/page-top'
 import { defineMessages, Language, useLocale, useMessages } from '../i18n/i18n'
 import { api } from '../lib/api'
+import { nativeStore, share } from '../lib/native'
 import { useHashSpotlight } from '../lib/spotlight'
 import type { Me } from '../lib/types'
 import { settingsPages } from '../plugins'
 import { Icon } from '../ui/icon'
 import { ErrorState } from '../ui/states'
+import { toast } from '../ui/toast'
 import './settings.css'
 
 const messages = defineMessages({
@@ -23,12 +25,22 @@ const messages = defineMessages({
     lead: 'A sua conta, os apps conectados, as notificações e as preferências.',
     loadFailed: 'Não conseguimos carregar as configurações.',
     version: 'Versão {version}',
+    rate: 'Avaliar o PlatJourney',
+    share: 'Compartilhar o PlatJourney',
+    shareText: 'Acompanhe a sua jornada até a platina no PlayStation com o PlatJourney.',
+    copied: 'Link do PlatJourney copiado.',
+    shareFailed: 'Não deu para compartilhar agora.',
   },
   [Language.En]: {
     title: 'Settings',
     lead: 'Your account, connected apps, notifications and preferences.',
     loadFailed: "We couldn't load the settings.",
     version: 'Version {version}',
+    rate: 'Rate PlatJourney',
+    share: 'Share PlatJourney',
+    shareText: 'Follow your journey to the platinum on PlayStation with PlatJourney.',
+    copied: 'PlatJourney link copied.',
+    shareFailed: "Couldn't share right now.",
   },
 })
 
@@ -126,6 +138,7 @@ export function SettingsView({
           )}
         </div>
       )}
+      <SettingsApp />
       <SettingsLinks />
       <SettingsVersion />
     </div>
@@ -137,6 +150,41 @@ export function SettingsView({
 function SettingsVersion() {
   const t = useMessages(messages)
   return <p className="settings-version">{t('version', { version: __APP_VERSION__ })}</p>
+}
+
+// Where the store apps are rated: the review form itself where the store has a link to it.
+const RATE_URL = {
+  android: 'https://play.google.com/store/apps/details?id=com.platjourney.app',
+  ios: 'https://apps.apple.com/app/id6829343019?action=write-review',
+}
+
+/** The app itself: rating it in its store (only in the store apps) and sharing it with a friend. */
+function SettingsApp() {
+  const t = useMessages(messages)
+  const locale = useLocale()
+  const store = nativeStore()
+  const shareApp = async () => {
+    const url = locale === Language.En ? 'https://platjourney.com/en/' : 'https://platjourney.com/'
+    const done = await share({ title: 'PlatJourney', text: t('shareText'), url })
+    if (done === 'copied') toast(t('copied'), 'success')
+    else if (done === 'failed') toast(t('shareFailed'))
+  }
+  return (
+    <nav className="settings-links settings-app">
+      {store && (
+        <a href={RATE_URL[store]} target="_blank" rel="noopener noreferrer">
+          <Icon name="thumbs-up" />
+          <b>{t('rate')}</b>
+          <Icon name="chevron-right" />
+        </a>
+      )}
+      <button type="button" onClick={shareApp}>
+        <Icon name="share" />
+        <b>{t('share')}</b>
+        <Icon name="chevron-right" />
+      </button>
+    </nav>
+  )
 }
 
 /** Pages a plugin keeps out of the menus (legal notes, credits), linked at the end. */
