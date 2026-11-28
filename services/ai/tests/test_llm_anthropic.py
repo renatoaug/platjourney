@@ -186,3 +186,36 @@ async def test_a_paused_search_is_resumed_and_counted_once(
 def test_claude_calls_have_a_price() -> None:
     cost = cost_usd('claude-haiku-5-5', Usage(input=1_000_000, output=1_000_000))
     assert cost == pytest.approx(0.6)
+
+
+@pytest.mark.parametrize(
+    'reply',
+    [
+        message([text('Para pegar o troféu, vá até')], stop='max_tokens'),
+        message([text('')], stop='refusal'),
+        message([text('  ')]),
+    ],
+)
+async def test_a_cut_refused_or_empty_answer_fails_and_is_still_recorded(
+    monkeypatch: pytest.MonkeyPatch,
+    calls: Fake,
+    recorded: list[tuple[str, Usage]],
+    reply: BetaMessage,
+) -> None:
+    monkeypatch.setattr(settings, 'ai_provider', 'anthropic')
+    calls.replies.append(reply)
+    with pytest.raises(llm.IncompleteReply):
+        await llm.respond(input='como pego o troféu?')
+    assert len(recorded) == 1
+
+
+async def test_a_search_still_paused_after_every_resume_fails(
+    monkeypatch: pytest.MonkeyPatch, calls: Fake, recorded: list[tuple[str, Usage]]
+) -> None:
+    monkeypatch.setattr(settings, 'ai_provider', 'anthropic')
+    calls.replies.extend(
+        [message([text('Procurando. ')], stop='pause_turn')] * (llm.MAX_RESUMES + 1)
+    )
+    with pytest.raises(llm.IncompleteReply):
+        await llm.respond(input='onde fica?')
+    assert len(calls.sent) == llm.MAX_RESUMES + 1

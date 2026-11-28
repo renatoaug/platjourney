@@ -151,6 +151,15 @@ EFFORT = {'none': 'low', 'minimal': 'low'}
 MUST_SEARCH = '\nSearch the web before answering.'
 
 
+# How a Claude message ends when its answer is not whole: the token cap cut it, the model (and its
+# fallback) refused, or the search was still paused after every resume.
+INCOMPLETE = ('max_tokens', 'refusal', 'pause_turn', 'model_context_window_exceeded')
+
+
+class IncompleteReply(RuntimeError):
+    """The model stopped before a whole answer; the call is paid for and recorded."""
+
+
 def anthropic_request(params: dict[str, Any], model: str) -> dict[str, Any]:
     """A Responses API request (instructions, input, tools, tool_choice, reasoning, text,
     max_output_tokens) as a Messages API one."""
@@ -217,6 +226,7 @@ async def _respond_with_anthropic(params: dict[str, Any], model: str) -> Reply:
     usage = Usage()
     texts: list[str] = []
     urls: list[str] = []
+    stop: str | None = None
     for _ in range(MAX_RESUMES + 1):
         message = cast(BetaMessage, await anthropic.beta.messages.create(**request))
         u = message.usage
@@ -230,7 +240,8 @@ async def _respond_with_anthropic(params: dict[str, Any], model: str) -> Reply:
         )
         texts.append(anthropic_text(message))
         urls.extend(url for url in anthropic_urls(message) if url not in urls)
-        if message.stop_reason != 'pause_turn':
+        stop = message.stop_reason
+        if stop != 'pause_turn':
             break
         # The server stopped its search loop midway: sent back as it is, the turn resumes.
         request['messages'] = [
@@ -238,7 +249,12 @@ async def _respond_with_anthropic(params: dict[str, Any], model: str) -> Reply:
             {'role': 'assistant', 'content': [b.model_dump() for b in message.content]},
         ]
     await record_call(model, usage, int((time.monotonic() - started) * 1000))
-    return Reply(''.join(texts), searches=usage.searches, urls=tuple(urls))
+    text = ''.join(texts)
+    # A cut, refused or empty answer is a failed call, like an error from the API: returned as a
+    # reply, it would reach the player half written and count the question as answered.
+    if stop in INCOMPLETE or not text.strip():
+        raise IncompleteReply(f'{model} stopped with {stop}, {len(text)} characters')
+    return Reply(text, searches=usage.searches, urls=tuple(urls))
 
 
 def cited_urls(response: Response) -> tuple[str, ...]:
